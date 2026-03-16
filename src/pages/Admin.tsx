@@ -1,26 +1,101 @@
-import { Button } from "@/components/ui/button";
-import { Plus, UserPlus } from "lucide-react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Users, ShieldOff } from "lucide-react";
+import { AddUserDialog } from "@/components/admin/AddUserDialog";
+import { UserRow } from "@/components/admin/UserRow";
+import { ROLE_LABELS, AppRole } from "@/lib/roles";
 
 export default function Admin() {
+  const [search, setSearch] = useState("");
+  const [tab, setTab] = useState("active");
+
+  const { data: profiles, refetch, isLoading } = useQuery({
+    queryKey: ["admin-profiles"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const filtered = (profiles || []).filter((p) => {
+    const isActive = p.is_active !== false;
+    if (tab === "active" && !isActive) return false;
+    if (tab === "inactive" && isActive) return false;
+
+    if (search) {
+      const q = search.toLowerCase();
+      const matchName = p.display_name?.toLowerCase().includes(q);
+      const matchEmail = p.email?.toLowerCase().includes(q);
+      const matchRole = ROLE_LABELS[p.role as AppRole]?.toLowerCase().includes(q);
+      return matchName || matchEmail || matchRole;
+    }
+    return true;
+  });
+
+  const activeCount = (profiles || []).filter((p) => p.is_active !== false).length;
+  const inactiveCount = (profiles || []).filter((p) => p.is_active === false).length;
+
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Admin Panel</h1>
-          <p className="text-muted-foreground text-sm mt-1">User management & system settings</p>
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+            User Management
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {activeCount} active user{activeCount !== 1 ? "s" : ""} · {inactiveCount} deactivated
+          </p>
         </div>
-        <Button>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add User
-        </Button>
+        <AddUserDialog onUserCreated={refetch} />
       </div>
 
-      <div className="bg-card rounded-lg p-5 shadow-sm">
-        <h2 className="font-display text-lg font-semibold text-card-foreground mb-4">User Management</h2>
-        <div className="text-sm text-card-foreground/60 py-8 text-center">
-          User management interface coming next. Add users, assign roles, manage access.
-        </div>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search by name, email, or role…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-10 bg-card text-card-foreground border-border"
+        />
       </div>
+
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList className="bg-muted">
+          <TabsTrigger value="active" className="gap-1.5">
+            <Users className="h-3.5 w-3.5" />
+            Active ({activeCount})
+          </TabsTrigger>
+          <TabsTrigger value="inactive" className="gap-1.5">
+            <ShieldOff className="h-3.5 w-3.5" />
+            Inactive ({inactiveCount})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={tab} className="mt-4">
+          <div className="bg-card rounded-lg shadow-sm overflow-hidden">
+            {isLoading ? (
+              <div className="p-8 text-center text-card-foreground/60 text-sm">Loading users…</div>
+            ) : filtered.length === 0 ? (
+              <div className="p-8 text-center text-card-foreground/60 text-sm">
+                {search ? "No users match your search." : tab === "active" ? "No active users yet." : "No deactivated users."}
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {filtered.map((profile) => (
+                  <UserRow key={profile.id} profile={profile} onUpdate={refetch} />
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
