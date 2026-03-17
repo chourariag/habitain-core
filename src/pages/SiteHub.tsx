@@ -84,22 +84,40 @@ export default function SiteHub() {
     check();
   }, [selectedModules]);
 
+  // Site readiness data for status calculation
+  const [siteReadinessMap, setSiteReadinessMap] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const fetchSiteReadiness = async () => {
+      const moduleIds = modules.map((m) => m.id);
+      if (!moduleIds.length) return;
+      const { data } = await (supabase.from("site_readiness" as any) as any)
+        .select("module_id,is_complete").in("module_id", moduleIds).eq("is_complete", true);
+      const map: Record<string, boolean> = {};
+      (data ?? []).forEach((r: any) => { map[r.module_id] = true; });
+      setSiteReadinessMap(map);
+    };
+    fetchSiteReadiness();
+  }, [modules]);
+
   const getDispatchSummary = (projectId: string) => {
     const pm = modules.filter((m) => m.project_id === projectId);
     const total = pm.length;
-    const dispatched = pm.filter((m) => m.production_status === "dispatched").length;
     if (!total) return { label: "No modules", tone: "muted" as const };
-    if (dispatched === 0) return { label: "Pending dispatch", tone: "warning" as const };
-    if (dispatched === total) return { label: "All dispatched", tone: "success" as const };
-    return { label: `${dispatched}/${total} dispatched`, tone: "primary" as const };
+    const dispatched = pm.filter((m) => m.production_status === "dispatched" || m.current_stage === "Dispatch").length;
+    if (dispatched === total) return { label: "Dispatched", tone: "success" as const };
+    if (dispatched > 0) return { label: "Partially Dispatched", tone: "warning" as const };
+    const anySiteReady = pm.some((m) => siteReadinessMap[m.id]);
+    if (anySiteReady) return { label: "Site Ready", tone: "success" as const };
+    return { label: "Pending Dispatch", tone: "warning" as const };
   };
 
   const badgeClass = (tone: "muted" | "warning" | "success" | "primary") => {
     switch (tone) {
-      case "warning": return "bg-warning/15 text-warning border-warning/30";
-      case "success": return "bg-success/15 text-success border-success/30";
-      case "primary": return "bg-primary/15 text-primary border-primary/30";
-      default: return "bg-muted text-muted-foreground border-border";
+      case "warning": return "bg-warning text-warning-foreground";
+      case "success": return "bg-primary text-primary-foreground";
+      case "primary": return "bg-primary text-primary-foreground";
+      default: return "bg-muted text-muted-foreground";
     }
   };
 
