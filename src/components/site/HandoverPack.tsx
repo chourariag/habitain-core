@@ -4,8 +4,9 @@ import { getAuthedClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Camera, Loader2, Check } from "lucide-react";
+import { FileText, Camera, Loader2, Check, PartyPopper } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -20,12 +21,15 @@ interface Props {
 export function HandoverPack({ projectId, clientName, userRole, installationComplete, onHandedOver }: Props) {
   const [existing, setExisting] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [justSubmitted, setJustSubmitted] = useState(false);
 
   // Form
   const [snagList, setSnagList] = useState("");
   const [omUrl, setOmUrl] = useState("");
   const [handoverDate, setHandoverDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [signoffName, setSignoffName] = useState("");
+  const [handoverNotes, setHandoverNotes] = useState("");
+  const [declaration, setDeclaration] = useState(false);
   const [snagPhotos, setSnagPhotos] = useState<File[]>([]);
   const [snagPreviews, setSnagPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -58,6 +62,10 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
       toast.error("Client sign-off name is required.");
       return;
     }
+    if (!declaration) {
+      toast.error("Please confirm the declaration checkbox.");
+      return;
+    }
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -75,7 +83,6 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
 
       const { client } = await getAuthedClient();
 
-      // Insert handover
       const { error: hErr } = await (client.from("handover_pack" as any) as any).insert({
         project_id: projectId,
         client_name: clientName || "",
@@ -84,19 +91,18 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
         om_document_url: omUrl.trim() || null,
         handover_date: handoverDate,
         client_signoff_name: signoffName.trim(),
+        handover_notes: handoverNotes.trim() || null,
         submitted_by: user.id,
       });
       if (hErr) throw hErr;
 
-      // Update project status
       const { error: pErr } = await client.from("projects").update({
         status: "handed_over",
       }).eq("id", projectId);
       if (pErr) throw pErr;
 
-      toast.success("Handover pack submitted! Project marked as Handed Over.");
+      setJustSubmitted(true);
       onHandedOver();
-      await loadExisting();
     } catch (err: any) {
       toast.error(err.message || "Failed to submit");
     } finally {
@@ -105,6 +111,21 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
   };
 
   if (loading) return null;
+
+  // Confirmation screen after submission
+  if (justSubmitted) {
+    return (
+      <Card className="border-success/30 bg-success/5">
+        <CardContent className="py-10 text-center space-y-3">
+          <PartyPopper className="h-10 w-10 mx-auto text-success" />
+          <h3 className="text-lg font-semibold text-success">Project successfully handed over</h3>
+          <p className="text-sm text-card-foreground/70">
+            The handover pack has been recorded and the project status has been updated.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   if (existing) {
     return (
@@ -138,12 +159,22 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
           <Input value={clientName || ""} disabled className="mt-1 text-sm bg-muted/30" />
         </div>
         <div>
+          <label className="text-xs font-medium text-card-foreground/70">Handover Date</label>
+          <Input
+            type="date"
+            value={handoverDate}
+            onChange={(e) => setHandoverDate(e.target.value)}
+            className="mt-1 text-sm"
+          />
+        </div>
+        <div>
           <label className="text-xs font-medium text-card-foreground/70">Snag List</label>
           <Textarea
             value={snagList}
             onChange={(e) => setSnagList(e.target.value)}
-            placeholder="List any remaining snags..."
+            placeholder="List any outstanding items or snags..."
             className="mt-1 text-sm"
+            rows={3}
           />
         </div>
         <div>
@@ -168,12 +199,13 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
           />
         </div>
         <div>
-          <label className="text-xs font-medium text-card-foreground/70">Handover Date</label>
-          <Input
-            type="date"
-            value={handoverDate}
-            onChange={(e) => setHandoverDate(e.target.value)}
+          <label className="text-xs font-medium text-card-foreground/70">Handover Notes</label>
+          <Textarea
+            value={handoverNotes}
+            onChange={(e) => setHandoverNotes(e.target.value)}
+            placeholder="Any additional notes for the handover..."
             className="mt-1 text-sm"
+            rows={3}
           />
         </div>
         <div>
@@ -186,7 +218,19 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
           />
         </div>
 
-        <Button size="sm" onClick={handleSubmit} disabled={submitting} className="w-full">
+        <div className="flex items-start gap-2 pt-1">
+          <Checkbox
+            id="declaration"
+            checked={declaration}
+            onCheckedChange={(checked) => setDeclaration(checked === true)}
+            className="mt-0.5"
+          />
+          <label htmlFor="declaration" className="text-xs text-card-foreground/70 leading-snug cursor-pointer">
+            I confirm the above information is accurate and the project is ready for handover.
+          </label>
+        </div>
+
+        <Button size="sm" onClick={handleSubmit} disabled={submitting || !declaration} className="w-full">
           {submitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
           Submit Handover Pack
         </Button>
