@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,18 +69,41 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token || !session.user) {
+        throw new Error("Not authenticated");
+      }
+
+      const authedClient = createClient<Database>(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          },
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+          },
+        }
+      );
+
       const location = [city, state].filter(Boolean).join(", ") || null;
 
-      const { error } = await supabase.from("projects").insert({
+      const { error } = await authedClient.from("projects").insert({
         name: name.trim(),
         client_name: clientName.trim() || null,
         location,
         type: projectType || null,
         start_date: startDate ? format(startDate, "yyyy-MM-dd") : null,
         est_completion: estCompletion ? format(estCompletion, "yyyy-MM-dd") : null,
-        created_by: user?.id || null,
-        updated_by: user?.id || null,
+        created_by: session.user.id,
+        updated_by: session.user.id,
       });
 
       if (error) throw error;
