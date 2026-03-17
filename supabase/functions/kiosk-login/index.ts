@@ -25,7 +25,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Normalize phone: strip non-digits, take last 10
     const normalizedPhone = phone.replace(/\D/g, "").slice(-10);
     if (normalizedPhone.length < 10) {
       return new Response(JSON.stringify({ error: "Invalid phone number" }), {
@@ -34,7 +33,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Look up profile by phone (try multiple formats)
+    // Try multiple phone formats
     const phoneVariants = [
       normalizedPhone,
       `+91${normalizedPhone}`,
@@ -43,7 +42,7 @@ Deno.serve(async (req) => {
 
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("auth_user_id, kiosk_pin, email, is_active, role")
+      .select("id, auth_user_id, kiosk_pin, email, is_active, role, display_name, phone")
       .or(phoneVariants.map(p => `phone.eq.${p}`).join(","))
       .single();
 
@@ -75,29 +74,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Generate a magic link token for this user
-    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-      type: "magiclink",
-      email: profile.email,
-    });
-
-    if (linkError || !linkData) {
-      return new Response(JSON.stringify({ error: "Failed to generate session" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Extract the token hash from the action link
-    const actionLink = linkData?.properties?.action_link;
-    const url = new URL(actionLink);
-    const tokenHash = url.searchParams.get("token") || url.hash?.match(/token=([^&]+)/)?.[1];
-
+    // Return profile data directly — no Supabase auth tokens needed for kiosk
     return new Response(
       JSON.stringify({
         success: true,
-        email: profile.email,
-        token_hash: linkData.properties?.hashed_token,
+        profile: {
+          id: profile.id,
+          auth_user_id: profile.auth_user_id,
+          display_name: profile.display_name,
+          role: profile.role,
+          phone: profile.phone,
+          email: profile.email,
+        },
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
