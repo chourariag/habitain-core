@@ -11,6 +11,7 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
+  Truck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -20,6 +21,7 @@ const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/production", label: "Production", icon: Factory },
+  { to: "/site-hub", label: "Site Hub", icon: Truck },
   { to: "/qc", label: "Quality", icon: ClipboardCheck },
   { to: "/inventory", label: "Inventory", icon: Package },
   { to: "/materials", label: "Materials", icon: PackagePlus },
@@ -44,15 +46,13 @@ export function AppSidebar() {
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="font-display text-sm font-bold text-sidebar-foreground truncate">
-              Habitainer
-            </h1>
+            <h1 className="font-display text-sm font-bold text-sidebar-foreground truncate">Habitainer</h1>
             <p className="text-[10px] text-muted-foreground">Production OS</p>
           </div>
         )}
       </div>
 
-      <nav className="flex-1 py-4 space-y-1 px-2">
+      <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
         {navItems.map((item) => (
           <NavLink
             key={item.to}

@@ -241,6 +241,45 @@ export type Database = {
           },
         ]
       }
+      inventory_items: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          current_stock: number
+          id: string
+          is_archived: boolean
+          material_name: string
+          reorder_level: number
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          current_stock?: number
+          id?: string
+          is_archived?: boolean
+          material_name: string
+          reorder_level?: number
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          current_stock?: number
+          id?: string
+          is_archived?: boolean
+          material_name?: string
+          reorder_level?: number
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       labour_approvals: {
         Row: {
           action: string
@@ -775,6 +814,48 @@ export type Database = {
           type?: string | null
           updated_at?: string | null
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      purchase_orders: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          is_archived: boolean
+          items_summary: string
+          notes: string | null
+          po_date: string
+          raised_by: string | null
+          status: string
+          updated_at: string
+          vendor_name: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          items_summary: string
+          notes?: string | null
+          po_date?: string
+          raised_by?: string | null
+          status?: string
+          updated_at?: string
+          vendor_name: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          items_summary?: string
+          notes?: string | null
+          po_date?: string
+          raised_by?: string | null
+          status?: string
+          updated_at?: string
+          vendor_name?: string
         }
         Relationships: []
       }
