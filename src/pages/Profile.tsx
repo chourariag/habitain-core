@@ -45,10 +45,6 @@ export default function Profile() {
       setPhone(data.phone || "");
       setAvatarUrl((data as any).avatar_url || null);
     }
-      setDisplayName(data.display_name || "");
-      setPhone(data.phone || "");
-      setAvatarUrl(data.avatar_url || null);
-    }
     setLoading(false);
   }, [user]);
 
