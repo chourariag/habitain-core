@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -39,6 +39,7 @@ interface PurchaseOrder {
 }
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
+const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
 
 function AddInventoryItemDialog({ onCreated, canAdd }: { onCreated: () => void; canAdd: boolean }) {
   const [open, setOpen] = useState(false);
@@ -131,6 +132,93 @@ function AddInventoryItemDialog({ onCreated, canAdd }: { onCreated: () => void; 
   );
 }
 
+function AddPurchaseOrderDialog({ onCreated, canAdd }: { onCreated: () => void; canAdd: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    vendor_name: "",
+    items_summary: "",
+    amount: "",
+    status: "Pending",
+    po_date: new Date().toISOString().slice(0, 10),
+  });
+
+  const handleSubmit = async () => {
+    if (!form.vendor_name.trim() || !form.items_summary.trim()) {
+      toast.error("Vendor and items are required.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { client } = await getAuthedClient();
+      const { error } = await (client.from("purchase_orders" as any) as any).insert({
+        vendor_name: form.vendor_name.trim(),
+        items_summary: form.items_summary.trim(),
+        amount: Number(form.amount) || 0,
+        status: form.status.toLowerCase(),
+        po_date: form.po_date,
+        raised_by: user.id,
+      });
+
+      if (error) throw error;
+
+      toast.success("Purchase order added");
+      setOpen(false);
+      setForm({ vendor_name: "", items_summary: "", amount: "", status: "Pending", po_date: new Date().toISOString().slice(0, 10) });
+      onCreated();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to add purchase order");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!canAdd) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm">
+          <Plus className="h-4 w-4 mr-1" /> Add PO
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Add Purchase Order</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Vendor</Label>
+            <Input value={form.vendor_name} onChange={(e) => setForm((prev) => ({ ...prev, vendor_name: e.target.value }))} />
+          </div>
+          <div className="space-y-2">
+            <Label>Items</Label>
+            <Input value={form.items_summary} onChange={(e) => setForm((prev) => ({ ...prev, items_summary: e.target.value }))} />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Amount</Label>
+              <Input type="number" value={form.amount} onChange={(e) => setForm((prev) => ({ ...prev, amount: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Input type="date" value={form.po_date} onChange={(e) => setForm((prev) => ({ ...prev, po_date: e.target.value }))} />
+            </div>
+          </div>
+          <Button onClick={handleSubmit} disabled={loading} className="w-full">
+            {loading && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+            Save PO
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function Inventory() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
@@ -169,6 +257,7 @@ export default function Inventory() {
   }, [fetchData]);
 
   const canAddItem = STOCK_CREATOR_ROLES.includes(userRole ?? "");
+  const canAddPurchaseOrder = PO_CREATOR_ROLES.includes(userRole ?? "");
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -246,6 +335,7 @@ export default function Inventory() {
         <TabsContent value="purchase-orders" className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-display text-lg font-semibold text-foreground">Purchase Orders</h2>
+            <AddPurchaseOrderDialog onCreated={fetchData} canAdd={canAddPurchaseOrder} />
           </div>
 
           {loading ? (
@@ -254,6 +344,7 @@ export default function Inventory() {
             <Card>
               <CardContent className="py-10 text-center space-y-4">
                 <p className="text-sm text-muted-foreground">No purchase orders yet.</p>
+                {canAddPurchaseOrder && <AddPurchaseOrderDialog onCreated={fetchData} canAdd={canAddPurchaseOrder} />}
               </CardContent>
             </Card>
           ) : (
