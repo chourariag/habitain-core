@@ -366,6 +366,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_archived: boolean | null
+          kiosk_pin: string | null
           language: string | null
           login_type: Database["public"]["Enums"]["login_type"] | null
           phone: string | null
@@ -381,6 +382,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_archived?: boolean | null
+          kiosk_pin?: string | null
           language?: string | null
           login_type?: Database["public"]["Enums"]["login_type"] | null
           phone?: string | null
@@ -396,6 +398,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_archived?: boolean | null
+          kiosk_pin?: string | null
           language?: string | null
           login_type?: Database["public"]["Enums"]["login_type"] | null
           phone?: string | null
