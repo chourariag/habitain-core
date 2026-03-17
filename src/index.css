@@ -5,7 +5,9 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  :root,
+  .light,
+  .dark {
     --background: 0 0% 100%;
     --foreground: 0 0% 10%;
 
@@ -55,6 +57,8 @@
     --font-body: 'Montserrat', system-ui, sans-serif;
 
     --transition-snappy: 150ms ease-out;
+
+    color-scheme: light;
   }
 }
 
