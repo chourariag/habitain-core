@@ -46,7 +46,7 @@ const STATUS_BADGE: Record<string, string> = {
   completed: "bg-success/20 text-success-foreground",
 };
 
-export function ModulePanelCard({ module, panels, canEdit, canAdvanceStage, onPanelCreated, onStageAdvanced }: Props) {
+export function ModulePanelCard({ module, panels, projectId, canEdit, canAdvanceStage, onPanelCreated, onStageAdvanced }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [addPanelOpen, setAddPanelOpen] = useState(false);
 
