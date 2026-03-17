@@ -47,6 +47,50 @@ export type Database = {
         }
         Relationships: []
       }
+      dispatch_log: {
+        Row: {
+          created_at: string | null
+          dispatch_date: string
+          dispatched_by: string
+          driver_name: string
+          id: string
+          module_id: string
+          transporter_name: string
+          updated_at: string | null
+          vehicle_number: string
+        }
+        Insert: {
+          created_at?: string | null
+          dispatch_date?: string
+          dispatched_by: string
+          driver_name: string
+          id?: string
+          module_id: string
+          transporter_name: string
+          updated_at?: string | null
+          vehicle_number: string
+        }
+        Update: {
+          created_at?: string | null
+          dispatch_date?: string
+          dispatched_by?: string
+          driver_name?: string
+          id?: string
+          module_id?: string
+          transporter_name?: string
+          updated_at?: string | null
+          vehicle_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_log_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispute_log: {
         Row: {
           claim_id: string
@@ -75,6 +119,124 @@ export type Database = {
             columns: ["claim_id"]
             isOneToOne: false
             referencedRelation: "labour_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      handover_pack: {
+        Row: {
+          client_name: string
+          client_signoff_name: string
+          created_at: string | null
+          handover_date: string
+          id: string
+          om_document_url: string | null
+          project_id: string
+          snag_list: string | null
+          snag_photos: string[] | null
+          submitted_by: string
+          updated_at: string | null
+        }
+        Insert: {
+          client_name: string
+          client_signoff_name: string
+          created_at?: string | null
+          handover_date?: string
+          id?: string
+          om_document_url?: string | null
+          project_id: string
+          snag_list?: string | null
+          snag_photos?: string[] | null
+          submitted_by: string
+          updated_at?: string | null
+        }
+        Update: {
+          client_name?: string
+          client_signoff_name?: string
+          created_at?: string | null
+          handover_date?: string
+          id?: string
+          om_document_url?: string | null
+          project_id?: string
+          snag_list?: string | null
+          snag_photos?: string[] | null
+          submitted_by?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "handover_pack_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      installation_checklist: {
+        Row: {
+          connections_photo: string | null
+          created_at: string | null
+          id: string
+          is_complete: boolean
+          lifting_photo: string | null
+          lifting_sequence: string
+          mep_photo: string | null
+          mep_stitching: string
+          module_connections: string
+          module_id: string
+          snagging: string
+          snagging_photo: string | null
+          submitted_at: string | null
+          submitted_by: string
+          updated_at: string | null
+          weatherproofing: string
+          weatherproofing_photo: string | null
+        }
+        Insert: {
+          connections_photo?: string | null
+          created_at?: string | null
+          id?: string
+          is_complete?: boolean
+          lifting_photo?: string | null
+          lifting_sequence?: string
+          mep_photo?: string | null
+          mep_stitching?: string
+          module_connections?: string
+          module_id: string
+          snagging?: string
+          snagging_photo?: string | null
+          submitted_at?: string | null
+          submitted_by: string
+          updated_at?: string | null
+          weatherproofing?: string
+          weatherproofing_photo?: string | null
+        }
+        Update: {
+          connections_photo?: string | null
+          created_at?: string | null
+          id?: string
+          is_complete?: boolean
+          lifting_photo?: string | null
+          lifting_sequence?: string
+          mep_photo?: string | null
+          mep_stitching?: string
+          module_connections?: string
+          module_id?: string
+          snagging?: string
+          snagging_photo?: string | null
+          submitted_at?: string | null
+          submitted_by?: string
+          updated_at?: string | null
+          weatherproofing?: string
+          weatherproofing_photo?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installation_checklist_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
             referencedColumns: ["id"]
           },
         ]
@@ -785,6 +947,103 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      site_diary: {
+        Row: {
+          created_at: string | null
+          entry_date: string
+          gps_location: string | null
+          id: string
+          notes: string | null
+          photo_urls: string[]
+          project_id: string
+          submitted_by: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entry_date?: string
+          gps_location?: string | null
+          id?: string
+          notes?: string | null
+          photo_urls?: string[]
+          project_id: string
+          submitted_by: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entry_date?: string
+          gps_location?: string | null
+          id?: string
+          notes?: string | null
+          photo_urls?: string[]
+          project_id?: string
+          submitted_by?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_diary_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_readiness: {
+        Row: {
+          crane_booked: boolean
+          created_at: string | null
+          foundation_ready: boolean
+          id: string
+          is_complete: boolean
+          module_id: string
+          safety_equipment: boolean
+          site_access_clear: boolean
+          submitted_at: string | null
+          submitted_by: string
+          team_briefed: boolean
+          updated_at: string | null
+        }
+        Insert: {
+          crane_booked?: boolean
+          created_at?: string | null
+          foundation_ready?: boolean
+          id?: string
+          is_complete?: boolean
+          module_id: string
+          safety_equipment?: boolean
+          site_access_clear?: boolean
+          submitted_at?: string | null
+          submitted_by: string
+          team_briefed?: boolean
+          updated_at?: string | null
+        }
+        Update: {
+          crane_booked?: boolean
+          created_at?: string | null
+          foundation_ready?: boolean
+          id?: string
+          is_complete?: boolean
+          module_id?: string
+          safety_equipment?: boolean
+          site_access_clear?: boolean
+          submitted_at?: string | null
+          submitted_by?: string
+          team_briefed?: boolean
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_readiness_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
