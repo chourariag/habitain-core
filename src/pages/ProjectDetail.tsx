@@ -17,6 +17,7 @@ const STATUS_COLORS: Record<string, string> = {
   in_progress: "bg-primary/20 text-primary border-primary/30",
   completed: "bg-success/20 text-success-foreground border-success/30",
   on_hold: "bg-muted text-muted-foreground border-border",
+  handed_over: "bg-success/20 text-success-foreground border-success/30",
 };
 
 const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
