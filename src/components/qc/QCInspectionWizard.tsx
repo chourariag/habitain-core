@@ -809,7 +809,7 @@ export function QCInspectionWizard({
                         )
                       }
                     >
-                      <SelectTrigger className="text-foreground">
+                      <SelectTrigger className="text-card-foreground bg-white/80 border-border">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
