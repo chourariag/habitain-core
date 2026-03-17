@@ -85,7 +85,6 @@ export default function Setup() {
           <p className="text-muted-foreground mt-1 text-sm">
             Create the Super Admin account
           </p>
-          </p>
         </div>
 
         <form onSubmit={handleSetup} className="space-y-4">
