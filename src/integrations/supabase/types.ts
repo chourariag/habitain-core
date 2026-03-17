@@ -177,6 +177,8 @@ export type Database = {
           current_stage: string | null
           id: string
           is_archived: boolean | null
+          module_code: string | null
+          module_type: string
           name: string
           panel_id: string | null
           production_status: string | null
@@ -190,6 +192,8 @@ export type Database = {
           current_stage?: string | null
           id?: string
           is_archived?: boolean | null
+          module_code?: string | null
+          module_type?: string
           name: string
           panel_id?: string | null
           production_status?: string | null
@@ -203,6 +207,8 @@ export type Database = {
           current_stage?: string | null
           id?: string
           is_archived?: boolean | null
+          module_code?: string | null
+          module_type?: string
           name?: string
           panel_id?: string | null
           production_status?: string | null
@@ -309,6 +315,59 @@ export type Database = {
           type?: string
         }
         Relationships: []
+      }
+      panels: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          current_stage: string | null
+          height_mm: number | null
+          id: string
+          is_archived: boolean | null
+          length_mm: number | null
+          module_id: string
+          panel_code: string
+          panel_type: string
+          production_status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          current_stage?: string | null
+          height_mm?: number | null
+          id?: string
+          is_archived?: boolean | null
+          length_mm?: number | null
+          module_id: string
+          panel_code: string
+          panel_type?: string
+          production_status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          current_stage?: string | null
+          height_mm?: number | null
+          id?: string
+          is_archived?: boolean | null
+          length_mm?: number | null
+          module_id?: string
+          panel_code?: string
+          panel_type?: string
+          production_status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "panels_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       production_stages: {
         Row: {
