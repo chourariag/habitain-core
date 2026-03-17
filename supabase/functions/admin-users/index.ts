@@ -62,9 +62,28 @@ Deno.serve(async (req) => {
 
     if (action === "create_user") {
       const { email, role, login_type, phone, kiosk_pin } = payload;
+      const kioskRoles = ["fabrication_foreman", "electrical_installer", "elec_plumbing_installer"];
+      const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+      const normalizedPhone = typeof phone === "string" ? phone.replace(/\D/g, "").slice(-10) : "";
+      const normalizedPin = typeof kiosk_pin === "string" ? kiosk_pin.replace(/\D/g, "").slice(0, 4) : "";
+      const effectiveLoginType = login_type || (kioskRoles.includes(role) ? "otp" : "email");
 
-      if (!email || !role) {
+      if (!normalizedEmail || !role) {
         return new Response(JSON.stringify({ error: "Email and role are required" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (kioskRoles.includes(role) && normalizedPhone.length !== 10) {
+        return new Response(JSON.stringify({ error: "Kiosk users require a valid 10-digit phone number" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (kioskRoles.includes(role) && normalizedPin.length !== 4) {
+        return new Response(JSON.stringify({ error: "Kiosk users require a 4-digit PIN" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -72,7 +91,7 @@ Deno.serve(async (req) => {
 
       const tempPassword = crypto.randomUUID().slice(0, 16) + "Aa1!";
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email,
+        email: normalizedEmail,
         password: tempPassword,
         email_confirm: true,
       });
@@ -84,31 +103,57 @@ Deno.serve(async (req) => {
         });
       }
 
-      await supabaseAdmin
-        .from("profiles")
-        .update({
-          role,
-          login_type: login_type || "email",
-          phone: phone || null,
-          kiosk_pin: kiosk_pin || null,
-        })
-        .eq("auth_user_id", newUser.user.id);
+      const profilePayload = {
+        auth_user_id: newUser.user.id,
+        email: normalizedEmail,
+        role,
+        login_type: effectiveLoginType,
+        phone: normalizedPhone ? `+91${normalizedPhone}` : null,
+        kiosk_pin: normalizedPin || null,
+        is_active: true,
+        is_archived: false,
+      };
 
-      await supabaseAdmin
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .upsert(profilePayload, { onConflict: "auth_user_id" });
+
+      if (profileError) {
+        await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
+        return new Response(JSON.stringify({ error: profileError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: roleError } = await supabaseAdmin
         .from("user_roles")
         .insert({ user_id: newUser.user.id, role });
+
+      if (roleError) {
+        return new Response(JSON.stringify({ error: roleError.message }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       await supabaseAdmin.from("admin_audit_log").insert({
         action: "create_user",
         performed_by: callerId,
         entity_type: "profile",
         entity_id: newUser.user.id,
-        new_value: { email, role, login_type },
+        new_value: {
+          email: normalizedEmail,
+          role,
+          login_type: effectiveLoginType,
+          phone: profilePayload.phone,
+          kiosk_pin_set: Boolean(profilePayload.kiosk_pin),
+        },
       });
 
       const { data: resetData } = await supabaseAdmin.auth.admin.generateLink({
         type: "magiclink",
-        email,
+        email: normalizedEmail,
       });
 
       return new Response(
