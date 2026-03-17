@@ -27,81 +27,84 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const locationRef = useRef(location.pathname);
-  locationRef.current = location.pathname;
 
-  // One-time subscription — no dependencies that change
+  useEffect(() => {
+    locationRef.current = location.pathname;
+  }, [location.pathname]);
+
   useEffect(() => {
     let mounted = true;
 
-    const handleSession = async (nextSession: Session | null) => {
-      if (!mounted) return;
-
-      if (!nextSession) {
-        setSession(null);
-        setLoading(false);
-        return;
-      }
-
-      // Validate profile is_active (non-blocking on failure)
-      try {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("is_active")
-          .eq("auth_user_id", nextSession.user.id)
-          .maybeSingle();
-
-        if (!mounted) return;
-
-        if (profile && profile.is_active === false) {
-          await supabase.auth.signOut();
-          return;
-        }
-      } catch {
-        // Continue with session if profile check fails
-      }
-
+    const applySession = (nextSession: Session | null) => {
       if (!mounted) return;
       setSession(nextSession);
       setLoading(false);
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, nextSession) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      window.setTimeout(() => {
         if (!mounted) return;
 
         if (event === "SIGNED_OUT") {
-          setSession(null);
-          setLoading(false);
+          applySession(null);
           if (!PUBLIC_ROUTES.includes(locationRef.current)) {
             navigate("/login", { replace: true });
           }
           return;
         }
 
-        await handleSession(nextSession);
-      }
-    );
+        applySession(nextSession);
+      }, 0);
+    });
 
-    // Initial session check
     supabase.auth.getSession().then(({ data: { session: existing } }) => {
-      handleSession(existing);
+      applySession(existing);
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigate]);
 
-  // Redirect unauthenticated users away from protected routes
+  useEffect(() => {
+    let cancelled = false;
+
+    const validateProfileStatus = async () => {
+      if (!session?.user) return;
+
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_active")
+          .eq("auth_user_id", session.user.id)
+          .maybeSingle();
+
+        if (cancelled) return;
+
+        if (profile && profile.is_active === false) {
+          await supabase.auth.signOut();
+        }
+      } catch {
+        // Keep session if profile validation fails temporarily
+      }
+    };
+
+    validateProfileStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.id]);
+
   useEffect(() => {
     if (!loading && !session && !PUBLIC_ROUTES.includes(location.pathname)) {
       navigate("/login", { replace: true });
     }
   }, [loading, session, location.pathname, navigate]);
 
-  // Redirect authenticated users away from public routes
   useEffect(() => {
     if (!loading && session && PUBLIC_ROUTES.includes(location.pathname)) {
       navigate("/dashboard", { replace: true });
