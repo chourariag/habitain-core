@@ -178,8 +178,8 @@ export default function SiteHub() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h2 className="font-semibold text-foreground truncate">{project.name}</h2>
-                      <p className="text-xs text-muted-foreground mt-1">{project.client_name || "No client assigned"}</p>
+                      <h2 className="font-semibold text-card-foreground truncate">{project.name}</h2>
+                      <p className="text-xs text-card-foreground/60 mt-1">Client: {project.client_name || "Not assigned"}</p>
                     </div>
                     <Badge variant="outline" className={badgeClass(summary.tone)}>
                       {summary.label}
