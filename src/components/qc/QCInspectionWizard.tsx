@@ -878,7 +878,7 @@ export function QCInspectionWizard({
                                 {field.replace(/([A-Z])/g, " $1")}
                               </label>
                               <Textarea
-                                className="mt-1 text-sm min-h-[50px]"
+                                className="mt-1 text-sm min-h-[50px] text-card-foreground bg-white/80 border-border placeholder:text-muted-foreground"
                                 value={a[field]}
                                 onChange={(e) => {
                                   const updated = [
