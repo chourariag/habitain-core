@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { Logo } from "./Logo";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -44,16 +45,8 @@ export function AppSidebar() {
         collapsed ? "w-16" : "w-60"
       )}
     >
-      <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border">
-        <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0">
-          H
-        </div>
-        {!collapsed && (
-          <div className="overflow-hidden">
-            <h1 className="font-display text-sm font-bold text-sidebar-foreground truncate">Habitainer</h1>
-            <p className="text-[10px] text-muted-foreground">Production OS</p>
-          </div>
-        )}
+      <div className="flex items-center px-4 h-16 border-b border-sidebar-border">
+        <Logo size="sm" showText={!collapsed} />
       </div>
 
       <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
@@ -65,8 +58,8 @@ export function AppSidebar() {
               cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-snappy",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-primary"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
               )
             }
           >
@@ -86,7 +79,7 @@ export function AppSidebar() {
         </button>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center justify-center h-12 w-full border-t border-sidebar-border text-muted-foreground hover:text-sidebar-foreground transition-snappy"
+          className="flex items-center justify-center h-12 w-full border-t border-sidebar-border text-muted-foreground hover:text-foreground transition-snappy"
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>

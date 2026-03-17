@@ -6,16 +6,15 @@ import { UserAvatar } from "./UserAvatar";
 
 export function AppLayout() {
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-screen bg-background">
       <OfflineBanner />
       <div className="flex flex-1 overflow-hidden">
         <AppSidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Top bar with avatar */}
           <header className="flex items-center justify-end h-12 px-4 border-b border-border bg-background shrink-0">
             <UserAvatar />
           </header>
-          <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
+          <main className="flex-1 overflow-y-auto pb-20 md:pb-0 bg-background">
             <Outlet />
           </main>
         </div>
