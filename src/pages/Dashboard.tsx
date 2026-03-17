@@ -35,7 +35,7 @@ function StatCard({
       className="bg-background rounded-lg border border-border p-5 shadow-card text-left w-full hover:ring-2 hover:ring-primary/40 transition-all cursor-pointer"
     >
       <div className="flex items-center justify-between mb-3">
-        <span className="text-sm font-medium text-card-foreground/70">{label}</span>
+        <span className="text-sm font-medium text-muted-foreground">{label}</span>
         <div className={`h-9 w-9 rounded-md bg-${accent}/10 flex items-center justify-center`}>
           <Icon className={`h-5 w-5 text-${accent}`} />
         </div>
