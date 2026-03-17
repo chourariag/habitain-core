@@ -26,7 +26,7 @@ const tabs = [
 
 export function MobileNav() {
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-sidebar border-t border-sidebar-border z-40 overflow-x-auto">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-40 overflow-x-auto">
       <div className="flex items-center h-16 min-w-max px-1">
         {tabs.map((tab) => (
           <NavLink
