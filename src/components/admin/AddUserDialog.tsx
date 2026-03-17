@@ -18,6 +18,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState<AppRole | "">("");
+  const [kioskPin, setKioskPin] = useState("");
   const [loading, setLoading] = useState(false);
 
   const isKiosk = role && KIOSK_ROLES.includes(role as AppRole);
