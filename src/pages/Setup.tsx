@@ -83,7 +83,7 @@ export default function Setup() {
           </div>
           <h1 className="font-display text-3xl font-bold text-foreground">Initial Setup</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Create the Managing Director account
+            Create the Super Admin account
           </p>
         </div>
 

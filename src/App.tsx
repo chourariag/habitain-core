@@ -15,6 +15,7 @@ import QualityControl from "@/pages/QualityControl";
 import Inventory from "@/pages/Inventory";
 import Admin from "@/pages/Admin";
 import AppSettings from "@/pages/AppSettings";
+import MaterialRequests from "@/pages/MaterialRequests";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/production" element={<Production />} />
               <Route path="/qc" element={<QualityControl />} />
               <Route path="/inventory" element={<Inventory />} />
+              <Route path="/materials" element={<MaterialRequests />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/settings" element={<AppSettings />} />
             </Route>

@@ -7,6 +7,7 @@ import {
   Factory,
   ClipboardCheck,
   Package,
+  PackagePlus,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -19,6 +20,7 @@ const navItems = [
   { to: "/production", label: "Production", icon: Factory },
   { to: "/qc", label: "Quality", icon: ClipboardCheck },
   { to: "/inventory", label: "Inventory", icon: Package },
+  { to: "/materials", label: "Materials", icon: PackagePlus },
   { to: "/admin", label: "Admin", icon: Users },
   { to: "/settings", label: "Settings", icon: Settings },
 ];

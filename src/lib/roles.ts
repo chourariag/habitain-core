@@ -3,6 +3,7 @@ import { Database } from "@/integrations/supabase/types";
 export type AppRole = Database["public"]["Enums"]["app_role"];
 
 export const ROLE_LABELS: Record<AppRole, string> = {
+  super_admin: "Super Admin",
   managing_director: "Managing Director",
   finance_director: "Finance Director",
   sales_director: "Sales Director",
@@ -30,6 +31,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
 };
 
 export const ROLE_TIERS: Record<string, AppRole[]> = {
+  "Tier 0 — Super Admin": ["super_admin"],
   "Tier 1 — Directors": ["managing_director", "finance_director", "sales_director", "architecture_director"],
   "Tier 2 — Functional Heads": ["head_operations", "production_head", "finance_manager", "planning_engineer", "costing_engineer", "quantity_surveyor"],
   "Tier 3 — Site & Delivery": ["site_installation_mgr", "delivery_rm_lead", "site_engineer"],
