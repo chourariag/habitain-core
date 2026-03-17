@@ -39,18 +39,27 @@ const TRADES = [
 type KioskStep = "phone" | "pin" | "work";
 
 const KIOSK_SESSION_KEY = "kiosk_session";
+const KIOSK_SESSION_EXPIRY_DAYS = 7;
 
 function getKioskSession(): KioskProfile | null {
   try {
     const raw = localStorage.getItem(KIOSK_SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const stored = JSON.parse(raw);
+    // Check expiry
+    if (stored.expiresAt && Date.now() > stored.expiresAt) {
+      localStorage.removeItem(KIOSK_SESSION_KEY);
+      return null;
+    }
+    return stored.profile ?? null;
   } catch {
     return null;
   }
 }
 
 function setKioskSession(profile: KioskProfile) {
-  localStorage.setItem(KIOSK_SESSION_KEY, JSON.stringify(profile));
+  const expiresAt = Date.now() + KIOSK_SESSION_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+  localStorage.setItem(KIOSK_SESSION_KEY, JSON.stringify({ profile, expiresAt }));
 }
 
 function clearKioskSession() {
