@@ -204,6 +204,21 @@ export default function ProjectDetail() {
           )}
         </TabsContent>
 
+        <TabsContent value="site-diary" className="space-y-4">
+          <SiteDiary projectId={id!} userRole={userRole} />
+        </TabsContent>
+
+        <TabsContent value="handover" className="space-y-4">
+          <h2 className="font-display text-lg font-semibold text-foreground">Handover</h2>
+          <HandoverPack
+            projectId={id!}
+            clientName={project.client_name}
+            userRole={userRole}
+            installationComplete={modules.some((m: any) => m.production_status === "dispatched")}
+            onHandedOver={fetchData}
+          />
+        </TabsContent>
+
         <TabsContent value="team" className="space-y-4">
           <h2 className="font-display text-lg font-semibold text-foreground">Team</h2>
           <div className="bg-card rounded-lg p-8 text-center shadow-sm">
