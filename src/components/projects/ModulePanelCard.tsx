@@ -27,6 +27,7 @@ interface Module {
 interface Props {
   module: Module;
   panels: Panel[];
+  projectId: string;
   canEdit: boolean;
   canAdvanceStage: boolean;
   onPanelCreated: () => void;
