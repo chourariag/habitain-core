@@ -47,6 +47,59 @@ export type Database = {
         }
         Relationships: []
       }
+      amc_contracts: {
+        Row: {
+          annual_fee: number
+          client_name: string
+          created_at: string
+          created_by: string
+          end_date: string
+          id: string
+          is_archived: boolean
+          project_id: string
+          start_date: string
+          status: string
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          annual_fee?: number
+          client_name: string
+          created_at?: string
+          created_by: string
+          end_date: string
+          id?: string
+          is_archived?: boolean
+          project_id: string
+          start_date: string
+          status?: string
+          tier?: string
+          updated_at?: string
+        }
+        Update: {
+          annual_fee?: number
+          client_name?: string
+          created_at?: string
+          created_by?: string
+          end_date?: string
+          id?: string
+          is_archived?: boolean
+          project_id?: string
+          start_date?: string
+          status?: string
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "amc_contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispatch_log: {
         Row: {
           created_at: string | null
@@ -1034,6 +1087,89 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      rm_tickets: {
+        Row: {
+          client_name: string
+          client_signoff_name: string | null
+          completed_at: string | null
+          completed_by: string | null
+          completion_notes: string | null
+          cost_estimate: number | null
+          cost_estimated_at: string | null
+          cost_estimated_by: string | null
+          created_at: string
+          id: string
+          is_archived: boolean
+          issue_description: string
+          photo_urls: string[]
+          priority: string
+          project_id: string
+          raised_at: string
+          raised_by: string
+          status: string
+          updated_at: string
+          visit_scheduled_at: string | null
+          visit_scheduled_by: string | null
+          visit_scheduled_date: string | null
+        }
+        Insert: {
+          client_name: string
+          client_signoff_name?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          completion_notes?: string | null
+          cost_estimate?: number | null
+          cost_estimated_at?: string | null
+          cost_estimated_by?: string | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          issue_description: string
+          photo_urls?: string[]
+          priority?: string
+          project_id: string
+          raised_at?: string
+          raised_by: string
+          status?: string
+          updated_at?: string
+          visit_scheduled_at?: string | null
+          visit_scheduled_by?: string | null
+          visit_scheduled_date?: string | null
+        }
+        Update: {
+          client_name?: string
+          client_signoff_name?: string | null
+          completed_at?: string | null
+          completed_by?: string | null
+          completion_notes?: string | null
+          cost_estimate?: number | null
+          cost_estimated_at?: string | null
+          cost_estimated_by?: string | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          issue_description?: string
+          photo_urls?: string[]
+          priority?: string
+          project_id?: string
+          raised_at?: string
+          raised_by?: string
+          status?: string
+          updated_at?: string
+          visit_scheduled_at?: string | null
+          visit_scheduled_by?: string | null
+          visit_scheduled_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rm_tickets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_diary: {
         Row: {
