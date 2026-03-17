@@ -129,6 +129,7 @@ export type Database = {
           client_signoff_name: string
           created_at: string | null
           handover_date: string
+          handover_notes: string | null
           id: string
           om_document_url: string | null
           project_id: string
@@ -142,6 +143,7 @@ export type Database = {
           client_signoff_name: string
           created_at?: string | null
           handover_date?: string
+          handover_notes?: string | null
           id?: string
           om_document_url?: string | null
           project_id: string
@@ -155,6 +157,7 @@ export type Database = {
           client_signoff_name?: string
           created_at?: string | null
           handover_date?: string
+          handover_notes?: string | null
           id?: string
           om_document_url?: string | null
           project_id?: string
@@ -1034,37 +1037,46 @@ export type Database = {
       }
       site_diary: {
         Row: {
+          blockers: string | null
           created_at: string | null
           entry_date: string
           gps_location: string | null
           id: string
+          manpower_count: number | null
           notes: string | null
           photo_urls: string[]
           project_id: string
           submitted_by: string
           updated_at: string | null
+          weather_condition: string | null
         }
         Insert: {
+          blockers?: string | null
           created_at?: string | null
           entry_date?: string
           gps_location?: string | null
           id?: string
+          manpower_count?: number | null
           notes?: string | null
           photo_urls?: string[]
           project_id: string
           submitted_by: string
           updated_at?: string | null
+          weather_condition?: string | null
         }
         Update: {
+          blockers?: string | null
           created_at?: string | null
           entry_date?: string
           gps_location?: string | null
           id?: string
+          manpower_count?: number | null
           notes?: string | null
           photo_urls?: string[]
           project_id?: string
           submitted_by?: string
           updated_at?: string | null
+          weather_condition?: string | null
         }
         Relationships: [
           {
