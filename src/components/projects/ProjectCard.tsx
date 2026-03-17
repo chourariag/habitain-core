@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { MapPin, Calendar, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
