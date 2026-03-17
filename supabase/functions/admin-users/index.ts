@@ -50,7 +50,7 @@ Deno.serve(async (req) => {
       .eq("auth_user_id", callerId)
       .single();
 
-    const directorRoles = ["managing_director", "finance_director", "sales_director", "architecture_director"];
+    const directorRoles = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
     if (!callerProfile || !directorRoles.includes(callerProfile.role)) {
       return new Response(JSON.stringify({ error: "Forbidden: Director access required", debug_role: callerProfile?.role || "no_profile_found" }), {
         status: 403,

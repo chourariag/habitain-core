@@ -18,7 +18,6 @@ Deno.serve(async (req) => {
 
     const { action, email, password, display_name } = await req.json();
 
-    // Check if any users exist
     if (action === "check") {
       const { count } = await supabaseAdmin
         .from("profiles")
@@ -31,7 +30,6 @@ Deno.serve(async (req) => {
     }
 
     if (action === "create") {
-      // Double-check no users exist
       const { count } = await supabaseAdmin
         .from("profiles")
         .select("id", { count: "exact", head: true });
@@ -64,20 +62,20 @@ Deno.serve(async (req) => {
         );
       }
 
-      // Update profile with managing_director role and display name
+      // Update profile with super_admin role (has identical access to managing_director)
       await supabaseAdmin
         .from("profiles")
         .update({
-          role: "managing_director",
+          role: "super_admin",
           display_name: display_name || null,
           login_type: "email",
         })
         .eq("auth_user_id", newUser.user.id);
 
-      // Also insert into user_roles
+      // Insert into user_roles
       await supabaseAdmin
         .from("user_roles")
-        .insert({ user_id: newUser.user.id, role: "managing_director" });
+        .insert({ user_id: newUser.user.id, role: "super_admin" });
 
       // Audit log
       await supabaseAdmin.from("admin_audit_log").insert({
@@ -85,7 +83,7 @@ Deno.serve(async (req) => {
         performed_by: newUser.user.id,
         entity_type: "profile",
         entity_id: newUser.user.id,
-        new_value: { email, role: "managing_director", display_name },
+        new_value: { email, role: "super_admin", display_name },
       });
 
       return new Response(

@@ -27,7 +27,7 @@ export default function ProjectDetail() {
   const [addModuleOpen, setAddModuleOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  const canEdit = userRole === "planning_engineer";
+  const canEdit = userRole === "planning_engineer" || userRole === "super_admin" || userRole === "managing_director";
 
   const fetchData = useCallback(async () => {
     if (!id) return;
