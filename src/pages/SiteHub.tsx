@@ -59,6 +59,16 @@ export default function SiteHub() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Realtime: sync modules changes
+  useEffect(() => {
+    const channel = supabase
+      .channel("sitehub-modules")
+      .on("postgres_changes", { event: "*", schema: "public", table: "modules" }, () => { fetchData(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "production_stages" }, () => { fetchData(); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchData]);
+
   const selectedProject = useMemo(() => projects.find((p) => p.id === selectedProjectId) ?? null, [projects, selectedProjectId]);
   const selectedModules = useMemo(() => modules.filter((m) => m.project_id === selectedProjectId), [modules, selectedProjectId]);
 
@@ -94,11 +104,7 @@ export default function SiteHub() {
   };
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <div className="flex justify-center items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
   return (

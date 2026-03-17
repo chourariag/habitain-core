@@ -12,6 +12,8 @@ import {
   ChevronRight,
   LogOut,
   Truck,
+  Wrench,
+  FileSignature,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -25,6 +27,8 @@ const navItems = [
   { to: "/qc", label: "Quality", icon: ClipboardCheck },
   { to: "/inventory", label: "Inventory", icon: Package },
   { to: "/materials", label: "Materials", icon: PackagePlus },
+  { to: "/rm", label: "R&M", icon: Wrench },
+  { to: "/amc", label: "AMC", icon: FileSignature },
   { to: "/admin", label: "Admin", icon: Users },
   { to: "/settings", label: "Settings", icon: Settings },
 ];

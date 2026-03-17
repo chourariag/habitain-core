@@ -7,6 +7,8 @@ import {
   PackagePlus,
   Users,
   Truck,
+  Wrench,
+  FileSignature,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +19,8 @@ const tabs = [
   { to: "/site-hub", label: "Site", icon: Truck },
   { to: "/qc", label: "Quality", icon: ClipboardCheck },
   { to: "/materials", label: "Materials", icon: PackagePlus },
+  { to: "/rm", label: "R&M", icon: Wrench },
+  { to: "/amc", label: "AMC", icon: FileSignature },
   { to: "/admin", label: "Admin", icon: Users },
 ];
 

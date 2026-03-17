@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getAuthedClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -33,14 +32,9 @@ const CAN_ESTIMATE = ["costing_engineer", "super_admin", "managing_director"];
 const CAN_SCHEDULE = ["planning_engineer", "super_admin", "managing_director"];
 const CAN_COMPLETE = ["delivery_rm_lead", "super_admin", "managing_director"];
 
-interface Props {
-  userRole: string | null;
-  userId: string | null;
-  projects: Record<string, string>;
-}
-
-export function RMTab({ userRole, userId, projects }: Props) {
+export default function RMPage() {
   const [tickets, setTickets] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [newOpen, setNewOpen] = useState(false);
   const [detailTicket, setDetailTicket] = useState<any | null>(null);
@@ -50,43 +44,59 @@ export function RMTab({ userRole, userId, projects }: Props) {
   const [signoffName, setSignoffName] = useState("");
   const [completionNotes, setCompletionNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const canRaise = CAN_RAISE.includes(userRole ?? "");
   const canEstimate = CAN_ESTIMATE.includes(userRole ?? "");
   const canSchedule = CAN_SCHEDULE.includes(userRole ?? "");
   const canComplete = CAN_COMPLETE.includes(userRole ?? "");
 
-  const fetchTickets = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    const { data } = await (supabase.from("rm_tickets" as any) as any)
-      .select("*, projects(name, client_name)")
-      .eq("is_archived", false)
-      .order("created_at", { ascending: false });
-    setTickets(data ?? []);
+    const [ticketRes, projRes, roleRes] = await Promise.all([
+      (supabase.from("rm_tickets" as any) as any)
+        .select("*, projects(name, client_name)")
+        .eq("is_archived", false)
+        .order("created_at", { ascending: false }),
+      supabase.from("projects").select("id, name"),
+      supabase.auth.getUser().then(async ({ data: { user } }) => {
+        if (!user) return { role: null, id: null };
+        const { data } = await supabase.rpc("get_user_role", { _user_id: user.id });
+        return { role: data as string | null, id: user.id };
+      }),
+    ]);
+    setTickets(ticketRes.data ?? []);
+    const projMap: Record<string, string> = {};
+    (projRes.data ?? []).forEach((p: any) => { projMap[p.id] = p.name; });
+    setProjects(projMap);
+    setUserRole(roleRes.role);
+    setUserId(roleRes.id);
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchTickets(); }, [fetchTickets]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleCreate = async () => {
     if (!form.project_id || !form.issue_description) { toast.error("Fill required fields"); return; }
     setSubmitting(true);
     try {
-      const { client, session } = await getAuthedClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
       const clientName = projects[form.project_id] || "Unknown";
-      const { error } = await (client.from("rm_tickets" as any) as any).insert({
+      const { error } = await (supabase.from("rm_tickets" as any) as any).insert({
         project_id: form.project_id,
         client_name: clientName,
         issue_description: form.issue_description,
         priority: form.priority,
         status: "open",
-        raised_by: session.user.id,
+        raised_by: user.id,
       });
       if (error) throw error;
       toast.success("R&M ticket created");
       setNewOpen(false);
       setForm({ project_id: "", issue_description: "", priority: "standard" });
-      fetchTickets();
+      fetchData();
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -98,10 +108,11 @@ export function RMTab({ userRole, userId, projects }: Props) {
     if (!estimateVal) return;
     setSubmitting(true);
     try {
-      const { client, session } = await getAuthedClient();
-      const { error } = await (client.from("rm_tickets" as any) as any).update({
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await (supabase.from("rm_tickets" as any) as any).update({
         cost_estimate: parseFloat(estimateVal),
-        cost_estimated_by: session.user.id,
+        cost_estimated_by: user.id,
         cost_estimated_at: new Date().toISOString(),
         status: "pending_schedule",
       }).eq("id", ticketId);
@@ -109,7 +120,7 @@ export function RMTab({ userRole, userId, projects }: Props) {
       toast.success("Cost estimate added");
       setDetailTicket(null);
       setEstimateVal("");
-      fetchTickets();
+      fetchData();
     } catch (err: any) { toast.error(err.message); } finally { setSubmitting(false); }
   };
 
@@ -117,10 +128,11 @@ export function RMTab({ userRole, userId, projects }: Props) {
     if (!scheduleDate) return;
     setSubmitting(true);
     try {
-      const { client, session } = await getAuthedClient();
-      const { error } = await (client.from("rm_tickets" as any) as any).update({
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await (supabase.from("rm_tickets" as any) as any).update({
         visit_scheduled_date: scheduleDate,
-        visit_scheduled_by: session.user.id,
+        visit_scheduled_by: user.id,
         visit_scheduled_at: new Date().toISOString(),
         status: "scheduled",
       }).eq("id", ticketId);
@@ -128,7 +140,7 @@ export function RMTab({ userRole, userId, projects }: Props) {
       toast.success("Visit scheduled");
       setDetailTicket(null);
       setScheduleDate("");
-      fetchTickets();
+      fetchData();
     } catch (err: any) { toast.error(err.message); } finally { setSubmitting(false); }
   };
 
@@ -136,9 +148,10 @@ export function RMTab({ userRole, userId, projects }: Props) {
     if (!signoffName) { toast.error("Client sign-off name required"); return; }
     setSubmitting(true);
     try {
-      const { client, session } = await getAuthedClient();
-      const { error } = await (client.from("rm_tickets" as any) as any).update({
-        completed_by: session.user.id,
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { error } = await (supabase.from("rm_tickets" as any) as any).update({
+        completed_by: user.id,
         completed_at: new Date().toISOString(),
         client_signoff_name: signoffName,
         completion_notes: completionNotes,
@@ -149,16 +162,21 @@ export function RMTab({ userRole, userId, projects }: Props) {
       setDetailTicket(null);
       setSignoffName("");
       setCompletionNotes("");
-      fetchTickets();
+      fetchData();
     } catch (err: any) { toast.error(err.message); } finally { setSubmitting(false); }
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  if (loading) {
+    return <div className="flex justify-center items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="font-display text-lg font-semibold text-foreground">Repair & Maintenance Tickets</h2>
+    <div className="p-4 md:p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Repair & Maintenance</h1>
+          <p className="text-muted-foreground text-sm mt-1">Service tickets from dispatch to client sign-off</p>
+        </div>
         {canRaise && <Button onClick={() => setNewOpen(true)}><Plus className="h-4 w-4 mr-1" /> New Ticket</Button>}
       </div>
 
@@ -166,14 +184,14 @@ export function RMTab({ userRole, userId, projects }: Props) {
         <Card><CardContent className="py-10 text-center"><Wrench className="h-10 w-10 mx-auto text-muted-foreground mb-3" /><p className="text-muted-foreground text-sm">No R&M tickets yet.</p></CardContent></Card>
       ) : (
         <div className="space-y-2">
-          {tickets.map((t) => (
+          {tickets.map((t: any) => (
             <Card key={t.id} className="cursor-pointer hover:ring-1 hover:ring-primary/30 transition-all" onClick={() => setDetailTicket(t)}>
               <CardContent className="py-3 px-4">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
-                    <p className="font-semibold text-sm text-card-foreground">{(t as any).projects?.name || "Project"}</p>
+                    <p className="font-semibold text-sm text-card-foreground">{t.projects?.name || "Project"}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {(t as any).projects?.client_name || t.client_name} · {format(new Date(t.created_at), "dd MMM yyyy")}
+                      Client: {t.projects?.client_name || t.client_name} · {format(new Date(t.created_at), "dd MMM yyyy")}
                     </p>
                     <p className="text-xs text-card-foreground/80 mt-1 line-clamp-1">{t.issue_description}</p>
                   </div>
@@ -223,37 +241,36 @@ export function RMTab({ userRole, userId, projects }: Props) {
       </Dialog>
 
       {/* Ticket Detail Dialog */}
-      <Dialog open={!!detailTicket} onOpenChange={(o) => !o && setDetailTicket(null)}>
+      <Dialog open={!!detailTicket} onOpenChange={(o) => { if (!o) setDetailTicket(null); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Ticket Details</DialogTitle></DialogHeader>
           {detailTicket && (
             <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-2">
-                <div><span className="text-muted-foreground">Project:</span> <span className="text-card-foreground font-medium">{(detailTicket as any).projects?.name}</span></div>
-                <div><span className="text-muted-foreground">Client:</span> <span className="text-card-foreground font-medium">{detailTicket.client_name}</span></div>
-                <div><span className="text-muted-foreground">Priority:</span> <Badge variant="outline" className={PRIORITY_BADGE[detailTicket.priority] ?? ""}>{detailTicket.priority}</Badge></div>
-                <div><span className="text-muted-foreground">Status:</span> <Badge variant="outline" className={STATUS_BADGE[detailTicket.status] ?? ""}>{detailTicket.status.replace(/_/g, " ")}</Badge></div>
-                <div><span className="text-muted-foreground">Raised:</span> <span className="text-card-foreground">{format(new Date(detailTicket.created_at), "dd MMM yyyy")}</span></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><p className="text-muted-foreground text-xs">Project</p><p className="text-card-foreground font-medium">{detailTicket.projects?.name || "—"}</p></div>
+                <div><p className="text-muted-foreground text-xs">Client</p><p className="text-card-foreground font-medium">{detailTicket.projects?.client_name || detailTicket.client_name || "—"}</p></div>
+                <div><p className="text-muted-foreground text-xs">Priority</p><Badge variant="outline" className={PRIORITY_BADGE[detailTicket.priority] ?? ""}>{detailTicket.priority}</Badge></div>
+                <div><p className="text-muted-foreground text-xs">Status</p><Badge variant="outline" className={STATUS_BADGE[detailTicket.status] ?? ""}>{detailTicket.status.replace(/_/g, " ")}</Badge></div>
+                <div><p className="text-muted-foreground text-xs">Date Raised</p><p className="text-card-foreground">{format(new Date(detailTicket.created_at), "dd MMM yyyy")}</p></div>
               </div>
               <div>
-                <span className="text-muted-foreground">Issue:</span>
-                <p className="text-card-foreground mt-1">{detailTicket.issue_description}</p>
+                <p className="text-muted-foreground text-xs mb-1">Issue Description</p>
+                <p className="text-card-foreground">{detailTicket.issue_description}</p>
               </div>
 
               {detailTicket.cost_estimate != null && (
-                <div><span className="text-muted-foreground">Cost Estimate:</span> <span className="text-card-foreground font-semibold">₹{Number(detailTicket.cost_estimate).toLocaleString()}</span></div>
+                <div><p className="text-muted-foreground text-xs">Cost Estimate</p><p className="text-card-foreground font-semibold">₹{Number(detailTicket.cost_estimate).toLocaleString()}</p></div>
               )}
               {detailTicket.visit_scheduled_date && (
-                <div><span className="text-muted-foreground">Visit Scheduled:</span> <span className="text-card-foreground">{detailTicket.visit_scheduled_date}</span></div>
+                <div><p className="text-muted-foreground text-xs">Visit Scheduled</p><p className="text-card-foreground">{detailTicket.visit_scheduled_date}</p></div>
               )}
               {detailTicket.client_signoff_name && (
-                <div><span className="text-muted-foreground">Client Sign-off:</span> <span className="text-card-foreground">{detailTicket.client_signoff_name}</span></div>
+                <div><p className="text-muted-foreground text-xs">Client Sign-off</p><p className="text-card-foreground">{detailTicket.client_signoff_name}</p></div>
               )}
               {detailTicket.completion_notes && (
-                <div><span className="text-muted-foreground">Completion Notes:</span> <p className="text-card-foreground">{detailTicket.completion_notes}</p></div>
+                <div><p className="text-muted-foreground text-xs">Completion Notes</p><p className="text-card-foreground">{detailTicket.completion_notes}</p></div>
               )}
 
-              {/* Actions based on status */}
               {detailTicket.status === "open" && canEstimate && (
                 <div className="border-t pt-3 space-y-2">
                   <Label>Cost Estimate (₹)</Label>

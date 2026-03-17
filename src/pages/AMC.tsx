@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getAuthedClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,12 +19,6 @@ const TIER_BADGE: Record<string, string> = {
 
 const CAN_CREATE = ["super_admin", "managing_director", "sales_director"];
 
-interface Props {
-  userRole: string | null;
-  userId: string | null;
-  projects: Record<string, string>;
-}
-
 function getContractStatus(endDate: string): { label: string; class: string } {
   const daysLeft = differenceInDays(new Date(endDate), new Date());
   if (daysLeft < 0) return { label: "Expired", class: "bg-destructive/20 text-destructive" };
@@ -33,28 +26,42 @@ function getContractStatus(endDate: string): { label: string; class: string } {
   return { label: "Active", class: "bg-success/20 text-success-foreground" };
 }
 
-export function AMCTab({ userRole, userId, projects }: Props) {
+export default function AMCPage() {
   const [contracts, setContracts] = useState<any[]>([]);
+  const [projects, setProjects] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [newOpen, setNewOpen] = useState(false);
   const [form, setForm] = useState({ project_id: "", tier: "basic", start_date: "", end_date: "", annual_fee: "" });
   const [submitting, setSubmitting] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const canCreate = CAN_CREATE.includes(userRole ?? "");
 
-  const fetchContracts = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    const { data } = await (supabase.from("amc_contracts" as any) as any)
-      .select("*, projects(name, client_name)")
-      .eq("is_archived", false)
-      .order("end_date", { ascending: true });
-    setContracts(data ?? []);
+    const [contractRes, projRes, roleRes] = await Promise.all([
+      (supabase.from("amc_contracts" as any) as any)
+        .select("*, projects(name, client_name)")
+        .eq("is_archived", false)
+        .order("end_date", { ascending: true }),
+      supabase.from("projects").select("id, name"),
+      supabase.auth.getUser().then(async ({ data: { user } }) => {
+        if (!user) return null;
+        const { data } = await supabase.rpc("get_user_role", { _user_id: user.id });
+        return data as string | null;
+      }),
+    ]);
+    setContracts(contractRes.data ?? []);
+    const projMap: Record<string, string> = {};
+    (projRes.data ?? []).forEach((p: any) => { projMap[p.id] = p.name; });
+    setProjects(projMap);
+    setUserRole(roleRes);
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchContracts(); }, [fetchContracts]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const totalRevenue = contracts.reduce((sum, c) => sum + (Number(c.annual_fee) || 0), 0);
+  const totalRevenue = contracts.reduce((sum: number, c: any) => sum + (Number(c.annual_fee) || 0), 0);
 
   const handleCreate = async () => {
     if (!form.project_id || !form.start_date || !form.end_date || !form.annual_fee) {
@@ -63,22 +70,23 @@ export function AMCTab({ userRole, userId, projects }: Props) {
     }
     setSubmitting(true);
     try {
-      const { client, session } = await getAuthedClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
       const proj = (await supabase.from("projects").select("client_name").eq("id", form.project_id).single()).data;
-      const { error } = await (client.from("amc_contracts" as any) as any).insert({
+      const { error } = await (supabase.from("amc_contracts" as any) as any).insert({
         project_id: form.project_id,
         client_name: proj?.client_name || "Client",
         tier: form.tier,
         start_date: form.start_date,
         end_date: form.end_date,
         annual_fee: parseFloat(form.annual_fee),
-        created_by: session.user.id,
+        created_by: user.id,
       });
       if (error) throw error;
       toast.success("AMC contract created");
       setNewOpen(false);
       setForm({ project_id: "", tier: "basic", start_date: "", end_date: "", annual_fee: "" });
-      fetchContracts();
+      fetchData();
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -86,14 +94,18 @@ export function AMCTab({ userRole, userId, projects }: Props) {
     }
   };
 
-  if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  if (loading) {
+    return <div className="flex justify-center items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center flex-wrap gap-3">
+    <div className="p-4 md:p-6 space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="font-display text-lg font-semibold text-foreground">Annual Maintenance Contracts</h2>
-          <p className="text-sm text-muted-foreground">Total AMC Revenue: <span className="font-semibold text-foreground">₹{totalRevenue.toLocaleString()}</span></p>
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">AMC Contracts</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Annual Maintenance Contracts · Total Revenue: <span className="font-semibold text-foreground">₹{totalRevenue.toLocaleString()}</span>
+          </p>
         </div>
         {canCreate && <Button onClick={() => setNewOpen(true)}><Plus className="h-4 w-4 mr-1" /> New AMC Contract</Button>}
       </div>
@@ -116,12 +128,12 @@ export function AMCTab({ userRole, userId, projects }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {contracts.map((c) => {
+                {contracts.map((c: any) => {
                   const status = getContractStatus(c.end_date);
                   return (
                     <tr key={c.id} className="border-b last:border-0">
                       <td className="p-3 font-medium text-card-foreground">{c.client_name}</td>
-                      <td className="p-3 text-muted-foreground">{(c as any).projects?.name || "—"}</td>
+                      <td className="p-3 text-muted-foreground">{c.projects?.name || "—"}</td>
                       <td className="p-3"><Badge variant="outline" className={TIER_BADGE[c.tier] ?? ""}>{c.tier}</Badge></td>
                       <td className="p-3 text-card-foreground">{format(new Date(c.start_date), "dd MMM yyyy")}</td>
                       <td className="p-3 text-card-foreground">{format(new Date(c.end_date), "dd MMM yyyy")}</td>
