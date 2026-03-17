@@ -19,10 +19,11 @@ export default function QualityControl() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [selectedNCR, setSelectedNCR] = useState<any | null>(null);
+  const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [inspRes, ncrRes, roleRes] = await Promise.all([
+    const [inspRes, ncrRes, roleRes, profilesRes] = await Promise.all([
       supabase
         .from("qc_inspections")
         .select("*, modules(name, module_code, project_id, projects(name))")
@@ -31,7 +32,7 @@ export default function QualityControl() {
         .limit(50),
       supabase
         .from("ncr_register")
-        .select("*, qc_inspections(stage_name, ai_response, modules(name, module_code, panel_id))")
+        .select("*, qc_inspections(stage_name, ai_response, module_id, modules(name, module_code, panel_id))")
         .eq("is_archived", false)
         .order("created_at", { ascending: false })
         .limit(100),
@@ -40,10 +41,14 @@ export default function QualityControl() {
         const { data } = await supabase.rpc("get_user_role", { _user_id: user.id });
         return data;
       }),
+      supabase.from("profiles").select("auth_user_id, display_name"),
     ]);
     setInspections(inspRes.data ?? []);
     setNCRs(ncrRes.data ?? []);
     setUserRole(roleRes as string | null);
+    const pMap: Record<string, string> = {};
+    (profilesRes.data ?? []).forEach((p: any) => { pMap[p.auth_user_id] = p.display_name || "Unknown"; });
+    setProfilesMap(pMap);
     setLoading(false);
   }, []);
 
@@ -216,7 +221,7 @@ export default function QualityControl() {
                   {isClosed && (
                     <>
                       <div><p className="text-muted-foreground text-xs">Closed Date</p><p className="text-card-foreground">{selectedNCR.closed_at ? format(new Date(selectedNCR.closed_at), "dd MMM yyyy") : "—"}</p></div>
-                      <div><p className="text-muted-foreground text-xs">Closed By</p><p className="text-card-foreground">{selectedNCR.closed_by || "—"}</p></div>
+                      <div><p className="text-muted-foreground text-xs">Closed By</p><p className="text-card-foreground">{(selectedNCR.closed_by && profilesMap[selectedNCR.closed_by]) || selectedNCR.closed_by || "—"}</p></div>
                     </>
                   )}
                 </div>
