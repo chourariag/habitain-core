@@ -221,7 +221,7 @@ export default function QualityControl() {
                   {isClosed && (
                     <>
                       <div><p className="text-muted-foreground text-xs">Closed Date</p><p className="text-card-foreground">{selectedNCR.closed_at ? format(new Date(selectedNCR.closed_at), "dd MMM yyyy") : "—"}</p></div>
-                      <div><p className="text-muted-foreground text-xs">Closed By</p><p className="text-card-foreground">{selectedNCR.closed_by || "—"}</p></div>
+                      <div><p className="text-muted-foreground text-xs">Closed By</p><p className="text-card-foreground">{(selectedNCR.closed_by && profilesMap[selectedNCR.closed_by]) || selectedNCR.closed_by || "—"}</p></div>
                     </>
                   )}
                 </div>
