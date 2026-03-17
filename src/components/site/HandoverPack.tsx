@@ -144,7 +144,15 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
     );
   }
 
-  if (!canCreate || !installationComplete) return null;
+  if (!canCreate) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <p className="text-sm text-card-foreground/60">Only authorized roles can create a handover pack.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
