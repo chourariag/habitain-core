@@ -17,7 +17,6 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Verify caller identity using anon client with user's auth header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -27,8 +26,6 @@ Deno.serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-
-    // Use anon key client with the user's auth header to verify identity
     const supabaseAuth = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -43,7 +40,6 @@ Deno.serve(async (req) => {
 
     const callerId = claimsData.claims.sub;
 
-    // Check caller is director using service role client (bypasses RLS)
     const { data: callerProfile } = await supabaseAdmin
       .from("profiles")
       .select("role")
@@ -52,7 +48,7 @@ Deno.serve(async (req) => {
 
     const directorRoles = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
     if (!callerProfile || !directorRoles.includes(callerProfile.role)) {
-      return new Response(JSON.stringify({ error: "Forbidden: Director access required", debug_role: callerProfile?.role || "no_profile_found" }), {
+      return new Response(JSON.stringify({ error: "Forbidden: Director access required" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -60,6 +56,7 @@ Deno.serve(async (req) => {
 
     const { action, ...payload } = await req.json();
 
+    // ── CREATE USER ──────────────────────────────────────────────
     if (action === "create_user") {
       const { email, role, login_type, phone, kiosk_pin } = payload;
       const kioskRoles = ["fabrication_foreman", "electrical_installer", "elec_plumbing_installer"];
@@ -89,22 +86,40 @@ Deno.serve(async (req) => {
         });
       }
 
-      const tempPassword = crypto.randomUUID().slice(0, 16) + "Aa1!";
-      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-        email: normalizedEmail,
-        password: tempPassword,
-        email_confirm: true,
-      });
+      // Use inviteUserByEmail for non-kiosk users, createUser for kiosk
+      let userId: string;
 
-      if (createError) {
-        return new Response(JSON.stringify({ error: createError.message }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+      if (kioskRoles.includes(role)) {
+        // Kiosk users get a random password (they use PIN login)
+        const tempPassword = crypto.randomUUID().slice(0, 16) + "Aa1!";
+        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+          email: normalizedEmail,
+          password: tempPassword,
+          email_confirm: true,
         });
+        if (createError) {
+          return new Response(JSON.stringify({ error: createError.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        userId = newUser.user.id;
+      } else {
+        // Non-kiosk users get an invite email with magic link
+        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail, {
+          redirectTo: `${req.headers.get("origin") || supabaseUrl}/welcome`,
+        });
+        if (inviteError) {
+          return new Response(JSON.stringify({ error: inviteError.message }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        userId = inviteData.user.id;
       }
 
       const profilePayload = {
-        auth_user_id: newUser.user.id,
+        auth_user_id: userId,
         email: normalizedEmail,
         role,
         login_type: effectiveLoginType,
@@ -119,7 +134,7 @@ Deno.serve(async (req) => {
         .upsert(profilePayload, { onConflict: "auth_user_id" });
 
       if (profileError) {
-        await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
+        await supabaseAdmin.auth.admin.deleteUser(userId);
         return new Response(JSON.stringify({ error: profileError.message }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -128,7 +143,7 @@ Deno.serve(async (req) => {
 
       const { error: roleError } = await supabaseAdmin
         .from("user_roles")
-        .insert({ user_id: newUser.user.id, role });
+        .insert({ user_id: userId, role });
 
       if (roleError) {
         return new Response(JSON.stringify({ error: roleError.message }), {
@@ -141,7 +156,7 @@ Deno.serve(async (req) => {
         action: "create_user",
         performed_by: callerId,
         entity_type: "profile",
-        entity_id: newUser.user.id,
+        entity_id: userId,
         new_value: {
           email: normalizedEmail,
           role,
@@ -151,22 +166,17 @@ Deno.serve(async (req) => {
         },
       });
 
-      const { data: resetData } = await supabaseAdmin.auth.admin.generateLink({
-        type: "magiclink",
-        email: normalizedEmail,
-      });
-
       return new Response(
         JSON.stringify({
           success: true,
-          user_id: newUser.user.id,
-          invite_link: resetData?.properties?.action_link || null,
-          temp_password: tempPassword,
+          user_id: userId,
+          invite_sent: !kioskRoles.includes(role),
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // ── DEACTIVATE USER ──────────────────────────────────────────
     if (action === "deactivate_user") {
       const { user_id } = payload;
       if (!user_id) {
@@ -203,6 +213,7 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── REACTIVATE USER ──────────────────────────────────────────
     if (action === "reactivate_user") {
       const { user_id } = payload;
       if (!user_id) {
@@ -232,6 +243,7 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── UPDATE ROLE ──────────────────────────────────────────────
     if (action === "update_role") {
       const { user_id, role } = payload;
       if (!user_id || !role) {

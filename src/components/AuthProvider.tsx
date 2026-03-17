@@ -17,7 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
-const PUBLIC_ROUTES = ["/login", "/setup"];
+const PUBLIC_ROUTES = ["/login", "/setup", "/welcome"];
 
 export const useAuth = () => useContext(AuthContext);
 
