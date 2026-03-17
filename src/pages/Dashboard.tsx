@@ -40,7 +40,7 @@ function StatCard({
           <Icon className={`h-5 w-5 text-${accent}`} />
         </div>
       </div>
-      <p className="text-2xl font-bold text-card-foreground font-display">
+      <p className="text-2xl font-bold text-foreground font-display">
         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : value}
       </p>
     </button>
