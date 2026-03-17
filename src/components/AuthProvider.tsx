@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
@@ -26,15 +26,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+  const locationRef = useRef(location.pathname);
+  locationRef.current = location.pathname;
 
-  const validateSession = useCallback(
-    async (nextSession: Session | null) => {
+  // One-time subscription — no dependencies that change
+  useEffect(() => {
+    let mounted = true;
+
+    const handleSession = async (nextSession: Session | null) => {
+      if (!mounted) return;
+
       if (!nextSession) {
         setSession(null);
         setLoading(false);
         return;
       }
 
+      // Validate profile is_active (non-blocking on failure)
       try {
         const { data: profile } = await supabase
           .from("profiles")
@@ -42,67 +50,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .eq("auth_user_id", nextSession.user.id)
           .maybeSingle();
 
+        if (!mounted) return;
+
         if (profile && profile.is_active === false) {
           await supabase.auth.signOut();
           return;
         }
       } catch {
-        // If profile validation fails temporarily, keep the current session
+        // Continue with session if profile check fails
       }
 
+      if (!mounted) return;
       setSession(nextSession);
       setLoading(false);
-
-      if (PUBLIC_ROUTES.includes(location.pathname)) {
-        navigate("/dashboard", { replace: true });
-      }
-    },
-    [location.pathname, navigate]
-  );
-
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
-      if (event === "SIGNED_OUT") {
-        setSession(null);
-        setLoading(false);
-        if (!PUBLIC_ROUTES.includes(location.pathname)) {
-          navigate("/login", { replace: true });
-        }
-        return;
-      }
-
-      await validateSession(nextSession);
-    });
-
-    supabase.auth.getSession().then(async ({ data: { session: existingSession } }) => {
-      await validateSession(existingSession);
-    });
-
-    const interval = window.setInterval(async () => {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      await validateSession(currentSession);
-    }, 5 * 60 * 1000);
-
-    const handleVisibilityChange = async () => {
-      if (document.visibilityState !== "visible") return;
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      await validateSession(currentSession);
     };
 
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, nextSession) => {
+        if (!mounted) return;
+
+        if (event === "SIGNED_OUT") {
+          setSession(null);
+          setLoading(false);
+          if (!PUBLIC_ROUTES.includes(locationRef.current)) {
+            navigate("/login", { replace: true });
+          }
+          return;
+        }
+
+        await handleSession(nextSession);
+      }
+    );
+
+    // Initial session check
+    supabase.auth.getSession().then(({ data: { session: existing } }) => {
+      handleSession(existing);
+    });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
-      window.clearInterval(interval);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [location.pathname, navigate, validateSession]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // Redirect unauthenticated users away from protected routes
   useEffect(() => {
     if (!loading && !session && !PUBLIC_ROUTES.includes(location.pathname)) {
       navigate("/login", { replace: true });
+    }
+  }, [loading, session, location.pathname, navigate]);
+
+  // Redirect authenticated users away from public routes
+  useEffect(() => {
+    if (!loading && session && PUBLIC_ROUTES.includes(location.pathname)) {
+      navigate("/dashboard", { replace: true });
     }
   }, [loading, session, location.pathname, navigate]);
 
