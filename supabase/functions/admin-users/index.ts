@@ -14,9 +14,10 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
-    // Verify caller is a director
+    // Verify caller identity using anon client with user's auth header
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -26,24 +27,32 @@ Deno.serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !caller) {
+
+    // Use anon key client with the user's auth header to verify identity
+    const supabaseAuth = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Check caller is director
+    const callerId = claimsData.claims.sub;
+
+    // Check caller is director using service role client (bypasses RLS)
     const { data: callerProfile } = await supabaseAdmin
       .from("profiles")
       .select("role")
-      .eq("auth_user_id", caller.id)
+      .eq("auth_user_id", callerId)
       .single();
 
-    const directorRoles = ["finance_director", "sales_director", "architecture_director"];
+    const directorRoles = ["managing_director", "finance_director", "sales_director", "architecture_director"];
     if (!callerProfile || !directorRoles.includes(callerProfile.role)) {
-      return new Response(JSON.stringify({ error: "Forbidden: Director access required" }), {
+      return new Response(JSON.stringify({ error: "Forbidden: Director access required", debug_role: callerProfile?.role || "no_profile_found" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -61,7 +70,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Create auth user with a temporary password
       const tempPassword = crypto.randomUUID().slice(0, 16) + "Aa1!";
       const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
         email,
@@ -76,27 +84,23 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Update the profile with role and login_type
       await supabaseAdmin
         .from("profiles")
         .update({ role, login_type: login_type || "email", phone: phone || null })
         .eq("auth_user_id", newUser.user.id);
 
-      // Also insert into user_roles
       await supabaseAdmin
         .from("user_roles")
         .insert({ user_id: newUser.user.id, role });
 
-      // Audit log
       await supabaseAdmin.from("admin_audit_log").insert({
         action: "create_user",
-        performed_by: caller.id,
+        performed_by: callerId,
         entity_type: "profile",
         entity_id: newUser.user.id,
         new_value: { email, role, login_type },
       });
 
-      // Generate password reset link so user can set their own password
       const { data: resetData } = await supabaseAdmin.auth.admin.generateLink({
         type: "magiclink",
         email,
@@ -122,26 +126,22 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Get old profile for audit
       const { data: oldProfile } = await supabaseAdmin
         .from("profiles")
         .select("*")
         .eq("auth_user_id", user_id)
         .single();
 
-      // Deactivate profile
       await supabaseAdmin
         .from("profiles")
         .update({ is_active: false, is_archived: true })
         .eq("auth_user_id", user_id);
 
-      // Ban user in auth
       await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "876600h" });
 
-      // Audit log
       await supabaseAdmin.from("admin_audit_log").insert({
         action: "deactivate_user",
-        performed_by: caller.id,
+        performed_by: callerId,
         entity_type: "profile",
         entity_id: user_id,
         old_value: oldProfile,
@@ -171,7 +171,7 @@ Deno.serve(async (req) => {
 
       await supabaseAdmin.from("admin_audit_log").insert({
         action: "reactivate_user",
-        performed_by: caller.id,
+        performed_by: callerId,
         entity_type: "profile",
         entity_id: user_id,
         new_value: { is_active: true },
@@ -202,14 +202,13 @@ Deno.serve(async (req) => {
         .update({ role })
         .eq("auth_user_id", user_id);
 
-      // Update user_roles table
       await supabaseAdmin
         .from("user_roles")
         .upsert({ user_id, role }, { onConflict: "user_id,role" });
 
       await supabaseAdmin.from("admin_audit_log").insert({
         action: "update_role",
-        performed_by: caller.id,
+        performed_by: callerId,
         entity_type: "profile",
         entity_id: user_id,
         old_value: { role: oldProfile?.role },
