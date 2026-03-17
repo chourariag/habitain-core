@@ -9,6 +9,7 @@ import Login from "@/pages/Login";
 import Setup from "@/pages/Setup";
 import Dashboard from "@/pages/Dashboard";
 import Projects from "@/pages/Projects";
+import ProjectDetail from "@/pages/ProjectDetail";
 import Production from "@/pages/Production";
 import QualityControl from "@/pages/QualityControl";
 import Inventory from "@/pages/Inventory";
