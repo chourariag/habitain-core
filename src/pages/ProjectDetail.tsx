@@ -186,6 +186,7 @@ export default function ProjectDetail() {
                   projectId={id!}
                   canEdit={canEdit}
                   canAdvanceStage={canAdvanceStage}
+                  userRole={userRole}
                   onPanelCreated={fetchData}
                   onStageAdvanced={fetchData}
                 />
