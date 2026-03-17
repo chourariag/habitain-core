@@ -7,16 +7,30 @@ interface AdminAction {
 }
 
 export async function callAdminFunction(payload: AdminAction) {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error("Not authenticated");
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  const response = await supabase.functions.invoke("admin-users", {
-    body: payload,
+  if (!session?.access_token) throw new Error("Not authenticated");
+
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-users`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+      apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+    },
+    body: JSON.stringify(payload),
   });
 
-  if (response.error) throw new Error(response.error.message);
-  if (response.data?.error) throw new Error(response.data.error);
-  return response.data;
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(data?.error || `Function failed: ${response.status}`);
+  }
+
+  if (data?.error) throw new Error(data.error);
+  return data;
 }
 
 export async function createUser(email: string, role: AppRole, loginType: "email" | "otp" = "email", phone?: string, kioskPin?: string) {
