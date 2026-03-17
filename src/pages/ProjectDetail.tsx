@@ -17,6 +17,9 @@ const STATUS_COLORS: Record<string, string> = {
   on_hold: "bg-muted text-muted-foreground border-border",
 };
 
+const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
+const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admin", "managing_director"];
+
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -27,13 +30,13 @@ export default function ProjectDetail() {
   const [addModuleOpen, setAddModuleOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  const canEdit = userRole === "planning_engineer" || userRole === "super_admin" || userRole === "managing_director";
+  const canEdit = EDIT_ROLES.includes(userRole ?? "");
+  const canAdvanceStage = STAGE_ADVANCE_ROLES.includes(userRole ?? "");
 
   const fetchData = useCallback(async () => {
     if (!id) return;
     setLoading(true);
 
-    // Fetch project, modules, user role in parallel
     const [projectRes, modulesRes, roleRes] = await Promise.all([
       supabase.from("projects").select("*").eq("id", id).single(),
       supabase.from("modules").select("*").eq("project_id", id).eq("is_archived", false).order("created_at", { ascending: true }),
@@ -48,7 +51,6 @@ export default function ProjectDetail() {
     setModules(modulesRes.data ?? []);
     setUserRole(roleRes as string | null);
 
-    // Fetch panels for all modules
     const moduleIds = (modulesRes.data ?? []).map((m: any) => m.id);
     if (moduleIds.length > 0) {
       const { data: panelsData } = await supabase
@@ -182,7 +184,9 @@ export default function ProjectDetail() {
                   module={m}
                   panels={panels[m.id] ?? []}
                   canEdit={canEdit}
+                  canAdvanceStage={canAdvanceStage}
                   onPanelCreated={fetchData}
+                  onStageAdvanced={fetchData}
                 />
               ))}
             </div>
@@ -202,8 +206,6 @@ export default function ProjectDetail() {
         open={addModuleOpen}
         onOpenChange={setAddModuleOpen}
         projectId={id!}
-        projectName={project.name}
-        existingModuleCount={modules.length}
         onCreated={fetchData}
       />
     </div>
