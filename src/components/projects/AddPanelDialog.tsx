@@ -10,14 +10,11 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { getAuthedClient } from "@/lib/auth-client";
-import { panelCode, panelTypeShort } from "@/lib/code-generators";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   moduleId: string;
-  moduleCode: string;
-  existingPanelCount: number;
   onCreated: () => void;
 }
 
@@ -29,30 +26,33 @@ const PANEL_TYPES = [
   { value: "facade", label: "Facade" },
 ];
 
-export function AddPanelDialog({ open, onOpenChange, moduleId, moduleCode: modCode, existingPanelCount, onCreated }: Props) {
+export function AddPanelDialog({ open, onOpenChange, moduleId, onCreated }: Props) {
   const [loading, setLoading] = useState(false);
+  const [panelId, setPanelId] = useState("");
   const [panelType, setPanelType] = useState("wall");
   const [length, setLength] = useState("");
   const [height, setHeight] = useState("");
 
-  const seq = existingPanelCount + 1;
-  const generatedCode = panelCode(modCode, panelTypeShort(panelType), seq);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!panelId.trim()) {
+      toast.error("Panel ID is required");
+      return;
+    }
     setLoading(true);
     try {
       const { client, session } = await getAuthedClient();
       const { error } = await client.from("panels" as any).insert({
         module_id: moduleId,
-        panel_code: generatedCode,
+        panel_code: panelId.trim(),
         panel_type: panelType,
         length_mm: length ? Number(length) : null,
         height_mm: height ? Number(height) : null,
         created_by: session.user.id,
       });
       if (error) throw error;
-      toast.success(`Panel ${generatedCode} created`);
+      toast.success(`Panel ${panelId.trim()} created`);
+      setPanelId("");
       setPanelType("wall");
       setLength("");
       setHeight("");
@@ -72,9 +72,9 @@ export function AddPanelDialog({ open, onOpenChange, moduleId, moduleCode: modCo
           <DialogTitle className="font-display text-xl">Add Panel</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Panel ID (auto)</Label>
-            <p className="font-mono text-sm font-semibold text-foreground">{generatedCode}</p>
+          <div className="space-y-2">
+            <Label htmlFor="pnlId">Panel ID *</Label>
+            <Input id="pnlId" value={panelId} onChange={(e) => setPanelId(e.target.value)} placeholder="e.g. PNL-NDH-001-W1" required />
           </div>
 
           <div className="space-y-2">

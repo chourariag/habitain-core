@@ -3,6 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip, TooltipContent, TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Loader2, Plus, PackagePlus, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { NewMaterialRequestDialog } from "@/components/materials/NewMaterialRequestDialog";
@@ -31,6 +34,56 @@ const APPROVER_ROLES = [
   "super_admin", "managing_director", "finance_director",
   "costing_engineer", "procurement", "stores_executive", "head_operations", "production_head",
 ];
+
+/** Check if the current user performed a previous step in the chain */
+function isBlockedBySoD(request: any, userId: string | null, action: string): string | null {
+  if (!userId) return null;
+  // The person who raised cannot approve
+  if ((action === "approve_budget" || action === "over_budget") && request.requested_by === userId) {
+    return "You cannot approve your own request";
+  }
+  // The person who approved budget cannot raise PO
+  if (action === "raise_po" && request.budget_approved_by === userId) {
+    return "You cannot raise a PO for a request you approved";
+  }
+  // The person who did director approval cannot raise PO either
+  if (action === "raise_po" && request.director_approved_by === userId) {
+    return "You cannot raise a PO for a request you approved";
+  }
+  // The person who raised PO cannot mark received
+  if (action === "mark_received" && request.po_raised_by === userId) {
+    return "You cannot receive materials for a PO you raised";
+  }
+  // Director approval: person who raised cannot approve
+  if (action === "director_approve" && request.requested_by === userId) {
+    return "You cannot approve your own request";
+  }
+  // Director approval: person who did budget review cannot also do director approval
+  if (action === "director_approve" && request.budget_approved_by === userId) {
+    return "You already reviewed this request's budget";
+  }
+  return null;
+}
+
+function SoDButton({ label, onClick, sodReason }: { label: string; onClick: () => void; sodReason: string | null }) {
+  if (sodReason) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span>
+            <Button size="sm" variant="outline" disabled className="opacity-50 cursor-not-allowed">
+              {label}
+            </Button>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="text-xs">{sodReason}</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  return <Button size="sm" variant="outline" onClick={onClick}>{label}</Button>;
+}
 
 export default function MaterialRequests() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -161,22 +214,22 @@ export default function MaterialRequests() {
                           <div className="flex gap-1 flex-wrap">
                             {r.status === "pending_budget" && (userRole === "costing_engineer" || userRole === "super_admin" || userRole === "managing_director") && (
                               <>
-                                <Button size="sm" variant="outline" onClick={() => handleAction(r.id, "approve_budget")}>Approve</Button>
-                                <Button size="sm" variant="outline" onClick={() => handleAction(r.id, "over_budget")}>Over Budget</Button>
+                                <SoDButton label="Approve" onClick={() => handleAction(r.id, "approve_budget")} sodReason={isBlockedBySoD(r, userId, "approve_budget")} />
+                                <SoDButton label="Over Budget" onClick={() => handleAction(r.id, "over_budget")} sodReason={isBlockedBySoD(r, userId, "over_budget")} />
                                 <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleAction(r.id, "reject")}>Reject</Button>
                               </>
                             )}
                             {r.status === "pending_director_approval" && (userRole === "managing_director" || userRole === "finance_director" || userRole === "super_admin") && (
                               <>
-                                <Button size="sm" variant="outline" onClick={() => handleAction(r.id, "director_approve")}>Approve</Button>
+                                <SoDButton label="Approve" onClick={() => handleAction(r.id, "director_approve")} sodReason={isBlockedBySoD(r, userId, "director_approve")} />
                                 <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleAction(r.id, "reject")}>Reject</Button>
                               </>
                             )}
                             {r.status === "pending_po" && (userRole === "procurement" || userRole === "super_admin" || userRole === "managing_director") && (
-                              <Button size="sm" variant="outline" onClick={() => handleAction(r.id, "raise_po")}>Raise PO</Button>
+                              <SoDButton label="Raise PO" onClick={() => handleAction(r.id, "raise_po")} sodReason={isBlockedBySoD(r, userId, "raise_po")} />
                             )}
                             {r.status === "po_raised" && (userRole === "stores_executive" || userRole === "super_admin" || userRole === "managing_director") && (
-                              <Button size="sm" variant="outline" onClick={() => handleAction(r.id, "mark_received")}>Mark Received</Button>
+                              <SoDButton label="Mark Received" onClick={() => handleAction(r.id, "mark_received")} sodReason={isBlockedBySoD(r, userId, "mark_received")} />
                             )}
                           </div>
                         </td>

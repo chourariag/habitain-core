@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, Plus, Layers } from "lucide-react";
 import { AddPanelDialog } from "./AddPanelDialog";
+import { ProductionStageTracker } from "./ProductionStageTracker";
 
 interface Panel {
   id: string;
@@ -27,7 +28,9 @@ interface Props {
   module: Module;
   panels: Panel[];
   canEdit: boolean;
+  canAdvanceStage: boolean;
   onPanelCreated: () => void;
+  onStageAdvanced: () => void;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -42,7 +45,7 @@ const STATUS_BADGE: Record<string, string> = {
   completed: "bg-success/20 text-success-foreground",
 };
 
-export function ModulePanelCard({ module, panels, canEdit, onPanelCreated }: Props) {
+export function ModulePanelCard({ module, panels, canEdit, canAdvanceStage, onPanelCreated, onStageAdvanced }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [addPanelOpen, setAddPanelOpen] = useState(false);
 
@@ -72,51 +75,65 @@ export function ModulePanelCard({ module, panels, canEdit, onPanelCreated }: Pro
         </Badge>
       </button>
 
-      {/* Expanded panels */}
+      {/* Expanded content */}
       {expanded && (
-        <div className="border-t border-border px-4 pb-4 pt-2 space-y-2">
-          {canEdit && (
-            <div className="flex justify-end">
-              <Button size="sm" variant="outline" onClick={() => setAddPanelOpen(true)}>
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add Panel
-              </Button>
-            </div>
-          )}
+        <div className="border-t border-border px-4 pb-4 pt-3 space-y-4">
+          {/* Production Stage Tracker */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-2">Production Progress</p>
+            <ProductionStageTracker
+              moduleId={module.id}
+              currentStage={module.current_stage}
+              productionStatus={module.production_status}
+              canAdvance={canAdvanceStage}
+              onAdvanced={onStageAdvanced}
+            />
+          </div>
 
-          {panels.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">No panels yet.</p>
-          ) : (
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {panels.map((p) => (
-                <div key={p.id} className="border border-border rounded-md p-3 bg-background space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-semibold text-foreground">{p.panel_code}</span>
-                    <Badge variant="outline" className={`text-[10px] ${STATUS_BADGE[p.production_status ?? "not_started"]}`}>
-                      {(p.production_status ?? "not_started").replace(/_/g, " ")}
-                    </Badge>
+          {/* Panels section */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-muted-foreground">Panels</p>
+              {canEdit && (
+                <Button size="sm" variant="outline" onClick={() => setAddPanelOpen(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Panel
+                </Button>
+              )}
+            </div>
+
+            {panels.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">No panels yet.</p>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {panels.map((p) => (
+                  <div key={p.id} className="border border-border rounded-md p-3 bg-background space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-xs font-semibold text-foreground">{p.panel_code}</span>
+                      <Badge variant="outline" className={`text-[10px] ${STATUS_BADGE[p.production_status ?? "not_started"]}`}>
+                        {(p.production_status ?? "not_started").replace(/_/g, " ")}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground capitalize">{p.panel_type}</p>
+                    {(p.length_mm || p.height_mm) && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Layers className="h-3 w-3" />
+                        {p.length_mm ?? "—"} × {p.height_mm ?? "—"} mm
+                      </p>
+                    )}
+                    {p.current_stage && (
+                      <p className="text-[10px] text-muted-foreground truncate">{p.current_stage}</p>
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground capitalize">{p.panel_type}</p>
-                  {(p.length_mm || p.height_mm) && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Layers className="h-3 w-3" />
-                      {p.length_mm ?? "—"} × {p.height_mm ?? "—"} mm
-                    </p>
-                  )}
-                  {p.current_stage && (
-                    <p className="text-[10px] text-muted-foreground truncate">{p.current_stage}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
 
-          {canEdit && module.module_code && (
+          {canEdit && (
             <AddPanelDialog
               open={addPanelOpen}
               onOpenChange={setAddPanelOpen}
               moduleId={module.id}
-              moduleCode={module.module_code}
-              existingPanelCount={panels.length}
               onCreated={onPanelCreated}
             />
           )}
