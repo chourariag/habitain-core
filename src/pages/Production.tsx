@@ -12,6 +12,8 @@ const STAGE_COLORS: Record<string, string> = {
   not_started: "bg-muted text-muted-foreground",
   in_progress: "bg-primary/20 text-primary",
   completed: "bg-success/20 text-success-foreground",
+  hold: "bg-warning/20 text-warning-foreground",
+  dispatched: "bg-secondary/20 text-secondary",
 };
 
 export default function Production() {
@@ -32,6 +34,20 @@ export default function Production() {
 
   useEffect(() => {
     fetchModules();
+  }, [fetchModules]);
+
+  // Realtime subscription for modules
+  useEffect(() => {
+    const channel = supabase
+      .channel("production-modules")
+      .on("postgres_changes", { event: "*", schema: "public", table: "modules" }, () => {
+        fetchModules();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "production_stages" }, () => {
+        fetchModules();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   }, [fetchModules]);
 
   if (kioskOpen) {
@@ -88,12 +104,12 @@ export default function Production() {
                 <tbody>
                   {modules.map((m) => (
                     <tr key={m.id} className="border-b last:border-0">
-                      <td className="p-3 font-medium text-card-foreground">{m.name}</td>
+                      <td className="p-3 font-medium text-card-foreground">{m.module_code || m.name}</td>
                       <td className="p-3 text-muted-foreground">{m.projects?.name ?? "—"}</td>
                       <td className="p-3 text-card-foreground">{m.current_stage ?? "—"}</td>
                       <td className="p-3">
                         <Badge variant="outline" className={STAGE_COLORS[m.production_status ?? "not_started"]}>
-                          {(m.production_status ?? "not_started").replace("_", " ")}
+                          {(m.production_status ?? "not_started").replace(/_/g, " ")}
                         </Badge>
                       </td>
                     </tr>

@@ -19,6 +19,8 @@ import Inventory from "@/pages/Inventory";
 import Admin from "@/pages/Admin";
 import AppSettings from "@/pages/AppSettings";
 import MaterialRequests from "@/pages/MaterialRequests";
+import RMPage from "@/pages/RM";
+import AMCPage from "@/pages/AMC";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 
@@ -46,6 +48,8 @@ const App = () => (
                 <Route path="/qc" element={<QualityControl />} />
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/materials" element={<MaterialRequests />} />
+                <Route path="/rm" element={<RMPage />} />
+                <Route path="/amc" element={<AMCPage />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/settings" element={<AppSettings />} />
                 <Route path="/profile" element={<Profile />} />
