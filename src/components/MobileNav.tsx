@@ -4,6 +4,7 @@ import {
   FolderKanban,
   Factory,
   ClipboardCheck,
+  PackagePlus,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -11,8 +12,8 @@ import { cn } from "@/lib/utils";
 const tabs = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
   { to: "/projects", label: "Projects", icon: FolderKanban },
-  { to: "/production", label: "Production", icon: Factory },
-  { to: "/qc", label: "QC", icon: ClipboardCheck },
+  { to: "/production", label: "Prod", icon: Factory },
+  { to: "/materials", label: "Materials", icon: PackagePlus },
   { to: "/admin", label: "Admin", icon: Users },
 ];
 
