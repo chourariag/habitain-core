@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, MapPinned, Truck, BookOpen, FileText, Boxes } from "lucide-react";
@@ -29,31 +28,19 @@ export default function SiteHub() {
     });
 
     const { data: projectsData } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("is_archived", false)
-      .neq("status", "handed_over")
+      .from("projects").select("*").eq("is_archived", false).neq("status", "handed_over")
       .order("created_at", { ascending: false });
 
     const activeProjects = projectsData ?? [];
-    const projectIds = activeProjects.map((project) => project.id);
+    const projectIds = activeProjects.map((p) => p.id);
 
     const { data: modulesData } = projectIds.length
-      ? await supabase
-          .from("modules")
-          .select("*")
-          .eq("is_archived", false)
-          .in("project_id", projectIds)
-          .order("created_at", { ascending: true })
+      ? await supabase.from("modules").select("*").eq("is_archived", false).in("project_id", projectIds).order("created_at", { ascending: true })
       : { data: [] };
 
-    const moduleIds = (modulesData ?? []).map((module) => module.id);
+    const moduleIds = (modulesData ?? []).map((m) => m.id);
     const { data: panelsData } = moduleIds.length
-      ? await (supabase.from("panels" as any) as any)
-          .select("*")
-          .eq("is_archived", false)
-          .in("module_id", moduleIds)
-          .order("created_at", { ascending: true })
+      ? await (supabase.from("panels" as any) as any).select("*").eq("is_archived", false).in("module_id", moduleIds).order("created_at", { ascending: true })
       : { data: [] };
 
     const groupedPanels: Record<string, any[]> = {};
@@ -66,74 +53,43 @@ export default function SiteHub() {
     setModules(modulesData ?? []);
     setPanelsByModule(groupedPanels);
     setUserRole((await rolePromise) as string | null);
-    setSelectedProjectId((current) => current && activeProjects.some((project) => project.id === current) ? current : activeProjects[0]?.id ?? null);
+    setSelectedProjectId((current) => current && activeProjects.some((p) => p.id === current) ? current : activeProjects[0]?.id ?? null);
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const selectedProject = useMemo(
-    () => projects.find((project) => project.id === selectedProjectId) ?? null,
-    [projects, selectedProjectId]
-  );
-
-  const selectedModules = useMemo(
-    () => modules.filter((module) => module.project_id === selectedProjectId),
-    [modules, selectedProjectId]
-  );
+  const selectedProject = useMemo(() => projects.find((p) => p.id === selectedProjectId) ?? null, [projects, selectedProjectId]);
+  const selectedModules = useMemo(() => modules.filter((m) => m.project_id === selectedProjectId), [modules, selectedProjectId]);
 
   useEffect(() => {
-    const checkInstallationCompletion = async () => {
-      if (!selectedModules.length) {
-        setInstallationComplete(false);
-        return;
-      }
-
-      const moduleIds = selectedModules.map((module) => module.id);
+    const check = async () => {
+      if (!selectedModules.length) { setInstallationComplete(false); return; }
+      const moduleIds = selectedModules.map((m) => m.id);
       const { data } = await (supabase.from("installation_checklist" as any) as any)
-        .select("module_id,is_complete")
-        .in("module_id", moduleIds)
-        .eq("is_complete", true);
-
-      const completedIds = new Set((data ?? []).map((record: any) => record.module_id));
+        .select("module_id,is_complete").in("module_id", moduleIds).eq("is_complete", true);
+      const completedIds = new Set((data ?? []).map((r: any) => r.module_id));
       setInstallationComplete(moduleIds.every((id) => completedIds.has(id)));
     };
-
-    checkInstallationCompletion();
+    check();
   }, [selectedModules]);
 
   const getDispatchSummary = (projectId: string) => {
-    const projectModules = modules.filter((module) => module.project_id === projectId);
-    const total = projectModules.length;
-    const dispatched = projectModules.filter((module) => module.production_status === "dispatched").length;
-
-    if (!total) {
-      return { label: "No modules", tone: "muted" as const };
-    }
-
-    if (dispatched === 0) {
-      return { label: "Pending dispatch", tone: "warning" as const };
-    }
-
-    if (dispatched === total) {
-      return { label: "All dispatched", tone: "success" as const };
-    }
-
+    const pm = modules.filter((m) => m.project_id === projectId);
+    const total = pm.length;
+    const dispatched = pm.filter((m) => m.production_status === "dispatched").length;
+    if (!total) return { label: "No modules", tone: "muted" as const };
+    if (dispatched === 0) return { label: "Pending dispatch", tone: "warning" as const };
+    if (dispatched === total) return { label: "All dispatched", tone: "success" as const };
     return { label: `${dispatched}/${total} dispatched`, tone: "primary" as const };
   };
 
   const badgeClass = (tone: "muted" | "warning" | "success" | "primary") => {
     switch (tone) {
-      case "warning":
-        return "bg-warning/15 text-warning border-warning/30";
-      case "success":
-        return "bg-success/15 text-success border-success/30";
-      case "primary":
-        return "bg-primary/15 text-primary border-primary/30";
-      default:
-        return "bg-muted text-muted-foreground border-border";
+      case "warning": return "bg-warning/15 text-warning border-warning/30";
+      case "success": return "bg-success/15 text-success border-success/30";
+      case "primary": return "bg-primary/15 text-primary border-primary/30";
+      default: return "bg-muted text-muted-foreground border-border";
     }
   };
 
@@ -153,47 +109,34 @@ export default function SiteHub() {
       </div>
 
       {projects.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center">
-            <p className="text-sm text-muted-foreground">No active projects available in Site Hub yet.</p>
-          </CardContent>
-        </Card>
+        <Card><CardContent className="py-10 text-center"><p className="text-sm text-muted-foreground">No active projects available in Site Hub yet.</p></CardContent></Card>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
           <div className="space-y-3">
             {projects.map((project) => {
               const summary = getDispatchSummary(project.id);
               const isSelected = project.id === selectedProjectId;
-
               return (
                 <button
                   key={project.id}
                   type="button"
                   onClick={() => setSelectedProjectId(project.id)}
                   className={`w-full rounded-lg border p-4 text-left transition-snappy ${
-                    isSelected
-                      ? "border-primary bg-card shadow-sm"
-                      : "border-border bg-card/80 hover:border-primary/30 hover:bg-card"
+                    isSelected ? "border-primary bg-card shadow-sm" : "border-border bg-card/80 hover:border-primary/30 hover:bg-card"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className="font-semibold text-card-foreground truncate">{project.name}</h2>
-                      <p className="text-xs text-card-foreground/60 mt-1">Client: {project.client_name || "Not assigned"}</p>
+                      <p className="text-xs mt-1" style={{ color: "#666666" }}>Client: {project.client_name || "Not assigned"}</p>
                     </div>
-                    <Badge variant="outline" className={badgeClass(summary.tone)}>
-                      {summary.label}
-                    </Badge>
+                    <Badge variant="outline" className={badgeClass(summary.tone)}>{summary.label}</Badge>
                   </div>
                   <div className="flex flex-wrap gap-3 mt-3 text-xs text-muted-foreground">
                     {project.location && (
-                      <span className="inline-flex items-center gap-1">
-                        <MapPinned className="h-3.5 w-3.5" /> {project.location}
-                      </span>
+                      <span className="inline-flex items-center gap-1"><MapPinned className="h-3.5 w-3.5" /> {project.location}</span>
                     )}
-                    <span className="inline-flex items-center gap-1">
-                      <Boxes className="h-3.5 w-3.5" /> {modules.filter((module) => module.project_id === project.id).length} modules
-                    </span>
+                    <span className="inline-flex items-center gap-1"><Boxes className="h-3.5 w-3.5" /> {modules.filter((m) => m.project_id === project.id).length} modules</span>
                   </div>
                 </button>
               );
@@ -206,8 +149,8 @@ export default function SiteHub() {
                 <div className="bg-card border border-border rounded-lg p-4 md:p-5">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div>
-                      <h2 className="font-display text-xl font-semibold text-foreground">{selectedProject.name}</h2>
-                      <p className="text-sm text-muted-foreground mt-1">{selectedProject.client_name || "No client assigned"}</p>
+                      <h2 className="font-display text-xl font-semibold text-card-foreground">{selectedProject.name}</h2>
+                      <p className="text-sm text-muted-foreground mt-1">{selectedProject.client_name ? `Client: ${selectedProject.client_name}` : "No client assigned"}</p>
                     </div>
                     <Badge variant="outline" className={badgeClass(getDispatchSummary(selectedProject.id).tone)}>
                       {getDispatchSummary(selectedProject.id).label}
@@ -217,37 +160,17 @@ export default function SiteHub() {
 
                 <Tabs defaultValue="pipeline" className="space-y-4">
                   <TabsList>
-                    <TabsTrigger value="pipeline" className="gap-1.5">
-                      <Truck className="h-4 w-4" /> Dispatch Pipeline
-                    </TabsTrigger>
-                    <TabsTrigger value="diary" className="gap-1.5">
-                      <BookOpen className="h-4 w-4" /> Site Diary
-                    </TabsTrigger>
-                    <TabsTrigger value="handover" className="gap-1.5">
-                      <FileText className="h-4 w-4" /> Handover Pack
-                    </TabsTrigger>
+                    <TabsTrigger value="pipeline" className="gap-1.5"><Truck className="h-4 w-4" /> Dispatch Pipeline</TabsTrigger>
+                    <TabsTrigger value="diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
+                    <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Pack</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="pipeline" className="space-y-4">
                     {selectedModules.length === 0 ? (
-                      <Card>
-                        <CardContent className="py-10 text-center">
-                          <p className="text-sm text-muted-foreground">No modules have been added to this project yet.</p>
-                        </CardContent>
-                      </Card>
+                      <Card><CardContent className="py-10 text-center"><p className="text-sm text-muted-foreground">No modules have been added to this project yet.</p></CardContent></Card>
                     ) : (
                       selectedModules.map((module) => (
-                        <ModulePanelCard
-                          key={module.id}
-                          module={module}
-                          panels={panelsByModule[module.id] ?? []}
-                          projectId={selectedProject.id}
-                          canEdit={false}
-                          canAdvanceStage={false}
-                          userRole={userRole}
-                          onPanelCreated={fetchData}
-                          onStageAdvanced={fetchData}
-                        />
+                        <ModulePanelCard key={module.id} module={module} panels={panelsByModule[module.id] ?? []} projectId={selectedProject.id} canEdit={false} canAdvanceStage={false} userRole={userRole} onPanelCreated={fetchData} onStageAdvanced={fetchData} />
                       ))
                     )}
                   </TabsContent>
@@ -257,22 +180,12 @@ export default function SiteHub() {
                   </TabsContent>
 
                   <TabsContent value="handover" className="space-y-4">
-                    <HandoverPack
-                      projectId={selectedProject.id}
-                      clientName={selectedProject.client_name}
-                      userRole={userRole}
-                      installationComplete={installationComplete}
-                      onHandedOver={fetchData}
-                    />
+                    <HandoverPack projectId={selectedProject.id} clientName={selectedProject.client_name} userRole={userRole} installationComplete={installationComplete} onHandedOver={fetchData} />
                   </TabsContent>
                 </Tabs>
               </>
             ) : (
-              <Card>
-                <CardContent className="py-10 text-center">
-                  <p className="text-sm text-muted-foreground">Select a project to open its site pipeline.</p>
-                </CardContent>
-              </Card>
+              <Card><CardContent className="py-10 text-center"><p className="text-sm text-muted-foreground">Select a project to open its site pipeline.</p></CardContent></Card>
             )}
           </div>
         </div>
