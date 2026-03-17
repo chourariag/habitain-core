@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
 
@@ -17,9 +17,9 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
-export const useAuth = () => useContext(AuthContext);
-
 const PUBLIC_ROUTES = ["/login", "/setup"];
+
+export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -27,34 +27,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
-        setSession(newSession);
+  const validateSession = useCallback(
+    async (nextSession: Session | null) => {
+      if (!nextSession) {
+        setSession(null);
         setLoading(false);
+        return;
+      }
 
-        if (event === "SIGNED_OUT") {
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("is_active")
+          .eq("auth_user_id", nextSession.user.id)
+          .maybeSingle();
+
+        if (profile && profile.is_active === false) {
+          await supabase.auth.signOut();
+          return;
+        }
+      } catch {
+        // If profile validation fails temporarily, keep the current session
+      }
+
+      setSession(nextSession);
+      setLoading(false);
+
+      if (PUBLIC_ROUTES.includes(location.pathname)) {
+        navigate("/dashboard", { replace: true });
+      }
+    },
+    [location.pathname, navigate]
+  );
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
+      if (event === "SIGNED_OUT") {
+        setSession(null);
+        setLoading(false);
+        if (!PUBLIC_ROUTES.includes(location.pathname)) {
           navigate("/login", { replace: true });
         }
-
-        if (event === "SIGNED_IN" && PUBLIC_ROUTES.includes(location.pathname)) {
-          navigate("/dashboard", { replace: true });
-        }
+        return;
       }
-    );
 
-    // THEN get existing session
-    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
-      setSession(existingSession);
-      setLoading(false);
+      await validateSession(nextSession);
     });
 
-    return () => subscription.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    supabase.auth.getSession().then(async ({ data: { session: existingSession } }) => {
+      await validateSession(existingSession);
+    });
 
-  // Redirect to login if not authenticated and not on a public route
+    const interval = window.setInterval(async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      await validateSession(currentSession);
+    }, 5 * 60 * 1000);
+
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState !== "visible") return;
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      await validateSession(currentSession);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      subscription.unsubscribe();
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [location.pathname, navigate, validateSession]);
+
   useEffect(() => {
     if (!loading && !session && !PUBLIC_ROUTES.includes(location.pathname)) {
       navigate("/login", { replace: true });

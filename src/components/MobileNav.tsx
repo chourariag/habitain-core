@@ -6,6 +6,7 @@ import {
   ClipboardCheck,
   PackagePlus,
   Users,
+  Truck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -13,24 +14,24 @@ const tabs = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/production", label: "Prod", icon: Factory },
+  { to: "/site-hub", label: "Site", icon: Truck },
+  { to: "/qc", label: "Quality", icon: ClipboardCheck },
   { to: "/materials", label: "Materials", icon: PackagePlus },
   { to: "/admin", label: "Admin", icon: Users },
 ];
 
 export function MobileNav() {
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-sidebar border-t border-sidebar-border z-40">
-      <div className="flex items-center justify-around h-16">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-sidebar border-t border-sidebar-border z-40 overflow-x-auto">
+      <div className="flex items-center h-16 min-w-max px-1">
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}
             className={({ isActive }) =>
               cn(
-                "flex flex-col items-center gap-1 px-2 py-1 text-[10px] font-medium transition-snappy",
-                isActive
-                  ? "text-primary"
-                  : "text-muted-foreground"
+                "min-w-[4.5rem] flex flex-col items-center justify-center gap-1 px-2 py-1 text-[10px] font-medium transition-snappy",
+                isActive ? "text-primary" : "text-muted-foreground"
               )
             }
           >
