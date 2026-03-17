@@ -37,12 +37,17 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
     setLoading(true);
     try {
       const result = await createUser(email, role as AppRole, loginType, phone || undefined, isKiosk ? kioskPin : undefined);
-      toast.success("User created successfully", {
-        description: result.invite_link
-          ? "Invite link generated. Share it with the user."
-          : `Temporary password: ${result.temp_password}`,
-        duration: 15000,
-      });
+      if (result.invite_sent) {
+        toast.success("Invite email sent!", {
+          description: "The user will receive an email with a magic link to set up their account.",
+          duration: 8000,
+        });
+      } else {
+        toast.success("User created successfully", {
+          description: "Kiosk user created. They can log in via PIN.",
+          duration: 8000,
+        });
+      }
       setEmail("");
       setPhone("");
       setRole("");
