@@ -4,17 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Users, Box } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Users, Box, BookOpen, FileText } from "lucide-react";
 import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 import { AddModuleDialog } from "@/components/projects/AddModuleDialog";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
+import { SiteDiary } from "@/components/site/SiteDiary";
+import { HandoverPack } from "@/components/site/HandoverPack";
 
 const STATUS_COLORS: Record<string, string> = {
   planning: "bg-warning/20 text-warning-foreground border-warning/30",
   in_progress: "bg-primary/20 text-primary border-primary/30",
   completed: "bg-success/20 text-success-foreground border-success/30",
   on_hold: "bg-muted text-muted-foreground border-border",
+  handed_over: "bg-success/20 text-success-foreground border-success/30",
 };
 
 const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
@@ -153,6 +156,12 @@ export default function ProjectDetail() {
           <TabsTrigger value="modules" className="gap-1.5">
             <Box className="h-4 w-4" /> Modules
           </TabsTrigger>
+          <TabsTrigger value="site-diary" className="gap-1.5">
+            <BookOpen className="h-4 w-4" /> Site Diary
+          </TabsTrigger>
+          <TabsTrigger value="handover" className="gap-1.5">
+            <FileText className="h-4 w-4" /> Handover
+          </TabsTrigger>
           <TabsTrigger value="team" className="gap-1.5">
             <Users className="h-4 w-4" /> Team
           </TabsTrigger>
@@ -186,12 +195,28 @@ export default function ProjectDetail() {
                   projectId={id!}
                   canEdit={canEdit}
                   canAdvanceStage={canAdvanceStage}
+                  userRole={userRole}
                   onPanelCreated={fetchData}
                   onStageAdvanced={fetchData}
                 />
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="site-diary" className="space-y-4">
+          <SiteDiary projectId={id!} userRole={userRole} />
+        </TabsContent>
+
+        <TabsContent value="handover" className="space-y-4">
+          <h2 className="font-display text-lg font-semibold text-foreground">Handover</h2>
+          <HandoverPack
+            projectId={id!}
+            clientName={project.client_name}
+            userRole={userRole}
+            installationComplete={modules.some((m: any) => m.production_status === "dispatched")}
+            onHandedOver={fetchData}
+          />
         </TabsContent>
 
         <TabsContent value="team" className="space-y-4">
