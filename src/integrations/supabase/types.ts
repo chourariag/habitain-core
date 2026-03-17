@@ -170,6 +170,99 @@ export type Database = {
           },
         ]
       }
+      material_requests: {
+        Row: {
+          budget_approved_at: string | null
+          budget_approved_by: string | null
+          created_at: string | null
+          director_approved_at: string | null
+          director_approved_by: string | null
+          id: string
+          is_archived: boolean | null
+          is_over_budget: boolean | null
+          material_name: string
+          module_id: string | null
+          notes: string | null
+          po_raised_at: string | null
+          po_raised_by: string | null
+          project_id: string | null
+          quantity: number
+          received_at: string | null
+          received_by: string | null
+          rejection_reason: string | null
+          requested_by: string
+          status: string
+          unit: string
+          updated_at: string | null
+          urgency: string
+        }
+        Insert: {
+          budget_approved_at?: string | null
+          budget_approved_by?: string | null
+          created_at?: string | null
+          director_approved_at?: string | null
+          director_approved_by?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_over_budget?: boolean | null
+          material_name: string
+          module_id?: string | null
+          notes?: string | null
+          po_raised_at?: string | null
+          po_raised_by?: string | null
+          project_id?: string | null
+          quantity: number
+          received_at?: string | null
+          received_by?: string | null
+          rejection_reason?: string | null
+          requested_by: string
+          status?: string
+          unit?: string
+          updated_at?: string | null
+          urgency?: string
+        }
+        Update: {
+          budget_approved_at?: string | null
+          budget_approved_by?: string | null
+          created_at?: string | null
+          director_approved_at?: string | null
+          director_approved_by?: string | null
+          id?: string
+          is_archived?: boolean | null
+          is_over_budget?: boolean | null
+          material_name?: string
+          module_id?: string | null
+          notes?: string | null
+          po_raised_at?: string | null
+          po_raised_by?: string | null
+          project_id?: string | null
+          quantity?: number
+          received_at?: string | null
+          received_by?: string | null
+          rejection_reason?: string | null
+          requested_by?: string
+          status?: string
+          unit?: string
+          updated_at?: string | null
+          urgency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_requests_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modules: {
         Row: {
           created_at: string | null
@@ -728,6 +821,7 @@ export type Database = {
         Returns: boolean
       }
       is_director: { Args: { _user_id: string }; Returns: boolean }
+      is_full_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
