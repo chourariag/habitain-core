@@ -27,12 +27,12 @@ const TRADES = [
   "Finishing",
 ];
 
-type KioskStep = "phone" | "otp" | "work";
+type KioskStep = "phone" | "pin" | "work";
 
 export function KioskScreen({ onExit }: KioskScreenProps) {
   const [step, setStep] = useState<KioskStep>("phone");
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
+  const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [modules, setModules] = useState<Tables<"modules">[]>([]);
   const [selectedModule, setSelectedModule] = useState("");
@@ -51,41 +51,41 @@ export function KioskScreen({ onExit }: KioskScreenProps) {
     }
   }, [step]);
 
-  const handleSendOtp = async () => {
-    if (phone.length < 10) {
-      toast.error("Enter a valid phone number");
+  const handlePhoneNext = () => {
+    if (phone.replace(/\D/g, "").length < 10) {
+      toast.error("Enter a valid 10-digit phone number");
       return;
     }
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOtp({ phone: `+91${phone.replace(/\D/g, "").slice(-10)}` });
-      if (error) throw error;
-      toast.success("OTP sent!");
-      setStep("otp");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to send OTP");
-    } finally {
-      setLoading(false);
-    }
+    setStep("pin");
   };
 
-  const handleVerifyOtp = async () => {
-    if (otp.length < 6) {
-      toast.error("Enter the 6-digit OTP");
+  const handleVerifyPin = async () => {
+    if (pin.length !== 4) {
+      toast.error("Enter your 4-digit PIN");
       return;
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        phone: `+91${phone.replace(/\D/g, "").slice(-10)}`,
-        token: otp,
-        type: "sms",
+      const { data, error } = await supabase.functions.invoke("kiosk-login", {
+        body: { phone: phone.replace(/\D/g, "").slice(-10), pin },
       });
-      if (error) throw error;
-      toast.success("Verified!");
+
+      if (error) throw new Error(error.message || "Login failed");
+      if (data?.error) throw new Error(data.error);
+
+      // Use the token_hash to establish a session
+      const { error: otpError } = await supabase.auth.verifyOtp({
+        email: data.email,
+        token_hash: data.token_hash,
+        type: "magiclink",
+      });
+
+      if (otpError) throw otpError;
+
+      toast.success("Logged in!");
       setStep("work");
     } catch (err: any) {
-      toast.error(err.message || "Invalid OTP");
+      toast.error(err.message || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -142,7 +142,7 @@ export function KioskScreen({ onExit }: KioskScreenProps) {
             <div className="space-y-6 text-center">
               <div className="space-y-2">
                 <h2 className="font-display text-2xl font-bold text-foreground">Enter Phone Number</h2>
-                <p className="text-muted-foreground">We'll send you an OTP to verify</p>
+                <p className="text-muted-foreground">Enter your registered phone number</p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-medium text-foreground shrink-0">+91</span>
@@ -155,31 +155,32 @@ export function KioskScreen({ onExit }: KioskScreenProps) {
                   maxLength={10}
                 />
               </div>
-              <Button size="lg" className="w-full h-14 text-lg" onClick={handleSendOtp} disabled={loading}>
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Send OTP"}
+              <Button size="lg" className="w-full h-14 text-lg" onClick={handlePhoneNext}>
+                Next
               </Button>
             </div>
           )}
 
-          {/* Step: OTP */}
-          {step === "otp" && (
+          {/* Step: PIN */}
+          {step === "pin" && (
             <div className="space-y-6 text-center">
               <div className="space-y-2">
-                <h2 className="font-display text-2xl font-bold text-foreground">Enter OTP</h2>
-                <p className="text-muted-foreground">Sent to +91 {phone}</p>
+                <h2 className="font-display text-2xl font-bold text-foreground">Enter PIN</h2>
+                <p className="text-muted-foreground">4-digit PIN for +91 {phone}</p>
               </div>
               <Input
-                type="text"
-                placeholder="000000"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-                className="text-2xl h-16 text-center tracking-[0.5em]"
-                maxLength={6}
+                type="password"
+                inputMode="numeric"
+                placeholder="••••"
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                className="text-3xl h-16 text-center tracking-[0.5em]"
+                maxLength={4}
               />
-              <Button size="lg" className="w-full h-14 text-lg" onClick={handleVerifyOtp} disabled={loading}>
-                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Verify"}
+              <Button size="lg" className="w-full h-14 text-lg" onClick={handleVerifyPin} disabled={loading}>
+                {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Login"}
               </Button>
-              <Button variant="ghost" onClick={() => setStep("phone")}>Change number</Button>
+              <Button variant="ghost" onClick={() => { setStep("phone"); setPin(""); }}>Change number</Button>
             </div>
           )}
 

@@ -116,9 +116,21 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
           )}
 
           {isKiosk && (
-            <p className="text-xs text-muted-foreground bg-muted p-2 rounded-md">
-              Kiosk role detected — login type will be set to OTP.
-            </p>
+            <div className="space-y-2">
+              <Label>4-Digit Kiosk PIN</Label>
+              <Input
+                type="text"
+                inputMode="numeric"
+                placeholder="1234"
+                value={kioskPin}
+                onChange={(e) => setKioskPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                maxLength={4}
+                className="bg-background text-foreground tracking-widest text-center text-lg"
+              />
+              <p className="text-xs text-muted-foreground">
+                This PIN will be used by the worker to log in at the kiosk.
+              </p>
+            </div>
           )}
 
           <Button type="submit" className="w-full" disabled={loading}>

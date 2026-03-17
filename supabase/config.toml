@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.bootstrap-admin]
 verify_jwt = false
+
+[functions.kiosk-login]
+verify_jwt = false
