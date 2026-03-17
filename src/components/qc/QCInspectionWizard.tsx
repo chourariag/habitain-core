@@ -809,7 +809,7 @@ export function QCInspectionWizard({
                         )
                       }
                     >
-                      <SelectTrigger className="text-foreground">
+                      <SelectTrigger className="text-card-foreground bg-white/80 border-border">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -821,7 +821,7 @@ export function QCInspectionWizard({
                       </SelectContent>
                     </Select>
                     <Textarea
-                      className="mt-2 text-sm"
+                      className="mt-2 text-sm text-card-foreground bg-white/80 border-border placeholder:text-muted-foreground"
                       value={editableAnalysis.summary}
                       onChange={(e) =>
                         setEditableAnalysis((prev) =>
@@ -861,7 +861,7 @@ export function QCInspectionWizard({
                               });
                             }}
                           >
-                            <SelectTrigger className="mt-1 text-foreground">
+                            <SelectTrigger className="mt-1 text-card-foreground bg-white/80 border-border">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -878,7 +878,7 @@ export function QCInspectionWizard({
                                 {field.replace(/([A-Z])/g, " $1")}
                               </label>
                               <Textarea
-                                className="mt-1 text-sm min-h-[50px]"
+                                className="mt-1 text-sm min-h-[50px] text-card-foreground bg-white/80 border-border placeholder:text-muted-foreground"
                                 value={a[field]}
                                 onChange={(e) => {
                                   const updated = [
