@@ -41,11 +41,12 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col bg-background border-r border-border transition-all duration-150",
+        "hidden md:flex flex-col transition-all duration-150",
         collapsed ? "w-16" : "w-60"
       )}
+      style={{ backgroundColor: "#FFFFFF", borderRight: "1px solid #E0E0E0" }}
     >
-      <div className="flex items-center px-4 h-16 border-b border-border">
+      <div className="flex items-center px-4 h-16" style={{ borderBottom: "1px solid #E0E0E0" }}>
         <Logo size="sm" showText={!collapsed} />
       </div>
 
@@ -58,9 +59,14 @@ export function AppSidebar() {
               cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-snappy",
                 isActive
-                  ? "bg-accent text-accent-foreground border-l-2 border-primary"
-                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                  ? "font-bold"
+                  : "hover:bg-accent/50"
               )
+            }
+            style={({ isActive }) =>
+              isActive
+                ? { backgroundColor: "#E8F2ED", color: "#006039", borderLeft: "3px solid #006039" }
+                : { color: "#666666" }
             }
           >
             <item.icon className="h-5 w-5 shrink-0" />
@@ -69,17 +75,21 @@ export function AppSidebar() {
         ))}
       </nav>
 
-      <div className="border-t border-border">
+      <div style={{ borderTop: "1px solid #E0E0E0" }}>
         <button
           onClick={signOut}
-          className="flex items-center gap-3 px-5 py-3 w-full text-sm text-muted-foreground hover:text-destructive transition-snappy"
+          className="flex items-center gap-3 px-5 py-3 w-full text-sm transition-snappy"
+          style={{ color: "#666666" }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = "#F40009")}
+          onMouseLeave={(e) => (e.currentTarget.style.color = "#666666")}
         >
           <LogOut className="h-4 w-4 shrink-0" />
           {!collapsed && <span>Sign Out</span>}
         </button>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center justify-center h-12 w-full border-t border-border text-muted-foreground hover:text-foreground transition-snappy"
+          className="flex items-center justify-center h-12 w-full transition-snappy"
+          style={{ borderTop: "1px solid #E0E0E0", color: "#666666" }}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>

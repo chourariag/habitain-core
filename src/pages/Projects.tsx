@@ -8,23 +8,32 @@ import type { Tables } from "@/integrations/supabase/types";
 
 export default function Projects() {
   const [projects, setProjects] = useState<Tables<"projects">[]>([]);
+  const [modulesByProject, setModulesByProject] = useState<Record<string, any[]>>({});
+  const [handoversByProject, setHandoversByProject] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const fetchProjects = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("is_archived", false)
-      .order("created_at", { ascending: false });
-    setProjects(data ?? []);
+    const [projRes, modRes, handoverRes] = await Promise.all([
+      supabase.from("projects").select("*").eq("is_archived", false).order("created_at", { ascending: false }),
+      supabase.from("modules").select("id, project_id, current_stage, production_status").eq("is_archived", false),
+      supabase.from("handover_pack").select("project_id"),
+    ]);
+    setProjects(projRes.data ?? []);
+    const grouped: Record<string, any[]> = {};
+    (modRes.data ?? []).forEach((m: any) => {
+      if (!grouped[m.project_id]) grouped[m.project_id] = [];
+      grouped[m.project_id].push(m);
+    });
+    setModulesByProject(grouped);
+    const hMap: Record<string, boolean> = {};
+    (handoverRes.data ?? []).forEach((h: any) => { hMap[h.project_id] = true; });
+    setHandoversByProject(hMap);
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    fetchProjects();
-  }, [fetchProjects]);
+  useEffect(() => { fetchProjects(); }, [fetchProjects]);
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -50,7 +59,12 @@ export default function Projects() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard
+              key={project.id}
+              project={project}
+              modules={modulesByProject[project.id] ?? []}
+              hasHandover={!!handoversByProject[project.id]}
+            />
           ))}
         </div>
       )}

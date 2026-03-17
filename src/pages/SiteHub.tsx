@@ -28,7 +28,7 @@ export default function SiteHub() {
     });
 
     const { data: projectsData } = await supabase
-      .from("projects").select("*").eq("is_archived", false).neq("status", "handed_over")
+      .from("projects").select("*").eq("is_archived", false)
       .order("created_at", { ascending: false });
 
     const activeProjects = projectsData ?? [];

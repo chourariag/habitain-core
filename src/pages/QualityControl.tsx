@@ -19,6 +19,7 @@ export default function QualityControl() {
   const [wizardOpen, setWizardOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [selectedNCR, setSelectedNCR] = useState<any | null>(null);
+  const [ncrInspectionItems, setNcrInspectionItems] = useState<any[]>([]);
   const [profilesMap, setProfilesMap] = useState<Record<string, string>>({});
 
   const fetchData = useCallback(async () => {
@@ -32,7 +33,7 @@ export default function QualityControl() {
         .limit(50),
       supabase
         .from("ncr_register")
-        .select("*, qc_inspections(stage_name, ai_response, module_id, modules(name, module_code, panel_id))")
+        .select("*, qc_inspections(id, stage_name, ai_response, module_id, modules(name, module_code, panel_id))")
         .eq("is_archived", false)
         .order("created_at", { ascending: false })
         .limit(100),
@@ -54,6 +55,24 @@ export default function QualityControl() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // When an NCR is selected, fetch its inspection items for AI analysis data
+  useEffect(() => {
+    if (!selectedNCR?.inspection_id) {
+      setNcrInspectionItems([]);
+      return;
+    }
+    const inspectionId = selectedNCR.inspection_id || selectedNCR.qc_inspections?.id;
+    if (!inspectionId) { setNcrInspectionItems([]); return; }
+
+    supabase
+      .from("qc_inspection_items")
+      .select("*, qc_checklist_items(description, stage_name, is_critical)")
+      .eq("inspection_id", inspectionId)
+      .then(({ data }) => {
+        setNcrInspectionItems(data ?? []);
+      });
+  }, [selectedNCR]);
+
   const canInspect = ["qc_inspector", "production_head", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
   const canCloseNCR = ["production_head", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
 
@@ -67,7 +86,6 @@ export default function QualityControl() {
   const openNCRs = ncrs.filter((n) => n.status !== "closed");
   const closedNCRs = ncrs.filter((n) => n.status === "closed");
 
-  // Sort: critical first, then open
   const sortedOpenNCRs = [...openNCRs].sort((a, b) => {
     if (a.status === "critical_open" && b.status !== "critical_open") return -1;
     if (a.status !== "critical_open" && b.status === "critical_open") return 1;
@@ -75,14 +93,14 @@ export default function QualityControl() {
   });
 
   const decisionBadgeClass = (decision: string | null) => {
-    if (decision === "PASS STAGE") return "bg-success/20 text-success-foreground border-success/30";
-    if (decision === "REWORK REQUIRED") return "bg-destructive/20 text-destructive border-destructive/30";
-    return "bg-warning/20 text-warning-foreground border-warning/30";
+    if (decision === "PASS STAGE") return "bg-primary text-primary-foreground";
+    if (decision === "REWORK REQUIRED") return "bg-destructive text-destructive-foreground";
+    return "bg-warning text-warning-foreground";
   };
 
   const severityBadge = (status: string) => {
-    if (status === "critical_open") return { label: "Critical", class: "bg-destructive/20 text-destructive border-destructive/30" };
-    return { label: "Open", class: "bg-warning/20 text-warning-foreground border-warning/30" };
+    if (status === "critical_open") return { label: "Critical", class: "bg-destructive text-destructive-foreground" };
+    return { label: "Open", class: "bg-warning text-warning-foreground" };
   };
 
   const getNCRModule = (ncr: any) => ncr.qc_inspections?.modules;
@@ -96,7 +114,7 @@ export default function QualityControl() {
 
   const renderNCRCard = (ncr: any, isClosed: boolean) => {
     const mod = getNCRModule(ncr);
-    const sev = isClosed ? { label: "Closed", class: "bg-success/20 text-success-foreground border-success/30" } : severityBadge(ncr.status);
+    const sev = isClosed ? { label: "Closed", class: "bg-muted text-muted-foreground" } : severityBadge(ncr.status);
     return (
       <Card
         key={ncr.id}
@@ -117,7 +135,7 @@ export default function QualityControl() {
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className={sev.class}>{sev.label}</Badge>
+              <Badge className={sev.class}>{sev.label}</Badge>
               {!isClosed && canCloseNCR && (
                 <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); handleCloseNCR(ncr.id); }}>Close NCR</Button>
               )}
@@ -126,6 +144,11 @@ export default function QualityControl() {
         </CardContent>
       </Card>
     );
+  };
+
+  // Get failed inspection items (the ones that generated this NCR)
+  const getFailedItems = () => {
+    return ncrInspectionItems.filter((item: any) => item.result === "fail" || item.ai_severity);
   };
 
   return (
@@ -168,7 +191,7 @@ export default function QualityControl() {
                           {(insp.modules as any)?.projects?.name || "Project"} · {insp.submitted_at ? format(new Date(insp.submitted_at), "dd MMM yyyy HH:mm") : "Draft"}
                         </p>
                       </div>
-                      <Badge variant="outline" className={decisionBadgeClass(insp.dispatch_decision)}>
+                      <Badge className={decisionBadgeClass(insp.dispatch_decision)}>
                         {insp.dispatch_decision || insp.status}
                       </Badge>
                     </div>
@@ -208,12 +231,13 @@ export default function QualityControl() {
             const mod = getNCRModule(selectedNCR);
             const ai = getAIResponse(selectedNCR);
             const isClosed = selectedNCR.status === "closed";
-            const sev = isClosed ? { label: "Closed", class: "bg-success/20 text-success-foreground border-success/30" } : severityBadge(selectedNCR.status);
+            const sev = isClosed ? { label: "Closed", class: "bg-muted text-muted-foreground" } : severityBadge(selectedNCR.status);
+            const failedItems = getFailedItems();
             return (
               <div className="space-y-4 text-sm">
                 <div className="grid grid-cols-2 gap-3">
                   <div><p className="text-muted-foreground text-xs">NCR Number</p><p className="font-mono font-semibold text-card-foreground">{selectedNCR.ncr_number}</p></div>
-                  <div><p className="text-muted-foreground text-xs">Severity</p><Badge variant="outline" className={sev.class}>{sev.label}</Badge></div>
+                  <div><p className="text-muted-foreground text-xs">Severity</p><Badge className={sev.class}>{sev.label}</Badge></div>
                   <div><p className="text-muted-foreground text-xs">Module</p><p className="text-card-foreground">{mod?.module_code || mod?.name || "—"}</p></div>
                   <div><p className="text-muted-foreground text-xs">Panel</p><p className="text-card-foreground">{mod?.panel_id || "—"}</p></div>
                   <div><p className="text-muted-foreground text-xs">Production Stage</p><p className="text-card-foreground">{getNCRStage(selectedNCR)}</p></div>
@@ -221,35 +245,68 @@ export default function QualityControl() {
                   {isClosed && (
                     <>
                       <div><p className="text-muted-foreground text-xs">Closed Date</p><p className="text-card-foreground">{selectedNCR.closed_at ? format(new Date(selectedNCR.closed_at), "dd MMM yyyy") : "—"}</p></div>
-                      <div><p className="text-muted-foreground text-xs">Closed By</p><p className="text-card-foreground">{(selectedNCR.closed_by && profilesMap[selectedNCR.closed_by]) || selectedNCR.closed_by || "—"}</p></div>
+                      <div><p className="text-muted-foreground text-xs">Closed By</p><p className="text-card-foreground">{(selectedNCR.closed_by && profilesMap[selectedNCR.closed_by]) || "—"}</p></div>
                     </>
                   )}
                 </div>
 
+                {/* AI Analysis from inspection-level ai_response */}
                 {ai && (
                   <div className="border-t pt-3 space-y-3">
-                    <h4 className="font-semibold text-card-foreground">AI Analysis</h4>
-                    {ai.root_cause && (
+                    <h4 className="font-semibold text-card-foreground">AI Analysis (Inspection)</h4>
+                    {!Array.isArray(ai) && ai.root_cause && (
                       <div><p className="text-muted-foreground text-xs">Root Cause</p><p className="text-card-foreground">{ai.root_cause}</p></div>
                     )}
-                    {ai.immediate_action && (
+                    {!Array.isArray(ai) && ai.immediate_action && (
                       <div><p className="text-muted-foreground text-xs">Immediate Action</p><p className="text-card-foreground">{ai.immediate_action}</p></div>
                     )}
-                    {ai.corrective_action && (
+                    {!Array.isArray(ai) && ai.corrective_action && (
                       <div><p className="text-muted-foreground text-xs">Corrective Action</p><p className="text-card-foreground">{ai.corrective_action}</p></div>
                     )}
-                    {ai.severity && (
+                    {!Array.isArray(ai) && ai.severity && (
                       <div><p className="text-muted-foreground text-xs">AI Severity</p><p className="text-card-foreground font-medium">{ai.severity}</p></div>
                     )}
-                    {/* Handle array format from AI */}
                     {Array.isArray(ai) && ai.map((item: any, idx: number) => (
-                      <div key={idx} className="border rounded-md p-3 space-y-1">
-                        {item.severity && <Badge variant="outline" className={item.severity === "Critical" ? "bg-destructive/20 text-destructive" : item.severity === "Major" ? "bg-warning/20 text-warning-foreground" : "bg-muted text-muted-foreground"}>{item.severity}</Badge>}
+                      <div key={idx} className="border rounded-md p-3 space-y-2">
+                        {item.severity && <Badge className={item.severity === "Critical" ? "bg-destructive text-destructive-foreground" : item.severity === "Major" ? "bg-warning text-warning-foreground" : "bg-muted text-muted-foreground"}>{item.severity}</Badge>}
+                        {item.checklist_item && <div><p className="text-muted-foreground text-xs">Checklist Item</p><p className="text-card-foreground">{item.checklist_item}</p></div>}
                         {item.root_cause && <div><p className="text-muted-foreground text-xs">Root Cause</p><p className="text-card-foreground">{item.root_cause}</p></div>}
                         {item.immediate_action && <div><p className="text-muted-foreground text-xs">Immediate Action</p><p className="text-card-foreground">{item.immediate_action}</p></div>}
                         {item.corrective_action && <div><p className="text-muted-foreground text-xs">Corrective Action</p><p className="text-card-foreground">{item.corrective_action}</p></div>}
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {/* Per-item AI analysis from qc_inspection_items */}
+                {failedItems.length > 0 && (
+                  <div className="border-t pt-3 space-y-3">
+                    <h4 className="font-semibold text-card-foreground">Failed Checklist Items</h4>
+                    {failedItems.map((item: any) => (
+                      <div key={item.id} className="border rounded-md p-3 space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-card-foreground font-medium text-xs">
+                            {item.qc_checklist_items?.description || "Checklist Item"}
+                          </p>
+                          {item.ai_severity && (
+                            <Badge className={
+                              item.ai_severity === "Critical" ? "bg-destructive text-destructive-foreground" :
+                              item.ai_severity === "Major" ? "bg-warning text-warning-foreground" :
+                              "bg-muted text-muted-foreground"
+                            }>{item.ai_severity}</Badge>
+                          )}
+                        </div>
+                        {item.notes && (
+                          <div><p className="text-muted-foreground text-xs">Notes</p><p className="text-card-foreground">{item.notes}</p></div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {!ai && failedItems.length === 0 && (
+                  <div className="border-t pt-3">
+                    <p className="text-muted-foreground text-xs">No AI analysis data available for this NCR.</p>
                   </div>
                 )}
 
