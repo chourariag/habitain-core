@@ -3,19 +3,12 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Users, Box } from "lucide-react";
 import { format } from "date-fns";
-import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
+import { AddModuleDialog } from "@/components/projects/AddModuleDialog";
+import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 
 const STATUS_COLORS: Record<string, string> = {
   planning: "bg-warning/20 text-warning-foreground border-warning/30",
@@ -24,66 +17,63 @@ const STATUS_COLORS: Record<string, string> = {
   on_hold: "bg-muted text-muted-foreground border-border",
 };
 
-const STAGE_COLORS: Record<string, string> = {
-  not_started: "bg-muted text-muted-foreground",
-  in_progress: "bg-primary/20 text-primary",
-  completed: "bg-success/20 text-success-foreground",
-};
-
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Tables<"projects"> | null>(null);
-  const [modules, setModules] = useState<Tables<"modules">[]>([]);
+  const [modules, setModules] = useState<any[]>([]);
+  const [panels, setPanels] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const [addModuleOpen, setAddModuleOpen] = useState(false);
-  const [moduleLoading, setModuleLoading] = useState(false);
-  const [moduleName, setModuleName] = useState("");
-  const [panelId, setPanelId] = useState("");
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  const canEdit = userRole === "planning_engineer";
 
   const fetchData = useCallback(async () => {
     if (!id) return;
     setLoading(true);
-    const [projectRes, modulesRes] = await Promise.all([
+
+    // Fetch project, modules, user role in parallel
+    const [projectRes, modulesRes, roleRes] = await Promise.all([
       supabase.from("projects").select("*").eq("id", id).single(),
-      supabase.from("modules").select("*").eq("project_id", id).eq("is_archived", false).order("created_at", { ascending: false }),
+      supabase.from("modules").select("*").eq("project_id", id).eq("is_archived", false).order("created_at", { ascending: true }),
+      supabase.auth.getUser().then(async ({ data: { user } }) => {
+        if (!user) return null;
+        const { data } = await supabase.rpc("get_user_role", { _user_id: user.id });
+        return data;
+      }),
     ]);
+
     setProject(projectRes.data);
     setModules(modulesRes.data ?? []);
+    setUserRole(roleRes as string | null);
+
+    // Fetch panels for all modules
+    const moduleIds = (modulesRes.data ?? []).map((m: any) => m.id);
+    if (moduleIds.length > 0) {
+      const { data: panelsData } = await supabase
+        .from("panels" as any)
+        .select("*")
+        .in("module_id", moduleIds)
+        .eq("is_archived", false)
+        .order("created_at", { ascending: true });
+
+      const grouped: Record<string, any[]> = {};
+      (panelsData ?? []).forEach((p: any) => {
+        if (!grouped[p.module_id]) grouped[p.module_id] = [];
+        grouped[p.module_id].push(p);
+      });
+      setPanels(grouped);
+    } else {
+      setPanels({});
+    }
+
     setLoading(false);
   }, [id]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
-
-  const handleAddModule = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!moduleName.trim() || !id) {
-      toast.error("Module name is required");
-      return;
-    }
-    setModuleLoading(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.from("modules").insert({
-        name: moduleName.trim(),
-        panel_id: panelId.trim() || null,
-        project_id: id,
-        created_by: user?.id ?? null,
-      });
-      if (error) throw error;
-      toast.success("Module added");
-      setModuleName("");
-      setPanelId("");
-      setAddModuleOpen(false);
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to add module");
-    } finally {
-      setModuleLoading(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -105,6 +95,7 @@ export default function ProjectDetail() {
   }
 
   const statusClass = STATUS_COLORS[project.status ?? "planning"] ?? STATUS_COLORS.planning;
+  const totalPanels = Object.values(panels).reduce((sum, arr) => sum + arr.length, 0);
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -150,7 +141,7 @@ export default function ProjectDetail() {
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
           <Box className="h-4 w-4 shrink-0" />
-          <span>{modules.length} module{modules.length !== 1 ? "s" : ""}</span>
+          <span>{modules.length} module{modules.length !== 1 ? "s" : ""} · {totalPanels} panel{totalPanels !== 1 ? "s" : ""}</span>
         </div>
       </div>
 
@@ -167,44 +158,33 @@ export default function ProjectDetail() {
 
         <TabsContent value="modules" className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold text-foreground">Modules</h2>
-            <Button size="sm" onClick={() => setAddModuleOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" /> Add Module
-            </Button>
+            <h2 className="font-display text-lg font-semibold text-foreground">Modules & Panels</h2>
+            {canEdit && (
+              <Button size="sm" onClick={() => setAddModuleOpen(true)}>
+                <Plus className="h-4 w-4 mr-1" /> Add Module
+              </Button>
+            )}
           </div>
 
           {modules.length === 0 ? (
             <div className="bg-card rounded-lg p-8 text-center shadow-sm">
-              <p className="text-muted-foreground text-sm">No modules yet. Click "Add Module" to create one.</p>
+              <p className="text-muted-foreground text-sm">
+                {canEdit
+                  ? 'No modules yet. Click "Add Module" to create one.'
+                  : "No modules have been created for this project yet."}
+              </p>
             </div>
           ) : (
-            <div className="bg-card rounded-lg shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-3 font-medium text-muted-foreground">Module</th>
-                      <th className="text-left p-3 font-medium text-muted-foreground">Panel ID</th>
-                      <th className="text-left p-3 font-medium text-muted-foreground">Current Stage</th>
-                      <th className="text-left p-3 font-medium text-muted-foreground">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {modules.map((m) => (
-                      <tr key={m.id} className="border-b last:border-0">
-                        <td className="p-3 font-medium text-card-foreground">{m.name}</td>
-                        <td className="p-3 text-muted-foreground">{m.panel_id ?? "—"}</td>
-                        <td className="p-3 text-card-foreground">{m.current_stage ?? "—"}</td>
-                        <td className="p-3">
-                          <Badge variant="outline" className={STAGE_COLORS[m.production_status ?? "not_started"]}>
-                            {(m.production_status ?? "not_started").replace("_", " ")}
-                          </Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            <div className="space-y-3">
+              {modules.map((m) => (
+                <ModulePanelCard
+                  key={m.id}
+                  module={m}
+                  panels={panels[m.id] ?? []}
+                  canEdit={canEdit}
+                  onPanelCreated={fetchData}
+                />
+              ))}
             </div>
           )}
         </TabsContent>
@@ -218,27 +198,14 @@ export default function ProjectDetail() {
       </Tabs>
 
       {/* Add Module Dialog */}
-      <Dialog open={addModuleOpen} onOpenChange={setAddModuleOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="font-display text-xl">Add Module</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleAddModule} className="space-y-4 mt-2">
-            <div className="space-y-2">
-              <Label htmlFor="modName">Module Name *</Label>
-              <Input id="modName" value={moduleName} onChange={(e) => setModuleName(e.target.value)} placeholder="e.g. Module A-101" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="panelId">Panel ID</Label>
-              <Input id="panelId" value={panelId} onChange={(e) => setPanelId(e.target.value)} placeholder="e.g. PNL-001" />
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setAddModuleOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={moduleLoading}>{moduleLoading ? "Adding…" : "Add Module"}</Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <AddModuleDialog
+        open={addModuleOpen}
+        onOpenChange={setAddModuleOpen}
+        projectId={id!}
+        projectName={project.name}
+        existingModuleCount={modules.length}
+        onCreated={fetchData}
+      />
     </div>
   );
 }
