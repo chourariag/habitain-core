@@ -27,6 +27,7 @@ interface Module {
 interface Props {
   module: Module;
   panels: Panel[];
+  projectId: string;
   canEdit: boolean;
   canAdvanceStage: boolean;
   onPanelCreated: () => void;
@@ -45,7 +46,7 @@ const STATUS_BADGE: Record<string, string> = {
   completed: "bg-success/20 text-success-foreground",
 };
 
-export function ModulePanelCard({ module, panels, canEdit, canAdvanceStage, onPanelCreated, onStageAdvanced }: Props) {
+export function ModulePanelCard({ module, panels, projectId, canEdit, canAdvanceStage, onPanelCreated, onStageAdvanced }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [addPanelOpen, setAddPanelOpen] = useState(false);
 
@@ -83,6 +84,7 @@ export function ModulePanelCard({ module, panels, canEdit, canAdvanceStage, onPa
             <p className="text-xs font-medium text-muted-foreground mb-2">Production Progress</p>
             <ProductionStageTracker
               moduleId={module.id}
+              projectId={projectId}
               currentStage={module.current_stage}
               productionStatus={module.production_status}
               canAdvance={canAdvanceStage}

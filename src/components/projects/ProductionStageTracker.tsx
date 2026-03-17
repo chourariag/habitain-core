@@ -1,8 +1,11 @@
-import { Check, Lock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Check, Lock, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { getAuthedClient } from "@/lib/auth-client";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { QCInspectionWizard } from "@/components/qc/QCInspectionWizard";
 
 export const PRODUCTION_STAGES = [
   "Sub-Frame",
@@ -18,20 +21,62 @@ export const PRODUCTION_STAGES = [
 
 interface Props {
   moduleId: string;
+  projectId: string;
   currentStage: string | null;
   productionStatus: string | null;
   canAdvance: boolean;
   onAdvanced: () => void;
 }
 
-export function ProductionStageTracker({ moduleId, currentStage, productionStatus, canAdvance, onAdvanced }: Props) {
+export function ProductionStageTracker({ moduleId, projectId, currentStage, productionStatus, canAdvance, onAdvanced }: Props) {
   const currentIdx = currentStage ? PRODUCTION_STAGES.indexOf(currentStage as any) : -1;
   const isCompleted = productionStatus === "completed";
+  const isOnHold = productionStatus === "hold";
+
+  const [openNCRCount, setOpenNCRCount] = useState(0);
+  const [qcWizardOpen, setQcWizardOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check for open NCRs on this module
+    const checkNCRs = async () => {
+      const { count } = await supabase
+        .from("ncr_register")
+        .select("id", { count: "exact", head: true })
+        .eq("is_archived", false)
+        .in("status", ["open", "critical_open"])
+        .in(
+          "inspection_id",
+          // subquery via inspections for this module
+          (await supabase
+            .from("qc_inspections")
+            .select("id")
+            .eq("module_id", moduleId)
+          ).data?.map((i) => i.id) ?? []
+        );
+      setOpenNCRCount(count ?? 0);
+    };
+    checkNCRs();
+
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const { data } = await supabase.rpc("get_user_role", { _user_id: user.id });
+      setUserRole(data as string | null);
+    });
+  }, [moduleId]);
+
+  const canStartInspection = ["qc_inspector", "production_head", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
+
+  const isBlocked = isOnHold && openNCRCount > 0;
 
   const handleAdvance = async () => {
+    if (isBlocked) {
+      toast.error("Module is locked. Close all open NCRs before advancing.");
+      return;
+    }
+
     const nextIdx = currentIdx + 1;
     if (nextIdx >= PRODUCTION_STAGES.length) {
-      // Mark completed
       try {
         const { client } = await getAuthedClient();
         const { error } = await client.from("modules").update({
@@ -95,15 +140,39 @@ export function ProductionStageTracker({ moduleId, currentStage, productionStatu
         })}
       </div>
 
-      {canAdvance && !isCompleted && (
-        <Button size="sm" variant="outline" onClick={handleAdvance} className="text-xs">
-          {currentIdx === -1
-            ? `Start → ${PRODUCTION_STAGES[0]}`
-            : currentIdx + 1 < PRODUCTION_STAGES.length
-              ? `Advance → ${PRODUCTION_STAGES[currentIdx + 1]}`
-              : "Mark Completed"}
-        </Button>
+      {/* Hold warning */}
+      {isBlocked && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-md p-2 flex items-center gap-2 text-xs text-destructive">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+          Module locked — {openNCRCount} open NCR(s). Production Head must close all NCRs before advancing.
+        </div>
       )}
+
+      <div className="flex items-center gap-2 flex-wrap">
+        {canAdvance && !isCompleted && (
+          <Button size="sm" variant="outline" onClick={handleAdvance} disabled={isBlocked} className="text-xs">
+            {currentIdx === -1
+              ? `Start → ${PRODUCTION_STAGES[0]}`
+              : currentIdx + 1 < PRODUCTION_STAGES.length
+                ? `Advance → ${PRODUCTION_STAGES[currentIdx + 1]}`
+                : "Mark Completed"}
+          </Button>
+        )}
+
+        {canStartInspection && currentStage === "QC Inspection" && !isCompleted && (
+          <Button size="sm" variant="secondary" onClick={() => setQcWizardOpen(true)} className="text-xs">
+            Start QC Inspection
+          </Button>
+        )}
+      </div>
+
+      <QCInspectionWizard
+        open={qcWizardOpen}
+        onOpenChange={setQcWizardOpen}
+        onCompleted={onAdvanced}
+        preselectedProjectId={projectId}
+        preselectedModuleId={moduleId}
+      />
     </div>
   );
 }
