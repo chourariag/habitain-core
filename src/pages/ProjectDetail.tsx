@@ -183,6 +183,7 @@ export default function ProjectDetail() {
                   key={m.id}
                   module={m}
                   panels={panels[m.id] ?? []}
+                  projectId={id!}
                   canEdit={canEdit}
                   canAdvanceStage={canAdvanceStage}
                   onPanelCreated={fetchData}

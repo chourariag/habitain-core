@@ -84,6 +84,7 @@ export function ModulePanelCard({ module, panels, projectId, canEdit, canAdvance
             <p className="text-xs font-medium text-muted-foreground mb-2">Production Progress</p>
             <ProductionStageTracker
               moduleId={module.id}
+              projectId={projectId}
               currentStage={module.current_stage}
               productionStatus={module.production_status}
               canAdvance={canAdvanceStage}
