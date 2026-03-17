@@ -18,6 +18,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState<AppRole | "">("");
+  const [kioskPin, setKioskPin] = useState("");
   const [loading, setLoading] = useState(false);
 
   const isKiosk = role && KIOSK_ROLES.includes(role as AppRole);
@@ -29,9 +30,13 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
       toast.error("Email and role are required");
       return;
     }
+    if (isKiosk && (!kioskPin || kioskPin.length !== 4)) {
+      toast.error("Set a 4-digit PIN for kiosk users");
+      return;
+    }
     setLoading(true);
     try {
-      const result = await createUser(email, role as AppRole, loginType, phone || undefined);
+      const result = await createUser(email, role as AppRole, loginType, phone || undefined, isKiosk ? kioskPin : undefined);
       toast.success("User created successfully", {
         description: result.invite_link
           ? "Invite link generated. Share it with the user."
@@ -41,6 +46,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
       setEmail("");
       setPhone("");
       setRole("");
+      setKioskPin("");
       setOpen(false);
       onUserCreated();
     } catch (err: any) {
@@ -110,9 +116,21 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
           )}
 
           {isKiosk && (
-            <p className="text-xs text-muted-foreground bg-muted p-2 rounded-md">
-              Kiosk role detected — login type will be set to OTP.
-            </p>
+            <div className="space-y-2">
+              <Label>4-Digit Kiosk PIN</Label>
+              <Input
+                type="text"
+                inputMode="numeric"
+                placeholder="1234"
+                value={kioskPin}
+                onChange={(e) => setKioskPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                maxLength={4}
+                className="bg-background text-foreground tracking-widest text-center text-lg"
+              />
+              <p className="text-xs text-muted-foreground">
+                This PIN will be used by the worker to log in at the kiosk.
+              </p>
+            </div>
           )}
 
           <Button type="submit" className="w-full" disabled={loading}>

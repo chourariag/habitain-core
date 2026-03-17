@@ -19,8 +19,8 @@ export async function callAdminFunction(payload: AdminAction) {
   return response.data;
 }
 
-export async function createUser(email: string, role: AppRole, loginType: "email" | "otp" = "email", phone?: string) {
-  return callAdminFunction({ action: "create_user", email, role, login_type: loginType, phone });
+export async function createUser(email: string, role: AppRole, loginType: "email" | "otp" = "email", phone?: string, kioskPin?: string) {
+  return callAdminFunction({ action: "create_user", email, role, login_type: loginType, phone, kiosk_pin: kioskPin });
 }
 
 export async function deactivateUser(userId: string) {

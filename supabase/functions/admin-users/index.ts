@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     const { action, ...payload } = await req.json();
 
     if (action === "create_user") {
-      const { email, role, login_type, phone } = payload;
+      const { email, role, login_type, phone, kiosk_pin } = payload;
 
       if (!email || !role) {
         return new Response(JSON.stringify({ error: "Email and role are required" }), {
@@ -86,7 +86,12 @@ Deno.serve(async (req) => {
 
       await supabaseAdmin
         .from("profiles")
-        .update({ role, login_type: login_type || "email", phone: phone || null })
+        .update({
+          role,
+          login_type: login_type || "email",
+          phone: phone || null,
+          kiosk_pin: kiosk_pin || null,
+        })
         .eq("auth_user_id", newUser.user.id);
 
       await supabaseAdmin
