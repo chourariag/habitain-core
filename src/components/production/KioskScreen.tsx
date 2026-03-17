@@ -17,6 +17,15 @@ interface KioskScreenProps {
   onExit: () => void;
 }
 
+interface KioskProfile {
+  id: string;
+  auth_user_id: string;
+  display_name: string | null;
+  role: string;
+  phone: string | null;
+  email: string | null;
+}
+
 const TRADES = [
   "Fabrication",
   "Welding",
@@ -29,11 +38,32 @@ const TRADES = [
 
 type KioskStep = "phone" | "pin" | "work";
 
+const KIOSK_SESSION_KEY = "kiosk_session";
+
+function getKioskSession(): KioskProfile | null {
+  try {
+    const raw = localStorage.getItem(KIOSK_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function setKioskSession(profile: KioskProfile) {
+  localStorage.setItem(KIOSK_SESSION_KEY, JSON.stringify(profile));
+}
+
+function clearKioskSession() {
+  localStorage.removeItem(KIOSK_SESSION_KEY);
+}
+
 export function KioskScreen({ onExit }: KioskScreenProps) {
-  const [step, setStep] = useState<KioskStep>("phone");
+  const existing = getKioskSession();
+  const [step, setStep] = useState<KioskStep>(existing ? "work" : "phone");
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
+  const [kioskProfile, setKioskProfile] = useState<KioskProfile | null>(existing);
   const [modules, setModules] = useState<Tables<"modules">[]>([]);
   const [selectedModule, setSelectedModule] = useState("");
   const [selectedTrade, setSelectedTrade] = useState("");
@@ -73,16 +103,10 @@ export function KioskScreen({ onExit }: KioskScreenProps) {
       if (error) throw new Error(error.message || "Login failed");
       if (data?.error) throw new Error(data.error);
 
-      // Use the token_hash to establish a session
-      const { error: otpError } = await supabase.auth.verifyOtp({
-        email: data.email,
-        token_hash: data.token_hash,
-        type: "magiclink",
-      });
-
-      if (otpError) throw otpError;
-
-      toast.success("Logged in!");
+      const profile: KioskProfile = data.profile;
+      setKioskSession(profile);
+      setKioskProfile(profile);
+      toast.success(`Welcome, ${profile.display_name || "Worker"}!`);
       setStep("work");
     } catch (err: any) {
       toast.error(err.message || "Login failed");
@@ -91,23 +115,34 @@ export function KioskScreen({ onExit }: KioskScreenProps) {
     }
   };
 
+  const handleLogout = () => {
+    clearKioskSession();
+    setKioskProfile(null);
+    setPhone("");
+    setPin("");
+    setStep("phone");
+  };
+
   const handleStartWork = async () => {
     if (!selectedModule || !selectedTrade) {
       toast.error("Select module and trade");
       return;
     }
+    if (!kioskProfile) {
+      toast.error("Session expired. Please log in again.");
+      handleLogout();
+      return;
+    }
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
+      // Use the auth_user_id from the kiosk profile for the worker_id
       const { error } = await supabase.from("labour_claims").insert({
         module_id: selectedModule,
         trade: selectedTrade,
-        worker_id: user.id,
+        worker_id: kioskProfile.auth_user_id,
         quantity: Number(quantity) || 1,
         work_description: workDescription || null,
-        created_by: user.id,
+        created_by: kioskProfile.auth_user_id,
       });
 
       if (error) throw error;
@@ -126,18 +161,21 @@ export function KioskScreen({ onExit }: KioskScreenProps) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b border-border">
-        <Button variant="ghost" size="icon" onClick={onExit}>
+        <Button variant="ghost" size="icon" onClick={() => { clearKioskSession(); onExit(); }}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="font-display text-xl font-bold text-foreground">Labour Kiosk</h1>
+        {kioskProfile && (
+          <Button variant="ghost" size="sm" className="ml-auto text-muted-foreground" onClick={handleLogout}>
+            Logout
+          </Button>
+        )}
       </div>
 
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md space-y-6">
 
-          {/* Step: Phone */}
           {step === "phone" && (
             <div className="space-y-6 text-center">
               <div className="space-y-2">
@@ -161,7 +199,6 @@ export function KioskScreen({ onExit }: KioskScreenProps) {
             </div>
           )}
 
-          {/* Step: PIN */}
           {step === "pin" && (
             <div className="space-y-6 text-center">
               <div className="space-y-2">
@@ -184,12 +221,14 @@ export function KioskScreen({ onExit }: KioskScreenProps) {
             </div>
           )}
 
-          {/* Step: Work */}
           {step === "work" && (
             <div className="space-y-5">
               <div className="text-center space-y-1">
                 <CheckCircle2 className="h-10 w-10 text-primary mx-auto" />
                 <h2 className="font-display text-2xl font-bold text-foreground">Log Work</h2>
+                {kioskProfile?.display_name && (
+                  <p className="text-muted-foreground text-sm">Logged in as {kioskProfile.display_name}</p>
+                )}
               </div>
 
               <div className="space-y-2">

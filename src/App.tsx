@@ -9,6 +9,7 @@ import Login from "@/pages/Login";
 import Setup from "@/pages/Setup";
 import Dashboard from "@/pages/Dashboard";
 import Projects from "@/pages/Projects";
+import ProjectDetail from "@/pages/ProjectDetail";
 import Production from "@/pages/Production";
 import QualityControl from "@/pages/QualityControl";
 import Inventory from "@/pages/Inventory";
@@ -32,6 +33,7 @@ const App = () => (
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/projects" element={<Projects />} />
+              <Route path="/projects/:id" element={<ProjectDetail />} />
               <Route path="/production" element={<Production />} />
               <Route path="/qc" element={<QualityControl />} />
               <Route path="/inventory" element={<Inventory />} />

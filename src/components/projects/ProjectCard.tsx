@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { MapPin, Calendar, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -16,10 +17,11 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function ProjectCard({ project }: ProjectCardProps) {
+  const navigate = useNavigate();
   const statusClass = STATUS_COLORS[project.status ?? "planning"] ?? STATUS_COLORS.planning;
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/projects/${project.id}`)}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="font-display text-lg leading-tight">{project.name}</CardTitle>
