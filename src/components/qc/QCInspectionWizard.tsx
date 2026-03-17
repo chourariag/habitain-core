@@ -821,7 +821,7 @@ export function QCInspectionWizard({
                       </SelectContent>
                     </Select>
                     <Textarea
-                      className="mt-2 text-sm"
+                      className="mt-2 text-sm text-card-foreground bg-white/80 border-border placeholder:text-muted-foreground"
                       value={editableAnalysis.summary}
                       onChange={(e) =>
                         setEditableAnalysis((prev) =>
