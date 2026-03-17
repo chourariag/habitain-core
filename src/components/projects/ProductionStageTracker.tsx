@@ -12,9 +12,10 @@ export const PRODUCTION_STAGES = [
   "Insulation",
   "MEP Rough-In",
   "Drywall",
-  "MEP Final",
-  "Finishing",
   "Paint",
+  "MEP Final",
+  "Windows & Doors",
+  "Finishing",
   "QC Inspection",
   "Dispatch",
 ] as const;
