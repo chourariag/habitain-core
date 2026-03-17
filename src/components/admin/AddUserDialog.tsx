@@ -46,6 +46,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
       setEmail("");
       setPhone("");
       setRole("");
+      setKioskPin("");
       setOpen(false);
       onUserCreated();
     } catch (err: any) {
