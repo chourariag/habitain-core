@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { OfflineProvider } from "@/components/OfflineProvider";
+import { AuthProvider } from "@/components/AuthProvider";
 import { AppLayout } from "@/components/AppLayout";
 import Login from "@/pages/Login";
 import Setup from "@/pages/Setup";
@@ -27,23 +28,25 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/setup" element={<Setup />} />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route element={<AppLayout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/projects/:id" element={<ProjectDetail />} />
-              <Route path="/production" element={<Production />} />
-              <Route path="/qc" element={<QualityControl />} />
-              <Route path="/inventory" element={<Inventory />} />
-              <Route path="/materials" element={<MaterialRequests />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/settings" element={<AppSettings />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/setup" element={<Setup />} />
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route element={<AppLayout />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/projects/:id" element={<ProjectDetail />} />
+                <Route path="/production" element={<Production />} />
+                <Route path="/qc" element={<QualityControl />} />
+                <Route path="/inventory" element={<Inventory />} />
+                <Route path="/materials" element={<MaterialRequests />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/settings" element={<AppSettings />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </OfflineProvider>
     </TooltipProvider>
