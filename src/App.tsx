@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { OfflineProvider } from "@/components/OfflineProvider";
 import { AppLayout } from "@/components/AppLayout";
 import Login from "@/pages/Login";
+import Setup from "@/pages/Setup";
 import Dashboard from "@/pages/Dashboard";
 import Projects from "@/pages/Projects";
 import Production from "@/pages/Production";
