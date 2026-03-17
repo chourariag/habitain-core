@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, Plus, Layers } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { AddPanelDialog } from "./AddPanelDialog";
 import { ProductionStageTracker } from "./ProductionStageTracker";
+import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
+import { DispatchLogForm } from "@/components/site/DispatchLogForm";
+import { InstallationChecklist } from "@/components/site/InstallationChecklist";
 
 interface Panel {
   id: string;
@@ -30,6 +34,7 @@ interface Props {
   projectId: string;
   canEdit: boolean;
   canAdvanceStage: boolean;
+  userRole: string | null;
   onPanelCreated: () => void;
   onStageAdvanced: () => void;
 }
@@ -44,11 +49,29 @@ const STATUS_BADGE: Record<string, string> = {
   not_started: "bg-muted text-muted-foreground",
   in_progress: "bg-primary/20 text-primary",
   completed: "bg-success/20 text-success-foreground",
+  hold: "bg-destructive/20 text-destructive",
+  dispatched: "bg-accent/20 text-accent-foreground",
 };
 
-export function ModulePanelCard({ module, panels, projectId, canEdit, canAdvanceStage, onPanelCreated, onStageAdvanced }: Props) {
+export function ModulePanelCard({ module, panels, projectId, canEdit, canAdvanceStage, userRole, onPanelCreated, onStageAdvanced }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [addPanelOpen, setAddPanelOpen] = useState(false);
+  const [siteReady, setSiteReady] = useState(false);
+  const isDispatched = module.production_status === "dispatched" || module.current_stage === "Dispatch";
+  const isAtDispatchStage = module.current_stage === "Dispatch";
+
+  // Check site readiness status
+  useEffect(() => {
+    if (!expanded) return;
+    (async () => {
+      const { data } = await (supabase.from("site_readiness" as any) as any)
+        .select("is_complete")
+        .eq("module_id", module.id)
+        .eq("is_complete", true)
+        .limit(1);
+      setSiteReady((data as any[])?.length > 0);
+    })();
+  }, [expanded, module.id]);
 
   return (
     <div className="bg-card rounded-lg shadow-sm border border-border overflow-hidden">
@@ -71,7 +94,7 @@ export function ModulePanelCard({ module, panels, projectId, canEdit, canAdvance
             {TYPE_LABELS[module.module_type] ?? module.module_type} · {panels.length} panel{panels.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Badge variant="outline" className={STATUS_BADGE[module.production_status ?? "not_started"]}>
+        <Badge variant="outline" className={STATUS_BADGE[module.production_status ?? "not_started"] ?? STATUS_BADGE.not_started}>
           {(module.production_status ?? "not_started").replace(/_/g, " ")}
         </Badge>
       </button>
@@ -92,6 +115,35 @@ export function ModulePanelCard({ module, panels, projectId, canEdit, canAdvance
             />
           </div>
 
+          {/* Site Readiness — show at Dispatch stage */}
+          {isAtDispatchStage && !isDispatched && (
+            <SiteReadinessChecklist
+              moduleId={module.id}
+              userRole={userRole}
+              onReadinessConfirmed={() => setSiteReady(true)}
+            />
+          )}
+
+          {/* Dispatch Log — show at Dispatch stage after site readiness */}
+          {isAtDispatchStage && !isDispatched && (
+            <DispatchLogForm
+              moduleId={module.id}
+              moduleCode={module.module_code}
+              userRole={userRole}
+              siteReady={siteReady}
+              onDispatched={onStageAdvanced}
+            />
+          )}
+
+          {/* Installation Checklist — show after dispatch */}
+          {isDispatched && (
+            <InstallationChecklist
+              moduleId={module.id}
+              userRole={userRole}
+              onComplete={onStageAdvanced}
+            />
+          )}
+
           {/* Panels section */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -111,7 +163,7 @@ export function ModulePanelCard({ module, panels, projectId, canEdit, canAdvance
                   <div key={p.id} className="border border-border rounded-md p-3 bg-background space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs font-semibold text-foreground">{p.panel_code}</span>
-                      <Badge variant="outline" className={`text-[10px] ${STATUS_BADGE[p.production_status ?? "not_started"]}`}>
+                      <Badge variant="outline" className={`text-[10px] ${STATUS_BADGE[p.production_status ?? "not_started"] ?? STATUS_BADGE.not_started}`}>
                         {(p.production_status ?? "not_started").replace(/_/g, " ")}
                       </Badge>
                     </div>
