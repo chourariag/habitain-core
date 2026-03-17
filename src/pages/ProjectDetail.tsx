@@ -9,6 +9,8 @@ import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 import { AddModuleDialog } from "@/components/projects/AddModuleDialog";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
+import { SiteDiary } from "@/components/site/SiteDiary";
+import { HandoverPack } from "@/components/site/HandoverPack";
 
 const STATUS_COLORS: Record<string, string> = {
   planning: "bg-warning/20 text-warning-foreground border-warning/30",
