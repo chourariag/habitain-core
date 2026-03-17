@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { OfflineProvider } from "@/components/OfflineProvider";
 import { AppLayout } from "@/components/AppLayout";
 import Login from "@/pages/Login";
+import Setup from "@/pages/Setup";
 import Dashboard from "@/pages/Dashboard";
 import Projects from "@/pages/Projects";
 import Production from "@/pages/Production";
@@ -26,6 +27,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/setup" element={<Setup />} />
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
