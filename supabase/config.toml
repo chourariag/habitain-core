@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.kiosk-login]
 verify_jwt = false
+
+[functions.qc-analysis]
+verify_jwt = false
