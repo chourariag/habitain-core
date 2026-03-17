@@ -30,6 +30,10 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
       toast.error("Email and role are required");
       return;
     }
+    if (isKiosk && (!kioskPin || kioskPin.length !== 4)) {
+      toast.error("Set a 4-digit PIN for kiosk users");
+      return;
+    }
     setLoading(true);
     try {
       const result = await createUser(email, role as AppRole, loginType, phone || undefined);
