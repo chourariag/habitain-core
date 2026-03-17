@@ -172,8 +172,8 @@ export default function SiteHub() {
                   onClick={() => setSelectedProjectId(project.id)}
                   className={`w-full rounded-lg border p-4 text-left transition-snappy ${
                     isSelected
-                      ? "border-primary bg-primary/5 shadow-sm"
-                      : "border-border bg-card hover:border-primary/30 hover:bg-accent/20"
+                      ? "border-primary bg-card shadow-sm"
+                      : "border-border bg-card/80 hover:border-primary/30 hover:bg-card"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
