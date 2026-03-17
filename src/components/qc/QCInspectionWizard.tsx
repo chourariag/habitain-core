@@ -861,7 +861,7 @@ export function QCInspectionWizard({
                               });
                             }}
                           >
-                            <SelectTrigger className="mt-1 text-foreground">
+                            <SelectTrigger className="mt-1 text-card-foreground bg-white/80 border-border">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
