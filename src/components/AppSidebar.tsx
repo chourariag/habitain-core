@@ -41,11 +41,11 @@ export function AppSidebar() {
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-150",
+        "hidden md:flex flex-col bg-background border-r border-border transition-all duration-150",
         collapsed ? "w-16" : "w-60"
       )}
     >
-      <div className="flex items-center px-4 h-16 border-b border-sidebar-border">
+      <div className="flex items-center px-4 h-16 border-b border-border">
         <Logo size="sm" showText={!collapsed} />
       </div>
 
@@ -58,7 +58,7 @@ export function AppSidebar() {
               cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-snappy",
                 isActive
-                  ? "bg-accent text-accent-foreground"
+                  ? "bg-accent text-accent-foreground border-l-2 border-primary"
                   : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
               )
             }
@@ -69,7 +69,7 @@ export function AppSidebar() {
         ))}
       </nav>
 
-      <div className="border-t border-sidebar-border">
+      <div className="border-t border-border">
         <button
           onClick={signOut}
           className="flex items-center gap-3 px-5 py-3 w-full text-sm text-muted-foreground hover:text-destructive transition-snappy"
@@ -79,7 +79,7 @@ export function AppSidebar() {
         </button>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center justify-center h-12 w-full border-t border-sidebar-border text-muted-foreground hover:text-foreground transition-snappy"
+          className="flex items-center justify-center h-12 w-full border-t border-border text-muted-foreground hover:text-foreground transition-snappy"
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </button>

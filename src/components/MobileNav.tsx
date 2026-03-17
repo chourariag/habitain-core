@@ -11,6 +11,7 @@ import {
   FileSignature,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import logoImg from "@/assets/logo.png";
 
 const tabs = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
@@ -28,6 +29,9 @@ export function MobileNav() {
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-40 overflow-x-auto">
       <div className="flex items-center h-16 min-w-max px-1">
+        <div className="min-w-[3rem] flex items-center justify-center px-1">
+          <img src={logoImg} alt="H" width={28} height={28} className="rounded-full" />
+        </div>
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}
