@@ -36,7 +36,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
     }
     setLoading(true);
     try {
-      const result = await createUser(email, role as AppRole, loginType, phone || undefined);
+      const result = await createUser(email, role as AppRole, loginType, phone || undefined, isKiosk ? kioskPin : undefined);
       toast.success("User created successfully", {
         description: result.invite_link
           ? "Invite link generated. Share it with the user."
