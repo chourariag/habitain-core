@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Users, Box } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Users, Box, BookOpen, FileText } from "lucide-react";
 import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 import { AddModuleDialog } from "@/components/projects/AddModuleDialog";
