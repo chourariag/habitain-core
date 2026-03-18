@@ -227,7 +227,7 @@ export default function SiteHub() {
                     <TabsTrigger value="diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
                     <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Pack</TabsTrigger>
                     <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
-
+                  </TabsList>
                   <TabsContent value="pipeline" className="space-y-4">
                     {/* Project-level Site Readiness */}
                     <div className="bg-card border border-border rounded-lg p-4 space-y-3">
