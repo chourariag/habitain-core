@@ -115,14 +115,7 @@ export function ModulePanelCard({ module, panels, projectId, canEdit, canAdvance
             />
           </div>
 
-          {/* Site Readiness — show at Dispatch stage */}
-          {isAtDispatchStage && !isDispatched && (
-            <SiteReadinessChecklist
-              moduleId={module.id}
-              userRole={userRole}
-              onReadinessConfirmed={() => setSiteReady(true)}
-            />
-          )}
+          {/* Site Readiness is now managed at project level on Site Hub */}
 
           {/* Dispatch Log — show at Dispatch stage after site readiness */}
           {isAtDispatchStage && !isDispatched && (
