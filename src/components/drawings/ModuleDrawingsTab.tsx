@@ -51,6 +51,7 @@ export function ModuleDrawingsTab({ projectId, moduleId, projectName }: Props) {
 
   const activeDrawings = useMemo(() => drawings.filter((d: any) => d.status === "active"), [drawings]);
   const archivedDrawings = useMemo(() => drawings.filter((d: any) => d.status === "archived"), [drawings]);
+  const isModuleSpecific = (d: any) => d.module_id === moduleId;
 
   const handleRaiseDQ = async () => {
     if (!dqForm.description) { toast.error("Description is required"); return; }
