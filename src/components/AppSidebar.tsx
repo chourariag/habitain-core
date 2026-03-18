@@ -2,18 +2,22 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, FolderKanban, Users, Settings, Factory,
   ClipboardCheck, Package, PackagePlus, ChevronLeft, ChevronRight,
-  LogOut, Truck, Wrench, FileSignature, PenTool,
+  LogOut, Truck, Wrench, FileSignature, PenTool, Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { Logo } from "./Logo";
+import { supabase } from "@/integrations/supabase/client";
 
-const navItems = [
+const DESIGN_ROLES = ["principal_architect", "project_architect", "structural_architect", "managing_director", "super_admin"];
+
+const baseNavItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/production", label: "Production", icon: Factory },
   { to: "/site-hub", label: "Site Hub", icon: Truck },
+  { to: "/design", label: "Design", icon: Compass, roles: DESIGN_ROLES },
   { to: "/drawings", label: "Drawings", icon: PenTool },
   { to: "/qc", label: "Quality", icon: ClipboardCheck },
   { to: "/inventory", label: "Inventory", icon: Package },
