@@ -1420,6 +1420,7 @@ export type Database = {
           labour_stay_notes: string | null
           module_id: string
           nearest_hardware_shop: boolean
+          project_id: string | null
           safety_equipment: boolean
           shop_address: string | null
           shop_name: string | null
@@ -1447,6 +1448,7 @@ export type Database = {
           labour_stay_notes?: string | null
           module_id: string
           nearest_hardware_shop?: boolean
+          project_id?: string | null
           safety_equipment?: boolean
           shop_address?: string | null
           shop_name?: string | null
@@ -1474,6 +1476,7 @@ export type Database = {
           labour_stay_notes?: string | null
           module_id?: string
           nearest_hardware_shop?: boolean
+          project_id?: string | null
           safety_equipment?: boolean
           shop_address?: string | null
           shop_name?: string | null
@@ -1492,6 +1495,13 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_readiness_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1560,6 +1570,7 @@ export type Database = {
         | "structural_architect"
         | "managing_director"
         | "super_admin"
+        | "principal_architect"
       login_type: "email" | "otp"
     }
     CompositeTypes: {
@@ -1714,6 +1725,7 @@ export const Constants = {
         "structural_architect",
         "managing_director",
         "super_admin",
+        "principal_architect",
       ],
       login_type: ["email", "otp"],
     },
