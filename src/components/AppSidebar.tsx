@@ -1,8 +1,8 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, FolderKanban, Users, Settings, Factory,
-  ClipboardCheck, Package, PackagePlus, ChevronLeft, ChevronRight,
-  LogOut, Truck, Wrench, FileSignature, PenTool, Compass,
+  ClipboardCheck, Package, ChevronLeft, ChevronRight,
+  LogOut, Truck, Wrench, FileSignature, Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
