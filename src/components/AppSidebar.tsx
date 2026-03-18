@@ -30,7 +30,20 @@ const baseNavItems = [
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.rpc("get_user_role", { _user_id: user.id }).then(({ data }) => setUserRole(data as string | null));
+  }, [user]);
+
+  const navItems = baseNavItems.filter((item) => {
+    if ("roles" in item && item.roles) {
+      return userRole ? item.roles.includes(userRole) : false;
+    }
+    return true;
+  });
 
   return (
     <aside
