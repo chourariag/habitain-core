@@ -1408,42 +1408,81 @@ export type Database = {
         Row: {
           crane_booked: boolean
           created_at: string | null
+          dg_generator: boolean
+          dg_generator_notes: string | null
+          dry_run_video_url: string | null
           foundation_ready: boolean
           id: string
           is_complete: boolean
+          labour_food: boolean
+          labour_food_notes: string | null
+          labour_stay: boolean
+          labour_stay_notes: string | null
           module_id: string
+          nearest_hardware_shop: boolean
           safety_equipment: boolean
+          shop_address: string | null
+          shop_name: string | null
+          shop_phone: string | null
           site_access_clear: boolean
           submitted_at: string | null
           submitted_by: string
+          supervisor_stay: boolean
+          supervisor_stay_notes: string | null
           team_briefed: boolean
           updated_at: string | null
         }
         Insert: {
           crane_booked?: boolean
           created_at?: string | null
+          dg_generator?: boolean
+          dg_generator_notes?: string | null
+          dry_run_video_url?: string | null
           foundation_ready?: boolean
           id?: string
           is_complete?: boolean
+          labour_food?: boolean
+          labour_food_notes?: string | null
+          labour_stay?: boolean
+          labour_stay_notes?: string | null
           module_id: string
+          nearest_hardware_shop?: boolean
           safety_equipment?: boolean
+          shop_address?: string | null
+          shop_name?: string | null
+          shop_phone?: string | null
           site_access_clear?: boolean
           submitted_at?: string | null
           submitted_by: string
+          supervisor_stay?: boolean
+          supervisor_stay_notes?: string | null
           team_briefed?: boolean
           updated_at?: string | null
         }
         Update: {
           crane_booked?: boolean
           created_at?: string | null
+          dg_generator?: boolean
+          dg_generator_notes?: string | null
+          dry_run_video_url?: string | null
           foundation_ready?: boolean
           id?: string
           is_complete?: boolean
+          labour_food?: boolean
+          labour_food_notes?: string | null
+          labour_stay?: boolean
+          labour_stay_notes?: string | null
           module_id?: string
+          nearest_hardware_shop?: boolean
           safety_equipment?: boolean
+          shop_address?: string | null
+          shop_name?: string | null
+          shop_phone?: string | null
           site_access_clear?: boolean
           submitted_at?: string | null
           submitted_by?: string
+          supervisor_stay?: boolean
+          supervisor_stay_notes?: string | null
           team_briefed?: boolean
           updated_at?: string | null
         }
