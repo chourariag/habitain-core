@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Users, Box, BookOpen, FileText } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Users, Box, BookOpen, FileText, Phone, Mail } from "lucide-react";
 import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 import { AddModuleDialog } from "@/components/projects/AddModuleDialog";
@@ -52,7 +52,7 @@ export default function ProjectDetail() {
 
     const moduleIds = (modulesRes.data ?? []).map((m: any) => m.id);
     if (moduleIds.length > 0) {
-      const { data: panelsData } = await (supabase.from("panels" as any) as any)
+      const { data: panelsData } = await (supabase.from("panels") as any)
         .select("*").in("module_id", moduleIds).eq("is_archived", false).order("created_at", { ascending: true });
       const grouped: Record<string, any[]> = {};
       (panelsData ?? []).forEach((p: any) => {
@@ -77,9 +77,7 @@ export default function ProjectDetail() {
     return (
       <div className="p-6 text-center">
         <p className="text-muted-foreground">Project not found.</p>
-        <Button variant="ghost" className="mt-4" onClick={() => navigate("/projects")}>
-          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Projects
-        </Button>
+        <Button variant="ghost" className="mt-4" onClick={() => navigate("/projects")}><ArrowLeft className="h-4 w-4 mr-2" /> Back to Projects</Button>
       </div>
     );
   }
@@ -87,6 +85,7 @@ export default function ProjectDetail() {
   const dynamicStatus = computeProjectStatus(modules, hasHandover);
   const statusCfg = PROJECT_STATUS_CONFIG[dynamicStatus];
   const totalPanels = Object.values(panels).reduce((sum, arr) => sum + arr.length, 0);
+  const proj = project as any;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -99,37 +98,39 @@ export default function ProjectDetail() {
             <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{project.name}</h1>
             <Badge className={statusCfg.badgeClass}>{statusCfg.label}</Badge>
           </div>
-          {project.client_name && (
-            <p className="text-muted-foreground mt-1">{project.client_name}</p>
-          )}
+          {project.client_name && <p className="text-muted-foreground mt-1">{project.client_name}</p>}
         </div>
       </div>
 
       <div className="bg-card rounded-lg p-4 shadow-sm flex flex-wrap gap-x-6 gap-y-2 text-sm">
         {project.location && (
           <div className="flex items-center gap-2 text-muted-foreground">
-            <MapPin className="h-4 w-4 shrink-0" />
-            <span>{project.location}</span>
+            <MapPin className="h-4 w-4 shrink-0" /><span>{project.location}</span>
           </div>
         )}
         {project.type && (
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Building2 className="h-4 w-4 shrink-0" />
-            <span>{project.type}</span>
+            <Building2 className="h-4 w-4 shrink-0" /><span>{project.type}{proj.construction_type ? ` · ${proj.construction_type}` : ""}</span>
           </div>
         )}
         <div className="flex items-center gap-2 text-muted-foreground">
           <Calendar className="h-4 w-4 shrink-0" />
-          <span>
-            {project.start_date ? format(new Date(project.start_date), "MMM yyyy") : "TBD"}
-            {" → "}
-            {project.est_completion ? format(new Date(project.est_completion), "MMM yyyy") : "TBD"}
-          </span>
+          <span>{project.start_date ? format(new Date(project.start_date), "MMM yyyy") : "TBD"} → {project.est_completion ? format(new Date(project.est_completion), "MMM yyyy") : "TBD"}</span>
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
           <Box className="h-4 w-4 shrink-0" />
           <span>{modules.length} module{modules.length !== 1 ? "s" : ""} · {totalPanels} panel{totalPanels !== 1 ? "s" : ""}</span>
         </div>
+        {proj.client_phone && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Phone className="h-4 w-4 shrink-0" /><span>{proj.client_phone}</span>
+          </div>
+        )}
+        {proj.client_email && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Mail className="h-4 w-4 shrink-0" /><a href={`mailto:${proj.client_email}`} className="hover:underline">{proj.client_email}</a>
+          </div>
+        )}
       </div>
 
       <Tabs defaultValue="modules">
@@ -144,16 +145,12 @@ export default function ProjectDetail() {
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold text-foreground">Modules & Panels</h2>
             {canEdit && (
-              <Button size="sm" onClick={() => setAddModuleOpen(true)}>
-                <Plus className="h-4 w-4 mr-1" /> Add Module
-              </Button>
+              <Button size="sm" onClick={() => setAddModuleOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Module</Button>
             )}
           </div>
           {modules.length === 0 ? (
             <div className="bg-card rounded-lg p-8 text-center shadow-sm">
-              <p className="text-muted-foreground text-sm">
-                {canEdit ? 'No modules yet. Click "Add Module" to create one.' : "No modules have been created for this project yet."}
-              </p>
+              <p className="text-muted-foreground text-sm">{canEdit ? 'No modules yet. Click "Add Module" to create one.' : "No modules have been created."}</p>
             </div>
           ) : (
             <div className="space-y-3">

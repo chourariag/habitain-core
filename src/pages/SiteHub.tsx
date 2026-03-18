@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, MapPinned, Truck, BookOpen, FileText, Boxes } from "lucide-react";
+import { Loader2, MapPinned, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle } from "lucide-react";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
@@ -17,6 +17,8 @@ export default function SiteHub() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [installationComplete, setInstallationComplete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [siteReadinessMap, setSiteReadinessMap] = useState<Record<string, boolean>>({});
+  const [dispatchConditions, setDispatchConditions] = useState<Record<string, { qc: boolean; inspection: boolean; site: boolean; signoff: boolean }>>({});
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -28,10 +30,16 @@ export default function SiteHub() {
     });
 
     const { data: projectsData } = await supabase
-      .from("projects").select("*").eq("is_archived", false)
-      .order("created_at", { ascending: false });
+      .from("projects").select("*").eq("is_archived", false).order("created_at", { ascending: false });
 
-    const activeProjects = projectsData ?? [];
+    // Deduplicate by project ID
+    const seen = new Set<string>();
+    const activeProjects = (projectsData ?? []).filter((p) => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+
     const projectIds = activeProjects.map((p) => p.id);
 
     const { data: modulesData } = projectIds.length
@@ -40,7 +48,7 @@ export default function SiteHub() {
 
     const moduleIds = (modulesData ?? []).map((m) => m.id);
     const { data: panelsData } = moduleIds.length
-      ? await (supabase.from("panels" as any) as any).select("*").eq("is_archived", false).in("module_id", moduleIds).order("created_at", { ascending: true })
+      ? await (supabase.from("panels") as any).select("*").eq("is_archived", false).in("module_id", moduleIds).order("created_at", { ascending: true })
       : { data: [] };
 
     const groupedPanels: Record<string, any[]> = {};
@@ -48,6 +56,46 @@ export default function SiteHub() {
       if (!groupedPanels[panel.module_id]) groupedPanels[panel.module_id] = [];
       groupedPanels[panel.module_id].push(panel);
     });
+
+    // Fetch site readiness
+    if (moduleIds.length) {
+      const { data: readinessData } = await (supabase.from("site_readiness") as any)
+        .select("module_id,is_complete").in("module_id", moduleIds).eq("is_complete", true);
+      const map: Record<string, boolean> = {};
+      (readinessData ?? []).forEach((r: any) => { map[r.module_id] = true; });
+      setSiteReadinessMap(map);
+    }
+
+    // Fetch dispatch conditions for pipeline view
+    if (moduleIds.length) {
+      const [ncrRes, inspRes, signoffRes] = await Promise.all([
+        supabase.from("ncr_register").select("inspection_id,status").eq("is_archived", false).in("status", ["open", "critical_open"]),
+        supabase.from("qc_inspections").select("id,module_id,dispatch_decision").in("module_id", moduleIds),
+        supabase.from("dispatch_signoffs").select("module_id").in("module_id", moduleIds),
+      ]);
+
+      const openNCRInspections = new Set((ncrRes.data ?? []).map((n) => n.inspection_id));
+      const inspectionsByModule: Record<string, any[]> = {};
+      (inspRes.data ?? []).forEach((i) => {
+        if (!inspectionsByModule[i.module_id]) inspectionsByModule[i.module_id] = [];
+        inspectionsByModule[i.module_id].push(i);
+      });
+      const signoffSet = new Set((signoffRes.data ?? []).map((s) => s.module_id));
+
+      const conditions: Record<string, { qc: boolean; inspection: boolean; site: boolean; signoff: boolean }> = {};
+      moduleIds.forEach((mId) => {
+        const moduleInspections = inspectionsByModule[mId] ?? [];
+        const hasOpenNCR = moduleInspections.some((i: any) => openNCRInspections.has(i.id));
+        const hasPassStage = moduleInspections.some((i: any) => i.dispatch_decision === "PASS STAGE");
+        conditions[mId] = {
+          qc: !hasOpenNCR,
+          inspection: hasPassStage,
+          site: !!siteReadinessMap[mId],
+          signoff: signoffSet.has(mId),
+        };
+      });
+      setDispatchConditions(conditions);
+    }
 
     setProjects(activeProjects);
     setModules(modulesData ?? []);
@@ -59,12 +107,10 @@ export default function SiteHub() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Realtime: sync modules changes
   useEffect(() => {
     const channel = supabase
       .channel("sitehub-modules")
       .on("postgres_changes", { event: "*", schema: "public", table: "modules" }, () => { fetchData(); })
-      .on("postgres_changes", { event: "*", schema: "public", table: "production_stages" }, () => { fetchData(); })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [fetchData]);
@@ -76,7 +122,7 @@ export default function SiteHub() {
     const check = async () => {
       if (!selectedModules.length) { setInstallationComplete(false); return; }
       const moduleIds = selectedModules.map((m) => m.id);
-      const { data } = await (supabase.from("installation_checklist" as any) as any)
+      const { data } = await (supabase.from("installation_checklist") as any)
         .select("module_id,is_complete").in("module_id", moduleIds).eq("is_complete", true);
       const completedIds = new Set((data ?? []).map((r: any) => r.module_id));
       setInstallationComplete(moduleIds.every((id) => completedIds.has(id)));
@@ -84,42 +130,30 @@ export default function SiteHub() {
     check();
   }, [selectedModules]);
 
-  // Site readiness data for status calculation
-  const [siteReadinessMap, setSiteReadinessMap] = useState<Record<string, boolean>>({});
-
-  useEffect(() => {
-    const fetchSiteReadiness = async () => {
-      const moduleIds = modules.map((m) => m.id);
-      if (!moduleIds.length) return;
-      const { data } = await (supabase.from("site_readiness" as any) as any)
-        .select("module_id,is_complete").in("module_id", moduleIds).eq("is_complete", true);
-      const map: Record<string, boolean> = {};
-      (data ?? []).forEach((r: any) => { map[r.module_id] = true; });
-      setSiteReadinessMap(map);
-    };
-    fetchSiteReadiness();
-  }, [modules]);
-
   const getDispatchSummary = (projectId: string) => {
     const pm = modules.filter((m) => m.project_id === projectId);
-    const total = pm.length;
-    if (!total) return { label: "No modules", tone: "muted" as const };
+    if (!pm.length) return { label: "No modules", tone: "muted" as const };
     const dispatched = pm.filter((m) => m.production_status === "dispatched" || m.current_stage === "Dispatch").length;
-    if (dispatched === total) return { label: "Dispatched", tone: "success" as const };
+    if (dispatched === pm.length) return { label: "Dispatched", tone: "success" as const };
     if (dispatched > 0) return { label: "Partially Dispatched", tone: "warning" as const };
-    const anySiteReady = pm.some((m) => siteReadinessMap[m.id]);
-    if (anySiteReady) return { label: "Site Ready", tone: "success" as const };
+    if (pm.some((m) => siteReadinessMap[m.id])) return { label: "Site Ready", tone: "success" as const };
     return { label: "Pending Dispatch", tone: "warning" as const };
   };
 
-  const badgeClass = (tone: "muted" | "warning" | "success" | "primary") => {
+  const badgeClass = (tone: string) => {
     switch (tone) {
       case "warning": return "bg-warning text-warning-foreground";
       case "success": return "bg-primary text-primary-foreground";
-      case "primary": return "bg-primary text-primary-foreground";
       default: return "bg-muted text-muted-foreground";
     }
   };
+
+  const Cond = ({ met, label }: { met: boolean; label: string }) => (
+    <div className="flex items-center gap-1.5 text-xs">
+      {met ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}
+      <span className={met ? "text-foreground" : "text-muted-foreground"}>{label}</span>
+    </div>
+  );
 
   if (loading) {
     return <div className="flex justify-center items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
@@ -133,7 +167,7 @@ export default function SiteHub() {
       </div>
 
       {projects.length === 0 ? (
-        <Card><CardContent className="py-10 text-center"><p className="text-sm text-muted-foreground">No active projects available in Site Hub yet.</p></CardContent></Card>
+        <Card><CardContent className="py-10 text-center"><p className="text-sm text-muted-foreground">No active projects.</p></CardContent></Card>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
           <div className="space-y-3">
@@ -141,14 +175,8 @@ export default function SiteHub() {
               const summary = getDispatchSummary(project.id);
               const isSelected = project.id === selectedProjectId;
               return (
-                <button
-                  key={project.id}
-                  type="button"
-                  onClick={() => setSelectedProjectId(project.id)}
-                  className={`w-full rounded-lg border p-4 text-left transition-snappy ${
-                    isSelected ? "border-primary bg-card shadow-sm" : "border-border bg-card/80 hover:border-primary/30 hover:bg-card"
-                  }`}
-                >
+                <button key={project.id} type="button" onClick={() => setSelectedProjectId(project.id)}
+                  className={`w-full rounded-lg border p-4 text-left transition-snappy ${isSelected ? "border-primary bg-card shadow-sm" : "border-border bg-card/80 hover:border-primary/30 hover:bg-card"}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className="font-semibold text-foreground truncate">{project.name}</h2>
@@ -157,9 +185,7 @@ export default function SiteHub() {
                     <Badge variant="outline" className={badgeClass(summary.tone)}>{summary.label}</Badge>
                   </div>
                   <div className="flex flex-wrap gap-3 mt-3 text-xs text-muted-foreground">
-                    {project.location && (
-                      <span className="inline-flex items-center gap-1"><MapPinned className="h-3.5 w-3.5" /> {project.location}</span>
-                    )}
+                    {project.location && <span className="inline-flex items-center gap-1"><MapPinned className="h-3.5 w-3.5" /> {project.location}</span>}
                     <span className="inline-flex items-center gap-1"><Boxes className="h-3.5 w-3.5" /> {modules.filter((m) => m.project_id === project.id).length} modules</span>
                   </div>
                 </button>
@@ -173,8 +199,8 @@ export default function SiteHub() {
                 <div className="bg-card border border-border rounded-lg p-4 md:p-5">
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div>
-                      <h2 className="font-display text-xl font-semibold text-card-foreground">{selectedProject.name}</h2>
-                      <p className="text-sm text-muted-foreground mt-1">{selectedProject.client_name ? `Client: ${selectedProject.client_name}` : "No client assigned"}</p>
+                      <h2 className="font-display text-xl font-semibold text-foreground">{selectedProject.name}</h2>
+                      <p className="text-sm text-muted-foreground mt-1">{selectedProject.client_name ? `Client: ${selectedProject.client_name}` : "No client"}</p>
                     </div>
                     <Badge variant="outline" className={badgeClass(getDispatchSummary(selectedProject.id).tone)}>
                       {getDispatchSummary(selectedProject.id).label}
@@ -191,25 +217,35 @@ export default function SiteHub() {
 
                   <TabsContent value="pipeline" className="space-y-4">
                     {selectedModules.length === 0 ? (
-                      <Card><CardContent className="py-10 text-center"><p className="text-sm text-muted-foreground">No modules have been added to this project yet.</p></CardContent></Card>
+                      <Card><CardContent className="py-10 text-center"><p className="text-sm text-muted-foreground">No modules added yet.</p></CardContent></Card>
                     ) : (
-                      selectedModules.map((module) => (
-                        <ModulePanelCard key={module.id} module={module} panels={panelsByModule[module.id] ?? []} projectId={selectedProject.id} canEdit={false} canAdvanceStage={false} userRole={userRole} onPanelCreated={fetchData} onStageAdvanced={fetchData} />
-                      ))
+                      selectedModules.map((module) => {
+                        const conds = dispatchConditions[module.id];
+                        return (
+                          <div key={module.id} className="space-y-2">
+                            <ModulePanelCard module={module} panels={panelsByModule[module.id] ?? []} projectId={selectedProject.id} canEdit={false} canAdvanceStage={false} userRole={userRole} onPanelCreated={fetchData} onStageAdvanced={fetchData} />
+                            {conds && (module.current_stage === "Dispatch" || module.current_stage === "QC Inspection") && (
+                              <div className="bg-card border border-border rounded-md p-3 grid grid-cols-2 gap-2">
+                                <Cond met={conds.qc} label="QC Passed" />
+                                <Cond met={conds.inspection} label="Final Inspection" />
+                                <Cond met={conds.site} label="Site Readiness" />
+                                <Cond met={conds.signoff} label="Production Head Sign-off" />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
                     )}
                   </TabsContent>
 
-                  <TabsContent value="diary" className="space-y-4">
-                    <SiteDiary projectId={selectedProject.id} userRole={userRole} />
-                  </TabsContent>
-
-                  <TabsContent value="handover" className="space-y-4">
+                  <TabsContent value="diary"><SiteDiary projectId={selectedProject.id} userRole={userRole} /></TabsContent>
+                  <TabsContent value="handover">
                     <HandoverPack projectId={selectedProject.id} clientName={selectedProject.client_name} userRole={userRole} installationComplete={installationComplete} onHandedOver={fetchData} />
                   </TabsContent>
                 </Tabs>
               </>
             ) : (
-              <Card><CardContent className="py-10 text-center"><p className="text-sm text-muted-foreground">Select a project to open its site pipeline.</p></CardContent></Card>
+              <Card><CardContent className="py-10 text-center"><p className="text-sm text-muted-foreground">Select a project.</p></CardContent></Card>
             )}
           </div>
         </div>

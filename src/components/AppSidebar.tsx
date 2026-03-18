@@ -1,19 +1,8 @@
 import { NavLink } from "react-router-dom";
 import {
-  LayoutDashboard,
-  FolderKanban,
-  Users,
-  Settings,
-  Factory,
-  ClipboardCheck,
-  Package,
-  PackagePlus,
-  ChevronLeft,
-  ChevronRight,
-  LogOut,
-  Truck,
-  Wrench,
-  FileSignature,
+  LayoutDashboard, FolderKanban, Users, Settings, Factory,
+  ClipboardCheck, Package, PackagePlus, ChevronLeft, ChevronRight,
+  LogOut, Truck, Wrench, FileSignature,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -57,10 +46,8 @@ export function AppSidebar() {
             to={item.to}
             className={({ isActive }) =>
               cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-snappy",
-                isActive
-                  ? "font-bold"
-                  : "hover:bg-accent/50"
+                "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-150",
+                isActive ? "font-bold" : "hover:bg-[#F7F7F7]"
               )
             }
             style={({ isActive }) =>
@@ -78,7 +65,7 @@ export function AppSidebar() {
       <div style={{ borderTop: "1px solid #E0E0E0" }}>
         <button
           onClick={signOut}
-          className="flex items-center gap-3 px-5 py-3 w-full text-sm transition-snappy"
+          className="flex items-center gap-3 px-5 py-3 w-full text-sm transition-all duration-150"
           style={{ color: "#666666" }}
           onMouseEnter={(e) => (e.currentTarget.style.color = "#F40009")}
           onMouseLeave={(e) => (e.currentTarget.style.color = "#666666")}
@@ -88,7 +75,7 @@ export function AppSidebar() {
         </button>
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center justify-center h-12 w-full transition-snappy"
+          className="flex items-center justify-center h-12 w-full transition-all duration-150"
           style={{ borderTop: "1px solid #E0E0E0", color: "#666666" }}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
