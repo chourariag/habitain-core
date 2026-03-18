@@ -4,7 +4,6 @@ import {
   FolderKanban,
   Factory,
   ClipboardCheck,
-  PackagePlus,
   Users,
   Truck,
   Wrench,
