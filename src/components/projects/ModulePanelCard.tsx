@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight, Plus, Layers } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddPanelDialog } from "./AddPanelDialog";
 import { ProductionStageTracker } from "./ProductionStageTracker";
-import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
+
 import { DispatchLogForm } from "@/components/site/DispatchLogForm";
 import { InstallationChecklist } from "@/components/site/InstallationChecklist";
 
