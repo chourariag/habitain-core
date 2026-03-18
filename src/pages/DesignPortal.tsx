@@ -996,8 +996,24 @@ export default function DesignPortal() {
             <CardContent className="space-y-3">
               {selectedConsultants.length === 0 && <p className="text-sm text-muted-foreground">No consultants added.</p>}
               {selectedConsultants.map((c: any) => (
-                <div key={c.id} className="border border-border rounded-lg p-3 space-y-2">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <div key={c.id} className="border border-border rounded-lg p-4 space-y-3">
+                  {/* Header row: Name, Type, Status badge */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-semibold text-sm">{c.name}</span>
+                      <span className="text-xs text-muted-foreground">({c.consultant_type})</span>
+                    </div>
+                    <Badge variant="outline" style={
+                      c.status === "approved" ? { backgroundColor: "#E8F2ED", color: "#006039", border: "none" } :
+                      c.status === "revisions_requested" ? { backgroundColor: "#FFF0F0", color: "#F40009", border: "none" } :
+                      c.status === "under_review" ? { backgroundColor: "#FFF8E8", color: "#D4860A", border: "none" } :
+                      c.status === "drawings_received" ? { backgroundColor: "#E8F0FE", color: "#1A73E8", border: "none" } :
+                      { backgroundColor: "#F5F5F5", color: "#666666", border: "none" }
+                    }>{consultantStatusLabel(c.status)}</Badge>
+                  </div>
+
+                  {/* Editable fields */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                     <div>
                       <Label className="text-[10px]">Type</Label>
                       <Select value={c.consultant_type} onValueChange={(v) => updateConsultant(c.id, { consultant_type: v })} disabled={!canUpload}>
@@ -1033,14 +1049,20 @@ export default function DesignPortal() {
                       </Select>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-1.5 text-xs">
-                      <Checkbox checked={c.review_complete} onCheckedChange={(v) => updateConsultant(c.id, { review_complete: !!v })} disabled={!canUpload} />
-                      Review Complete
+
+                  {/* Toggles row - clearly visible */}
+                  <div className="flex flex-wrap items-center gap-4 pt-1 border-t border-border">
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <Checkbox checked={c.drawings_uploaded} onCheckedChange={(v) => updateConsultant(c.id, { drawings_uploaded: !!v })} disabled={!canUpload} />
+                      <span>Drawings Received</span>
                     </label>
-                    <label className="flex items-center gap-1.5 text-xs">
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <Checkbox checked={c.review_complete} onCheckedChange={(v) => updateConsultant(c.id, { review_complete: !!v })} disabled={!canUpload} />
+                      <span>Review Complete</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
                       <Checkbox checked={c.approved} onCheckedChange={(v) => updateConsultant(c.id, { approved: !!v })} disabled={!canUpload} />
-                      Approved
+                      <span>Approved</span>
                     </label>
                   </div>
                 </div>

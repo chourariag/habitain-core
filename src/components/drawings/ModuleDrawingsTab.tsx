@@ -173,11 +173,12 @@ export function ModuleDrawingsTab({ projectId, moduleId, projectName }: Props) {
       {activeDrawings.length === 0 && <p className="text-xs text-muted-foreground py-4 text-center">No drawings linked.</p>}
 
       {activeDrawings.map((d: any) => (
-        <div key={d.id} className="flex items-center justify-between gap-2 p-2 rounded border border-border">
+        <div key={d.id} className={`flex items-center justify-between gap-2 p-2 rounded border ${moduleId && isModuleSpecific(d) ? "border-primary/50 bg-primary/5" : "border-border"}`}>
           <div className="flex items-center gap-2 min-w-0">
             <FileText className="h-4 w-4 shrink-0" style={{ color: "#006039" }} />
             <span className="font-mono text-xs font-semibold">{d.drawing_id_code}</span>
             <span className="text-[10px]" style={{ color: "#999" }}>{d.drawing_type} · R{d.revision}</span>
+            {moduleId && isModuleSpecific(d) && <Badge variant="outline" className="text-[9px]" style={{ backgroundColor: "#E8F2ED", color: "#006039", border: "none" }}>Module</Badge>}
           </div>
           <a href={d.file_url} target="_blank" rel="noopener noreferrer">
             <Button variant="ghost" size="icon" className="h-7 w-7"><Download className="h-3.5 w-3.5" /></Button>
