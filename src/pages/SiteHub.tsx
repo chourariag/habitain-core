@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, MapPinned, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, MapPinned, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck } from "lucide-react";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
+import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
 import type { Tables } from "@/integrations/supabase/types";
 
 export default function SiteHub() {
@@ -19,6 +21,7 @@ export default function SiteHub() {
   const [loading, setLoading] = useState(true);
   const [siteReadinessMap, setSiteReadinessMap] = useState<Record<string, boolean>>({});
   const [dispatchConditions, setDispatchConditions] = useState<Record<string, { qc: boolean; inspection: boolean; site: boolean; signoff: boolean }>>({});
+  const [readinessDialogModule, setReadinessDialogModule] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -58,12 +61,12 @@ export default function SiteHub() {
     });
 
     // Fetch site readiness
+    let readinessMap: Record<string, boolean> = {};
     if (moduleIds.length) {
       const { data: readinessData } = await (supabase.from("site_readiness") as any)
         .select("module_id,is_complete").in("module_id", moduleIds).eq("is_complete", true);
-      const map: Record<string, boolean> = {};
-      (readinessData ?? []).forEach((r: any) => { map[r.module_id] = true; });
-      setSiteReadinessMap(map);
+      (readinessData ?? []).forEach((r: any) => { readinessMap[r.module_id] = true; });
+      setSiteReadinessMap(readinessMap);
     }
 
     // Fetch dispatch conditions for pipeline view
@@ -90,7 +93,7 @@ export default function SiteHub() {
         conditions[mId] = {
           qc: !hasOpenNCR,
           inspection: hasPassStage,
-          site: !!siteReadinessMap[mId],
+          site: !!readinessMap[mId],
           signoff: signoffSet.has(mId),
         };
       });
@@ -140,18 +143,20 @@ export default function SiteHub() {
     return { label: "Pending Dispatch", tone: "warning" as const };
   };
 
-  const badgeClass = (tone: string) => {
+  const badgeStyle = (tone: string): React.CSSProperties => {
     switch (tone) {
-      case "warning": return "bg-warning text-warning-foreground";
-      case "success": return "bg-primary text-primary-foreground";
-      default: return "bg-muted text-muted-foreground";
+      case "warning": return { backgroundColor: "#FFF8E8", color: "#D4860A", border: "none" };
+      case "success": return { backgroundColor: "#E8F2ED", color: "#006039", border: "none" };
+      default: return { backgroundColor: "#F5F5F5", color: "#666666", border: "none" };
     }
   };
 
+  const canManageReadiness = ["site_installation_mgr", "super_admin", "managing_director"].includes(userRole ?? "");
+
   const Cond = ({ met, label }: { met: boolean; label: string }) => (
     <div className="flex items-center gap-1.5 text-xs">
-      {met ? <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> : <XCircle className="h-3.5 w-3.5 text-destructive" />}
-      <span className={met ? "text-foreground" : "text-muted-foreground"}>{label}</span>
+      {met ? <CheckCircle2 className="h-3.5 w-3.5" style={{ color: "#006039" }} /> : <XCircle className="h-3.5 w-3.5" style={{ color: "#F40009" }} />}
+      <span style={{ color: met ? "#1A1A1A" : "#999999" }}>{label}</span>
     </div>
   );
 
@@ -163,7 +168,7 @@ export default function SiteHub() {
     <div className="p-4 md:p-6 space-y-6">
       <div>
         <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Site Hub</h1>
-        <p className="text-muted-foreground text-sm mt-1">Dispatch-to-handover workflows for active projects</p>
+        <p className="text-sm mt-1" style={{ color: "#666666" }}>Dispatch-to-handover workflows for active projects</p>
       </div>
 
       {projects.length === 0 ? (
@@ -176,15 +181,15 @@ export default function SiteHub() {
               const isSelected = project.id === selectedProjectId;
               return (
                 <button key={project.id} type="button" onClick={() => setSelectedProjectId(project.id)}
-                  className={`w-full rounded-lg border p-4 text-left transition-snappy ${isSelected ? "border-primary bg-card shadow-sm" : "border-border bg-card/80 hover:border-primary/30 hover:bg-card"}`}>
+                  className={`w-full rounded-lg border p-4 text-left transition-all ${isSelected ? "border-[#006039] bg-card shadow-sm" : "border-border bg-card/80 hover:border-[#006039]/30 hover:bg-card"}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h2 className="font-semibold text-foreground truncate">{project.name}</h2>
-                      <p className="text-xs mt-1 text-muted-foreground">Client: {project.client_name || "Not assigned"}</p>
+                      <p className="text-xs mt-1" style={{ color: "#666666" }}>Client: {project.client_name || "Not assigned"}</p>
                     </div>
-                    <Badge variant="outline" className={badgeClass(summary.tone)}>{summary.label}</Badge>
+                    <Badge variant="outline" style={badgeStyle(summary.tone)}>{summary.label}</Badge>
                   </div>
-                  <div className="flex flex-wrap gap-3 mt-3 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap gap-3 mt-3 text-xs" style={{ color: "#666666" }}>
                     {project.location && <span className="inline-flex items-center gap-1"><MapPinned className="h-3.5 w-3.5" /> {project.location}</span>}
                     <span className="inline-flex items-center gap-1"><Boxes className="h-3.5 w-3.5" /> {modules.filter((m) => m.project_id === project.id).length} modules</span>
                   </div>
@@ -200,9 +205,9 @@ export default function SiteHub() {
                   <div className="flex items-start justify-between gap-3 flex-wrap">
                     <div>
                       <h2 className="font-display text-xl font-semibold text-foreground">{selectedProject.name}</h2>
-                      <p className="text-sm text-muted-foreground mt-1">{selectedProject.client_name ? `Client: ${selectedProject.client_name}` : "No client"}</p>
+                      <p className="text-sm mt-1" style={{ color: "#666666" }}>{selectedProject.client_name ? `Client: ${selectedProject.client_name}` : "No client"}</p>
                     </div>
-                    <Badge variant="outline" className={badgeClass(getDispatchSummary(selectedProject.id).tone)}>
+                    <Badge variant="outline" style={badgeStyle(getDispatchSummary(selectedProject.id).tone)}>
                       {getDispatchSummary(selectedProject.id).label}
                     </Badge>
                   </div>
@@ -221,16 +226,53 @@ export default function SiteHub() {
                     ) : (
                       selectedModules.map((module) => {
                         const conds = dispatchConditions[module.id];
+                        const siteReady = siteReadinessMap[module.id];
                         return (
                           <div key={module.id} className="space-y-2">
                             <ModulePanelCard module={module} panels={panelsByModule[module.id] ?? []} projectId={selectedProject.id} canEdit={false} canAdvanceStage={false} userRole={userRole} onPanelCreated={fetchData} onStageAdvanced={fetchData} />
-                            {conds && (module.current_stage === "Dispatch" || module.current_stage === "QC Inspection") && (
-                              <div className="bg-card border border-border rounded-md p-3 grid grid-cols-2 gap-2">
-                                <Cond met={conds.qc} label="QC Passed" />
-                                <Cond met={conds.inspection} label="Final Inspection" />
-                                <Cond met={conds.site} label="Site Readiness" />
-                                <Cond met={conds.signoff} label="Production Head Sign-off" />
+
+                            {/* Dispatch conditions checklist */}
+                            <div className="bg-card border border-border rounded-md p-3 space-y-3">
+                              <div className="grid grid-cols-2 gap-2">
+                                <Cond met={conds?.qc ?? false} label="QC Passed" />
+                                <Cond met={conds?.inspection ?? false} label="Final Inspection" />
+                                <Cond met={conds?.site ?? false} label="Site Readiness" />
+                                <Cond met={conds?.signoff ?? false} label="Production Head Sign-off" />
                               </div>
+
+                              {/* Site Readiness button */}
+                              <div className="flex items-center gap-2">
+                                <ClipboardCheck className="h-4 w-4" style={{ color: siteReady ? "#006039" : "#F40009" }} />
+                                {siteReady ? (
+                                  <span className="text-xs font-medium" style={{ color: "#006039" }}>Site Readiness: Completed ✅</span>
+                                ) : (
+                                  <>
+                                    <span className="text-xs font-medium" style={{ color: "#F40009" }}>Site Readiness: Not Started</span>
+                                    {canManageReadiness && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="ml-auto text-xs"
+                                        onClick={() => setReadinessDialogModule(module.id)}
+                                      >
+                                        Submit Checklist
+                                      </Button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Readiness dialog inline */}
+                            {readinessDialogModule === module.id && (
+                              <SiteReadinessChecklist
+                                moduleId={module.id}
+                                userRole={userRole}
+                                onReadinessConfirmed={() => {
+                                  setReadinessDialogModule(null);
+                                  fetchData();
+                                }}
+                              />
                             )}
                           </div>
                         );

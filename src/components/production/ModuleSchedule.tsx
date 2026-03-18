@@ -62,16 +62,31 @@ export function ModuleSchedule({ moduleId, currentStage, userRole }: Props) {
 
   useEffect(() => { loadSchedule(); }, [loadSchedule]);
 
-  const getStatus = (row: ScheduleRow): { label: string; color: string } => {
+  const getStatus = (row: ScheduleRow): { label: string; className: string } => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Completed — has actual end date
+    if (row.actual_end) {
+      return { label: "Completed", className: "bg-[#E8F2ED] text-[#006039]" };
+    }
+
+    // Delayed — target end is past and stage not completed
+    if (row.target_end) {
+      const targetEnd = new Date(row.target_end + "T23:59:59");
+      if (today > targetEnd) {
+        return { label: "Delayed", className: "bg-[#FFF0F0] text-[#F40009]" };
+      }
+    }
+
+    // On Track — stage has started (actual_start exists) or is current/past stage
     const currentIdx = currentStage ? PRODUCTION_STAGES.indexOf(currentStage as any) : -1;
     const stageIdx = PRODUCTION_STAGES.indexOf(row.stage_name as any);
-
-    if (row.actual_end) return { label: "Completed", color: "bg-primary text-primary-foreground" };
-    if (row.target_end && new Date() > new Date(row.target_end) && !row.actual_end && stageIdx <= currentIdx) {
-      return { label: "Delayed", color: "bg-destructive text-destructive-foreground" };
+    if (stageIdx <= currentIdx && row.actual_start) {
+      return { label: "On Track", className: "bg-[#E8F2ED] text-[#006039]" };
     }
-    if (stageIdx <= currentIdx && row.actual_start) return { label: "On Track", color: "bg-primary/20 text-primary" };
-    return { label: "Pending", color: "bg-muted text-muted-foreground" };
+
+    return { label: "Pending", className: "bg-muted text-muted-foreground" };
   };
 
   const handleSave = async () => {
@@ -164,7 +179,7 @@ export function ModuleSchedule({ moduleId, currentStage, userRole }: Props) {
                   <td className="p-2 text-muted-foreground">{row.actual_start || "—"}</td>
                   <td className="p-2 text-muted-foreground">{row.actual_end || "—"}</td>
                   <td className="p-2">
-                    <Badge variant="outline" className={`${status.color} text-[10px]`}>{status.label}</Badge>
+                    <Badge variant="outline" className={`${status.className} text-[10px] border-0`}>{status.label}</Badge>
                   </td>
                 </tr>
               );
