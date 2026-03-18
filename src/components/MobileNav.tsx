@@ -9,15 +9,21 @@ import {
   Truck,
   Wrench,
   FileSignature,
+  Compass,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import logoImg from "@/assets/logo.png";
 
-const tabs = [
+const DESIGN_ROLES = ["principal_architect", "project_architect", "structural_architect", "managing_director", "super_admin"];
+
+const allTabs = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard },
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/production", label: "Prod", icon: Factory },
   { to: "/site-hub", label: "Site", icon: Truck },
+  { to: "/design", label: "Design", icon: Compass, roles: DESIGN_ROLES },
   { to: "/qc", label: "Quality", icon: ClipboardCheck },
   { to: "/materials", label: "Materials", icon: PackagePlus },
   { to: "/rm", label: "R&M", icon: Wrench },
@@ -26,6 +32,21 @@ const tabs = [
 ];
 
 export function MobileNav() {
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const { data } = await supabase.rpc("get_user_role", { _user_id: user.id });
+      setUserRole(data as string | null);
+    });
+  }, []);
+
+  const tabs = allTabs.filter((t) => {
+    if ("roles" in t && t.roles) return userRole ? t.roles.includes(userRole) : false;
+    return true;
+  });
+
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-40 overflow-x-auto">
       <div className="flex items-center h-16 min-w-max px-1">

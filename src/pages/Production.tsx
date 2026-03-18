@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Factory } from "lucide-react";
 import { SupervisorDailyLog } from "@/components/production/SupervisorDailyLog";
 import { ModuleSchedule } from "@/components/production/ModuleSchedule";
+import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
@@ -97,11 +98,16 @@ export default function Production() {
                       currentStage={m.current_stage}
                       userRole={userRole}
                     />
-                    <ModuleSchedule
-                      moduleId={m.id}
-                      currentStage={m.current_stage}
-                      userRole={userRole}
-                    />
+                     <ModuleSchedule
+                       moduleId={m.id}
+                       currentStage={m.current_stage}
+                       userRole={userRole}
+                     />
+                     <ModuleDrawingsTab
+                       projectId={m.project_id}
+                       moduleId={m.id}
+                       projectName={m.projects?.name}
+                     />
                   </div>
                 )}
               </div>

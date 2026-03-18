@@ -4,11 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, MapPinned, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck } from "lucide-react";
+import { Loader2, MapPinned, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool } from "lucide-react";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
+import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import type { Tables } from "@/integrations/supabase/types";
 
 export default function SiteHub() {
@@ -220,7 +221,8 @@ export default function SiteHub() {
 
                 <Tabs defaultValue="pipeline" className="space-y-4">
                   <TabsList>
-                    <TabsTrigger value="pipeline" className="gap-1.5"><Truck className="h-4 w-4" /> Dispatch Pipeline</TabsTrigger>
+                   <TabsTrigger value="pipeline" className="gap-1.5"><Truck className="h-4 w-4" /> Dispatch Pipeline</TabsTrigger>
+                    <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
                     <TabsTrigger value="diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
                     <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Pack</TabsTrigger>
                   </TabsList>
@@ -283,6 +285,14 @@ export default function SiteHub() {
                         );
                       })
                     )}
+                  </TabsContent>
+
+                  <TabsContent value="drawings">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <ModuleDrawingsTab projectId={selectedProject.id} projectName={selectedProject.name} />
+                      </CardContent>
+                    </Card>
                   </TabsContent>
 
                   <TabsContent value="diary"><SiteDiary projectId={selectedProject.id} userRole={userRole} /></TabsContent>

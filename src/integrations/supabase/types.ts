@@ -165,8 +165,71 @@ export type Database = {
           },
         ]
       }
+      design_consultants: {
+        Row: {
+          approved: boolean
+          brief_issued_at: string | null
+          consultant_type: string
+          created_at: string
+          drawings_uploaded: boolean
+          email: string | null
+          firm: string | null
+          id: string
+          name: string
+          phone: string | null
+          project_id: string
+          review_complete: boolean
+          revisions_text: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved?: boolean
+          brief_issued_at?: string | null
+          consultant_type?: string
+          created_at?: string
+          drawings_uploaded?: boolean
+          email?: string | null
+          firm?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          project_id: string
+          review_complete?: boolean
+          revisions_text?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved?: boolean
+          brief_issued_at?: string | null
+          consultant_type?: string
+          created_at?: string
+          drawings_uploaded?: boolean
+          email?: string | null
+          firm?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          project_id?: string
+          review_complete?: boolean
+          revisions_text?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_consultants_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       design_queries: {
         Row: {
+          affected_area: string | null
           assigned_architect_id: string | null
           created_at: string
           description: string
@@ -177,6 +240,7 @@ export type Database = {
           module_id: string | null
           photo_url: string | null
           project_id: string
+          query_type: string
           raised_by: string
           raised_by_name: string | null
           resolved_at: string | null
@@ -187,9 +251,11 @@ export type Database = {
           response_text: string | null
           status: string
           updated_at: string
+          urgency: string
           voice_note_url: string | null
         }
         Insert: {
+          affected_area?: string | null
           assigned_architect_id?: string | null
           created_at?: string
           description: string
@@ -200,6 +266,7 @@ export type Database = {
           module_id?: string | null
           photo_url?: string | null
           project_id: string
+          query_type?: string
           raised_by: string
           raised_by_name?: string | null
           resolved_at?: string | null
@@ -210,9 +277,11 @@ export type Database = {
           response_text?: string | null
           status?: string
           updated_at?: string
+          urgency?: string
           voice_note_url?: string | null
         }
         Update: {
+          affected_area?: string | null
           assigned_architect_id?: string | null
           created_at?: string
           description?: string
@@ -223,6 +292,7 @@ export type Database = {
           module_id?: string | null
           photo_url?: string | null
           project_id?: string
+          query_type?: string
           raised_by?: string
           raised_by_name?: string | null
           resolved_at?: string | null
@@ -233,6 +303,7 @@ export type Database = {
           response_text?: string | null
           status?: string
           updated_at?: string
+          urgency?: string
           voice_note_url?: string | null
         }
         Relationships: [
@@ -262,6 +333,62 @@ export type Database = {
             columns: ["response_drawing_id"]
             isOneToOne: false
             referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      design_stages: {
+        Row: {
+          approval_date: string | null
+          approval_method: string | null
+          approval_proof_url: string | null
+          created_at: string
+          drawing_urls: string[]
+          id: string
+          project_id: string
+          revision_changes: string | null
+          revision_comments: string | null
+          stage_name: string
+          stage_order: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approval_date?: string | null
+          approval_method?: string | null
+          approval_proof_url?: string | null
+          created_at?: string
+          drawing_urls?: string[]
+          id?: string
+          project_id: string
+          revision_changes?: string | null
+          revision_comments?: string | null
+          stage_name: string
+          stage_order: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approval_date?: string | null
+          approval_method?: string | null
+          approval_proof_url?: string | null
+          created_at?: string
+          drawing_urls?: string[]
+          id?: string
+          project_id?: string
+          revision_changes?: string | null
+          revision_comments?: string | null
+          stage_name?: string
+          stage_order?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_stages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -1138,6 +1265,68 @@ export type Database = {
             columns: ["reporting_manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_design_files: {
+        Row: {
+          budget_discussed: boolean
+          client_brief_url: string | null
+          client_requirements_documented: boolean
+          created_at: string
+          created_by: string | null
+          design_stage: string
+          id: string
+          measurements_confirmed: boolean
+          num_floors: number | null
+          project_id: string
+          site_area_sqft: number | null
+          site_visit_done: boolean
+          special_requirements: string | null
+          survey_report_uploaded: boolean
+          updated_at: string
+        }
+        Insert: {
+          budget_discussed?: boolean
+          client_brief_url?: string | null
+          client_requirements_documented?: boolean
+          created_at?: string
+          created_by?: string | null
+          design_stage?: string
+          id?: string
+          measurements_confirmed?: boolean
+          num_floors?: number | null
+          project_id: string
+          site_area_sqft?: number | null
+          site_visit_done?: boolean
+          special_requirements?: string | null
+          survey_report_uploaded?: boolean
+          updated_at?: string
+        }
+        Update: {
+          budget_discussed?: boolean
+          client_brief_url?: string | null
+          client_requirements_documented?: boolean
+          created_at?: string
+          created_by?: string | null
+          design_stage?: string
+          id?: string
+          measurements_confirmed?: boolean
+          num_floors?: number | null
+          project_id?: string
+          site_area_sqft?: number | null
+          site_visit_done?: boolean
+          special_requirements?: string | null
+          survey_report_uploaded?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_design_files_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]

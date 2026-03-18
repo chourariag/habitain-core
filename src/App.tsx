@@ -16,6 +16,8 @@ import ProjectDetail from "@/pages/ProjectDetail";
 import Production from "@/pages/Production";
 import SiteHub from "@/pages/SiteHub";
 import Drawings from "@/pages/Drawings";
+import DesignPortal from "@/pages/DesignPortal";
+import { DesignRouteGuard } from "@/components/DesignRouteGuard";
 import QualityControl from "@/pages/QualityControl";
 import Inventory from "@/pages/Inventory";
 import Admin from "@/pages/Admin";
@@ -47,6 +49,7 @@ const App = () => (
                 <Route path="/projects/:id" element={<ProjectDetail />} />
                 <Route path="/production" element={<Production />} />
                 <Route path="/site-hub" element={<SiteHub />} />
+                <Route path="/design" element={<DesignRouteGuard><DesignPortal /></DesignRouteGuard>} />
                 <Route path="/drawings" element={<Drawings />} />
                 <Route path="/qc" element={<QualityControl />} />
                 <Route path="/inventory" element={<Inventory />} />
