@@ -9,6 +9,7 @@ import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
+import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import type { Tables } from "@/integrations/supabase/types";
 
 export default function SiteHub() {
