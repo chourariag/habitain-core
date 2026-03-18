@@ -10,22 +10,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
 import {
   Loader2, Search, Upload, Download, FileText, MessageSquare,
-  Plus, Filter, Clock, AlertTriangle, CheckCircle2, XCircle,
-  ArrowLeft, Flame, Eye, Compass
+  Plus, Clock, AlertTriangle, CheckCircle2, XCircle,
+  ArrowLeft, Flame
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { projectCode } from "@/lib/code-generators";
+import { BriefScopeSection } from "@/components/design/BriefScopeSection";
+import { ConsultantRow } from "@/components/design/ConsultantRow";
 
 const DRAWING_TYPES = ["Architectural", "Structural", "MEP", "BOQ Reference", "Site Plan"];
 const DESIGN_STAGES_ORDER = ["Concept Design", "Schematic Design", "Design Development", "Working Drawings", "GFC Issue"];
 const STAGE_STATUSES = ["not_started", "in_progress", "submitted_to_client", "revision_requested", "client_approved"];
-const CONSULTANT_TYPES = ["Structural Engineer", "MEP Consultant", "Landscape", "Geotechnical", "Fire Safety", "Other"];
-const CONSULTANT_STATUSES = ["awaiting_brief", "brief_issued", "drawings_received", "under_review", "revisions_requested", "approved"];
 const DQ_QUERY_TYPES = ["Dimension Clarification", "Material Specification", "Structural Query", "MEP Routing", "Opening Position", "Finishing Detail", "Other"];
 const DQ_URGENCY = ["Critical", "High", "Normal"];
 
@@ -42,8 +40,6 @@ const stageStatusStyle = (s: string): React.CSSProperties => ({
   client_approved: { backgroundColor: "#E8F2ED", color: "#006039" },
 }[s] ?? { backgroundColor: "#F5F5F5", color: "#666666" });
 
-const consultantStatusLabel = (s: string) => s.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-
 export default function DesignPortal() {
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<any[]>([]);
@@ -52,7 +48,6 @@ export default function DesignPortal() {
   const [designFiles, setDesignFiles] = useState<any[]>([]);
   const [designStages, setDesignStages] = useState<any[]>([]);
   const [consultants, setConsultants] = useState<any[]>([]);
-  const [modules, setModules] = useState<any[]>([]);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState("");
@@ -97,7 +92,6 @@ export default function DesignPortal() {
   const isArchitect = ["principal_architect", "project_architect", "structural_architect"].includes(userRole ?? "");
 
   const fetchData = useCallback(async () => {
-    setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setUserId(user.id);
@@ -109,9 +103,8 @@ export default function DesignPortal() {
       setUserName((profileRes.data as any)?.display_name ?? user.email ?? "");
     }
 
-    const [projectsRes, modulesRes, drawingsRes, dqsRes, dfRes, dsRes, dcRes] = await Promise.all([
+    const [projectsRes, drawingsRes, dqsRes, dfRes, dsRes, dcRes] = await Promise.all([
       supabase.from("projects").select("id,name,client_name,status,updated_at").eq("is_archived", false).order("name"),
-      supabase.from("modules").select("id,name,module_code,project_id").eq("is_archived", false),
       (supabase.from("drawings") as any).select("*").eq("is_archived", false).order("created_at", { ascending: false }),
       (supabase.from("design_queries") as any).select("*").eq("is_archived", false).order("created_at", { ascending: false }),
       (supabase.from("project_design_files") as any).select("*"),
@@ -120,7 +113,6 @@ export default function DesignPortal() {
     ]);
 
     setProjects(projectsRes.data ?? []);
-    setModules(modulesRes.data ?? []);
     setDrawings(drawingsRes.data ?? []);
     setDqs(dqsRes.data ?? []);
     setDesignFiles(dfRes.data ?? []);
@@ -131,56 +123,87 @@ export default function DesignPortal() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Realtime subscription for design_stages changes
+  useEffect(() => {
+    const channel = supabase
+      .channel("design-stages-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "design_stages" }, () => {
+        // Only refetch stages and design files, not full page
+        Promise.all([
+          (supabase.from("design_stages") as any).select("*").order("stage_order"),
+          (supabase.from("project_design_files") as any).select("*"),
+        ]).then(([dsRes, dfRes]) => {
+          setDesignStages(dsRes.data ?? []);
+          setDesignFiles(dfRes.data ?? []);
+        });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "design_queries" }, () => {
+        (supabase.from("design_queries") as any).select("*").eq("is_archived", false).order("created_at", { ascending: false }).then(({ data }: any) => {
+          setDqs(data ?? []);
+        });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
   const projectMap = useMemo(() => {
     const m: Record<string, any> = {};
     projects.forEach((p) => { m[p.id] = p; });
     return m;
   }, [projects]);
 
-  // ──── Design Dashboard helpers ────
-  const getDesignStage = (projectId: string) => {
-    const df = designFiles.find((d: any) => d.project_id === projectId);
-    return df?.design_stage ?? "brief";
-  };
-
-  const pendingClientApprovals = useMemo(() => designStages.filter((s: any) => s.status === "submitted_to_client").length, [designStages]);
-
+  // ── Design stage counts: determine each project's current stage from design_stages table ──
   const designStageCounts = useMemo(() => {
+    const stageMap: Record<string, string> = {
+      "Concept Design": "concept", "Schematic Design": "schematic",
+      "Design Development": "design_development", "Working Drawings": "working_drawings", "GFC Issue": "gfc_issued",
+    };
     const counts: Record<string, number> = { brief: 0, concept: 0, schematic: 0, design_development: 0, working_drawings: 0, gfc_issued: 0 };
+
     projects.forEach((p) => {
       const df = designFiles.find((d: any) => d.project_id === p.id);
-      const stage = df?.design_stage ?? "brief";
-      // Map to the furthest approved design stage from design_stages table
-      const projStages = designStages.filter((s: any) => s.project_id === p.id);
-      let effectiveStage = stage;
-      if (projStages.length > 0 && stage !== "gfc_issued") {
-        const approved = projStages.filter((s: any) => s.status === "client_approved");
-        const inProgress = projStages.filter((s: any) => s.status === "in_progress" || s.status === "submitted_to_client" || s.status === "revision_requested");
-        if (approved.length > 0) {
-          const maxApproved = approved.reduce((a: any, b: any) => a.stage_order > b.stage_order ? a : b);
-          const stageMap: Record<string, string> = { "Concept Design": "concept", "Schematic Design": "schematic", "Design Development": "design_development", "Working Drawings": "working_drawings", "GFC Issue": "gfc_issued" };
-          // If there's an in-progress stage after the approved one, use that
-          const nextInProgress = inProgress.find((s: any) => s.stage_order > maxApproved.stage_order);
-          if (nextInProgress) {
-            effectiveStage = stageMap[nextInProgress.stage_name] ?? stage;
-          } else {
-            effectiveStage = stageMap[maxApproved.stage_name] ?? stage;
-          }
-        } else if (inProgress.length > 0) {
-          const firstInProgress = inProgress.reduce((a: any, b: any) => a.stage_order < b.stage_order ? a : b);
-          const stageMap: Record<string, string> = { "Concept Design": "concept", "Schematic Design": "schematic", "Design Development": "design_development", "Working Drawings": "working_drawings", "GFC Issue": "gfc_issued" };
-          effectiveStage = stageMap[firstInProgress.stage_name] ?? stage;
-        }
+      if (df?.design_stage === "gfc_issued") {
+        counts.gfc_issued++;
+        return;
       }
-      if (counts[effectiveStage] !== undefined) counts[effectiveStage]++;
-      else counts["brief"]++;
+
+      const projStages = designStages.filter((s: any) => s.project_id === p.id);
+      if (projStages.length === 0) {
+        counts.brief++;
+        return;
+      }
+
+      // Find the highest approved stage
+      const approved = projStages.filter((s: any) => s.status === "client_approved");
+      if (approved.length > 0) {
+        const maxApproved = approved.reduce((a: any, b: any) => a.stage_order > b.stage_order ? a : b);
+        // Check if there's a next stage in progress
+        const nextInProgress = projStages.find((s: any) => s.stage_order > maxApproved.stage_order && s.status !== "not_started");
+        if (nextInProgress) {
+          counts[stageMap[nextInProgress.stage_name] ?? "brief"]++;
+        } else {
+          counts[stageMap[maxApproved.stage_name] ?? "brief"]++;
+        }
+        return;
+      }
+
+      // No approved stages — find first non-not_started stage
+      const active = projStages.filter((s: any) => s.status !== "not_started");
+      if (active.length > 0) {
+        const first = active.reduce((a: any, b: any) => a.stage_order < b.stage_order ? a : b);
+        counts[stageMap[first.stage_name] ?? "brief"]++;
+      } else {
+        counts.brief++;
+      }
     });
+
     return counts;
   }, [projects, designFiles, designStages]);
 
+  const pendingClientApprovals = useMemo(() => designStages.filter((s: any) => s.status === "submitted_to_client").length, [designStages]);
   const openDqCount = useMemo(() => dqs.filter((d: any) => d.status === "open").length, [dqs]);
   const criticalDqCount = useMemo(() => dqs.filter((d: any) => d.status === "open" && d.urgency === "Critical").length, [dqs]);
-  const gfcReadyCount = useMemo(() => projects.filter((p) => getDesignStage(p.id) === "gfc_issued").length, [projects, designFiles]);
+  const gfcReadyCount = designStageCounts.gfc_issued;
 
   // ──── DQ helpers ────
   const getNextDqCode = (projectId: string) => {
@@ -404,32 +427,23 @@ export default function DesignPortal() {
     if (!existing) {
       const { client } = await getAuthedClient();
       await (client.from("project_design_files") as any).insert({ project_id: projId, created_by: userId });
-      // Create 5 design stages
       const stageInserts = DESIGN_STAGES_ORDER.map((name, i) => ({
         project_id: projId, stage_name: name, stage_order: i + 1, status: "not_started",
       }));
       await (client.from("design_stages") as any).insert(stageInserts);
-      fetchData();
+      await fetchData();
     }
     setSelectedProjectId(projId);
     setActiveTab("project-file");
-  };
-
-  // ──── Update design file scope ────
-  const updateDesignFile = async (field: string, value: any) => {
-    if (!selectedProjectId) return;
-    const df = designFiles.find((d: any) => d.project_id === selectedProjectId);
-    if (!df) return;
-    const { client } = await getAuthedClient();
-    await (client.from("project_design_files") as any).update({ [field]: value }).eq("id", df.id);
-    fetchData();
   };
 
   // ──── Update design stage ────
   const updateStage = async (stageId: string, updates: Record<string, any>) => {
     const { client } = await getAuthedClient();
     await (client.from("design_stages") as any).update(updates).eq("id", stageId);
-    fetchData();
+    // Lightweight refetch of stages only
+    const { data } = await (supabase.from("design_stages") as any).select("*").order("stage_order");
+    setDesignStages(data ?? []);
   };
 
   // ──── Add consultant ────
@@ -438,21 +452,20 @@ export default function DesignPortal() {
     await (client.from("design_consultants") as any).insert({
       project_id: projId, consultant_type: "Other", name: "New Consultant",
     });
-    fetchData();
+    const { data } = await (supabase.from("design_consultants") as any).select("*").order("created_at");
+    setConsultants(data ?? []);
   };
 
-  const updateConsultant = async (id: string, updates: Record<string, any>) => {
-    const { client } = await getAuthedClient();
-    await (client.from("design_consultants") as any).update(updates).eq("id", id);
-    fetchData();
-  };
+  const refreshConsultants = useCallback(async () => {
+    const { data } = await (supabase.from("design_consultants") as any).select("*").order("created_at");
+    setConsultants(data ?? []);
+  }, []);
 
   // ──── Issue GFC ────
   const issueGFC = async (projId: string) => {
     const { client } = await getAuthedClient();
     await (client.from("project_design_files") as any).update({ design_stage: "gfc_issued" }).eq("project_id", projId);
 
-    // Notify production team
     const { data: prodProfiles } = await supabase.from("profiles")
       .select("auth_user_id").in("role", ["production_head", "planning_engineer", "factory_floor_supervisor"] as any[]).eq("is_active", true);
     const projName = projectMap[projId]?.name ?? "Unknown";
@@ -486,10 +499,16 @@ export default function DesignPortal() {
       { label: "Architectural drawings Client Approved", met: !!archApproved, auto: true },
       { label: "Structural drawings received and reviewed", met: !!structOk, auto: true },
       { label: "MEP drawings received and reviewed", met: !!mepOk, auto: true },
-      { label: "All consultant comments incorporated", met: false, auto: false, key: "comments_incorporated" },
-      { label: "Internal QC review complete", met: false, auto: false, key: "internal_qc" },
+      { label: "All consultant comments incorporated", met: false, auto: false },
+      { label: "Internal QC review complete", met: false, auto: false },
       { label: "No open Design Queries on this project", met: projDqs.length === 0, auto: true },
     ];
+  };
+
+  // ──── Helper for design stage label on dashboard ────
+  const getDesignStage = (projectId: string) => {
+    const df = designFiles.find((d: any) => d.project_id === projectId);
+    return df?.design_stage ?? "brief";
   };
 
   if (loading) {
@@ -608,8 +627,7 @@ export default function DesignPortal() {
                   </div>
                   <div>
                     <Label className="text-xs">Drawing ID *</Label>
-                    <Input value={uploadForm.drawing_id_code} onChange={(e) => setUploadForm({ ...uploadForm, drawing_id_code: e.target.value })}
-                      placeholder="e.g. VV-ARCH-001-R1" />
+                    <Input value={uploadForm.drawing_id_code} onChange={(e) => setUploadForm({ ...uploadForm, drawing_id_code: e.target.value })} placeholder="e.g. VV-ARCH-001-R1" />
                   </div>
                   <div>
                     <Label className="text-xs">Revision Number</Label>
@@ -617,8 +635,7 @@ export default function DesignPortal() {
                   </div>
                   <div>
                     <Label className="text-xs">Existing Drawing Code (for revision)</Label>
-                    <Input value={uploadForm.existing_drawing_code} onChange={(e) => setUploadForm({ ...uploadForm, existing_drawing_code: e.target.value })}
-                      placeholder="Leave blank for new drawing" />
+                    <Input value={uploadForm.existing_drawing_code} onChange={(e) => setUploadForm({ ...uploadForm, existing_drawing_code: e.target.value })} placeholder="Leave blank for new drawing" />
                   </div>
                   <div>
                     <Label className="text-xs">File (PDF or DWG) *</Label>
@@ -895,59 +912,13 @@ export default function DesignPortal() {
       ) : (
         /* ═══════ TAB 2: Project Design File ═══════ */
         <div className="space-y-6">
-          {/* Section A: Brief & Scope */}
-          <Card>
-            <CardHeader><CardTitle className="text-lg">A — Brief & Scope</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <p className="text-xs font-semibold" style={{ color: "#666666" }}>Scope Checklist</p>
-                {[
-                  { field: "site_visit_done", label: "Site visit done" },
-                  { field: "measurements_confirmed", label: "Measurements confirmed" },
-                  { field: "survey_report_uploaded", label: "Survey report uploaded" },
-                  { field: "client_requirements_documented", label: "Client requirements documented" },
-                  { field: "budget_discussed", label: "Budget discussed" },
-                ].map((item) => (
-                  <div key={item.field} className="flex items-center gap-2">
-                    <Checkbox
-                      checked={selectedDF?.[item.field] ?? false}
-                      onCheckedChange={(v) => canUpload && updateDesignFile(item.field, !!v)}
-                      disabled={!canUpload}
-                    />
-                    <span className="text-sm">{item.label}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label className="text-xs">Site Area (sq ft)</Label>
-                  <Input type="number" value={selectedDF?.site_area_sqft ?? ""} onChange={(e) => canUpload && updateDesignFile("site_area_sqft", parseFloat(e.target.value) || null)} disabled={!canUpload} />
-                </div>
-                <div>
-                  <Label className="text-xs">Number of Floors</Label>
-                  <Input type="number" value={selectedDF?.num_floors ?? ""} onChange={(e) => canUpload && updateDesignFile("num_floors", parseInt(e.target.value) || null)} disabled={!canUpload} />
-                </div>
-              </div>
-              <div>
-                <Label className="text-xs">Special Requirements</Label>
-                <Textarea value={selectedDF?.special_requirements ?? ""} onChange={(e) => canUpload && updateDesignFile("special_requirements", e.target.value)} disabled={!canUpload} rows={2} />
-              </div>
-              <div>
-                <Label className="text-xs">Client Brief PDF</Label>
-                <Input type="file" accept=".pdf" disabled={!canUpload} onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file || !selectedProjectId) return;
-                  const path = `briefs/${selectedProjectId}/${Date.now()}.pdf`;
-                  await supabase.storage.from("design-files").upload(path, file);
-                  const url = supabase.storage.from("design-files").getPublicUrl(path).data.publicUrl;
-                  updateDesignFile("client_brief_url", url);
-                }} />
-                {selectedDF?.client_brief_url && (
-                  <a href={selectedDF.client_brief_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary mt-1 inline-block">View Brief PDF</a>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Section A: Brief & Scope — isolated component with local state */}
+          <BriefScopeSection
+            designFile={selectedDF}
+            projectId={selectedProjectId!}
+            canEdit={canUpload}
+            onSaved={fetchData}
+          />
 
           {/* Section B: Design Stages & Client Approvals */}
           <Card>
@@ -985,7 +956,7 @@ export default function DesignPortal() {
             </CardContent>
           </Card>
 
-          {/* Section C: Consultant Coordination */}
+          {/* Section C: Consultant Coordination — each row is isolated */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -996,76 +967,7 @@ export default function DesignPortal() {
             <CardContent className="space-y-3">
               {selectedConsultants.length === 0 && <p className="text-sm text-muted-foreground">No consultants added.</p>}
               {selectedConsultants.map((c: any) => (
-                <div key={c.id} className="border border-border rounded-lg p-4 space-y-3">
-                  {/* Header row: Name, Type, Status badge */}
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-semibold text-sm">{c.name}</span>
-                      <span className="text-xs text-muted-foreground">({c.consultant_type})</span>
-                    </div>
-                    <Badge variant="outline" style={
-                      c.status === "approved" ? { backgroundColor: "#E8F2ED", color: "#006039", border: "none" } :
-                      c.status === "revisions_requested" ? { backgroundColor: "#FFF0F0", color: "#F40009", border: "none" } :
-                      c.status === "under_review" ? { backgroundColor: "#FFF8E8", color: "#D4860A", border: "none" } :
-                      c.status === "drawings_received" ? { backgroundColor: "#E8F0FE", color: "#1A73E8", border: "none" } :
-                      { backgroundColor: "#F5F5F5", color: "#666666", border: "none" }
-                    }>{consultantStatusLabel(c.status)}</Badge>
-                  </div>
-
-                  {/* Editable fields */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                    <div>
-                      <Label className="text-[10px]">Type</Label>
-                      <Select value={c.consultant_type} onValueChange={(v) => updateConsultant(c.id, { consultant_type: v })} disabled={!canUpload}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>{CONSULTANT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-[10px]">Name</Label>
-                      <Input className="h-8 text-xs" value={c.name} onChange={(e) => updateConsultant(c.id, { name: e.target.value })} disabled={!canUpload} />
-                    </div>
-                    <div>
-                      <Label className="text-[10px]">Firm</Label>
-                      <Input className="h-8 text-xs" value={c.firm ?? ""} onChange={(e) => updateConsultant(c.id, { firm: e.target.value })} disabled={!canUpload} />
-                    </div>
-                    <div>
-                      <Label className="text-[10px]">Phone</Label>
-                      <Input className="h-8 text-xs" value={c.phone ?? ""} onChange={(e) => updateConsultant(c.id, { phone: e.target.value })} disabled={!canUpload} />
-                    </div>
-                    <div>
-                      <Label className="text-[10px]">Email</Label>
-                      <Input className="h-8 text-xs" value={c.email ?? ""} onChange={(e) => updateConsultant(c.id, { email: e.target.value })} disabled={!canUpload} />
-                    </div>
-                    <div>
-                      <Label className="text-[10px]">Status</Label>
-                      <Select value={c.status} onValueChange={(v) => {
-                        const updates: any = { status: v };
-                        if (v === "brief_issued" && !c.brief_issued_at) updates.brief_issued_at = new Date().toISOString();
-                        updateConsultant(c.id, updates);
-                      }} disabled={!canUpload}>
-                        <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                        <SelectContent>{CONSULTANT_STATUSES.map((s) => <SelectItem key={s} value={s}>{consultantStatusLabel(s)}</SelectItem>)}</SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Toggles row - clearly visible */}
-                  <div className="flex flex-wrap items-center gap-4 pt-1 border-t border-border">
-                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                      <Checkbox checked={c.drawings_uploaded} onCheckedChange={(v) => updateConsultant(c.id, { drawings_uploaded: !!v })} disabled={!canUpload} />
-                      <span>Drawings Received</span>
-                    </label>
-                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                      <Checkbox checked={c.review_complete} onCheckedChange={(v) => updateConsultant(c.id, { review_complete: !!v })} disabled={!canUpload} />
-                      <span>Review Complete</span>
-                    </label>
-                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                      <Checkbox checked={c.approved} onCheckedChange={(v) => updateConsultant(c.id, { approved: !!v })} disabled={!canUpload} />
-                      <span>Approved</span>
-                    </label>
-                  </div>
-                </div>
+                <ConsultantRow key={c.id} consultant={c} canEdit={canUpload} onSaved={refreshConsultants} />
               ))}
             </CardContent>
           </Card>
@@ -1107,7 +1009,7 @@ export default function DesignPortal() {
                     <span className="font-mono text-xs font-semibold">{d.drawing_id_code}</span>
                     <span className="text-[10px]" style={{ color: "#999999" }}>{d.drawing_type} · R{d.revision}</span>
                     <Badge variant="outline" style={d.status === "active" ? { backgroundColor: "#E8F2ED", color: "#006039", border: "none" } : { backgroundColor: "#F5F5F5", color: "#999999", border: "none" }} className="text-[10px]">
-                      {d.status === "active" ? "Active" : `Archived`}
+                      {d.status === "active" ? "Active" : "Archived"}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-1">
