@@ -300,6 +300,9 @@ export default function SiteHub() {
                   <TabsContent value="handover">
                     <HandoverPack projectId={selectedProject.id} clientName={selectedProject.client_name} userRole={userRole} installationComplete={installationComplete} onHandedOver={fetchData} />
                   </TabsContent>
+                  <TabsContent value="materials">
+                    <MaterialRequestsPanel projectId={selectedProject.id} />
+                  </TabsContent>
                 </Tabs>
               </>
             ) : (
