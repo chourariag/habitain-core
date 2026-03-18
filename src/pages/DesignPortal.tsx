@@ -143,15 +143,40 @@ export default function DesignPortal() {
     return df?.design_stage ?? "brief";
   };
 
+  const pendingClientApprovals = useMemo(() => designStages.filter((s: any) => s.status === "submitted_to_client").length, [designStages]);
+
   const designStageCounts = useMemo(() => {
     const counts: Record<string, number> = { brief: 0, concept: 0, schematic: 0, design_development: 0, working_drawings: 0, gfc_issued: 0 };
     projects.forEach((p) => {
-      const stage = getDesignStage(p.id);
-      if (counts[stage] !== undefined) counts[stage]++;
+      const df = designFiles.find((d: any) => d.project_id === p.id);
+      const stage = df?.design_stage ?? "brief";
+      // Map to the furthest approved design stage from design_stages table
+      const projStages = designStages.filter((s: any) => s.project_id === p.id);
+      let effectiveStage = stage;
+      if (projStages.length > 0 && stage !== "gfc_issued") {
+        const approved = projStages.filter((s: any) => s.status === "client_approved");
+        const inProgress = projStages.filter((s: any) => s.status === "in_progress" || s.status === "submitted_to_client" || s.status === "revision_requested");
+        if (approved.length > 0) {
+          const maxApproved = approved.reduce((a: any, b: any) => a.stage_order > b.stage_order ? a : b);
+          const stageMap: Record<string, string> = { "Concept Design": "concept", "Schematic Design": "schematic", "Design Development": "design_development", "Working Drawings": "working_drawings", "GFC Issue": "gfc_issued" };
+          // If there's an in-progress stage after the approved one, use that
+          const nextInProgress = inProgress.find((s: any) => s.stage_order > maxApproved.stage_order);
+          if (nextInProgress) {
+            effectiveStage = stageMap[nextInProgress.stage_name] ?? stage;
+          } else {
+            effectiveStage = stageMap[maxApproved.stage_name] ?? stage;
+          }
+        } else if (inProgress.length > 0) {
+          const firstInProgress = inProgress.reduce((a: any, b: any) => a.stage_order < b.stage_order ? a : b);
+          const stageMap: Record<string, string> = { "Concept Design": "concept", "Schematic Design": "schematic", "Design Development": "design_development", "Working Drawings": "working_drawings", "GFC Issue": "gfc_issued" };
+          effectiveStage = stageMap[firstInProgress.stage_name] ?? stage;
+        }
+      }
+      if (counts[effectiveStage] !== undefined) counts[effectiveStage]++;
       else counts["brief"]++;
     });
     return counts;
-  }, [projects, designFiles]);
+  }, [projects, designFiles, designStages]);
 
   const openDqCount = useMemo(() => dqs.filter((d: any) => d.status === "open").length, [dqs]);
   const criticalDqCount = useMemo(() => dqs.filter((d: any) => d.status === "open" && d.urgency === "Critical").length, [dqs]);
