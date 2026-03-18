@@ -42,7 +42,6 @@ export function ModuleDrawingsTab({ projectId, moduleId, projectName }: Props) {
     }
 
     let query = (supabase.from("drawings") as any).select("*").eq("project_id", projectId).eq("is_archived", false).order("created_at", { ascending: false });
-    if (moduleId) query = query.eq("module_id", moduleId);
     const { data } = await query;
     setDrawings(data ?? []);
     setLoading(false);
