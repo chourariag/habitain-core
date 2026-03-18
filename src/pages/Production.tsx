@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Factory } from "lucide-react";
 import { SupervisorDailyLog } from "@/components/production/SupervisorDailyLog";
 import { ModuleSchedule } from "@/components/production/ModuleSchedule";
+import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
