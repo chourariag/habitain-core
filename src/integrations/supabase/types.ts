@@ -165,6 +165,107 @@ export type Database = {
           },
         ]
       }
+      design_queries: {
+        Row: {
+          assigned_architect_id: string | null
+          created_at: string
+          description: string
+          dq_code: string
+          drawing_id: string | null
+          id: string
+          is_archived: boolean
+          module_id: string | null
+          photo_url: string | null
+          project_id: string
+          raised_by: string
+          raised_by_name: string | null
+          resolved_at: string | null
+          responded_at: string | null
+          responded_by: string | null
+          responded_by_name: string | null
+          response_drawing_id: string | null
+          response_text: string | null
+          status: string
+          updated_at: string
+          voice_note_url: string | null
+        }
+        Insert: {
+          assigned_architect_id?: string | null
+          created_at?: string
+          description: string
+          dq_code: string
+          drawing_id?: string | null
+          id?: string
+          is_archived?: boolean
+          module_id?: string | null
+          photo_url?: string | null
+          project_id: string
+          raised_by: string
+          raised_by_name?: string | null
+          resolved_at?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          responded_by_name?: string | null
+          response_drawing_id?: string | null
+          response_text?: string | null
+          status?: string
+          updated_at?: string
+          voice_note_url?: string | null
+        }
+        Update: {
+          assigned_architect_id?: string | null
+          created_at?: string
+          description?: string
+          dq_code?: string
+          drawing_id?: string | null
+          id?: string
+          is_archived?: boolean
+          module_id?: string | null
+          photo_url?: string | null
+          project_id?: string
+          raised_by?: string
+          raised_by_name?: string | null
+          resolved_at?: string | null
+          responded_at?: string | null
+          responded_by?: string | null
+          responded_by_name?: string | null
+          response_drawing_id?: string | null
+          response_text?: string | null
+          status?: string
+          updated_at?: string
+          voice_note_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_queries_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "design_queries_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "design_queries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "design_queries_response_drawing_id_fkey"
+            columns: ["response_drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispatch_log: {
         Row: {
           created_at: string | null
@@ -269,6 +370,75 @@ export type Database = {
             columns: ["claim_id"]
             isOneToOne: false
             referencedRelation: "labour_claims"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drawings: {
+        Row: {
+          created_at: string
+          drawing_id_code: string
+          drawing_type: string
+          file_name: string | null
+          file_url: string
+          id: string
+          is_archived: boolean
+          module_id: string | null
+          notes: string | null
+          project_id: string
+          revision: number
+          status: string
+          updated_at: string
+          uploaded_by: string
+          uploaded_by_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          drawing_id_code: string
+          drawing_type?: string
+          file_name?: string | null
+          file_url: string
+          id?: string
+          is_archived?: boolean
+          module_id?: string | null
+          notes?: string | null
+          project_id: string
+          revision?: number
+          status?: string
+          updated_at?: string
+          uploaded_by: string
+          uploaded_by_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          drawing_id_code?: string
+          drawing_type?: string
+          file_name?: string | null
+          file_url?: string
+          id?: string
+          is_archived?: boolean
+          module_id?: string | null
+          notes?: string | null
+          project_id?: string
+          revision?: number
+          status?: string
+          updated_at?: string
+          uploaded_by?: string
+          uploaded_by_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drawings_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drawings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
