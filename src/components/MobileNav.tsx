@@ -25,7 +25,6 @@ const allTabs = [
   { to: "/site-hub", label: "Site", icon: Truck },
   { to: "/design", label: "Design", icon: Compass, roles: DESIGN_ROLES },
   { to: "/qc", label: "Quality", icon: ClipboardCheck },
-  { to: "/materials", label: "Materials", icon: PackagePlus },
   { to: "/rm", label: "R&M", icon: Wrench },
   { to: "/amc", label: "AMC", icon: FileSignature },
   { to: "/admin", label: "Admin", icon: Users },
