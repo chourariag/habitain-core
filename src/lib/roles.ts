@@ -26,6 +26,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   stores_executive: "Stores Executive",
   accounts_executive: "Accounts Executive",
   hr_executive: "HR Executive",
+  principal_architect: "Principal Architect",
   project_architect: "Project Architect",
   structural_architect: "Structural Architect",
 };
@@ -38,7 +39,7 @@ export const ROLE_TIERS: Record<string, AppRole[]> = {
   "Tier 4 — Factory Floor": ["qc_inspector", "factory_floor_supervisor", "fabrication_foreman", "electrical_installer", "elec_plumbing_installer"],
   "Tier 5 — Procurement & Finance": ["procurement", "stores_executive", "accounts_executive"],
   "Tier 6 — HR": ["hr_executive"],
-  "Architects": ["project_architect", "structural_architect"],
+  "Architects": ["principal_architect", "project_architect", "structural_architect"],
 };
 
 export const KIOSK_ROLES: AppRole[] = ["fabrication_foreman", "electrical_installer", "elec_plumbing_installer"];

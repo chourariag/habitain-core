@@ -5,7 +5,7 @@ import { ChevronDown, ChevronRight, Plus, Layers } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AddPanelDialog } from "./AddPanelDialog";
 import { ProductionStageTracker } from "./ProductionStageTracker";
-import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
+
 import { DispatchLogForm } from "@/components/site/DispatchLogForm";
 import { InstallationChecklist } from "@/components/site/InstallationChecklist";
 
@@ -115,14 +115,7 @@ export function ModulePanelCard({ module, panels, projectId, canEdit, canAdvance
             />
           </div>
 
-          {/* Site Readiness — show at Dispatch stage */}
-          {isAtDispatchStage && !isDispatched && (
-            <SiteReadinessChecklist
-              moduleId={module.id}
-              userRole={userRole}
-              onReadinessConfirmed={() => setSiteReady(true)}
-            />
-          )}
+          {/* Site Readiness is now managed at project level on Site Hub */}
 
           {/* Dispatch Log — show at Dispatch stage after site readiness */}
           {isAtDispatchStage && !isDispatched && (
