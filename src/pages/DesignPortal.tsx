@@ -143,15 +143,40 @@ export default function DesignPortal() {
     return df?.design_stage ?? "brief";
   };
 
+  const pendingClientApprovals = useMemo(() => designStages.filter((s: any) => s.status === "submitted_to_client").length, [designStages]);
+
   const designStageCounts = useMemo(() => {
     const counts: Record<string, number> = { brief: 0, concept: 0, schematic: 0, design_development: 0, working_drawings: 0, gfc_issued: 0 };
     projects.forEach((p) => {
-      const stage = getDesignStage(p.id);
-      if (counts[stage] !== undefined) counts[stage]++;
+      const df = designFiles.find((d: any) => d.project_id === p.id);
+      const stage = df?.design_stage ?? "brief";
+      // Map to the furthest approved design stage from design_stages table
+      const projStages = designStages.filter((s: any) => s.project_id === p.id);
+      let effectiveStage = stage;
+      if (projStages.length > 0 && stage !== "gfc_issued") {
+        const approved = projStages.filter((s: any) => s.status === "client_approved");
+        const inProgress = projStages.filter((s: any) => s.status === "in_progress" || s.status === "submitted_to_client" || s.status === "revision_requested");
+        if (approved.length > 0) {
+          const maxApproved = approved.reduce((a: any, b: any) => a.stage_order > b.stage_order ? a : b);
+          const stageMap: Record<string, string> = { "Concept Design": "concept", "Schematic Design": "schematic", "Design Development": "design_development", "Working Drawings": "working_drawings", "GFC Issue": "gfc_issued" };
+          // If there's an in-progress stage after the approved one, use that
+          const nextInProgress = inProgress.find((s: any) => s.stage_order > maxApproved.stage_order);
+          if (nextInProgress) {
+            effectiveStage = stageMap[nextInProgress.stage_name] ?? stage;
+          } else {
+            effectiveStage = stageMap[maxApproved.stage_name] ?? stage;
+          }
+        } else if (inProgress.length > 0) {
+          const firstInProgress = inProgress.reduce((a: any, b: any) => a.stage_order < b.stage_order ? a : b);
+          const stageMap: Record<string, string> = { "Concept Design": "concept", "Schematic Design": "schematic", "Design Development": "design_development", "Working Drawings": "working_drawings", "GFC Issue": "gfc_issued" };
+          effectiveStage = stageMap[firstInProgress.stage_name] ?? stage;
+        }
+      }
+      if (counts[effectiveStage] !== undefined) counts[effectiveStage]++;
       else counts["brief"]++;
     });
     return counts;
-  }, [projects, designFiles]);
+  }, [projects, designFiles, designStages]);
 
   const openDqCount = useMemo(() => dqs.filter((d: any) => d.status === "open").length, [dqs]);
   const criticalDqCount = useMemo(() => dqs.filter((d: any) => d.status === "open" && d.urgency === "Critical").length, [dqs]);
@@ -651,6 +676,12 @@ export default function DesignPortal() {
               </Card>
               <Card>
                 <CardContent className="pt-4 pb-3 text-center">
+                  <p className="text-2xl font-bold" style={{ color: pendingClientApprovals > 0 ? "#D4860A" : "#1A1A1A" }}>{pendingClientApprovals}</p>
+                  <p className="text-xs mt-1" style={{ color: "#666666" }}>Pending Approvals</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4 pb-3 text-center">
                   <p className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>{gfcReadyCount}</p>
                   <p className="text-xs mt-1" style={{ color: "#666666" }}>GFC Issued</p>
                 </CardContent>
@@ -965,8 +996,24 @@ export default function DesignPortal() {
             <CardContent className="space-y-3">
               {selectedConsultants.length === 0 && <p className="text-sm text-muted-foreground">No consultants added.</p>}
               {selectedConsultants.map((c: any) => (
-                <div key={c.id} className="border border-border rounded-lg p-3 space-y-2">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <div key={c.id} className="border border-border rounded-lg p-4 space-y-3">
+                  {/* Header row: Name, Type, Status badge */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-semibold text-sm">{c.name}</span>
+                      <span className="text-xs text-muted-foreground">({c.consultant_type})</span>
+                    </div>
+                    <Badge variant="outline" style={
+                      c.status === "approved" ? { backgroundColor: "#E8F2ED", color: "#006039", border: "none" } :
+                      c.status === "revisions_requested" ? { backgroundColor: "#FFF0F0", color: "#F40009", border: "none" } :
+                      c.status === "under_review" ? { backgroundColor: "#FFF8E8", color: "#D4860A", border: "none" } :
+                      c.status === "drawings_received" ? { backgroundColor: "#E8F0FE", color: "#1A73E8", border: "none" } :
+                      { backgroundColor: "#F5F5F5", color: "#666666", border: "none" }
+                    }>{consultantStatusLabel(c.status)}</Badge>
+                  </div>
+
+                  {/* Editable fields */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                     <div>
                       <Label className="text-[10px]">Type</Label>
                       <Select value={c.consultant_type} onValueChange={(v) => updateConsultant(c.id, { consultant_type: v })} disabled={!canUpload}>
@@ -1002,14 +1049,20 @@ export default function DesignPortal() {
                       </Select>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-1.5 text-xs">
-                      <Checkbox checked={c.review_complete} onCheckedChange={(v) => updateConsultant(c.id, { review_complete: !!v })} disabled={!canUpload} />
-                      Review Complete
+
+                  {/* Toggles row - clearly visible */}
+                  <div className="flex flex-wrap items-center gap-4 pt-1 border-t border-border">
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <Checkbox checked={c.drawings_uploaded} onCheckedChange={(v) => updateConsultant(c.id, { drawings_uploaded: !!v })} disabled={!canUpload} />
+                      <span>Drawings Received</span>
                     </label>
-                    <label className="flex items-center gap-1.5 text-xs">
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                      <Checkbox checked={c.review_complete} onCheckedChange={(v) => updateConsultant(c.id, { review_complete: !!v })} disabled={!canUpload} />
+                      <span>Review Complete</span>
+                    </label>
+                    <label className="flex items-center gap-1.5 text-xs cursor-pointer">
                       <Checkbox checked={c.approved} onCheckedChange={(v) => updateConsultant(c.id, { approved: !!v })} disabled={!canUpload} />
-                      Approved
+                      <span>Approved</span>
                     </label>
                   </div>
                 </div>
