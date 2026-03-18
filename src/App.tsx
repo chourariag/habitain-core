@@ -15,6 +15,7 @@ import Projects from "@/pages/Projects";
 import ProjectDetail from "@/pages/ProjectDetail";
 import Production from "@/pages/Production";
 import SiteHub from "@/pages/SiteHub";
+import Drawings from "@/pages/Drawings";
 import QualityControl from "@/pages/QualityControl";
 import Inventory from "@/pages/Inventory";
 import Admin from "@/pages/Admin";
