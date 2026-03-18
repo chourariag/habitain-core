@@ -12,21 +12,18 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 
 interface Props {
-  moduleId: string;
+  projectId: string;
   userRole: string | null;
   onReadinessConfirmed: () => void;
 }
 
 interface ChecklistState {
-  // Section 1 - Site Preparation
   foundation_ready: boolean;
   crane_booked: boolean;
   site_access_clear: boolean;
   team_briefed: boolean;
   safety_equipment: boolean;
-  // Section 2 - Dry Run
   dry_run_video_url: string;
-  // Section 3 - Logistics
   labour_stay: boolean;
   labour_stay_notes: string;
   labour_food: boolean;
@@ -50,7 +47,7 @@ const INITIAL_STATE: ChecklistState = {
   supervisor_stay: false, supervisor_stay_notes: "",
 };
 
-export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirmed }: Props) {
+export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirmed }: Props) {
   const [state, setState] = useState<ChecklistState>(INITIAL_STATE);
   const [existing, setExisting] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -60,21 +57,19 @@ export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirme
 
   const canManage = ["site_installation_mgr", "super_admin", "managing_director"].includes(userRole ?? "");
 
-  // Completion counts
   const section1Count = [state.foundation_ready, state.crane_booked, state.site_access_clear, state.team_briefed, state.safety_equipment].filter(Boolean).length;
   const section2Count = state.dry_run_video_url ? 1 : 0;
   const section3Count = [state.labour_stay, state.labour_food, state.dg_generator, state.nearest_hardware_shop, state.supervisor_stay].filter(Boolean).length;
   const totalComplete = section1Count + section2Count + section3Count;
   const allComplete = totalComplete === 11;
 
-  useEffect(() => { loadExisting(); }, [moduleId]);
+  useEffect(() => { loadExisting(); }, [projectId]);
 
   const loadExisting = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("site_readiness" as any)
+    const { data } = await (supabase.from("site_readiness") as any)
       .select("*")
-      .eq("module_id", moduleId)
+      .eq("project_id", projectId)
       .order("created_at", { ascending: false })
       .limit(1);
     const record = (data as any[])?.[0];
@@ -111,7 +106,7 @@ export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirme
     setUploading(true);
     try {
       const ext = file.name.split(".").pop();
-      const path = `${moduleId}/${Date.now()}.${ext}`;
+      const path = `${projectId}/${Date.now()}.${ext}`;
       const { error } = await supabase.storage.from("dry-run-videos").upload(path, file);
       if (error) throw error;
       const { data: urlData } = supabase.storage.from("dry-run-videos").getPublicUrl(path);
@@ -132,20 +127,21 @@ export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirme
       if (!user) throw new Error("Not authenticated");
       const { client } = await getAuthedClient();
       const payload = {
-        module_id: moduleId,
+        project_id: projectId,
+        module_id: null as any,
         submitted_by: user.id,
         submitted_at: new Date().toISOString(),
         is_complete: true,
         ...state,
       };
       if (existing) {
-        const { error } = await (client.from("site_readiness" as any) as any).update(payload).eq("id", existing.id);
+        const { error } = await (client.from("site_readiness") as any).update(payload).eq("id", existing.id);
         if (error) throw error;
       } else {
-        const { error } = await (client.from("site_readiness" as any) as any).insert(payload);
+        const { error } = await (client.from("site_readiness") as any).insert(payload);
         if (error) throw error;
       }
-      toast.success("Site readiness confirmed!");
+      toast.success("Site readiness confirmed for this project!");
       onReadinessConfirmed();
       await loadExisting();
     } catch (err: any) {
@@ -162,16 +158,17 @@ export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirme
       if (!user) throw new Error("Not authenticated");
       const { client } = await getAuthedClient();
       const payload = {
-        module_id: moduleId,
+        project_id: projectId,
+        module_id: null as any,
         submitted_by: user.id,
         is_complete: false,
         ...state,
       };
       if (existing) {
-        const { error } = await (client.from("site_readiness" as any) as any).update(payload).eq("id", existing.id);
+        const { error } = await (client.from("site_readiness") as any).update(payload).eq("id", existing.id);
         if (error) throw error;
       } else {
-        const { error } = await (client.from("site_readiness" as any) as any).insert(payload);
+        const { error } = await (client.from("site_readiness") as any).insert(payload);
         if (error) throw error;
       }
       toast.success("Progress saved");
@@ -241,7 +238,6 @@ export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirme
         </CardTitle>
       </CardHeader>
       <CardContent className="px-4 pb-4 space-y-5">
-        {/* Overall progress */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs" style={{ color: "#666666" }}>
             <span>Overall Progress</span>
@@ -250,7 +246,6 @@ export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirme
           <Progress value={progressPct} className="h-2" />
         </div>
 
-        {/* Section 1 — Site Preparation */}
         <div className="border rounded-lg p-3" style={{ borderColor: "#E5E5E5" }}>
           <SectionHeader title="Section 1 — Site Preparation" done={section1Count} total={5} />
           <div className="space-y-1">
@@ -262,7 +257,6 @@ export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirme
           </div>
         </div>
 
-        {/* Section 2 — Dry Run */}
         <div className="border rounded-lg p-3" style={{ borderColor: "#E5E5E5" }}>
           <SectionHeader title="Section 2 — Dry Run" done={section2Count} total={1} />
           <div className="space-y-2">
@@ -293,11 +287,9 @@ export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirme
           </div>
         </div>
 
-        {/* Section 3 — Logistics & Arrangements */}
         <div className="border rounded-lg p-3" style={{ borderColor: "#E5E5E5" }}>
           <SectionHeader title="Section 3 — Logistics & Arrangements" done={section3Count} total={5} />
           <div className="space-y-3">
-            {/* Labour Stay */}
             <div>
               <CheckItem checked={state.labour_stay} onCheck={(v) => set("labour_stay", v)} label="Labour Stay" />
               {state.labour_stay && (
@@ -305,8 +297,6 @@ export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirme
                   onChange={(e) => set("labour_stay_notes", e.target.value)} className="mt-1.5 text-sm" rows={2} />
               )}
             </div>
-
-            {/* Labour Food */}
             <div>
               <CheckItem checked={state.labour_food} onCheck={(v) => set("labour_food", v)} label="Labour Food Arrangements" />
               {state.labour_food && (
@@ -314,8 +304,6 @@ export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirme
                   onChange={(e) => set("labour_food_notes", e.target.value)} className="mt-1.5 text-sm" rows={2} />
               )}
             </div>
-
-            {/* DG/Generator */}
             <div>
               <CheckItem checked={state.dg_generator} onCheck={(v) => set("dg_generator", v)} label="DG/Generator Arrangement" />
               {state.dg_generator && (
@@ -323,8 +311,6 @@ export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirme
                   onChange={(e) => set("dg_generator_notes", e.target.value)} className="mt-1.5 text-sm" rows={2} />
               )}
             </div>
-
-            {/* Nearest Hardware Shop */}
             <div>
               <CheckItem checked={state.nearest_hardware_shop} onCheck={(v) => set("nearest_hardware_shop", v)} label="Nearest Hardware Shop" />
               {state.nearest_hardware_shop && (
@@ -335,8 +321,6 @@ export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirme
                 </div>
               )}
             </div>
-
-            {/* Supervisor Stay */}
             <div>
               <CheckItem checked={state.supervisor_stay} onCheck={(v) => set("supervisor_stay", v)} label="Supervisor Stay Arrangements" />
               {state.supervisor_stay && (
@@ -347,7 +331,6 @@ export function SiteReadinessChecklist({ moduleId, userRole, onReadinessConfirme
           </div>
         </div>
 
-        {/* Buttons */}
         <div className="flex gap-2">
           <Button size="sm" variant="outline" onClick={handleSaveProgress} disabled={submitting} className="flex-1">
             {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}

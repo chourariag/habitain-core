@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, FolderKanban, Users, Settings, Factory,
   ClipboardCheck, Package, PackagePlus, ChevronLeft, ChevronRight,
-  LogOut, Truck, Wrench, FileSignature,
+  LogOut, Truck, Wrench, FileSignature, PenTool,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -14,6 +14,7 @@ const navItems = [
   { to: "/projects", label: "Projects", icon: FolderKanban },
   { to: "/production", label: "Production", icon: Factory },
   { to: "/site-hub", label: "Site Hub", icon: Truck },
+  { to: "/drawings", label: "Drawings", icon: PenTool },
   { to: "/qc", label: "Quality", icon: ClipboardCheck },
   { to: "/inventory", label: "Inventory", icon: Package },
   { to: "/materials", label: "Materials", icon: PackagePlus },
