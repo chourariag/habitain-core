@@ -98,11 +98,16 @@ export default function Production() {
                       currentStage={m.current_stage}
                       userRole={userRole}
                     />
-                    <ModuleSchedule
-                      moduleId={m.id}
-                      currentStage={m.current_stage}
-                      userRole={userRole}
-                    />
+                     <ModuleSchedule
+                       moduleId={m.id}
+                       currentStage={m.current_stage}
+                       userRole={userRole}
+                     />
+                     <ModuleDrawingsTab
+                       projectId={m.project_id}
+                       moduleId={m.id}
+                       projectName={m.projects?.name}
+                     />
                   </div>
                 )}
               </div>

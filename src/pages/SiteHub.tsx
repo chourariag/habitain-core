@@ -287,6 +287,14 @@ export default function SiteHub() {
                     )}
                   </TabsContent>
 
+                  <TabsContent value="drawings">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <ModuleDrawingsTab projectId={selectedProject.id} projectName={selectedProject.name} />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
                   <TabsContent value="diary"><SiteDiary projectId={selectedProject.id} userRole={userRole} /></TabsContent>
                   <TabsContent value="handover">
                     <HandoverPack projectId={selectedProject.id} clientName={selectedProject.client_name} userRole={userRole} installationComplete={installationComplete} onHandedOver={fetchData} />
