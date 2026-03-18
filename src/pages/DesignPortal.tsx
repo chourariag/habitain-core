@@ -676,6 +676,12 @@ export default function DesignPortal() {
               </Card>
               <Card>
                 <CardContent className="pt-4 pb-3 text-center">
+                  <p className="text-2xl font-bold" style={{ color: pendingClientApprovals > 0 ? "#D4860A" : "#1A1A1A" }}>{pendingClientApprovals}</p>
+                  <p className="text-xs mt-1" style={{ color: "#666666" }}>Pending Approvals</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-4 pb-3 text-center">
                   <p className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>{gfcReadyCount}</p>
                   <p className="text-xs mt-1" style={{ color: "#666666" }}>GFC Issued</p>
                 </CardContent>
