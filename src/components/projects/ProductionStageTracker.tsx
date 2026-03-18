@@ -9,8 +9,8 @@ import { QCInspectionWizard } from "@/components/qc/QCInspectionWizard";
 
 export const PRODUCTION_STAGES = [
   "Sub-Frame",
-  "Insulation",
   "MEP Rough-In",
+  "Insulation",
   "Drywall",
   "Paint",
   "MEP Final",
@@ -39,22 +39,19 @@ export function ProductionStageTracker({ moduleId, projectId, currentStage, prod
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check for open NCRs on this module
     const checkNCRs = async () => {
+      const { data: inspections } = await supabase
+        .from("qc_inspections")
+        .select("id")
+        .eq("module_id", moduleId);
+      const inspectionIds = inspections?.map((i) => i.id) ?? [];
+      if (inspectionIds.length === 0) { setOpenNCRCount(0); return; }
       const { count } = await supabase
         .from("ncr_register")
         .select("id", { count: "exact", head: true })
         .eq("is_archived", false)
         .in("status", ["open", "critical_open"])
-        .in(
-          "inspection_id",
-          // subquery via inspections for this module
-          (await supabase
-            .from("qc_inspections")
-            .select("id")
-            .eq("module_id", moduleId)
-          ).data?.map((i) => i.id) ?? []
-        );
+        .in("inspection_id", inspectionIds);
       setOpenNCRCount(count ?? 0);
     };
     checkNCRs();
@@ -67,7 +64,6 @@ export function ProductionStageTracker({ moduleId, projectId, currentStage, prod
   }, [moduleId]);
 
   const canStartInspection = ["qc_inspector", "production_head", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
-
   const isBlocked = isOnHold && openNCRCount > 0;
 
   const handleAdvance = async () => {
@@ -120,13 +116,13 @@ export function ProductionStageTracker({ moduleId, projectId, currentStage, prod
               {idx > 0 && (
                 <div className={cn(
                   "w-4 h-0.5 mx-0.5",
-                  isComplete ? "bg-success" : isCurrent ? "bg-primary" : "bg-border"
+                  isComplete ? "bg-primary" : isCurrent ? "bg-primary" : "bg-border"
                 )} />
               )}
               <div
                 className={cn(
                   "flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium border transition-colors",
-                  isComplete && "bg-success/20 text-success-foreground border-success/30",
+                  isComplete && "bg-primary/20 text-primary border-primary/30",
                   isCurrent && "bg-primary/20 text-primary border-primary/30 ring-2 ring-primary/20",
                   isLocked && "bg-muted text-muted-foreground border-border opacity-50"
                 )}
@@ -141,7 +137,6 @@ export function ProductionStageTracker({ moduleId, projectId, currentStage, prod
         })}
       </div>
 
-      {/* Hold warning */}
       {isBlocked && (
         <div className="bg-destructive/10 border border-destructive/30 rounded-md p-2 flex items-center gap-2 text-xs text-destructive">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />

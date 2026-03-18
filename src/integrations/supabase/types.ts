@@ -100,6 +100,71 @@ export type Database = {
           },
         ]
       }
+      daily_production_logs: {
+        Row: {
+          created_at: string | null
+          id: string
+          issues_blockers: string | null
+          log_date: string
+          materials_used: string | null
+          module_id: string
+          photo_urls: string[]
+          review_comment: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          stage_progress: number
+          stage_worked: string
+          status: string
+          submitted_by: string
+          updated_at: string | null
+          work_completed: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          issues_blockers?: string | null
+          log_date?: string
+          materials_used?: string | null
+          module_id: string
+          photo_urls?: string[]
+          review_comment?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          stage_progress?: number
+          stage_worked: string
+          status?: string
+          submitted_by: string
+          updated_at?: string | null
+          work_completed: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          issues_blockers?: string | null
+          log_date?: string
+          materials_used?: string | null
+          module_id?: string
+          photo_urls?: string[]
+          review_comment?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          stage_progress?: number
+          stage_worked?: string
+          status?: string
+          submitted_by?: string
+          updated_at?: string | null
+          work_completed?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_production_logs_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispatch_log: {
         Row: {
           created_at: string | null
@@ -139,6 +204,38 @@ export type Database = {
             foreignKeyName: "dispatch_log_module_id_fkey"
             columns: ["module_id"]
             isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dispatch_signoffs: {
+        Row: {
+          id: string
+          module_id: string
+          notes: string | null
+          signed_at: string | null
+          signed_by: string
+        }
+        Insert: {
+          id?: string
+          module_id: string
+          notes?: string | null
+          signed_at?: string | null
+          signed_by: string
+        }
+        Update: {
+          id?: string
+          module_id?: string
+          notes?: string | null
+          signed_at?: string | null
+          signed_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_signoffs_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: true
             referencedRelation: "modules"
             referencedColumns: ["id"]
           },
@@ -520,6 +617,53 @@ export type Database = {
           },
         ]
       }
+      module_schedule: {
+        Row: {
+          actual_end: string | null
+          actual_start: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          module_id: string
+          stage_name: string
+          target_end: string | null
+          target_start: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          actual_end?: string | null
+          actual_start?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          module_id: string
+          stage_name: string
+          target_end?: string | null
+          target_start?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          actual_end?: string | null
+          actual_start?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          module_id?: string
+          stage_name?: string
+          target_end?: string | null
+          target_start?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_schedule_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       modules: {
         Row: {
           created_at: string | null
@@ -830,7 +974,10 @@ export type Database = {
       }
       projects: {
         Row: {
+          client_email: string | null
           client_name: string | null
+          client_phone: string | null
+          construction_type: string | null
           created_at: string | null
           created_by: string | null
           est_completion: string | null
@@ -845,7 +992,10 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          client_email?: string | null
           client_name?: string | null
+          client_phone?: string | null
+          construction_type?: string | null
           created_at?: string | null
           created_by?: string | null
           est_completion?: string | null
@@ -860,7 +1010,10 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          client_email?: string | null
           client_name?: string | null
+          client_phone?: string | null
+          construction_type?: string | null
           created_at?: string | null
           created_by?: string | null
           est_completion?: string | null
@@ -1174,42 +1327,69 @@ export type Database = {
       site_diary: {
         Row: {
           blockers: string | null
+          client_visit: boolean | null
+          client_visit_name: string | null
+          client_visit_notes: string | null
+          client_visit_purpose: string | null
           created_at: string | null
           entry_date: string
           gps_location: string | null
           id: string
           manpower_count: number | null
+          material_deliveries: boolean | null
+          material_delivery_items: Json | null
           notes: string | null
           photo_urls: string[]
+          power_cut_duration: number | null
+          power_cuts: boolean | null
           project_id: string
+          subcontractor_attendance: Json | null
           submitted_by: string
           updated_at: string | null
           weather_condition: string | null
         }
         Insert: {
           blockers?: string | null
+          client_visit?: boolean | null
+          client_visit_name?: string | null
+          client_visit_notes?: string | null
+          client_visit_purpose?: string | null
           created_at?: string | null
           entry_date?: string
           gps_location?: string | null
           id?: string
           manpower_count?: number | null
+          material_deliveries?: boolean | null
+          material_delivery_items?: Json | null
           notes?: string | null
           photo_urls?: string[]
+          power_cut_duration?: number | null
+          power_cuts?: boolean | null
           project_id: string
+          subcontractor_attendance?: Json | null
           submitted_by: string
           updated_at?: string | null
           weather_condition?: string | null
         }
         Update: {
           blockers?: string | null
+          client_visit?: boolean | null
+          client_visit_name?: string | null
+          client_visit_notes?: string | null
+          client_visit_purpose?: string | null
           created_at?: string | null
           entry_date?: string
           gps_location?: string | null
           id?: string
           manpower_count?: number | null
+          material_deliveries?: boolean | null
+          material_delivery_items?: Json | null
           notes?: string | null
           photo_urls?: string[]
+          power_cut_duration?: number | null
+          power_cuts?: boolean | null
           project_id?: string
+          subcontractor_attendance?: Json | null
           submitted_by?: string
           updated_at?: string | null
           weather_condition?: string | null
