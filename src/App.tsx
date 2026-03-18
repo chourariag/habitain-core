@@ -21,7 +21,6 @@ import QualityControl from "@/pages/QualityControl";
 import Inventory from "@/pages/Inventory";
 import Admin from "@/pages/Admin";
 import AppSettings from "@/pages/AppSettings";
-import AppSettings from "@/pages/AppSettings";
 import RMPage from "@/pages/RM";
 import AMCPage from "@/pages/AMC";
 import Profile from "@/pages/Profile";
