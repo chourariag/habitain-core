@@ -15,14 +15,12 @@ import Projects from "@/pages/Projects";
 import ProjectDetail from "@/pages/ProjectDetail";
 import Production from "@/pages/Production";
 import SiteHub from "@/pages/SiteHub";
-import Drawings from "@/pages/Drawings";
 import DesignPortal from "@/pages/DesignPortal";
 import { DesignRouteGuard } from "@/components/DesignRouteGuard";
 import QualityControl from "@/pages/QualityControl";
 import Inventory from "@/pages/Inventory";
 import Admin from "@/pages/Admin";
 import AppSettings from "@/pages/AppSettings";
-import MaterialRequests from "@/pages/MaterialRequests";
 import RMPage from "@/pages/RM";
 import AMCPage from "@/pages/AMC";
 import Profile from "@/pages/Profile";
@@ -50,10 +48,9 @@ const App = () => (
                 <Route path="/production" element={<Production />} />
                 <Route path="/site-hub" element={<SiteHub />} />
                 <Route path="/design" element={<DesignRouteGuard><DesignPortal /></DesignRouteGuard>} />
-                <Route path="/drawings" element={<Drawings />} />
                 <Route path="/qc" element={<QualityControl />} />
                 <Route path="/inventory" element={<Inventory />} />
-                <Route path="/materials" element={<MaterialRequests />} />
+                <Route path="/materials" element={<Navigate to="/production" replace />} />
                 <Route path="/rm" element={<RMPage />} />
                 <Route path="/amc" element={<AMCPage />} />
                 <Route path="/admin" element={<Admin />} />

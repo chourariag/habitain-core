@@ -4,12 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, MapPinned, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool } from "lucide-react";
+import { Loader2, MapPinned, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus } from "lucide-react";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
+import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPanel";
 import type { Tables } from "@/integrations/supabase/types";
 
 export default function SiteHub() {
@@ -225,8 +226,8 @@ export default function SiteHub() {
                     <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
                     <TabsTrigger value="diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
                     <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Pack</TabsTrigger>
+                    <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
                   </TabsList>
-
                   <TabsContent value="pipeline" className="space-y-4">
                     {/* Project-level Site Readiness */}
                     <div className="bg-card border border-border rounded-lg p-4 space-y-3">
@@ -298,6 +299,9 @@ export default function SiteHub() {
                   <TabsContent value="diary"><SiteDiary projectId={selectedProject.id} userRole={userRole} /></TabsContent>
                   <TabsContent value="handover">
                     <HandoverPack projectId={selectedProject.id} clientName={selectedProject.client_name} userRole={userRole} installationComplete={installationComplete} onHandedOver={fetchData} />
+                  </TabsContent>
+                  <TabsContent value="materials">
+                    <MaterialRequestsPanel projectId={selectedProject.id} />
                   </TabsContent>
                 </Tabs>
               </>
