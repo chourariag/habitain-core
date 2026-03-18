@@ -16,6 +16,8 @@ import ProjectDetail from "@/pages/ProjectDetail";
 import Production from "@/pages/Production";
 import SiteHub from "@/pages/SiteHub";
 import Drawings from "@/pages/Drawings";
+import DesignPortal from "@/pages/DesignPortal";
+import { DesignRouteGuard } from "@/components/DesignRouteGuard";
 import QualityControl from "@/pages/QualityControl";
 import Inventory from "@/pages/Inventory";
 import Admin from "@/pages/Admin";
