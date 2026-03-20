@@ -42,6 +42,7 @@ const stageStatusStyle = (s: string): React.CSSProperties => ({
 
 export default function DesignPortal() {
   const [loading, setLoading] = useState(true);
+  const [countsLoading, setCountsLoading] = useState(true);
   const [projects, setProjects] = useState<any[]>([]);
   const [drawings, setDrawings] = useState<any[]>([]);
   const [dqs, setDqs] = useState<any[]>([]);
