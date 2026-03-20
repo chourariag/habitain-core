@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
@@ -92,6 +92,9 @@ export default function DesignPortal() {
   const canUpload = ["principal_architect", "project_architect", "structural_architect", "super_admin", "managing_director"].includes(userRole ?? "");
   const isArchitect = ["principal_architect", "project_architect", "structural_architect"].includes(userRole ?? "");
 
+  const dedupe = <T extends { id?: string }>(arr: T[]): T[] =>
+    Array.from(new Map(arr.map((item) => [(item as any).id ?? JSON.stringify(item), item])).values());
+
   const fetchStageCounts = useCallback(async () => {
     setCountsLoading(true);
     const [dsRes, dfRes, dqsRes] = await Promise.all([
@@ -99,9 +102,9 @@ export default function DesignPortal() {
       (supabase.from("project_design_files") as any).select("*"),
       (supabase.from("design_queries") as any).select("*").eq("is_archived", false).order("created_at", { ascending: false }),
     ]);
-    setDesignStages(dsRes.data ?? []);
-    setDesignFiles(dfRes.data ?? []);
-    setDqs(dqsRes.data ?? []);
+    setDesignStages(dedupe(dsRes.data ?? []));
+    setDesignFiles(dedupe(dfRes.data ?? []));
+    setDqs(dedupe(dqsRes.data ?? []));
     setCountsLoading(false);
   }, []);
 
@@ -126,41 +129,52 @@ export default function DesignPortal() {
       (supabase.from("design_consultants") as any).select("*").order("created_at"),
     ]);
 
-    setProjects(projectsRes.data ?? []);
-    setDrawings(drawingsRes.data ?? []);
-    setDqs(dqsRes.data ?? []);
-    setDesignFiles(dfRes.data ?? []);
-    setDesignStages(dsRes.data ?? []);
-    setConsultants(dcRes.data ?? []);
+    setProjects(dedupe(projectsRes.data ?? []));
+    setDrawings(dedupe(drawingsRes.data ?? []));
+    setDqs(dedupe(dqsRes.data ?? []));
+    setDesignFiles(dedupe(dfRes.data ?? []));
+    setDesignStages(dedupe(dsRes.data ?? []));
+    setConsultants(dedupe(dcRes.data ?? []));
     setLoading(false);
     setCountsLoading(false);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Realtime subscription for design_stages, design_queries, and project_design_files
+  // Stable ref for fetchStageCounts so realtime callback doesn't go stale
+  const fetchStageCountsRef = useRef(fetchStageCounts);
+  fetchStageCountsRef.current = fetchStageCounts;
+
+  // Single realtime channel — created once, never recreated
+  const channelRef = useRef<any>(null);
   useEffect(() => {
-    const channel = supabase
-      .channel("design-stages-realtime")
+    if (channelRef.current) return; // already subscribed
+    channelRef.current = supabase
+      .channel("design-dashboard-counts")
       .on("postgres_changes", { event: "*", schema: "public", table: "design_stages" }, () => {
-        fetchStageCounts();
+        fetchStageCountsRef.current();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "design_queries" }, () => {
-        fetchStageCounts();
+        fetchStageCountsRef.current();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "project_design_files" }, () => {
-        fetchStageCounts();
+        fetchStageCountsRef.current();
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [fetchStageCounts]);
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, []); // empty deps — runs once
 
   // Fallback: refetch on window/tab focus
   useEffect(() => {
-    const onFocus = () => { fetchStageCounts(); };
+    const onFocus = () => { fetchStageCountsRef.current(); };
     window.addEventListener("focus", onFocus);
     return () => { window.removeEventListener("focus", onFocus); };
-  }, [fetchStageCounts]);
+  }, []);
 
   const projectMap = useMemo(() => {
     const m: Record<string, any> = {};
