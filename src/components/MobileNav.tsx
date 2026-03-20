@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, FolderKanban, Factory, Truck,
   BarChart3, DollarSign, ClipboardCheck, ShoppingCart, Compass,
-  Wrench, Users, Settings,
+  Wrench, Users, Settings, Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
