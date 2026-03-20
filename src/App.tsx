@@ -24,6 +24,7 @@ import AppSettings from "@/pages/AppSettings";
 import RMPage from "@/pages/RM";
 import AMCPage from "@/pages/AMC";
 import Drawings from "@/pages/Drawings";
+import Procurement from "@/pages/Procurement";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 import ComingSoon from "@/pages/ComingSoon";
