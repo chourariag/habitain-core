@@ -191,7 +191,7 @@ function SiteHubContent() {
                 <Badge variant="outline" style={{ backgroundColor: "#E8F2ED", color: "#006039", border: "none" }}>Completed ✅</Badge>
               ) : (
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" style={{ backgroundColor: "#FFF0F0", color: "#F40009", border: "none" }}>Not Started</Badge>
+                  <Badge variant="outline" style={{ backgroundColor: "#FFF8E8", color: "#D4860A", border: "none" }}>Not Started</Badge>
                   {canManageReadiness && (
                     <Button size="sm" variant="outline" onClick={() => setShowReadinessChecklist(!showReadinessChecklist)}>
                       {showReadinessChecklist ? "Hide Checklist" : "Submit Checklist"}
