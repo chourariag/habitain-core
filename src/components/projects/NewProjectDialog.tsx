@@ -49,6 +49,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
     setName(""); setClientName(""); setClientPhone(""); setClientEmail("");
     setCity(""); setState(""); setProjectType(""); setConstructionType("");
     setUnitCount(""); setStartDate(undefined); setEstCompletion(undefined);
+    setSiteLat(""); setSiteLng(""); setSiteRadius("300");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
