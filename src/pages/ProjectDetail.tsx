@@ -12,6 +12,7 @@ import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
+import { useProjectContext } from "@/contexts/ProjectContext";
 
 const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admin", "managing_director"];
@@ -19,6 +20,7 @@ const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admi
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { setSelectedProjectId } = useProjectContext();
   const [project, setProject] = useState<Tables<"projects"> | null>(null);
   const [modules, setModules] = useState<any[]>([]);
   const [panels, setPanels] = useState<Record<string, any[]>>({});
@@ -29,6 +31,13 @@ export default function ProjectDetail() {
 
   const canEdit = EDIT_ROLES.includes(userRole ?? "");
   const canAdvanceStage = STAGE_ADVANCE_ROLES.includes(userRole ?? "");
+
+  // Sync sidebar project selector with URL param
+  useEffect(() => {
+    if (id) {
+      setSelectedProjectId(id);
+    }
+  }, [id, setSelectedProjectId]);
 
   const fetchData = useCallback(async () => {
     if (!id) return;

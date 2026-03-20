@@ -23,8 +23,7 @@ const projectTabs = [
   { to: "/projects/:id", label: "Overview", icon: FolderKanban, suffix: "" },
   { to: "/production", label: "Production", icon: Factory, suffix: "?ctx=project" },
   { to: "/site-hub", label: "Site Hub", icon: Truck, suffix: "?ctx=project" },
-  { to: "/design", label: "Design", icon: Compass, suffix: "?ctx=project", roles: DESIGN_ROLES },
-  { to: "/drawings", label: "Documents", icon: ClipboardList, suffix: "?ctx=project" },
+  { to: "/drawings", label: "Drawings", icon: ClipboardList, suffix: "?ctx=project" },
 ];
 
 // Sections with role gating
@@ -90,12 +89,7 @@ export function AppSidebar() {
 
   const showProjectSelector = canSeeProjectSelector(userRole);
 
-  const filteredProjectTabs = projectTabs.filter((item) => {
-    if ("roles" in item && item.roles) {
-      return userRole ? item.roles.includes(userRole) : false;
-    }
-    return true;
-  });
+  const filteredProjectTabs = projectTabs;
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
