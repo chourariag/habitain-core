@@ -32,30 +32,42 @@ export function ScrollableTabsWrapper({ children, className }: ScrollableTabsWra
     };
   }, [checkOverflow]);
 
+  const scrollBy = (dir: number) => {
+    scrollRef.current?.scrollBy({ left: dir * 120, behavior: "smooth" });
+  };
+
   return (
-    <div className={cn("relative", className)}>
-      <div ref={scrollRef} className="overflow-x-auto overflow-y-visible scrollbar-none">
+    <div className={cn("flex items-center w-full gap-0", className)}>
+      {showLeft && (
+        <button
+          type="button"
+          onClick={() => scrollBy(-1)}
+          className="flex-shrink-0 flex items-center justify-center w-7 h-full"
+          style={{ background: "#FFFFFF", color: "#006039" }}
+          aria-label="Scroll tabs left"
+        >
+          <ChevronLeft className="h-[18px] w-[18px]" strokeWidth={2.5} />
+        </button>
+      )}
+
+      <div
+        ref={scrollRef}
+        className="flex-1 min-w-0 overflow-x-auto overflow-y-visible scrollbar-none"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
         {children}
       </div>
 
-      {/* Left fade + chevron */}
-      {showLeft && (
-        <div
-          className="absolute left-0 top-0 bottom-0 w-12 flex items-center justify-start pl-1.5 pointer-events-none z-10"
-          style={{ background: "linear-gradient(to right, #FFFFFF 30%, transparent)" }}
-        >
-          <ChevronLeft className="h-4 w-4" style={{ color: "#006039" }} />
-        </div>
-      )}
-
-      {/* Right fade + chevron */}
       {showRight && (
-        <div
-          className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-end pr-1.5 pointer-events-none z-10"
-          style={{ background: "linear-gradient(to left, #FFFFFF 30%, transparent)" }}
+        <button
+          type="button"
+          onClick={() => scrollBy(1)}
+          className="flex-shrink-0 flex items-center justify-center w-7 h-full"
+          style={{ background: "#FFFFFF", color: "#006039" }}
+          aria-label="Scroll tabs right"
         >
-          <ChevronRight className="h-4 w-4" style={{ color: "#006039" }} />
-        </div>
+          <ChevronRight className="h-[18px] w-[18px]" strokeWidth={2.5} />
+        </button>
       )}
     </div>
   );
