@@ -255,6 +255,9 @@ export default function Profile() {
         </CardContent>
       </Card>
 
+      {/* Attendance */}
+      <ProfileAttendance userRole={profile?.role} />
+
       {/* Change Password */}
       <Card>
         <CardHeader>
