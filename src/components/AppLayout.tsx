@@ -17,7 +17,7 @@ export function AppLayout() {
             <header className="flex items-center justify-end h-12 px-4 border-b border-border bg-background shrink-0">
               <UserAvatar />
             </header>
-            <main className="flex-1 overflow-y-auto pb-20 md:pb-0 bg-background">
+            <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0 bg-background max-w-full">
               <div className="px-4 md:px-6 pt-4">
                 <ProjectBreadcrumb />
               </div>
