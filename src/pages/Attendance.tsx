@@ -38,16 +38,24 @@ export default function Attendance() {
         HR & Attendance
       </h1>
 
-      <ScrollableTabs
-        tabs={[
-          { id: "overview", label: "Overview" },
-          { id: "daily", label: "Daily Log" },
-          { id: "leave", label: "Leave Requests" },
-          { id: "export", label: "Export" },
-        ]}
-        activeTab={tab}
-        onTabChange={setTab}
-      />
+      <ScrollableTabsWrapper>
+        <div className="flex gap-0 border-b border-border">
+          {["overview", "daily", "leave", "export"].map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className="px-4 py-2 text-sm font-medium whitespace-nowrap flex-shrink-0 transition-colors"
+              style={{
+                color: tab === t ? "#006039" : "#666",
+                borderBottom: tab === t ? "2px solid #006039" : "2px solid transparent",
+                fontWeight: tab === t ? 700 : 500,
+              }}
+            >
+              {t === "overview" ? "Overview" : t === "daily" ? "Daily Log" : t === "leave" ? "Leave Requests" : "Export"}
+            </button>
+          ))}
+        </div>
+      </ScrollableTabsWrapper>
 
       {tab === "overview" && <OverviewTab />}
       {tab === "daily" && <DailyLogTab />}
