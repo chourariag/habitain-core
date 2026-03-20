@@ -12,6 +12,7 @@ import { ArrowLeft, Camera, Loader2, Lock, User, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { useTranslation } from "react-i18next";
+import { ProfileAttendance } from "@/components/attendance/ProfileAttendance";
 
 const LANG_OPTIONS = [
   { value: "en", label: "English" },
