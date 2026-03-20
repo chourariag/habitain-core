@@ -224,6 +224,36 @@ export default function Profile() {
         </CardContent>
       </Card>
 
+      {/* Language */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Globe className="h-4 w-4" /> Language
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Select
+            value={i18n.language}
+            onValueChange={(lang) => {
+              i18n.changeLanguage(lang);
+              if (user) {
+                supabase.from("profiles").update({ language: lang } as any).eq("auth_user_id", user.id);
+              }
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LANG_OPTIONS.map((l) => (
+                <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">UI labels will update immediately. Data is always shown as entered.</p>
+        </CardContent>
+      </Card>
+
       {/* Change Password */}
       <Card>
         <CardHeader>
