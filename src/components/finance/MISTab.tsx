@@ -40,21 +40,17 @@ interface MISUpload {
 }
 
 function sumByCategory(entries: LedgerEntry[], mappings: Record<string, string>, category: string): number {
+  // Revenue/income: credit - debit (positive = income)
+  // Costs/expenses: debit - credit (positive = expense)
+  const isIncome = ["revenue", "other_income", "unbilled_revenue"].includes(category);
   return entries
     .filter(e => mappings[e.ledger_name] === category)
-    .reduce((sum, e) => sum + (e.credit - e.debit), 0);
-}
-
-function sumDebitByCategory(entries: LedgerEntry[], mappings: Record<string, string>, category: string): number {
-  return entries
-    .filter(e => mappings[e.ledger_name] === category)
-    .reduce((sum, e) => sum + (e.debit - e.credit), 0);
+    .reduce((sum, e) => sum + (isIncome ? (e.credit - e.debit) : (e.debit - e.credit)), 0);
 }
 
 function formatPct(value: number, totalIncome: number): string {
   if (!totalIncome || totalIncome === 0) return "—";
   const pct = (value / totalIncome) * 100;
-  if (Math.abs(pct) > 999.99) return pct > 0 ? ">999%" : "<-999%";
   return pct.toFixed(2) + "%";
 }
 
