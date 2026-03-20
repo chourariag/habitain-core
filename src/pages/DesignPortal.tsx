@@ -691,32 +691,68 @@ export default function DesignPortal() {
               ].map((s) => (
                 <Card key={s.label} className="text-center">
                   <CardContent className="pt-4 pb-3">
-                    <p className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>{s.count}</p>
-                    <p className="text-xs mt-1" style={{ color: "#666666" }}>{s.label}</p>
+                    {countsLoading ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="h-7 w-10 rounded bg-muted animate-pulse" />
+                        <div className="h-3 w-16 rounded bg-muted animate-pulse mt-1" />
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>{s.count}</p>
+                        <p className="text-xs mt-1" style={{ color: "#666666" }}>{s.label}</p>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               ))}
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <Card style={openDqCount > 0 ? { backgroundColor: criticalDqCount > 0 ? "#FFF0F0" : "#FFF8E8" } : {}}>
+              <Card style={!countsLoading && openDqCount > 0 ? { backgroundColor: criticalDqCount > 0 ? "#FFF0F0" : "#FFF8E8" } : {}}>
                 <CardContent className="pt-4 pb-3 text-center">
-                  <p className="text-2xl font-bold" style={{ color: criticalDqCount > 0 ? "#F40009" : openDqCount > 0 ? "#D4860A" : "#1A1A1A" }}>
-                    {openDqCount}
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: "#666666" }}>Open DQs</p>
+                  {countsLoading ? (
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="h-7 w-10 rounded bg-muted animate-pulse" />
+                      <div className="h-3 w-16 rounded bg-muted animate-pulse mt-1" />
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold" style={{ color: criticalDqCount > 0 ? "#F40009" : openDqCount > 0 ? "#D4860A" : "#1A1A1A" }}>
+                        {openDqCount}
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: "#666666" }}>Open DQs</p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-4 pb-3 text-center">
-                  <p className="text-2xl font-bold" style={{ color: pendingClientApprovals > 0 ? "#D4860A" : "#1A1A1A" }}>{pendingClientApprovals}</p>
-                  <p className="text-xs mt-1" style={{ color: "#666666" }}>Pending Approvals</p>
+                  {countsLoading ? (
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="h-7 w-10 rounded bg-muted animate-pulse" />
+                      <div className="h-3 w-16 rounded bg-muted animate-pulse mt-1" />
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold" style={{ color: pendingClientApprovals > 0 ? "#D4860A" : "#1A1A1A" }}>{pendingClientApprovals}</p>
+                      <p className="text-xs mt-1" style={{ color: "#666666" }}>Pending Approvals</p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-4 pb-3 text-center">
-                  <p className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>{gfcReadyCount}</p>
-                  <p className="text-xs mt-1" style={{ color: "#666666" }}>GFC Issued</p>
+                  {countsLoading ? (
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="h-7 w-10 rounded bg-muted animate-pulse" />
+                      <div className="h-3 w-16 rounded bg-muted animate-pulse mt-1" />
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>{gfcReadyCount}</p>
+                      <p className="text-xs mt-1" style={{ color: "#666666" }}>GFC Issued</p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
