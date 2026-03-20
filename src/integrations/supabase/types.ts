@@ -200,9 +200,11 @@ export type Database = {
           id: string
           is_manual_override: boolean | null
           location_type: string
+          offline_captured: boolean | null
           override_reason: string | null
           project_id: string | null
           remote_reason: string | null
+          synced_at: string | null
           updated_at: string | null
           user_id: string
         }
@@ -218,9 +220,11 @@ export type Database = {
           id?: string
           is_manual_override?: boolean | null
           location_type?: string
+          offline_captured?: boolean | null
           override_reason?: string | null
           project_id?: string | null
           remote_reason?: string | null
+          synced_at?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -236,9 +240,11 @@ export type Database = {
           id?: string
           is_manual_override?: boolean | null
           location_type?: string
+          offline_captured?: boolean | null
           override_reason?: string | null
           project_id?: string | null
           remote_reason?: string | null
+          synced_at?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -1950,6 +1956,9 @@ export type Database = {
           is_archived: boolean | null
           location: string | null
           name: string
+          site_lat: number | null
+          site_lng: number | null
+          site_radius: number | null
           start_date: string | null
           status: string | null
           type: string | null
@@ -1968,6 +1977,9 @@ export type Database = {
           is_archived?: boolean | null
           location?: string | null
           name: string
+          site_lat?: number | null
+          site_lng?: number | null
+          site_radius?: number | null
           start_date?: string | null
           status?: string | null
           type?: string | null
@@ -1986,6 +1998,9 @@ export type Database = {
           is_archived?: boolean | null
           location?: string | null
           name?: string
+          site_lat?: number | null
+          site_lng?: number | null
+          site_radius?: number | null
           start_date?: string | null
           status?: string | null
           type?: string | null

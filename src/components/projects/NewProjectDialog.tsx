@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -40,11 +40,16 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
   const [unitCount, setUnitCount] = useState("");
   const [startDate, setStartDate] = useState<Date>();
   const [estCompletion, setEstCompletion] = useState<Date>();
+  const [siteLat, setSiteLat] = useState("");
+  const [siteLng, setSiteLng] = useState("");
+  const [siteRadius, setSiteRadius] = useState("300");
+  const [loadingGps, setLoadingGps] = useState(false);
 
   const resetForm = () => {
     setName(""); setClientName(""); setClientPhone(""); setClientEmail("");
     setCity(""); setState(""); setProjectType(""); setConstructionType("");
     setUnitCount(""); setStartDate(undefined); setEstCompletion(undefined);
+    setSiteLat(""); setSiteLng(""); setSiteRadius("300");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,6 +73,9 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
         est_completion: estCompletion ? format(estCompletion, "yyyy-MM-dd") : null,
         created_by: session.user.id,
         updated_by: session.user.id,
+        site_lat: siteLat ? parseFloat(siteLat) : null,
+        site_lng: siteLng ? parseFloat(siteLng) : null,
+        site_radius: siteRadius ? parseInt(siteRadius) : 300,
       } as any).select("id").single();
 
       if (error) throw error;
@@ -213,6 +221,38 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
               />
             </div>
           )}
+
+          {/* Site Location */}
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#666" }}>Site Location (for attendance GPS)</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1">
+                <Label className="font-inter text-[11px]" style={{ color: "#666" }}>Latitude</Label>
+                <Input type="number" step="0.000001" value={siteLat} onChange={(e) => setSiteLat(e.target.value)} placeholder="13.3622" className="font-inter text-[15px]" />
+              </div>
+              <div className="space-y-1">
+                <Label className="font-inter text-[11px]" style={{ color: "#666" }}>Longitude</Label>
+                <Input type="number" step="0.000001" value={siteLng} onChange={(e) => setSiteLng(e.target.value)} placeholder="77.5401" className="font-inter text-[15px]" />
+              </div>
+              <div className="space-y-1">
+                <Label className="font-inter text-[11px]" style={{ color: "#666" }}>Radius (m)</Label>
+                <Input type="number" min="50" value={siteRadius} onChange={(e) => setSiteRadius(e.target.value)} placeholder="300" className="font-inter text-[15px]" />
+              </div>
+            </div>
+            <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs" onClick={async () => {
+              setLoadingGps(true);
+              try {
+                const pos = await new Promise<GeolocationPosition>((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 10000 }));
+                setSiteLat(pos.coords.latitude.toFixed(6));
+                setSiteLng(pos.coords.longitude.toFixed(6));
+                toast.success("Location captured");
+              } catch { toast.error("Could not get GPS"); }
+              setLoadingGps(false);
+            }} disabled={loadingGps}>
+              {loadingGps ? <Loader2 className="h-3 w-3 animate-spin" /> : <MapPin className="h-3 w-3" />}
+              Use My Current Location
+            </Button>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
