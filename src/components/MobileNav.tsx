@@ -15,7 +15,7 @@ const mobileItems = [
   { to: "/production", label: "Factory", icon: Factory, section: "production" },
   { to: "/site-hub", label: "Site", icon: Truck, section: "production" },
   { to: "/qc", label: "QC", icon: ClipboardCheck, section: "production" },
-  { to: "/inventory", label: "Inv", icon: Package, section: "procurement" },
+  { to: "/procurement", label: "Proc", icon: Package, section: "procurement" },
   { to: "/design", label: "Design", icon: Compass, section: "design" },
   { to: "/rm", label: "R&M", icon: Wrench, section: "business" },
   { to: "/admin", label: "Admin", icon: Users, section: "admin" },
