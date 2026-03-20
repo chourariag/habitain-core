@@ -237,30 +237,32 @@ export function MISTab() {
   };
 
   const entries = currentUpload?.raw_data || [];
-  const totalIncome = sumByCategory(entries, mappings, "revenue") + sumByCategory(entries, mappings, "other_income") + sumByCategory(entries, mappings, "unbilled_revenue");
-  const fp = (v: number) => formatPct(v, totalIncome);
-
   const salesRevenue = sumByCategory(entries, mappings, "revenue");
   const otherIncome = sumByCategory(entries, mappings, "other_income");
   const unbilledRevenue = sumByCategory(entries, mappings, "unbilled_revenue");
-  const rawMaterials = sumDebitByCategory(entries, mappings, "raw_materials");
-  const manufacturing = sumDebitByCategory(entries, mappings, "manufacturing");
+  const totalIncome = salesRevenue + otherIncome + unbilledRevenue;
+  console.log('MIS Debug — salesRevenue:', salesRevenue, 'otherIncome:', otherIncome, 'unbilledRevenue:', unbilledRevenue, 'Total Income:', totalIncome);
+  const fp = (v: number) => formatPct(v, totalIncome);
+
+  const rawMaterials = sumByCategory(entries, mappings, "raw_materials");
+  const manufacturing = sumByCategory(entries, mappings, "manufacturing");
   const totalVariable = rawMaterials + manufacturing;
   const contribution = totalIncome - totalVariable;
-  const rentElec = sumDebitByCategory(entries, mappings, "rent_electricity");
-  const salaries = sumDebitByCategory(entries, mappings, "salaries");
-  const dirRem = sumDebitByCategory(entries, mappings, "director_remuneration");
-  const otherFixed = sumDebitByCategory(entries, mappings, "other_fixed");
+  const rentElec = sumByCategory(entries, mappings, "rent_electricity");
+  const salaries = sumByCategory(entries, mappings, "salaries");
+  const dirRem = sumByCategory(entries, mappings, "director_remuneration");
+  const otherFixed = sumByCategory(entries, mappings, "other_fixed");
   const totalFixed = rentElec + salaries + dirRem + otherFixed;
   const ebitda = contribution - totalFixed;
-  const depreciation = sumDebitByCategory(entries, mappings, "depreciation");
-  const interest = sumDebitByCategory(entries, mappings, "interest");
+  const depreciation = sumByCategory(entries, mappings, "depreciation");
+  const interest = sumByCategory(entries, mappings, "interest");
   const pbt = ebitda - depreciation - interest;
-  const tax = sumDebitByCategory(entries, mappings, "tax");
+  const tax = sumByCategory(entries, mappings, "tax");
   const pat = pbt - tax;
 
   const adsVal = (key: string) => (currentUpload?.ads_split as Record<string, number>)?.[key] || 0;
   const hasAds = currentUpload && Object.keys(currentUpload.ads_split || {}).length > 0;
+  const zeroIncome = entries.length > 0 && totalIncome === 0;
 
   return (
     <div className="space-y-4 mt-2">
