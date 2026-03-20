@@ -1,14 +1,7 @@
 import { NavLink } from "react-router-dom";
 import {
-  LayoutDashboard,
-  FolderKanban,
-  Factory,
-  ClipboardCheck,
-  Users,
-  Truck,
-  Wrench,
-  FileSignature,
-  Compass,
+  LayoutDashboard, FolderKanban, Factory, ClipboardCheck,
+  Users, Truck, Wrench, FileSignature, Compass, Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
@@ -24,6 +17,7 @@ const allTabs = [
   { to: "/site-hub", label: "Site", icon: Truck },
   { to: "/design", label: "Design", icon: Compass, roles: DESIGN_ROLES },
   { to: "/qc", label: "Quality", icon: ClipboardCheck },
+  { to: "/inventory", label: "Inv", icon: Package },
   { to: "/rm", label: "R&M", icon: Wrench },
   { to: "/amc", label: "AMC", icon: FileSignature },
   { to: "/admin", label: "Admin", icon: Users },
@@ -57,7 +51,7 @@ export function MobileNav() {
             to={tab.to}
             className={({ isActive }) =>
               cn(
-                "min-w-[4.5rem] flex flex-col items-center justify-center gap-1 px-2 py-1 text-[10px] font-medium transition-snappy",
+                "min-w-[4rem] flex flex-col items-center justify-center gap-1 px-1.5 py-1 text-[10px] font-medium transition-snappy",
                 isActive ? "text-primary" : "text-muted-foreground"
               )
             }
