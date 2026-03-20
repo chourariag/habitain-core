@@ -25,6 +25,7 @@ import RMPage from "@/pages/RM";
 import AMCPage from "@/pages/AMC";
 import Drawings from "@/pages/Drawings";
 import Procurement from "@/pages/Procurement";
+import Sales from "@/pages/Sales";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 import ComingSoon from "@/pages/ComingSoon";
@@ -58,7 +59,7 @@ const App = () => (
                 <Route path="/materials" element={<Navigate to="/procurement" replace />} />
                 <Route path="/rm" element={<RMPage />} />
                 <Route path="/amc" element={<AMCPage />} />
-                <Route path="/sales" element={<ComingSoon />} />
+                <Route path="/sales" element={<Sales />} />
                 <Route path="/finance" element={<ComingSoon />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/settings" element={<AppSettings />} />

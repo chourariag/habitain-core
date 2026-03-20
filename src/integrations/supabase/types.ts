@@ -1775,6 +1775,142 @@ export type Database = {
           },
         ]
       }
+      sales_amc_contacts: {
+        Row: {
+          contacted_by: string | null
+          created_at: string
+          deal_id: string
+          followup_date: string | null
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          contacted_by?: string | null
+          created_at?: string
+          deal_id: string
+          followup_date?: string | null
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          contacted_by?: string | null
+          created_at?: string
+          deal_id?: string
+          followup_date?: string | null
+          id?: string
+          notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_amc_contacts_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "sales_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_deals: {
+        Row: {
+          amc_interest: string | null
+          assigned_to: string | null
+          client_name: string
+          contact_number: string | null
+          contract_value: number
+          created_at: string
+          created_by: string | null
+          email: string | null
+          estimated_sqft: number | null
+          id: string
+          is_archived: boolean
+          lead_source: string | null
+          lost_reason: string | null
+          next_followup_date: string | null
+          notes: string | null
+          project_type: string
+          stage: string
+          temperature: string
+          updated_at: string
+        }
+        Insert: {
+          amc_interest?: string | null
+          assigned_to?: string | null
+          client_name: string
+          contact_number?: string | null
+          contract_value?: number
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          estimated_sqft?: number | null
+          id?: string
+          is_archived?: boolean
+          lead_source?: string | null
+          lost_reason?: string | null
+          next_followup_date?: string | null
+          notes?: string | null
+          project_type?: string
+          stage?: string
+          temperature?: string
+          updated_at?: string
+        }
+        Update: {
+          amc_interest?: string | null
+          assigned_to?: string | null
+          client_name?: string
+          contact_number?: string | null
+          contract_value?: number
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          estimated_sqft?: number | null
+          id?: string
+          is_archived?: boolean
+          lead_source?: string | null
+          lost_reason?: string | null
+          next_followup_date?: string | null
+          notes?: string | null
+          project_type?: string
+          stage?: string
+          temperature?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sales_stage_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          deal_id: string
+          from_stage: string | null
+          id: string
+          to_stage: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          deal_id: string
+          from_stage?: string | null
+          id?: string
+          to_stage: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          deal_id?: string
+          from_stage?: string | null
+          id?: string
+          to_stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_stage_history_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "sales_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_diary: {
         Row: {
           blockers: string | null
