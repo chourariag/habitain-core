@@ -857,6 +857,62 @@ export type Database = {
           },
         ]
       }
+      material_plan_items: {
+        Row: {
+          category: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          lead_time_days: number
+          material_name: string
+          project_id: string
+          quantity: number
+          required_by: string | null
+          status: string
+          supplier: string | null
+          unit: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_time_days?: number
+          material_name: string
+          project_id: string
+          quantity?: number
+          required_by?: string | null
+          status?: string
+          supplier?: string | null
+          unit?: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_time_days?: number
+          material_name?: string
+          project_id?: string
+          quantity?: number
+          required_by?: string | null
+          status?: string
+          supplier?: string | null
+          unit?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_plan_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_requests: {
         Row: {
           budget_approved_at: string | null
