@@ -1,0 +1,35 @@
+{
+  "nav": {
+    "dashboard": "डैशबोर्ड",
+    "projects": "प्रोजेक्ट्स",
+    "factoryFloor": "फैक्ट्री फ्लोर",
+    "qcNcr": "QC और NCR",
+    "siteHub": "साइट हब",
+    "inventory": "इन्वेंटरी",
+    "designPortal": "डिज़ाइन पोर्टल",
+    "selectProject": "प्रोजेक्ट चुनें"
+  },
+  "common": {
+    "save": "सहेजें",
+    "cancel": "रद्द करें",
+    "submit": "जमा करें",
+    "approve": "स्वीकृत करें",
+    "reject": "अस्वीकार करें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "close": "बंद करें",
+    "search": "खोजें",
+    "loading": "लोड हो रहा है...",
+    "comingSoon": "जल्द आ रहा है"
+  },
+  "status": {
+    "pending": "लंबित",
+    "approved": "स्वीकृत",
+    "rejected": "अस्वीकृत",
+    "delayed": "विलंबित",
+    "completed": "पूर्ण",
+    "inProgress": "प्रगति में",
+    "open": "खुला",
+    "closed": "बंद"
+  }
+}

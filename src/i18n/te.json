@@ -1,0 +1,27 @@
+{
+  "nav": {
+    "dashboard": "డాష్‌బోర్డ్",
+    "projects": "ప్రాజెక్టులు",
+    "factoryFloor": "ఫ్యాక్టరీ",
+    "siteHub": "సైట్ హబ్",
+    "inventory": "ఇన్వెంటరీ",
+    "selectProject": "ప్రాజెక్ట్ ఎంచుకోండి"
+  },
+  "common": {
+    "save": "సేవ్",
+    "cancel": "రద్దు",
+    "submit": "సమర్పించు",
+    "approve": "ఆమోదించు",
+    "reject": "తిరస్కరించు",
+    "loading": "లోడ్ అవుతోంది...",
+    "comingSoon": "త్వరలో వస్తుంది"
+  },
+  "status": {
+    "pending": "పెండింగ్",
+    "approved": "ఆమోదించబడింది",
+    "rejected": "తిరస్కరించబడింది",
+    "delayed": "ఆలస్యం",
+    "completed": "పూర్తయింది",
+    "inProgress": "ప్రగతిలో"
+  }
+}
