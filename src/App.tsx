@@ -18,7 +18,7 @@ import SiteHub from "@/pages/SiteHub";
 import DesignPortal from "@/pages/DesignPortal";
 import { DesignRouteGuard } from "@/components/DesignRouteGuard";
 import QualityControl from "@/pages/QualityControl";
-import Inventory from "@/pages/Inventory";
+import MaterialRequests from "@/pages/MaterialRequests";
 import Admin from "@/pages/Admin";
 import AppSettings from "@/pages/AppSettings";
 import RMPage from "@/pages/RM";
