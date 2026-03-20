@@ -141,7 +141,7 @@ function OverviewTab() {
                       borderColor: STATUS_COLORS[status] || "#E5E7EB",
                       backgroundColor: status === "present" ? "#E8F2ED" : status === "not_checked_in" && !isMorning ? "#FEE2E2" : "transparent",
                     }}>
-                      {status === "present" ? "Present" : status === "remote" ? "Remote" : status === "on_leave" ? "On Leave" : "Not Checked In"}
+                      {status === "present" ? "Present" : status === "remote" ? "Remote" : "Not Checked In"}
                     </Badge>
                   </td>
                 </tr>
