@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { DealCard } from "./DealCard";
+import { DealCardActions } from "./DealCardActions";
 import { DealDrawer } from "./DealDrawer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -70,7 +71,13 @@ export function PipelineKanban({ deals, onRefresh }: { deals: Deal[]; onRefresh:
                     draggable
                     onDragStart={() => setDragDealId(deal.id)}
                   >
-                    <DealCard deal={deal} onClick={() => { setSelectedDeal(deal); setDrawerOpen(true); }} />
+                    <DealCardActions
+                      deal={deal}
+                      onRefresh={onRefresh}
+                      onEdit={() => { setSelectedDeal(deal); setDrawerOpen(true); }}
+                    >
+                      <DealCard deal={deal} onClick={() => { setSelectedDeal(deal); setDrawerOpen(true); }} />
+                    </DealCardActions>
                   </div>
                 ))}
                 {stageDeals.length === 0 && (

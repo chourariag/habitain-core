@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, ClipboardCheck, AlertTriangle, Loader2 } from "lucide-react";
 import { format } from "date-fns";
@@ -167,13 +168,15 @@ export default function QualityControl() {
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
       ) : (
         <Tabs defaultValue={defaultTab}>
-          <TabsList>
-            <TabsTrigger value="inspections" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> Inspections</TabsTrigger>
-            <TabsTrigger value="ncrs" className="gap-1.5">
-              <AlertTriangle className="h-4 w-4" /> NCRs
-              {openNCRs.length > 0 && <Badge variant="destructive" className="ml-1 text-[10px] px-1.5 py-0">{openNCRs.length}</Badge>}
-            </TabsTrigger>
-          </TabsList>
+          <ScrollableTabsWrapper>
+            <TabsList>
+              <TabsTrigger value="inspections" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> Inspections</TabsTrigger>
+              <TabsTrigger value="ncrs" className="gap-1.5">
+                <AlertTriangle className="h-4 w-4" /> NCRs
+                {openNCRs.length > 0 && <Badge variant="destructive" className="ml-1 text-[10px] px-1.5 py-0">{openNCRs.length}</Badge>}
+              </TabsTrigger>
+            </TabsList>
+          </ScrollableTabsWrapper>
 
           <TabsContent value="inspections" className="space-y-3 mt-4">
             {inspections.length === 0 ? (

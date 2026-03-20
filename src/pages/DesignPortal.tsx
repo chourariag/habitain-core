@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -712,11 +713,13 @@ export default function DesignPortal() {
 
       {activeTab !== "project-file" ? (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="flex-wrap">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="dq-register">Design Queries</TabsTrigger>
-            <TabsTrigger value="drawings-register">Drawings</TabsTrigger>
-          </TabsList>
+          <ScrollableTabsWrapper>
+            <TabsList>
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+              <TabsTrigger value="dq-register">Design Queries</TabsTrigger>
+              <TabsTrigger value="drawings-register">Drawings</TabsTrigger>
+            </TabsList>
+          </ScrollableTabsWrapper>
 
           {/* ═══════ TAB 1: Dashboard ═══════ */}
           <TabsContent value="dashboard" className="space-y-6">
