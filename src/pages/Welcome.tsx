@@ -65,7 +65,7 @@ export default function Welcome() {
           .eq("auth_user_id", user.id);
       }
 
-      toast.success("Account setup complete! Welcome to Habitainer.");
+      toast.success("Account setup complete! Welcome to HStack.");
       navigate("/dashboard", { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Setup failed");
