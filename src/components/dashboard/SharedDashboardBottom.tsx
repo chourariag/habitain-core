@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import type { AppRole } from "@/lib/roles";
 import { useAuth } from "@/components/AuthProvider";
+import { CheckInButton } from "@/components/attendance/CheckInButton";
 
 const CAN_POST: AppRole[] = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
 
@@ -66,6 +67,9 @@ export function SharedDashboardBottom({ userRole }: Props) {
 
   return (
     <>
+      {/* Check-in */}
+      <CheckInButton userRole={userRole} />
+
       {/* Announcements */}
       <div className="rounded-lg border border-border bg-card p-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
         <div className="flex items-center justify-between mb-4">
