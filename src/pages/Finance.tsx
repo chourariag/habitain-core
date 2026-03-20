@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
+import { FinanceOverviewStrip } from "@/components/finance/FinanceOverviewStrip";
 import { MISTab } from "@/components/finance/MISTab";
 import { PLTab } from "@/components/finance/PLTab";
 import { CashFlowTab } from "@/components/finance/CashFlowTab";
@@ -16,6 +17,8 @@ export default function Finance() {
       <p className="text-sm mb-4" style={{ color: "#666666" }}>
         Financial reporting, payments & compliance
       </p>
+
+      <FinanceOverviewStrip />
 
       <Tabs defaultValue="mis" className="w-full">
         <ScrollableTabsWrapper>

@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Upload, Download } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, Legend } from "recharts";
 
 interface Budget {
   id: string; project_name: string; sanctioned_budget: number;
@@ -67,6 +68,52 @@ export function ProjectBudgetsTab() {
         </label>
         <Button variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4 mr-2" /> Download Template</Button>
       </div>
+
+      {/* Budget Comparison Chart */}
+      {budgets.length > 0 && (
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-xs font-display font-semibold mb-2" style={{ color: "#666" }}>Budget vs Spent</p>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart
+                data={budgets.map(b => {
+                  const matCommitted = b.project_id ? (materialSpent[b.project_id] || 0) : 0;
+                  const totalSpent = matCommitted + b.labour_budget + b.logistics_budget;
+                  const util = b.sanctioned_budget ? (totalSpent / b.sanctioned_budget) * 100 : 0;
+                  return {
+                    name: b.project_name.length > 12 ? b.project_name.slice(0, 12) + "…" : b.project_name,
+                    fullName: b.project_name,
+                    Budget: b.sanctioned_budget / 100000,
+                    Spent: totalSpent / 100000,
+                    util,
+                    variance: (b.sanctioned_budget - totalSpent) / 100000,
+                  };
+                })}
+                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#666" }} />
+                <YAxis tick={{ fontSize: 10, fill: "#666" }} tickFormatter={(v: number) => `₹${v}L`} />
+                <Tooltip
+                  formatter={(v: number, name: string) => [`₹${v.toFixed(1)}L`, name]}
+                  labelFormatter={(_, payload) => payload?.[0]?.payload?.fullName || ""}
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="Budget" fill="#E5E7EB" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="Spent" radius={[3, 3, 0, 0]}>
+                  {budgets.map((b, i) => {
+                    const matCommitted = b.project_id ? (materialSpent[b.project_id] || 0) : 0;
+                    const totalSpent = matCommitted + b.labour_budget + b.logistics_budget;
+                    const util = b.sanctioned_budget ? (totalSpent / b.sanctioned_budget) * 100 : 0;
+                    const color = util < 80 ? "#006039" : util < 95 ? "#D4860A" : "#F40009";
+                    return <Cell key={i} fill={color} />;
+                  })}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardContent className="pt-4 overflow-x-auto">

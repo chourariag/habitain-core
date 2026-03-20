@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, Download, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { AreaChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 const INFLOW_CATS = ["Client Payment", "Advance", "Retention Release", "Other"];
 const OUTFLOW_CATS = ["Materials", "Logistics", "Labour Contract", "Vendor Payment", "Admin", "Other"];
@@ -102,6 +103,21 @@ export function CashFlowTab() {
 
   const openAdd = (type: "inflow" | "outflow") => { setAddType(type); setForm({ date: "", amount: "", category: "", description: "", project: "" }); setAddOpen(true); };
 
+  // Chart data: group entries by week
+  const getWeekNum = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return Math.min(Math.ceil(d.getDate() / 7), 4);
+  };
+
+  const weekData = [1, 2, 3, 4].map(w => {
+    const wIn = entries.filter(e => e.type === "inflow" && getWeekNum(e.entry_date) === w).reduce((s, e) => s + e.amount, 0);
+    const wOut = entries.filter(e => e.type === "outflow" && getWeekNum(e.entry_date) === w).reduce((s, e) => s + e.amount, 0);
+    return { week: `Week ${w}`, Inflows: wIn, Outflows: wOut, Net: wIn - wOut };
+  });
+
+  const hasChartData = entries.length > 0;
+  const fmtLakh = (v: number) => `₹${(v / 100000).toFixed(0)}L`;
+
   return (
     <div className="space-y-4 mt-2">
       <div className="flex flex-wrap gap-2 items-center justify-between">
@@ -121,6 +137,28 @@ export function CashFlowTab() {
           <Button variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4 mr-2" /> Template</Button>
         </div>
       </div>
+
+      {/* Weekly Cash Flow Chart */}
+      {hasChartData ? (
+        <Card>
+          <CardContent className="pt-4">
+            <p className="text-xs font-display font-semibold mb-2" style={{ color: "#666" }}>Weekly Cash Position — {MONTHS[month]} {year}</p>
+            <ResponsiveContainer width="100%" height={200}>
+              <AreaChart data={weekData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="week" tick={{ fontSize: 11, fill: "#666" }} />
+                <YAxis tick={{ fontSize: 10, fill: "#666" }} tickFormatter={fmtLakh} />
+                <Tooltip formatter={(v: number) => `₹${v.toLocaleString("en-IN")}`} />
+                <Area type="monotone" dataKey="Inflows" fill="#006039" fillOpacity={0.3} stroke="#006039" />
+                <Area type="monotone" dataKey="Outflows" fill="#F40009" fillOpacity={0.2} stroke="#F40009" />
+                <Line type="monotone" dataKey="Net" stroke="#1A1A1A" strokeWidth={2} strokeDasharray="4 4" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="py-6"><CardContent className="text-center"><p className="text-xs" style={{ color: "#999" }}>No cash flow data for {MONTHS[month]} {year}</p></CardContent></Card>
+      )}
 
       {/* Running Balance */}
       <Card style={{ backgroundColor: closing >= 0 ? "#E8F2ED" : "#FFF0F0" }}>

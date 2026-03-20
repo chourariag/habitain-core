@@ -8,6 +8,7 @@ import { Upload, Download, Plus, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { differenceInDays } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
 
 interface Payment {
   id: string; project_name: string; client_name: string; milestone_description: string;
@@ -91,6 +92,28 @@ export function PaymentsTab() {
   const totalReceived = payments.filter(p => p.status === "received").reduce((s, p) => s + p.amount, 0);
   const outstanding = totalExpected - totalReceived;
 
+  // Ageing buckets
+  const today = new Date();
+  const ageingBuckets = (() => {
+    const buckets = [
+      { name: "Current", min: -Infinity, max: 0, color: "#006039", count: 0, total: 0 },
+      { name: "1–30 days", min: 1, max: 30, color: "#D4860A", count: 0, total: 0 },
+      { name: "31–60 days", min: 31, max: 60, color: "#F40009B3", count: 0, total: 0 },
+      { name: "60+ days", min: 61, max: Infinity, color: "#F40009", count: 0, total: 0 },
+    ];
+    payments.forEach(p => {
+      if (p.status === "received") return;
+      const days = differenceInDays(today, new Date(p.due_date));
+      if (days <= 0) { buckets[0].count++; buckets[0].total += p.amount; }
+      else if (days <= 30) { buckets[1].count++; buckets[1].total += p.amount; }
+      else if (days <= 60) { buckets[2].count++; buckets[2].total += p.amount; }
+      else { buckets[3].count++; buckets[3].total += p.amount; }
+    });
+    return buckets;
+  })();
+
+  const hasOverdue = ageingBuckets.slice(1).some(b => b.total > 0);
+
   const statusBadge = (s: string) => {
     const map: Record<string, { bg: string; color: string }> = {
       pending: { bg: "#F7F7F7", color: "#666" },
@@ -117,6 +140,35 @@ export function PaymentsTab() {
         </div>
         <Button variant="outline" size="sm" onClick={exportCSV}><FileDown className="h-4 w-4 mr-1" /> Export CSV</Button>
       </div>
+
+      {/* Ageing Chart */}
+      {payments.length > 0 && (
+        hasOverdue ? (
+          <Card>
+            <CardContent className="pt-4">
+              <p className="text-xs font-display font-semibold mb-2" style={{ color: "#666" }}>Payment Ageing</p>
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart data={ageingBuckets} layout="vertical" margin={{ top: 5, right: 10, left: 60, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: "#666" }} tickFormatter={(v: number) => `₹${(v / 100000).toFixed(0)}L`} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: "#666" }} width={70} />
+                  <Tooltip
+                    formatter={(v: number, _: any, props: any) => [`₹${v.toLocaleString("en-IN")}`, `${props.payload.count} invoices`]}
+                    labelFormatter={(l: string) => l}
+                  />
+                  <Bar dataKey="total" radius={[0, 4, 4, 0]}>
+                    {ageingBuckets.map((b, i) => <Cell key={i} fill={b.color} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="rounded-lg px-4 py-3 text-sm font-semibold" style={{ backgroundColor: "#E8F2ED", color: "#006039" }}>
+            No overdue payments ✓
+          </div>
+        )
+      )}
 
       <Card>
         <CardContent className="pt-4 overflow-x-auto">
