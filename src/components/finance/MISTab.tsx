@@ -54,6 +54,11 @@ function formatPct(value: number, totalIncome: number): string {
   return pct.toFixed(2) + "%";
 }
 
+function getLedgerDisplayAmount(entry: LedgerEntry, category: string): number {
+  const isIncome = ["revenue", "other_income", "unbilled_revenue"].includes(category);
+  return isIncome ? entry.credit - entry.debit : entry.debit - entry.credit;
+}
+
 function MISRow({ label, amount, pctStr, bold, large, color }: {
   label: string; amount: number; pctStr?: string; bold?: boolean; large?: boolean; color?: string;
 }) {
@@ -237,27 +242,27 @@ export function MISTab() {
   };
 
   const entries = currentUpload?.raw_data || [];
-  const salesRevenue = sumByCategory(entries, mappings, "revenue");
-  const otherIncome = sumByCategory(entries, mappings, "other_income");
-  const unbilledRevenue = sumByCategory(entries, mappings, "unbilled_revenue");
-  const totalIncome = salesRevenue + otherIncome + unbilledRevenue;
-  console.log('MIS Debug — salesRevenue:', salesRevenue, 'otherIncome:', otherIncome, 'unbilledRevenue:', unbilledRevenue, 'Total Income:', totalIncome);
+  const getMISValue = (category: string) => sumByCategory(entries, mappings, category);
+  const salesRevenue = getMISValue("revenue");
+  const otherIncome = getMISValue("other_income");
+  const unbilledRevenue = getMISValue("unbilled_revenue");
+  const totalIncome = getMISValue("revenue") + getMISValue("other_income") + getMISValue("unbilled_revenue");
   const fp = (v: number) => formatPct(v, totalIncome);
 
-  const rawMaterials = sumByCategory(entries, mappings, "raw_materials");
-  const manufacturing = sumByCategory(entries, mappings, "manufacturing");
+  const rawMaterials = getMISValue("raw_materials");
+  const manufacturing = getMISValue("manufacturing");
   const totalVariable = rawMaterials + manufacturing;
   const contribution = totalIncome - totalVariable;
-  const rentElec = sumByCategory(entries, mappings, "rent_electricity");
-  const salaries = sumByCategory(entries, mappings, "salaries");
-  const dirRem = sumByCategory(entries, mappings, "director_remuneration");
-  const otherFixed = sumByCategory(entries, mappings, "other_fixed");
+  const rentElec = getMISValue("rent_electricity");
+  const salaries = getMISValue("salaries");
+  const dirRem = getMISValue("director_remuneration");
+  const otherFixed = getMISValue("other_fixed");
   const totalFixed = rentElec + salaries + dirRem + otherFixed;
   const ebitda = contribution - totalFixed;
-  const depreciation = sumByCategory(entries, mappings, "depreciation");
-  const interest = sumByCategory(entries, mappings, "interest");
+  const depreciation = getMISValue("depreciation");
+  const interest = getMISValue("interest");
   const pbt = ebitda - depreciation - interest;
-  const tax = sumByCategory(entries, mappings, "tax");
+  const tax = getMISValue("tax");
   const pat = pbt - tax;
 
   const adsVal = (key: string) => (currentUpload?.ads_split as Record<string, number>)?.[key] || 0;
@@ -438,15 +443,17 @@ export function MISTab() {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <div className="pl-5 space-y-0.5 pb-2">
-                            {catEntries.map((e, i) => (
+                            {catEntries.map((e, i) => {
+                              const displayAmount = getLedgerDisplayAmount(e, cat);
+                              return (
                               <div key={i} className="flex justify-between text-xs py-0.5" style={{ color: "#1A1A1A" }}>
                                 <span>{e.ledger_name}</span>
                                 <div className="flex gap-4">
-                                  <span className="font-mono">₹{(e.debit || e.credit).toLocaleString("en-IN")}</span>
-                                  <span className="text-xs" style={{ color: "#666" }}>{fp(e.debit || e.credit)}</span>
+                                  <span className="font-mono">₹{Math.abs(displayAmount).toLocaleString("en-IN")}</span>
+                                  <span className="text-xs" style={{ color: "#666" }}>{fp(displayAmount)}</span>
                                 </div>
                               </div>
-                            ))}
+                            )})}
                           </div>
                         </CollapsibleContent>
                       </Collapsible>
