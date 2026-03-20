@@ -53,8 +53,9 @@ const App = () => (
                 <Route path="/design" element={<DesignRouteGuard><DesignPortal /></DesignRouteGuard>} />
                 <Route path="/drawings" element={<DesignRouteGuard><Drawings /></DesignRouteGuard>} />
                 <Route path="/qc" element={<QualityControl />} />
-                <Route path="/inventory" element={<Inventory />} />
-                <Route path="/materials" element={<Navigate to="/production" replace />} />
+                <Route path="/procurement" element={<Procurement />} />
+                <Route path="/inventory" element={<Navigate to="/procurement" replace />} />
+                <Route path="/materials" element={<Navigate to="/procurement" replace />} />
                 <Route path="/rm" element={<RMPage />} />
                 <Route path="/amc" element={<AMCPage />} />
                 <Route path="/sales" element={<ComingSoon />} />
