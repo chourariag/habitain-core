@@ -138,28 +138,29 @@ export default function DesignPortal() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Realtime subscription for design_stages changes
+  // Realtime subscription for design_stages, design_queries, and project_design_files
   useEffect(() => {
     const channel = supabase
       .channel("design-stages-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "design_stages" }, () => {
-        // Only refetch stages and design files, not full page
-        Promise.all([
-          (supabase.from("design_stages") as any).select("*").order("stage_order"),
-          (supabase.from("project_design_files") as any).select("*"),
-        ]).then(([dsRes, dfRes]) => {
-          setDesignStages(dsRes.data ?? []);
-          setDesignFiles(dfRes.data ?? []);
-        });
+        fetchStageCounts();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "design_queries" }, () => {
-        (supabase.from("design_queries") as any).select("*").eq("is_archived", false).order("created_at", { ascending: false }).then(({ data }: any) => {
-          setDqs(data ?? []);
-        });
+        fetchStageCounts();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "project_design_files" }, () => {
+        fetchStageCounts();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [fetchStageCounts]);
+
+  // Fallback: refetch on window/tab focus
+  useEffect(() => {
+    const onFocus = () => { fetchStageCounts(); };
+    window.addEventListener("focus", onFocus);
+    return () => { window.removeEventListener("focus", onFocus); };
+  }, [fetchStageCounts]);
 
   const projectMap = useMemo(() => {
     const m: Record<string, any> = {};
