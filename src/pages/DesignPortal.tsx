@@ -92,6 +92,19 @@ export default function DesignPortal() {
   const canUpload = ["principal_architect", "project_architect", "structural_architect", "super_admin", "managing_director"].includes(userRole ?? "");
   const isArchitect = ["principal_architect", "project_architect", "structural_architect"].includes(userRole ?? "");
 
+  const fetchStageCounts = useCallback(async () => {
+    setCountsLoading(true);
+    const [dsRes, dfRes, dqsRes] = await Promise.all([
+      (supabase.from("design_stages") as any).select("*").order("stage_order"),
+      (supabase.from("project_design_files") as any).select("*"),
+      (supabase.from("design_queries") as any).select("*").eq("is_archived", false).order("created_at", { ascending: false }),
+    ]);
+    setDesignStages(dsRes.data ?? []);
+    setDesignFiles(dfRes.data ?? []);
+    setDqs(dqsRes.data ?? []);
+    setCountsLoading(false);
+  }, []);
+
   const fetchData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
@@ -120,6 +133,7 @@ export default function DesignPortal() {
     setDesignStages(dsRes.data ?? []);
     setConsultants(dcRes.data ?? []);
     setLoading(false);
+    setCountsLoading(false);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
