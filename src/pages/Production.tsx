@@ -105,11 +105,13 @@ function ProductionContent() {
         <ProductionKanban modules={modules} onRefresh={fetchModules} />
       ) : (
         <Tabs value={projectTab} onValueChange={setProjectTab}>
-          <TabsList>
-            <TabsTrigger value="modules" className="gap-1.5"><Factory className="h-4 w-4" /> Modules</TabsTrigger>
-            <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
-            <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
-          </TabsList>
+          <ScrollableTabsWrapper>
+            <TabsList>
+              <TabsTrigger value="modules" className="gap-1.5"><Factory className="h-4 w-4" /> Modules</TabsTrigger>
+              <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
+              <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
+            </TabsList>
+          </ScrollableTabsWrapper>
 
           <TabsContent value="modules" className="space-y-3">
             {modules.map((m) => (

@@ -713,11 +713,13 @@ export default function DesignPortal() {
 
       {activeTab !== "project-file" ? (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="flex-wrap">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="dq-register">Design Queries</TabsTrigger>
-            <TabsTrigger value="drawings-register">Drawings</TabsTrigger>
-          </TabsList>
+          <ScrollableTabsWrapper>
+            <TabsList>
+              <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+              <TabsTrigger value="dq-register">Design Queries</TabsTrigger>
+              <TabsTrigger value="drawings-register">Drawings</TabsTrigger>
+            </TabsList>
+          </ScrollableTabsWrapper>
 
           {/* ═══════ TAB 1: Dashboard ═══════ */}
           <TabsContent value="dashboard" className="space-y-6">

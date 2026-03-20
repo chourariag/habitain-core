@@ -253,13 +253,15 @@ export default function Procurement() {
       </div>
 
       <Tabs defaultValue="dashboard" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="dashboard" className="gap-1.5"><LayoutDashboard className="h-4 w-4" /> Dashboard</TabsTrigger>
-          <TabsTrigger value="material-plan" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Material Plan</TabsTrigger>
-          <TabsTrigger value="requests" className="gap-1.5"><AlertTriangle className="h-4 w-4" /> Requests</TabsTrigger>
-          <TabsTrigger value="purchase-orders" className="gap-1.5"><FileText className="h-4 w-4" /> Purchase Orders</TabsTrigger>
-          <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>
-        </TabsList>
+        <ScrollableTabsWrapper>
+          <TabsList>
+            <TabsTrigger value="dashboard" className="gap-1.5"><LayoutDashboard className="h-4 w-4" /> Dashboard</TabsTrigger>
+            <TabsTrigger value="material-plan" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Material Plan</TabsTrigger>
+            <TabsTrigger value="requests" className="gap-1.5"><AlertTriangle className="h-4 w-4" /> Requests</TabsTrigger>
+            <TabsTrigger value="purchase-orders" className="gap-1.5"><FileText className="h-4 w-4" /> Purchase Orders</TabsTrigger>
+            <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>
+          </TabsList>
+        </ScrollableTabsWrapper>
 
         {/* Dashboard Tab */}
         <TabsContent value="dashboard" className="space-y-4">

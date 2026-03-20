@@ -268,14 +268,16 @@ export default function Inventory() {
       </div>
 
       <Tabs defaultValue="stock" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="stock" className="gap-1.5">
-            <Package className="h-4 w-4" /> Stock
-          </TabsTrigger>
-          <TabsTrigger value="purchase-orders" className="gap-1.5">
-            <FileText className="h-4 w-4" /> Purchase Orders
-          </TabsTrigger>
-        </TabsList>
+        <ScrollableTabsWrapper>
+          <TabsList>
+            <TabsTrigger value="stock" className="gap-1.5">
+              <Package className="h-4 w-4" /> Stock
+            </TabsTrigger>
+            <TabsTrigger value="purchase-orders" className="gap-1.5">
+              <FileText className="h-4 w-4" /> Purchase Orders
+            </TabsTrigger>
+          </TabsList>
+        </ScrollableTabsWrapper>
 
         <TabsContent value="stock" className="space-y-4">
           <div className="flex items-center justify-between gap-3">
