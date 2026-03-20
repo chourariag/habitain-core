@@ -1,0 +1,27 @@
+{
+  "nav": {
+    "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+    "projects": "ಯೋಜನೆಗಳು",
+    "factoryFloor": "ಕಾರ್ಖಾನೆ",
+    "siteHub": "ಸೈಟ್ ಹಬ್",
+    "inventory": "ಸಂಗ್ರಹ",
+    "selectProject": "ಯೋಜನೆ ಆರಿಸಿ"
+  },
+  "common": {
+    "save": "ಉಳಿಸಿ",
+    "cancel": "ರದ್ದುಮಾಡಿ",
+    "submit": "ಸಲ್ಲಿಸಿ",
+    "approve": "ಅನುಮೋದಿಸಿ",
+    "reject": "ತಿರಸ್ಕರಿಸಿ",
+    "loading": "ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
+    "comingSoon": "ಶೀಘ್ರದಲ್ಲಿ ಬರಲಿದೆ"
+  },
+  "status": {
+    "pending": "ಬಾಕಿ",
+    "approved": "ಅನುಮೋದಿತ",
+    "rejected": "ತಿರಸ್ಕೃತ",
+    "delayed": "ವಿಳಂಬ",
+    "completed": "ಪೂರ್ಣ",
+    "inProgress": "ಪ್ರಗತಿಯಲ್ಲಿ"
+  }
+}

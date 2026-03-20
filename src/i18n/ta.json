@@ -1,0 +1,27 @@
+{
+  "nav": {
+    "dashboard": "டாஷ்போர்டு",
+    "projects": "திட்டங்கள்",
+    "factoryFloor": "தொழிற்சாலை",
+    "siteHub": "தளம்",
+    "inventory": "சரக்கு",
+    "selectProject": "திட்டத்தைத் தேர்ந்தெடுக்கவும்"
+  },
+  "common": {
+    "save": "சேமி",
+    "cancel": "ரத்துசெய்",
+    "submit": "சமர்ப்பி",
+    "approve": "ஒப்புதல்",
+    "reject": "நிராகரி",
+    "loading": "ஏற்றுகிறது...",
+    "comingSoon": "விரைவில் வரும்"
+  },
+  "status": {
+    "pending": "நிலுவையில்",
+    "approved": "ஒப்புதல்",
+    "rejected": "நிராகரிக்கப்பட்டது",
+    "delayed": "தாமதம்",
+    "completed": "நிறைவு",
+    "inProgress": "நடப்பில்"
+  }
+}

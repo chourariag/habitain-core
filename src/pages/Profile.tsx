@@ -7,14 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Camera, Loader2, Lock, User } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Camera, Loader2, Lock, User, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
+import { useTranslation } from "react-i18next";
+
+const LANG_OPTIONS = [
+  { value: "en", label: "English" },
+  { value: "hi", label: "हिंदी (Hindi)" },
+  { value: "kn", label: "ಕನ್ನಡ (Kannada)" },
+  { value: "ta", label: "தமிழ் (Tamil)" },
+  { value: "te", label: "తెలుగు (Telugu)" },
+];
 
 export default function Profile() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { i18n } = useTranslation();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -211,6 +221,36 @@ export default function Profile() {
             {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
             Save Changes
           </Button>
+        </CardContent>
+      </Card>
+
+      {/* Language */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Globe className="h-4 w-4" /> Language
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Select
+            value={i18n.language}
+            onValueChange={(lang) => {
+              i18n.changeLanguage(lang);
+              if (user) {
+                supabase.from("profiles").update({ language: lang } as any).eq("auth_user_id", user.id);
+              }
+            }}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {LANG_OPTIONS.map((l) => (
+                <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">UI labels will update immediately. Data is always shown as entered.</p>
         </CardContent>
       </Card>
 

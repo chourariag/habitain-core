@@ -1,0 +1,92 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "factoryFloor": "Factory Floor",
+    "qcNcr": "QC & NCR",
+    "siteHub": "Site Hub",
+    "purchaseOrders": "Purchase Orders",
+    "materialPlan": "Material Plan",
+    "inventory": "Inventory",
+    "designPortal": "Design Portal",
+    "sales": "Sales",
+    "finance": "Finance",
+    "rmAmc": "R&M / AMC",
+    "hrAttendance": "HR & Attendance",
+    "settingsAdmin": "Settings / Admin",
+    "selectProject": "Select Project"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "approve": "Approve",
+    "reject": "Reject",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "loading": "Loading...",
+    "noData": "No data available",
+    "comingSoon": "Coming Soon",
+    "viewAll": "View All"
+  },
+  "status": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "delayed": "Delayed",
+    "completed": "Completed",
+    "inProgress": "In Progress",
+    "open": "Open",
+    "closed": "Closed",
+    "active": "Active",
+    "dispatched": "Dispatched",
+    "onTrack": "On Track",
+    "notStarted": "Not Started"
+  },
+  "dashboard": {
+    "commandCentre": "Command Centre",
+    "myDashboard": "My Dashboard",
+    "myWorkspace": "My Workspace",
+    "designWorkspace": "Design Workspace",
+    "activeProjects": "Active Projects",
+    "panelsInProduction": "Panels In Production",
+    "productionDelays": "Production Delays",
+    "openNcrs": "Open NCRs",
+    "dispatchesThisWeek": "Dispatches This Week",
+    "activeSiteInstallations": "Active Site Installations",
+    "siteReadinessPending": "Site Readiness Pending",
+    "recentActivity": "Recent Activity",
+    "productionHealth": "Production Health",
+    "upcomingDispatches": "Upcoming Dispatches",
+    "announcements": "Announcements",
+    "postAnnouncement": "Post Announcement",
+    "myTasks": "My Tasks",
+    "weeklyKpi": "Weekly KPI Score"
+  },
+  "project": {
+    "newProject": "New Project",
+    "projectName": "Project Name",
+    "clientName": "Client Name",
+    "location": "Location",
+    "overview": "Overview",
+    "production": "Production",
+    "drawings": "Drawings",
+    "materialRequests": "Material Requests"
+  },
+  "production": {
+    "table": "Table",
+    "board": "Board",
+    "supervisorLog": "Supervisor Log",
+    "schedule": "Schedule"
+  },
+  "language": {
+    "english": "English",
+    "hindi": "हिंदी",
+    "kannada": "ಕನ್ನಡ",
+    "tamil": "தமிழ்",
+    "telugu": "తెలుగు"
+  }
+}

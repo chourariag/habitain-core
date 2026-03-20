@@ -100,6 +100,42 @@ export type Database = {
           },
         ]
       }
+      announcements: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          is_archived: boolean
+          pinned: boolean
+          posted_at: string
+          posted_by: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          pinned?: boolean
+          posted_at?: string
+          posted_by: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          pinned?: boolean
+          posted_at?: string
+          posted_by?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       daily_production_logs: {
         Row: {
           created_at: string | null
