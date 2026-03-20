@@ -67,9 +67,6 @@ export function SharedDashboardBottom({ userRole }: Props) {
 
   return (
     <>
-      {/* Check-in */}
-      <CheckInButton userRole={userRole} />
-
       {/* Announcements */}
       <div className="rounded-lg border border-border bg-card p-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
         <div className="flex items-center justify-between mb-4">

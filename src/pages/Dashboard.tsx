@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { Tier1Dashboard } from "@/components/dashboard/Tier1Dashboard";
 import { PlaceholderDashboard } from "@/components/dashboard/PlaceholderDashboard";
 import { SharedDashboardBottom } from "@/components/dashboard/SharedDashboardBottom";
+import { CheckInButton } from "@/components/attendance/CheckInButton";
 
 export default function Dashboard() {
   const { role, loading } = useUserRole();
@@ -20,6 +21,9 @@ export default function Dashboard() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
+      {/* Check-in card at the very top */}
+      <CheckInButton userRole={userRole} />
+
       {tier === 1 ? (
         <Tier1Dashboard today={today} />
       ) : tier === 2 ? (
