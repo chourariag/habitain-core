@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Download } from "lucide-react";
 import { toast } from "sonner";
+import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts";
 
 interface PLRow {
   month: number; year: number; revenue: number; materials: number; labour: number;
@@ -55,6 +56,19 @@ export function PLTab() {
 
   const last6 = data.slice(0, 6).reverse();
 
+  const chartData = last6.map(d => {
+    const cogs = (d.materials || 0) + (d.labour || 0) + (d.logistics || 0) + (d.other_cogs || 0);
+    const gm = d.revenue ? ((d.revenue - cogs) / d.revenue * 100) : 0;
+    return {
+      month: MONTH_NAMES[d.month - 1],
+      Revenue: d.revenue || 0,
+      COGS: cogs,
+      "Gross Margin %": Number(gm.toFixed(1)),
+    };
+  });
+
+  const fmtLakh = (v: number) => `₹${(v / 100000).toFixed(0)}L`;
+
   const plRows = [
     { label: "Revenue", key: "revenue", bold: false },
     { label: "— Materials", key: "materials" },
@@ -98,7 +112,28 @@ export function PLTab() {
         <span className="text-xs" style={{ color: "#999" }}>Tally integration coming in Phase 5</span>
       </div>
 
-      {last6.length > 0 ? (
+      {last6.length > 0 ? (<>
+        <Card>
+          <CardContent className="pt-4">
+            <ResponsiveContainer width="100%" height={240}>
+              <ComposedChart data={chartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#666" }} />
+                <YAxis yAxisId="left" tick={{ fontSize: 10, fill: "#666" }} tickFormatter={fmtLakh} />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 10, fill: "#666" }} unit="%" domain={[0, 100]} />
+                <Tooltip
+                  formatter={(value: number, name: string) =>
+                    name === "Gross Margin %" ? `${value}%` : `₹${value.toLocaleString("en-IN")}`
+                  }
+                />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar yAxisId="left" dataKey="Revenue" fill="#006039" radius={[3, 3, 0, 0]} />
+                <Bar yAxisId="left" dataKey="COGS" fill="#D4860A" radius={[3, 3, 0, 0]} />
+                <Line yAxisId="right" type="monotone" dataKey="Gross Margin %" stroke="#F40009" strokeWidth={2} dot={{ r: 4, fill: "#F40009" }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
         <Card>
           <CardContent className="pt-4 overflow-x-auto">
             <table className="w-full text-sm">
@@ -131,7 +166,7 @@ export function PLTab() {
             </table>
           </CardContent>
         </Card>
-      ) : (
+      </>) : (
         <Card className="py-12"><CardContent className="text-center"><p className="text-sm" style={{ color: "#666" }}>Upload P&L data to view monthly summary</p></CardContent></Card>
       )}
     </div>
