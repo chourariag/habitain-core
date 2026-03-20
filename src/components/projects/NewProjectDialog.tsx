@@ -73,6 +73,9 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
         est_completion: estCompletion ? format(estCompletion, "yyyy-MM-dd") : null,
         created_by: session.user.id,
         updated_by: session.user.id,
+        site_lat: siteLat ? parseFloat(siteLat) : null,
+        site_lng: siteLng ? parseFloat(siteLng) : null,
+        site_radius: siteRadius ? parseInt(siteRadius) : 300,
       } as any).select("id").single();
 
       if (error) throw error;
