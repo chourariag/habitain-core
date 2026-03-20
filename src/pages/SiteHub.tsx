@@ -249,6 +249,7 @@ function SiteHubContent() {
         </TabsContent>
       </Tabs>
     </div>
+    </div>
   );
 }
 
