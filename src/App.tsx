@@ -23,8 +23,10 @@ import Admin from "@/pages/Admin";
 import AppSettings from "@/pages/AppSettings";
 import RMPage from "@/pages/RM";
 import AMCPage from "@/pages/AMC";
+import Drawings from "@/pages/Drawings";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
+import ComingSoon from "@/pages/ComingSoon";
 
 const queryClient = new QueryClient();
 
@@ -48,11 +50,14 @@ const App = () => (
                 <Route path="/production" element={<Production />} />
                 <Route path="/site-hub" element={<SiteHub />} />
                 <Route path="/design" element={<DesignRouteGuard><DesignPortal /></DesignRouteGuard>} />
+                <Route path="/drawings" element={<DesignRouteGuard><Drawings /></DesignRouteGuard>} />
                 <Route path="/qc" element={<QualityControl />} />
                 <Route path="/inventory" element={<Inventory />} />
                 <Route path="/materials" element={<Navigate to="/production" replace />} />
                 <Route path="/rm" element={<RMPage />} />
                 <Route path="/amc" element={<AMCPage />} />
+                <Route path="/sales" element={<ComingSoon />} />
+                <Route path="/finance" element={<ComingSoon />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/settings" element={<AppSettings />} />
                 <Route path="/profile" element={<Profile />} />

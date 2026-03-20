@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Factory, PenTool, PackagePlus } from "lucide-react";
+import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon } from "lucide-react";
 import { SupervisorDailyLog } from "@/components/production/SupervisorDailyLog";
 import { ModuleSchedule } from "@/components/production/ModuleSchedule";
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPanel";
+import { ProductionKanban } from "@/components/production/ProductionKanban";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
@@ -26,6 +28,14 @@ export default function Production() {
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [projectTab, setProjectTab] = useState("modules");
+  const [viewMode, setViewMode] = useState<"table" | "board">(() => {
+    try { return (sessionStorage.getItem("prodViewMode") as "table" | "board") ?? "table"; } catch { return "table"; }
+  });
+
+  const setView = (mode: "table" | "board") => {
+    setViewMode(mode);
+    try { sessionStorage.setItem("prodViewMode", mode); } catch {}
+  };
 
   const fetchModules = useCallback(async () => {
     setLoading(true);
@@ -57,7 +67,6 @@ export default function Production() {
     return () => { supabase.removeChannel(channel); };
   }, [fetchModules]);
 
-  // Group modules by project
   const projects = useMemo(() => {
     const map: Record<string, { id: string; name: string; modules: ModuleWithProject[] }> = {};
     modules.forEach((m) => {
@@ -69,7 +78,6 @@ export default function Production() {
     return Object.values(map);
   }, [modules]);
 
-  // Auto-select first project
   useEffect(() => {
     if (!selectedProjectId && projects.length > 0) {
       setSelectedProjectId(projects[0].id);
@@ -80,9 +88,27 @@ export default function Production() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <div>
-        <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Production</h1>
-        <p className="text-muted-foreground text-sm mt-1">Module production tracking & daily supervisor logs</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Production</h1>
+          <p className="text-muted-foreground text-sm mt-1">Module production tracking & daily supervisor logs</p>
+        </div>
+        <div className="flex items-center gap-1 rounded-lg border border-border p-0.5" style={{ backgroundColor: "#F7F7F7" }}>
+          <Button
+            variant="ghost" size="sm"
+            className={viewMode === "table" ? "bg-background shadow-sm" : ""}
+            onClick={() => setView("table")}
+          >
+            <TableIcon className="h-4 w-4 mr-1" /> Table
+          </Button>
+          <Button
+            variant="ghost" size="sm"
+            className={viewMode === "board" ? "bg-background shadow-sm" : ""}
+            onClick={() => setView("board")}
+          >
+            <LayoutGrid className="h-4 w-4 mr-1" /> Board
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -93,6 +119,8 @@ export default function Production() {
         <div className="bg-card rounded-lg p-8 text-center shadow-sm">
           <p className="text-muted-foreground text-sm">No modules yet. Create a project and add modules first.</p>
         </div>
+      ) : viewMode === "board" ? (
+        <ProductionKanban modules={modules} onRefresh={fetchModules} />
       ) : (
         <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
           {/* Project selector */}
