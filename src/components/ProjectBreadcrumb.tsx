@@ -7,8 +7,7 @@ import {
 const TAB_LABELS: Record<string, string> = {
   "/production": "Production",
   "/site-hub": "Site Hub",
-  "/design": "Design",
-  "/drawings": "Documents",
+  "/drawings": "Drawings",
 };
 
 export function ProjectBreadcrumb() {

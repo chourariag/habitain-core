@@ -23,8 +23,7 @@ const projectTabs = [
   { to: "/projects/:id", label: "Overview", icon: FolderKanban, suffix: "" },
   { to: "/production", label: "Production", icon: Factory, suffix: "?ctx=project" },
   { to: "/site-hub", label: "Site Hub", icon: Truck, suffix: "?ctx=project" },
-  { to: "/design", label: "Design", icon: Compass, suffix: "?ctx=project", roles: DESIGN_ROLES },
-  { to: "/drawings", label: "Documents", icon: ClipboardList, suffix: "?ctx=project" },
+  { to: "/drawings", label: "Drawings", icon: ClipboardList, suffix: "?ctx=project" },
 ];
 
 // Sections with role gating
