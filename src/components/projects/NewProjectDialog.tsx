@@ -40,6 +40,10 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
   const [unitCount, setUnitCount] = useState("");
   const [startDate, setStartDate] = useState<Date>();
   const [estCompletion, setEstCompletion] = useState<Date>();
+  const [siteLat, setSiteLat] = useState("");
+  const [siteLng, setSiteLng] = useState("");
+  const [siteRadius, setSiteRadius] = useState("300");
+  const [loadingGps, setLoadingGps] = useState(false);
 
   const resetForm = () => {
     setName(""); setClientName(""); setClientPhone(""); setClientEmail("");
