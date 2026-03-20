@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
@@ -32,7 +33,9 @@ export function DealCardActions({ deal, children, onRefresh, onEdit }: DealCardA
   const [mobileOpen, setMobileOpen] = useState(false);
   const [lostConfirm, setLostConfirm] = useState(false);
   const [lostReason, setLostReason] = useState("");
-  const longPressTimer = { current: null as ReturnType<typeof setTimeout> | null };
+
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
 
   const currentIdx = STAGES.indexOf(deal.stage);
   const nextStage = currentIdx >= 0 && currentIdx < STAGES.length - 1 ? STAGES[currentIdx + 1] : null;
@@ -53,21 +56,120 @@ export function DealCardActions({ deal, children, onRefresh, onEdit }: DealCardA
     setLostReason("");
   };
 
-  const handleMarkLost = () => {
-    setLostConfirm(true);
-  };
+  const handleMarkLost = () => setLostConfirm(true);
 
   const confirmLost = () => {
     if (!lostReason) { toast.error("Select a reason"); return; }
     moveToStage("Lost");
   };
 
-  const handleTouchStart = () => {
-    longPressTimer.current = setTimeout(() => setMobileOpen(true), 400);
-  };
-  const handleTouchEnd = () => {
-    if (longPressTimer.current) clearTimeout(longPressTimer.current);
-  };
+  const cancelTimer = useCallback(() => {
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+      pressTimer.current = null;
+    }
+  }, []);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStart.current = { x: touch.clientX, y: touch.clientY };
+    pressTimer.current = setTimeout(() => {
+      setMobileOpen(true);
+    }, 400);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!touchStart.current) return;
+    const touch = e.touches[0];
+    const dx = Math.abs(touch.clientX - touchStart.current.x);
+    const dy = Math.abs(touch.clientY - touchStart.current.y);
+    if (dx > 8 || dy > 8) cancelTimer();
+  }, [cancelTimer]);
+
+  const handleTouchEnd = useCallback(() => {
+    cancelTimer();
+    touchStart.current = null;
+  }, [cancelTimer]);
+
+  const actionSheet = mobileOpen ? createPortal(
+    <div
+      className="fixed inset-0 z-[9998]"
+      onClick={() => { setMobileOpen(false); setLostConfirm(false); }}
+    >
+      <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.4)" }} />
+      <div
+        className="fixed bottom-0 left-0 right-0 z-[9999] bg-white rounded-t-2xl p-4 pb-8 space-y-2 animate-in slide-in-from-bottom"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3" />
+
+        {!lostConfirm ? (
+          <>
+            {nextStage && nextStage !== "Lost" && (
+              <Button
+                className="w-full justify-start font-semibold text-left"
+                variant="ghost"
+                style={{ color: "#006039" }}
+                onClick={() => moveToStage(nextStage)}
+              >
+                Move to {nextStage}
+              </Button>
+            )}
+
+            <div className="space-y-1">
+              <p className="text-xs font-medium px-3 pt-2" style={{ color: "#666666" }}>Move to…</p>
+              {STAGES.filter(s => s !== deal.stage).map(s => (
+                <Button
+                  key={s}
+                  variant="ghost"
+                  className="w-full justify-start text-left"
+                  style={{ color: s === "Lost" ? "#F40009" : "#1A1A1A" }}
+                  onClick={() => s === "Lost" ? handleMarkLost() : moveToStage(s)}
+                >
+                  {s}
+                </Button>
+              ))}
+            </div>
+
+            {deal.stage !== "Lost" && (
+              <>
+                <div className="border-t my-2" style={{ borderColor: "#E5E7EB" }} />
+                <Button variant="ghost" className="w-full justify-start" style={{ color: "#F40009" }} onClick={handleMarkLost}>
+                  Mark as Lost
+                </Button>
+              </>
+            )}
+
+            <Button variant="ghost" className="w-full justify-start" onClick={() => { setMobileOpen(false); onEdit(); }}>
+              Edit Details
+            </Button>
+
+            <div className="border-t my-2" style={{ borderColor: "#E5E7EB" }} />
+            <Button variant="ghost" className="w-full justify-start" style={{ color: "#666666" }} onClick={() => setMobileOpen(false)}>
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <div className="space-y-3">
+            <p className="font-semibold text-sm" style={{ color: "#1A1A1A" }}>Mark "{deal.client_name}" as Lost</p>
+            <Select value={lostReason} onValueChange={setLostReason}>
+              <SelectTrigger><SelectValue placeholder="Select reason…" /></SelectTrigger>
+              <SelectContent>
+                {LOST_REASONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Button className="w-full" style={{ background: "#F40009", color: "#fff" }} onClick={confirmLost}>
+              Confirm Lost
+            </Button>
+            <button className="w-full text-center text-sm underline" style={{ color: "#666666" }} onClick={() => setLostConfirm(false)}>
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+    </div>,
+    document.body
+  ) : null;
 
   return (
     <>
@@ -76,6 +178,7 @@ export function DealCardActions({ deal, children, onRefresh, onEdit }: DealCardA
         <ContextMenuTrigger asChild>
           <div
             onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchEnd}
           >
@@ -107,82 +210,7 @@ export function DealCardActions({ deal, children, onRefresh, onEdit }: DealCardA
         </ContextMenuContent>
       </ContextMenu>
 
-      {/* Mobile bottom sheet + Lost confirmation */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={() => { setMobileOpen(false); setLostConfirm(false); }}>
-          <div className="absolute inset-0 bg-black/30" />
-          <div
-            className="relative bg-white w-full max-w-md rounded-t-2xl p-4 pb-8 space-y-2 animate-in slide-in-from-bottom"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3" />
-
-            {!lostConfirm ? (
-              <>
-                {nextStage && nextStage !== "Lost" && (
-                  <Button
-                    className="w-full justify-start font-semibold text-left"
-                    variant="ghost"
-                    style={{ color: "#006039" }}
-                    onClick={() => moveToStage(nextStage)}
-                  >
-                    Move to {nextStage}
-                  </Button>
-                )}
-
-                <div className="space-y-1">
-                  <p className="text-xs font-medium px-3 pt-2" style={{ color: "#666666" }}>Move to…</p>
-                  {STAGES.filter(s => s !== deal.stage).map(s => (
-                    <Button
-                      key={s}
-                      variant="ghost"
-                      className="w-full justify-start text-left"
-                      style={{ color: s === "Lost" ? "#F40009" : "#1A1A1A" }}
-                      onClick={() => s === "Lost" ? handleMarkLost() : moveToStage(s)}
-                    >
-                      {s}
-                    </Button>
-                  ))}
-                </div>
-
-                {deal.stage !== "Lost" && (
-                  <>
-                    <div className="border-t my-2" style={{ borderColor: "#E5E7EB" }} />
-                    <Button variant="ghost" className="w-full justify-start" style={{ color: "#F40009" }} onClick={handleMarkLost}>
-                      Mark as Lost
-                    </Button>
-                  </>
-                )}
-
-                <Button variant="ghost" className="w-full justify-start" onClick={onEdit}>
-                  Edit Details
-                </Button>
-
-                <div className="border-t my-2" style={{ borderColor: "#E5E7EB" }} />
-                <Button variant="ghost" className="w-full justify-start" style={{ color: "#666666" }} onClick={() => setMobileOpen(false)}>
-                  Cancel
-                </Button>
-              </>
-            ) : (
-              <div className="space-y-3">
-                <p className="font-semibold text-sm" style={{ color: "#1A1A1A" }}>Mark "{deal.client_name}" as Lost</p>
-                <Select value={lostReason} onValueChange={setLostReason}>
-                  <SelectTrigger><SelectValue placeholder="Select reason…" /></SelectTrigger>
-                  <SelectContent>
-                    {LOST_REASONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Button className="w-full" style={{ background: "#F40009", color: "#fff" }} onClick={confirmLost}>
-                  Confirm Lost
-                </Button>
-                <button className="w-full text-center text-sm underline" style={{ color: "#666666" }} onClick={() => setLostConfirm(false)}>
-                  Cancel
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      {actionSheet}
     </>
   );
 }
