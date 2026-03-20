@@ -127,3 +127,21 @@
     font-weight: 400;
   }
 }
+
+/* Global card overflow fix */
+@layer components {
+  .bg-card, [class*="rounded-lg"][class*="border"], [class*="rounded-md"][class*="border"] {
+    max-width: 100%;
+    overflow: hidden;
+  }
+}
+
+/* Ensure flex rows inside cards wrap on mobile */
+@layer utilities {
+  @media (max-width: 767px) {
+    .flex-wrap-mobile {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+  }
+}
