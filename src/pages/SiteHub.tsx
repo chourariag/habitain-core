@@ -12,6 +12,7 @@ import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPanel";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
+import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import type { Tables } from "@/integrations/supabase/types";
 
