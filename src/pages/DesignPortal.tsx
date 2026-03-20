@@ -42,6 +42,7 @@ const stageStatusStyle = (s: string): React.CSSProperties => ({
 
 export default function DesignPortal() {
   const [loading, setLoading] = useState(true);
+  const [countsLoading, setCountsLoading] = useState(true);
   const [projects, setProjects] = useState<any[]>([]);
   const [drawings, setDrawings] = useState<any[]>([]);
   const [dqs, setDqs] = useState<any[]>([]);
@@ -91,6 +92,19 @@ export default function DesignPortal() {
   const canUpload = ["principal_architect", "project_architect", "structural_architect", "super_admin", "managing_director"].includes(userRole ?? "");
   const isArchitect = ["principal_architect", "project_architect", "structural_architect"].includes(userRole ?? "");
 
+  const fetchStageCounts = useCallback(async () => {
+    setCountsLoading(true);
+    const [dsRes, dfRes, dqsRes] = await Promise.all([
+      (supabase.from("design_stages") as any).select("*").order("stage_order"),
+      (supabase.from("project_design_files") as any).select("*"),
+      (supabase.from("design_queries") as any).select("*").eq("is_archived", false).order("created_at", { ascending: false }),
+    ]);
+    setDesignStages(dsRes.data ?? []);
+    setDesignFiles(dfRes.data ?? []);
+    setDqs(dqsRes.data ?? []);
+    setCountsLoading(false);
+  }, []);
+
   const fetchData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
@@ -119,32 +133,34 @@ export default function DesignPortal() {
     setDesignStages(dsRes.data ?? []);
     setConsultants(dcRes.data ?? []);
     setLoading(false);
+    setCountsLoading(false);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Realtime subscription for design_stages changes
+  // Realtime subscription for design_stages, design_queries, and project_design_files
   useEffect(() => {
     const channel = supabase
       .channel("design-stages-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "design_stages" }, () => {
-        // Only refetch stages and design files, not full page
-        Promise.all([
-          (supabase.from("design_stages") as any).select("*").order("stage_order"),
-          (supabase.from("project_design_files") as any).select("*"),
-        ]).then(([dsRes, dfRes]) => {
-          setDesignStages(dsRes.data ?? []);
-          setDesignFiles(dfRes.data ?? []);
-        });
+        fetchStageCounts();
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "design_queries" }, () => {
-        (supabase.from("design_queries") as any).select("*").eq("is_archived", false).order("created_at", { ascending: false }).then(({ data }: any) => {
-          setDqs(data ?? []);
-        });
+        fetchStageCounts();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "project_design_files" }, () => {
+        fetchStageCounts();
       })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [fetchStageCounts]);
+
+  // Fallback: refetch on window/tab focus
+  useEffect(() => {
+    const onFocus = () => { fetchStageCounts(); };
+    window.addEventListener("focus", onFocus);
+    return () => { window.removeEventListener("focus", onFocus); };
+  }, [fetchStageCounts]);
 
   const projectMap = useMemo(() => {
     const m: Record<string, any> = {};
@@ -675,32 +691,68 @@ export default function DesignPortal() {
               ].map((s) => (
                 <Card key={s.label} className="text-center">
                   <CardContent className="pt-4 pb-3">
-                    <p className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>{s.count}</p>
-                    <p className="text-xs mt-1" style={{ color: "#666666" }}>{s.label}</p>
+                    {countsLoading ? (
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="h-7 w-10 rounded bg-muted animate-pulse" />
+                        <div className="h-3 w-16 rounded bg-muted animate-pulse mt-1" />
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>{s.count}</p>
+                        <p className="text-xs mt-1" style={{ color: "#666666" }}>{s.label}</p>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               ))}
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              <Card style={openDqCount > 0 ? { backgroundColor: criticalDqCount > 0 ? "#FFF0F0" : "#FFF8E8" } : {}}>
+              <Card style={!countsLoading && openDqCount > 0 ? { backgroundColor: criticalDqCount > 0 ? "#FFF0F0" : "#FFF8E8" } : {}}>
                 <CardContent className="pt-4 pb-3 text-center">
-                  <p className="text-2xl font-bold" style={{ color: criticalDqCount > 0 ? "#F40009" : openDqCount > 0 ? "#D4860A" : "#1A1A1A" }}>
-                    {openDqCount}
-                  </p>
-                  <p className="text-xs mt-1" style={{ color: "#666666" }}>Open DQs</p>
+                  {countsLoading ? (
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="h-7 w-10 rounded bg-muted animate-pulse" />
+                      <div className="h-3 w-16 rounded bg-muted animate-pulse mt-1" />
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold" style={{ color: criticalDqCount > 0 ? "#F40009" : openDqCount > 0 ? "#D4860A" : "#1A1A1A" }}>
+                        {openDqCount}
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: "#666666" }}>Open DQs</p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-4 pb-3 text-center">
-                  <p className="text-2xl font-bold" style={{ color: pendingClientApprovals > 0 ? "#D4860A" : "#1A1A1A" }}>{pendingClientApprovals}</p>
-                  <p className="text-xs mt-1" style={{ color: "#666666" }}>Pending Approvals</p>
+                  {countsLoading ? (
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="h-7 w-10 rounded bg-muted animate-pulse" />
+                      <div className="h-3 w-16 rounded bg-muted animate-pulse mt-1" />
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold" style={{ color: pendingClientApprovals > 0 ? "#D4860A" : "#1A1A1A" }}>{pendingClientApprovals}</p>
+                      <p className="text-xs mt-1" style={{ color: "#666666" }}>Pending Approvals</p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="pt-4 pb-3 text-center">
-                  <p className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>{gfcReadyCount}</p>
-                  <p className="text-xs mt-1" style={{ color: "#666666" }}>GFC Issued</p>
+                  {countsLoading ? (
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="h-7 w-10 rounded bg-muted animate-pulse" />
+                      <div className="h-3 w-16 rounded bg-muted animate-pulse mt-1" />
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>{gfcReadyCount}</p>
+                      <p className="text-xs mt-1" style={{ color: "#666666" }}>GFC Issued</p>
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
