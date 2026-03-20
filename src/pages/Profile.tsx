@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Camera, Loader2, Lock, User } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Camera, Loader2, Lock, User, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
+import { useTranslation } from "react-i18next";
 
 export default function Profile() {
   const navigate = useNavigate();
