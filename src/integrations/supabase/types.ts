@@ -606,6 +606,338 @@ export type Database = {
           },
         ]
       }
+      finance_cashflow: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          description: string | null
+          entered_by: string | null
+          entry_date: string
+          id: string
+          project_name: string | null
+          type: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          entered_by?: string | null
+          entry_date?: string
+          id?: string
+          project_name?: string | null
+          type?: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          description?: string | null
+          entered_by?: string | null
+          entry_date?: string
+          id?: string
+          project_name?: string | null
+          type?: string
+        }
+        Relationships: []
+      }
+      finance_cashflow_balances: {
+        Row: {
+          id: string
+          month: number
+          opening_balance: number
+          updated_at: string
+          updated_by: string | null
+          year: number
+        }
+        Insert: {
+          id?: string
+          month: number
+          opening_balance?: number
+          updated_at?: string
+          updated_by?: string | null
+          year: number
+        }
+        Update: {
+          id?: string
+          month?: number
+          opening_balance?: number
+          updated_at?: string
+          updated_by?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
+      finance_mis_uploads: {
+        Row: {
+          ads_split: Json | null
+          created_at: string
+          id: string
+          period_label: string
+          raw_data: Json
+          upload_date: string
+          uploaded_by: string
+        }
+        Insert: {
+          ads_split?: Json | null
+          created_at?: string
+          id?: string
+          period_label: string
+          raw_data?: Json
+          upload_date?: string
+          uploaded_by: string
+        }
+        Update: {
+          ads_split?: Json | null
+          created_at?: string
+          id?: string
+          period_label?: string
+          raw_data?: Json
+          upload_date?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
+      finance_payments: {
+        Row: {
+          amount: number
+          client_name: string
+          created_at: string
+          due_date: string
+          entered_by: string | null
+          id: string
+          milestone_description: string
+          project_name: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          client_name: string
+          created_at?: string
+          due_date: string
+          entered_by?: string | null
+          id?: string
+          milestone_description: string
+          project_name: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          client_name?: string
+          created_at?: string
+          due_date?: string
+          entered_by?: string | null
+          id?: string
+          milestone_description?: string
+          project_name?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      finance_pl_data: {
+        Row: {
+          created_at: string
+          depreciation: number | null
+          id: string
+          labour: number | null
+          logistics: number | null
+          marketing: number | null
+          materials: number | null
+          month: number
+          office_admin: number | null
+          other_cogs: number | null
+          other_opex: number | null
+          revenue: number | null
+          rm_costs: number | null
+          updated_at: string
+          uploaded_by: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          depreciation?: number | null
+          id?: string
+          labour?: number | null
+          logistics?: number | null
+          marketing?: number | null
+          materials?: number | null
+          month: number
+          office_admin?: number | null
+          other_cogs?: number | null
+          other_opex?: number | null
+          revenue?: number | null
+          rm_costs?: number | null
+          updated_at?: string
+          uploaded_by?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string
+          depreciation?: number | null
+          id?: string
+          labour?: number | null
+          logistics?: number | null
+          marketing?: number | null
+          materials?: number | null
+          month?: number
+          office_admin?: number | null
+          other_cogs?: number | null
+          other_opex?: number | null
+          revenue?: number | null
+          rm_costs?: number | null
+          updated_at?: string
+          uploaded_by?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
+      finance_project_budgets: {
+        Row: {
+          created_at: string
+          id: string
+          labour_budget: number | null
+          logistics_budget: number | null
+          project_id: string | null
+          project_name: string
+          sanctioned_budget: number | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          labour_budget?: number | null
+          logistics_budget?: number | null
+          project_id?: string | null
+          project_name: string
+          sanctioned_budget?: number | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          labour_budget?: number | null
+          logistics_budget?: number | null
+          project_id?: string | null
+          project_name?: string
+          sanctioned_budget?: number | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_project_budgets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_project_cashflow: {
+        Row: {
+          created_at: string
+          id: string
+          inflow_advance: number | null
+          inflow_client_payment: number | null
+          inflow_other: number | null
+          inflow_retention: number | null
+          month: number
+          notes: string | null
+          outflow_admin: number | null
+          outflow_labour: number | null
+          outflow_logistics: number | null
+          outflow_materials: number | null
+          outflow_other: number | null
+          outflow_subcontract: number | null
+          project_name: string
+          uploaded_by: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inflow_advance?: number | null
+          inflow_client_payment?: number | null
+          inflow_other?: number | null
+          inflow_retention?: number | null
+          month: number
+          notes?: string | null
+          outflow_admin?: number | null
+          outflow_labour?: number | null
+          outflow_logistics?: number | null
+          outflow_materials?: number | null
+          outflow_other?: number | null
+          outflow_subcontract?: number | null
+          project_name: string
+          uploaded_by?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inflow_advance?: number | null
+          inflow_client_payment?: number | null
+          inflow_other?: number | null
+          inflow_retention?: number | null
+          month?: number
+          notes?: string | null
+          outflow_admin?: number | null
+          outflow_labour?: number | null
+          outflow_logistics?: number | null
+          outflow_materials?: number | null
+          outflow_other?: number | null
+          outflow_subcontract?: number | null
+          project_name?: string
+          uploaded_by?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
+      finance_statutory: {
+        Row: {
+          created_at: string
+          due_date: string
+          filing_type: string
+          id: string
+          is_recurring: boolean | null
+          notes: string | null
+          recurrence_rule: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          due_date: string
+          filing_type: string
+          id?: string
+          is_recurring?: boolean | null
+          notes?: string | null
+          recurrence_rule?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          due_date?: string
+          filing_type?: string
+          id?: string
+          is_recurring?: boolean | null
+          notes?: string | null
+          recurrence_rule?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       handover_pack: {
         Row: {
           client_name: string
@@ -856,6 +1188,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ledger_mappings: {
+        Row: {
+          created_at: string
+          id: string
+          ledger_name: string
+          mis_category: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ledger_name: string
+          mis_category: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ledger_name?: string
+          mis_category?: string
+        }
+        Relationships: []
       }
       material_plan_items: {
         Row: {
