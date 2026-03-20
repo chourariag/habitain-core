@@ -95,6 +95,31 @@ export default function DesignPortal() {
   const dedupe = <T extends { id?: string }>(arr: T[]): T[] =>
     Array.from(new Map(arr.map((item) => [(item as any).id ?? JSON.stringify(item), item])).values());
 
+  const normalizeProjectLevelDesignStages = useCallback((rows: any[]) => {
+    const canonical = new Map<string, any>();
+
+    [...(rows ?? [])]
+      .filter((row) => row?.project_id && row?.stage_name)
+      .sort((a, b) => {
+        const aTime = new Date(a.updated_at ?? a.created_at ?? 0).getTime();
+        const bTime = new Date(b.updated_at ?? b.created_at ?? 0).getTime();
+        return bTime - aTime;
+      })
+      .forEach((row) => {
+        const key = `${row.project_id}:${row.stage_name}`;
+        if (!canonical.has(key)) {
+          canonical.set(key, row);
+        }
+      });
+
+    return Array.from(canonical.values()).sort((a, b) => {
+      if (a.project_id === b.project_id) {
+        return (a.stage_order ?? 0) - (b.stage_order ?? 0);
+      }
+      return String(a.project_id).localeCompare(String(b.project_id));
+    });
+  }, []);
+
   const fetchStageCounts = useCallback(async () => {
     setCountsLoading(true);
     const [dsRes, dfRes, dqsRes] = await Promise.all([
@@ -102,11 +127,11 @@ export default function DesignPortal() {
       (supabase.from("project_design_files") as any).select("*"),
       (supabase.from("design_queries") as any).select("*").eq("is_archived", false).order("created_at", { ascending: false }),
     ]);
-    setDesignStages(dedupe(dsRes.data ?? []));
+    setDesignStages(normalizeProjectLevelDesignStages(dsRes.data ?? []));
     setDesignFiles(dedupe(dfRes.data ?? []));
     setDqs(dedupe(dqsRes.data ?? []));
     setCountsLoading(false);
-  }, []);
+  }, [normalizeProjectLevelDesignStages]);
 
   const fetchData = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -133,11 +158,11 @@ export default function DesignPortal() {
     setDrawings(dedupe(drawingsRes.data ?? []));
     setDqs(dedupe(dqsRes.data ?? []));
     setDesignFiles(dedupe(dfRes.data ?? []));
-    setDesignStages(dedupe(dsRes.data ?? []));
+    setDesignStages(normalizeProjectLevelDesignStages(dsRes.data ?? []));
     setConsultants(dedupe(dcRes.data ?? []));
     setLoading(false);
     setCountsLoading(false);
-  }, []);
+  }, [normalizeProjectLevelDesignStages]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -473,7 +498,7 @@ export default function DesignPortal() {
     await (client.from("design_stages") as any).update(updates).eq("id", stageId);
     // Lightweight refetch of stages only
     const { data } = await (supabase.from("design_stages") as any).select("*").order("stage_order");
-    setDesignStages(data ?? []);
+    setDesignStages(normalizeProjectLevelDesignStages(data ?? []));
   };
 
   // ──── Add consultant ────
