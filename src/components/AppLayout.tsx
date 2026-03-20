@@ -9,7 +9,7 @@ import { ProjectProvider } from "@/contexts/ProjectContext";
 export function AppLayout() {
   return (
     <ProjectProvider>
-      <div className="flex flex-col h-screen bg-background">
+      <div className="flex flex-col h-screen bg-background overflow-x-hidden max-w-[100vw]">
         <OfflineBanner />
         <div className="flex flex-1 overflow-hidden">
           <AppSidebar />
