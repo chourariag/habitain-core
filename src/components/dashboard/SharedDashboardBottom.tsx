@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import type { AppRole } from "@/lib/roles";
 import { useAuth } from "@/components/AuthProvider";
+import { CheckInButton } from "@/components/attendance/CheckInButton";
 
 const CAN_POST: AppRole[] = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
 
