@@ -12,6 +12,7 @@ import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPanel";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
+import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -149,12 +150,15 @@ function SiteHubContent() {
   const summary = getDispatchSummary();
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="space-y-0">
+      <MobileProjectSwitcher label="Project" />
+      <div className="p-4 md:p-6 space-y-6">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Site Hub</h1>
-          <p className="text-sm mt-1" style={{ color: "#666666" }}>
-            {selectedProject?.name} — Dispatch-to-handover workflows
+          <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "#1A1A1A" }}>Site Hub</h1>
+          <p className="text-sm mt-1">
+            <span className="font-bold" style={{ color: "#006039" }}>{selectedProject?.name}</span>
+            <span style={{ color: "#666666" }}> — Dispatch-to-handover workflows</span>
           </p>
         </div>
         <Badge variant="outline" style={badgeStyle(summary.tone)}>{summary.label}</Badge>
@@ -244,6 +248,7 @@ function SiteHubContent() {
           <MaterialRequestsPanel projectId={selectedProjectId!} />
         </TabsContent>
       </Tabs>
+    </div>
     </div>
   );
 }

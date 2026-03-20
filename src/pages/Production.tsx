@@ -10,6 +10,7 @@ import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPanel";
 import { ProductionKanban } from "@/components/production/ProductionKanban";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
+import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -72,12 +73,15 @@ function ProductionContent() {
   }, [fetchModules]);
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
+    <div className="space-y-0">
+      <MobileProjectSwitcher label="Project" />
+      <div className="p-4 md:p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Production</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {selectedProject?.name} — Module production tracking & daily supervisor logs
+          <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "#1A1A1A" }}>Production</h1>
+          <p className="text-sm mt-1">
+            <span className="font-bold" style={{ color: "#006039" }}>{selectedProject?.name}</span>
+            <span style={{ color: "#666666" }}> — Module production tracking</span>
           </p>
         </div>
         <div className="flex items-center gap-1 rounded-lg border border-border p-0.5" style={{ backgroundColor: "#F7F7F7" }}>
@@ -145,6 +149,7 @@ function ProductionContent() {
           </TabsContent>
         </Tabs>
       )}
+    </div>
     </div>
   );
 }
