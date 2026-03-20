@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useUserRole } from "@/hooks/useUserRole";
-import { ScrollableTabs } from "@/components/ui/scrollable-tabs";
+import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
