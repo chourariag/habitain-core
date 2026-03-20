@@ -316,6 +316,11 @@ export function MISTab() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-0">
+              {zeroIncome && (
+                <div className="rounded px-3 py-2 mb-2 text-sm" style={{ backgroundColor: "#FFF8E1", color: "#D4860A", border: "1px solid #D4860A" }}>
+                  Total Income is ₹0 — percentages cannot be calculated. Check that your Trial Balance has revenue entries in the Credit column and that revenue ledgers are mapped correctly.
+                </div>
+              )}
               <div className="text-xs font-semibold uppercase tracking-wider py-2 px-2" style={{ color: "#006039" }}>Income</div>
               <MISRow label="Sales Revenue" amount={salesRevenue} pctStr={fp(salesRevenue)} />
               <MISRow label="Other Income" amount={otherIncome} pctStr={fp(otherIncome)} />
