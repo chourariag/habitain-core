@@ -61,7 +61,7 @@ const App = () => (
                 <Route path="/rm" element={<RMPage />} />
                 <Route path="/amc" element={<AMCPage />} />
                 <Route path="/sales" element={<Sales />} />
-                <Route path="/finance" element={<ComingSoon />} />
+                <Route path="/finance" element={<Finance />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/settings" element={<AppSettings />} />
                 <Route path="/profile" element={<Profile />} />
