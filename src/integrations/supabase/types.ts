@@ -136,6 +136,122 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: string | null
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: string | null
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
+      attendance_exports: {
+        Row: {
+          created_at: string | null
+          generated_by: string | null
+          id: string
+          month: number
+          sent_to_finance_at: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          generated_by?: string | null
+          id?: string
+          month: number
+          sent_to_finance_at?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          generated_by?: string | null
+          id?: string
+          month?: number
+          sent_to_finance_at?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
+      attendance_records: {
+        Row: {
+          check_in_time: string | null
+          check_out_time: string | null
+          created_at: string | null
+          date: string
+          gps_lat: number | null
+          gps_lng: number | null
+          gps_verified: boolean | null
+          hours_worked: number | null
+          id: string
+          is_manual_override: boolean | null
+          location_type: string
+          override_reason: string | null
+          project_id: string | null
+          remote_reason: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string | null
+          date?: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          gps_verified?: boolean | null
+          hours_worked?: number | null
+          id?: string
+          is_manual_override?: boolean | null
+          location_type?: string
+          override_reason?: string | null
+          project_id?: string | null
+          remote_reason?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          created_at?: string | null
+          date?: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          gps_verified?: boolean | null
+          hours_worked?: number | null
+          id?: string
+          is_manual_override?: boolean | null
+          location_type?: string
+          override_reason?: string | null
+          project_id?: string | null
+          remote_reason?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_records_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_production_logs: {
         Row: {
           created_at: string | null
@@ -1188,6 +1304,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      leave_requests: {
+        Row: {
+          approved_by: string | null
+          days_count: number
+          from_date: string
+          id: string
+          leave_type: string
+          reason: string
+          rejection_reason: string | null
+          requested_at: string | null
+          status: string
+          to_date: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          approved_by?: string | null
+          days_count?: number
+          from_date: string
+          id?: string
+          leave_type?: string
+          reason: string
+          rejection_reason?: string | null
+          requested_at?: string | null
+          status?: string
+          to_date: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          approved_by?: string | null
+          days_count?: number
+          from_date?: string
+          id?: string
+          leave_type?: string
+          reason?: string
+          rejection_reason?: string | null
+          requested_at?: string | null
+          status?: string
+          to_date?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       ledger_mappings: {
         Row: {
