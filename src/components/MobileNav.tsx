@@ -21,6 +21,7 @@ const allTabs = [
   { to: "/procurement", label: "Procurement", icon: ShoppingCart, section: "procurement" },
   { to: "/design", label: "Design", icon: Compass, section: "design" },
   { to: "/rm", label: "R&M", icon: Wrench, section: "business" },
+  { to: "/attendance", label: "HR", icon: Clock, section: "admin" },
   { to: "/admin", label: "Admin", icon: Users, section: "admin" },
   { to: "/settings", label: "Settings", icon: Settings, section: "admin" },
 ];
