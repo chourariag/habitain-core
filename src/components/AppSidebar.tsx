@@ -51,7 +51,7 @@ const sectionConfig = [
     key: "procurement",
     label: "Procurement",
     items: [
-      { to: "/inventory", label: "Inventory", icon: Package },
+      { to: "/procurement", label: "Procurement", icon: ShoppingCart },
     ],
   },
   {

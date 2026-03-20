@@ -18,12 +18,13 @@ import SiteHub from "@/pages/SiteHub";
 import DesignPortal from "@/pages/DesignPortal";
 import { DesignRouteGuard } from "@/components/DesignRouteGuard";
 import QualityControl from "@/pages/QualityControl";
-import Inventory from "@/pages/Inventory";
+// Inventory page consolidated into Procurement
 import Admin from "@/pages/Admin";
 import AppSettings from "@/pages/AppSettings";
 import RMPage from "@/pages/RM";
 import AMCPage from "@/pages/AMC";
 import Drawings from "@/pages/Drawings";
+import Procurement from "@/pages/Procurement";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 import ComingSoon from "@/pages/ComingSoon";
@@ -52,8 +53,9 @@ const App = () => (
                 <Route path="/design" element={<DesignRouteGuard><DesignPortal /></DesignRouteGuard>} />
                 <Route path="/drawings" element={<DesignRouteGuard><Drawings /></DesignRouteGuard>} />
                 <Route path="/qc" element={<QualityControl />} />
-                <Route path="/inventory" element={<Inventory />} />
-                <Route path="/materials" element={<Navigate to="/production" replace />} />
+                <Route path="/procurement" element={<Procurement />} />
+                <Route path="/inventory" element={<Navigate to="/procurement" replace />} />
+                <Route path="/materials" element={<Navigate to="/procurement" replace />} />
                 <Route path="/rm" element={<RMPage />} />
                 <Route path="/amc" element={<AMCPage />} />
                 <Route path="/sales" element={<ComingSoon />} />
