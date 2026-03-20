@@ -222,6 +222,38 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
             </div>
           )}
 
+          {/* Site Location */}
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold uppercase tracking-wider" style={{ color: "#666" }}>Site Location (for attendance GPS)</Label>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="space-y-1">
+                <Label className="font-inter text-[11px]" style={{ color: "#666" }}>Latitude</Label>
+                <Input type="number" step="0.000001" value={siteLat} onChange={(e) => setSiteLat(e.target.value)} placeholder="13.3622" className="font-inter text-[15px]" />
+              </div>
+              <div className="space-y-1">
+                <Label className="font-inter text-[11px]" style={{ color: "#666" }}>Longitude</Label>
+                <Input type="number" step="0.000001" value={siteLng} onChange={(e) => setSiteLng(e.target.value)} placeholder="77.5401" className="font-inter text-[15px]" />
+              </div>
+              <div className="space-y-1">
+                <Label className="font-inter text-[11px]" style={{ color: "#666" }}>Radius (m)</Label>
+                <Input type="number" min="50" value={siteRadius} onChange={(e) => setSiteRadius(e.target.value)} placeholder="300" className="font-inter text-[15px]" />
+              </div>
+            </div>
+            <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs" onClick={async () => {
+              setLoadingGps(true);
+              try {
+                const pos = await new Promise<GeolocationPosition>((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 10000 }));
+                setSiteLat(pos.coords.latitude.toFixed(6));
+                setSiteLng(pos.coords.longitude.toFixed(6));
+                toast.success("Location captured");
+              } catch { toast.error("Could not get GPS"); }
+              setLoadingGps(false);
+            }} disabled={loadingGps}>
+              {loadingGps ? <Loader2 className="h-3 w-3 animate-spin" /> : <MapPin className="h-3 w-3" />}
+              Use My Current Location
+            </Button>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label>Start Date</Label>
