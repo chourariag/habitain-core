@@ -89,12 +89,7 @@ export function AppSidebar() {
 
   const showProjectSelector = canSeeProjectSelector(userRole);
 
-  const filteredProjectTabs = projectTabs.filter((item) => {
-    if ("roles" in item && item.roles) {
-      return userRole ? item.roles.includes(userRole) : false;
-    }
-    return true;
-  });
+  const filteredProjectTabs = projectTabs;
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
