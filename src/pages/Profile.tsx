@@ -13,9 +13,18 @@ import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { useTranslation } from "react-i18next";
 
+const LANG_OPTIONS = [
+  { value: "en", label: "English" },
+  { value: "hi", label: "हिंदी (Hindi)" },
+  { value: "kn", label: "ಕನ್ನಡ (Kannada)" },
+  { value: "ta", label: "தமிழ் (Tamil)" },
+  { value: "te", label: "తెలుగు (Telugu)" },
+];
+
 export default function Profile() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { i18n } = useTranslation();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
