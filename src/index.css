@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -55,6 +56,7 @@
 
     --font-heading: 'Montserrat', system-ui, sans-serif;
     --font-body: 'Montserrat', system-ui, sans-serif;
+    --font-input: 'Inter', system-ui, sans-serif;
 
     --transition-snappy: 150ms ease-out;
 
@@ -87,6 +89,9 @@
   .font-body {
     font-family: var(--font-body);
   }
+  .font-input {
+    font-family: var(--font-input);
+  }
   .transition-snappy {
     transition-duration: var(--transition-snappy);
   }
@@ -96,5 +101,47 @@
   }
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* Inter font for form elements */
+@layer base {
+  input, textarea, select, option,
+  [role="option"], [role="listbox"] {
+    font-family: var(--font-input);
+  }
+  input::placeholder, textarea::placeholder {
+    font-family: var(--font-input);
+    font-size: 14px;
+    color: #999999;
+    font-weight: 400;
+  }
+  label {
+    font-family: var(--font-input);
+    font-size: 11px;
+    font-weight: 500;
+  }
+  td {
+    font-family: var(--font-input);
+    font-size: 12px;
+    font-weight: 400;
+  }
+}
+
+/* Global card overflow fix */
+@layer components {
+  .bg-card, [class*="rounded-lg"][class*="border"], [class*="rounded-md"][class*="border"] {
+    max-width: 100%;
+    overflow: hidden;
+  }
+}
+
+/* Ensure flex rows inside cards wrap on mobile */
+@layer utilities {
+  @media (max-width: 767px) {
+    .flex-wrap-mobile {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
   }
 }

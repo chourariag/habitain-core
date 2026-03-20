@@ -40,17 +40,21 @@ export function ScrollableTabsWrapper({ children, className }: ScrollableTabsWra
 
       {/* Left fade + chevron */}
       {showLeft && (
-        <div className="absolute left-0 top-0 bottom-0 w-8 flex items-center justify-center pointer-events-none z-10"
-          style={{ background: "linear-gradient(to right, #FFFFFF 40%, transparent)" }}>
-          <ChevronLeft className="h-3.5 w-3.5" style={{ color: "#006039" }} />
+        <div
+          className="absolute left-0 top-0 bottom-0 w-12 flex items-center justify-start pl-1.5 pointer-events-none z-10"
+          style={{ background: "linear-gradient(to right, #FFFFFF 30%, transparent)" }}
+        >
+          <ChevronLeft className="h-4 w-4" style={{ color: "#006039" }} />
         </div>
       )}
 
       {/* Right fade + chevron */}
       {showRight && (
-        <div className="absolute right-0 top-0 bottom-0 w-8 flex items-center justify-center pointer-events-none z-10"
-          style={{ background: "linear-gradient(to left, #FFFFFF 40%, transparent)" }}>
-          <ChevronRight className="h-3.5 w-3.5" style={{ color: "#006039" }} />
+        <div
+          className="absolute right-0 top-0 bottom-0 w-12 flex items-center justify-end pr-1.5 pointer-events-none z-10"
+          style={{ background: "linear-gradient(to left, #FFFFFF 30%, transparent)" }}
+        >
+          <ChevronRight className="h-4 w-4" style={{ color: "#006039" }} />
         </div>
       )}
     </div>

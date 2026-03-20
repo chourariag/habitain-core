@@ -10,13 +10,12 @@ interface LogoProps {
 export function Logo({ size = "md", showText = true, className }: LogoProps) {
   const iconSize = size === "sm" ? 36 : size === "md" ? 36 : 64;
   const fontSize = size === "lg" ? "text-3xl" : "text-sm";
-  const subSize = size === "lg" ? "text-sm" : "text-[10px]";
 
   return (
     <div className={cn("flex items-center gap-3", className)}>
       <img
         src={logoImg}
-        alt="Habitainer"
+        alt="HStack"
         width={iconSize}
         height={iconSize}
         className="shrink-0 rounded-full"
@@ -24,9 +23,13 @@ export function Logo({ size = "md", showText = true, className }: LogoProps) {
       {showText && (
         <div className="overflow-hidden">
           <h1 className={cn("font-display font-bold text-primary truncate", fontSize)}>
-            Habitainer
+            HStack
           </h1>
-          <p className={cn("text-muted-foreground font-body font-normal", subSize)}>Production OS</p>
+          {size === "lg" ? (
+            <p className="text-sm text-muted-foreground font-body font-normal">Habitainer Operations Platform</p>
+          ) : (
+            <p className="text-[10px] font-body font-normal" style={{ color: "#999999" }}>by Habitainer</p>
+          )}
         </div>
       )}
     </div>
