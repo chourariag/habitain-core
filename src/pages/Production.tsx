@@ -150,6 +150,7 @@ function ProductionContent() {
         </Tabs>
       )}
     </div>
+    </div>
   );
 }
 
