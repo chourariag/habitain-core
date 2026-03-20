@@ -29,6 +29,7 @@ import Sales from "@/pages/Sales";
 import Profile from "@/pages/Profile";
 import NotFound from "@/pages/NotFound";
 import ComingSoon from "@/pages/ComingSoon";
+import Finance from "@/pages/Finance";
 
 const queryClient = new QueryClient();
 
