@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon } from "lucide-react";
 import { SupervisorDailyLog } from "@/components/production/SupervisorDailyLog";
 import { ModuleSchedule } from "@/components/production/ModuleSchedule";
