@@ -16,6 +16,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSunday, differen
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
+import { ExpensesTab } from "@/components/expenses/ExpensesTab";
 import * as XLSX from "xlsx";
 
 const ARCHITECT_ROLES = ["principal_architect", "project_architect", "structural_architect"];
