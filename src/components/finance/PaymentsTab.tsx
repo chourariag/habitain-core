@@ -20,6 +20,9 @@ export function PaymentsTab() {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ project: "", description: "", due_date: "", amount: "" });
+  const [approvedExpenses, setApprovedExpenses] = useState<any[]>([]);
+  const [expenseProfiles, setExpenseProfiles] = useState<any[]>([]);
+  const [expensesOpen, setExpensesOpen] = useState(false);
 
   const fetchData = async () => {
     const { data } = await supabase.from("finance_payments").select("*").order("due_date");
