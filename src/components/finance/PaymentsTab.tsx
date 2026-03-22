@@ -283,6 +283,7 @@ export function PaymentsTab() {
         </CollapsibleContent>
       </Collapsible>
 
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent>
           <DialogHeader><DialogTitle className="font-display">Quick Add Payment Milestone</DialogTitle></DialogHeader>
           <div className="space-y-3">
