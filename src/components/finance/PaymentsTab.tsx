@@ -234,7 +234,55 @@ export function PaymentsTab() {
         <div><span style={{ color: "#666" }}>Outstanding:</span> <span className="font-mono font-bold" style={{ color: outstanding > 0 ? "#D4860A" : "#006039" }}>₹{outstanding.toLocaleString("en-IN")}</span></div>
       </div>
 
-      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+      {/* Approved Expenses — Pending Tally Entry */}
+      <Collapsible open={expensesOpen} onOpenChange={setExpensesOpen}>
+        <CollapsibleTrigger asChild>
+          <Button variant="outline" className="w-full justify-between text-sm font-semibold" style={{ color: "#1A1A1A" }}>
+            <span>Approved Expenses — Pending Tally Entry {approvedExpenses.length > 0 && <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] text-white" style={{ backgroundColor: "#F40009" }}>{approvedExpenses.length}</span>}</span>
+            <ChevronDown className={cn("h-4 w-4 transition-transform", expensesOpen && "rotate-180")} />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          {approvedExpenses.length === 0 ? (
+            <div className="rounded-lg px-4 py-3 text-sm font-semibold mt-2" style={{ backgroundColor: "#E8F2ED", color: "#006039" }}>
+              No expenses pending Tally entry ✓
+            </div>
+          ) : (
+            <Card className="mt-2">
+              <CardContent className="pt-4 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead><tr className="border-b" style={{ color: "#666" }}>
+                    <th className="text-left py-2 text-xs font-display">Employee</th>
+                    <th className="text-left py-2 text-xs font-display">Date</th>
+                    <th className="text-left py-2 text-xs font-display">Category</th>
+                    <th className="text-left py-2 text-xs font-display">Project</th>
+                    <th className="text-right py-2 text-xs font-display">Amount ₹</th>
+                    <th className="text-left py-2 text-xs font-display">Approved By</th>
+                    <th className="text-right py-2 text-xs font-display">Action</th>
+                  </tr></thead>
+                  <tbody>{approvedExpenses.map((e: any) => (
+                    <tr key={e.id} className="border-b">
+                      <td className="py-1.5 text-xs">{getExpenseName(e.submitted_by)}</td>
+                      <td className="py-1.5 text-xs font-inter">{format(new Date(e.expense_date), "dd/MM/yyyy")}</td>
+                      <td className="py-1.5 text-xs">{e.category}</td>
+                      <td className="py-1.5 text-xs">{e.project_id ? "Linked" : "—"}</td>
+                      <td className="text-right py-1.5 text-xs font-mono font-semibold">₹{Number(e.amount).toLocaleString("en-IN")}</td>
+                      <td className="py-1.5 text-xs">{e.stage2_approved_by ? getExpenseName(e.stage2_approved_by) : "—"}</td>
+                      <td className="text-right py-1.5">
+                        <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => handleMarkProcessed(e.id)}
+                          style={{ color: "#006039", borderColor: "#006039" }}>
+                          <Check className="h-3 w-3" /> Processed
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </CardContent>
+            </Card>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
+
         <DialogContent>
           <DialogHeader><DialogTitle className="font-display">Quick Add Payment Milestone</DialogTitle></DialogHeader>
           <div className="space-y-3">
