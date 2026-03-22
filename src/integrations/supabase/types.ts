@@ -728,6 +728,86 @@ export type Database = {
           },
         ]
       }
+      expense_reports: {
+        Row: {
+          amount: number
+          budget_flag: boolean | null
+          budget_overrun_amount: number | null
+          category: string
+          created_at: string | null
+          description: string
+          expense_date: string
+          id: string
+          processed_at: string | null
+          processed_by: string | null
+          project_id: string | null
+          receipt_url: string | null
+          rejection_reason: string | null
+          stage1_approved_at: string | null
+          stage1_approved_by: string | null
+          stage1_note: string | null
+          stage2_approved_at: string | null
+          stage2_approved_by: string | null
+          status: string
+          submitted_by: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          budget_flag?: boolean | null
+          budget_overrun_amount?: number | null
+          category: string
+          created_at?: string | null
+          description: string
+          expense_date?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          project_id?: string | null
+          receipt_url?: string | null
+          rejection_reason?: string | null
+          stage1_approved_at?: string | null
+          stage1_approved_by?: string | null
+          stage1_note?: string | null
+          stage2_approved_at?: string | null
+          stage2_approved_by?: string | null
+          status?: string
+          submitted_by: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          budget_flag?: boolean | null
+          budget_overrun_amount?: number | null
+          category?: string
+          created_at?: string | null
+          description?: string
+          expense_date?: string
+          id?: string
+          processed_at?: string | null
+          processed_by?: string | null
+          project_id?: string | null
+          receipt_url?: string | null
+          rejection_reason?: string | null
+          stage1_approved_at?: string | null
+          stage1_approved_by?: string | null
+          stage1_note?: string | null
+          stage2_approved_at?: string | null
+          stage2_approved_by?: string | null
+          status?: string
+          submitted_by?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_reports_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_cashflow: {
         Row: {
           amount: number
