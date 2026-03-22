@@ -25,17 +25,35 @@ export function PaymentsTab() {
   const [expensesOpen, setExpensesOpen] = useState(false);
 
   const fetchData = async () => {
-    const { data } = await supabase.from("finance_payments").select("*").order("due_date");
+    const [{ data }, { data: expData }, { data: profData }] = await Promise.all([
+      supabase.from("finance_payments").select("*").order("due_date"),
+      supabase.from("expense_reports").select("*").eq("status", "approved").order("created_at", { ascending: false }),
+      supabase.from("profiles").select("auth_user_id, display_name"),
+    ]);
     const rows = (data as Payment[]) || [];
-    // Auto-set overdue
     const today = new Date().toISOString().slice(0, 10);
     setPayments(rows.map(r => ({
       ...r,
       status: (r.status === "pending" || r.status === "invoiced") && r.due_date < today ? "overdue" : r.status,
     })));
+    setApprovedExpenses((expData ?? []) as any[]);
+    setExpenseProfiles(profData ?? []);
   };
 
   useEffect(() => { fetchData(); }, []);
+
+  const getExpenseName = (uid: string) => expenseProfiles.find((p: any) => p.auth_user_id === uid)?.display_name || "—";
+
+  const handleMarkProcessed = async (id: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase.from("expense_reports").update({
+      status: "processed",
+      processed_by: user?.id,
+      processed_at: new Date().toISOString(),
+    } as any).eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success("Marked as processed"); fetchData(); }
+  };
 
   const handleAdd = async () => {
     const { data: { user } } = await supabase.auth.getUser();
