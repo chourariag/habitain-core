@@ -40,7 +40,7 @@ export default function Attendance() {
 
       <ScrollableTabsWrapper>
         <div className="flex gap-0 border-b border-border">
-          {["overview", "daily", "leave", "export"].map((t) => (
+          {["overview", "daily", "leave", "export", "expenses"].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -51,7 +51,7 @@ export default function Attendance() {
                 fontWeight: tab === t ? 700 : 500,
               }}
             >
-              {t === "overview" ? "Overview" : t === "daily" ? "Daily Log" : t === "leave" ? "Leave Requests" : "Export"}
+              {t === "overview" ? "Overview" : t === "daily" ? "Daily Log" : t === "leave" ? "Leave Requests" : t === "export" ? "Export" : "Expenses"}
             </button>
           ))}
         </div>
@@ -61,8 +61,14 @@ export default function Attendance() {
       {tab === "daily" && <DailyLogTab />}
       {tab === "leave" && <LeaveRequestsTab />}
       {tab === "export" && <ExportTab />}
+      {tab === "expenses" && <ExpensesTabWrapper />}
     </div>
   );
+}
+
+function ExpensesTabWrapper() {
+  const { ExpensesTab } = require("@/components/expenses/ExpensesTab");
+  return <ExpensesTab />;
 }
 
 /* ─── Overview ─── */
