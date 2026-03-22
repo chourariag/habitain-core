@@ -62,14 +62,9 @@ export default function Attendance() {
       {tab === "daily" && <DailyLogTab />}
       {tab === "leave" && <LeaveRequestsTab />}
       {tab === "export" && <ExportTab />}
-      {tab === "expenses" && <ExpensesTabWrapper />}
+      {tab === "expenses" && <ExpensesTab />}
     </div>
   );
-}
-
-function ExpensesTabWrapper() {
-  const { ExpensesTab } = require("@/components/expenses/ExpensesTab");
-  return <ExpensesTab />;
 }
 
 /* ─── Overview ─── */
