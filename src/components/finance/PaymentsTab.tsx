@@ -47,13 +47,13 @@ export function PaymentsTab() {
 
   const handleMarkProcessed = async (id: string) => {
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("expense_reports").update({
-      status: "processed",
-      processed_by: user?.id,
-      processed_at: new Date().toISOString(),
+    const { error } = await supabase.from("expense_entries").update({
+      status: "paid",
+      finance_paid_by: user?.id,
+      finance_paid_at: new Date().toISOString(),
     } as any).eq("id", id);
     if (error) toast.error(error.message);
-    else { toast.success("Marked as processed"); fetchData(); }
+    else { toast.success("Marked as paid"); fetchData(); }
   };
 
   const handleAdd = async () => {
