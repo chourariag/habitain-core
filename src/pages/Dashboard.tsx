@@ -6,7 +6,7 @@ import { Tier1Dashboard } from "@/components/dashboard/Tier1Dashboard";
 import { PlaceholderDashboard } from "@/components/dashboard/PlaceholderDashboard";
 import { SharedDashboardBottom } from "@/components/dashboard/SharedDashboardBottom";
 import { CheckInButton } from "@/components/attendance/CheckInButton";
-import { ExpenseSubmitButton } from "@/components/expenses/ExpenseSubmitButton";
+import { LogExpenseButton } from "@/components/expenses/LogExpenseButton";
 
 export default function Dashboard() {
   const { role, loading } = useUserRole();
