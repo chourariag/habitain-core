@@ -239,7 +239,7 @@ export function PaymentsTab() {
       <Collapsible open={expensesOpen} onOpenChange={setExpensesOpen}>
         <CollapsibleTrigger asChild>
           <Button variant="outline" className="w-full justify-between text-sm font-semibold" style={{ color: "#1A1A1A" }}>
-            <span>Approved Expenses — Pending Tally Entry {approvedExpenses.length > 0 && <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] text-white" style={{ backgroundColor: "#F40009" }}>{approvedExpenses.length}</span>}</span>
+            <span>Approved Expenses — Pending Payment {approvedExpenses.length > 0 && <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] text-white" style={{ backgroundColor: "#F40009" }}>{approvedExpenses.length}</span>}</span>
             <ChevronDown className={cn("h-4 w-4 transition-transform", expensesOpen && "rotate-180")} />
           </Button>
         </CollapsibleTrigger>
