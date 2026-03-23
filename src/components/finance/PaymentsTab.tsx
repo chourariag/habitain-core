@@ -246,7 +246,7 @@ export function PaymentsTab() {
         <CollapsibleContent>
           {approvedExpenses.length === 0 ? (
             <div className="rounded-lg px-4 py-3 text-sm font-semibold mt-2" style={{ backgroundColor: "#E8F2ED", color: "#006039" }}>
-              No expenses pending Tally entry ✓
+              No expenses pending payment ✓
             </div>
           ) : (
             <Card className="mt-2">
