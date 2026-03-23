@@ -218,6 +218,10 @@ export default function Profile() {
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91XXXXXXXXXX" />
           </div>
           <div className="space-y-2">
+            <Label>Home / Start Location</Label>
+            <Input value={homeBase} onChange={(e) => setHomeBase(e.target.value)} placeholder="Default 'From' for conveyance claims" />
+            <p className="text-xs text-muted-foreground">Used as default start location in conveyance claims.</p>
+          <div className="space-y-2">
             <Label>Role</Label>
             <Input value={ROLE_LABELS[(profile?.role as AppRole)] || profile?.role || ""} disabled className="bg-muted/30" />
             <p className="text-xs text-muted-foreground">Roles can only be changed by an administrator.</p>
