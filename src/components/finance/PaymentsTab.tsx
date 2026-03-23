@@ -264,7 +264,7 @@ export function PaymentsTab() {
                   <tbody>{approvedExpenses.map((e: any) => (
                     <tr key={e.id} className="border-b">
                       <td className="py-1.5 text-xs">{getExpenseName(e.submitted_by)}</td>
-                      <td className="py-1.5 text-xs font-inter">{format(new Date(e.expense_date), "dd/MM/yyyy")}</td>
+                      <td className="py-1.5 text-xs font-inter">{format(new Date(e.entry_date), "dd/MM/yyyy")}</td>
                       <td className="py-1.5 text-xs">{e.category}</td>
                       <td className="py-1.5 text-xs">{e.project_id ? "Linked" : "—"}</td>
                       <td className="text-right py-1.5 text-xs font-mono font-semibold">₹{Number(e.amount).toLocaleString("en-IN")}</td>
