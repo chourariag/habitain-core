@@ -272,7 +272,7 @@ export function PaymentsTab() {
                       <td className="text-right py-1.5">
                         <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => handleMarkProcessed(e.id)}
                           style={{ color: "#006039", borderColor: "#006039" }}>
-                          <Check className="h-3 w-3" /> Processed
+                          <Check className="h-3 w-3" /> Mark Paid
                         </Button>
                       </td>
                     </tr>
