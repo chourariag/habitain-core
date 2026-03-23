@@ -63,6 +63,7 @@ export default function Attendance() {
       {tab === "leave" && <LeaveRequestsTab />}
       {tab === "export" && <ExportTab />}
       {tab === "expenses" && <ExpensesTab />}
+      {tab === "hr_settings" && <HRSettingsTab />}
     </div>
   );
 }
