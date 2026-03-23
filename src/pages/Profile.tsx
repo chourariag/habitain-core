@@ -259,6 +259,9 @@ export default function Profile() {
       {/* Attendance */}
       <ProfileAttendance userRole={profile?.role} />
 
+      {/* Expenses */}
+      <MyExpenses />
+
       {/* Change Password */}
       <Card>
         <CardHeader>

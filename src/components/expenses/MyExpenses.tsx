@@ -29,18 +29,9 @@ const STATUS_LABELS: Record<string, string> = {
 function getSubmissionWindow(): { isOpen: boolean; label: string; nextWindow: string } {
   const now = new Date();
   const day = now.getDate();
-
-  if (day >= 1 && day <= 5) {
-    return { isOpen: true, label: "Submit expenses for 16th–end of last month", nextWindow: "" };
-  }
-  if (day >= 16 && day <= 20) {
-    return { isOpen: true, label: "Submit expenses for 1st–15th of this month", nextWindow: "" };
-  }
-
-  // Calculate next window
-  if (day < 16) {
-    return { isOpen: false, label: "", nextWindow: `16th–20th ${format(now, "MMMM")}` };
-  }
+  if (day >= 1 && day <= 5) return { isOpen: true, label: "Submit expenses for 16th–end of last month", nextWindow: "" };
+  if (day >= 16 && day <= 20) return { isOpen: true, label: "Submit expenses for 1st–15th of this month", nextWindow: "" };
+  if (day < 16) return { isOpen: false, label: "", nextWindow: `16th–20th ${format(now, "MMMM")}` };
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
   return { isOpen: false, label: "", nextWindow: `1st–5th ${format(nextMonth, "MMMM yyyy")}` };
 }
@@ -54,11 +45,7 @@ export function MyExpenses() {
   const fetchData = async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
-      .from("expense_entries")
-      .select("*")
-      .eq("submitted_by", user.id)
-      .order("entry_date", { ascending: false });
+    const { data } = await supabase.from("expense_entries").select("*").eq("submitted_by", user.id).order("entry_date", { ascending: false });
     setEntries((data ?? []) as any[]);
     setLoading(false);
   };
@@ -66,10 +53,7 @@ export function MyExpenses() {
   useEffect(() => { fetchData(); }, [user]);
 
   const drafts = entries.filter((e) => e.status === "draft");
-  const totalThisMonth = entries
-    .filter((e) => format(new Date(e.entry_date), "yyyy-MM") === format(new Date(), "yyyy-MM"))
-    .reduce((s, e) => s + Number(e.amount), 0);
-
+  const totalThisMonth = entries.filter((e) => format(new Date(e.entry_date), "yyyy-MM") === format(new Date(), "yyyy-MM")).reduce((s, e) => s + Number(e.amount), 0);
   const window = getSubmissionWindow();
 
   const handleSubmitAll = async () => {
@@ -94,23 +78,13 @@ export function MyExpenses() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base flex items-center gap-2">
-          <Receipt className="h-4 w-4" /> My Expenses
-        </CardTitle>
+        <CardTitle className="text-base flex items-center gap-2"><Receipt className="h-4 w-4" /> My Expenses</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-3 text-sm">
-          <div>
-            <span style={{ color: "#666" }}>This Month:</span>{" "}
-            <span className="font-mono font-bold" style={{ color: "#006039" }}>₹{totalThisMonth.toLocaleString("en-IN")}</span>
-          </div>
-          <div>
-            <span style={{ color: "#666" }}>Drafts:</span>{" "}
-            <span className="font-mono font-bold">{drafts.length}</span>
-          </div>
+          <div><span style={{ color: "#666" }}>This Month:</span> <span className="font-mono font-bold" style={{ color: "#006039" }}>₹{totalThisMonth.toLocaleString("en-IN")}</span></div>
+          <div><span style={{ color: "#666" }}>Drafts:</span> <span className="font-mono font-bold">{drafts.length}</span></div>
         </div>
-
-        {/* Submit button */}
         {drafts.length > 0 && (
           <div className="rounded-md p-3 border border-border" style={{ backgroundColor: window.isOpen ? "#E8F2ED" : "#F7F7F7" }}>
             {window.isOpen ? (
@@ -122,14 +96,10 @@ export function MyExpenses() {
                 </Button>
               </>
             ) : (
-              <p className="text-xs" style={{ color: "#999" }}>
-                Next submission window: {window.nextWindow}
-              </p>
+              <p className="text-xs" style={{ color: "#999" }}>Next submission window: {window.nextWindow}</p>
             )}
           </div>
         )}
-
-        {/* Entry list */}
         {entries.length === 0 ? (
           <p className="text-xs text-center py-4" style={{ color: "#999" }}>No expenses logged yet.</p>
         ) : (
@@ -139,16 +109,12 @@ export function MyExpenses() {
               return (
                 <div key={e.id} className="flex items-center justify-between flex-wrap gap-2 p-2 rounded-md border border-border bg-white text-xs">
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate" style={{ color: "#1A1A1A" }}>
-                      {e.expense_type === "conveyance" ? `🚗 ${e.description}` : e.category}
-                    </p>
+                    <p className="font-medium truncate" style={{ color: "#1A1A1A" }}>{e.expense_type === "conveyance" ? `🚗 ${e.description}` : e.category}</p>
                     <p style={{ color: "#999" }}>{format(new Date(e.entry_date), "dd/MM/yyyy")}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className="font-bold font-inter" style={{ color: "#006039" }}>₹{Number(e.amount).toLocaleString("en-IN")}</span>
-                    <Badge variant="outline" className="text-[10px]" style={{ color: sc.color, borderColor: sc.color, backgroundColor: sc.bg }}>
-                      {STATUS_LABELS[e.status] || e.status}
-                    </Badge>
+                    <Badge variant="outline" className="text-[10px]" style={{ color: sc.color, borderColor: sc.color, backgroundColor: sc.bg }}>{STATUS_LABELS[e.status] || e.status}</Badge>
                     {e.status === "draft" && (
                       <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleDelete(e.id)}>
                         <Trash2 className="h-3 w-3" style={{ color: "#F40009" }} />
@@ -160,8 +126,6 @@ export function MyExpenses() {
             })}
           </div>
         )}
-
-        
       </CardContent>
     </Card>
   );
