@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { useTranslation } from "react-i18next";
 import { ProfileAttendance } from "@/components/attendance/ProfileAttendance";
+import { MyExpenses } from "@/components/expenses/MyExpenses";
 
 const LANG_OPTIONS = [
   { value: "en", label: "English" },
@@ -33,6 +34,7 @@ export default function Profile() {
   // Profile fields
   const [displayName, setDisplayName] = useState("");
   const [phone, setPhone] = useState("");
+  const [homeBase, setHomeBase] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -54,6 +56,7 @@ export default function Profile() {
       setProfile(data);
       setDisplayName(data.display_name || "");
       setPhone(data.phone || "");
+      setHomeBase((data as any).home_base || "");
       setAvatarUrl((data as any).avatar_url || null);
     }
     setLoading(false);
@@ -72,7 +75,8 @@ export default function Profile() {
         .update({
           display_name: displayName.trim() || null,
           phone: phone.trim() || null,
-        })
+          home_base: homeBase.trim() || null,
+        } as any)
         .eq("auth_user_id", user.id);
       if (error) throw error;
       toast.success("Profile updated");
@@ -214,6 +218,11 @@ export default function Profile() {
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91XXXXXXXXXX" />
           </div>
           <div className="space-y-2">
+            <Label>Home / Start Location</Label>
+            <Input value={homeBase} onChange={(e) => setHomeBase(e.target.value)} placeholder="Default 'From' for conveyance claims" />
+            <p className="text-xs text-muted-foreground">Used as default start location in conveyance claims.</p>
+          </div>
+          <div className="space-y-2">
             <Label>Role</Label>
             <Input value={ROLE_LABELS[(profile?.role as AppRole)] || profile?.role || ""} disabled className="bg-muted/30" />
             <p className="text-xs text-muted-foreground">Roles can only be changed by an administrator.</p>
@@ -257,6 +266,9 @@ export default function Profile() {
 
       {/* Attendance */}
       <ProfileAttendance userRole={profile?.role} />
+
+      {/* Expenses */}
+      <MyExpenses />
 
       {/* Change Password */}
       <Card>

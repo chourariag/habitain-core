@@ -28,7 +28,7 @@ export function PaymentsTab() {
   const fetchData = async () => {
     const [{ data }, { data: expData }, { data: profData }] = await Promise.all([
       supabase.from("finance_payments").select("*").order("due_date"),
-      supabase.from("expense_reports").select("*").eq("status", "approved").order("created_at", { ascending: false }),
+      supabase.from("expense_entries").select("*").eq("status", "approved").order("created_at", { ascending: false }),
       supabase.from("profiles").select("auth_user_id, display_name"),
     ]);
     const rows = (data as Payment[]) || [];
@@ -47,13 +47,13 @@ export function PaymentsTab() {
 
   const handleMarkProcessed = async (id: string) => {
     const { data: { user } } = await supabase.auth.getUser();
-    const { error } = await supabase.from("expense_reports").update({
-      status: "processed",
-      processed_by: user?.id,
-      processed_at: new Date().toISOString(),
+    const { error } = await supabase.from("expense_entries").update({
+      status: "paid",
+      finance_paid_by: user?.id,
+      finance_paid_at: new Date().toISOString(),
     } as any).eq("id", id);
     if (error) toast.error(error.message);
-    else { toast.success("Marked as processed"); fetchData(); }
+    else { toast.success("Marked as paid"); fetchData(); }
   };
 
   const handleAdd = async () => {
@@ -239,14 +239,14 @@ export function PaymentsTab() {
       <Collapsible open={expensesOpen} onOpenChange={setExpensesOpen}>
         <CollapsibleTrigger asChild>
           <Button variant="outline" className="w-full justify-between text-sm font-semibold" style={{ color: "#1A1A1A" }}>
-            <span>Approved Expenses — Pending Tally Entry {approvedExpenses.length > 0 && <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] text-white" style={{ backgroundColor: "#F40009" }}>{approvedExpenses.length}</span>}</span>
+            <span>Approved Expenses — Pending Payment {approvedExpenses.length > 0 && <span className="ml-1 px-1.5 py-0.5 rounded text-[10px] text-white" style={{ backgroundColor: "#F40009" }}>{approvedExpenses.length}</span>}</span>
             <ChevronDown className={cn("h-4 w-4 transition-transform", expensesOpen && "rotate-180")} />
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
           {approvedExpenses.length === 0 ? (
             <div className="rounded-lg px-4 py-3 text-sm font-semibold mt-2" style={{ backgroundColor: "#E8F2ED", color: "#006039" }}>
-              No expenses pending Tally entry ✓
+              No expenses pending payment ✓
             </div>
           ) : (
             <Card className="mt-2">
@@ -264,15 +264,15 @@ export function PaymentsTab() {
                   <tbody>{approvedExpenses.map((e: any) => (
                     <tr key={e.id} className="border-b">
                       <td className="py-1.5 text-xs">{getExpenseName(e.submitted_by)}</td>
-                      <td className="py-1.5 text-xs font-inter">{format(new Date(e.expense_date), "dd/MM/yyyy")}</td>
+                      <td className="py-1.5 text-xs font-inter">{format(new Date(e.entry_date), "dd/MM/yyyy")}</td>
                       <td className="py-1.5 text-xs">{e.category}</td>
                       <td className="py-1.5 text-xs">{e.project_id ? "Linked" : "—"}</td>
                       <td className="text-right py-1.5 text-xs font-mono font-semibold">₹{Number(e.amount).toLocaleString("en-IN")}</td>
-                      <td className="py-1.5 text-xs">{e.stage2_approved_by ? getExpenseName(e.stage2_approved_by) : "—"}</td>
+                      <td className="py-1.5 text-xs">{e.hod_approved_by ? getExpenseName(e.hod_approved_by) : "—"}</td>
                       <td className="text-right py-1.5">
                         <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => handleMarkProcessed(e.id)}
                           style={{ color: "#006039", borderColor: "#006039" }}>
-                          <Check className="h-3 w-3" /> Processed
+                          <Check className="h-3 w-3" /> Mark Paid
                         </Button>
                       </td>
                     </tr>

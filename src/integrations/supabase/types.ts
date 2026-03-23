@@ -728,6 +728,107 @@ export type Database = {
           },
         ]
       }
+      expense_entries: {
+        Row: {
+          amount: number
+          budget_flag: boolean | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          distance_km: number | null
+          entry_date: string
+          expense_type: string
+          finance_paid_at: string | null
+          finance_paid_by: string | null
+          from_location: string | null
+          hod_approved_at: string | null
+          hod_approved_by: string | null
+          hr_flag_note: string | null
+          hr_flag_response: string | null
+          hr_reviewed_at: string | null
+          hr_reviewed_by: string | null
+          id: string
+          project_id: string | null
+          rate_per_km: number | null
+          receipt_url: string | null
+          rejection_reason: string | null
+          report_period: string | null
+          status: string
+          submitted_by: string
+          to_location: string | null
+          updated_at: string | null
+          vehicle_type: string | null
+        }
+        Insert: {
+          amount?: number
+          budget_flag?: boolean | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          distance_km?: number | null
+          entry_date?: string
+          expense_type?: string
+          finance_paid_at?: string | null
+          finance_paid_by?: string | null
+          from_location?: string | null
+          hod_approved_at?: string | null
+          hod_approved_by?: string | null
+          hr_flag_note?: string | null
+          hr_flag_response?: string | null
+          hr_reviewed_at?: string | null
+          hr_reviewed_by?: string | null
+          id?: string
+          project_id?: string | null
+          rate_per_km?: number | null
+          receipt_url?: string | null
+          rejection_reason?: string | null
+          report_period?: string | null
+          status?: string
+          submitted_by: string
+          to_location?: string | null
+          updated_at?: string | null
+          vehicle_type?: string | null
+        }
+        Update: {
+          amount?: number
+          budget_flag?: boolean | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          distance_km?: number | null
+          entry_date?: string
+          expense_type?: string
+          finance_paid_at?: string | null
+          finance_paid_by?: string | null
+          from_location?: string | null
+          hod_approved_at?: string | null
+          hod_approved_by?: string | null
+          hr_flag_note?: string | null
+          hr_flag_response?: string | null
+          hr_reviewed_at?: string | null
+          hr_reviewed_by?: string | null
+          id?: string
+          project_id?: string | null
+          rate_per_km?: number | null
+          receipt_url?: string | null
+          rejection_reason?: string | null
+          report_period?: string | null
+          status?: string
+          submitted_by?: string
+          to_location?: string | null
+          updated_at?: string | null
+          vehicle_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_reports: {
         Row: {
           amount: number
@@ -1003,6 +1104,7 @@ export type Database = {
           id: string
           labour_budget: number | null
           logistics_budget: number | null
+          misc_budget: number | null
           project_id: string | null
           project_name: string
           sanctioned_budget: number | null
@@ -1014,6 +1116,7 @@ export type Database = {
           id?: string
           labour_budget?: number | null
           logistics_budget?: number | null
+          misc_budget?: number | null
           project_id?: string | null
           project_name: string
           sanctioned_budget?: number | null
@@ -1025,6 +1128,7 @@ export type Database = {
           id?: string
           labour_budget?: number | null
           logistics_budget?: number | null
+          misc_budget?: number | null
           project_id?: string | null
           project_name?: string
           sanctioned_budget?: number | null
@@ -1192,6 +1296,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hr_settings: {
+        Row: {
+          approval1_at: string | null
+          approval1_by: string | null
+          approval2_at: string | null
+          approval2_by: string | null
+          effective_date: string | null
+          id: string
+          key: string
+          proposed_by: string | null
+          proposed_value: string | null
+          status: string
+          updated_at: string | null
+          value: string | null
+        }
+        Insert: {
+          approval1_at?: string | null
+          approval1_by?: string | null
+          approval2_at?: string | null
+          approval2_by?: string | null
+          effective_date?: string | null
+          id?: string
+          key: string
+          proposed_by?: string | null
+          proposed_value?: string | null
+          status?: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Update: {
+          approval1_at?: string | null
+          approval1_by?: string | null
+          approval2_at?: string | null
+          approval2_by?: string | null
+          effective_date?: string | null
+          id?: string
+          key?: string
+          proposed_by?: string | null
+          proposed_value?: string | null
+          status?: string
+          updated_at?: string | null
+          value?: string | null
+        }
+        Relationships: []
       }
       installation_checklist: {
         Row: {
@@ -1903,9 +2052,12 @@ export type Database = {
         Row: {
           auth_user_id: string
           avatar_url: string | null
+          children: Json | null
           created_at: string | null
+          date_of_birth: string | null
           display_name: string | null
           email: string | null
+          home_base: string | null
           id: string
           is_active: boolean | null
           is_archived: boolean | null
@@ -1916,13 +2068,17 @@ export type Database = {
           reporting_manager_id: string | null
           role: Database["public"]["Enums"]["app_role"]
           updated_at: string | null
+          wedding_anniversary: string | null
         }
         Insert: {
           auth_user_id: string
           avatar_url?: string | null
+          children?: Json | null
           created_at?: string | null
+          date_of_birth?: string | null
           display_name?: string | null
           email?: string | null
+          home_base?: string | null
           id?: string
           is_active?: boolean | null
           is_archived?: boolean | null
@@ -1933,13 +2089,17 @@ export type Database = {
           reporting_manager_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
+          wedding_anniversary?: string | null
         }
         Update: {
           auth_user_id?: string
           avatar_url?: string | null
+          children?: Json | null
           created_at?: string | null
+          date_of_birth?: string | null
           display_name?: string | null
           email?: string | null
+          home_base?: string | null
           id?: string
           is_active?: boolean | null
           is_archived?: boolean | null
@@ -1950,6 +2110,7 @@ export type Database = {
           reporting_manager_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string | null
+          wedding_anniversary?: string | null
         }
         Relationships: [
           {
