@@ -28,7 +28,7 @@ export function PaymentsTab() {
   const fetchData = async () => {
     const [{ data }, { data: expData }, { data: profData }] = await Promise.all([
       supabase.from("finance_payments").select("*").order("due_date"),
-      supabase.from("expense_reports").select("*").eq("status", "approved").order("created_at", { ascending: false }),
+      supabase.from("expense_entries").select("*").eq("status", "approved").order("created_at", { ascending: false }),
       supabase.from("profiles").select("auth_user_id, display_name"),
     ]);
     const rows = (data as Payment[]) || [];
