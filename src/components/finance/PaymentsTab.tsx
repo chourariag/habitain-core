@@ -268,7 +268,7 @@ export function PaymentsTab() {
                       <td className="py-1.5 text-xs">{e.category}</td>
                       <td className="py-1.5 text-xs">{e.project_id ? "Linked" : "—"}</td>
                       <td className="text-right py-1.5 text-xs font-mono font-semibold">₹{Number(e.amount).toLocaleString("en-IN")}</td>
-                      <td className="py-1.5 text-xs">{e.stage2_approved_by ? getExpenseName(e.stage2_approved_by) : "—"}</td>
+                      <td className="py-1.5 text-xs">{e.hod_approved_by ? getExpenseName(e.hod_approved_by) : "—"}</td>
                       <td className="text-right py-1.5">
                         <Button size="sm" variant="outline" className="h-6 text-[10px] gap-1" onClick={() => handleMarkProcessed(e.id)}
                           style={{ color: "#006039", borderColor: "#006039" }}>
