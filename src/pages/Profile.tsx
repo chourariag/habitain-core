@@ -75,7 +75,8 @@ export default function Profile() {
         .update({
           display_name: displayName.trim() || null,
           phone: phone.trim() || null,
-        })
+          home_base: homeBase.trim() || null,
+        } as any)
         .eq("auth_user_id", user.id);
       if (error) throw error;
       toast.success("Profile updated");
