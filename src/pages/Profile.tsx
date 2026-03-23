@@ -34,6 +34,7 @@ export default function Profile() {
   // Profile fields
   const [displayName, setDisplayName] = useState("");
   const [phone, setPhone] = useState("");
+  const [homeBase, setHomeBase] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
