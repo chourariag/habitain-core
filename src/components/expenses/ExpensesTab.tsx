@@ -91,12 +91,12 @@ export function ExpensesTab() {
   });
 
   // Group by employee + period
-  const grouped = pendingEntries.reduce((acc: Record<string, any[]>, e) => {
+  const grouped: Record<string, any[]> = {};
+  pendingEntries.forEach((e: any) => {
     const key = `${e.submitted_by}__${e.report_period}`;
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(e);
-    return acc;
-  }, {});
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(e);
+  });
 
   const allFiltered = entries.filter((e) => {
     if (filterStatus !== "all" && e.status !== filterStatus) return false;

@@ -26,7 +26,7 @@ export default function Dashboard() {
       <CheckInButton userRole={userRole} />
 
       {/* Submit Expense button */}
-      <ExpenseSubmitButton userRole={userRole} />
+      <LogExpenseButton userRole={userRole} />
 
       {tier === 1 ? (
         <Tier1Dashboard today={today} />

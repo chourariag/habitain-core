@@ -161,7 +161,7 @@ export function MyExpenses() {
           </div>
         )}
 
-        {e.hr_flag_note && entries.some((e) => e.hr_flag_note && e.status === "pending_hr") && null}
+        
       </CardContent>
     </Card>
   );
