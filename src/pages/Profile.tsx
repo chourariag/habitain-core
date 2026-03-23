@@ -56,6 +56,7 @@ export default function Profile() {
       setProfile(data);
       setDisplayName(data.display_name || "");
       setPhone(data.phone || "");
+      setHomeBase((data as any).home_base || "");
       setAvatarUrl((data as any).avatar_url || null);
     }
     setLoading(false);
