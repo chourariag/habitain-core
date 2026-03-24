@@ -7,14 +7,18 @@ export function useUserRole() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
+      if (cancelled) return;
       if (!user) { setLoading(false); return; }
       setUserId(user.id);
       const { data } = await supabase.rpc("get_user_role", { _user_id: user.id });
+      if (cancelled) return;
       setRole(data as string | null);
       setLoading(false);
     })();
+    return () => { cancelled = true; };
   }, []);
 
   return { role, userId, loading };

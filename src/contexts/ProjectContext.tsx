@@ -50,7 +50,16 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
         .select("id,name,client_name,status")
         .eq("is_archived", false)
         .order("created_at", { ascending: false });
-      setProjects(data ?? []);
+      const loaded = data ?? [];
+      setProjects(loaded);
+      // Clear stale sessionStorage ID if it no longer exists in the project list
+      setSelectedProjectIdRaw((prev) => {
+        if (prev && !loaded.some((p) => p.id === prev)) {
+          try { sessionStorage.removeItem("selectedProjectId"); } catch {}
+          return null;
+        }
+        return prev;
+      });
       setLoading(false);
     };
     fetch();

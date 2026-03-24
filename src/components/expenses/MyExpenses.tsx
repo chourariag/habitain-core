@@ -29,9 +29,13 @@ const STATUS_LABELS: Record<string, string> = {
 function getSubmissionWindow(): { isOpen: boolean; label: string; nextWindow: string } {
   const now = new Date();
   const day = now.getDate();
+  // Window 1: 1st–5th — submit second-half expenses from last month
   if (day >= 1 && day <= 5) return { isOpen: true, label: "Submit expenses for 16th–end of last month", nextWindow: "" };
+  // Window 2: 16th–20th — submit first-half expenses from this month
   if (day >= 16 && day <= 20) return { isOpen: true, label: "Submit expenses for 1st–15th of this month", nextWindow: "" };
-  if (day < 16) return { isOpen: false, label: "", nextWindow: `16th–20th ${format(now, "MMMM")}` };
+  // Between 6th–15th: next window opens on the 16th of this month
+  if (day >= 6 && day <= 15) return { isOpen: false, label: "", nextWindow: `16th–20th ${format(now, "MMMM")}` };
+  // After 20th: next window opens on the 1st–5th of next month
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
   return { isOpen: false, label: "", nextWindow: `1st–5th ${format(nextMonth, "MMMM yyyy")}` };
 }
