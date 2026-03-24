@@ -49,7 +49,7 @@ export function ExpensesTab() {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [subTab, setSubTab] = useState<"pending" | "all">("pending");
-  const [rejectId, setRejectId] = useState<string | null>(null);
+  const [rejectIds, setRejectIds] = useState<string[] | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [flagId, setFlagId] = useState<string | null>(null);
@@ -134,13 +134,15 @@ export function ExpensesTab() {
   };
 
   const handleReject = async () => {
-    if (!rejectId || !rejectReason.trim()) return;
-    await supabase.from("expense_entries").update({
-      status: "rejected",
-      rejection_reason: rejectReason.trim(),
-    } as any).eq("id", rejectId);
-    toast.success("Expense rejected");
-    setRejectId(null);
+    if (!rejectIds?.length || !rejectReason.trim()) return;
+    for (const id of rejectIds) {
+      await supabase.from("expense_entries").update({
+        status: "rejected",
+        rejection_reason: rejectReason.trim(),
+      } as any).eq("id", id);
+    }
+    toast.success("Expense report rejected");
+    setRejectIds(null);
     setRejectReason("");
     fetchData();
   };
@@ -273,7 +275,7 @@ export function ExpensesTab() {
                       <Check className="h-3 w-3 mr-1" /> Approve for Payment
                     </Button>
                   )}
-                  <Button size="sm" variant="outline" onClick={() => setRejectId(items[0].id)} className="text-xs" style={{ color: "#F40009", borderColor: "#F40009" }}>
+                  <Button size="sm" variant="outline" onClick={() => setRejectIds(items.map((e: any) => e.id))} className="text-xs" style={{ color: "#F40009", borderColor: "#F40009" }}>
                     <X className="h-3 w-3 mr-1" /> Reject Report
                   </Button>
                 </div>
@@ -342,11 +344,11 @@ export function ExpensesTab() {
       )}
 
       {/* Reject dialog */}
-      <Dialog open={!!rejectId} onOpenChange={(v) => { if (!v) { setRejectId(null); setRejectReason(""); } }}>
+      <Dialog open={!!rejectIds} onOpenChange={(v) => { if (!v) { setRejectIds(null); setRejectReason(""); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>Reject Expense Report</DialogTitle></DialogHeader>
           <Textarea placeholder="Reason for rejection" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} rows={3} />
-          <Button onClick={handleReject} disabled={!rejectReason.trim()} style={{ backgroundColor: "#F40009" }} className="text-white w-full">Confirm Reject</Button>
+          <Button onClick={handleReject} disabled={!rejectReason.trim()} style={{ backgroundColor: "#F40009" }} className="text-white w-full">Confirm Reject ({rejectIds?.length ?? 0} entries)</Button>
         </DialogContent>
       </Dialog>
 

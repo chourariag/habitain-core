@@ -22,9 +22,11 @@ export function computeProjectStatus(
   if (hasHandover) return "handed_over";
   if (modules.length === 0) return "not_started";
 
-  const allDispatched = modules.every((m) => m.production_status === "dispatched" || m.current_stage === "Dispatch");
+  // All modules must have production_status === "dispatched" to be fully dispatched
+  const allDispatched = modules.every((m) => m.production_status === "dispatched");
   if (allDispatched) return "dispatched";
 
+  // Any module actively in the Dispatch stage (but not all fully dispatched yet)
   const anyDispatching = modules.some((m) => m.current_stage === "Dispatch" || m.production_status === "dispatched");
   if (anyDispatching) return "dispatching";
 

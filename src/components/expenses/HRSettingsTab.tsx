@@ -52,6 +52,15 @@ export function HRSettingsTab() {
       toast.error("Fill all fields");
       return;
     }
+    if (Number(newCarRate) <= 0 || Number(newBikeRate) <= 0) {
+      toast.error("Rates must be greater than 0");
+      return;
+    }
+    const today = format(new Date(), "yyyy-MM-dd");
+    if (effectiveDate < today) {
+      toast.error("Effective date cannot be in the past");
+      return;
+    }
     setSubmitting(true);
     // Create pending proposals
     for (const [key, val] of [["car_rate_per_km", newCarRate], ["bike_rate_per_km", newBikeRate]]) {

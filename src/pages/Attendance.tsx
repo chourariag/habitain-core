@@ -73,6 +73,7 @@ export default function Attendance() {
 function OverviewTab() {
   const [records, setRecords] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -82,19 +83,21 @@ function OverviewTab() {
   const fetchData = async () => {
     setLoading(true);
     const today = format(new Date(), "yyyy-MM-dd");
-    const [{ data: recs }, { data: profs }] = await Promise.all([
+    const [{ data: recs }, { data: profs }, { data: leaves }] = await Promise.all([
       supabase.from("attendance_records").select("*").eq("date", today),
       supabase.from("profiles").select("id, auth_user_id, display_name, role, is_active").eq("is_active", true),
+      supabase.from("leave_requests").select("user_id, from_date, to_date, status").eq("status", "approved").lte("from_date", today).gte("to_date", today),
     ]);
     setRecords(recs ?? []);
     setProfiles((profs ?? []).filter((p: any) => !ARCHITECT_ROLES.includes(p.role)));
+    setLeaveRequests(leaves ?? []);
     setLoading(false);
   };
 
   const present = records.filter((r) => r.check_in_time && r.location_type !== "remote").length;
   const remote = records.filter((r) => r.location_type === "remote").length;
-  const onLeave = 0; // TODO: count from leave_requests
-  const notChecked = profiles.length - records.length;
+  const onLeave = leaveRequests.length;
+  const notChecked = profiles.length - records.length - onLeave;
 
   const tiles = [
     { label: "Present Today", value: present, color: "#006039" },
@@ -358,9 +361,10 @@ function ExportTab() {
       const startDate = format(new Date(year, month - 1, 1), "yyyy-MM-dd");
       const endDate = format(endOfMonth(new Date(year, month - 1, 1)), "yyyy-MM-dd");
 
-      const [{ data: records }, { data: profiles }] = await Promise.all([
+      const [{ data: records }, { data: profiles }, { data: leaveData }] = await Promise.all([
         supabase.from("attendance_records").select("*").gte("date", startDate).lte("date", endDate),
         supabase.from("profiles").select("auth_user_id, display_name, role, is_active").eq("is_active", true),
+        supabase.from("leave_requests").select("user_id, days_count").eq("status", "approved").lte("from_date", endDate).gte("to_date", startDate),
       ]);
 
       const nonArchitects = (profiles ?? []).filter((p: any) => !ARCHITECT_ROLES.includes(p.role));
@@ -375,16 +379,18 @@ function ExportTab() {
         const lateCheckins = userRecs.filter((r: any) => {
           if (!r.check_in_time) return false;
           const h = new Date(r.check_in_time).getHours();
-          const m = new Date(r.check_in_time).getMinutes();
-          return h > 9 || (h === 9 && m > 30);
+          return h >= 10;
         }).length;
+        const daysOnLeave = (leaveData ?? [])
+          .filter((l: any) => l.user_id === p.auth_user_id)
+          .reduce((s: number, l: any) => s + (l.days_count || 0), 0);
 
         return {
           "Employee Name": p.display_name || "—",
           "Role": ROLE_LABELS[p.role as AppRole] || p.role,
           "Days Present": presentDays,
-          "Days on Leave": 0, // TODO: from leave_requests
-          "Days Absent": Math.max(0, workingDays - presentDays),
+          "Days on Leave": daysOnLeave,
+          "Days Absent": Math.max(0, workingDays - presentDays - daysOnLeave),
           "Total Hours": Math.round(totalHours * 10) / 10,
           "Remote Days": remoteDays,
           "Late Check-ins": lateCheckins,

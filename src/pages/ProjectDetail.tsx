@@ -179,7 +179,7 @@ export default function ProjectDetail() {
 
         <TabsContent value="handover" className="space-y-4">
           <h2 className="font-display text-lg font-semibold text-foreground">Handover</h2>
-          <HandoverPack projectId={id!} clientName={project.client_name} userRole={userRole} installationComplete={modules.some((m: any) => m.production_status === "dispatched")} onHandedOver={fetchData} />
+          <HandoverPack projectId={id!} clientName={project.client_name} userRole={userRole} installationComplete={modules.length > 0 && modules.every((m: any) => m.production_status === "dispatched")} onHandedOver={fetchData} />
         </TabsContent>
 
         <TabsContent value="team" className="space-y-4">
