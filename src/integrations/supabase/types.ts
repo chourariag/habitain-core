@@ -2040,33 +2040,54 @@ export type Database = {
       }
       notifications: {
         Row: {
+          body: string
+          category: string
           content: string
           created_at: string | null
           id: string
-          is_read: boolean | null
+          is_read: boolean
           linked_entity_id: string | null
           linked_entity_type: string | null
+          navigate_to: string | null
+          read_at: string | null
           recipient_id: string
+          related_id: string | null
+          related_table: string | null
+          title: string
           type: string
         }
         Insert: {
+          body: string
+          category: string
           content: string
           created_at?: string | null
           id?: string
-          is_read?: boolean | null
+          is_read?: boolean
           linked_entity_id?: string | null
           linked_entity_type?: string | null
+          navigate_to?: string | null
+          read_at?: string | null
           recipient_id: string
+          related_id?: string | null
+          related_table?: string | null
+          title: string
           type: string
         }
         Update: {
+          body?: string
+          category?: string
           content?: string
           created_at?: string | null
           id?: string
-          is_read?: boolean | null
+          is_read?: boolean
           linked_entity_id?: string | null
           linked_entity_type?: string | null
+          navigate_to?: string | null
+          read_at?: string | null
           recipient_id?: string
+          related_id?: string | null
+          related_table?: string | null
+          title?: string
           type?: string
         }
         Relationships: []
