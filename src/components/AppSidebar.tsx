@@ -82,6 +82,13 @@ const sectionConfig = [
       { to: "/settings", label: "Settings", icon: Settings },
     ],
   },
+  {
+    key: "system",
+    label: "System",
+    items: [
+      { to: "/alerts", label: "Alerts", icon: Bell },
+    ],
+  },
 ];
 
 export function AppSidebar() {
