@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { insertNotifications } from "@/lib/notifications";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -92,10 +93,12 @@ export function ModuleDrawingsTab({ projectId, moduleId, projectName }: Props) {
       });
 
       if (architects?.[0]) {
-        await supabase.from("notifications").insert({
-          recipient_id: architects[0].auth_user_id, type: "design_query",
-          content: `New DQ ${dqCode} (${dqForm.urgency}) raised. Please review.`,
-          linked_entity_type: "design_query",
+        await insertNotifications({
+          recipient_id: architects[0].auth_user_id,
+          title: "New Design Query",
+          body: `DQ ${dqCode} (${dqForm.urgency}) raised. Please review.`,
+          category: "design",
+          related_table: "design_query",
         });
       }
 

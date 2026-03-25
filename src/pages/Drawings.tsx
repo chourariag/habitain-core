@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { insertNotifications } from "@/lib/notifications";
 import { getAuthedClient } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -175,13 +176,15 @@ export default function Drawings() {
         const { data: qsProfiles } = await supabase.from("profiles")
           .select("auth_user_id").eq("role", "quantity_surveyor" as any).eq("is_active", true);
         if (qsProfiles?.length) {
-          const notifications = qsProfiles.map((p: any) => ({
-            recipient_id: p.auth_user_id,
-            type: "drawing_revised",
-            content: `Drawing ${uploadForm.drawing_id_code} has been revised to R${uploadForm.revision}. Please review for quantity changes.`,
-            linked_entity_type: "drawing",
-          }));
-          await supabase.from("notifications").insert(notifications);
+          await insertNotifications(
+            qsProfiles.map((p: any) => ({
+              recipient_id: p.auth_user_id,
+              title: "Drawing Revised",
+              body: `Drawing ${uploadForm.drawing_id_code} has been revised to R${uploadForm.revision}. Please review for quantity changes.`,
+              category: "design",
+              related_table: "drawing",
+            }))
+          );
         }
       }
 
@@ -260,11 +263,12 @@ export default function Drawings() {
 
       // Notify architect
       if (assignedArchitect) {
-        await supabase.from("notifications").insert({
+        await insertNotifications({
           recipient_id: assignedArchitect.auth_user_id,
-          type: "design_query",
-          content: `New Design Query ${dqCode} raised. Please review.`,
-          linked_entity_type: "design_query",
+          title: "New Design Query",
+          body: `Design Query ${dqCode} raised. Please review.`,
+          category: "design",
+          related_table: "design_query",
         });
       }
 
@@ -299,11 +303,12 @@ export default function Drawings() {
       if (error) throw error;
 
       // Notify raiser
-      await supabase.from("notifications").insert({
+      await insertNotifications({
         recipient_id: dq.raised_by,
-        type: "dq_responded",
-        content: `DQ ${dq.dq_code} has been responded to by ${userName}`,
-        linked_entity_type: "design_query",
+        title: "DQ Response",
+        body: `DQ ${dq.dq_code} has been responded to by ${userName}`,
+        category: "design",
+        related_table: "design_query",
       });
 
       toast.success("Response submitted");

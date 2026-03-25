@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { insertNotifications } from "@/lib/notifications";
 import { getAuthedClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -433,12 +434,13 @@ export function QCInspectionWizard({
         .eq("is_active", true);
 
       for (const ph of prodHeads ?? []) {
-        await client.from("notifications").insert({
+        await insertNotifications({
           recipient_id: ph.auth_user_id,
-          type: "qc_inspection",
-          content: `QC Inspection completed for stage "${activeStage}" with ${generatedNCRs.length} NCR(s). Decision: ${editableAnalysis?.stageDecision || "N/A"}`,
-          linked_entity_type: "qc_inspection",
-          linked_entity_id: newInspectionId,
+          title: "QC Inspection Complete",
+          body: `QC Inspection completed for stage "${activeStage}" with ${generatedNCRs.length} NCR(s). Decision: ${editableAnalysis?.stageDecision || "N/A"}`,
+          category: "production",
+          related_table: "qc_inspection",
+          related_id: newInspectionId,
         });
       }
 

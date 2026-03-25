@@ -3,7 +3,7 @@ import {
   LayoutDashboard, FolderKanban, Factory, ClipboardCheck,
   Truck, Package, ShoppingCart, ClipboardList, Compass,
   BarChart3, DollarSign, Wrench, Users, Settings,
-  ChevronLeft, ChevronRight, LogOut, Globe, Clock, Target,
+  ChevronLeft, ChevronRight, LogOut, Globe, Clock, Target, Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -80,6 +80,13 @@ const sectionConfig = [
       { to: "/attendance", label: "HR & Attendance", icon: Clock },
       { to: "/admin", label: "Admin", icon: Users },
       { to: "/settings", label: "Settings", icon: Settings },
+    ],
+  },
+  {
+    key: "system",
+    label: "System",
+    items: [
+      { to: "/alerts", label: "Alerts", icon: Bell },
     ],
   },
 ];
