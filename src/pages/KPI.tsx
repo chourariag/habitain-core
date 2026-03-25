@@ -123,7 +123,7 @@ function DirectorView({ week }: { week: ReturnType<typeof getWeekRange> }) {
                 </div>
               </div>
               <div className="flex items-center gap-4 text-sm">
-                <span style={{ color: avgScore !== null ? getScoreColor(avgScore) : "#999" }}>
+                <span style={{ color: avgScore !== null ? getScoreColor(avgScore) : "#999999" }}>
                   {avgScore !== null ? `${avgScore}/100` : "—"}
                 </span>
                 <span className="text-xs text-muted-foreground">{onTrack} on track</span>
@@ -152,7 +152,7 @@ function DirectorView({ week }: { week: ReturnType<typeof getWeekRange> }) {
                         <tr key={p.auth_user_id} className="border-t border-border">
                           <td className="px-4 py-2.5 font-medium text-foreground">{p.display_name || "—"}</td>
                           <td className="px-4 py-2.5 text-xs text-muted-foreground">{ROLE_LABELS[p.role as AppRole] || p.role}</td>
-                          <td className="px-4 py-2.5 font-mono text-sm" style={{ color: getScoreColor(avg) }}>
+                          <td className="px-4 py-2.5 font-mono text-sm" style={{ color: avg !== null ? getScoreColor(avg) : "#999999" }}>
                             {avg !== null ? `${avg}/100` : "—"}
                           </td>
                           <td className="px-4 py-2.5">
@@ -242,7 +242,7 @@ function HODView({ role, week }: { role: AppRole; week: ReturnType<typeof getWee
                   <tr key={p.auth_user_id} className="border-t border-border">
                     <td className="px-4 py-2.5 font-medium text-foreground">{p.display_name || "—"}</td>
                     <td className="px-4 py-2.5 text-xs text-muted-foreground">{ROLE_LABELS[p.role as AppRole] || p.role}</td>
-                    <td className="px-4 py-2.5 font-mono text-sm" style={{ color: getScoreColor(avg) }}>{avg !== null ? `${avg}/100` : "—"}</td>
+                    <td className="px-4 py-2.5 font-mono text-sm" style={{ color: avg !== null ? getScoreColor(avg) : "#999999" }}>{avg !== null ? `${avg}/100` : "—"}</td>
                     <td className="px-4 py-2.5">
                       <Badge variant="outline" className="text-[10px] font-semibold" style={{ color: badge.color, borderColor: badge.color, backgroundColor: badge.bg }}>{badge.label}</Badge>
                     </td>
