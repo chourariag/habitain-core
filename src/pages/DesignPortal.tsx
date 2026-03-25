@@ -949,6 +949,7 @@ export default function DesignPortal() {
                           <span className="text-xs truncate" style={{ color: "#666666" }}>{projectMap[dq.project_id]?.name}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
+                          <DQEscalationBadge dq={dq} />
                           <Badge variant="outline" style={urgencyStyle(dq.urgency ?? "Normal")} className="text-[10px]">{dq.urgency ?? "Normal"}</Badge>
                           <Badge variant="outline" style={dqStatusStyle(dq.status)} className="text-[10px]">{dqStatusLabel(dq.status)}</Badge>
                         </div>
