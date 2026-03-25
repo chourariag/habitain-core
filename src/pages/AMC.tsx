@@ -51,12 +51,46 @@ export default function AMCPage() {
         return data as string | null;
       }),
     ]);
-    setContracts(contractRes.data ?? []);
+    const contractList = contractRes.data ?? [];
+    setContracts(contractList);
     const projMap: Record<string, string> = {};
     (projRes.data ?? []).forEach((p: any) => { projMap[p.id] = p.name; });
     setProjects(projMap);
     setUserRole(roleRes);
     setLoading(false);
+
+    // Trigger: AMC renewal due within 60 days → notify delivery_rm_lead
+    const soonExpiring = contractList.filter((c: any) => {
+      const daysLeft = differenceInDays(new Date(c.end_date), new Date());
+      return daysLeft >= 0 && daysLeft <= 60;
+    });
+    if (soonExpiring.length > 0) {
+      const { data: leads } = await supabase.from("profiles").select("auth_user_id").eq("role" as any, "delivery_rm_lead");
+      for (const lead of leads ?? []) {
+        for (const contract of soonExpiring.slice(0, 5)) {
+          const { data: existing } = await (supabase.from("notifications") as any)
+            .select("id")
+            .eq("recipient_id", lead.auth_user_id)
+            .eq("category", "amc")
+            .eq("related_id", contract.id)
+            .maybeSingle();
+          if (!existing) {
+            const daysLeft = differenceInDays(new Date(contract.end_date), new Date());
+            await (supabase.from("notifications") as any).insert({
+              recipient_id: lead.auth_user_id,
+              title: `AMC Renewal Due — ${contract.client_name}`,
+              body: `Contract expires in ${daysLeft} day${daysLeft !== 1 ? "s" : ""} on ${contract.end_date}. Initiate renewal.`,
+              category: "amc",
+              related_table: "amc_contracts",
+              related_id: contract.id,
+              navigate_to: "/amc",
+              type: "amc_renewal",
+              content: `AMC for ${contract.client_name} expires on ${contract.end_date}.`,
+            });
+          }
+        }
+      }
+    }
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);

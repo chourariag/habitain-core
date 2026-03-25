@@ -433,8 +433,14 @@ export function QCInspectionWizard({
         .eq("is_active", true);
 
       for (const ph of prodHeads ?? []) {
-        await client.from("notifications").insert({
+        await (client.from("notifications") as any).insert({
           recipient_id: ph.auth_user_id,
+          title: `NCR Raised — ${generatedNCRs.length} issue${generatedNCRs.length !== 1 ? "s" : ""} on "${activeStage}"`,
+          body: `Decision: ${editableAnalysis?.stageDecision || "N/A"}. Review and close NCRs before stage can advance.`,
+          category: "ncr",
+          related_table: "qc_inspections",
+          related_id: newInspectionId,
+          navigate_to: "/qc",
           type: "qc_inspection",
           content: `QC Inspection completed for stage "${activeStage}" with ${generatedNCRs.length} NCR(s). Decision: ${editableAnalysis?.stageDecision || "N/A"}`,
           linked_entity_type: "qc_inspection",

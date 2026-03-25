@@ -29,16 +29,47 @@ export function PaymentsTab() {
     const [{ data }, { data: expData }, { data: profData }] = await Promise.all([
       supabase.from("finance_payments").select("*").order("due_date"),
       supabase.from("expense_entries").select("*").eq("status", "approved").order("created_at", { ascending: false }),
-      supabase.from("profiles").select("auth_user_id, display_name"),
+      supabase.from("profiles").select("auth_user_id, display_name, role"),
     ]);
     const rows = (data as Payment[]) || [];
     const today = new Date().toISOString().slice(0, 10);
-    setPayments(rows.map(r => ({
+    const mapped = rows.map(r => ({
       ...r,
       status: (r.status === "pending" || r.status === "invoiced") && r.due_date < today ? "overdue" : r.status,
-    })));
+    }));
+    setPayments(mapped);
     setApprovedExpenses((expData ?? []) as any[]);
     setExpenseProfiles(profData ?? []);
+
+    // Trigger: payment overdue → notify finance_manager (once per payment, deduped by related_id)
+    const overdueRows = mapped.filter(r => r.status === "overdue");
+    if (overdueRows.length > 0) {
+      const fmProfiles = (profData ?? []).filter((p: any) => p.role === "finance_manager");
+      for (const fm of fmProfiles) {
+        for (const payment of overdueRows.slice(0, 5)) { // cap at 5 to avoid spam
+          // Check if notification already sent for this payment
+          const { data: existing } = await (supabase.from("notifications") as any)
+            .select("id")
+            .eq("recipient_id", fm.auth_user_id)
+            .eq("category", "payment")
+            .eq("related_id", payment.id)
+            .maybeSingle();
+          if (!existing) {
+            await (supabase.from("notifications") as any).insert({
+              recipient_id: fm.auth_user_id,
+              title: `Payment Overdue — ${payment.project_name || payment.client_name}`,
+              body: `${payment.milestone_description} — ₹${payment.amount.toLocaleString("en-IN")} was due on ${payment.due_date}.`,
+              category: "payment",
+              related_table: "finance_payments",
+              related_id: payment.id,
+              navigate_to: "/finance",
+              type: "payment_overdue",
+              content: `Payment of ₹${payment.amount.toLocaleString("en-IN")} overdue since ${payment.due_date}.`,
+            });
+          }
+        }
+      }
+    }
   };
 
   useEffect(() => { fetchData(); }, []);

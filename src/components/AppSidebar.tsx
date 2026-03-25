@@ -3,8 +3,9 @@ import {
   LayoutDashboard, FolderKanban, Factory, ClipboardCheck,
   Truck, Package, ShoppingCart, ClipboardList, Compass,
   BarChart3, DollarSign, Wrench, Users, Settings,
-  ChevronLeft, ChevronRight, LogOut, Globe, Clock, Target,
+  ChevronLeft, ChevronRight, LogOut, Globe, Clock, Target, Bell,
 } from "lucide-react";
+import { useNotifications } from "@/hooks/useNotifications";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
@@ -74,6 +75,10 @@ const sectionConfig = [
     items: [{ to: "/kpi", label: "KPI Scorecard", icon: Target }],
   },
   {
+    key: "alerts",
+    items: [{ to: "/alerts", label: "Alerts", icon: Bell }],
+  },
+  {
     key: "admin",
     label: "Admin",
     items: [
@@ -92,6 +97,7 @@ export function AppSidebar() {
   const { projects, selectedProjectId, setSelectedProjectId } = useProjectContext();
   const { i18n } = useTranslation();
   const location = useLocation();
+  const { unreadCount } = useNotifications();
 
   const showProjectSelector = canSeeProjectSelector(userRole);
 
@@ -194,7 +200,12 @@ export function AppSidebar() {
               {section.items.map((item) => (
                 <NavLink key={item.to} to={item.to} className={navLinkClass} style={navLinkStyle}>
                   <item.icon className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span>{item.label}</span>}
+                  {!collapsed && <span className="flex-1">{item.label}</span>}
+                  {!collapsed && item.to === "/alerts" && unreadCount > 0 && (
+                    <span className="text-white text-[9px] font-bold rounded-full px-1.5 py-0.5" style={{ backgroundColor: "#F40009" }}>
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </div>

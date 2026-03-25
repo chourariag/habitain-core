@@ -33,6 +33,7 @@ import ComingSoon from "@/pages/ComingSoon";
 import Finance from "@/pages/Finance";
 import KPI from "@/pages/KPI";
 import KPISettings from "@/pages/KPISettings";
+import Alerts from "@/pages/Alerts";
 import { KPIRouteGuard } from "@/components/KPIRouteGuard";
 import { KPIDirectorRouteGuard } from "@/components/KPIDirectorRouteGuard";
 
@@ -74,6 +75,7 @@ const App = () => (
                 <Route path="/settings" element={<AppSettings />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/attendance" element={<Attendance />} />
+                <Route path="/alerts" element={<Alerts />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

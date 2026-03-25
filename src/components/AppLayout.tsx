@@ -6,6 +6,7 @@ import { UserAvatar } from "./UserAvatar";
 import { ProjectBreadcrumb } from "./ProjectBreadcrumb";
 import { ProjectProvider } from "@/contexts/ProjectContext";
 import { ConnectionIndicator } from "./ConnectionIndicator";
+import { BellIcon } from "./notifications/BellIcon";
 
 export function AppLayout() {
   return (
@@ -17,6 +18,7 @@ export function AppLayout() {
           <div className="flex-1 flex flex-col overflow-hidden">
             <header className="flex items-center justify-end h-12 px-4 border-b border-border bg-background shrink-0 gap-2">
               <ConnectionIndicator />
+              <BellIcon />
               <UserAvatar />
             </header>
             <main className="flex-1 overflow-y-auto overflow-x-hidden pb-20 md:pb-0 bg-background max-w-full">

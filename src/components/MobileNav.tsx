@@ -3,11 +3,12 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, FolderKanban, Factory, Truck,
   BarChart3, DollarSign, ClipboardCheck, ShoppingCart, Compass,
-  Wrench, Users, Settings, Clock,
+  Wrench, Users, Settings, Clock, Bell,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
 import { canSeeSection } from "@/lib/role-nav";
+import { useNotifications } from "@/hooks/useNotifications";
 import type { AppRole } from "@/lib/roles";
 
 const allTabs = [
@@ -24,15 +25,17 @@ const allTabs = [
   { to: "/attendance", label: "HR", icon: Clock, section: "admin" },
   { to: "/admin", label: "Admin", icon: Users, section: "admin" },
   { to: "/settings", label: "Settings", icon: Settings, section: "admin" },
+  { to: "/alerts", label: "Alerts", icon: Bell, section: "alerts" },
 ];
 
 export function MobileNav() {
   const { role } = useUserRole();
   const userRole = role as AppRole | null;
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { unreadCount } = useNotifications();
 
   const visibleTabs = allTabs.filter(
-    (t) => t.section === "dashboard" || canSeeSection(userRole, t.section)
+    (t) => t.section === "dashboard" || t.section === "alerts" || canSeeSection(userRole, t.section)
   );
 
   // Scroll active tab into view on mount
@@ -70,9 +73,17 @@ export function MobileNav() {
               {({ isActive }) => (
                 <span
                   data-active={isActive ? "true" : undefined}
-                  className="flex flex-col items-center gap-[3px]"
+                  className="flex flex-col items-center gap-[3px] relative"
                 >
-                  <tab.icon className="h-[22px] w-[22px]" />
+                  <span className="relative">
+                    <tab.icon className="h-[22px] w-[22px]" />
+                    {tab.to === "/alerts" && unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex items-center justify-center rounded-full text-white font-bold"
+                        style={{ backgroundColor: "#F40009", fontSize: 8, minWidth: 14, height: 14, padding: "0 2px" }}>
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </span>
                   <span>{tab.label}</span>
                 </span>
               )}
