@@ -46,11 +46,11 @@ export const HOD_DIRECT_REPORTS: Record<string, AppRole[]> = {
   architecture_director: ["principal_architect", "project_architect", "structural_architect"],
 };
 
-export function getScoreColor(score: number | null): string {
-  if (score === null) return "hsl(0 0% 60%)";
-  if (score >= 70) return "hsl(var(--primary))";
-  if (score >= 50) return "hsl(var(--warning))";
-  return "hsl(var(--destructive))";
+export function getScoreColor(score: number | null | undefined): string {
+  if (score === null || score === undefined) return "#999999";
+  if (score >= 70) return "#006039";
+  if (score >= 50) return "#D4860A";
+  return "#F40009";
 }
 
 export function getStatusBadge(status: string): { label: string; color: string; bg: string } {
