@@ -15,13 +15,17 @@ import { Label } from "@/components/ui/label";
 import {
   Loader2, Search, Upload, Download, FileText, MessageSquare,
   Plus, Clock, AlertTriangle, CheckCircle2, XCircle,
-  ArrowLeft, Flame
+  ArrowLeft, Flame, Eye
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { projectCode } from "@/lib/code-generators";
 import { BriefScopeSection } from "@/components/design/BriefScopeSection";
 import { ConsultantRow } from "@/components/design/ConsultantRow";
+import { ProjectHealthCard } from "@/components/design/ProjectHealthCard";
+import { GFCChecklist } from "@/components/design/GFCChecklist";
+import { DrawingApprovalSheet } from "@/components/design/DrawingApprovalSheet";
+import { DQStatsBar, DQEscalationBadge } from "@/components/design/DQStatsBar";
 
 const DRAWING_TYPES = ["Architectural", "Structural", "MEP", "BOQ Reference", "Site Plan"];
 const DESIGN_STAGES_ORDER = ["Concept Design", "Schematic Design", "Design Development", "Working Drawings", "GFC Issue"];
