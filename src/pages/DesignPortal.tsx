@@ -555,27 +555,8 @@ export default function DesignPortal() {
     fetchData();
   };
 
-  // ──── GFC Checklist evaluation ────
-  const getGFCChecklist = (projId: string) => {
-    const projStages = designStages.filter((s: any) => s.project_id === projId);
-    const projConsultants = consultants.filter((c: any) => c.project_id === projId);
-    const projDqs = dqs.filter((d: any) => d.project_id === projId && d.status !== "resolved");
 
-    const archApproved = projStages.find((s: any) => s.stage_name === "Working Drawings")?.status === "client_approved";
-    const structConsultant = projConsultants.find((c: any) => c.consultant_type === "Structural Engineer");
-    const structOk = structConsultant?.review_complete && structConsultant?.approved;
-    const mepConsultant = projConsultants.find((c: any) => c.consultant_type === "MEP Consultant");
-    const mepOk = mepConsultant?.review_complete && mepConsultant?.approved;
 
-    return [
-      { label: "Architectural drawings Client Approved", met: !!archApproved, auto: true },
-      { label: "Structural drawings received and reviewed", met: !!structOk, auto: true },
-      { label: "MEP drawings received and reviewed", met: !!mepOk, auto: true },
-      { label: "All consultant comments incorporated", met: false, auto: false },
-      { label: "Internal QC review complete", met: false, auto: false },
-      { label: "No open Design Queries on this project", met: projDqs.length === 0, auto: true },
-    ];
-  };
 
   // ──── Helper for design stage label on dashboard ────
   const getDesignStage = (projectId: string) => {
