@@ -385,6 +385,84 @@ export type Database = {
           },
         ]
       }
+      design_detail_library: {
+        Row: {
+          detail_name: string
+          detail_number: number
+          drawing_reference: string | null
+          id: string
+          project_id: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          detail_name: string
+          detail_number: number
+          drawing_reference?: string | null
+          id?: string
+          project_id: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          detail_name?: string
+          detail_number?: number
+          drawing_reference?: string | null
+          id?: string
+          project_id?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      design_qc_checklist: {
+        Row: {
+          created_at: string
+          id: string
+          is_ticked: boolean
+          item_index: number
+          item_text: string
+          note: string | null
+          project_id: string
+          section_name: string
+          section_number: number
+          ticked_at: string | null
+          ticked_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_ticked?: boolean
+          item_index: number
+          item_text: string
+          note?: string | null
+          project_id: string
+          section_name: string
+          section_number: number
+          ticked_at?: string | null
+          ticked_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_ticked?: boolean
+          item_index?: number
+          item_text?: string
+          note?: string | null
+          project_id?: string
+          section_name?: string
+          section_number?: number
+          ticked_at?: string | null
+          ticked_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       design_queries: {
         Row: {
           affected_area: string | null
