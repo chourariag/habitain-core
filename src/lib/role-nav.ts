@@ -32,6 +32,7 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
     ...DIRECTORS, "sales_director", "finance_director", "finance_manager",
     "accounts_executive", "delivery_rm_lead",
   ],
+  performance: [], // everyone sees own KPIs
   admin: [
     ...DIRECTORS, "hr_executive", "head_operations",
   ],

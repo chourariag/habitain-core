@@ -31,6 +31,8 @@ import Attendance from "@/pages/Attendance";
 import NotFound from "@/pages/NotFound";
 import ComingSoon from "@/pages/ComingSoon";
 import Finance from "@/pages/Finance";
+import KPI from "@/pages/KPI";
+import KPISettings from "@/pages/KPISettings";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +65,8 @@ const App = () => (
                 <Route path="/amc" element={<AMCPage />} />
                 <Route path="/sales" element={<Sales />} />
                 <Route path="/finance" element={<Finance />} />
+                <Route path="/kpi" element={<KPI />} />
+                <Route path="/kpi/settings" element={<KPISettings />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/settings" element={<AppSettings />} />
                 <Route path="/profile" element={<Profile />} />
