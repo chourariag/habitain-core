@@ -61,6 +61,8 @@ export default function DesignPortal() {
   const [userName, setUserName] = useState("");
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const [projectFileTab, setProjectFileTab] = useState("design-file");
+  const [detailStats, setDetailStats] = useState({ complete: 0, inProgress: 0, notStarted: 40, na: 0, total: 40 });
 
   // Filters
   const [dqFilterProject, setDqFilterProject] = useState("all");
