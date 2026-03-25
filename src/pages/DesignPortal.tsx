@@ -1117,10 +1117,8 @@ export default function DesignPortal() {
               userName={userName}
               onRefresh={fetchData}
             />
-          )}
-              )}
-            </CardContent>
-          </Card>
+
+
 
           {/* Section E: Drawings Library */}
           <Card>
