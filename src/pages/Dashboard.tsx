@@ -7,6 +7,7 @@ import { PlaceholderDashboard } from "@/components/dashboard/PlaceholderDashboar
 import { SharedDashboardBottom } from "@/components/dashboard/SharedDashboardBottom";
 import { CheckInButton } from "@/components/attendance/CheckInButton";
 import { LogExpenseButton } from "@/components/expenses/LogExpenseButton";
+import { WeeklyDigestCard } from "@/components/kpi/WeeklyDigestCard";
 
 export default function Dashboard() {
   const { role, loading } = useUserRole();
@@ -27,6 +28,9 @@ export default function Dashboard() {
 
       {/* Submit Expense button */}
       <LogExpenseButton userRole={userRole} />
+
+      {/* Weekly KPI Digest */}
+      <WeeklyDigestCard />
 
       {tier === 1 ? (
         <Tier1Dashboard today={today} />

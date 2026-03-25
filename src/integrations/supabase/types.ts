@@ -1449,6 +1449,129 @@ export type Database = {
         }
         Relationships: []
       }
+      kpi_definitions: {
+        Row: {
+          coaching_template_above: string | null
+          coaching_template_below: string | null
+          created_at: string
+          data_source_query: string | null
+          data_source_table: string | null
+          effective_from: string | null
+          id: string
+          is_active: boolean
+          kpi_key: string
+          kpi_name: string
+          measurement_period: string
+          role: Database["public"]["Enums"]["app_role"]
+          target_value: number | null
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          coaching_template_above?: string | null
+          coaching_template_below?: string | null
+          created_at?: string
+          data_source_query?: string | null
+          data_source_table?: string | null
+          effective_from?: string | null
+          id?: string
+          is_active?: boolean
+          kpi_key: string
+          kpi_name: string
+          measurement_period?: string
+          role: Database["public"]["Enums"]["app_role"]
+          target_value?: number | null
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          coaching_template_above?: string | null
+          coaching_template_below?: string | null
+          created_at?: string
+          data_source_query?: string | null
+          data_source_table?: string | null
+          effective_from?: string | null
+          id?: string
+          is_active?: boolean
+          kpi_key?: string
+          kpi_name?: string
+          measurement_period?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          target_value?: number | null
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      kpi_snapshots: {
+        Row: {
+          actual_value: number | null
+          created_at: string
+          id: string
+          kpi_key: string
+          score: number | null
+          status: string
+          target_value: number | null
+          user_id: string
+          week_start_date: string
+        }
+        Insert: {
+          actual_value?: number | null
+          created_at?: string
+          id?: string
+          kpi_key: string
+          score?: number | null
+          status?: string
+          target_value?: number | null
+          user_id: string
+          week_start_date: string
+        }
+        Update: {
+          actual_value?: number | null
+          created_at?: string
+          id?: string
+          kpi_key?: string
+          score?: number | null
+          status?: string
+          target_value?: number | null
+          user_id?: string
+          week_start_date?: string
+        }
+        Relationships: []
+      }
+      kpi_targets_history: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          id: string
+          kpi_key: string
+          new_target: number | null
+          old_target: number | null
+          reason: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          id?: string
+          kpi_key: string
+          new_target?: number | null
+          old_target?: number | null
+          reason?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          id?: string
+          kpi_key?: string
+          new_target?: number | null
+          old_target?: number | null
+          reason?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
       labour_approvals: {
         Row: {
           action: string
@@ -2878,6 +3001,39 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      weekly_digests: {
+        Row: {
+          created_at: string
+          digest_sent_at: string | null
+          focus_areas: Json | null
+          id: string
+          overall_score: number | null
+          user_id: string
+          week_start_date: string
+          wins: Json | null
+        }
+        Insert: {
+          created_at?: string
+          digest_sent_at?: string | null
+          focus_areas?: Json | null
+          id?: string
+          overall_score?: number | null
+          user_id: string
+          week_start_date: string
+          wins?: Json | null
+        }
+        Update: {
+          created_at?: string
+          digest_sent_at?: string | null
+          focus_areas?: Json | null
+          id?: string
+          overall_score?: number | null
+          user_id?: string
+          week_start_date?: string
+          wins?: Json | null
         }
         Relationships: []
       }
