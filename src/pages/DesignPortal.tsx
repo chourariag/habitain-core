@@ -851,6 +851,7 @@ export default function DesignPortal() {
 
           {/* ═══════ TAB 3: DQ Register ═══════ */}
           <TabsContent value="dq-register" className="space-y-4">
+            <DQStatsBar dqs={dqs} />
             <div className="flex flex-wrap gap-2">
               <Select value={dqFilterProject} onValueChange={setDqFilterProject}>
                 <SelectTrigger className="w-40"><SelectValue placeholder="Project" /></SelectTrigger>
