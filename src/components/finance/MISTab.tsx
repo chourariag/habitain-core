@@ -246,7 +246,7 @@ export function MISTab() {
   const salesRevenue = getMISValue("revenue");
   const otherIncome = getMISValue("other_income");
   const unbilledRevenue = getMISValue("unbilled_revenue");
-  const totalIncome = getMISValue("revenue") + getMISValue("other_income") + getMISValue("unbilled_revenue");
+  const totalIncome = salesRevenue + otherIncome + unbilledRevenue;
   const fp = (v: number) => formatPct(v, totalIncome);
 
   const rawMaterials = getMISValue("raw_materials");

@@ -47,10 +47,10 @@ export const HOD_DIRECT_REPORTS: Record<string, AppRole[]> = {
 };
 
 export function getScoreColor(score: number | null): string {
-  if (score === null) return "hsl(0 0% 60%)";
-  if (score >= 70) return "hsl(var(--primary))";
-  if (score >= 50) return "hsl(var(--warning))";
-  return "hsl(var(--destructive))";
+  if (score === null) return "#999999";
+  if (score >= 70) return "#006039";
+  if (score >= 50) return "#D4860A";
+  return "#F40009";
 }
 
 export function getStatusBadge(status: string): { label: string; color: string; bg: string } {
