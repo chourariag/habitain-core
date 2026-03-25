@@ -502,6 +502,8 @@ export type Database = {
           approval_proof_url: string | null
           created_at: string
           drawing_urls: string[]
+          evidence_uploaded_at: string | null
+          evidence_url: string | null
           id: string
           project_id: string
           revision_changes: string | null
@@ -509,6 +511,8 @@ export type Database = {
           stage_name: string
           stage_order: number
           status: string
+          ticked_at: string | null
+          ticked_by: string | null
           updated_at: string
         }
         Insert: {
@@ -517,6 +521,8 @@ export type Database = {
           approval_proof_url?: string | null
           created_at?: string
           drawing_urls?: string[]
+          evidence_uploaded_at?: string | null
+          evidence_url?: string | null
           id?: string
           project_id: string
           revision_changes?: string | null
@@ -524,6 +530,8 @@ export type Database = {
           stage_name: string
           stage_order: number
           status?: string
+          ticked_at?: string | null
+          ticked_by?: string | null
           updated_at?: string
         }
         Update: {
@@ -532,6 +540,8 @@ export type Database = {
           approval_proof_url?: string | null
           created_at?: string
           drawing_urls?: string[]
+          evidence_uploaded_at?: string | null
+          evidence_url?: string | null
           id?: string
           project_id?: string
           revision_changes?: string | null
@@ -539,6 +549,8 @@ export type Database = {
           stage_name?: string
           stage_order?: number
           status?: string
+          ticked_at?: string | null
+          ticked_by?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -661,8 +673,17 @@ export type Database = {
       }
       drawings: {
         Row: {
+          approval_date: string | null
+          approval_method: string | null
+          approval_reference: string | null
+          approval_screenshot_url: string | null
+          approval_status: string
+          approved_at: string | null
+          approved_by: string | null
+          approved_by_name: string | null
           created_at: string
           drawing_id_code: string
+          drawing_title: string | null
           drawing_type: string
           file_name: string | null
           file_url: string
@@ -678,8 +699,17 @@ export type Database = {
           uploaded_by_name: string | null
         }
         Insert: {
+          approval_date?: string | null
+          approval_method?: string | null
+          approval_reference?: string | null
+          approval_screenshot_url?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_name?: string | null
           created_at?: string
           drawing_id_code: string
+          drawing_title?: string | null
           drawing_type?: string
           file_name?: string | null
           file_url: string
@@ -695,8 +725,17 @@ export type Database = {
           uploaded_by_name?: string | null
         }
         Update: {
+          approval_date?: string | null
+          approval_method?: string | null
+          approval_reference?: string | null
+          approval_screenshot_url?: string | null
+          approval_status?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_name?: string | null
           created_at?: string
           drawing_id_code?: string
+          drawing_title?: string | null
           drawing_type?: string
           file_name?: string | null
           file_url?: string
@@ -2274,7 +2313,12 @@ export type Database = {
           created_at: string
           created_by: string | null
           design_stage: string
+          gfc_issued_at: string | null
+          gfc_issued_by: string | null
+          gfc_issuer_name: string | null
           id: string
+          is_design_only: boolean
+          linked_project_id: string | null
           measurements_confirmed: boolean
           num_floors: number | null
           project_id: string
@@ -2282,6 +2326,7 @@ export type Database = {
           site_visit_done: boolean
           special_requirements: string | null
           survey_report_uploaded: boolean
+          target_gfc_date: string | null
           updated_at: string
         }
         Insert: {
@@ -2291,7 +2336,12 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           design_stage?: string
+          gfc_issued_at?: string | null
+          gfc_issued_by?: string | null
+          gfc_issuer_name?: string | null
           id?: string
+          is_design_only?: boolean
+          linked_project_id?: string | null
           measurements_confirmed?: boolean
           num_floors?: number | null
           project_id: string
@@ -2299,6 +2349,7 @@ export type Database = {
           site_visit_done?: boolean
           special_requirements?: string | null
           survey_report_uploaded?: boolean
+          target_gfc_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -2308,7 +2359,12 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           design_stage?: string
+          gfc_issued_at?: string | null
+          gfc_issued_by?: string | null
+          gfc_issuer_name?: string | null
           id?: string
+          is_design_only?: boolean
+          linked_project_id?: string | null
           measurements_confirmed?: boolean
           num_floors?: number | null
           project_id?: string
@@ -2316,6 +2372,7 @@ export type Database = {
           site_visit_done?: boolean
           special_requirements?: string | null
           survey_report_uploaded?: boolean
+          target_gfc_date?: string | null
           updated_at?: string
         }
         Relationships: [
