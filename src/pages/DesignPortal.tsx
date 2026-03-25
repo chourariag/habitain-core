@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { insertNotifications } from "@/lib/notifications";
 import { getAuthedClient } from "@/lib/auth-client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -352,11 +353,12 @@ export default function DesignPortal() {
       if (error) throw error;
 
       if (assignedArchitect) {
-        await supabase.from("notifications").insert({
+        await insertNotifications({
           recipient_id: assignedArchitect.auth_user_id,
-          type: "design_query",
-          content: `New Design Query ${dqCode} (${dqForm.urgency}) raised. Please review.`,
-          linked_entity_type: "design_query",
+          title: "New Design Query",
+          body: `Design Query ${dqCode} (${dqForm.urgency}) raised. Please review.`,
+          category: "design",
+          related_table: "design_query",
         });
       }
 
@@ -386,10 +388,12 @@ export default function DesignPortal() {
         responded_at: new Date().toISOString(),
       }).eq("id", dq.id);
 
-      await supabase.from("notifications").insert({
-        recipient_id: dq.raised_by, type: "dq_responded",
-        content: `DQ ${dq.dq_code} has been responded to by ${userName}`,
-        linked_entity_type: "design_query",
+      await insertNotifications({
+        recipient_id: dq.raised_by,
+        title: "DQ Response",
+        body: `DQ ${dq.dq_code} has been responded to by ${userName}`,
+        category: "design",
+        related_table: "design_query",
       });
 
       toast.success("Response submitted");
@@ -440,11 +444,13 @@ export default function DesignPortal() {
         const { data: qsProfiles } = await supabase.from("profiles")
           .select("auth_user_id").eq("role", "quantity_surveyor" as any).eq("is_active", true);
         if (qsProfiles?.length) {
-          await supabase.from("notifications").insert(
+          await insertNotifications(
             qsProfiles.map((p: any) => ({
-              recipient_id: p.auth_user_id, type: "drawing_revised",
-              content: `Drawing ${uploadForm.drawing_id_code} revised to R${uploadForm.revision}. Please review for quantity changes.`,
-              linked_entity_type: "drawing",
+              recipient_id: p.auth_user_id,
+              title: "Drawing Revised",
+              body: `Drawing ${uploadForm.drawing_id_code} revised to R${uploadForm.revision}. Please review for quantity changes.`,
+              category: "design",
+              related_table: "drawing",
             }))
           );
         }
@@ -526,11 +532,14 @@ export default function DesignPortal() {
       .select("auth_user_id").in("role", ["production_head", "planning_engineer", "factory_floor_supervisor"] as any[]).eq("is_active", true);
     const projName = projectMap[projId]?.name ?? "Unknown";
     if (prodProfiles?.length) {
-      await supabase.from("notifications").insert(
+      await insertNotifications(
         prodProfiles.map((p: any) => ({
-          recipient_id: p.auth_user_id, type: "gfc_issued",
-          content: `GFC issued for ${projName} — drawings now available in production.`,
-          linked_entity_type: "project", linked_entity_id: projId,
+          recipient_id: p.auth_user_id,
+          title: "GFC Issued",
+          body: `GFC issued for ${projName} — drawings now available in production.`,
+          category: "design",
+          related_table: "project",
+          related_id: projId,
         }))
       );
     }
