@@ -1034,9 +1034,8 @@ export default function DesignPortal() {
           </TabsContent>
         </Tabs>
       ) : (
-        /* ═══════ TAB 2: Project Design File ═══════ */
+        /* ═══════ Project Design File View ═══════ */
         <div className="space-y-6">
-          {/* Project Health Card */}
           {selectedProject && (
             <ProjectHealthCard
               project={selectedProject}
@@ -1046,87 +1045,100 @@ export default function DesignPortal() {
             />
           )}
 
-          {/* Section A: Brief & Scope */}
-          <BriefScopeSection
-            designFile={selectedDF}
-            projectId={selectedProjectId!}
-            canEdit={canUpload}
-            onSaved={fetchData}
-          />
+          <Tabs value={projectFileTab} onValueChange={setProjectFileTab}>
+            <ScrollableTabsWrapper>
+              <TabsList>
+                <TabsTrigger value="design-file">Project Design File</TabsTrigger>
+                <TabsTrigger value="detail-library">Detail Library</TabsTrigger>
+                <TabsTrigger value="consultants">Consultants</TabsTrigger>
+                <TabsTrigger value="drawings">Drawings</TabsTrigger>
+              </TabsList>
+            </ScrollableTabsWrapper>
 
-          {/* Section B: Design Stages & Client Approvals */}
-          <Card>
-            <CardHeader><CardTitle className="text-lg">B — Design Stages & Client Approvals</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-              {selectedStages.map((stage: any) => (
-                <div key={stage.id} className="border border-border rounded-lg p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <h4 className="font-semibold text-sm">{stage.stage_name}</h4>
-                    <Badge variant="outline" style={stageStatusStyle(stage.status)}>{stageStatusLabel(stage.status)}</Badge>
-                  </div>
-                  {canUpload && (
-                    <div className="flex flex-wrap gap-2">
-                      {STAGE_STATUSES.filter((s) => s !== stage.status).map((s) => (
-                        <Button key={s} size="sm" variant="outline" className="text-xs"
-                          onClick={() => {
-                            if (s === "client_approved") {
-                              const hasDrawings = drawings.some((d: any) => d.project_id === selectedProjectId && d.status === "active");
-                              if (!hasDrawings) { toast.error("Upload at least one drawing before approving"); return; }
-                            }
-                            updateStage(stage.id, { status: s });
-                          }}>
-                          {stageStatusLabel(s)}
-                        </Button>
-                      ))}
-                    </div>
-                  )}
-                  {stage.status === "revision_requested" && stage.revision_comments && (
-                    <div className="bg-muted/50 rounded p-2">
-                      <p className="text-xs" style={{ color: "#666666" }}>Client Comments: {stage.revision_comments}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+            <TabsContent value="design-file" className="space-y-6">
+              <BriefScopeSection
+                designFile={selectedDF}
+                projectId={selectedProjectId!}
+                canEdit={canUpload}
+                onSaved={fetchData}
+              />
 
-          {/* Section C: Consultant Coordination — each row is isolated */}
-          <Card>
-            <CardHeader>
+              <Card>
+                <CardHeader><CardTitle className="text-lg">B — Design Stages & Client Approvals</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  {selectedStages.map((stage: any) => (
+                    <div key={stage.id} className="border border-border rounded-lg p-4 space-y-3">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <h4 className="font-semibold text-sm">{stage.stage_name}</h4>
+                        <Badge variant="outline" style={stageStatusStyle(stage.status)}>{stageStatusLabel(stage.status)}</Badge>
+                      </div>
+                      {canUpload && (
+                        <div className="flex flex-wrap gap-2">
+                          {STAGE_STATUSES.filter((s) => s !== stage.status).map((s) => (
+                            <Button key={s} size="sm" variant="outline" className="text-xs"
+                              onClick={() => {
+                                if (s === "client_approved") {
+                                  const hasDrawings = drawings.some((d: any) => d.project_id === selectedProjectId && d.status === "active");
+                                  if (!hasDrawings) { toast.error("Upload at least one drawing before approving"); return; }
+                                }
+                                updateStage(stage.id, { status: s });
+                              }}>
+                              {stageStatusLabel(s)}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                      {stage.status === "revision_requested" && stage.revision_comments && (
+                        <div className="bg-muted/50 rounded p-2">
+                          <p className="text-xs" style={{ color: "#666666" }}>Client Comments: {stage.revision_comments}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {selectedProjectId && (
+                <MasterQCChecklist
+                  projectId={selectedProjectId}
+                  projectName={selectedProject?.name ?? ""}
+                  designFile={selectedDF}
+                  isPrincipal={isPrincipal}
+                  isArchitect={isArchitect}
+                  userId={userId}
+                  userName={userName}
+                  detailLibraryReady={(detailStats.complete + detailStats.na) >= detailStats.total && detailStats.total > 0}
+                  detailLibraryStats={detailStats}
+                  onRefresh={fetchData}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="detail-library">
+              {selectedProjectId && (
+                <DetailLibraryTab
+                  projectId={selectedProjectId}
+                  isArchitect={isArchitect}
+                  userId={userId}
+                  userName={userName}
+                  onStatsChange={setDetailStats}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="consultants" className="space-y-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">C — Consultant Coordination</CardTitle>
+                <h3 className="text-base font-semibold">Consultant Coordination</h3>
                 {canUpload && <Button size="sm" variant="outline" onClick={() => selectedProjectId && addConsultant(selectedProjectId)}><Plus className="h-4 w-4 mr-1" /> Add</Button>}
               </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
               {selectedConsultants.length === 0 && <p className="text-sm text-muted-foreground">No consultants added.</p>}
               {selectedConsultants.map((c: any) => (
                 <ConsultantRow key={c.id} consultant={c} canEdit={canUpload} onSaved={refreshConsultants} />
               ))}
-            </CardContent>
-          </Card>
+            </TabsContent>
 
-          {/* Section D: GFC Checklist */}
-          {selectedProjectId && (
-            <GFCChecklist
-              projectId={selectedProjectId}
-              projectName={selectedProject?.name ?? ""}
-              designStages={designStages}
-              consultants={consultants}
-              dqs={dqs}
-              designFile={selectedDF}
-              isPrincipal={isPrincipal}
-              userId={userId}
-              userName={userName}
-              onRefresh={fetchData}
-            />
-          )}
-
-
-          {/* Section E: Drawings Library */}
-          <Card>
-            <CardHeader><CardTitle className="text-lg">E — Drawings Library</CardTitle></CardHeader>
-            <CardContent className="space-y-2">
+            <TabsContent value="drawings" className="space-y-4">
+              <h3 className="text-base font-semibold">Drawings Library</h3>
               {selectedDrawings.length === 0 && <p className="text-sm text-muted-foreground">No drawings uploaded for this project.</p>}
               {selectedDrawings.map((d: any) => (
                 <div key={d.id} className="flex items-center justify-between gap-3 p-2 rounded border border-border"
@@ -1156,8 +1168,8 @@ export default function DesignPortal() {
                   </div>
                 </div>
               ))}
-            </CardContent>
-          </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       )}
     </div>
