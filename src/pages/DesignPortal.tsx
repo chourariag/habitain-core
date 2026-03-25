@@ -23,7 +23,8 @@ import { projectCode } from "@/lib/code-generators";
 import { BriefScopeSection } from "@/components/design/BriefScopeSection";
 import { ConsultantRow } from "@/components/design/ConsultantRow";
 import { ProjectHealthCard } from "@/components/design/ProjectHealthCard";
-import { GFCChecklist } from "@/components/design/GFCChecklist";
+import { MasterQCChecklist } from "@/components/design/MasterQCChecklist";
+import { DetailLibraryTab } from "@/components/design/DetailLibraryTab";
 import { DrawingApprovalSheet } from "@/components/design/DrawingApprovalSheet";
 import { DQStatsBar, DQEscalationBadge } from "@/components/design/DQStatsBar";
 
