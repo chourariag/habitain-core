@@ -1002,20 +1002,24 @@ export default function DesignPortal() {
               {filteredDrawings.map((d: any) => (
                 <div key={d.id} className="bg-card border border-border rounded-lg p-3 flex items-center justify-between gap-3 flex-wrap"
                   style={d.status === "archived" ? { opacity: 0.6 } : {}}>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 shrink-0" style={{ color: "#006039" }} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <FileText className="h-4 w-4 shrink-0" style={{ color: "hsl(var(--primary))" }} />
                       <span className="font-mono text-sm font-semibold">{d.drawing_id_code}</span>
-                      <Badge variant="outline" style={d.status === "active" ? { backgroundColor: "#E8F2ED", color: "#006039", border: "none" } : { backgroundColor: "#F5F5F5", color: "#999999", border: "none" }}>
+                      {d.drawing_title && <span className="text-xs text-muted-foreground">— {d.drawing_title}</span>}
+                      <Badge variant="outline" style={d.status === "active" ? { backgroundColor: "hsl(var(--accent))", color: "hsl(var(--primary))", border: "none" } : { backgroundColor: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", border: "none" }}>
                         {d.status === "active" ? "Active" : `Archived R${d.revision}`}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-[10px]" style={{ color: "#999999" }}>
+                    <div className="flex items-center gap-3 mt-1 text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
                       <span>{projectMap[d.project_id]?.name}</span>
                       <span>{d.drawing_type}</span>
                       <span>R{d.revision}</span>
                       <span>{d.uploaded_by_name}</span>
                       <span>{formatDistanceToNow(new Date(d.created_at), { addSuffix: true })}</span>
+                    </div>
+                    <div className="mt-1.5">
+                      <DrawingApprovalSheet drawing={d} isArchitect={isArchitect} userId={userId} userName={userName} onRefresh={fetchData} />
                     </div>
                   </div>
                   <a href={d.file_url} target="_blank" rel="noopener noreferrer">
