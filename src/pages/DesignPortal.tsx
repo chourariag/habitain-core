@@ -1033,7 +1033,17 @@ export default function DesignPortal() {
       ) : (
         /* ═══════ TAB 2: Project Design File ═══════ */
         <div className="space-y-6">
-          {/* Section A: Brief & Scope — isolated component with local state */}
+          {/* Project Health Card */}
+          {selectedProject && (
+            <ProjectHealthCard
+              project={selectedProject}
+              designFile={selectedDF}
+              designStages={designStages}
+              architects={[]}
+            />
+          )}
+
+          {/* Section A: Brief & Scope */}
           <BriefScopeSection
             designFile={selectedDF}
             projectId={selectedProjectId!}
@@ -1094,25 +1104,20 @@ export default function DesignPortal() {
           </Card>
 
           {/* Section D: GFC Checklist */}
-          <Card>
-            <CardHeader><CardTitle className="text-lg">D — GFC Checklist</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              {selectedProjectId && getGFCChecklist(selectedProjectId).map((item, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm">
-                  {item.met ? <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: "#006039" }} /> : <XCircle className="h-4 w-4 shrink-0" style={{ color: "#F40009" }} />}
-                  <span style={{ color: item.met ? "#1A1A1A" : "#999999" }}>{item.label}</span>
-                  {item.auto && <span className="text-[10px] ml-1" style={{ color: "#999999" }}>(auto)</span>}
-                </div>
-              ))}
-              {isPrincipal && selectedProjectId && (
-                <Button
-                  className="mt-3"
-                  style={{ backgroundColor: "#006039" }}
-                  disabled={!getGFCChecklist(selectedProjectId).every((c) => c.met)}
-                  onClick={() => issueGFC(selectedProjectId)}
-                >
-                  Issue GFC
-                </Button>
+          {selectedProjectId && (
+            <GFCChecklist
+              projectId={selectedProjectId}
+              projectName={selectedProject?.name ?? ""}
+              designStages={designStages}
+              consultants={consultants}
+              dqs={dqs}
+              designFile={selectedDF}
+              isPrincipal={isPrincipal}
+              userId={userId}
+              userName={userName}
+              onRefresh={fetchData}
+            />
+          )}
               )}
             </CardContent>
           </Card>
