@@ -15,13 +15,17 @@ import { Label } from "@/components/ui/label";
 import {
   Loader2, Search, Upload, Download, FileText, MessageSquare,
   Plus, Clock, AlertTriangle, CheckCircle2, XCircle,
-  ArrowLeft, Flame
+  ArrowLeft, Flame, Eye
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { projectCode } from "@/lib/code-generators";
 import { BriefScopeSection } from "@/components/design/BriefScopeSection";
 import { ConsultantRow } from "@/components/design/ConsultantRow";
+import { ProjectHealthCard } from "@/components/design/ProjectHealthCard";
+import { GFCChecklist } from "@/components/design/GFCChecklist";
+import { DrawingApprovalSheet } from "@/components/design/DrawingApprovalSheet";
+import { DQStatsBar, DQEscalationBadge } from "@/components/design/DQStatsBar";
 
 const DRAWING_TYPES = ["Architectural", "Structural", "MEP", "BOQ Reference", "Site Plan"];
 const DESIGN_STAGES_ORDER = ["Concept Design", "Schematic Design", "Design Development", "Working Drawings", "GFC Issue"];
@@ -283,7 +287,7 @@ export default function DesignPortal() {
     return { backgroundColor: "#F5F5F5", color: "#666666" };
   };
 
-  const dqStatusLabel = (s: string) => ({ open: "Open", under_review: "Under Review", resolved: "Resolved" }[s] ?? s);
+  const dqStatusLabel = (s: string) => ({ open: "Open", under_review: "In Review", resolved: "Resolved", closed: "Closed" }[s] ?? s);
 
   // ──── Filtered data ────
   const filteredDqs = useMemo(() => {
@@ -815,6 +819,8 @@ export default function DesignPortal() {
                 {projects.map((p) => {
                   const stage = getDesignStage(p.id);
                   const pDqs = dqs.filter((d: any) => d.project_id === p.id && d.status === "open").length;
+                  const df = designFiles.find((d: any) => d.project_id === p.id);
+                  const isDesignOnly = df?.is_design_only !== false;
                   return (
                     <button key={p.id} type="button" onClick={() => initProjectDesignFile(p.id)}
                       className="w-full text-left bg-card border border-border rounded-lg p-4 hover:border-primary/40 transition-colors">
@@ -824,6 +830,12 @@ export default function DesignPortal() {
                           <p className="text-xs" style={{ color: "#666666" }}>{p.client_name || "No client"}</p>
                         </div>
                         <div className="flex items-center gap-2">
+                          <Badge variant="outline" style={isDesignOnly
+                            ? { backgroundColor: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", border: "none" }
+                            : { backgroundColor: "hsl(var(--accent))", color: "hsl(var(--primary))", border: "none" }
+                          } className="text-[10px]">
+                            {isDesignOnly ? "Design Only" : "Linked"}
+                          </Badge>
                           {pDqs > 0 && <Badge variant="outline" style={{ backgroundColor: "#FFF0F0", color: "#F40009", border: "none" }}>{pDqs} DQ</Badge>}
                           <Badge variant="outline" style={stageStatusStyle(stage === "gfc_issued" ? "client_approved" : "in_progress")}>
                             {stage.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
@@ -839,6 +851,7 @@ export default function DesignPortal() {
 
           {/* ═══════ TAB 3: DQ Register ═══════ */}
           <TabsContent value="dq-register" className="space-y-4">
+            <DQStatsBar dqs={dqs} />
             <div className="flex flex-wrap gap-2">
               <Select value={dqFilterProject} onValueChange={setDqFilterProject}>
                 <SelectTrigger className="w-40"><SelectValue placeholder="Project" /></SelectTrigger>
@@ -936,6 +949,7 @@ export default function DesignPortal() {
                           <span className="text-xs truncate" style={{ color: "#666666" }}>{projectMap[dq.project_id]?.name}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
+                          <DQEscalationBadge dq={dq} />
                           <Badge variant="outline" style={urgencyStyle(dq.urgency ?? "Normal")} className="text-[10px]">{dq.urgency ?? "Normal"}</Badge>
                           <Badge variant="outline" style={dqStatusStyle(dq.status)} className="text-[10px]">{dqStatusLabel(dq.status)}</Badge>
                         </div>
@@ -988,20 +1002,24 @@ export default function DesignPortal() {
               {filteredDrawings.map((d: any) => (
                 <div key={d.id} className="bg-card border border-border rounded-lg p-3 flex items-center justify-between gap-3 flex-wrap"
                   style={d.status === "archived" ? { opacity: 0.6 } : {}}>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 shrink-0" style={{ color: "#006039" }} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <FileText className="h-4 w-4 shrink-0" style={{ color: "hsl(var(--primary))" }} />
                       <span className="font-mono text-sm font-semibold">{d.drawing_id_code}</span>
-                      <Badge variant="outline" style={d.status === "active" ? { backgroundColor: "#E8F2ED", color: "#006039", border: "none" } : { backgroundColor: "#F5F5F5", color: "#999999", border: "none" }}>
+                      {d.drawing_title && <span className="text-xs text-muted-foreground">— {d.drawing_title}</span>}
+                      <Badge variant="outline" style={d.status === "active" ? { backgroundColor: "hsl(var(--accent))", color: "hsl(var(--primary))", border: "none" } : { backgroundColor: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", border: "none" }}>
                         {d.status === "active" ? "Active" : `Archived R${d.revision}`}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-3 mt-1 text-[10px]" style={{ color: "#999999" }}>
+                    <div className="flex items-center gap-3 mt-1 text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
                       <span>{projectMap[d.project_id]?.name}</span>
                       <span>{d.drawing_type}</span>
                       <span>R{d.revision}</span>
                       <span>{d.uploaded_by_name}</span>
                       <span>{formatDistanceToNow(new Date(d.created_at), { addSuffix: true })}</span>
+                    </div>
+                    <div className="mt-1.5">
+                      <DrawingApprovalSheet drawing={d} isArchitect={isArchitect} userId={userId} userName={userName} onRefresh={fetchData} />
                     </div>
                   </div>
                   <a href={d.file_url} target="_blank" rel="noopener noreferrer">
@@ -1015,7 +1033,17 @@ export default function DesignPortal() {
       ) : (
         /* ═══════ TAB 2: Project Design File ═══════ */
         <div className="space-y-6">
-          {/* Section A: Brief & Scope — isolated component with local state */}
+          {/* Project Health Card */}
+          {selectedProject && (
+            <ProjectHealthCard
+              project={selectedProject}
+              designFile={selectedDF}
+              designStages={designStages}
+              architects={[]}
+            />
+          )}
+
+          {/* Section A: Brief & Scope */}
           <BriefScopeSection
             designFile={selectedDF}
             projectId={selectedProjectId!}
@@ -1076,28 +1104,21 @@ export default function DesignPortal() {
           </Card>
 
           {/* Section D: GFC Checklist */}
-          <Card>
-            <CardHeader><CardTitle className="text-lg">D — GFC Checklist</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              {selectedProjectId && getGFCChecklist(selectedProjectId).map((item, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm">
-                  {item.met ? <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: "#006039" }} /> : <XCircle className="h-4 w-4 shrink-0" style={{ color: "#F40009" }} />}
-                  <span style={{ color: item.met ? "#1A1A1A" : "#999999" }}>{item.label}</span>
-                  {item.auto && <span className="text-[10px] ml-1" style={{ color: "#999999" }}>(auto)</span>}
-                </div>
-              ))}
-              {isPrincipal && selectedProjectId && (
-                <Button
-                  className="mt-3"
-                  style={{ backgroundColor: "#006039" }}
-                  disabled={!getGFCChecklist(selectedProjectId).every((c) => c.met)}
-                  onClick={() => issueGFC(selectedProjectId)}
-                >
-                  Issue GFC
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+          {selectedProjectId && (
+            <GFCChecklist
+              projectId={selectedProjectId}
+              projectName={selectedProject?.name ?? ""}
+              designStages={designStages}
+              consultants={consultants}
+              dqs={dqs}
+              designFile={selectedDF}
+              isPrincipal={isPrincipal}
+              userId={userId}
+              userName={userName}
+              onRefresh={fetchData}
+            />
+          )}
+
 
           {/* Section E: Drawings Library */}
           <Card>
