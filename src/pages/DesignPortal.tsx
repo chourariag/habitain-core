@@ -1116,8 +1116,7 @@ export default function DesignPortal() {
               userId={userId}
               userName={userName}
               onRefresh={fetchData}
-            />
-
+          )}
 
 
           {/* Section E: Drawings Library */}
