@@ -1,4 +1,5 @@
 import type { AppRole } from "@/lib/roles";
+import { KPI_VISIBLE_ROLES } from "@/lib/kpi-helpers";
 
 // Roles that see everything
 const FULL_ACCESS: AppRole[] = ["super_admin", "managing_director"];
@@ -32,7 +33,7 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
     ...DIRECTORS, "sales_director", "finance_director", "finance_manager",
     "accounts_executive", "delivery_rm_lead",
   ],
-  performance: [], // everyone sees own KPIs
+  performance: KPI_VISIBLE_ROLES,
   admin: [
     ...DIRECTORS, "hr_executive", "head_operations",
   ],

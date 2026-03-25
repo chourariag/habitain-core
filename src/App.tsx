@@ -33,6 +33,7 @@ import ComingSoon from "@/pages/ComingSoon";
 import Finance from "@/pages/Finance";
 import KPI from "@/pages/KPI";
 import KPISettings from "@/pages/KPISettings";
+import { KPIRouteGuard } from "@/components/KPIRouteGuard";
 
 const queryClient = new QueryClient();
 
@@ -65,8 +66,8 @@ const App = () => (
                 <Route path="/amc" element={<AMCPage />} />
                 <Route path="/sales" element={<Sales />} />
                 <Route path="/finance" element={<Finance />} />
-                <Route path="/kpi" element={<KPI />} />
-                <Route path="/kpi/settings" element={<KPISettings />} />
+                <Route path="/kpi" element={<KPIRouteGuard><KPI /></KPIRouteGuard>} />
+                <Route path="/kpi/settings" element={<KPIRouteGuard><KPISettings /></KPIRouteGuard>} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/settings" element={<AppSettings />} />
                 <Route path="/profile" element={<Profile />} />
