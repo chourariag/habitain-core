@@ -8,9 +8,114 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Loader2, Plus, Wrench, Camera, X, Image as ImageIcon } from "lucide-react";
+import { Loader2, Plus, Wrench, Camera, X, Image as ImageIcon, Search, RefreshCw, Copy, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+
+/* ─── AI Analysis Types ─── */
+interface AIAnalysis {
+  summary: string;
+  root_cause: string;
+  severity: "Critical" | "High" | "Medium" | "Low";
+  severity_reason: string;
+  immediate_action: string;
+  complexity: "Simple" | "Moderate" | "Complex";
+  materials_needed: string[];
+}
+
+const SEVERITY_STYLE: Record<string, string> = {
+  Critical: "bg-[#F40009] text-white",
+  High: "bg-[#F40009]/70 text-white",
+  Medium: "bg-[#D4860A] text-white",
+  Low: "bg-[#006039] text-white",
+};
+
+const COMPLEXITY_STYLE: Record<string, string> = {
+  Simple: "bg-[#006039] text-white",
+  Moderate: "bg-[#D4860A] text-white",
+  Complex: "bg-[#F40009] text-white",
+};
+
+/* ─── AI Report Card ─── */
+function AIReportCard({ analysis, generatedAt, onRegenerate, onCopy, analysing }: {
+  analysis: AIAnalysis;
+  generatedAt: string;
+  onRegenerate: () => void;
+  onCopy: () => void;
+  analysing: boolean;
+}) {
+  const actionBullets = analysis.immediate_action
+    .split(/\n|•/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  return (
+    <div className="border rounded-lg p-4 space-y-4" style={{ borderColor: "#E0E0E0", backgroundColor: "#F7F7F7" }}>
+      <div>
+        <h4 className="font-bold text-sm" style={{ fontFamily: "Montserrat, sans-serif", color: "#1A1A1A" }}>AI Analysis Report</h4>
+        <p className="text-[10px]" style={{ color: "#999999" }}>Generated {format(new Date(generatedAt), "dd MMM yyyy, HH:mm")}</p>
+        <p className="text-[10px] italic" style={{ color: "#999999" }}>Advisory only — final assessment by R&M Manager</p>
+      </div>
+
+      {/* 1. Summary */}
+      <div>
+        <p className="text-[11px] font-bold uppercase" style={{ color: "#006039", fontFamily: "Montserrat, sans-serif" }}>Issue Summary</p>
+        <p className="text-[13px]" style={{ color: "#1A1A1A" }}>{analysis.summary}</p>
+      </div>
+
+      {/* 2. Root Cause */}
+      <div>
+        <p className="text-[11px] font-bold uppercase" style={{ color: "#006039", fontFamily: "Montserrat, sans-serif" }}>Likely Root Cause</p>
+        <p className="text-[13px]" style={{ color: "#1A1A1A" }}>{analysis.root_cause}</p>
+      </div>
+
+      {/* 3. Severity */}
+      <div>
+        <p className="text-[11px] font-bold uppercase" style={{ color: "#006039", fontFamily: "Montserrat, sans-serif" }}>Severity</p>
+        <Badge className={SEVERITY_STYLE[analysis.severity] ?? "bg-muted"}>{analysis.severity}</Badge>
+        <p className="text-[11px] mt-1" style={{ color: "#999999" }}>{analysis.severity_reason}</p>
+      </div>
+
+      {/* 4. Immediate Action */}
+      <div>
+        <p className="text-[11px] font-bold uppercase" style={{ color: "#006039", fontFamily: "Montserrat, sans-serif" }}>Recommended Immediate Action</p>
+        <ul className="list-disc list-inside text-[13px] space-y-0.5" style={{ color: "#1A1A1A" }}>
+          {actionBullets.map((b, i) => <li key={i}>{b}</li>)}
+        </ul>
+      </div>
+
+      {/* 5. Complexity */}
+      <div>
+        <p className="text-[11px] font-bold uppercase" style={{ color: "#006039", fontFamily: "Montserrat, sans-serif" }}>Repair Complexity</p>
+        <Badge className={COMPLEXITY_STYLE[analysis.complexity] ?? "bg-muted"}>{analysis.complexity}</Badge>
+      </div>
+
+      {/* 6. Materials */}
+      <div>
+        <p className="text-[11px] font-bold uppercase" style={{ color: "#006039", fontFamily: "Montserrat, sans-serif" }}>Materials Likely Needed</p>
+        <div className="flex flex-wrap gap-1.5 mt-1">
+          {analysis.materials_needed.map((m, i) => (
+            <span key={i} className="px-2 py-0.5 rounded-full text-[12px]" style={{ backgroundColor: "#F7F7F7", border: "1px solid #E0E0E0", color: "#1A1A1A" }}>{m}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={onRegenerate} disabled={analysing} className="flex-1" style={{ borderColor: "#006039", color: "#006039" }}>
+          <RefreshCw className="h-3.5 w-3.5 mr-1" /> Regenerate
+        </Button>
+        <Button variant="outline" size="sm" onClick={onCopy} className="flex-1" style={{ borderColor: "#006039", color: "#006039" }}>
+          <Copy className="h-3.5 w-3.5 mr-1" /> Copy Report
+        </Button>
+      </div>
+
+      <p className="text-[10px] italic text-center" style={{ color: "#999999" }}>
+        AI analysis is advisory only. Final assessment and decision must be made by the R&M Manager.
+      </p>
+    </div>
+  );
+}
 
 const STATUS_BADGE: Record<string, string> = {
   open: "bg-warning text-warning-foreground",
