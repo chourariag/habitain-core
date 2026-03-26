@@ -2743,6 +2743,8 @@ export type Database = {
       }
       rm_tickets: {
         Row: {
+          ai_analysis: Json | null
+          ai_analysis_generated_at: string | null
           client_name: string
           client_signoff_name: string | null
           completed_at: string | null
@@ -2767,6 +2769,8 @@ export type Database = {
           visit_scheduled_date: string | null
         }
         Insert: {
+          ai_analysis?: Json | null
+          ai_analysis_generated_at?: string | null
           client_name: string
           client_signoff_name?: string | null
           completed_at?: string | null
@@ -2791,6 +2795,8 @@ export type Database = {
           visit_scheduled_date?: string | null
         }
         Update: {
+          ai_analysis?: Json | null
+          ai_analysis_generated_at?: string | null
           client_name?: string
           client_signoff_name?: string | null
           completed_at?: string | null
