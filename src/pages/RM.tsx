@@ -8,9 +8,114 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Loader2, Plus, Wrench, Camera, X, Image as ImageIcon } from "lucide-react";
+import { Loader2, Plus, Wrench, Camera, X, Image as ImageIcon, Search, RefreshCw, Copy, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+
+/* ─── AI Analysis Types ─── */
+interface AIAnalysis {
+  summary: string;
+  root_cause: string;
+  severity: "Critical" | "High" | "Medium" | "Low";
+  severity_reason: string;
+  immediate_action: string;
+  complexity: "Simple" | "Moderate" | "Complex";
+  materials_needed: string[];
+}
+
+const SEVERITY_STYLE: Record<string, string> = {
+  Critical: "bg-[#F40009] text-white",
+  High: "bg-[#F40009]/70 text-white",
+  Medium: "bg-[#D4860A] text-white",
+  Low: "bg-[#006039] text-white",
+};
+
+const COMPLEXITY_STYLE: Record<string, string> = {
+  Simple: "bg-[#006039] text-white",
+  Moderate: "bg-[#D4860A] text-white",
+  Complex: "bg-[#F40009] text-white",
+};
+
+/* ─── AI Report Card ─── */
+function AIReportCard({ analysis, generatedAt, onRegenerate, onCopy, analysing }: {
+  analysis: AIAnalysis;
+  generatedAt: string;
+  onRegenerate: () => void;
+  onCopy: () => void;
+  analysing: boolean;
+}) {
+  const actionBullets = analysis.immediate_action
+    .split(/\n|•/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  return (
+    <div className="border rounded-lg p-4 space-y-4" style={{ borderColor: "#E0E0E0", backgroundColor: "#F7F7F7" }}>
+      <div>
+        <h4 className="font-bold text-sm" style={{ fontFamily: "Montserrat, sans-serif", color: "#1A1A1A" }}>AI Analysis Report</h4>
+        <p className="text-[10px]" style={{ color: "#999999" }}>Generated {format(new Date(generatedAt), "dd MMM yyyy, HH:mm")}</p>
+        <p className="text-[10px] italic" style={{ color: "#999999" }}>Advisory only — final assessment by R&M Manager</p>
+      </div>
+
+      {/* 1. Summary */}
+      <div>
+        <p className="text-[11px] font-bold uppercase" style={{ color: "#006039", fontFamily: "Montserrat, sans-serif" }}>Issue Summary</p>
+        <p className="text-[13px]" style={{ color: "#1A1A1A" }}>{analysis.summary}</p>
+      </div>
+
+      {/* 2. Root Cause */}
+      <div>
+        <p className="text-[11px] font-bold uppercase" style={{ color: "#006039", fontFamily: "Montserrat, sans-serif" }}>Likely Root Cause</p>
+        <p className="text-[13px]" style={{ color: "#1A1A1A" }}>{analysis.root_cause}</p>
+      </div>
+
+      {/* 3. Severity */}
+      <div>
+        <p className="text-[11px] font-bold uppercase" style={{ color: "#006039", fontFamily: "Montserrat, sans-serif" }}>Severity</p>
+        <Badge className={SEVERITY_STYLE[analysis.severity] ?? "bg-muted"}>{analysis.severity}</Badge>
+        <p className="text-[11px] mt-1" style={{ color: "#999999" }}>{analysis.severity_reason}</p>
+      </div>
+
+      {/* 4. Immediate Action */}
+      <div>
+        <p className="text-[11px] font-bold uppercase" style={{ color: "#006039", fontFamily: "Montserrat, sans-serif" }}>Recommended Immediate Action</p>
+        <ul className="list-disc list-inside text-[13px] space-y-0.5" style={{ color: "#1A1A1A" }}>
+          {actionBullets.map((b, i) => <li key={i}>{b}</li>)}
+        </ul>
+      </div>
+
+      {/* 5. Complexity */}
+      <div>
+        <p className="text-[11px] font-bold uppercase" style={{ color: "#006039", fontFamily: "Montserrat, sans-serif" }}>Repair Complexity</p>
+        <Badge className={COMPLEXITY_STYLE[analysis.complexity] ?? "bg-muted"}>{analysis.complexity}</Badge>
+      </div>
+
+      {/* 6. Materials */}
+      <div>
+        <p className="text-[11px] font-bold uppercase" style={{ color: "#006039", fontFamily: "Montserrat, sans-serif" }}>Materials Likely Needed</p>
+        <div className="flex flex-wrap gap-1.5 mt-1">
+          {analysis.materials_needed.map((m, i) => (
+            <span key={i} className="px-2 py-0.5 rounded-full text-[12px]" style={{ backgroundColor: "#F7F7F7", border: "1px solid #E0E0E0", color: "#1A1A1A" }}>{m}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex gap-2">
+        <Button variant="outline" size="sm" onClick={onRegenerate} disabled={analysing} className="flex-1" style={{ borderColor: "#006039", color: "#006039" }}>
+          <RefreshCw className="h-3.5 w-3.5 mr-1" /> Regenerate
+        </Button>
+        <Button variant="outline" size="sm" onClick={onCopy} className="flex-1" style={{ borderColor: "#006039", color: "#006039" }}>
+          <Copy className="h-3.5 w-3.5 mr-1" /> Copy Report
+        </Button>
+      </div>
+
+      <p className="text-[10px] italic text-center" style={{ color: "#999999" }}>
+        AI analysis is advisory only. Final assessment and decision must be made by the R&M Manager.
+      </p>
+    </div>
+  );
+}
 
 const STATUS_BADGE: Record<string, string> = {
   open: "bg-warning text-warning-foreground",
@@ -150,6 +255,11 @@ export default function RMPage() {
   const [submitting, setSubmitting] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [analysing, setAnalysing] = useState(false);
+  const [aiReport, setAiReport] = useState<AIAnalysis | null>(null);
+  const [aiReportTime, setAiReportTime] = useState<string | null>(null);
+  const [aiRawText, setAiRawText] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const canRaise = CAN_RAISE.includes(userRole ?? "");
   const canEstimate = CAN_ESTIMATE.includes(userRole ?? "");
@@ -180,6 +290,71 @@ export default function RMPage() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Load saved AI report when detail ticket opens
+  useEffect(() => {
+    if (detailTicket?.ai_analysis) {
+      setAiReport(detailTicket.ai_analysis as AIAnalysis);
+      setAiReportTime(detailTicket.ai_analysis_generated_at ?? null);
+      setAiRawText(null);
+      setAiError(null);
+    } else {
+      setAiReport(null);
+      setAiReportTime(null);
+      setAiRawText(null);
+      setAiError(null);
+    }
+  }, [detailTicket?.id]);
+
+  const runAnalysis = async (ticketId: string, description: string, photoUrls: string[]) => {
+    if (!photoUrls?.length) {
+      toast.error("Please upload at least one photo of the issue before analysing.");
+      return;
+    }
+    setAnalysing(true);
+    setAiError(null);
+    setAiRawText(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("rm-analysis", {
+        body: { issue_description: description, image_urls: photoUrls },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      const now = new Date().toISOString();
+
+      if (data.analysis) {
+        setAiReport(data.analysis);
+        setAiReportTime(now);
+        // Save to DB
+        await (supabase.from("rm_tickets" as any) as any).update({
+          ai_analysis: data.analysis,
+          ai_analysis_generated_at: now,
+        }).eq("id", ticketId);
+      } else if (data.raw_text) {
+        setAiRawText(data.raw_text);
+        setAiReport(null);
+      }
+    } catch (err: any) {
+      console.error("AI analysis error:", err);
+      setAiError(err.message || "Analysis failed");
+    } finally {
+      setAnalysing(false);
+    }
+  };
+
+  const copyReport = () => {
+    if (!aiReport) return;
+    const text = `AI Analysis Report
+Summary: ${aiReport.summary}
+Root Cause: ${aiReport.root_cause}
+Severity: ${aiReport.severity} — ${aiReport.severity_reason}
+Immediate Action: ${aiReport.immediate_action}
+Complexity: ${aiReport.complexity}
+Materials: ${aiReport.materials_needed.join(", ")}`;
+    navigator.clipboard.writeText(text);
+    toast.success("Copied!");
+  };
 
   const handleCreate = async () => {
     if (!form.project_id || !form.issue_description) { toast.error("Fill required fields"); return; }
@@ -395,6 +570,75 @@ export default function RMPage() {
                 <div>
                   <p className="text-xs mb-1" style={{ color: "#666666" }}>Photos</p>
                   <ImagePreview urls={detailTicket.photo_urls} />
+                </div>
+              )}
+
+              {/* AI Analysis Section */}
+              {(detailTicket.photo_urls?.length ?? 0) > 0 && (
+                <div className="space-y-3">
+                  {aiReportTime && !analysing && (
+                    <p className="text-[11px]" style={{ color: "#999999" }}>
+                      Last analysed {format(new Date(aiReportTime), "dd MMM yyyy, HH:mm")}
+                    </p>
+                  )}
+
+                  {!aiReport && !aiRawText && !aiError && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      style={{ borderColor: "#006039", color: "#006039" }}
+                      onClick={() => runAnalysis(detailTicket.id, detailTicket.issue_description, detailTicket.photo_urls)}
+                      disabled={analysing}
+                    >
+                      {analysing ? (
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Analysing issue...</>
+                      ) : (
+                        <><Search className="h-4 w-4 mr-2" /> 🔍 Analyse Issue with AI</>
+                      )}
+                    </Button>
+                  )}
+
+                  {analysing && (
+                    <div className="flex items-center justify-center py-4 gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#006039" }} />
+                      <span className="text-sm" style={{ color: "#666666" }}>Analysing issue...</span>
+                    </div>
+                  )}
+
+                  {aiError && (
+                    <div className="border rounded-lg p-4 space-y-2" style={{ borderColor: "#F40009", backgroundColor: "#FFF5F5" }}>
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4" style={{ color: "#F40009" }} />
+                        <p className="text-sm font-medium" style={{ color: "#F40009" }}>Analysis failed</p>
+                      </div>
+                      <p className="text-xs" style={{ color: "#666666" }}>{aiError}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        style={{ borderColor: "#F40009", color: "#F40009" }}
+                        onClick={() => { setAiError(null); runAnalysis(detailTicket.id, detailTicket.issue_description, detailTicket.photo_urls); }}
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  )}
+
+                  {aiRawText && !aiReport && (
+                    <div className="border rounded-lg p-4" style={{ borderColor: "#E0E0E0", backgroundColor: "#F7F7F7" }}>
+                      <p className="text-[11px] font-bold uppercase mb-2" style={{ color: "#D4860A" }}>Raw Analysis</p>
+                      <p className="text-[13px] whitespace-pre-wrap" style={{ color: "#1A1A1A" }}>{aiRawText}</p>
+                    </div>
+                  )}
+
+                  {aiReport && aiReportTime && (
+                    <AIReportCard
+                      analysis={aiReport}
+                      generatedAt={aiReportTime}
+                      onRegenerate={() => runAnalysis(detailTicket.id, detailTicket.issue_description, detailTicket.photo_urls)}
+                      onCopy={copyReport}
+                      analysing={analysing}
+                    />
+                  )}
                 </div>
               )}
 
