@@ -573,7 +573,75 @@ Materials: ${aiReport.materials_needed.join(", ")}`;
                 </div>
               )}
 
-              {detailTicket.cost_estimate != null && (
+              {/* AI Analysis Section */}
+              {(detailTicket.photo_urls?.length ?? 0) > 0 && (
+                <div className="space-y-3">
+                  {aiReportTime && !analysing && (
+                    <p className="text-[11px]" style={{ color: "#999999" }}>
+                      Last analysed {format(new Date(aiReportTime), "dd MMM yyyy, HH:mm")}
+                    </p>
+                  )}
+
+                  {!aiReport && !aiRawText && !aiError && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      style={{ borderColor: "#006039", color: "#006039" }}
+                      onClick={() => runAnalysis(detailTicket.id, detailTicket.issue_description, detailTicket.photo_urls)}
+                      disabled={analysing}
+                    >
+                      {analysing ? (
+                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Analysing issue...</>
+                      ) : (
+                        <><Search className="h-4 w-4 mr-2" /> 🔍 Analyse Issue with AI</>
+                      )}
+                    </Button>
+                  )}
+
+                  {analysing && (
+                    <div className="flex items-center justify-center py-4 gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#006039" }} />
+                      <span className="text-sm" style={{ color: "#666666" }}>Analysing issue...</span>
+                    </div>
+                  )}
+
+                  {aiError && (
+                    <div className="border rounded-lg p-4 space-y-2" style={{ borderColor: "#F40009", backgroundColor: "#FFF5F5" }}>
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4" style={{ color: "#F40009" }} />
+                        <p className="text-sm font-medium" style={{ color: "#F40009" }}>Analysis failed</p>
+                      </div>
+                      <p className="text-xs" style={{ color: "#666666" }}>{aiError}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        style={{ borderColor: "#F40009", color: "#F40009" }}
+                        onClick={() => { setAiError(null); runAnalysis(detailTicket.id, detailTicket.issue_description, detailTicket.photo_urls); }}
+                      >
+                        Retry
+                      </Button>
+                    </div>
+                  )}
+
+                  {aiRawText && !aiReport && (
+                    <div className="border rounded-lg p-4" style={{ borderColor: "#E0E0E0", backgroundColor: "#F7F7F7" }}>
+                      <p className="text-[11px] font-bold uppercase mb-2" style={{ color: "#D4860A" }}>Raw Analysis</p>
+                      <p className="text-[13px] whitespace-pre-wrap" style={{ color: "#1A1A1A" }}>{aiRawText}</p>
+                    </div>
+                  )}
+
+                  {aiReport && aiReportTime && (
+                    <AIReportCard
+                      analysis={aiReport}
+                      generatedAt={aiReportTime}
+                      onRegenerate={() => runAnalysis(detailTicket.id, detailTicket.issue_description, detailTicket.photo_urls)}
+                      onCopy={copyReport}
+                      analysing={analysing}
+                    />
+                  )}
+                </div>
+              )}
+
                 <div><p className="text-xs" style={{ color: "#666666" }}>Cost Estimate</p><p className="font-semibold" style={{ color: "#1A1A1A" }}>₹{Number(detailTicket.cost_estimate).toLocaleString()}</p></div>
               )}
               {detailTicket.visit_scheduled_date && (
