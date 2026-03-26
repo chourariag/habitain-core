@@ -291,6 +291,71 @@ export default function RMPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Load saved AI report when detail ticket opens
+  useEffect(() => {
+    if (detailTicket?.ai_analysis) {
+      setAiReport(detailTicket.ai_analysis as AIAnalysis);
+      setAiReportTime(detailTicket.ai_analysis_generated_at ?? null);
+      setAiRawText(null);
+      setAiError(null);
+    } else {
+      setAiReport(null);
+      setAiReportTime(null);
+      setAiRawText(null);
+      setAiError(null);
+    }
+  }, [detailTicket?.id]);
+
+  const runAnalysis = async (ticketId: string, description: string, photoUrls: string[]) => {
+    if (!photoUrls?.length) {
+      toast.error("Please upload at least one photo of the issue before analysing.");
+      return;
+    }
+    setAnalysing(true);
+    setAiError(null);
+    setAiRawText(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("rm-analysis", {
+        body: { issue_description: description, image_urls: photoUrls },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      const now = new Date().toISOString();
+
+      if (data.analysis) {
+        setAiReport(data.analysis);
+        setAiReportTime(now);
+        // Save to DB
+        await (supabase.from("rm_tickets" as any) as any).update({
+          ai_analysis: data.analysis,
+          ai_analysis_generated_at: now,
+        }).eq("id", ticketId);
+      } else if (data.raw_text) {
+        setAiRawText(data.raw_text);
+        setAiReport(null);
+      }
+    } catch (err: any) {
+      console.error("AI analysis error:", err);
+      setAiError(err.message || "Analysis failed");
+    } finally {
+      setAnalysing(false);
+    }
+  };
+
+  const copyReport = () => {
+    if (!aiReport) return;
+    const text = `AI Analysis Report
+Summary: ${aiReport.summary}
+Root Cause: ${aiReport.root_cause}
+Severity: ${aiReport.severity} — ${aiReport.severity_reason}
+Immediate Action: ${aiReport.immediate_action}
+Complexity: ${aiReport.complexity}
+Materials: ${aiReport.materials_needed.join(", ")}`;
+    navigator.clipboard.writeText(text);
+    toast.success("Copied!");
+  };
+
   const handleCreate = async () => {
     if (!form.project_id || !form.issue_description) { toast.error("Fill required fields"); return; }
     setSubmitting(true);
