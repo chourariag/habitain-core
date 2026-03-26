@@ -255,6 +255,11 @@ export default function RMPage() {
   const [submitting, setSubmitting] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [analysing, setAnalysing] = useState(false);
+  const [aiReport, setAiReport] = useState<AIAnalysis | null>(null);
+  const [aiReportTime, setAiReportTime] = useState<string | null>(null);
+  const [aiRawText, setAiRawText] = useState<string | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const canRaise = CAN_RAISE.includes(userRole ?? "");
   const canEstimate = CAN_ESTIMATE.includes(userRole ?? "");
