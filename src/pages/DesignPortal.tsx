@@ -713,8 +713,8 @@ export default function DesignPortal() {
           <ScrollableTabsWrapper>
             <TabsList>
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-              <TabsTrigger value="dq-register">Design Queries</TabsTrigger>
               <TabsTrigger value="drawings-register">Drawings</TabsTrigger>
+              <TabsTrigger value="dq-register">Design Queries</TabsTrigger>
             </TabsList>
           </ScrollableTabsWrapper>
 
