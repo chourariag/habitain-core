@@ -642,6 +642,7 @@ Materials: ${aiReport.materials_needed.join(", ")}`;
                 </div>
               )}
 
+              {detailTicket.cost_estimate != null && (
                 <div><p className="text-xs" style={{ color: "#666666" }}>Cost Estimate</p><p className="font-semibold" style={{ color: "#1A1A1A" }}>₹{Number(detailTicket.cost_estimate).toLocaleString()}</p></div>
               )}
               {detailTicket.visit_scheduled_date && (
