@@ -15,6 +15,7 @@ import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPa
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
+import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import type { Tables } from "@/integrations/supabase/types";
 
 function SiteHubContent() {
@@ -154,6 +155,9 @@ function SiteHubContent() {
     <div className="space-y-0">
       <MobileProjectSwitcher label="Project" />
       <div className="p-4 md:p-6 space-y-6">
+      {selectedProjectId && selectedProject && (
+        <ProjectChatButton projectId={selectedProjectId} projectName={selectedProject.name} projectType="production" />
+      )}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "#1A1A1A" }}>Site Hub</h1>

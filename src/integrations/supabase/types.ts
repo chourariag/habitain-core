@@ -2463,6 +2463,42 @@ export type Database = {
           },
         ]
       }
+      project_messages: {
+        Row: {
+          attachment_urls: string[] | null
+          created_at: string
+          id: string
+          message_text: string | null
+          project_id: string
+          project_type: string
+          read_by: string[] | null
+          sender_id: string
+          sender_name: string
+        }
+        Insert: {
+          attachment_urls?: string[] | null
+          created_at?: string
+          id?: string
+          message_text?: string | null
+          project_id: string
+          project_type?: string
+          read_by?: string[] | null
+          sender_id: string
+          sender_name: string
+        }
+        Update: {
+          attachment_urls?: string[] | null
+          created_at?: string
+          id?: string
+          message_text?: string | null
+          project_id?: string
+          project_type?: string
+          read_by?: string[] | null
+          sender_id?: string
+          sender_name?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           client_email: string | null

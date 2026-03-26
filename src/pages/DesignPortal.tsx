@@ -27,6 +27,7 @@ import { MasterQCChecklist } from "@/components/design/MasterQCChecklist";
 import { DetailLibraryTab } from "@/components/design/DetailLibraryTab";
 import { DrawingApprovalSheet } from "@/components/design/DrawingApprovalSheet";
 import { DQStatsBar, DQEscalationBadge } from "@/components/design/DQStatsBar";
+import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 
 const DRAWING_TYPES = ["Architectural", "Structural", "MEP", "BOQ Reference", "Site Plan"];
 const DESIGN_STAGES_ORDER = ["Concept Design", "Schematic Design", "Design Development", "Working Drawings", "GFC Issue"];
@@ -576,6 +577,9 @@ export default function DesignPortal() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
+      {selectedProjectId && selectedProject && (
+        <ProjectChatButton projectId={selectedProjectId} projectName={selectedProject.name} projectType="design" />
+      )}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3">
           {activeTab === "project-file" && (
