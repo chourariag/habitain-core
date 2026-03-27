@@ -2507,9 +2507,11 @@ export type Database = {
           construction_type: string | null
           created_at: string | null
           created_by: string | null
+          division: string
           est_completion: string | null
           id: string
           is_archived: boolean | null
+          is_design_only: boolean
           location: string | null
           name: string
           site_lat: number | null
@@ -2528,9 +2530,11 @@ export type Database = {
           construction_type?: string | null
           created_at?: string | null
           created_by?: string | null
+          division?: string
           est_completion?: string | null
           id?: string
           is_archived?: boolean | null
+          is_design_only?: boolean
           location?: string | null
           name: string
           site_lat?: number | null
@@ -2549,9 +2553,11 @@ export type Database = {
           construction_type?: string | null
           created_at?: string | null
           created_by?: string | null
+          division?: string
           est_completion?: string | null
           id?: string
           is_archived?: boolean | null
+          is_design_only?: boolean
           location?: string | null
           name?: string
           site_lat?: number | null

@@ -61,6 +61,20 @@ export function ProjectCommandCard({
           <div className="min-w-0 flex-1">
             <p className="font-bold text-base leading-tight" style={{ color: "#1A1A1A" }}>{project.name}</p>
             {project.client_name && <p className="text-xs mt-0.5" style={{ color: "#666666" }}>{project.client_name}</p>}
+            <div className="flex flex-wrap items-center gap-1 mt-1">
+              {(project as any).division && (
+                <Badge className="text-[9px] px-1.5 py-0 border-0" style={{
+                  backgroundColor: (project as any).division === "ADS" ? "#66666620" : "#00603920",
+                  color: (project as any).division === "ADS" ? "#666666" : "#006039",
+                }}>{(project as any).division}</Badge>
+              )}
+              {(project as any).is_design_only && (
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0 text-muted-foreground">Design Only</Badge>
+              )}
+              {project.construction_type && (
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0 text-muted-foreground">{project.construction_type}</Badge>
+              )}
+            </div>
             <p className="text-[10px] mt-0.5" style={{ color: "#999999" }}>
               {[project.construction_type, project.location].filter(Boolean).join(" · ")}
             </p>
