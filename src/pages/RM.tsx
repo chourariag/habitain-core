@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Loader2, Plus, Wrench, Camera, X, Image as ImageIcon } from "lucide-react";
+import { Loader2, Plus, Wrench, Camera, X, Image as ImageIcon, Sparkles, Copy, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -32,7 +32,7 @@ const CAN_ESTIMATE = ["costing_engineer", "super_admin", "managing_director"];
 const CAN_SCHEDULE = ["planning_engineer", "super_admin", "managing_director"];
 const CAN_COMPLETE = ["delivery_rm_lead", "super_admin", "managing_director"];
 
-function ImageUploader({ images, setImages, ticketId }: { images: File[]; setImages: (f: File[]) => void; ticketId?: string }) {
+function ImageUploader({ images, setImages }: { images: File[]; setImages: (f: File[]) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = (files: FileList | null) => {
@@ -135,6 +135,108 @@ async function uploadImages(files: File[], ticketId: string): Promise<string[]> 
   return urls;
 }
 
+interface AIReport {
+  summary: string;
+  severity: string;
+  rootCause: string;
+  materials: string[];
+  repairSteps: string[];
+  estimatedDuration: string;
+  generatedAt?: string;
+  model?: string;
+}
+
+const SEVERITY_STYLE: Record<string, { bg: string; color: string }> = {
+  High: { bg: "#FFF0F0", color: "#F40009" },
+  Medium: { bg: "#FFF8E8", color: "#D4860A" },
+  Low: { bg: "#E8F2ED", color: "#006039" },
+};
+
+function AIReportCard({ report, onCopy }: { report: AIReport; onCopy: () => void }) {
+  const sev = SEVERITY_STYLE[report.severity] ?? SEVERITY_STYLE["Medium"];
+  return (
+    <div className="space-y-3 rounded-lg border p-4" style={{ borderColor: "#E0E0E0", backgroundColor: "#FAFAFA" }}>
+      {/* Header */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4" style={{ color: "#006039" }} />
+          <span className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>AI Analysis Report</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span
+            className="text-xs font-semibold px-2 py-0.5 rounded-full"
+            style={{ backgroundColor: sev.bg, color: sev.color }}
+          >
+            {report.severity} Severity
+          </span>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onCopy} title="Copy report">
+            <Copy className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Section 1: Summary */}
+      <div>
+        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#666666" }}>Summary</p>
+        <p className="text-xs" style={{ color: "#1A1A1A" }}>{report.summary}</p>
+      </div>
+
+      {/* Section 2: Root Cause */}
+      <div>
+        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#666666" }}>Root Cause</p>
+        <p className="text-xs" style={{ color: "#1A1A1A" }}>{report.rootCause}</p>
+      </div>
+
+      {/* Section 3: Recommended Materials */}
+      <div>
+        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#666666" }}>Recommended Materials</p>
+        <div className="flex flex-wrap gap-1.5">
+          {(report.materials ?? []).map((m, i) => (
+            <span
+              key={i}
+              className="text-[11px] px-2 py-0.5 rounded-full border"
+              style={{ borderColor: "#006039", color: "#006039", backgroundColor: "#E8F2ED" }}
+            >
+              {m}
+            </span>
+          ))}
+          {(!report.materials || report.materials.length === 0) && (
+            <span className="text-xs" style={{ color: "#999" }}>None specified</span>
+          )}
+        </div>
+      </div>
+
+      {/* Section 4: Repair Steps */}
+      <div>
+        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#666666" }}>Repair Steps</p>
+        <ol className="space-y-1">
+          {(report.repairSteps ?? []).map((step, i) => (
+            <li key={i} className="text-xs" style={{ color: "#1A1A1A" }}>{step}</li>
+          ))}
+          {(!report.repairSteps || report.repairSteps.length === 0) && (
+            <li className="text-xs" style={{ color: "#999" }}>No steps provided</li>
+          )}
+        </ol>
+      </div>
+
+      {/* Section 5: Estimated Duration */}
+      <div>
+        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#666666" }}>Estimated Duration</p>
+        <p className="text-xs" style={{ color: "#1A1A1A" }}>{report.estimatedDuration || "—"}</p>
+      </div>
+
+      {/* Section 6: Metadata / Disclaimer */}
+      <div className="border-t pt-2" style={{ borderColor: "#E0E0E0" }}>
+        <p className="text-[10px] italic" style={{ color: "#999999" }}>
+          AI-generated analysis using {report.model ?? "claude-sonnet-4-20250514"}.
+          {report.generatedAt && ` Generated ${format(new Date(report.generatedAt), "dd MMM yyyy, HH:mm")}.`}
+          {" "}This report is advisory only — always verify on-site before proceeding.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function RMPage() {
   const [tickets, setTickets] = useState<any[]>([]);
   const [projects, setProjects] = useState<Record<string, string>>({});
@@ -150,6 +252,11 @@ export default function RMPage() {
   const [submitting, setSubmitting] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+
+  // AI analysis state
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiReport, setAiReport] = useState<AIReport | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
 
   const canRaise = CAN_RAISE.includes(userRole ?? "");
   const canEstimate = CAN_ESTIMATE.includes(userRole ?? "");
@@ -180,6 +287,17 @@ export default function RMPage() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // When a ticket is opened, load existing ai_analysis
+  useEffect(() => {
+    if (detailTicket) {
+      setAiReport(detailTicket.ai_analysis ?? null);
+      setAiError(null);
+    } else {
+      setAiReport(null);
+      setAiError(null);
+    }
+  }, [detailTicket]);
 
   const handleCreate = async () => {
     if (!form.project_id || !form.issue_description) { toast.error("Fill required fields"); return; }
@@ -278,6 +396,75 @@ export default function RMPage() {
     } catch (err: any) { toast.error(err.message); } finally { setSubmitting(false); }
   };
 
+  const handleAnalyseWithAI = async () => {
+    if (!detailTicket) return;
+    const photoUrls: string[] = detailTicket.photo_urls ?? [];
+    if (photoUrls.length === 0) {
+      toast.error("Upload at least one photo before running AI analysis");
+      return;
+    }
+
+    setAiLoading(true);
+    setAiError(null);
+    setAiReport(null);
+
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) throw new Error("Not authenticated");
+
+      const { data, error } = await supabase.functions.invoke("rm-ai-analysis", {
+        body: {
+          imageUrls: photoUrls,
+          issueDescription: detailTicket.issue_description,
+          priority: detailTicket.priority,
+        },
+      });
+
+      if (error) throw new Error(error.message || "AI analysis failed");
+      if (data?.error) throw new Error(data.error);
+
+      const report = data as AIReport;
+      setAiReport(report);
+
+      // Save to database
+      await (supabase.from("rm_tickets" as any) as any)
+        .update({ ai_analysis: report })
+        .eq("id", detailTicket.id);
+
+      // Update local state so it persists on revisit
+      setDetailTicket((prev: any) => ({ ...prev, ai_analysis: report }));
+    } catch (err: any) {
+      setAiError(err.message || "AI analysis failed");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleCopyReport = () => {
+    if (!aiReport) return;
+    const text = [
+      `AI Analysis Report`,
+      `Severity: ${aiReport.severity}`,
+      ``,
+      `Summary:\n${aiReport.summary}`,
+      ``,
+      `Root Cause:\n${aiReport.rootCause}`,
+      ``,
+      `Materials: ${(aiReport.materials ?? []).join(", ")}`,
+      ``,
+      `Repair Steps:\n${(aiReport.repairSteps ?? []).join("\n")}`,
+      ``,
+      `Estimated Duration: ${aiReport.estimatedDuration}`,
+      ``,
+      `Generated: ${aiReport.generatedAt ? format(new Date(aiReport.generatedAt), "dd MMM yyyy, HH:mm") : "—"}`,
+      `Model: ${aiReport.model ?? "claude-sonnet-4-20250514"}`,
+      ``,
+      `AI-generated advisory only. Verify on-site before proceeding.`,
+    ].join("\n");
+    navigator.clipboard.writeText(text).then(() => toast.success("Report copied to clipboard"));
+  };
+
   if (loading) {
     return <div className="flex justify-center items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
@@ -318,6 +505,7 @@ export default function RMPage() {
                     <div className="flex items-center gap-1.5">
                       <p className="font-semibold text-sm" style={{ color: "#1A1A1A" }}>{t.projects?.name || "Project"}</p>
                       {(t.photo_urls?.length ?? 0) > 0 && <ImageIcon className="h-3.5 w-3.5 shrink-0" style={{ color: "#006039" }} />}
+                      {t.ai_analysis && <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: "#006039" }} />}
                     </div>
                     <p className="text-xs mt-0.5" style={{ color: "#666666" }}>
                       Client: {t.projects?.client_name || t.client_name} · {format(new Date(t.created_at), "dd MMM yyyy")}
@@ -374,7 +562,7 @@ export default function RMPage() {
 
       {/* Ticket Detail Dialog */}
       <Dialog open={!!detailTicket} onOpenChange={(o) => { if (!o) setDetailTicket(null); }}>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto" style={{ backgroundColor: "#FFFFFF" }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" style={{ backgroundColor: "#FFFFFF" }}>
           <DialogHeader><DialogTitle style={{ color: "#1A1A1A" }}>Ticket Details</DialogTitle></DialogHeader>
           {detailTicket && (
             <div className="space-y-3 text-sm">
@@ -395,6 +583,64 @@ export default function RMPage() {
                 <div>
                   <p className="text-xs mb-1" style={{ color: "#666666" }}>Photos</p>
                   <ImagePreview urls={detailTicket.photo_urls} />
+                </div>
+              )}
+
+              {/* Analyse with AI button — only shown when images exist */}
+              {(detailTicket.photo_urls?.length ?? 0) > 0 && !aiReport && (
+                <div className="border-t pt-3" style={{ borderColor: "#E0E0E0" }}>
+                  <Button
+                    size="sm"
+                    onClick={handleAnalyseWithAI}
+                    disabled={aiLoading}
+                    className="w-full"
+                    style={{ backgroundColor: "#1A1A1A", color: "#FFFFFF" }}
+                  >
+                    {aiLoading
+                      ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Analysing…</>
+                      : <><Sparkles className="h-4 w-4 mr-2" />Analyse with AI</>
+                    }
+                  </Button>
+                </div>
+              )}
+
+              {/* AI Error Card */}
+              {aiError && (
+                <div className="rounded-lg border p-3 flex items-start gap-2" style={{ borderColor: "#F40009", backgroundColor: "#FFF0F0" }}>
+                  <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "#F40009" }} />
+                  <div>
+                    <p className="text-xs font-semibold" style={{ color: "#F40009" }}>AI Analysis Failed</p>
+                    <p className="text-xs mt-0.5" style={{ color: "#666666" }}>{aiError}</p>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 mt-1 text-xs"
+                      style={{ color: "#F40009" }}
+                      onClick={handleAnalyseWithAI}
+                      disabled={aiLoading}
+                    >
+                      Retry
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* AI Report */}
+              {aiReport && (
+                <div className="border-t pt-3" style={{ borderColor: "#E0E0E0" }}>
+                  <AIReportCard report={aiReport} onCopy={handleCopyReport} />
+                  {/* Re-analyse button */}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="mt-2 w-full text-xs"
+                    style={{ color: "#666666" }}
+                    onClick={handleAnalyseWithAI}
+                    disabled={aiLoading}
+                  >
+                    {aiLoading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                    Re-analyse
+                  </Button>
                 </div>
               )}
 
