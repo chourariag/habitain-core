@@ -1,17 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus } from "lucide-react";
+import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus, Package } from "lucide-react";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPanel";
+import { DispatchPacksTab } from "@/components/site/DispatchPacksTab";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
@@ -19,6 +21,7 @@ import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import type { Tables } from "@/integrations/supabase/types";
 
 function SiteHubContent() {
+  const navigate = useNavigate();
   const { selectedProjectId, selectedProject } = useProjectContext();
   const [modules, setModules] = useState<Tables<"modules">[]>([]);
   const [panelsByModule, setPanelsByModule] = useState<Record<string, any[]>>({});
@@ -137,6 +140,7 @@ function SiteHubContent() {
   };
 
   const canManageReadiness = ["site_installation_mgr", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canCreateDispatchPack = ["factory_floor_supervisor", "production_head", "super_admin", "managing_director"].includes(userRole ?? "");
 
   const Cond = ({ met, label }: { met: boolean; label: string }) => (
     <div className="flex items-center gap-1.5 text-xs">
@@ -177,6 +181,7 @@ function SiteHubContent() {
             <TabsTrigger value="diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
             <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Pack</TabsTrigger>
             <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
+            <TabsTrigger value="dispatch-packs" className="gap-1.5"><Package className="h-4 w-4" /> Dispatch Packs</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -225,13 +230,23 @@ function SiteHubContent() {
               return (
                 <div key={module.id} className="space-y-2">
                   <ModulePanelCard module={module} panels={panelsByModule[module.id] ?? []} projectId={selectedProjectId!} canEdit={false} canAdvanceStage={false} userRole={userRole} onPanelCreated={fetchData} onStageAdvanced={fetchData} />
-                  <div className="bg-card border border-border rounded-md p-3">
+                  <div className="bg-card border border-border rounded-md p-3 space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       <Cond met={conds?.qc ?? false} label="QC Passed" />
                       <Cond met={conds?.inspection ?? false} label="Final Inspection" />
                       <Cond met={conds?.site ?? false} label="Site Readiness" />
                       <Cond met={conds?.signoff ?? false} label="Production Head Sign-off" />
                     </div>
+                    {conds?.qc && conds?.inspection && conds?.site && conds?.signoff && canCreateDispatchPack && module.production_status !== "dispatched" && (
+                      <Button
+                        size="sm"
+                        className="w-full mt-2 font-display"
+                        style={{ backgroundColor: "#006039" }}
+                        onClick={() => navigate(`/site-hub/dispatch-pack?projectId=${selectedProjectId}&projectName=${encodeURIComponent(selectedProject?.name ?? "")}`)}
+                      >
+                        Create Dispatch Pack
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
@@ -253,6 +268,9 @@ function SiteHubContent() {
         </TabsContent>
         <TabsContent value="materials">
           <MaterialRequestsPanel projectId={selectedProjectId!} />
+        </TabsContent>
+        <TabsContent value="dispatch-packs">
+          <DispatchPacksTab projectId={selectedProjectId!} />
         </TabsContent>
       </Tabs>
     </div>

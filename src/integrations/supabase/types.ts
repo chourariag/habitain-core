@@ -685,6 +685,99 @@ export type Database = {
           },
         ]
       }
+      dispatch_material_log: {
+        Row: {
+          created_at: string
+          dispatch_pack_id: string
+          id: string
+          material_name: string
+          note: string | null
+          project_id: string
+          qty_dispatched: number
+          unit: string | null
+        }
+        Insert: {
+          created_at?: string
+          dispatch_pack_id: string
+          id?: string
+          material_name: string
+          note?: string | null
+          project_id: string
+          qty_dispatched: number
+          unit?: string | null
+        }
+        Update: {
+          created_at?: string
+          dispatch_pack_id?: string
+          id?: string
+          material_name?: string
+          note?: string | null
+          project_id?: string
+          qty_dispatched?: number
+          unit?: string | null
+        }
+        Relationships: []
+      }
+      dispatch_packs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dispatch_date: string
+          dispatch_pack_id: string
+          driver_name: string | null
+          driver_phone: string | null
+          id: string
+          loading_checklist_complete: boolean | null
+          notes: string | null
+          project_id: string
+          site_installation_manager_id: string | null
+          status: string
+          supervisor_accompanying: boolean | null
+          team_member_ids: string[] | null
+          transporter_name: string | null
+          vehicle_number: string | null
+          vehicle_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dispatch_date?: string
+          dispatch_pack_id: string
+          driver_name?: string | null
+          driver_phone?: string | null
+          id?: string
+          loading_checklist_complete?: boolean | null
+          notes?: string | null
+          project_id: string
+          site_installation_manager_id?: string | null
+          status?: string
+          supervisor_accompanying?: boolean | null
+          team_member_ids?: string[] | null
+          transporter_name?: string | null
+          vehicle_number?: string | null
+          vehicle_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dispatch_date?: string
+          dispatch_pack_id?: string
+          driver_name?: string | null
+          driver_phone?: string | null
+          id?: string
+          loading_checklist_complete?: boolean | null
+          notes?: string | null
+          project_id?: string
+          site_installation_manager_id?: string | null
+          status?: string
+          supervisor_accompanying?: boolean | null
+          team_member_ids?: string[] | null
+          transporter_name?: string | null
+          vehicle_number?: string | null
+          vehicle_type?: string | null
+        }
+        Relationships: []
+      }
       dispatch_signoffs: {
         Row: {
           id: string
@@ -3189,6 +3282,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stores_inventory: {
+        Row: {
+          available_qty: number
+          created_at: string
+          id: string
+          material_name: string
+          note: string | null
+          project_id: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          available_qty?: number
+          created_at?: string
+          id?: string
+          material_name: string
+          note?: string | null
+          project_id: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          available_qty?: number
+          created_at?: string
+          id?: string
+          material_name?: string
+          note?: string | null
+          project_id?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {

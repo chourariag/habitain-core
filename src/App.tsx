@@ -15,6 +15,7 @@ import Projects from "@/pages/Projects";
 import ProjectDetail from "@/pages/ProjectDetail";
 import Production from "@/pages/Production";
 import SiteHub from "@/pages/SiteHub";
+import DispatchPackForm from "@/pages/DispatchPackForm";
 import DesignPortal from "@/pages/DesignPortal";
 import { DesignRouteGuard } from "@/components/DesignRouteGuard";
 import QualityControl from "@/pages/QualityControl";
@@ -56,6 +57,7 @@ const App = () => (
                 <Route path="/projects/:id" element={<ProjectDetail />} />
                 <Route path="/production" element={<Production />} />
                 <Route path="/site-hub" element={<SiteHub />} />
+                <Route path="/site-hub/dispatch-pack" element={<DispatchPackForm />} />
                 <Route path="/design" element={<DesignRouteGuard><DesignPortal /></DesignRouteGuard>} />
                 <Route path="/drawings" element={<DesignRouteGuard><Drawings /></DesignRouteGuard>} />
                 <Route path="/qc" element={<QualityControl />} />
