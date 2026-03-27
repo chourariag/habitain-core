@@ -21,6 +21,7 @@ import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import type { Tables } from "@/integrations/supabase/types";
 
 function SiteHubContent() {
+  const navigate = useNavigate();
   const { selectedProjectId, selectedProject } = useProjectContext();
   const [modules, setModules] = useState<Tables<"modules">[]>([]);
   const [panelsByModule, setPanelsByModule] = useState<Record<string, any[]>>({});
