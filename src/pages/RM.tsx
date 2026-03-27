@@ -106,7 +106,7 @@ function ImagePreview({ urls }: { urls: string[] }) {
                 <button
                   key={i}
                   type="button"
-                  className="w-10 h-10 rounded border overflow-hidden"
+                  className="w-11 h-11 rounded border overflow-hidden"
                   style={{ borderColor: i === selected ? "#006039" : "#E0E0E0", borderWidth: i === selected ? 2 : 1 }}
                   onClick={() => setSelected(i)}
                 >
@@ -169,7 +169,7 @@ function AIReportCard({ report, onCopy }: { report: AIReport; onCopy: () => void
           >
             {report.severity} Severity
           </span>
-          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onCopy} title="Copy report">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onCopy} title="Copy report">
             <Copy className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -177,19 +177,19 @@ function AIReportCard({ report, onCopy }: { report: AIReport; onCopy: () => void
 
       {/* Section 1: Summary */}
       <div>
-        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#666666" }}>Summary</p>
+        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#444444" }}>Summary</p>
         <p className="text-xs" style={{ color: "#1A1A1A" }}>{report.summary}</p>
       </div>
 
       {/* Section 2: Root Cause */}
       <div>
-        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#666666" }}>Root Cause</p>
+        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#444444" }}>Root Cause</p>
         <p className="text-xs" style={{ color: "#1A1A1A" }}>{report.rootCause}</p>
       </div>
 
       {/* Section 3: Recommended Materials */}
       <div>
-        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#666666" }}>Recommended Materials</p>
+        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#444444" }}>Recommended Materials</p>
         <div className="flex flex-wrap gap-1.5">
           {(report.materials ?? []).map((m, i) => (
             <span
@@ -208,7 +208,7 @@ function AIReportCard({ report, onCopy }: { report: AIReport; onCopy: () => void
 
       {/* Section 4: Repair Steps */}
       <div>
-        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#666666" }}>Repair Steps</p>
+        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#444444" }}>Repair Steps</p>
         <ol className="space-y-1">
           {(report.repairSteps ?? []).map((step, i) => (
             <li key={i} className="text-xs" style={{ color: "#1A1A1A" }}>{step}</li>
@@ -221,7 +221,7 @@ function AIReportCard({ report, onCopy }: { report: AIReport; onCopy: () => void
 
       {/* Section 5: Estimated Duration */}
       <div>
-        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#666666" }}>Estimated Duration</p>
+        <p className="text-[10px] uppercase font-semibold mb-1" style={{ color: "#444444" }}>Estimated Duration</p>
         <p className="text-xs" style={{ color: "#1A1A1A" }}>{report.estimatedDuration || "—"}</p>
       </div>
 
@@ -503,7 +503,7 @@ export default function RMPage() {
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <p className="font-semibold text-sm" style={{ color: "#1A1A1A" }}>{t.projects?.name || "Project"}</p>
+                      <p className="font-semibold text-sm truncate" style={{ color: "#1A1A1A" }}>{t.projects?.name || "Project"}</p>
                       {(t.photo_urls?.length ?? 0) > 0 && <ImageIcon className="h-3.5 w-3.5 shrink-0" style={{ color: "#006039" }} />}
                       {t.ai_analysis && <Sparkles className="h-3.5 w-3.5 shrink-0" style={{ color: "#006039" }} />}
                     </div>

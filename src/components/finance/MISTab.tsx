@@ -304,6 +304,7 @@ export function MISTab() {
                 value={currentUploadId || ""}
                 onChange={e => setCurrentUploadId(e.target.value)}
               >
+                <option value="" disabled>— Select period —</option>
                 {uploads.map(u => <option key={u.id} value={u.id}>{u.period_label}</option>)}
               </select>
             </div>

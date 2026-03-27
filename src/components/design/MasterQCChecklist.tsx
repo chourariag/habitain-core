@@ -164,7 +164,7 @@ export function MasterQCChecklist({
   if (loading) {
     return (
       <Card>
-        <CardContent className="flex justify-center py-8">
+        <CardContent className="flex justify-center items-center min-h-[320px]">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         </CardContent>
       </Card>

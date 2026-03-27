@@ -810,8 +810,8 @@ export default function DesignPortal() {
                       className="w-full text-left bg-card border border-border rounded-lg p-4 hover:border-primary/40 transition-colors">
                       <div className="flex items-center justify-between gap-3 flex-wrap">
                         <div className="min-w-0">
-                          <p className="font-semibold text-foreground">{p.name}</p>
-                          <p className="text-xs" style={{ color: "#666666" }}>{p.client_name || "No client"}</p>
+                          <p className="font-semibold text-foreground truncate">{p.name}</p>
+                          <p className="text-xs truncate" style={{ color: "#666666" }}>{p.client_name || "No client"}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" style={isDesignOnly

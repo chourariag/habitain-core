@@ -90,7 +90,7 @@ export function FinanceOverviewStrip() {
     <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
       {tiles.map((t, i) => (
         <div key={i} className="rounded-[10px] bg-white p-3" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)", borderLeft: `3px solid ${t.color}` }}>
-          <p className="text-[10px] uppercase tracking-wider font-display font-semibold" style={{ color: "#666666" }}>{t.label}</p>
+          <p className="text-[10px] uppercase tracking-wider font-display font-semibold" style={{ color: "#444444" }}>{t.label}</p>
           <p className="text-lg font-bold font-mono mt-1" style={{ color: t.color }}>{t.value}</p>
           {t.subtitle && <p className="text-xs font-mono" style={{ color: t.color }}>{t.subtitle}</p>}
         </div>

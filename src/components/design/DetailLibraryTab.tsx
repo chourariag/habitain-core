@@ -169,7 +169,7 @@ export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onS
               <thead>
                 <tr className="border-b">
                   <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground w-10">#</th>
-                  <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Detail Name</th>
+                  <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground min-w-[180px]">Detail Name</th>
                   <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground w-36">Status</th>
                   <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground w-32">Drawing Ref</th>
                   <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground w-24">Updated</th>
