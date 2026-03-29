@@ -10,6 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Check, Loader2, ClipboardCheck, Upload, Video, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { insertNotifications } from "@/lib/notifications";
 
 interface Props {
   projectId: string;
