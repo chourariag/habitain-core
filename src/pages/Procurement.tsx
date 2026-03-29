@@ -13,10 +13,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, LayoutDashboard } from "lucide-react";
+import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, LayoutDashboard, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { NewMaterialRequestDialog } from "@/components/materials/NewMaterialRequestDialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { TransfersTab } from "@/components/procurement/TransfersTab";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
@@ -260,6 +261,7 @@ export default function Procurement() {
             <TabsTrigger value="requests" className="gap-1.5"><AlertTriangle className="h-4 w-4" /> Requests</TabsTrigger>
             <TabsTrigger value="purchase-orders" className="gap-1.5"><FileText className="h-4 w-4" /> Purchase Orders</TabsTrigger>
             <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>
+            <TabsTrigger value="transfers" className="gap-1.5"><Truck className="h-4 w-4" /> Transfers</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -566,6 +568,11 @@ export default function Procurement() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Transfers Tab */}
+        <TabsContent value="transfers">
+          <TransfersTab />
         </TabsContent>
       </Tabs>
 
