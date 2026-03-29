@@ -323,6 +323,71 @@ export type Database = {
           },
         ]
       }
+      delivery_checklists: {
+        Row: {
+          additional_materials: Json | null
+          additional_signed_at: string | null
+          additional_signed_by: string | null
+          created_at: string | null
+          dispatch_confirmed_at: string | null
+          dispatch_confirmed_by: string | null
+          id: string
+          modules_checklist: Json | null
+          modules_signed_at: string | null
+          modules_signed_by: string | null
+          project_id: string
+          site_ready_confirmed_at: string | null
+          status: string
+          tools_checklist: Json | null
+          tools_signed_at: string | null
+          tools_signed_by: string | null
+        }
+        Insert: {
+          additional_materials?: Json | null
+          additional_signed_at?: string | null
+          additional_signed_by?: string | null
+          created_at?: string | null
+          dispatch_confirmed_at?: string | null
+          dispatch_confirmed_by?: string | null
+          id?: string
+          modules_checklist?: Json | null
+          modules_signed_at?: string | null
+          modules_signed_by?: string | null
+          project_id: string
+          site_ready_confirmed_at?: string | null
+          status?: string
+          tools_checklist?: Json | null
+          tools_signed_at?: string | null
+          tools_signed_by?: string | null
+        }
+        Update: {
+          additional_materials?: Json | null
+          additional_signed_at?: string | null
+          additional_signed_by?: string | null
+          created_at?: string | null
+          dispatch_confirmed_at?: string | null
+          dispatch_confirmed_by?: string | null
+          id?: string
+          modules_checklist?: Json | null
+          modules_signed_at?: string | null
+          modules_signed_by?: string | null
+          project_id?: string
+          site_ready_confirmed_at?: string | null
+          status?: string
+          tools_checklist?: Json | null
+          tools_signed_at?: string | null
+          tools_signed_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_checklists_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       design_consultants: {
         Row: {
           approved: boolean
