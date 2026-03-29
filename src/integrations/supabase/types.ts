@@ -2675,6 +2675,7 @@ export type Database = {
           site_lat: number | null
           site_lng: number | null
           site_radius: number | null
+          site_ready_confirmed: boolean | null
           start_date: string | null
           status: string | null
           type: string | null
@@ -2698,6 +2699,7 @@ export type Database = {
           site_lat?: number | null
           site_lng?: number | null
           site_radius?: number | null
+          site_ready_confirmed?: boolean | null
           start_date?: string | null
           status?: string | null
           type?: string | null
@@ -2721,6 +2723,7 @@ export type Database = {
           site_lat?: number | null
           site_lng?: number | null
           site_radius?: number | null
+          site_ready_confirmed?: boolean | null
           start_date?: string | null
           status?: string | null
           type?: string | null
