@@ -142,6 +142,49 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
         const { error } = await (client.from("site_readiness") as any).insert(payload);
         if (error) throw error;
       }
+      // Set site_ready_confirmed on the project
+      await (client.from("projects") as any).update({ site_ready_confirmed: true }).eq("id", projectId);
+
+      // Get project name for notifications
+      const { data: projData } = await supabase.from("projects").select("name").eq("id", projectId).single();
+      const pName = projData?.name ?? "this project";
+
+      // Notify production_head and factory_floor_supervisor
+      const { data: prodRecipients } = await supabase
+        .from("profiles")
+        .select("auth_user_id, role")
+        .in("role", ["production_head", "factory_floor_supervisor"] as any)
+        .eq("is_active", true);
+      if (prodRecipients?.length) {
+        await insertNotifications(prodRecipients.map((r: any) => ({
+          recipient_id: r.auth_user_id,
+          title: "Site Ready",
+          body: `Site is ready for ${pName}. Complete the Delivery Checklist to proceed with dispatch.`,
+          category: "Production",
+          related_table: "projects",
+          related_id: projectId,
+          navigate_to: "/production",
+        })));
+      }
+
+      // Notify stores_executive
+      const { data: storesRecipients } = await supabase
+        .from("profiles")
+        .select("auth_user_id")
+        .eq("role", "stores_executive" as any)
+        .eq("is_active", true);
+      if (storesRecipients?.length) {
+        await insertNotifications(storesRecipients.map((r: any) => ({
+          recipient_id: r.auth_user_id,
+          title: "Site Ready — Tools Checklist",
+          body: `Site is ready for ${pName}. Complete the Tools and Equipment Checklist for dispatch.`,
+          category: "Production",
+          related_table: "projects",
+          related_id: projectId,
+          navigate_to: "/production",
+        })));
+      }
+
       toast.success("Site readiness confirmed for this project!");
       onReadinessConfirmed();
       await loadExisting();
