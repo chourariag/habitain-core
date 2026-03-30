@@ -1533,10 +1533,14 @@ export type Database = {
           created_at: string
           created_by: string | null
           current_stock: number
+          delivery_destination: string
           id: string
           is_archived: boolean
           material_name: string
+          project_id: string | null
+          received_by_on_site: string | null
           reorder_level: number
+          site_receipt_notes: string | null
           unit: string
           updated_at: string
         }
@@ -1545,10 +1549,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           current_stock?: number
+          delivery_destination?: string
           id?: string
           is_archived?: boolean
           material_name: string
+          project_id?: string | null
+          received_by_on_site?: string | null
           reorder_level?: number
+          site_receipt_notes?: string | null
           unit?: string
           updated_at?: string
         }
@@ -1557,10 +1565,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           current_stock?: number
+          delivery_destination?: string
           id?: string
           is_archived?: boolean
           material_name?: string
+          project_id?: string | null
+          received_by_on_site?: string | null
           reorder_level?: number
+          site_receipt_notes?: string | null
           unit?: string
           updated_at?: string
         }
@@ -3033,6 +3045,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "site_diary_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_direct_receipts: {
+        Row: {
+          category: string
+          created_by: string | null
+          grn_id: string | null
+          id: string
+          material_name: string
+          project_id: string
+          qty: number
+          received_at: string
+          received_by_on_site: string | null
+          site_receipt_notes: string | null
+          unit: string | null
+          vendor_name: string | null
+        }
+        Insert: {
+          category?: string
+          created_by?: string | null
+          grn_id?: string | null
+          id?: string
+          material_name: string
+          project_id: string
+          qty?: number
+          received_at?: string
+          received_by_on_site?: string | null
+          site_receipt_notes?: string | null
+          unit?: string | null
+          vendor_name?: string | null
+        }
+        Update: {
+          category?: string
+          created_by?: string | null
+          grn_id?: string | null
+          id?: string
+          material_name?: string
+          project_id?: string
+          qty?: number
+          received_at?: string
+          received_by_on_site?: string | null
+          site_receipt_notes?: string | null
+          unit?: string | null
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_direct_receipts_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
