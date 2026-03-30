@@ -15,6 +15,8 @@ import { ArrowLeft, Check, ClipboardCheck, Lock, Loader2, Package, Wrench, Plus,
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useUserRole } from "@/hooks/useUserRole";
+import { ROLE_LABELS } from "@/lib/roles";
+import type { AppRole } from "@/lib/roles";
 
 const MODULES_ITEMS = [
   "All modules and panels physically present at loading bay",
@@ -79,6 +81,7 @@ export default function DeliveryChecklist() {
   const { role, userId } = useUserRole();
 
   const [projectName, setProjectName] = useState("");
+  const [displayName, setDisplayName] = useState<string>("");
   const [siteReady, setSiteReady] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -125,6 +128,12 @@ export default function DeliveryChecklist() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  useEffect(() => {
+    if (!userId) return;
+    supabase.from("profiles").select("display_name").eq("auth_user_id", userId).maybeSingle()
+      .then(({ data }) => setDisplayName((data as any)?.display_name ?? ""));
+  }, [userId]);
+
   // Bug 16 fix: guard against direct URL access when site is not ready
   if (!loading && siteReady === false) {
     return (
@@ -142,6 +151,12 @@ export default function DeliveryChecklist() {
       </div>
     );
   }
+
+  const signerLabel = () => {
+    const name = displayName || "—";
+    const roleLabel = role ? (ROLE_LABELS[role as AppRole] ?? role) : "—";
+    return `${name} (${roleLabel})`;
+  };
 
   const ensureRecord = async () => {
     if (checklist) return checklist.id;
@@ -165,6 +180,7 @@ export default function DeliveryChecklist() {
         modules_checklist: modulesChecked,
         modules_signed_by: userId,
         modules_signed_at: new Date().toISOString(),
+        modules_signed_by_name: signerLabel(),
         status: "in_progress",
       }).eq("id", recordId);
       if (error) throw error;
@@ -183,6 +199,7 @@ export default function DeliveryChecklist() {
         tools_checklist: toolsChecked,
         tools_signed_by: userId,
         tools_signed_at: new Date().toISOString(),
+        tools_signed_by_name: signerLabel(),
       }).eq("id", recordId);
       if (error) throw error;
       toast.success("Tools & Equipment section signed off");
@@ -199,6 +216,7 @@ export default function DeliveryChecklist() {
         additional_materials: additionalMaterials,
         additional_signed_by: userId,
         additional_signed_at: new Date().toISOString(),
+        additional_signed_by_name: signerLabel(),
       }).eq("id", recordId);
       if (error) throw error;
       toast.success("Additional Materials section signed off");
@@ -352,11 +370,17 @@ export default function DeliveryChecklist() {
               </Card>
             ))}
             {modulesSigned ? (
-              <div className="flex items-center gap-2 p-3 rounded-lg" style={{ backgroundColor: "#E8F2ED" }}>
-                <Lock className="h-4 w-4" style={{ color: "#006039" }} />
-                <span className="text-sm font-medium" style={{ color: "#006039" }}>
-                  Signed off {checklist?.modules_signed_at ? format(new Date(checklist.modules_signed_at), "dd/MM/yyyy HH:mm") : ""}
-                </span>
+              <div className="p-3 rounded-lg space-y-0.5" style={{ backgroundColor: "#E8F2ED" }}>
+                <div className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 shrink-0" style={{ color: "#006039" }} />
+                  <span className="text-sm font-semibold" style={{ color: "#006039" }}>Signed off</span>
+                </div>
+                {checklist?.modules_signed_by_name && (
+                  <p className="text-xs pl-6" style={{ color: "#1A1A1A" }}>{checklist.modules_signed_by_name}</p>
+                )}
+                <p className="text-xs pl-6" style={{ color: "#666666" }}>
+                  {checklist?.modules_signed_at ? format(new Date(checklist.modules_signed_at), "dd/MM/yyyy HH:mm") : ""}
+                </p>
               </div>
             ) : canEditModules ? (
               <Button
@@ -396,11 +420,17 @@ export default function DeliveryChecklist() {
               </Card>
             ))}
             {toolsSigned ? (
-              <div className="flex items-center gap-2 p-3 rounded-lg" style={{ backgroundColor: "#E8F2ED" }}>
-                <Lock className="h-4 w-4" style={{ color: "#006039" }} />
-                <span className="text-sm font-medium" style={{ color: "#006039" }}>
-                  Signed off {checklist?.tools_signed_at ? format(new Date(checklist.tools_signed_at), "dd/MM/yyyy HH:mm") : ""}
-                </span>
+              <div className="p-3 rounded-lg space-y-0.5" style={{ backgroundColor: "#E8F2ED" }}>
+                <div className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 shrink-0" style={{ color: "#006039" }} />
+                  <span className="text-sm font-semibold" style={{ color: "#006039" }}>Signed off</span>
+                </div>
+                {checklist?.tools_signed_by_name && (
+                  <p className="text-xs pl-6" style={{ color: "#1A1A1A" }}>{checklist.tools_signed_by_name}</p>
+                )}
+                <p className="text-xs pl-6" style={{ color: "#666666" }}>
+                  {checklist?.tools_signed_at ? format(new Date(checklist.tools_signed_at), "dd/MM/yyyy HH:mm") : ""}
+                </p>
               </div>
             ) : canEditTools ? (
               <Button
@@ -428,58 +458,63 @@ export default function DeliveryChecklist() {
 
             {additionalMaterials.map((m, idx) => (
               <Card key={idx} style={{ backgroundColor: "#F7F7F7" }}>
-                <CardContent className="p-3 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      placeholder="Material description"
-                      value={m.description}
-                      onChange={(e) => updateMaterial(idx, "description", e.target.value)}
-                      disabled={additionalSigned || !canEditAdditional}
-                      className="flex-1 text-sm"
-                    />
-                    {!additionalSigned && canEditAdditional && (
-                      <Button variant="ghost" size="icon" onClick={() => removeMaterial(idx)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Qty"
-                      value={m.qty}
-                      onChange={(e) => updateMaterial(idx, "qty", Number(e.target.value))}
-                      disabled={additionalSigned || !canEditAdditional}
-                      className="text-sm"
-                    />
-                    <Input
-                      placeholder="Unit"
-                      value={m.unit}
-                      onChange={(e) => updateMaterial(idx, "unit", e.target.value)}
-                      disabled={additionalSigned || !canEditAdditional}
-                      className="text-sm"
-                    />
-                    <Select
-                      value={m.source}
-                      onValueChange={(v) => updateMaterial(idx, "source", v)}
-                      disabled={additionalSigned || !canEditAdditional}
-                    >
-                      <SelectTrigger className="text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Factory Stock">Factory Stock</SelectItem>
-                        <SelectItem value="Procure Fresh">Procure Fresh</SelectItem>
-                        <SelectItem value="Already on Site">Already on Site</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      placeholder="Notes"
-                      value={m.notes}
-                      onChange={(e) => updateMaterial(idx, "notes", e.target.value)}
-                      disabled={additionalSigned || !canEditAdditional}
-                      className="text-sm"
-                    />
+                <CardContent className="p-2">
+                  {/* Single horizontal-scroll row: Description | Qty | Unit | Source | Notes | Delete */}
+                  <div className="overflow-x-auto">
+                    <div className="flex items-center gap-2" style={{ minWidth: 580 }}>
+                      <Input
+                        placeholder="Description"
+                        value={m.description}
+                        onChange={(e) => updateMaterial(idx, "description", e.target.value)}
+                        disabled={additionalSigned || !canEditAdditional}
+                        className="text-sm"
+                        style={{ minWidth: 160 }}
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Qty"
+                        value={m.qty}
+                        onChange={(e) => updateMaterial(idx, "qty", Number(e.target.value))}
+                        disabled={additionalSigned || !canEditAdditional}
+                        className="text-sm"
+                        style={{ width: 72, minWidth: 72 }}
+                      />
+                      <Input
+                        placeholder="Unit"
+                        value={m.unit}
+                        onChange={(e) => updateMaterial(idx, "unit", e.target.value)}
+                        disabled={additionalSigned || !canEditAdditional}
+                        className="text-sm"
+                        style={{ width: 68, minWidth: 68 }}
+                      />
+                      <Select
+                        value={m.source}
+                        onValueChange={(v) => updateMaterial(idx, "source", v)}
+                        disabled={additionalSigned || !canEditAdditional}
+                      >
+                        <SelectTrigger className="text-sm" style={{ width: 144, minWidth: 144 }}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Factory Stock">Factory Stock</SelectItem>
+                          <SelectItem value="Procure Fresh">Procure Fresh</SelectItem>
+                          <SelectItem value="Already on Site">Already on Site</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        placeholder="Notes"
+                        value={m.notes}
+                        onChange={(e) => updateMaterial(idx, "notes", e.target.value)}
+                        disabled={additionalSigned || !canEditAdditional}
+                        className="text-sm flex-1"
+                        style={{ minWidth: 88 }}
+                      />
+                      {!additionalSigned && canEditAdditional && (
+                        <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0" onClick={() => removeMaterial(idx)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -492,11 +527,17 @@ export default function DeliveryChecklist() {
             )}
 
             {additionalSigned ? (
-              <div className="flex items-center gap-2 p-3 rounded-lg" style={{ backgroundColor: "#E8F2ED" }}>
-                <Lock className="h-4 w-4" style={{ color: "#006039" }} />
-                <span className="text-sm font-medium" style={{ color: "#006039" }}>
-                  Signed off {checklist?.additional_signed_at ? format(new Date(checklist.additional_signed_at), "dd/MM/yyyy HH:mm") : ""}
-                </span>
+              <div className="p-3 rounded-lg space-y-0.5" style={{ backgroundColor: "#E8F2ED" }}>
+                <div className="flex items-center gap-2">
+                  <Lock className="h-4 w-4 shrink-0" style={{ color: "#006039" }} />
+                  <span className="text-sm font-semibold" style={{ color: "#006039" }}>Signed off</span>
+                </div>
+                {checklist?.additional_signed_by_name && (
+                  <p className="text-xs pl-6" style={{ color: "#1A1A1A" }}>{checklist.additional_signed_by_name}</p>
+                )}
+                <p className="text-xs pl-6" style={{ color: "#666666" }}>
+                  {checklist?.additional_signed_at ? format(new Date(checklist.additional_signed_at), "dd/MM/yyyy HH:mm") : ""}
+                </p>
               </div>
             ) : canEditAdditional ? (
               <Button
