@@ -223,8 +223,11 @@ function AddPurchaseOrderDialog({ onCreated, canAdd }: { onCreated: () => void; 
 export default function Inventory() {
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [siteReceipts, setSiteReceipts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [projectsMap, setProjectsMap] = useState<Record<string, string>>({});
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -235,7 +238,7 @@ export default function Inventory() {
       return data;
     });
 
-    const [{ data: itemsData }, { data: purchaseOrdersData }, role] = await Promise.all([
+    const [{ data: itemsData }, { data: purchaseOrdersData }, { data: siteData }, { data: projData }, role] = await Promise.all([
       (supabase.from("inventory_items" as any) as any)
         .select("*")
         .eq("is_archived", false)
@@ -244,11 +247,21 @@ export default function Inventory() {
         .select("*")
         .eq("is_archived", false)
         .order("po_date", { ascending: false }),
+      (supabase.from("site_direct_receipts" as any) as any)
+        .select("*")
+        .order("received_at", { ascending: false }),
+      supabase.from("projects").select("id,name").eq("is_archived", false),
       rolePromise,
     ]);
 
     setItems((itemsData ?? []) as InventoryItem[]);
     setPurchaseOrders((purchaseOrdersData ?? []) as PurchaseOrder[]);
+    setSiteReceipts(siteData ?? []);
+    const pl = projData ?? [];
+    setProjects(pl);
+    const pm: Record<string, string> = {};
+    pl.forEach((p: any) => { pm[p.id] = p.name; });
+    setProjectsMap(pm);
     setUserRole(role as string | null);
     setLoading(false);
   }, []);
@@ -282,56 +295,104 @@ export default function Inventory() {
         <TabsContent value="stock" className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-display text-lg font-semibold text-foreground">Stock</h2>
-            <AddInventoryItemDialog onCreated={fetchData} canAdd={canAddItem} />
+            <AddInventoryItemDialog onCreated={fetchData} canAdd={canAddItem} projects={projects} />
           </div>
 
           {loading ? (
             <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-          ) : items.length === 0 ? (
+          ) : items.length === 0 && siteReceipts.length === 0 ? (
             <Card>
               <CardContent className="py-10 text-center space-y-4">
                 <p className="text-sm text-muted-foreground">No inventory items yet.</p>
-                {canAddItem && <AddInventoryItemDialog onCreated={fetchData} canAdd={canAddItem} />}
+                {canAddItem && <AddInventoryItemDialog onCreated={fetchData} canAdd={canAddItem} projects={projects} />}
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <CardContent className="p-0 overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Material Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Current Stock</TableHead>
-                      <TableHead>Unit</TableHead>
-                      <TableHead>Reorder Level</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {items.map((item) => {
-                      const isLowStock = Number(item.current_stock) <= Number(item.reorder_level);
-                      return (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium text-foreground">{item.material_name}</TableCell>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell>{item.current_stock}</TableCell>
-                          <TableCell>{item.unit}</TableCell>
-                          <TableCell>{item.reorder_level}</TableCell>
-                          <TableCell>
-                            {isLowStock ? (
-                              <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">LOW STOCK</Badge>
-                            ) : (
-                              <Badge variant="outline" className="bg-success/10 text-success border-success/30">Healthy</Badge>
-                            )}
-                          </TableCell>
+            <>
+              {/* Factory Stock */}
+              {items.length > 0 && (
+                <Card>
+                  <CardContent className="p-0 overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Material Name</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead>Current Stock</TableHead>
+                          <TableHead>Unit</TableHead>
+                          <TableHead>Reorder Level</TableHead>
+                          <TableHead>Destination</TableHead>
+                          <TableHead>Status</TableHead>
                         </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+                      </TableHeader>
+                      <TableBody>
+                        {items.map((item) => {
+                          const isLowStock = Number(item.current_stock) <= Number(item.reorder_level);
+                          return (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-medium text-foreground">{item.material_name}</TableCell>
+                              <TableCell>{item.category}</TableCell>
+                              <TableCell>{item.current_stock}</TableCell>
+                              <TableCell>{item.unit}</TableCell>
+                              <TableCell>{item.reorder_level}</TableCell>
+                              <TableCell>
+                                <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: "#E8F2ED", color: "#006039" }}>Factory</span>
+                              </TableCell>
+                              <TableCell>
+                                {isLowStock ? (
+                                  <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">LOW STOCK</Badge>
+                                ) : (
+                                  <Badge variant="outline" className="bg-success/10 text-success border-success/30">Healthy</Badge>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Site Direct Receipts */}
+              {siteReceipts.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="font-display text-sm font-semibold text-foreground">Direct to Site Receipts</h3>
+                  <Card>
+                    <CardContent className="p-0 overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Material Name</TableHead>
+                            <TableHead>Project</TableHead>
+                            <TableHead>Qty</TableHead>
+                            <TableHead>Unit</TableHead>
+                            <TableHead>Vendor</TableHead>
+                            <TableHead>Destination</TableHead>
+                            <TableHead>Received At</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {siteReceipts.map((r: any) => (
+                            <TableRow key={r.id}>
+                              <TableCell className="font-medium text-foreground">{r.material_name}</TableCell>
+                              <TableCell>{projectsMap[r.project_id] ?? "—"}</TableCell>
+                              <TableCell>{r.qty}</TableCell>
+                              <TableCell>{r.unit}</TableCell>
+                              <TableCell>{r.vendor_name ?? "—"}</TableCell>
+                              <TableCell>
+                                <span className="text-xs font-medium px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: "#D4860A" }}>Site Direct</span>
+                              </TableCell>
+                              <TableCell>{new Date(r.received_at).toLocaleDateString("en-GB")}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
 
