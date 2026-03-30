@@ -126,6 +126,7 @@ export default function Procurement() {
     setPurchaseOrders(poRes.data ?? []);
     setRequests(reqRes.data ?? []);
     setPlanItems(planRes.data ?? []);
+    setSiteReceipts(siteRes.data ?? []);
     const pm: Record<string, string> = {};
     const projList = projRes.data ?? [];
     projList.forEach((p) => { pm[p.id] = p.name; });
@@ -167,20 +168,34 @@ export default function Procurement() {
 
   const handleSaveItem = async () => {
     if (!itemForm.material_name.trim() || !itemForm.category.trim()) { toast.error("Name and category required"); return; }
+    if (itemDeliveryDest === "site_direct" && !itemForm.project_id) { toast.error("Project is required for site direct delivery."); return; }
     setItemSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       const { client } = await getAuthedClient();
-      const { error } = await (client.from("inventory_items") as any).insert({
-        material_name: itemForm.material_name.trim(), category: itemForm.category.trim(),
-        current_stock: Number(itemForm.current_stock) || 0, unit: itemForm.unit.trim() || "units",
-        reorder_level: Number(itemForm.reorder_level) || 0, created_by: user.id,
-      });
-      if (error) throw error;
-      toast.success("Item added");
+      if (itemDeliveryDest === "site_direct") {
+        const { error } = await (client.from("site_direct_receipts" as any) as any).insert({
+          project_id: itemForm.project_id, material_name: itemForm.material_name.trim(), category: itemForm.category.trim(),
+          qty: Number(itemForm.current_stock) || 0, unit: itemForm.unit.trim() || "units",
+          vendor_name: itemForm.vendor_name.trim() || null, received_by_on_site: itemForm.received_by_on_site.trim() || null,
+          site_receipt_notes: itemForm.site_receipt_notes.trim() || null, created_by: user.id,
+        });
+        if (error) throw error;
+        toast.success("Logged to site inventory");
+      } else {
+        const { error } = await (client.from("inventory_items") as any).insert({
+          material_name: itemForm.material_name.trim(), category: itemForm.category.trim(),
+          current_stock: Number(itemForm.current_stock) || 0, unit: itemForm.unit.trim() || "units",
+          reorder_level: Number(itemForm.reorder_level) || 0, delivery_destination: "factory",
+          project_id: itemForm.project_id || null, created_by: user.id,
+        });
+        if (error) throw error;
+        toast.success("Item added");
+      }
       setItemDialogOpen(false);
-      setItemForm({ material_name: "", category: "", current_stock: "", unit: "units", reorder_level: "" });
+      setItemForm({ material_name: "", category: "", current_stock: "", unit: "units", reorder_level: "", project_id: "", vendor_name: "", received_by_on_site: "", site_receipt_notes: "" });
+      setItemDeliveryDest("factory");
       fetchData();
     } catch (err: any) { toast.error(err.message); } finally { setItemSaving(false); }
   };
