@@ -89,8 +89,10 @@ export default function Procurement() {
 
   // Add item dialog
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
-  const [itemForm, setItemForm] = useState({ material_name: "", category: "", current_stock: "", unit: "units", reorder_level: "" });
+  const [itemForm, setItemForm] = useState({ material_name: "", category: "", current_stock: "", unit: "units", reorder_level: "", project_id: "", vendor_name: "", received_by_on_site: "", site_receipt_notes: "" });
   const [itemSaving, setItemSaving] = useState(false);
+  const [itemDeliveryDest, setItemDeliveryDest] = useState<"factory" | "site_direct">("factory");
+  const [siteReceipts, setSiteReceipts] = useState<any[]>([]);
 
   // Add PO dialog
   const [poDialogOpen, setPoDialogOpen] = useState(false);
@@ -110,12 +112,13 @@ export default function Procurement() {
       return { role: data as string | null, id: user.id };
     });
 
-    const [invRes, poRes, reqRes, projRes, planRes, roleData] = await Promise.all([
+    const [invRes, poRes, reqRes, projRes, planRes, siteRes, roleData] = await Promise.all([
       supabase.from("inventory_items").select("*").eq("is_archived", false).order("material_name"),
       supabase.from("purchase_orders").select("*").eq("is_archived", false).order("po_date", { ascending: false }),
       supabase.from("material_requests").select("*").eq("is_archived", false).order("created_at", { ascending: false }),
       supabase.from("projects").select("id,name").eq("is_archived", false),
       (supabase.from("material_plan_items") as any).select("*").order("required_by", { ascending: true }),
+      (supabase.from("site_direct_receipts" as any) as any).select("*").order("received_at", { ascending: false }),
       rolePromise,
     ]);
 
