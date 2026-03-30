@@ -455,31 +455,37 @@ export type Database = {
           detail_name: string
           detail_number: number
           drawing_reference: string | null
+          file_url: string | null
           id: string
           project_id: string
           status: string
           updated_at: string
           updated_by: string | null
+          uploaded_by_name: string | null
         }
         Insert: {
           detail_name: string
           detail_number: number
           drawing_reference?: string | null
+          file_url?: string | null
           id?: string
           project_id: string
           status?: string
           updated_at?: string
           updated_by?: string | null
+          uploaded_by_name?: string | null
         }
         Update: {
           detail_name?: string
           detail_number?: number
           drawing_reference?: string | null
+          file_url?: string | null
           id?: string
           project_id?: string
           status?: string
           updated_at?: string
           updated_by?: string | null
+          uploaded_by_name?: string | null
         }
         Relationships: []
       }
@@ -527,6 +533,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      design_qc_section_signoffs: {
+        Row: {
+          id: string
+          project_id: string
+          section_number: number
+          signed_at: string
+          signed_by: string
+          signed_by_name: string | null
+          signed_by_role: string | null
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          section_number: number
+          signed_at?: string
+          signed_by: string
+          signed_by_name?: string | null
+          signed_by_role?: string | null
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          section_number?: number
+          signed_at?: string
+          signed_by?: string
+          signed_by_name?: string | null
+          signed_by_role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_qc_section_signoffs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       design_queries: {
         Row: {
