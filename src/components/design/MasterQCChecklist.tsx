@@ -22,16 +22,18 @@ interface Props {
   isArchitect: boolean;
   userId: string | null;
   userName: string;
-  detailLibraryReady: boolean; // whether all 40 details are Complete or N/A
+  userRole: string | null;
+  detailLibraryReady: boolean;
   detailLibraryStats: { complete: number; na: number; total: number };
   onRefresh: () => void;
 }
 
 export function MasterQCChecklist({
   projectId, projectName, designFile, isPrincipal, isArchitect,
-  userId, userName, detailLibraryReady, detailLibraryStats, onRefresh,
+  userId, userName, userRole, detailLibraryReady, detailLibraryStats, onRefresh,
 }: Props) {
   const [items, setItems] = useState<any[]>([]);
+  const [signoffs, setSignoffs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [issuing, setIssuing] = useState(false);
   const [openSections, setOpenSections] = useState<number[]>([]);
@@ -42,22 +44,21 @@ export function MasterQCChecklist({
   const canTick = (isPrincipal || isArchitect) && !isGfcIssued;
 
   const fetchItems = useCallback(async () => {
-    const { data } = await (supabase.from("design_qc_checklist") as any)
-      .select("*")
-      .eq("project_id", projectId)
-      .order("section_number")
-      .order("item_index");
-    setItems(data ?? []);
+    const [itemsRes, signoffsRes] = await Promise.all([
+      (supabase.from("design_qc_checklist") as any)
+        .select("*").eq("project_id", projectId).order("section_number").order("item_index"),
+      (supabase.from("design_qc_section_signoffs") as any)
+        .select("*").eq("project_id", projectId),
+    ]);
+    setItems(itemsRes.data ?? []);
+    setSignoffs(signoffsRes.data ?? []);
     setLoading(false);
   }, [projectId]);
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
 
-  // Seed checklist if empty
   useEffect(() => {
-    if (!loading && items.length === 0) {
-      seedChecklist();
-    }
+    if (!loading && items.length === 0) { seedChecklist(); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, items.length]);
 
@@ -100,24 +101,52 @@ export function MasterQCChecklist({
     setNoteText("");
   };
 
-  // Group items by section
+  const handleSignOffSection = async (sectionNumber: number) => {
+    if (!isPrincipal && !isArchitect) return;
+    try {
+      const { client } = await getAuthedClient();
+      await (client.from("design_qc_section_signoffs") as any).insert({
+        project_id: projectId,
+        section_number: sectionNumber,
+        signed_by: userId,
+        signed_by_name: userName,
+        signed_by_role: userRole,
+      });
+      setSignoffs((prev) => [...prev, {
+        project_id: projectId,
+        section_number: sectionNumber,
+        signed_by: userId,
+        signed_by_name: userName,
+        signed_by_role: userRole,
+        signed_at: new Date().toISOString(),
+      }]);
+      toast.success(`Section ${sectionNumber} signed off`);
+    } catch (err: any) {
+      toast.error(err.message || "Sign-off failed");
+    }
+  };
+
+  const getSectionSignoff = (sectionNumber: number) =>
+    signoffs.find((s: any) => s.section_number === sectionNumber);
+
   const sections = QC_CHECKLIST_SECTIONS.map((sec) => {
     const sectionItems = items.filter((i) => i.section_number === sec.number);
     const tickedCount = sectionItems.filter((i) => i.is_ticked).length;
     const totalCount = sec.items.length;
     const pct = totalCount > 0 ? Math.round((tickedCount / totalCount) * 100) : 0;
-    return { ...sec, sectionItems, tickedCount, totalCount, pct };
+    const signoff = getSectionSignoff(sec.number);
+    return { ...sec, sectionItems, tickedCount, totalCount, pct, signoff };
   });
 
   const totalTicked = items.filter((i) => i.is_ticked).length;
   const totalItems = TOTAL_CHECKLIST_ITEMS;
   const totalPct = totalItems > 0 ? Math.round((totalTicked / totalItems) * 100) : 0;
 
-  // GFC readiness: all checklist items + detail library
-  const allChecklistComplete = totalTicked === totalItems && items.length >= totalItems;
+  const allSectionsSigned = sections.every((s) => s.signoff);
+  const allChecklistComplete = totalTicked === totalItems && items.length >= totalItems && allSectionsSigned;
   const canIssueGFC = allChecklistComplete && detailLibraryReady && isPrincipal && !isGfcIssued;
 
-  const incompleteSections = sections.filter((s) => s.pct < 100).length;
+  const incompleteSections = sections.filter((s) => s.pct < 100 || !s.signoff).length;
   const remainingItems = totalItems - totalTicked;
 
   const handleIssueGFC = async () => {
@@ -188,7 +217,9 @@ export function MasterQCChecklist({
         {/* Master progress */}
         <div className="space-y-1.5">
           <div className="flex justify-between text-xs">
-            <span style={{ color: "#666666" }}>{totalTicked} of {totalItems} items complete</span>
+            <span style={{ color: "#666666" }}>
+              {totalTicked} of {totalItems} items complete · {sections.filter(s => s.signoff).length} of {sections.length} sections signed off
+            </span>
             <span className="font-semibold" style={{ color: totalPct === 100 ? "#006039" : "#1A1A1A" }}>{totalPct}%</span>
           </div>
           <Progress value={totalPct} className="h-2.5" />
@@ -197,22 +228,33 @@ export function MasterQCChecklist({
         {/* Sections */}
         {sections.map((sec) => {
           const isOpen = openSections.includes(sec.number);
-          const sectionColor = sec.pct === 100 ? "#006039" : sec.pct > 0 ? "#D4860A" : undefined;
+          const sectionComplete = sec.pct === 100;
+          const sectionColor = sectionComplete ? "#006039" : sec.pct > 0 ? "#D4860A" : undefined;
+          const statusLabel = sectionComplete && sec.signoff ? "Complete" : sectionComplete ? "Ready for Sign-Off" : sec.pct > 0 ? "In Progress" : "Pending";
+          const statusStyle: React.CSSProperties = sectionComplete && sec.signoff
+            ? { backgroundColor: "#E8F2ED", color: "#006039" }
+            : sectionComplete
+            ? { backgroundColor: "#FFF8E8", color: "#D4860A" }
+            : sec.pct > 0
+            ? { backgroundColor: "#FFF8E8", color: "#D4860A" }
+            : { backgroundColor: "#F5F5F5", color: "#666666" };
+
           return (
             <Collapsible key={sec.number} open={isOpen} onOpenChange={() => toggleSection(sec.number)}>
               <CollapsibleTrigger asChild>
                 <button
                   type="button"
                   className="w-full flex items-center justify-between gap-3 p-3 rounded-lg border border-border transition-colors hover:bg-muted/30"
-                  style={sec.pct === 100 ? { backgroundColor: "#E8F2ED" } : undefined}
+                  style={sectionComplete && sec.signoff ? { backgroundColor: "#E8F2ED" } : undefined}
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    {sec.pct === 100 && <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: "#006039" }} />}
+                    {sectionComplete && sec.signoff && <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: "#006039" }} />}
                     <span className="text-sm font-semibold text-left" style={{ color: "#1A1A1A" }}>
                       {sec.number}. {sec.name}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="outline" className="text-[10px]" style={statusStyle}>{statusLabel}</Badge>
                     <span className="text-xs font-medium" style={{ color: sectionColor || "#666666" }}>
                       {sec.tickedCount}/{sec.totalCount}
                     </span>
@@ -229,7 +271,7 @@ export function MasterQCChecklist({
                     <div key={item.id} className="flex items-start gap-2.5 py-1.5 px-2 rounded hover:bg-muted/20">
                       <Checkbox
                         checked={item.is_ticked}
-                        disabled={!canTick}
+                        disabled={!canTick || !!sec.signoff}
                         onCheckedChange={(checked) => handleTick(item, !!checked)}
                         className="mt-0.5"
                       />
@@ -260,7 +302,7 @@ export function MasterQCChecklist({
                           </div>
                         )}
                       </div>
-                      {canTick && noteEditing !== item.id && (
+                      {canTick && !sec.signoff && noteEditing !== item.id && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -272,6 +314,25 @@ export function MasterQCChecklist({
                       )}
                     </div>
                   ))}
+
+                  {/* Section Sign-Off */}
+                  {sec.signoff ? (
+                    <div className="mt-3 p-2.5 rounded-lg flex items-center gap-2" style={{ backgroundColor: "#E8F2ED" }}>
+                      <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: "#006039" }} />
+                      <span className="text-xs" style={{ color: "#666666" }}>
+                        Signed off by {sec.signoff.signed_by_name} ({sec.signoff.signed_by_role?.replace(/_/g, " ")}) on{" "}
+                        {format(new Date(sec.signoff.signed_at), "dd/MM/yyyy")}
+                      </span>
+                    </div>
+                  ) : sectionComplete && (isPrincipal || isArchitect) && !isGfcIssued ? (
+                    <Button
+                      className="mt-3 w-full text-xs"
+                      style={{ backgroundColor: "#006039" }}
+                      onClick={() => handleSignOffSection(sec.number)}
+                    >
+                      Sign Off — {sec.name}
+                    </Button>
+                  ) : null}
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -308,8 +369,10 @@ export function MasterQCChecklist({
             </Button>
             {!canIssueGFC && !issuing && (
               <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-foreground text-background text-[11px] px-3 py-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                Complete all 19 sections to issue GFC. Remaining: {remainingItems} items in {incompleteSections} sections
-                {!detailLibraryReady ? " + Detail Library incomplete" : ""}.
+                Complete QC Checklist and Detail Library before issuing GFC.
+                {remainingItems > 0 ? ` ${remainingItems} items remaining.` : ""}
+                {!allSectionsSigned ? ` ${sections.filter(s => !s.signoff).length} sections need sign-off.` : ""}
+                {!detailLibraryReady ? " Detail Library incomplete." : ""}
               </div>
             )}
           </div>

@@ -1092,6 +1092,7 @@ export default function DesignPortal() {
                   isArchitect={isArchitect}
                   userId={userId}
                   userName={userName}
+                  userRole={userRole}
                   detailLibraryReady={(detailStats.complete + detailStats.na) >= detailStats.total && detailStats.total > 0}
                   detailLibraryStats={detailStats}
                   onRefresh={fetchData}
