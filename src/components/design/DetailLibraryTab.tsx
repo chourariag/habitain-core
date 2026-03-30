@@ -2,10 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
 import { toast } from "sonner";
@@ -18,7 +19,7 @@ const statusStyle = (s: string): React.CSSProperties => {
   switch (s) {
     case "Complete": return { backgroundColor: "#E8F2ED", color: "#006039" };
     case "In Progress": return { backgroundColor: "#FFF8E8", color: "#D4860A" };
-    case "Not Applicable": return { color: "#666666", textDecoration: "line-through" };
+    case "Not Applicable": return { color: "#999999" };
     default: return { backgroundColor: "#F5F5F5", color: "#666666" };
   }
 };
@@ -34,6 +35,7 @@ interface Props {
 export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onStatsChange }: Props) {
   const [details, setDetails] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState<string | null>(null);
 
   const fetchDetails = useCallback(async () => {
     const { data } = await (supabase.from("design_detail_library") as any)
@@ -46,11 +48,8 @@ export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onS
 
   useEffect(() => { fetchDetails(); }, [fetchDetails]);
 
-  // Auto-seed if empty
   useEffect(() => {
-    if (!loading && details.length === 0) {
-      seedDetails();
-    }
+    if (!loading && details.length === 0) { seedDetails(); }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, details.length]);
 
@@ -66,7 +65,6 @@ export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onS
     await fetchDetails();
   };
 
-  // Emit stats to parent
   useEffect(() => {
     const complete = details.filter((d) => d.status === "Complete").length;
     const inProgress = details.filter((d) => d.status === "In Progress").length;
@@ -93,6 +91,32 @@ export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onS
       updated_at: new Date().toISOString(),
     }).eq("id", detail.id);
     setDetails((prev) => prev.map((d) => d.id === detail.id ? { ...d, drawing_reference: ref } : d));
+  };
+
+  const handleUploadFile = async (detail: any, file: File) => {
+    setUploading(detail.id);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `detail-library/${projectId}/${detail.detail_number}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("design-files").upload(path, file);
+      if (uploadError) throw uploadError;
+      const url = supabase.storage.from("design-files").getPublicUrl(path).data.publicUrl;
+
+      const { client } = await getAuthedClient();
+      await (client.from("design_detail_library") as any).update({
+        file_url: url,
+        uploaded_by_name: userName,
+        updated_by: userId,
+        updated_at: new Date().toISOString(),
+      }).eq("id", detail.id);
+
+      setDetails((prev) => prev.map((d) => d.id === detail.id ? { ...d, file_url: url, uploaded_by_name: userName, updated_at: new Date().toISOString() } : d));
+      toast.success("File uploaded");
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setUploading(null);
+    }
   };
 
   const handleMarkAllNA = async () => {
@@ -172,7 +196,9 @@ export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onS
                   <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground">Detail Name</th>
                   <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground w-36">Status</th>
                   <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground w-32">Drawing Ref</th>
-                  <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground w-24">Updated</th>
+                  <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground w-28">Uploaded By</th>
+                  <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground w-24">Date</th>
+                  <th className="text-left py-2 px-2 text-xs font-medium text-muted-foreground w-24">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -181,6 +207,11 @@ export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onS
                     <td className="py-2 px-2 text-xs text-muted-foreground">{d.detail_number}</td>
                     <td className="py-2 px-2 text-[13px]" style={d.status === "Not Applicable" ? { textDecoration: "line-through", color: "#999" } : { color: "#1A1A1A" }}>
                       {d.detail_name}
+                      {d.file_url && (
+                        <a href={d.file_url} target="_blank" rel="noopener noreferrer" className="ml-2 text-[10px] underline" style={{ color: "#006039" }}>
+                          View File
+                        </a>
+                      )}
                     </td>
                     <td className="py-2 px-2">
                       {isArchitect ? (
@@ -216,9 +247,31 @@ export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onS
                       )}
                     </td>
                     <td className="py-2 px-2">
+                      <span className="text-[10px] text-muted-foreground">{d.uploaded_by_name || "—"}</span>
+                    </td>
+                    <td className="py-2 px-2">
                       {d.updated_at ? (
-                        <span className="text-[10px] text-muted-foreground">{format(new Date(d.updated_at), "dd MMM")}</span>
+                        <span className="text-[10px] text-muted-foreground">{format(new Date(d.updated_at), "dd/MM/yyyy")}</span>
                       ) : <span className="text-[10px] text-muted-foreground">—</span>}
+                    </td>
+                    <td className="py-2 px-2">
+                      {isArchitect && (
+                        <Label className="cursor-pointer">
+                          <div className="flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-border hover:bg-muted transition-colors">
+                            {uploading === d.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                            Upload
+                          </div>
+                          <Input
+                            type="file"
+                            accept=".pdf,image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) handleUploadFile(d, f);
+                            }}
+                          />
+                        </Label>
+                      )}
                     </td>
                   </tr>
                 ))}
