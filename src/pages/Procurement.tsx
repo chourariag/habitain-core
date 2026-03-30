@@ -537,56 +537,126 @@ export default function Procurement() {
             {canAddItem && (
               <Dialog open={itemDialogOpen} onOpenChange={setItemDialogOpen}>
                 <DialogTrigger asChild><Button style={{ backgroundColor: "#006039" }}><Plus className="h-4 w-4 mr-1" /> Add Item</Button></DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-h-[85vh] overflow-y-auto">
                   <DialogHeader><DialogTitle>Add Inventory Item</DialogTitle></DialogHeader>
                   <div className="space-y-4">
+                    {/* Delivery Destination Radio */}
+                    <div className="space-y-2">
+                      <Label className="font-display text-sm font-bold">Delivery Destination</Label>
+                      <RadioGroup value={itemDeliveryDest} onValueChange={(v) => setItemDeliveryDest(v as "factory" | "site_direct")} className="flex gap-3">
+                        <label className={`flex items-center gap-2 rounded-lg border px-4 py-3 cursor-pointer transition-all ${itemDeliveryDest === "factory" ? "border-[#006039] bg-[#E8F2ED]" : "border-border bg-card"}`}>
+                          <RadioGroupItem value="factory" />
+                          <span className="text-sm font-medium">Factory / Stores</span>
+                        </label>
+                        <label className={`flex items-center gap-2 rounded-lg border px-4 py-3 cursor-pointer transition-all ${itemDeliveryDest === "site_direct" ? "border-[#D4860A] bg-[#FFF8E8]" : "border-border bg-card"}`}>
+                          <RadioGroupItem value="site_direct" />
+                          <span className="text-sm font-medium">Direct to Site</span>
+                        </label>
+                      </RadioGroup>
+                    </div>
+                    {itemDeliveryDest === "site_direct" && (
+                      <div className="flex items-start gap-2 rounded-lg p-3" style={{ backgroundColor: "#FFF8E8", border: "1px solid #D4860A33" }}>
+                        <Info className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#D4860A" }} />
+                        <p className="text-xs" style={{ color: "#D4860A" }}>This item will not be added to factory inventory. It will be logged directly to the site inventory for this project.</p>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label>{itemDeliveryDest === "site_direct" ? "Project *" : "Project (optional)"}</Label>
+                      <Select value={itemForm.project_id} onValueChange={(v) => setItemForm((p) => ({ ...p, project_id: v }))}>
+                        <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
+                        <SelectContent>{projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
                     <div className="space-y-2"><Label>Material Name</Label><Input value={itemForm.material_name} onChange={(e) => setItemForm((p) => ({ ...p, material_name: e.target.value }))} /></div>
                     <div className="space-y-2"><Label>Category</Label><Input value={itemForm.category} onChange={(e) => setItemForm((p) => ({ ...p, category: e.target.value }))} /></div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><Label>Current Stock</Label><Input type="number" value={itemForm.current_stock} onChange={(e) => setItemForm((p) => ({ ...p, current_stock: e.target.value }))} /></div>
+                      <div className="space-y-2"><Label>{itemDeliveryDest === "site_direct" ? "Quantity" : "Current Stock"}</Label><Input type="number" value={itemForm.current_stock} onChange={(e) => setItemForm((p) => ({ ...p, current_stock: e.target.value }))} /></div>
                       <div className="space-y-2"><Label>Unit</Label><Input value={itemForm.unit} onChange={(e) => setItemForm((p) => ({ ...p, unit: e.target.value }))} /></div>
                     </div>
-                    <div className="space-y-2"><Label>Reorder Level</Label><Input type="number" value={itemForm.reorder_level} onChange={(e) => setItemForm((p) => ({ ...p, reorder_level: e.target.value }))} /></div>
+                    {itemDeliveryDest === "factory" && (
+                      <div className="space-y-2"><Label>Reorder Level</Label><Input type="number" value={itemForm.reorder_level} onChange={(e) => setItemForm((p) => ({ ...p, reorder_level: e.target.value }))} /></div>
+                    )}
+                    {itemDeliveryDest === "site_direct" && (
+                      <>
+                        <div className="space-y-2"><Label>Vendor Name (optional)</Label><Input value={itemForm.vendor_name} onChange={(e) => setItemForm((p) => ({ ...p, vendor_name: e.target.value }))} /></div>
+                        <div className="space-y-2"><Label>Received By on Site</Label><Input value={itemForm.received_by_on_site} onChange={(e) => setItemForm((p) => ({ ...p, received_by_on_site: e.target.value }))} placeholder="Name of person who received on site" /></div>
+                        <div className="space-y-2"><Label>Site Receipt Notes (optional)</Label><Textarea value={itemForm.site_receipt_notes} onChange={(e) => setItemForm((p) => ({ ...p, site_receipt_notes: e.target.value }))} placeholder="Any notes about this delivery" rows={2} /></div>
+                      </>
+                    )}
                     <Button onClick={handleSaveItem} disabled={itemSaving} className="w-full" style={{ backgroundColor: "#006039" }}>
-                      {itemSaving && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Save Item
+                      {itemSaving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+                      {itemDeliveryDest === "site_direct" ? "Log Site Receipt" : "Save Item"}
                     </Button>
                   </div>
                 </DialogContent>
               </Dialog>
             )}
           </div>
-          {items.length === 0 ? (
+          {items.length === 0 && siteReceipts.length === 0 ? (
             <Card><CardContent className="py-10 text-center"><p className="text-sm" style={{ color: "#666666" }}>No inventory items yet.</p></CardContent></Card>
           ) : (
-            <Card>
-              <CardContent className="p-0 overflow-x-auto">
-                <Table>
-                  <TableHeader><TableRow>
-                    <TableHead>Material</TableHead><TableHead>Category</TableHead><TableHead>Stock</TableHead>
-                    <TableHead>Unit</TableHead><TableHead>Reorder</TableHead><TableHead>Status</TableHead>
-                  </TableRow></TableHeader>
-                  <TableBody>
-                    {items.map((item) => {
-                      const low = Number(item.current_stock) <= Number(item.reorder_level);
-                      return (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium" style={{ color: "#1A1A1A" }}>{item.material_name}</TableCell>
-                          <TableCell>{item.category}</TableCell>
-                          <TableCell>{item.current_stock}</TableCell>
-                          <TableCell>{item.unit}</TableCell>
-                          <TableCell>{item.reorder_level}</TableCell>
-                          <TableCell>
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={low ? { backgroundColor: "#FFF0F0", color: "#F40009" } : { backgroundColor: "#E8F2ED", color: "#006039" }}>
-                              {low ? "LOW STOCK" : "Healthy"}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
+            <>
+              {items.length > 0 && (
+                <Card>
+                  <CardContent className="p-0 overflow-x-auto">
+                    <Table>
+                      <TableHeader><TableRow>
+                        <TableHead>Material</TableHead><TableHead>Category</TableHead><TableHead>Stock</TableHead>
+                        <TableHead>Unit</TableHead><TableHead>Reorder</TableHead><TableHead>Destination</TableHead><TableHead>Status</TableHead>
+                      </TableRow></TableHeader>
+                      <TableBody>
+                        {items.map((item) => {
+                          const low = Number(item.current_stock) <= Number(item.reorder_level);
+                          return (
+                            <TableRow key={item.id}>
+                              <TableCell className="font-medium" style={{ color: "#1A1A1A" }}>{item.material_name}</TableCell>
+                              <TableCell>{item.category}</TableCell>
+                              <TableCell>{item.current_stock}</TableCell>
+                              <TableCell>{item.unit}</TableCell>
+                              <TableCell>{item.reorder_level}</TableCell>
+                              <TableCell><span className="text-xs font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: "#E8F2ED", color: "#006039" }}>Factory</span></TableCell>
+                              <TableCell>
+                                <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={low ? { backgroundColor: "#FFF0F0", color: "#F40009" } : { backgroundColor: "#E8F2ED", color: "#006039" }}>
+                                  {low ? "LOW STOCK" : "Healthy"}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+              )}
+              {siteReceipts.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="font-display text-sm font-semibold" style={{ color: "#1A1A1A" }}>Direct to Site Receipts</h3>
+                  <Card>
+                    <CardContent className="p-0 overflow-x-auto">
+                      <Table>
+                        <TableHeader><TableRow>
+                          <TableHead>Material</TableHead><TableHead>Project</TableHead><TableHead>Qty</TableHead>
+                          <TableHead>Unit</TableHead><TableHead>Vendor</TableHead><TableHead>Destination</TableHead><TableHead>Received At</TableHead>
+                        </TableRow></TableHeader>
+                        <TableBody>
+                          {siteReceipts.map((r: any) => (
+                            <TableRow key={r.id}>
+                              <TableCell className="font-medium" style={{ color: "#1A1A1A" }}>{r.material_name}</TableCell>
+                              <TableCell>{projectsMap[r.project_id] ?? "—"}</TableCell>
+                              <TableCell>{r.qty}</TableCell>
+                              <TableCell>{r.unit}</TableCell>
+                              <TableCell>{r.vendor_name ?? "—"}</TableCell>
+                              <TableCell><span className="text-xs font-medium px-2 py-0.5 rounded-full text-white" style={{ backgroundColor: "#D4860A" }}>Site Direct</span></TableCell>
+                              <TableCell>{new Date(r.received_at).toLocaleDateString("en-GB")}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
 
