@@ -13,6 +13,8 @@ import { ProductionKanban } from "@/components/production/ProductionKanban";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
+import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
+import { DeliveryChecklistButton } from "@/components/production/DeliveryChecklistButton";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
@@ -77,6 +79,14 @@ function ProductionContent() {
     <div className="space-y-0">
       <MobileProjectSwitcher label="Project" />
       <div className="p-4 md:p-6 space-y-6">
+      {selectedProjectId && selectedProject && (
+        <ProjectChatButton projectId={selectedProjectId} projectName={selectedProject.name} projectType="production" />
+      )}
+      {selectedProjectId && (
+        <div className="flex items-center justify-between">
+          <DeliveryChecklistButton projectId={selectedProjectId} />
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "#1A1A1A" }}>Production</h1>

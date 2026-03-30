@@ -14,6 +14,7 @@ import Dashboard from "@/pages/Dashboard";
 import Projects from "@/pages/Projects";
 import ProjectDetail from "@/pages/ProjectDetail";
 import Production from "@/pages/Production";
+import DeliveryChecklist from "@/pages/DeliveryChecklist";
 import SiteHub from "@/pages/SiteHub";
 import DesignPortal from "@/pages/DesignPortal";
 import { DesignRouteGuard } from "@/components/DesignRouteGuard";
@@ -55,6 +56,7 @@ const App = () => (
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/projects/:id" element={<ProjectDetail />} />
                 <Route path="/production" element={<Production />} />
+                <Route path="/production/delivery-checklist/:projectId" element={<DeliveryChecklist />} />
                 <Route path="/site-hub" element={<SiteHub />} />
                 <Route path="/design" element={<DesignRouteGuard><DesignPortal /></DesignRouteGuard>} />
                 <Route path="/drawings" element={<DesignRouteGuard><Drawings /></DesignRouteGuard>} />
