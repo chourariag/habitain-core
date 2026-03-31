@@ -148,6 +148,7 @@ export function CheckInButton({ userRole }: Props) {
     setSubmitting(true);
     const now = new Date();
     const finalLocationType = locationType === "office" ? (subType === "remote" ? "remote" : "office") : locationType;
+    const isUnmatched = (locationType === "factory" || locationType === "site") && !gpsVerified && !gpsNotConfigured;
 
     const record: any = {
       user_id: user.id,
@@ -159,6 +160,7 @@ export function CheckInButton({ userRole }: Props) {
       gps_verified: gpsVerified,
       remote_reason: finalLocationType === "remote" ? remoteReason.trim() || null : null,
       project_id: locationType === "site" && selectedProject ? selectedProject : null,
+      location_note: isUnmatched ? locationNote.trim() : null,
     };
 
     if (connectionStatus === "offline") {
