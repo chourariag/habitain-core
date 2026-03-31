@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Receipt, Send, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { ExpenseExcelUpload } from "./ExpenseExcelUpload";
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
   draft: { color: "#666", bg: "#F7F7F7" },
