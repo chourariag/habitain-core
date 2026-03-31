@@ -12,8 +12,6 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { saveOfflineRecord, type OfflineAttendanceRecord } from "@/lib/offline-attendance";
 
-const ARCHITECT_ROLES = ["principal_architect", "project_architect", "structural_architect"];
-
 interface Props {
   userRole: string | null;
 }
@@ -39,8 +37,7 @@ export function CheckInButton({ userRole }: Props) {
   const [checkingOut, setCheckingOut] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [offlineCheckedIn, setOfflineCheckedIn] = useState(false);
-
-  const isArchitect = userRole && ARCHITECT_ROLES.includes(userRole);
+  const [locationNote, setLocationNote] = useState("");
 
   // Live clock
   useEffect(() => {
@@ -49,7 +46,7 @@ export function CheckInButton({ userRole }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!user || isArchitect) return;
+    if (!user) return;
     fetchToday();
   }, [user]);
 
@@ -68,7 +65,7 @@ export function CheckInButton({ userRole }: Props) {
     setLoading(false);
   };
 
-  if (isArchitect || !user) return null;
+  if (!user) return null;
 
   const getGPS = (): Promise<GeolocationPosition> =>
     new Promise((resolve, reject) =>
@@ -151,6 +148,7 @@ export function CheckInButton({ userRole }: Props) {
     setSubmitting(true);
     const now = new Date();
     const finalLocationType = locationType === "office" ? (subType === "remote" ? "remote" : "office") : locationType;
+    const isUnmatched = (locationType === "factory" || locationType === "site") && !gpsVerified && !gpsNotConfigured;
 
     const record: any = {
       user_id: user.id,
@@ -162,6 +160,7 @@ export function CheckInButton({ userRole }: Props) {
       gps_verified: gpsVerified,
       remote_reason: finalLocationType === "remote" ? remoteReason.trim() || null : null,
       project_id: locationType === "site" && selectedProject ? selectedProject : null,
+      location_note: isUnmatched ? locationNote.trim() : null,
     };
 
     if (connectionStatus === "offline") {
@@ -241,6 +240,7 @@ export function CheckInButton({ userRole }: Props) {
     setGpsVerified(false);
     setGpsWarning(false);
     setGpsNotConfigured(false);
+    setLocationNote("");
   };
 
   if (loading) return null;
@@ -384,14 +384,37 @@ export function CheckInButton({ userRole }: Props) {
             </div>
           )}
 
-          {step === "confirm" && (
+          {step === "confirm" && (() => {
+            const isUnmatched = (locationType === "factory" || locationType === "site") && !gpsVerified && !gpsNotConfigured;
+            const noteValid = !isUnmatched || locationNote.trim().length >= 10;
+            return (
             <div className="space-y-4">
               {gpsNotConfigured && (
                 <div className="rounded-md p-3 text-sm" style={{ backgroundColor: "#FFF3E0", color: "#D4860A" }}>
                   ⚠ {locationType === "factory" ? "Factory" : "Site"} GPS not set up. Contact Admin to configure location verification.
                 </div>
               )}
-              {gpsWarning && !gpsNotConfigured && (
+              {isUnmatched && (
+                <>
+                  <div className="rounded-md p-3 text-sm font-inter" style={{ backgroundColor: "#D4860A", color: "#fff" }}>
+                    Your location does not match any predefined site, office, or factory. Please add a note explaining your location.
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold font-display mb-1" style={{ color: "#1A1A1A" }}>Location Note (required)</label>
+                    <Input
+                      placeholder="e.g. Client meeting at Whitefield, Working from home, Vendor site visit at Peenya"
+                      value={locationNote}
+                      onChange={(e) => setLocationNote(e.target.value)}
+                      className="font-inter text-sm"
+                      style={{ borderColor: locationNote.trim().length >= 10 ? "#006039" : "#D4860A" }}
+                    />
+                    {locationNote.trim().length > 0 && locationNote.trim().length < 10 && (
+                      <p className="text-xs mt-1" style={{ color: "#D4860A" }}>Minimum 10 characters ({locationNote.trim().length}/10)</p>
+                    )}
+                  </div>
+                </>
+              )}
+              {gpsWarning && !gpsNotConfigured && !isUnmatched && (
                 <div className="rounded-md p-3 text-sm" style={{ backgroundColor: "#FFF3E0", color: "#D4860A" }}>
                   ⚠ You appear to be outside the expected area. You can still check in.
                 </div>
@@ -402,12 +425,13 @@ export function CheckInButton({ userRole }: Props) {
                 <div className="flex justify-between"><span style={{ color: "#666" }}>Location</span><span style={{ color: "#1A1A1A" }} className="capitalize">{locationType === "office" ? subType : locationType}</span></div>
                 <div className="flex justify-between"><span style={{ color: "#666" }}>GPS</span><span style={{ color: gpsNotConfigured ? "#D4860A" : gpsVerified ? "#006039" : "#D4860A" }}>{gpsNotConfigured ? "Not configured" : gpsVerified ? "Verified ✓" : "Not verified"}</span></div>
               </div>
-              <Button onClick={handleCheckIn} disabled={submitting} className="w-full" style={{ backgroundColor: "#006039" }}>
+              <Button onClick={handleCheckIn} disabled={submitting || !noteValid} className="w-full" style={{ backgroundColor: noteValid && !submitting ? "#006039" : undefined }}>
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
                 Confirm Check In
               </Button>
             </div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
     );

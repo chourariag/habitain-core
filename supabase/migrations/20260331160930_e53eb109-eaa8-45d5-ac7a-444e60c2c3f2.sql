@@ -1,0 +1,1 @@
+ALTER TABLE public.attendance_records ADD COLUMN IF NOT EXISTS location_note text;
