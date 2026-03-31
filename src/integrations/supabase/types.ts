@@ -199,6 +199,7 @@ export type Database = {
           hours_worked: number | null
           id: string
           is_manual_override: boolean | null
+          location_note: string | null
           location_type: string
           offline_captured: boolean | null
           override_reason: string | null
@@ -219,6 +220,7 @@ export type Database = {
           hours_worked?: number | null
           id?: string
           is_manual_override?: boolean | null
+          location_note?: string | null
           location_type?: string
           offline_captured?: boolean | null
           override_reason?: string | null
@@ -239,6 +241,7 @@ export type Database = {
           hours_worked?: number | null
           id?: string
           is_manual_override?: boolean | null
+          location_note?: string | null
           location_type?: string
           offline_captured?: boolean | null
           override_reason?: string | null
