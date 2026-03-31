@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { NewMaterialRequestDialog } from "@/components/materials/NewMaterialRequestDialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TransfersTab } from "@/components/procurement/TransfersTab";
+import { TallyPOUploadTab } from "@/components/procurement/TallyPOUploadTab";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
