@@ -65,7 +65,7 @@ export function CheckInButton({ userRole }: Props) {
     setLoading(false);
   };
 
-  if (isArchitect || !user) return null;
+  if (!user) return null;
 
   const getGPS = (): Promise<GeolocationPosition> =>
     new Promise((resolve, reject) =>
