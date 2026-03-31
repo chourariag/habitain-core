@@ -185,7 +185,7 @@ export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onS
                     <td className="py-2 px-2">
                       {isArchitect ? (
                         <Select value={d.status} onValueChange={(v) => handleUpdateStatus(d, v)}>
-                          <SelectTrigger className="h-7 text-xs w-32">
+                          <SelectTrigger className="h-10 text-xs w-32">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -199,7 +199,7 @@ export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onS
                     <td className="py-2 px-2">
                       {isArchitect ? (
                         <Input
-                          className="h-7 text-xs w-28"
+                          className="h-9 text-xs w-28"
                           value={d.drawing_reference || ""}
                           placeholder="e.g. DT-001"
                           onBlur={(e) => {

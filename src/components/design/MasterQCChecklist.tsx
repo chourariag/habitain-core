@@ -22,6 +22,7 @@ interface Props {
   isArchitect: boolean;
   userId: string | null;
   userName: string;
+  userRole: string | null;
   detailLibraryReady: boolean; // whether all 40 details are Complete or N/A
   detailLibraryStats: { complete: number; na: number; total: number };
   onRefresh: () => void;
@@ -29,7 +30,7 @@ interface Props {
 
 export function MasterQCChecklist({
   projectId, projectName, designFile, isPrincipal, isArchitect,
-  userId, userName, detailLibraryReady, detailLibraryStats, onRefresh,
+  userId, userName, userRole, detailLibraryReady, detailLibraryStats, onRefresh,
 }: Props) {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,12 @@ export function MasterQCChecklist({
 
   const isGfcIssued = designFile?.design_stage === "gfc_issued";
   const canTick = (isPrincipal || isArchitect) && !isGfcIssued;
+
+  // structural_architect may only tick sections 3 (Structure) and 16 (Structural Drawings)
+  const canTickSection = (sectionNumber: number) => {
+    if (userRole === "structural_architect") return sectionNumber === 3 || sectionNumber === 16;
+    return isPrincipal || isArchitect;
+  };
 
   const fetchItems = useCallback(async () => {
     const { data } = await (supabase.from("design_qc_checklist") as any)
@@ -121,6 +128,7 @@ export function MasterQCChecklist({
   const remainingItems = totalItems - totalTicked;
 
   const handleIssueGFC = async () => {
+    if (!isPrincipal) return;
     setIssuing(true);
     try {
       const { client } = await getAuthedClient();
@@ -204,7 +212,7 @@ export function MasterQCChecklist({
                 <button
                   type="button"
                   className="w-full flex items-center justify-between gap-3 p-3 rounded-lg border border-border transition-colors hover:bg-muted/30"
-                  style={sec.pct === 100 ? { backgroundColor: "#E8F2ED" } : undefined}
+                  style={sec.pct === 100 ? { backgroundColor: "#E8F2ED" } : { backgroundColor: "#F7F7F7" }}
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     {sec.pct === 100 && <CheckCircle2 className="h-4 w-4 shrink-0" style={{ color: "#006039" }} />}
@@ -229,7 +237,7 @@ export function MasterQCChecklist({
                     <div key={item.id} className="flex items-start gap-2.5 py-1.5 px-2 rounded hover:bg-muted/20">
                       <Checkbox
                         checked={item.is_ticked}
-                        disabled={!canTick}
+                        disabled={!canTick || !canTickSection(sec.number)}
                         onCheckedChange={(checked) => handleTick(item, !!checked)}
                         className="mt-0.5"
                       />
@@ -298,7 +306,7 @@ export function MasterQCChecklist({
         {!isGfcIssued && isPrincipal && (
           <div className="relative group">
             <Button
-              className="mt-2 w-full"
+              className="mt-2 w-full h-12"
               style={{ backgroundColor: "#006039" }}
               disabled={!canIssueGFC || issuing}
               onClick={handleIssueGFC}

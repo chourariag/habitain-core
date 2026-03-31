@@ -1030,6 +1030,7 @@ export default function DesignPortal() {
             <ScrollableTabsWrapper>
               <TabsList>
                 <TabsTrigger value="design-file">Project Design File</TabsTrigger>
+                <TabsTrigger value="qc-checklist">QC Checklist</TabsTrigger>
                 <TabsTrigger value="detail-library">Detail Library</TabsTrigger>
                 <TabsTrigger value="consultants">Consultants</TabsTrigger>
                 <TabsTrigger value="drawings">Drawings</TabsTrigger>
@@ -1079,6 +1080,9 @@ export default function DesignPortal() {
                 </CardContent>
               </Card>
 
+            </TabsContent>
+
+            <TabsContent value="qc-checklist">
               {selectedProjectId && (
                 <MasterQCChecklist
                   projectId={selectedProjectId}
@@ -1088,6 +1092,7 @@ export default function DesignPortal() {
                   isArchitect={isArchitect}
                   userId={userId}
                   userName={userName}
+                  userRole={userRole}
                   detailLibraryReady={(detailStats.complete + detailStats.na) >= detailStats.total && detailStats.total > 0}
                   detailLibraryStats={detailStats}
                   onRefresh={fetchData}
