@@ -15,11 +15,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, LayoutDashboard, Truck, Info } from "lucide-react";
+import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, LayoutDashboard, Truck, Info, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { NewMaterialRequestDialog } from "@/components/materials/NewMaterialRequestDialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TransfersTab } from "@/components/procurement/TransfersTab";
+import { TallyPOUploadTab } from "@/components/procurement/TallyPOUploadTab";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
@@ -282,6 +283,7 @@ export default function Procurement() {
             <TabsTrigger value="purchase-orders" className="gap-1.5"><FileText className="h-4 w-4" /> Purchase Orders</TabsTrigger>
             <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>
             <TabsTrigger value="transfers" className="gap-1.5"><Truck className="h-4 w-4" /> Transfers</TabsTrigger>
+            <TabsTrigger value="tally-po" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -663,6 +665,10 @@ export default function Procurement() {
         {/* Transfers Tab */}
         <TabsContent value="transfers">
           <TransfersTab />
+        </TabsContent>
+
+        <TabsContent value="tally-po">
+          <TallyPOUploadTab />
         </TabsContent>
       </Tabs>
 

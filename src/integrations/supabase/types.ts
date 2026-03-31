@@ -2802,44 +2802,100 @@ export type Database = {
       purchase_orders: {
         Row: {
           amount: number
+          approved_at: string | null
+          approved_by: string | null
+          category: string | null
           created_at: string
+          delivery_date: string | null
           id: string
           is_archived: boolean
+          item_description: string | null
           items_summary: string
           notes: string | null
           po_date: string
+          po_number: string | null
+          project_id: string | null
+          project_name: string | null
+          quantity: number | null
           raised_by: string | null
+          rejection_reason: string | null
+          source: string | null
           status: string
+          total_amount: number | null
+          unit: string | null
+          unit_rate: number | null
           updated_at: string
+          uploaded_by: string | null
+          vendor_code: string | null
           vendor_name: string
         }
         Insert: {
           amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string | null
           created_at?: string
+          delivery_date?: string | null
           id?: string
           is_archived?: boolean
+          item_description?: string | null
           items_summary: string
           notes?: string | null
           po_date?: string
+          po_number?: string | null
+          project_id?: string | null
+          project_name?: string | null
+          quantity?: number | null
           raised_by?: string | null
+          rejection_reason?: string | null
+          source?: string | null
           status?: string
+          total_amount?: number | null
+          unit?: string | null
+          unit_rate?: number | null
           updated_at?: string
+          uploaded_by?: string | null
+          vendor_code?: string | null
           vendor_name: string
         }
         Update: {
           amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string | null
           created_at?: string
+          delivery_date?: string | null
           id?: string
           is_archived?: boolean
+          item_description?: string | null
           items_summary?: string
           notes?: string | null
           po_date?: string
+          po_number?: string | null
+          project_id?: string | null
+          project_name?: string | null
+          quantity?: number | null
           raised_by?: string | null
+          rejection_reason?: string | null
+          source?: string | null
           status?: string
+          total_amount?: number | null
+          unit?: string | null
+          unit_rate?: number | null
           updated_at?: string
+          uploaded_by?: string | null
+          vendor_code?: string | null
           vendor_name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "purchase_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qc_checklist_items: {
         Row: {
