@@ -46,7 +46,7 @@ export function CheckInButton({ userRole }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!user || isArchitect) return;
+    if (!user) return;
     fetchToday();
   }, [user]);
 
