@@ -666,6 +666,10 @@ export default function Procurement() {
         <TabsContent value="transfers">
           <TransfersTab />
         </TabsContent>
+
+        <TabsContent value="tally-po">
+          <TallyPOUploadTab />
+        </TabsContent>
       </Tabs>
 
       <NewMaterialRequestDialog open={addOpen} onOpenChange={setAddOpen} onCreated={fetchData} />
