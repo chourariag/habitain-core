@@ -129,5 +129,9 @@ export function MyExpenses() {
         )}
       </CardContent>
     </Card>
+
+    {/* Excel Upload */}
+    <ExpenseExcelUpload />
+    </>
   );
 }
