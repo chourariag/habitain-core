@@ -240,6 +240,7 @@ export function CheckInButton({ userRole }: Props) {
     setGpsVerified(false);
     setGpsWarning(false);
     setGpsNotConfigured(false);
+    setLocationNote("");
   };
 
   if (loading) return null;
