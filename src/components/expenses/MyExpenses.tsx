@@ -77,7 +77,7 @@ export function MyExpenses() {
   if (loading) return <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
 
   return (
-    <Card>
+    <>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2"><Receipt className="h-4 w-4" /> My Expenses</CardTitle>
       </CardHeader>
