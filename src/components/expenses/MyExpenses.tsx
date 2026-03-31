@@ -78,6 +78,7 @@ export function MyExpenses() {
 
   return (
     <>
+    <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2"><Receipt className="h-4 w-4" /> My Expenses</CardTitle>
       </CardHeader>
