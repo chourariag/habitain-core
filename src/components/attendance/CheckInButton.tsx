@@ -12,8 +12,6 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { saveOfflineRecord, type OfflineAttendanceRecord } from "@/lib/offline-attendance";
 
-const ARCHITECT_ROLES = ["principal_architect", "project_architect", "structural_architect"];
-
 interface Props {
   userRole: string | null;
 }
@@ -39,8 +37,7 @@ export function CheckInButton({ userRole }: Props) {
   const [checkingOut, setCheckingOut] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [offlineCheckedIn, setOfflineCheckedIn] = useState(false);
-
-  const isArchitect = userRole && ARCHITECT_ROLES.includes(userRole);
+  const [locationNote, setLocationNote] = useState("");
 
   // Live clock
   useEffect(() => {
