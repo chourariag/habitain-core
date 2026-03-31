@@ -283,6 +283,7 @@ export default function Procurement() {
             <TabsTrigger value="purchase-orders" className="gap-1.5"><FileText className="h-4 w-4" /> Purchase Orders</TabsTrigger>
             <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>
             <TabsTrigger value="transfers" className="gap-1.5"><Truck className="h-4 w-4" /> Transfers</TabsTrigger>
+            <TabsTrigger value="tally-po" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
