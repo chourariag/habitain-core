@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Receipt, Send, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { ExpenseExcelUpload } from "./ExpenseExcelUpload";
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
   draft: { color: "#666", bg: "#F7F7F7" },
@@ -76,6 +77,7 @@ export function MyExpenses() {
   if (loading) return <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
 
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2"><Receipt className="h-4 w-4" /> My Expenses</CardTitle>
@@ -128,5 +130,9 @@ export function MyExpenses() {
         )}
       </CardContent>
     </Card>
+
+    {/* Excel Upload */}
+    <ExpenseExcelUpload />
+    </>
   );
 }

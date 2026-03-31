@@ -322,9 +322,14 @@ export function ExpensesTab() {
                       <td className="px-3 py-2 text-xs">{e.category}</td>
                       <td className="px-3 py-2 text-xs font-inter font-semibold">₹{Number(e.amount).toLocaleString("en-IN")}</td>
                       <td className="px-3 py-2">
-                        <Badge variant="outline" className="text-[10px]" style={{ color: sc.color, borderColor: sc.color, backgroundColor: sc.bg }}>
-                          {STATUS_LABELS[e.status] || e.status}
-                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Badge variant="outline" className="text-[10px]" style={{ color: sc.color, borderColor: sc.color, backgroundColor: sc.bg }}>
+                            {STATUS_LABELS[e.status] || e.status}
+                          </Badge>
+                          {(e as any).submission_method === "excel_upload" && (
+                            <Badge variant="outline" className="text-[9px]" style={{ color: "#006039", borderColor: "#006039", backgroundColor: "#E8F2ED" }}>Excel</Badge>
+                          )}
+                        </div>
                       </td>
                       <td className="px-3 py-2">{e.budget_flag && <AlertTriangle className="h-3 w-3" style={{ color: "#D4860A" }} />}</td>
                     </tr>

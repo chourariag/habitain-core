@@ -1072,13 +1072,16 @@ export type Database = {
           id: string
           project_id: string | null
           rate_per_km: number | null
+          rate_used: number | null
           receipt_url: string | null
           rejection_reason: string | null
           report_period: string | null
           status: string
+          submission_method: string
           submitted_by: string
           to_location: string | null
           updated_at: string | null
+          uploaded_on_behalf_of: string | null
           vehicle_type: string | null
         }
         Insert: {
@@ -1102,13 +1105,16 @@ export type Database = {
           id?: string
           project_id?: string | null
           rate_per_km?: number | null
+          rate_used?: number | null
           receipt_url?: string | null
           rejection_reason?: string | null
           report_period?: string | null
           status?: string
+          submission_method?: string
           submitted_by: string
           to_location?: string | null
           updated_at?: string | null
+          uploaded_on_behalf_of?: string | null
           vehicle_type?: string | null
         }
         Update: {
@@ -1132,13 +1138,16 @@ export type Database = {
           id?: string
           project_id?: string | null
           rate_per_km?: number | null
+          rate_used?: number | null
           receipt_url?: string | null
           rejection_reason?: string | null
           report_period?: string | null
           status?: string
+          submission_method?: string
           submitted_by?: string
           to_location?: string | null
           updated_at?: string | null
+          uploaded_on_behalf_of?: string | null
           vehicle_type?: string | null
         }
         Relationships: [
