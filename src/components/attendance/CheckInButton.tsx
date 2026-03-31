@@ -384,14 +384,37 @@ export function CheckInButton({ userRole }: Props) {
             </div>
           )}
 
-          {step === "confirm" && (
+          {step === "confirm" && (() => {
+            const isUnmatched = (locationType === "factory" || locationType === "site") && !gpsVerified && !gpsNotConfigured;
+            const noteValid = !isUnmatched || locationNote.trim().length >= 10;
+            return (
             <div className="space-y-4">
               {gpsNotConfigured && (
                 <div className="rounded-md p-3 text-sm" style={{ backgroundColor: "#FFF3E0", color: "#D4860A" }}>
                   ⚠ {locationType === "factory" ? "Factory" : "Site"} GPS not set up. Contact Admin to configure location verification.
                 </div>
               )}
-              {gpsWarning && !gpsNotConfigured && (
+              {isUnmatched && (
+                <>
+                  <div className="rounded-md p-3 text-sm font-inter" style={{ backgroundColor: "#D4860A", color: "#fff" }}>
+                    Your location does not match any predefined site, office, or factory. Please add a note explaining your location.
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold font-display mb-1" style={{ color: "#1A1A1A" }}>Location Note (required)</label>
+                    <Input
+                      placeholder="e.g. Client meeting at Whitefield, Working from home, Vendor site visit at Peenya"
+                      value={locationNote}
+                      onChange={(e) => setLocationNote(e.target.value)}
+                      className="font-inter text-sm"
+                      style={{ borderColor: locationNote.trim().length >= 10 ? "#006039" : "#D4860A" }}
+                    />
+                    {locationNote.trim().length > 0 && locationNote.trim().length < 10 && (
+                      <p className="text-xs mt-1" style={{ color: "#D4860A" }}>Minimum 10 characters ({locationNote.trim().length}/10)</p>
+                    )}
+                  </div>
+                </>
+              )}
+              {gpsWarning && !gpsNotConfigured && !isUnmatched && (
                 <div className="rounded-md p-3 text-sm" style={{ backgroundColor: "#FFF3E0", color: "#D4860A" }}>
                   ⚠ You appear to be outside the expected area. You can still check in.
                 </div>
@@ -402,12 +425,13 @@ export function CheckInButton({ userRole }: Props) {
                 <div className="flex justify-between"><span style={{ color: "#666" }}>Location</span><span style={{ color: "#1A1A1A" }} className="capitalize">{locationType === "office" ? subType : locationType}</span></div>
                 <div className="flex justify-between"><span style={{ color: "#666" }}>GPS</span><span style={{ color: gpsNotConfigured ? "#D4860A" : gpsVerified ? "#006039" : "#D4860A" }}>{gpsNotConfigured ? "Not configured" : gpsVerified ? "Verified ✓" : "Not verified"}</span></div>
               </div>
-              <Button onClick={handleCheckIn} disabled={submitting} className="w-full" style={{ backgroundColor: "#006039" }}>
+              <Button onClick={handleCheckIn} disabled={submitting || !noteValid} className="w-full" style={{ backgroundColor: noteValid && !submitting ? "#006039" : undefined }}>
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
                 Confirm Check In
               </Button>
             </div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
     );
