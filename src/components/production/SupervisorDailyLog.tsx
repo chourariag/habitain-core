@@ -12,6 +12,7 @@ import { Camera, Loader2, CheckCircle2, XCircle, Clock, Plus } from "lucide-reac
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
+import { PhotoGuidanceCard, PhotoFeedback, PhotoQualitySummary, usePhotoWithAI } from "@/components/photos/PhotoGuidance";
 
 interface Props {
   moduleId: string;
