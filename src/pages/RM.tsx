@@ -550,7 +550,7 @@ Materials: ${aiReport.materials_needed.join(", ")}`;
                 </SelectContent>
               </Select>
             </div>
-            <ImageUploader images={formImages} setImages={setFormImages} />
+            <RMImageUploader aiPhotos={rmAIPhotos} addAIPhotos={rmAddPhotos} retakePhoto={rmRetakePhoto} overridePhoto={rmOverridePhoto} guidanceCollapsed={rmGuidanceCollapsed} />
           </div>
           <DialogFooter>
             <Button onClick={handleCreate} disabled={submitting} style={{ backgroundColor: "#006039" }} className="text-white">
