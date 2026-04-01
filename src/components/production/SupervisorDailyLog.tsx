@@ -79,9 +79,9 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
       if (!user) throw new Error("Not authenticated");
 
       const urls: string[] = [];
-      for (const photo of photos) {
-        const path = `production/${moduleId}/${Date.now()}-${photo.name}`;
-        const { error } = await supabase.storage.from("site-photos").upload(path, photo);
+      for (const p of aiPhotos) {
+        const path = `production/${moduleId}/${Date.now()}-${p.file.name}`;
+        const { error } = await supabase.storage.from("site-photos").upload(path, p.file);
         if (error) throw error;
         const { data: urlData } = supabase.storage.from("site-photos").getPublicUrl(path);
         urls.push(urlData.publicUrl);
