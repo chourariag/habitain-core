@@ -96,9 +96,9 @@ export function SiteDiary({ projectId, userRole }: Props) {
       } catch { /* GPS optional */ }
 
       const urls: string[] = [];
-      for (const photo of photos) {
-        const path = `diary/${projectId}/${Date.now()}-${photo.name}`;
-        const { error } = await supabase.storage.from("site-photos").upload(path, photo);
+      for (const p of aiPhotos) {
+        const path = `diary/${projectId}/${Date.now()}-${p.file.name}`;
+        const { error } = await supabase.storage.from("site-photos").upload(path, p.file);
         if (error) throw error;
         const { data: urlData } = supabase.storage.from("site-photos").getPublicUrl(path);
         urls.push(urlData.publicUrl);
