@@ -33,9 +33,19 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
   const [stageProgress, setStageProgress] = useState([50]);
   const [materialsUsed, setMaterialsUsed] = useState("");
   const [issuesBlockers, setIssuesBlockers] = useState("");
-  const [photos, setPhotos] = useState<File[]>([]);
-  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const {
+    photos: aiPhotos,
+    guidanceCollapsed,
+    addPhotos: addAIPhotos,
+    removePhoto: removeAIPhoto,
+    overridePhoto,
+    retakePhoto,
+    resetPhotos,
+    anyChecking,
+    qualityMeta,
+  } = usePhotoWithAI("daily_log");
 
   const isSupervisor = ["factory_floor_supervisor", "production_head", "super_admin", "managing_director", "head_operations"].includes(userRole ?? "");
   const isReviewer = ["production_head", "super_admin", "managing_director", "head_operations"].includes(userRole ?? "");
