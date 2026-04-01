@@ -80,7 +80,7 @@ export function SiteDiary({ projectId, userRole }: Props) {
   };
 
   const handleSubmit = async () => {
-    if (photos.length < 3) { toast.error("Please add at least 3 photos"); return; }
+    if (aiPhotos.length < 3) { toast.error("Please add at least 3 photos"); return; }
     if (!notes.trim()) { toast.error("Work done today is required"); return; }
     setSubmitting(true);
     try {
