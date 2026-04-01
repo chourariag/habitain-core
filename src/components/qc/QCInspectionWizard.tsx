@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { PhotoGuidanceCard, type PhotoCheckResult } from "@/components/photos/PhotoGuidance";
 import { supabase } from "@/integrations/supabase/client";
 import { insertNotifications } from "@/lib/notifications";
 import { getAuthedClient } from "@/lib/auth-client";
