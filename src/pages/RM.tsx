@@ -377,8 +377,8 @@ Materials: ${aiReport.materials_needed.join(", ")}`;
       const clientName = projects[form.project_id] || "Unknown";
       const ticketId = crypto.randomUUID();
       let photoUrls: string[] = [];
-      if (formImages.length > 0) {
-        photoUrls = await uploadImages(formImages, ticketId);
+      if (rmAIPhotos.length > 0) {
+        photoUrls = await uploadImages(rmAIPhotos.map(p => p.file), ticketId);
       }
       const { error } = await (supabase.from("rm_tickets" as any) as any).insert({
         id: ticketId,
@@ -389,12 +389,13 @@ Materials: ${aiReport.materials_needed.join(", ")}`;
         status: "open",
         raised_by: user.id,
         photo_urls: photoUrls,
+        ...rmQualityMeta,
       });
       if (error) throw error;
       toast.success("R&M ticket created");
       setNewOpen(false);
       setForm({ project_id: "", issue_description: "", priority: "standard" });
-      setFormImages([]);
+      rmResetPhotos();
       fetchData();
     } catch (err: any) {
       toast.error(err.message);
