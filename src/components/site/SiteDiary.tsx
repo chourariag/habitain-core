@@ -267,29 +267,33 @@ export function SiteDiary({ projectId, userRole }: Props) {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Photos (minimum 3) — {photos.length} added</label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {photoPreviews.map((url, idx) => (
-                  <div key={idx} className="relative">
-                    <img src={url} alt={`Photo ${idx + 1}`} className="h-16 w-16 rounded object-cover border border-border" />
-                    <button type="button" className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 text-[10px] flex items-center justify-center" onClick={() => removePhoto(idx)}>×</button>
-                  </div>
+              <label className="text-xs font-medium text-muted-foreground">Photos (minimum 3) — {aiPhotos.length} added</label>
+              <PhotoGuidanceCard context="site_diary" collapsed={guidanceCollapsed} />
+              <div className="flex flex-wrap gap-3 mt-2">
+                {aiPhotos.map((p, idx) => (
+                  <PhotoFeedback
+                    key={idx}
+                    photo={p}
+                    onRetake={() => retakePhoto(idx)}
+                    onOverride={() => overridePhoto(idx)}
+                  />
                 ))}
-                <label className="h-16 w-16 rounded border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50">
+                <label className="h-20 w-20 rounded border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50">
                   <Camera className="h-5 w-5 text-muted-foreground" />
                   <input type="file" accept="image/*" capture="environment" multiple className="hidden" onChange={handlePhotoAdd} />
                 </label>
               </div>
-              {photos.length > 0 && photos.length < 3 && (
-                <p className="text-xs text-destructive mt-1">Please add at least 3 photos ({3 - photos.length} more needed)</p>
+              {aiPhotos.length > 0 && aiPhotos.length < 3 && (
+                <p className="text-xs text-destructive mt-1">Please add at least 3 photos ({3 - aiPhotos.length} more needed)</p>
               )}
+              <PhotoQualitySummary photos={aiPhotos} />
             </div>
 
             <p className="text-xs text-muted-foreground">📍 GPS location auto-captured on submission</p>
 
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={resetForm} className="flex-1">Cancel</Button>
-              <Button size="sm" onClick={handleSubmit} disabled={submitting || photos.length < 3} className="flex-1">
+              <Button size="sm" onClick={handleSubmit} disabled={submitting || aiPhotos.length < 3 || anyChecking} className="flex-1">
                 {submitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Save Entry
               </Button>
             </div>
