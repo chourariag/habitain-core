@@ -71,7 +71,7 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
 
   const handleSubmit = async () => {
     if (!workCompleted.trim()) { toast.error("Work completed is required"); return; }
-    if (photos.length < 1) { toast.error("At least 1 photo is required"); return; }
+    if (aiPhotos.length < 1) { toast.error("At least 1 photo is required"); return; }
 
     setSubmitting(true);
     try {
