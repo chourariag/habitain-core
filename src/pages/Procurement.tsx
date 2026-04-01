@@ -13,14 +13,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, LayoutDashboard } from "lucide-react";
+import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, LayoutDashboard, Truck, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { NewMaterialRequestDialog } from "@/components/materials/NewMaterialRequestDialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
+import { TallyPOUploadTab } from "@/components/procurement/TallyPOUploadTab";
+import { TransfersTab } from "@/components/procurement/TransfersTab";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
-const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
 const PLANNER_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const REQUESTOR_ROLES = [
   "super_admin", "managing_director", "site_installation_mgr", "site_engineer",
@@ -89,11 +90,6 @@ export default function Procurement() {
   const [itemForm, setItemForm] = useState({ material_name: "", category: "", current_stock: "", unit: "units", reorder_level: "" });
   const [itemSaving, setItemSaving] = useState(false);
 
-  // Add PO dialog
-  const [poDialogOpen, setPoDialogOpen] = useState(false);
-  const [poForm, setPoForm] = useState({ vendor_name: "", items_summary: "", amount: "", po_date: new Date().toISOString().slice(0, 10) });
-  const [poSaving, setPoSaving] = useState(false);
-
   // Add plan item dialog
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
   const [planForm, setPlanForm] = useState({ project_id: "", material_name: "", category: "", quantity: "", unit: "units", required_by: "", lead_time_days: "7", supplier: "" });
@@ -133,7 +129,6 @@ export default function Procurement() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const canAddItem = STOCK_CREATOR_ROLES.includes(userRole ?? "");
-  const canAddPO = PO_CREATOR_ROLES.includes(userRole ?? "");
   const canRequest = REQUESTOR_ROLES.includes(userRole ?? "");
   const canApprove = APPROVER_ROLES.includes(userRole ?? "");
   const canPlan = PLANNER_ROLES.includes(userRole ?? "");
@@ -147,7 +142,10 @@ export default function Procurement() {
     const orderBy = p.required_by ? subDays(new Date(p.required_by), Number(p.lead_time_days || 7)) : null;
     return orderBy && isBefore(orderBy, today);
   }).length;
-  const pendingDirectorPOCount = purchaseOrders.filter((po) => po.status === "pending" && Number(po.amount) > 50000).length;
+  // Fix: include both 'pending' (manual) and 'pending_approval' (tally) statuses
+  const pendingDirectorPOCount = purchaseOrders.filter(
+    (po) => (po.status === "pending" || po.status === "pending_approval") && Number(po.amount || po.total_amount || 0) > 50000
+  ).length;
 
   // Upcoming order deadlines (next 7 days)
   const upcomingDeadlines = useMemo(() => {
@@ -177,25 +175,6 @@ export default function Procurement() {
       setItemForm({ material_name: "", category: "", current_stock: "", unit: "units", reorder_level: "" });
       fetchData();
     } catch (err: any) { toast.error(err.message); } finally { setItemSaving(false); }
-  };
-
-  const handleSavePO = async () => {
-    if (!poForm.vendor_name.trim() || !poForm.items_summary.trim()) { toast.error("Vendor and items required"); return; }
-    setPoSaving(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-      const { client } = await getAuthedClient();
-      const { error } = await (client.from("purchase_orders") as any).insert({
-        vendor_name: poForm.vendor_name.trim(), items_summary: poForm.items_summary.trim(),
-        amount: Number(poForm.amount) || 0, po_date: poForm.po_date, raised_by: user.id,
-      });
-      if (error) throw error;
-      toast.success("PO added");
-      setPoDialogOpen(false);
-      setPoForm({ vendor_name: "", items_summary: "", amount: "", po_date: new Date().toISOString().slice(0, 10) });
-      fetchData();
-    } catch (err: any) { toast.error(err.message); } finally { setPoSaving(false); }
   };
 
   const handleSavePlanItem = async () => {
@@ -260,6 +239,8 @@ export default function Procurement() {
             <TabsTrigger value="requests" className="gap-1.5"><AlertTriangle className="h-4 w-4" /> Requests</TabsTrigger>
             <TabsTrigger value="purchase-orders" className="gap-1.5"><FileText className="h-4 w-4" /> Purchase Orders</TabsTrigger>
             <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>
+            <TabsTrigger value="transfers" className="gap-1.5"><Truck className="h-4 w-4" /> Transfers</TabsTrigger>
+            <TabsTrigger value="tally-po" className="gap-1.5"><Upload className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -457,31 +438,12 @@ export default function Procurement() {
           )}
         </TabsContent>
 
-        {/* Purchase Orders Tab */}
+        {/* Purchase Orders Tab — manual POs only; Tally POs are in the Tally PO Upload tab */}
         <TabsContent value="purchase-orders" className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Purchase Orders</h2>
-            {canAddPO && (
-              <Dialog open={poDialogOpen} onOpenChange={setPoDialogOpen}>
-                <DialogTrigger asChild><Button style={{ backgroundColor: "#006039" }}><Plus className="h-4 w-4 mr-1" /> Add PO</Button></DialogTrigger>
-                <DialogContent>
-                  <DialogHeader><DialogTitle>Add Purchase Order</DialogTitle></DialogHeader>
-                  <div className="space-y-4">
-                    <div className="space-y-2"><Label>Vendor</Label><Input value={poForm.vendor_name} onChange={(e) => setPoForm((p) => ({ ...p, vendor_name: e.target.value }))} /></div>
-                    <div className="space-y-2"><Label>Items</Label><Input value={poForm.items_summary} onChange={(e) => setPoForm((p) => ({ ...p, items_summary: e.target.value }))} /></div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><Label>Amount (₹)</Label><Input type="number" value={poForm.amount} onChange={(e) => setPoForm((p) => ({ ...p, amount: e.target.value }))} /></div>
-                      <div className="space-y-2"><Label>Date</Label><Input type="date" value={poForm.po_date} onChange={(e) => setPoForm((p) => ({ ...p, po_date: e.target.value }))} /></div>
-                    </div>
-                    <Button onClick={handleSavePO} disabled={poSaving} className="w-full" style={{ backgroundColor: "#006039" }}>
-                      {poSaving && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Save PO
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
           </div>
-          {purchaseOrders.length === 0 ? (
+          {purchaseOrders.filter((po) => po.source !== "tally_upload").length === 0 ? (
             <Card><CardContent className="py-10 text-center"><p className="text-sm" style={{ color: "#666666" }}>No purchase orders yet.</p></CardContent></Card>
           ) : (
             <Card>
@@ -492,7 +454,7 @@ export default function Procurement() {
                     <TableHead>Status</TableHead><TableHead>Date</TableHead>
                   </TableRow></TableHeader>
                   <TableBody>
-                    {purchaseOrders.map((po) => (
+                    {purchaseOrders.filter((po) => po.source !== "tally_upload").map((po) => (
                       <TableRow key={po.id}>
                         <TableCell className="font-medium" style={{ color: "#1A1A1A" }}>{po.vendor_name}</TableCell>
                         <TableCell className="max-w-[280px] truncate">{po.items_summary}</TableCell>
@@ -566,6 +528,22 @@ export default function Procurement() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Transfers Tab */}
+        <TabsContent value="transfers" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Transfers</h2>
+          </div>
+          <TransfersTab />
+        </TabsContent>
+
+        {/* Tally PO Upload Tab */}
+        <TabsContent value="tally-po" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Tally PO Upload</h2>
+          </div>
+          <TallyPOUploadTab />
         </TabsContent>
       </Tabs>
 
