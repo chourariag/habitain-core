@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { PhotoGuidanceCard, type PhotoCheckResult } from "@/components/photos/PhotoGuidance";
 import { supabase } from "@/integrations/supabase/client";
 import { insertNotifications } from "@/lib/notifications";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -59,6 +60,10 @@ interface ItemResult {
   notes: string;
   photoFile: File | null;
   photoPreview: string | null;
+  photoChecking?: boolean;
+  photoCheckResult?: PhotoCheckResult | null;
+  photoOverridden?: boolean;
+  photoCheckError?: boolean;
 }
 
 interface AIItemAnalysis {
@@ -259,15 +264,53 @@ export function QCInspectionWizard({
     }));
   };
 
-  const handlePhotoCapture = (itemId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoCapture = async (itemId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const preview = URL.createObjectURL(file);
     setItemResults((prev) => ({
       ...prev,
-      [itemId]: { ...prev[itemId], photoFile: file, photoPreview: preview },
+      [itemId]: { ...prev[itemId], photoFile: file, photoPreview: preview, photoChecking: true, photoCheckResult: null, photoCheckError: false, photoOverridden: false },
     }));
+
+    // AI check
+    try {
+      const base64 = await compressForCheck(file);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const { data, error } = await supabase.functions.invoke("photo-check", {
+        body: { image_base64: base64, context: "qc_evidence" },
+      });
+      clearTimeout(timeout);
+      if (error) throw error;
+      setItemResults((prev) => ({
+        ...prev,
+        [itemId]: { ...prev[itemId], photoChecking: false, photoCheckResult: data.result },
+      }));
+    } catch {
+      setItemResults((prev) => ({
+        ...prev,
+        [itemId]: { ...prev[itemId], photoChecking: false, photoCheckError: true },
+      }));
+    }
   };
+
+  const compressForCheck = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1280;
+        let w = img.width, h = img.height;
+        if (w > h && w > MAX) { h = (h * MAX) / w; w = MAX; }
+        else if (h > MAX) { w = (w * MAX) / h; h = MAX; }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.8).split(",")[1]);
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
 
   // Step 3: AI Analysis
   const runAIAnalysis = async () => {
@@ -699,6 +742,7 @@ export function QCInspectionWizard({
                             onChange={(e) => setNotes(item.id, e.target.value)}
                             className="text-sm min-h-[60px]"
                           />
+                          <PhotoGuidanceCard context="qc_evidence" collapsed={!!ir.photoFile} />
                           <div className="flex items-center gap-2">
                             <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer hover:text-foreground">
                               <Camera className="h-3.5 w-3.5" />
@@ -711,14 +755,45 @@ export function QCInspectionWizard({
                                 onChange={(e) => handlePhotoCapture(item.id, e)}
                               />
                             </label>
-                            {ir.photoPreview && (
-                              <img
-                                src={ir.photoPreview}
-                                alt="Capture"
-                                className="h-10 w-10 rounded object-cover border border-border"
-                              />
+                            {ir.photoChecking && (
+                              <div className="relative">
+                                <img src={ir.photoPreview!} alt="Checking" className="h-10 w-10 rounded object-cover" />
+                                <div className="absolute inset-0 flex items-center justify-center rounded" style={{ backgroundColor: "rgba(0,96,57,0.8)" }}>
+                                  <div className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                </div>
+                              </div>
+                            )}
+                            {!ir.photoChecking && ir.photoPreview && (
+                              <div className="flex items-center gap-1.5">
+                                <img
+                                  src={ir.photoPreview}
+                                  alt="Capture"
+                                  className="h-10 w-10 rounded object-cover border border-border"
+                                />
+                                {ir.photoCheckResult?.accepted === true && <span className="text-xs">✅</span>}
+                                {ir.photoCheckResult?.accepted === false && !ir.photoOverridden && (
+                                  <button
+                                    type="button"
+                                    className="text-[9px] px-1.5 py-0.5 rounded"
+                                    style={{ backgroundColor: "#FFF3CD", color: "#D4860A" }}
+                                    onClick={() => setItemResults((prev) => ({
+                                      ...prev,
+                                      [item.id]: { ...prev[item.id], photoOverridden: true },
+                                    }))}
+                                  >
+                                    Use anyway
+                                  </button>
+                                )}
+                                {ir.photoOverridden && <span className="text-[9px]" style={{ color: "#D4860A" }}>⚠</span>}
+                                {ir.photoCheckError && <span className="text-[9px] text-muted-foreground">—</span>}
+                              </div>
                             )}
                           </div>
+                          {!ir.photoChecking && ir.photoCheckResult?.accepted === false && !ir.photoOverridden && ir.photoCheckResult.retake_tip && (
+                            <p className="text-[9px] rounded px-2 py-1" style={{ backgroundColor: "#FFF3CD", color: "#333" }}>
+                              💡 {ir.photoCheckResult.retake_tip}
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>

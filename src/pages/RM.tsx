@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Loader2, Plus, Wrench, Camera, X, Image as ImageIcon, Search, RefreshCw, Copy, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { PhotoGuidanceCard, PhotoFeedback, PhotoQualitySummary, usePhotoWithAI } from "@/components/photos/PhotoGuidance";
 
 /* ─── AI Analysis Types ─── */
 interface AIAnalysis {
@@ -137,34 +138,35 @@ const CAN_ESTIMATE = ["costing_engineer", "super_admin", "managing_director"];
 const CAN_SCHEDULE = ["planning_engineer", "super_admin", "managing_director"];
 const CAN_COMPLETE = ["delivery_rm_lead", "super_admin", "managing_director"];
 
-function ImageUploader({ images, setImages, ticketId }: { images: File[]; setImages: (f: File[]) => void; ticketId?: string }) {
+function RMImageUploader({ aiPhotos, addAIPhotos, retakePhoto, overridePhoto, guidanceCollapsed }: {
+  aiPhotos: any[];
+  addAIPhotos: (files: File[]) => void;
+  retakePhoto: (i: number) => void;
+  overridePhoto: (i: number) => void;
+  guidanceCollapsed: boolean;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
-    const allowed = Array.from(files).filter((f) => f.type === "image/jpeg" || f.type === "image/png");
-    const combined = [...images, ...allowed].slice(0, 5);
-    setImages(combined);
+    const allowed = Array.from(files).filter((f) => f.type === "image/jpeg" || f.type === "image/png").slice(0, 5 - aiPhotos.length);
+    if (allowed.length > 0) addAIPhotos(allowed);
   };
 
   return (
     <div className="space-y-2">
       <Label>Photos of Issue (optional)</Label>
-      <div className="flex items-center gap-2 flex-wrap">
-        {images.map((img, i) => (
-          <div key={i} className="relative w-20 h-20 rounded-md overflow-hidden border" style={{ borderColor: "#E0E0E0" }}>
-            <img src={URL.createObjectURL(img)} alt="" className="w-full h-full object-cover" />
-            <button
-              type="button"
-              className="absolute top-0 right-0 p-0.5 rounded-bl-md"
-              style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-              onClick={() => setImages(images.filter((_, idx) => idx !== i))}
-            >
-              <X className="h-3 w-3 text-white" />
-            </button>
-          </div>
+      <PhotoGuidanceCard context="rm_ticket" collapsed={guidanceCollapsed} />
+      <div className="flex items-center gap-3 flex-wrap">
+        {aiPhotos.map((p: any, i: number) => (
+          <PhotoFeedback
+            key={i}
+            photo={p}
+            onRetake={() => retakePhoto(i)}
+            onOverride={() => overridePhoto(i)}
+          />
         ))}
-        {images.length < 5 && (
+        {aiPhotos.length < 5 && (
           <button
             type="button"
             className="w-20 h-20 rounded-md flex flex-col items-center justify-center gap-1 border-2 border-dashed transition-colors"
@@ -176,6 +178,7 @@ function ImageUploader({ images, setImages, ticketId }: { images: File[]; setIma
           </button>
         )}
       </div>
+      <PhotoQualitySummary photos={aiPhotos} />
       <input
         ref={inputRef}
         type="file"
@@ -247,7 +250,16 @@ export default function RMPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [detailTicket, setDetailTicket] = useState<any | null>(null);
   const [form, setForm] = useState({ project_id: "", issue_description: "", priority: "standard" });
-  const [formImages, setFormImages] = useState<File[]>([]);
+  const {
+    photos: rmAIPhotos,
+    guidanceCollapsed: rmGuidanceCollapsed,
+    addPhotos: rmAddPhotos,
+    overridePhoto: rmOverridePhoto,
+    retakePhoto: rmRetakePhoto,
+    resetPhotos: rmResetPhotos,
+    anyChecking: rmAnyChecking,
+    qualityMeta: rmQualityMeta,
+  } = usePhotoWithAI("rm_ticket");
   const [estimateVal, setEstimateVal] = useState("");
   const [scheduleDate, setScheduleDate] = useState("");
   const [signoffName, setSignoffName] = useState("");
@@ -365,8 +377,8 @@ Materials: ${aiReport.materials_needed.join(", ")}`;
       const clientName = projects[form.project_id] || "Unknown";
       const ticketId = crypto.randomUUID();
       let photoUrls: string[] = [];
-      if (formImages.length > 0) {
-        photoUrls = await uploadImages(formImages, ticketId);
+      if (rmAIPhotos.length > 0) {
+        photoUrls = await uploadImages(rmAIPhotos.map(p => p.file), ticketId);
       }
       const { error } = await (supabase.from("rm_tickets" as any) as any).insert({
         id: ticketId,
@@ -377,12 +389,13 @@ Materials: ${aiReport.materials_needed.join(", ")}`;
         status: "open",
         raised_by: user.id,
         photo_urls: photoUrls,
+        ...rmQualityMeta,
       });
       if (error) throw error;
       toast.success("R&M ticket created");
       setNewOpen(false);
       setForm({ project_id: "", issue_description: "", priority: "standard" });
-      setFormImages([]);
+      rmResetPhotos();
       fetchData();
     } catch (err: any) {
       toast.error(err.message);
@@ -537,7 +550,7 @@ Materials: ${aiReport.materials_needed.join(", ")}`;
                 </SelectContent>
               </Select>
             </div>
-            <ImageUploader images={formImages} setImages={setFormImages} />
+            <RMImageUploader aiPhotos={rmAIPhotos} addAIPhotos={rmAddPhotos} retakePhoto={rmRetakePhoto} overridePhoto={rmOverridePhoto} guidanceCollapsed={rmGuidanceCollapsed} />
           </div>
           <DialogFooter>
             <Button onClick={handleCreate} disabled={submitting} style={{ backgroundColor: "#006039" }} className="text-white">

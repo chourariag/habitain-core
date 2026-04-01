@@ -12,6 +12,7 @@ import { Camera, Loader2, CheckCircle2, XCircle, Clock, Plus } from "lucide-reac
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
+import { PhotoGuidanceCard, PhotoFeedback, PhotoQualitySummary, usePhotoWithAI } from "@/components/photos/PhotoGuidance";
 
 interface Props {
   moduleId: string;
@@ -32,9 +33,19 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
   const [stageProgress, setStageProgress] = useState([50]);
   const [materialsUsed, setMaterialsUsed] = useState("");
   const [issuesBlockers, setIssuesBlockers] = useState("");
-  const [photos, setPhotos] = useState<File[]>([]);
-  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const {
+    photos: aiPhotos,
+    guidanceCollapsed,
+    addPhotos: addAIPhotos,
+    removePhoto: removeAIPhoto,
+    overridePhoto,
+    retakePhoto,
+    resetPhotos,
+    anyChecking,
+    qualityMeta,
+  } = usePhotoWithAI("daily_log");
 
   const isSupervisor = ["factory_floor_supervisor", "production_head", "super_admin", "managing_director", "head_operations"].includes(userRole ?? "");
   const isReviewer = ["production_head", "super_admin", "managing_director", "head_operations"].includes(userRole ?? "");
@@ -54,14 +65,13 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
   useEffect(() => { loadLogs(); }, [loadLogs]);
 
   const handlePhotoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []).slice(0, 5 - photos.length);
-    setPhotos((prev) => [...prev, ...files]);
-    setPhotoPreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
+    const files = Array.from(e.target.files ?? []).slice(0, 5 - aiPhotos.length);
+    if (files.length > 0) addAIPhotos(files);
   };
 
   const handleSubmit = async () => {
     if (!workCompleted.trim()) { toast.error("Work completed is required"); return; }
-    if (photos.length < 1) { toast.error("At least 1 photo is required"); return; }
+    if (aiPhotos.length < 1) { toast.error("At least 1 photo is required"); return; }
 
     setSubmitting(true);
     try {
@@ -69,9 +79,9 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
       if (!user) throw new Error("Not authenticated");
 
       const urls: string[] = [];
-      for (const photo of photos) {
-        const path = `production/${moduleId}/${Date.now()}-${photo.name}`;
-        const { error } = await supabase.storage.from("site-photos").upload(path, photo);
+      for (const p of aiPhotos) {
+        const path = `production/${moduleId}/${Date.now()}-${p.file.name}`;
+        const { error } = await supabase.storage.from("site-photos").upload(path, p.file);
         if (error) throw error;
         const { data: urlData } = supabase.storage.from("site-photos").getPublicUrl(path);
         urls.push(urlData.publicUrl);
@@ -86,12 +96,13 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
         issues_blockers: issuesBlockers.trim() || null,
         photo_urls: urls,
         submitted_by: user.id,
+        ...qualityMeta,
       });
       if (error) throw error;
 
       toast.success("Daily log submitted for review");
       setWorkCompleted(""); setStageProgress([50]); setMaterialsUsed("");
-      setIssuesBlockers(""); setPhotos([]); setPhotoPreviews([]);
+      setIssuesBlockers(""); resetPhotos();
       setShowForm(false);
       await loadLogs();
     } catch (err: any) {
@@ -186,23 +197,30 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Photos (1–5) · {photos.length} added</label>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {photoPreviews.map((url, idx) => (
-                  <img key={idx} src={url} alt={`Photo ${idx + 1}`} className="h-14 w-14 rounded object-cover border border-border" />
+              <label className="text-xs font-medium text-muted-foreground">Photos (1–5) · {aiPhotos.length} added</label>
+              <PhotoGuidanceCard context="daily_log" collapsed={guidanceCollapsed} />
+              <div className="flex flex-wrap gap-3 mt-1">
+                {aiPhotos.map((p, idx) => (
+                  <PhotoFeedback
+                    key={idx}
+                    photo={p}
+                    onRetake={() => retakePhoto(idx)}
+                    onOverride={() => overridePhoto(idx)}
+                  />
                 ))}
-                {photos.length < 5 && (
-                  <label className="h-14 w-14 rounded border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50">
+                {aiPhotos.length < 5 && (
+                  <label className="h-20 w-20 rounded border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50">
                     <Camera className="h-5 w-5 text-muted-foreground" />
                     <input type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoAdd} />
                   </label>
                 )}
               </div>
+              <PhotoQualitySummary photos={aiPhotos} />
             </div>
 
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={() => setShowForm(false)} className="flex-1">Cancel</Button>
-              <Button size="sm" onClick={handleSubmit} disabled={submitting || photos.length < 1} className="flex-1">
+              <Button size="sm" onClick={handleSubmit} disabled={submitting || aiPhotos.length < 1 || anyChecking} className="flex-1">
                 {submitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
                 Submit Log
               </Button>

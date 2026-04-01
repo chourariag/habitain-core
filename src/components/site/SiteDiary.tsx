@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Camera, MapPin, BookOpen, Loader2, Plus, Cloud, Sun, CloudRain, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { PhotoGuidanceCard, PhotoFeedback, PhotoQualitySummary, usePhotoWithAI } from "@/components/photos/PhotoGuidance";
 
 interface Props {
   projectId: string;
@@ -35,9 +36,19 @@ export function SiteDiary({ projectId, userRole }: Props) {
   const [weather, setWeather] = useState("");
   const [manpower, setManpower] = useState("");
   const [blockers, setBlockers] = useState("");
-  const [photos, setPhotos] = useState<File[]>([]);
-  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const {
+    photos: aiPhotos,
+    guidanceCollapsed,
+    addPhotos: addAIPhotos,
+    removePhoto: removeAIPhoto,
+    overridePhoto,
+    retakePhoto,
+    resetPhotos: resetAIPhotos,
+    anyChecking,
+    qualityMeta,
+  } = usePhotoWithAI("site_diary");
 
   // New fields
   const [subcontractors, setSubcontractors] = useState<SubcontractorRow[]>([]);
@@ -65,17 +76,11 @@ export function SiteDiary({ projectId, userRole }: Props) {
 
   const handlePhotoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
-    setPhotos((prev) => [...prev, ...files]);
-    setPhotoPreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
-  };
-
-  const removePhoto = (idx: number) => {
-    setPhotos((prev) => prev.filter((_, i) => i !== idx));
-    setPhotoPreviews((prev) => prev.filter((_, i) => i !== idx));
+    if (files.length > 0) addAIPhotos(files);
   };
 
   const handleSubmit = async () => {
-    if (photos.length < 3) { toast.error("Please add at least 3 photos"); return; }
+    if (aiPhotos.length < 3) { toast.error("Please add at least 3 photos"); return; }
     if (!notes.trim()) { toast.error("Work done today is required"); return; }
     setSubmitting(true);
     try {
@@ -91,9 +96,9 @@ export function SiteDiary({ projectId, userRole }: Props) {
       } catch { /* GPS optional */ }
 
       const urls: string[] = [];
-      for (const photo of photos) {
-        const path = `diary/${projectId}/${Date.now()}-${photo.name}`;
-        const { error } = await supabase.storage.from("site-photos").upload(path, photo);
+      for (const p of aiPhotos) {
+        const path = `diary/${projectId}/${Date.now()}-${p.file.name}`;
+        const { error } = await supabase.storage.from("site-photos").upload(path, p.file);
         if (error) throw error;
         const { data: urlData } = supabase.storage.from("site-photos").getPublicUrl(path);
         urls.push(urlData.publicUrl);
@@ -118,6 +123,7 @@ export function SiteDiary({ projectId, userRole }: Props) {
         client_visit_notes: clientVisit ? clientVisitNotes.trim() || null : null,
         material_deliveries: materialDeliveries,
         material_delivery_items: deliveryItems.filter((d) => d.material.trim()),
+        ...qualityMeta,
       });
       if (error) throw error;
 
@@ -133,7 +139,7 @@ export function SiteDiary({ projectId, userRole }: Props) {
 
   const resetForm = () => {
     setNotes(""); setWeather(""); setManpower(""); setBlockers("");
-    setPhotos([]); setPhotoPreviews([]); setShowForm(false);
+    resetAIPhotos(); setShowForm(false);
     setSubcontractors([]); setPowerCuts(false); setPowerCutDuration("");
     setClientVisit(false); setClientVisitName(""); setClientVisitPurpose(""); setClientVisitNotes("");
     setMaterialDeliveries(false); setDeliveryItems([]);
@@ -262,29 +268,33 @@ export function SiteDiary({ projectId, userRole }: Props) {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-muted-foreground">Photos (minimum 3) — {photos.length} added</label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {photoPreviews.map((url, idx) => (
-                  <div key={idx} className="relative">
-                    <img src={url} alt={`Photo ${idx + 1}`} className="h-16 w-16 rounded object-cover border border-border" />
-                    <button type="button" className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full h-4 w-4 text-[10px] flex items-center justify-center" onClick={() => removePhoto(idx)}>×</button>
-                  </div>
+              <label className="text-xs font-medium text-muted-foreground">Photos (minimum 3) — {aiPhotos.length} added</label>
+              <PhotoGuidanceCard context="site_diary" collapsed={guidanceCollapsed} />
+              <div className="flex flex-wrap gap-3 mt-2">
+                {aiPhotos.map((p, idx) => (
+                  <PhotoFeedback
+                    key={idx}
+                    photo={p}
+                    onRetake={() => retakePhoto(idx)}
+                    onOverride={() => overridePhoto(idx)}
+                  />
                 ))}
-                <label className="h-16 w-16 rounded border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50">
+                <label className="h-20 w-20 rounded border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50">
                   <Camera className="h-5 w-5 text-muted-foreground" />
                   <input type="file" accept="image/*" capture="environment" multiple className="hidden" onChange={handlePhotoAdd} />
                 </label>
               </div>
-              {photos.length > 0 && photos.length < 3 && (
-                <p className="text-xs text-destructive mt-1">Please add at least 3 photos ({3 - photos.length} more needed)</p>
+              {aiPhotos.length > 0 && aiPhotos.length < 3 && (
+                <p className="text-xs text-destructive mt-1">Please add at least 3 photos ({3 - aiPhotos.length} more needed)</p>
               )}
+              <PhotoQualitySummary photos={aiPhotos} />
             </div>
 
             <p className="text-xs text-muted-foreground">📍 GPS location auto-captured on submission</p>
 
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={resetForm} className="flex-1">Cancel</Button>
-              <Button size="sm" onClick={handleSubmit} disabled={submitting || photos.length < 3} className="flex-1">
+              <Button size="sm" onClick={handleSubmit} disabled={submitting || aiPhotos.length < 3 || anyChecking} className="flex-1">
                 {submitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Save Entry
               </Button>
             </div>
