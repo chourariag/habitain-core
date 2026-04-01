@@ -263,6 +263,7 @@ export type Database = {
       }
       daily_production_logs: {
         Row: {
+          ai_quality_checked: boolean | null
           created_at: string | null
           id: string
           issues_blockers: string | null
@@ -270,6 +271,8 @@ export type Database = {
           materials_used: string | null
           module_id: string
           photo_urls: string[]
+          quality_issues: string[] | null
+          quality_override: boolean | null
           review_comment: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -281,6 +284,7 @@ export type Database = {
           work_completed: string
         }
         Insert: {
+          ai_quality_checked?: boolean | null
           created_at?: string | null
           id?: string
           issues_blockers?: string | null
@@ -288,6 +292,8 @@ export type Database = {
           materials_used?: string | null
           module_id: string
           photo_urls?: string[]
+          quality_issues?: string[] | null
+          quality_override?: boolean | null
           review_comment?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -299,6 +305,7 @@ export type Database = {
           work_completed: string
         }
         Update: {
+          ai_quality_checked?: boolean | null
           created_at?: string | null
           id?: string
           issues_blockers?: string | null
@@ -306,6 +313,8 @@ export type Database = {
           materials_used?: string | null
           module_id?: string
           photo_urls?: string[]
+          quality_issues?: string[] | null
+          quality_override?: boolean | null
           review_comment?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -2947,6 +2956,7 @@ export type Database = {
       }
       qc_inspection_items: {
         Row: {
+          ai_quality_checked: boolean | null
           ai_severity: string | null
           checklist_item_id: string
           created_at: string | null
@@ -2954,9 +2964,12 @@ export type Database = {
           inspection_id: string
           notes: string | null
           photo_url: string | null
+          quality_issues: string[] | null
+          quality_override: boolean | null
           result: string | null
         }
         Insert: {
+          ai_quality_checked?: boolean | null
           ai_severity?: string | null
           checklist_item_id: string
           created_at?: string | null
@@ -2964,9 +2977,12 @@ export type Database = {
           inspection_id: string
           notes?: string | null
           photo_url?: string | null
+          quality_issues?: string[] | null
+          quality_override?: boolean | null
           result?: string | null
         }
         Update: {
+          ai_quality_checked?: boolean | null
           ai_severity?: string | null
           checklist_item_id?: string
           created_at?: string | null
@@ -2974,6 +2990,8 @@ export type Database = {
           inspection_id?: string
           notes?: string | null
           photo_url?: string | null
+          quality_issues?: string[] | null
+          quality_override?: boolean | null
           result?: string | null
         }
         Relationships: [
@@ -3080,6 +3098,7 @@ export type Database = {
         Row: {
           ai_analysis: Json | null
           ai_analysis_generated_at: string | null
+          ai_quality_checked: boolean | null
           client_name: string
           client_signoff_name: string | null
           completed_at: string | null
@@ -3095,6 +3114,8 @@ export type Database = {
           photo_urls: string[]
           priority: string
           project_id: string
+          quality_issues: string[] | null
+          quality_override: boolean | null
           raised_at: string
           raised_by: string
           status: string
@@ -3106,6 +3127,7 @@ export type Database = {
         Insert: {
           ai_analysis?: Json | null
           ai_analysis_generated_at?: string | null
+          ai_quality_checked?: boolean | null
           client_name: string
           client_signoff_name?: string | null
           completed_at?: string | null
@@ -3121,6 +3143,8 @@ export type Database = {
           photo_urls?: string[]
           priority?: string
           project_id: string
+          quality_issues?: string[] | null
+          quality_override?: boolean | null
           raised_at?: string
           raised_by: string
           status?: string
@@ -3132,6 +3156,7 @@ export type Database = {
         Update: {
           ai_analysis?: Json | null
           ai_analysis_generated_at?: string | null
+          ai_quality_checked?: boolean | null
           client_name?: string
           client_signoff_name?: string | null
           completed_at?: string | null
@@ -3147,6 +3172,8 @@ export type Database = {
           photo_urls?: string[]
           priority?: string
           project_id?: string
+          quality_issues?: string[] | null
+          quality_override?: boolean | null
           raised_at?: string
           raised_by?: string
           status?: string
@@ -3303,6 +3330,7 @@ export type Database = {
       }
       site_diary: {
         Row: {
+          ai_quality_checked: boolean | null
           blockers: string | null
           client_visit: boolean | null
           client_visit_name: string | null
@@ -3320,12 +3348,15 @@ export type Database = {
           power_cut_duration: number | null
           power_cuts: boolean | null
           project_id: string
+          quality_issues: string[] | null
+          quality_override: boolean | null
           subcontractor_attendance: Json | null
           submitted_by: string
           updated_at: string | null
           weather_condition: string | null
         }
         Insert: {
+          ai_quality_checked?: boolean | null
           blockers?: string | null
           client_visit?: boolean | null
           client_visit_name?: string | null
@@ -3343,12 +3374,15 @@ export type Database = {
           power_cut_duration?: number | null
           power_cuts?: boolean | null
           project_id: string
+          quality_issues?: string[] | null
+          quality_override?: boolean | null
           subcontractor_attendance?: Json | null
           submitted_by: string
           updated_at?: string | null
           weather_condition?: string | null
         }
         Update: {
+          ai_quality_checked?: boolean | null
           blockers?: string | null
           client_visit?: boolean | null
           client_visit_name?: string | null
@@ -3366,6 +3400,8 @@ export type Database = {
           power_cut_duration?: number | null
           power_cuts?: boolean | null
           project_id?: string
+          quality_issues?: string[] | null
+          quality_override?: boolean | null
           subcontractor_attendance?: Json | null
           submitted_by?: string
           updated_at?: string | null
