@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Loader2, Plus, Wrench, Camera, X, Image as ImageIcon, Search, RefreshCw, Copy, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { PhotoGuidanceCard, PhotoFeedback, PhotoQualitySummary, usePhotoWithAI } from "@/components/photos/PhotoGuidance";
 
 /* ─── AI Analysis Types ─── */
 interface AIAnalysis {
