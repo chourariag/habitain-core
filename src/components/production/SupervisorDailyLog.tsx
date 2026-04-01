@@ -65,9 +65,8 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
   useEffect(() => { loadLogs(); }, [loadLogs]);
 
   const handlePhotoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []).slice(0, 5 - photos.length);
-    setPhotos((prev) => [...prev, ...files]);
-    setPhotoPreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
+    const files = Array.from(e.target.files ?? []).slice(0, 5 - aiPhotos.length);
+    if (files.length > 0) addAIPhotos(files);
   };
 
   const handleSubmit = async () => {
