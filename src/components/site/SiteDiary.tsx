@@ -36,9 +36,19 @@ export function SiteDiary({ projectId, userRole }: Props) {
   const [weather, setWeather] = useState("");
   const [manpower, setManpower] = useState("");
   const [blockers, setBlockers] = useState("");
-  const [photos, setPhotos] = useState<File[]>([]);
-  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+
+  const {
+    photos: aiPhotos,
+    guidanceCollapsed,
+    addPhotos: addAIPhotos,
+    removePhoto: removeAIPhoto,
+    overridePhoto,
+    retakePhoto,
+    resetPhotos: resetAIPhotos,
+    anyChecking,
+    qualityMeta,
+  } = usePhotoWithAI("site_diary");
 
   // New fields
   const [subcontractors, setSubcontractors] = useState<SubcontractorRow[]>([]);
