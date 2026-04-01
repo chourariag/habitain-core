@@ -250,7 +250,16 @@ export default function RMPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [detailTicket, setDetailTicket] = useState<any | null>(null);
   const [form, setForm] = useState({ project_id: "", issue_description: "", priority: "standard" });
-  const [formImages, setFormImages] = useState<File[]>([]);
+  const {
+    photos: rmAIPhotos,
+    guidanceCollapsed: rmGuidanceCollapsed,
+    addPhotos: rmAddPhotos,
+    overridePhoto: rmOverridePhoto,
+    retakePhoto: rmRetakePhoto,
+    resetPhotos: rmResetPhotos,
+    anyChecking: rmAnyChecking,
+    qualityMeta: rmQualityMeta,
+  } = usePhotoWithAI("rm_ticket");
   const [estimateVal, setEstimateVal] = useState("");
   const [scheduleDate, setScheduleDate] = useState("");
   const [signoffName, setSignoffName] = useState("");
