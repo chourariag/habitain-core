@@ -101,7 +101,7 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
 
       toast.success("Daily log submitted for review");
       setWorkCompleted(""); setStageProgress([50]); setMaterialsUsed("");
-      setIssuesBlockers(""); setPhotos([]); setPhotoPreviews([]);
+      setIssuesBlockers(""); resetPhotos();
       setShowForm(false);
       await loadLogs();
     } catch (err: any) {
