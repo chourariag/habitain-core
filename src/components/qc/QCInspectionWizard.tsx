@@ -742,6 +742,7 @@ export function QCInspectionWizard({
                             onChange={(e) => setNotes(item.id, e.target.value)}
                             className="text-sm min-h-[60px]"
                           />
+                          <PhotoGuidanceCard context="qc_evidence" collapsed={!!ir.photoFile} />
                           <div className="flex items-center gap-2">
                             <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer hover:text-foreground">
                               <Camera className="h-3.5 w-3.5" />
@@ -754,14 +755,45 @@ export function QCInspectionWizard({
                                 onChange={(e) => handlePhotoCapture(item.id, e)}
                               />
                             </label>
-                            {ir.photoPreview && (
-                              <img
-                                src={ir.photoPreview}
-                                alt="Capture"
-                                className="h-10 w-10 rounded object-cover border border-border"
-                              />
+                            {ir.photoChecking && (
+                              <div className="relative">
+                                <img src={ir.photoPreview!} alt="Checking" className="h-10 w-10 rounded object-cover" />
+                                <div className="absolute inset-0 flex items-center justify-center rounded" style={{ backgroundColor: "rgba(0,96,57,0.8)" }}>
+                                  <div className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                </div>
+                              </div>
+                            )}
+                            {!ir.photoChecking && ir.photoPreview && (
+                              <div className="flex items-center gap-1.5">
+                                <img
+                                  src={ir.photoPreview}
+                                  alt="Capture"
+                                  className="h-10 w-10 rounded object-cover border border-border"
+                                />
+                                {ir.photoCheckResult?.accepted === true && <span className="text-xs">✅</span>}
+                                {ir.photoCheckResult?.accepted === false && !ir.photoOverridden && (
+                                  <button
+                                    type="button"
+                                    className="text-[9px] px-1.5 py-0.5 rounded"
+                                    style={{ backgroundColor: "#FFF3CD", color: "#D4860A" }}
+                                    onClick={() => setItemResults((prev) => ({
+                                      ...prev,
+                                      [item.id]: { ...prev[item.id], photoOverridden: true },
+                                    }))}
+                                  >
+                                    Use anyway
+                                  </button>
+                                )}
+                                {ir.photoOverridden && <span className="text-[9px]" style={{ color: "#D4860A" }}>⚠</span>}
+                                {ir.photoCheckError && <span className="text-[9px] text-muted-foreground">—</span>}
+                              </div>
                             )}
                           </div>
+                          {!ir.photoChecking && ir.photoCheckResult?.accepted === false && !ir.photoOverridden && ir.photoCheckResult.retake_tip && (
+                            <p className="text-[9px] rounded px-2 py-1" style={{ backgroundColor: "#FFF3CD", color: "#333" }}>
+                              💡 {ir.photoCheckResult.retake_tip}
+                            </p>
+                          )}
                         </div>
                       )}
                     </div>
