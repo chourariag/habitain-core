@@ -60,6 +60,10 @@ interface ItemResult {
   notes: string;
   photoFile: File | null;
   photoPreview: string | null;
+  photoChecking?: boolean;
+  photoCheckResult?: PhotoCheckResult | null;
+  photoOverridden?: boolean;
+  photoCheckError?: boolean;
 }
 
 interface AIItemAnalysis {
