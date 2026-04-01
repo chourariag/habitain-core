@@ -76,13 +76,7 @@ export function SiteDiary({ projectId, userRole }: Props) {
 
   const handlePhotoAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
-    setPhotos((prev) => [...prev, ...files]);
-    setPhotoPreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
-  };
-
-  const removePhoto = (idx: number) => {
-    setPhotos((prev) => prev.filter((_, i) => i !== idx));
-    setPhotoPreviews((prev) => prev.filter((_, i) => i !== idx));
+    if (files.length > 0) addAIPhotos(files);
   };
 
   const handleSubmit = async () => {
