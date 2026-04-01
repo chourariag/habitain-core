@@ -15,6 +15,7 @@ interface Props {
 export function ProfileAttendance({ userRole }: Props) {
   const { user } = useAuth();
   const [records, setRecords] = useState<any[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const isArchitect = userRole && ARCHITECT_ROLES.includes(userRole);
@@ -29,17 +30,43 @@ export function ProfileAttendance({ userRole }: Props) {
     setLoading(true);
     const thirtyDaysAgo = format(subDays(new Date(), 30), "yyyy-MM-dd");
     const today = format(new Date(), "yyyy-MM-dd");
-    const { data } = await supabase
-      .from("attendance_records")
-      .select("date, location_type, check_in_time")
-      .eq("user_id", user.id)
-      .gte("date", thirtyDaysAgo)
-      .lte("date", today);
-    setRecords(data ?? []);
+
+    // Fix #30: fetch both attendance records and approved leave requests in parallel
+    const [{ data: attendanceData }, { data: leaveData }] = await Promise.all([
+      supabase
+        .from("attendance_records")
+        .select("date, location_type, check_in_time")
+        .eq("user_id", user.id)
+        .gte("date", thirtyDaysAgo)
+        .lte("date", today),
+      supabase
+        .from("leave_requests")
+        .select("from_date, to_date")
+        .eq("user_id", user.id)
+        .eq("status", "approved")
+        // fetch any request that overlaps with the 30-day window
+        .lte("from_date", today)
+        .gte("to_date", thirtyDaysAgo),
+    ]);
+
+    setRecords(attendanceData ?? []);
+    setLeaveRequests(leaveData ?? []);
     setLoading(false);
   };
 
   if (isArchitect || !user) return null;
+
+  // Build a Set of all leave date strings from approved leave requests
+  const leaveDateSet = new Set<string>();
+  for (const lr of leaveRequests) {
+    const start = new Date(lr.from_date);
+    const end = new Date(lr.to_date);
+    const cur = new Date(start);
+    while (cur <= end) {
+      leaveDateSet.add(format(cur, "yyyy-MM-dd"));
+      cur.setDate(cur.getDate() + 1);
+    }
+  }
 
   // This month stats
   const now = new Date();
@@ -48,7 +75,13 @@ export function ProfileAttendance({ userRole }: Props) {
   const monthRecords = records.filter((r: any) => r.date >= monthStart && r.date <= monthEnd);
   const monthWorkingDays = eachDayOfInterval({ start: startOfMonth(now), end: now }).filter((d) => !isSunday(d)).length;
   const presentDays = monthRecords.filter((r: any) => r.check_in_time).length;
-  const absentDays = Math.max(0, monthWorkingDays - presentDays);
+
+  // Fix #30: count approved leave days that fall on working days in this month
+  const monthLeaveDays = eachDayOfInterval({ start: startOfMonth(now), end: now })
+    .filter((d) => !isSunday(d) && leaveDateSet.has(format(d, "yyyy-MM-dd"))).length;
+
+  // Absent = working days not covered by attendance or approved leave
+  const absentDays = Math.max(0, monthWorkingDays - presentDays - monthLeaveDays);
 
   // Last 30 days strip
   const last30 = Array.from({ length: 30 }, (_, i) => {
@@ -63,6 +96,10 @@ export function ProfileAttendance({ userRole }: Props) {
       if (rec?.check_in_time) {
         color = "#006039"; // present
         label = "Present";
+      } else if (leaveDateSet.has(dateStr)) {
+        // Fix #30: show leave days as amber, not red
+        color = "#D4860A";
+        label = "Leave";
       } else {
         color = "#F40009"; // absent
         label = "Absent";
@@ -89,7 +126,8 @@ export function ProfileAttendance({ userRole }: Props) {
         </div>
         <div className="rounded-md p-3" style={{ backgroundColor: "#FFF3E0" }}>
           <p className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "#D4860A" }}>Leave</p>
-          <p className="text-xl font-bold font-display" style={{ color: "#D4860A" }}>0</p>
+          {/* Fix #30: show real leave count instead of hardcoded 0 */}
+          <p className="text-xl font-bold font-display" style={{ color: "#D4860A" }}>{monthLeaveDays}</p>
         </div>
         <div className="rounded-md p-3" style={{ backgroundColor: "#FEE2E2" }}>
           <p className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "#F40009" }}>Absent</p>

@@ -12,6 +12,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, LayoutDashboard, Truck, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -84,6 +85,12 @@ export default function Procurement() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+
+  // Reject material request dialog
+  const [rejectReqOpen, setRejectReqOpen] = useState(false);
+  const [rejectReqId, setRejectReqId] = useState<string | null>(null);
+  const [rejectReqReason, setRejectReqReason] = useState("");
+  const [rejectReqSaving, setRejectReqSaving] = useState(false);
 
   // Add item dialog
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
@@ -218,6 +225,24 @@ export default function Procurement() {
       toast.success("Updated");
       fetchData();
     } catch (err: any) { toast.error(err.message); }
+  };
+
+  const handleRejectRequest = async () => {
+    if (!rejectReqId || !rejectReqReason.trim()) { toast.error("Rejection reason required"); return; }
+    setRejectReqSaving(true);
+    try {
+      const { client } = await getAuthedClient();
+      const { error } = await (client.from("material_requests") as any)
+        .update({ status: "rejected", rejection_reason: rejectReqReason.trim() })
+        .eq("id", rejectReqId);
+      if (error) throw error;
+      toast.success("Request rejected");
+      setRejectReqOpen(false);
+      setRejectReqId(null);
+      setRejectReqReason("");
+      fetchData();
+    } catch (err: any) { toast.error(err.message); }
+    finally { setRejectReqSaving(false); }
   };
 
   if (loading) {
@@ -425,6 +450,17 @@ export default function Procurement() {
                                 {r.status === "po_raised" && ["stores_executive", "super_admin", "managing_director"].includes(userRole ?? "") && (
                                   <SoDButton label="Received" onClick={() => handleAction(r.id, "mark_received")} sodReason={isBlockedBySoD(r, userId, "mark_received")} />
                                 )}
+                                {/* Reject button: available on any pending status before received */}
+                                {["pending_budget", "pending_director_approval", "pending_po"].includes(r.status) && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => { setRejectReqId(r.id); setRejectReqOpen(true); }}
+                                    style={{ borderColor: "#F40009", color: "#F40009" }}
+                                  >
+                                    Reject
+                                  </Button>
+                                )}
                               </div>
                             </TableCell>
                           )}
@@ -546,6 +582,33 @@ export default function Procurement() {
           <TallyPOUploadTab />
         </TabsContent>
       </Tabs>
+
+      {/* Reject material request dialog */}
+      <Dialog open={rejectReqOpen} onOpenChange={(v) => { if (!v) { setRejectReqOpen(false); setRejectReqId(null); setRejectReqReason(""); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Reject Material Request</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label className="text-sm">Reason for Rejection</Label>
+              <Textarea
+                placeholder="Explain why this request is being rejected..."
+                value={rejectReqReason}
+                onChange={(e) => setRejectReqReason(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+            <Button
+              onClick={handleRejectRequest}
+              disabled={rejectReqSaving || !rejectReqReason.trim()}
+              className="w-full"
+              style={{ backgroundColor: "#F40009" }}
+            >
+              {rejectReqSaving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+              Confirm Rejection
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <NewMaterialRequestDialog open={addOpen} onOpenChange={setAddOpen} onCreated={fetchData} />
     </div>

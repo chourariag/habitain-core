@@ -11,6 +11,7 @@ export interface OfflineAttendanceRecord {
   check_in_time?: string;
   check_out_time?: string;
   location_type: string;
+  location_note?: string | null;
   project_id?: string | null;
   gps_lat?: number | null;
   gps_lng?: number | null;
@@ -19,7 +20,7 @@ export interface OfflineAttendanceRecord {
   hours_worked?: number | null;
   action: "check_in" | "check_out";
   created_at: string;
-  // For check-out, reference the attendance record id
+  // For check-out, reference the attendance record id (local UUID — used for lookup only)
   attendance_record_id?: string;
 }
 
@@ -62,6 +63,18 @@ export async function clearPendingRecords(): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite");
     tx.objectStore(STORE_NAME).clear();
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// Delete a single record by key — used by OfflineProvider to clear only
+// successfully synced records rather than the entire store at once.
+export async function deleteOfflineRecord(id: string): Promise<void> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).delete(id);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
