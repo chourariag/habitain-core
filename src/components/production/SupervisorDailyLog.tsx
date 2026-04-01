@@ -196,23 +196,30 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">Photos (1–5) · {photos.length} added</label>
-              <div className="flex flex-wrap gap-2 mt-1">
-                {photoPreviews.map((url, idx) => (
-                  <img key={idx} src={url} alt={`Photo ${idx + 1}`} className="h-14 w-14 rounded object-cover border border-border" />
+              <label className="text-xs font-medium text-muted-foreground">Photos (1–5) · {aiPhotos.length} added</label>
+              <PhotoGuidanceCard context="daily_log" collapsed={guidanceCollapsed} />
+              <div className="flex flex-wrap gap-3 mt-1">
+                {aiPhotos.map((p, idx) => (
+                  <PhotoFeedback
+                    key={idx}
+                    photo={p}
+                    onRetake={() => retakePhoto(idx)}
+                    onOverride={() => overridePhoto(idx)}
+                  />
                 ))}
-                {photos.length < 5 && (
-                  <label className="h-14 w-14 rounded border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50">
+                {aiPhotos.length < 5 && (
+                  <label className="h-20 w-20 rounded border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary/50">
                     <Camera className="h-5 w-5 text-muted-foreground" />
                     <input type="file" accept="image/*" multiple className="hidden" onChange={handlePhotoAdd} />
                   </label>
                 )}
               </div>
+              <PhotoQualitySummary photos={aiPhotos} />
             </div>
 
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={() => setShowForm(false)} className="flex-1">Cancel</Button>
-              <Button size="sm" onClick={handleSubmit} disabled={submitting || photos.length < 1} className="flex-1">
+              <Button size="sm" onClick={handleSubmit} disabled={submitting || aiPhotos.length < 1 || anyChecking} className="flex-1">
                 {submitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
                 Submit Log
               </Button>
