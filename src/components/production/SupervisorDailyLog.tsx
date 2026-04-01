@@ -96,6 +96,7 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
         issues_blockers: issuesBlockers.trim() || null,
         photo_urls: urls,
         submitted_by: user.id,
+        ...qualityMeta,
       });
       if (error) throw error;
 
