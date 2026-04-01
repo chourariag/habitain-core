@@ -138,7 +138,7 @@ export function SiteDiary({ projectId, userRole }: Props) {
 
   const resetForm = () => {
     setNotes(""); setWeather(""); setManpower(""); setBlockers("");
-    setPhotos([]); setPhotoPreviews([]); setShowForm(false);
+    resetAIPhotos(); setShowForm(false);
     setSubcontractors([]); setPowerCuts(false); setPowerCutDuration("");
     setClientVisit(false); setClientVisitName(""); setClientVisitPurpose(""); setClientVisitNotes("");
     setMaterialDeliveries(false); setDeliveryItems([]);
