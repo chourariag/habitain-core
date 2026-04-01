@@ -264,15 +264,53 @@ export function QCInspectionWizard({
     }));
   };
 
-  const handlePhotoCapture = (itemId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoCapture = async (itemId: string, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const preview = URL.createObjectURL(file);
     setItemResults((prev) => ({
       ...prev,
-      [itemId]: { ...prev[itemId], photoFile: file, photoPreview: preview },
+      [itemId]: { ...prev[itemId], photoFile: file, photoPreview: preview, photoChecking: true, photoCheckResult: null, photoCheckError: false, photoOverridden: false },
     }));
+
+    // AI check
+    try {
+      const base64 = await compressForCheck(file);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const { data, error } = await supabase.functions.invoke("photo-check", {
+        body: { image_base64: base64, context: "qc_evidence" },
+      });
+      clearTimeout(timeout);
+      if (error) throw error;
+      setItemResults((prev) => ({
+        ...prev,
+        [itemId]: { ...prev[itemId], photoChecking: false, photoCheckResult: data.result },
+      }));
+    } catch {
+      setItemResults((prev) => ({
+        ...prev,
+        [itemId]: { ...prev[itemId], photoChecking: false, photoCheckError: true },
+      }));
+    }
   };
+
+  const compressForCheck = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1280;
+        let w = img.width, h = img.height;
+        if (w > h && w > MAX) { h = (h * MAX) / w; w = MAX; }
+        else if (h > MAX) { w = (w * MAX) / h; h = MAX; }
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.8).split(",")[1]);
+      };
+      img.onerror = reject;
+      img.src = URL.createObjectURL(file);
+    });
 
   // Step 3: AI Analysis
   const runAIAnalysis = async () => {
