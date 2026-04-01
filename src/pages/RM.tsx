@@ -138,34 +138,35 @@ const CAN_ESTIMATE = ["costing_engineer", "super_admin", "managing_director"];
 const CAN_SCHEDULE = ["planning_engineer", "super_admin", "managing_director"];
 const CAN_COMPLETE = ["delivery_rm_lead", "super_admin", "managing_director"];
 
-function ImageUploader({ images, setImages, ticketId }: { images: File[]; setImages: (f: File[]) => void; ticketId?: string }) {
+function RMImageUploader({ aiPhotos, addAIPhotos, retakePhoto, overridePhoto, guidanceCollapsed }: {
+  aiPhotos: any[];
+  addAIPhotos: (files: File[]) => void;
+  retakePhoto: (i: number) => void;
+  overridePhoto: (i: number) => void;
+  guidanceCollapsed: boolean;
+}) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = (files: FileList | null) => {
     if (!files) return;
-    const allowed = Array.from(files).filter((f) => f.type === "image/jpeg" || f.type === "image/png");
-    const combined = [...images, ...allowed].slice(0, 5);
-    setImages(combined);
+    const allowed = Array.from(files).filter((f) => f.type === "image/jpeg" || f.type === "image/png").slice(0, 5 - aiPhotos.length);
+    if (allowed.length > 0) addAIPhotos(allowed);
   };
 
   return (
     <div className="space-y-2">
       <Label>Photos of Issue (optional)</Label>
-      <div className="flex items-center gap-2 flex-wrap">
-        {images.map((img, i) => (
-          <div key={i} className="relative w-20 h-20 rounded-md overflow-hidden border" style={{ borderColor: "#E0E0E0" }}>
-            <img src={URL.createObjectURL(img)} alt="" className="w-full h-full object-cover" />
-            <button
-              type="button"
-              className="absolute top-0 right-0 p-0.5 rounded-bl-md"
-              style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-              onClick={() => setImages(images.filter((_, idx) => idx !== i))}
-            >
-              <X className="h-3 w-3 text-white" />
-            </button>
-          </div>
+      <PhotoGuidanceCard context="rm_ticket" collapsed={guidanceCollapsed} />
+      <div className="flex items-center gap-3 flex-wrap">
+        {aiPhotos.map((p: any, i: number) => (
+          <PhotoFeedback
+            key={i}
+            photo={p}
+            onRetake={() => retakePhoto(i)}
+            onOverride={() => overridePhoto(i)}
+          />
         ))}
-        {images.length < 5 && (
+        {aiPhotos.length < 5 && (
           <button
             type="button"
             className="w-20 h-20 rounded-md flex flex-col items-center justify-center gap-1 border-2 border-dashed transition-colors"
@@ -177,6 +178,7 @@ function ImageUploader({ images, setImages, ticketId }: { images: File[]; setIma
           </button>
         )}
       </div>
+      <PhotoQualitySummary photos={aiPhotos} />
       <input
         ref={inputRef}
         type="file"
