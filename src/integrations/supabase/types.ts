@@ -261,6 +261,87 @@ export type Database = {
           },
         ]
       }
+      bank_ledger_entries: {
+        Row: {
+          balance: number | null
+          credit: number | null
+          debit: number | null
+          entry_date: string
+          id: string
+          particulars: string
+          upload_month: string | null
+          uploaded_at: string | null
+          uploaded_by: string | null
+          vch_no: string | null
+          vch_type: string | null
+        }
+        Insert: {
+          balance?: number | null
+          credit?: number | null
+          debit?: number | null
+          entry_date: string
+          id?: string
+          particulars: string
+          upload_month?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+          vch_no?: string | null
+          vch_type?: string | null
+        }
+        Update: {
+          balance?: number | null
+          credit?: number | null
+          debit?: number | null
+          entry_date?: string
+          id?: string
+          particulars?: string
+          upload_month?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+          vch_no?: string | null
+          vch_type?: string | null
+        }
+        Relationships: []
+      }
+      creditor_ledger_entries: {
+        Row: {
+          amount: number
+          bill_date: string | null
+          bill_no: string | null
+          due_date: string | null
+          id: string
+          overdue_days: number | null
+          party_name: string
+          status: string | null
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          amount: number
+          bill_date?: string | null
+          bill_no?: string | null
+          due_date?: string | null
+          id?: string
+          overdue_days?: number | null
+          party_name: string
+          status?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          amount?: number
+          bill_date?: string | null
+          bill_no?: string | null
+          due_date?: string | null
+          id?: string
+          overdue_days?: number | null
+          party_name?: string
+          status?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       daily_production_logs: {
         Row: {
           ai_quality_checked: boolean | null
@@ -334,6 +415,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      debtor_ledger_entries: {
+        Row: {
+          amount: number
+          bill_date: string | null
+          bill_no: string | null
+          due_date: string | null
+          id: string
+          overdue_days: number | null
+          party_name: string
+          status: string | null
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          amount: number
+          bill_date?: string | null
+          bill_no?: string | null
+          due_date?: string | null
+          id?: string
+          overdue_days?: number | null
+          party_name: string
+          status?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          amount?: number
+          bill_date?: string | null
+          bill_no?: string | null
+          due_date?: string | null
+          id?: string
+          overdue_days?: number | null
+          party_name?: string
+          status?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: []
       }
       delivery_checklists: {
         Row: {
