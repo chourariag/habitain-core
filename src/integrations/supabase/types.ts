@@ -3490,6 +3490,7 @@ export type Database = {
           client_visit_notes: string | null
           client_visit_purpose: string | null
           created_at: string | null
+          daily_summary: string | null
           entry_date: string
           gps_location: string | null
           id: string
@@ -3498,6 +3499,7 @@ export type Database = {
           material_delivery_items: Json | null
           notes: string | null
           photo_urls: string[]
+          planned_activities: Json | null
           power_cut_duration: number | null
           power_cuts: boolean | null
           project_id: string
@@ -3516,6 +3518,7 @@ export type Database = {
           client_visit_notes?: string | null
           client_visit_purpose?: string | null
           created_at?: string | null
+          daily_summary?: string | null
           entry_date?: string
           gps_location?: string | null
           id?: string
@@ -3524,6 +3527,7 @@ export type Database = {
           material_delivery_items?: Json | null
           notes?: string | null
           photo_urls?: string[]
+          planned_activities?: Json | null
           power_cut_duration?: number | null
           power_cuts?: boolean | null
           project_id: string
@@ -3542,6 +3546,7 @@ export type Database = {
           client_visit_notes?: string | null
           client_visit_purpose?: string | null
           created_at?: string | null
+          daily_summary?: string | null
           entry_date?: string
           gps_location?: string | null
           id?: string
@@ -3550,6 +3555,7 @@ export type Database = {
           material_delivery_items?: Json | null
           notes?: string | null
           photo_urls?: string[]
+          planned_activities?: Json | null
           power_cut_duration?: number | null
           power_cuts?: boolean | null
           project_id?: string
@@ -3722,6 +3728,75 @@ export type Database = {
           },
         ]
       }
+      site_receipt_checklist: {
+        Row: {
+          created_at: string | null
+          dispatch_docs_checked: boolean | null
+          id: string
+          is_complete: boolean | null
+          module_id: string | null
+          module_ids_verified: boolean | null
+          physical_condition_checked: boolean | null
+          physical_condition_photo_url: string | null
+          project_id: string
+          submitted_at: string | null
+          submitted_by: string
+          transport_damage_description: string | null
+          transport_damage_found: boolean | null
+          transport_damage_photos: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          dispatch_docs_checked?: boolean | null
+          id?: string
+          is_complete?: boolean | null
+          module_id?: string | null
+          module_ids_verified?: boolean | null
+          physical_condition_checked?: boolean | null
+          physical_condition_photo_url?: string | null
+          project_id: string
+          submitted_at?: string | null
+          submitted_by: string
+          transport_damage_description?: string | null
+          transport_damage_found?: boolean | null
+          transport_damage_photos?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          dispatch_docs_checked?: boolean | null
+          id?: string
+          is_complete?: boolean | null
+          module_id?: string | null
+          module_ids_verified?: boolean | null
+          physical_condition_checked?: boolean | null
+          physical_condition_photo_url?: string | null
+          project_id?: string
+          submitted_at?: string | null
+          submitted_by?: string
+          transport_damage_description?: string | null
+          transport_damage_found?: boolean | null
+          transport_damage_photos?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_receipt_checklist_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_receipt_checklist_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores_inventory: {
         Row: {
           available_qty: number
@@ -3754,6 +3829,62 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      subcontractor_schedules: {
+        Row: {
+          confirmed: boolean | null
+          confirmed_at: string | null
+          created_at: string | null
+          created_by: string
+          escalation_sent: boolean | null
+          id: string
+          project_id: string
+          reminder_14d_sent: boolean | null
+          reminder_1d_sent: boolean | null
+          reminder_5d_sent: boolean | null
+          start_date: string
+          subcontractor_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          confirmed?: boolean | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          created_by: string
+          escalation_sent?: boolean | null
+          id?: string
+          project_id: string
+          reminder_14d_sent?: boolean | null
+          reminder_1d_sent?: boolean | null
+          reminder_5d_sent?: boolean | null
+          start_date: string
+          subcontractor_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          confirmed?: boolean | null
+          confirmed_at?: string | null
+          created_at?: string | null
+          created_by?: string
+          escalation_sent?: boolean | null
+          id?: string
+          project_id?: string
+          reminder_14d_sent?: boolean | null
+          reminder_1d_sent?: boolean | null
+          reminder_5d_sent?: boolean | null
+          start_date?: string
+          subcontractor_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_schedules_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

@@ -14,6 +14,8 @@ import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPanel";
 import { DispatchPacksTab } from "@/components/site/DispatchPacksTab";
+import { SiteReceiptChecklist } from "@/components/site/SiteReceiptChecklist";
+import { SubcontractorSchedule } from "@/components/site/SubcontractorSchedule";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
@@ -230,6 +232,18 @@ function SiteHubContent() {
               return (
                 <div key={module.id} className="space-y-2">
                   <ModulePanelCard module={module} panels={panelsByModule[module.id] ?? []} projectId={selectedProjectId!} canEdit={false} canAdvanceStage={false} userRole={userRole} onPanelCreated={fetchData} onStageAdvanced={fetchData} />
+                  
+                  {/* Site Receipt Checklist — shown for dispatched modules */}
+                  {(module.production_status === "dispatched" || module.current_stage === "Dispatch") && (
+                    <SiteReceiptChecklist
+                      projectId={selectedProjectId!}
+                      moduleId={module.id}
+                      moduleName={module.module_code || module.name}
+                      userRole={userRole}
+                      onComplete={fetchData}
+                    />
+                  )}
+
                   <div className="bg-card border border-border rounded-md p-3 space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       <Cond met={conds?.qc ?? false} label="QC Passed" />
@@ -262,7 +276,10 @@ function SiteHubContent() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="diary"><SiteDiary projectId={selectedProjectId!} userRole={userRole} /></TabsContent>
+        <TabsContent value="diary" className="space-y-4">
+          <SiteDiary projectId={selectedProjectId!} userRole={userRole} />
+          <SubcontractorSchedule projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
+        </TabsContent>
         <TabsContent value="handover">
           <HandoverPack projectId={selectedProjectId!} clientName={selectedProject?.client_name ?? null} userRole={userRole} installationComplete={installationComplete} onHandedOver={fetchData} />
         </TabsContent>

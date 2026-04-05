@@ -11,6 +11,7 @@ import { Camera, MapPin, BookOpen, Loader2, Plus, Cloud, Sun, CloudRain, Trash2 
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { PhotoGuidanceCard, PhotoFeedback, PhotoQualitySummary, usePhotoWithAI } from "@/components/photos/PhotoGuidance";
+import { DailyProgressSection, validatePlannedActivities, type PlannedActivity } from "@/components/site/DailyProgressSection";
 
 interface Props {
   projectId: string;
@@ -61,6 +62,10 @@ export function SiteDiary({ projectId, userRole }: Props) {
   const [materialDeliveries, setMaterialDeliveries] = useState(false);
   const [deliveryItems, setDeliveryItems] = useState<MaterialDeliveryRow[]>([]);
 
+  // Planned activities state
+  const [plannedActivities, setPlannedActivities] = useState<PlannedActivity[]>([]);
+  const [activityErrors, setActivityErrors] = useState<Record<number, string>>({});
+
   const canAdd = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
 
   useEffect(() => { loadEntries(); }, [projectId]);
@@ -82,6 +87,18 @@ export function SiteDiary({ projectId, userRole }: Props) {
   const handleSubmit = async () => {
     if (aiPhotos.length < 3) { toast.error("Please add at least 3 photos"); return; }
     if (!notes.trim()) { toast.error("Work done today is required"); return; }
+
+    // Validate planned activities
+    if (plannedActivities.length > 0) {
+      const { valid, errors } = validatePlannedActivities(plannedActivities);
+      setActivityErrors(errors);
+      if (!valid) { toast.error("Please explain shortfalls for activities below 75%"); return; }
+    }
+
+    const completedCount = plannedActivities.filter((a) => a.actual_completion_pct >= 75).length;
+    const dailySummary = plannedActivities.length > 0
+      ? `${completedCount} of ${plannedActivities.length} activities completed`
+      : null;
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -123,6 +140,8 @@ export function SiteDiary({ projectId, userRole }: Props) {
         client_visit_notes: clientVisit ? clientVisitNotes.trim() || null : null,
         material_deliveries: materialDeliveries,
         material_delivery_items: deliveryItems.filter((d) => d.material.trim()),
+        planned_activities: plannedActivities.length > 0 ? plannedActivities : null,
+        daily_summary: dailySummary,
         ...qualityMeta,
       });
       if (error) throw error;
@@ -143,6 +162,7 @@ export function SiteDiary({ projectId, userRole }: Props) {
     setSubcontractors([]); setPowerCuts(false); setPowerCutDuration("");
     setClientVisit(false); setClientVisitName(""); setClientVisitPurpose(""); setClientVisitNotes("");
     setMaterialDeliveries(false); setDeliveryItems([]);
+    setPlannedActivities([]); setActivityErrors({});
   };
 
   const weatherLabel = (val: string | null) => WEATHER_OPTIONS.find((w) => w.value === val)?.label ?? val;
@@ -168,6 +188,14 @@ export function SiteDiary({ projectId, userRole }: Props) {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-3 space-y-3">
+            {/* Daily Progress — Planned vs Actual */}
+            <DailyProgressSection
+              projectId={projectId}
+              activities={plannedActivities}
+              onChange={setPlannedActivities}
+              validationErrors={activityErrors}
+            />
+
             <div>
               <label className="text-xs font-medium text-muted-foreground">Weather Condition</label>
               <Select value={weather} onValueChange={setWeather}>
