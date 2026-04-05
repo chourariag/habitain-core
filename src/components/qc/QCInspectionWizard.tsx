@@ -464,7 +464,15 @@ export function QCInspectionWizard({
         .insert(inspectionItems);
       if (itemsErr) throw itemsErr;
 
-      // 4. Create NCRs
+      // 4. Create NCRs — auto-assign to factory_supervisor
+      const { data: supervisors } = await client
+        .from("profiles")
+        .select("auth_user_id")
+        .eq("role", "factory_supervisor" as any)
+        .eq("is_active", true)
+        .limit(1);
+      const assignedTo = supervisors?.[0]?.auth_user_id || null;
+
       for (const ncr of generatedNCRs) {
         await client.from("ncr_register").insert({
           inspection_id: newInspectionId,
@@ -472,6 +480,19 @@ export function QCInspectionWizard({
           ncr_number: ncr.ncrNumber,
           status: ncr.severity === "Critical" ? "critical_open" : "open",
           raised_by: inspectorId,
+          assigned_to: assignedTo,
+        } as any);
+      }
+
+      // Notify assigned supervisor
+      if (assignedTo && generatedNCRs.length > 0) {
+        await insertNotifications({
+          recipient_id: assignedTo,
+          title: "NCR Assigned to You",
+          body: `${generatedNCRs.length} NCR(s) assigned from QC inspection on stage "${activeStage}". Please acknowledge and set fix timeline.`,
+          category: "production",
+          related_table: "qc_inspection",
+          related_id: newInspectionId,
         });
       }
 
