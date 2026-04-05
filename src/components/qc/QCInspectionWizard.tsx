@@ -535,7 +535,7 @@ export function QCInspectionWizard({
     }
   };
 
-  const canProceedStep0 = selectedProjectId && selectedModuleId && selectedPanelId;
+  const canProceedStep0 = selectedProjectId && selectedModuleId && selectedPanelId && stageType;
   const canProceedStep1 = allStageItemsMarked;
 
   // Validate failed items have notes
