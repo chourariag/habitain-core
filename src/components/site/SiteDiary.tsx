@@ -11,6 +11,7 @@ import { Camera, MapPin, BookOpen, Loader2, Plus, Cloud, Sun, CloudRain, Trash2 
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { PhotoGuidanceCard, PhotoFeedback, PhotoQualitySummary, usePhotoWithAI } from "@/components/photos/PhotoGuidance";
+import { DailyProgressSection, validatePlannedActivities, type PlannedActivity } from "@/components/site/DailyProgressSection";
 
 interface Props {
   projectId: string;
