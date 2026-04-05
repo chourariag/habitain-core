@@ -111,6 +111,8 @@ export function QCInspectionWizard({
   const [selectedPanelId, setSelectedPanelId] = useState<string>("");
   const [inspectorName, setInspectorName] = useState("");
   const [inspectorId, setInspectorId] = useState("");
+  const [stageType, setStageType] = useState<string>("");
+  const [stageTypeLocked, setStageTypeLocked] = useState(false);
 
   // Step 2 state
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
