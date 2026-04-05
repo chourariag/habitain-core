@@ -162,6 +162,7 @@ export function SiteDiary({ projectId, userRole }: Props) {
     setSubcontractors([]); setPowerCuts(false); setPowerCutDuration("");
     setClientVisit(false); setClientVisitName(""); setClientVisitPurpose(""); setClientVisitNotes("");
     setMaterialDeliveries(false); setDeliveryItems([]);
+    setPlannedActivities([]); setActivityErrors({});
   };
 
   const weatherLabel = (val: string | null) => WEATHER_OPTIONS.find((w) => w.value === val)?.label ?? val;
