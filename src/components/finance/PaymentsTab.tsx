@@ -16,6 +16,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { BankLedgerSubTab } from "./BankLedgerSubTab";
 import { CreditorLedgerSubTab } from "./CreditorLedgerSubTab";
 import { DebtorLedgerSubTab } from "./DebtorLedgerSubTab";
+import { PaymentApprovalSection } from "./PaymentApprovalSection";
+import { AdvanceManagement } from "./AdvanceManagement";
 
 interface Payment {
   id: string; project_name: string; client_name: string; milestone_description: string;
