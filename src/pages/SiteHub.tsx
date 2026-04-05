@@ -232,6 +232,18 @@ function SiteHubContent() {
               return (
                 <div key={module.id} className="space-y-2">
                   <ModulePanelCard module={module} panels={panelsByModule[module.id] ?? []} projectId={selectedProjectId!} canEdit={false} canAdvanceStage={false} userRole={userRole} onPanelCreated={fetchData} onStageAdvanced={fetchData} />
+                  
+                  {/* Site Receipt Checklist — shown for dispatched modules */}
+                  {(module.production_status === "dispatched" || module.current_stage === "Dispatch") && (
+                    <SiteReceiptChecklist
+                      projectId={selectedProjectId!}
+                      moduleId={module.id}
+                      moduleName={module.module_code || module.name}
+                      userRole={userRole}
+                      onComplete={fetchData}
+                    />
+                  )}
+
                   <div className="bg-card border border-border rounded-md p-3 space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       <Cond met={conds?.qc ?? false} label="QC Passed" />
