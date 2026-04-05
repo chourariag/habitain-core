@@ -14,6 +14,8 @@ import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPanel";
 import { DispatchPacksTab } from "@/components/site/DispatchPacksTab";
+import { SiteReceiptChecklist } from "@/components/site/SiteReceiptChecklist";
+import { SubcontractorSchedule } from "@/components/site/SubcontractorSchedule";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
