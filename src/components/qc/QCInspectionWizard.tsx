@@ -142,6 +142,8 @@ export function QCInspectionWizard({
     setSelectedProjectId(preselectedProjectId || "");
     setSelectedModuleId(preselectedModuleId || "");
     setSelectedPanelId("");
+    setStageType("");
+    setStageTypeLocked(false);
     setChecklistItems([]);
     setItemResults({});
     setAiAnalysis(null);
