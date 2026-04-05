@@ -366,6 +366,12 @@ export function PaymentsTab() {
     <div className="space-y-4 mt-2">
       <CashPositionCard />
 
+      {/* Payment Approvals & Advance Management */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <PaymentApprovalSection canUpload={canUpload} />
+        <AdvanceManagement canManage={canUpload} />
+      </div>
+
       <Tabs defaultValue="bank" className="w-full">
         <TabsList className="w-full justify-start">
           <TabsTrigger value="bank" className="text-xs">Bank Ledger</TabsTrigger>
