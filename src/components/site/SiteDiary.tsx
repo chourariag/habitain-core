@@ -87,6 +87,18 @@ export function SiteDiary({ projectId, userRole }: Props) {
   const handleSubmit = async () => {
     if (aiPhotos.length < 3) { toast.error("Please add at least 3 photos"); return; }
     if (!notes.trim()) { toast.error("Work done today is required"); return; }
+
+    // Validate planned activities
+    if (plannedActivities.length > 0) {
+      const { valid, errors } = validatePlannedActivities(plannedActivities);
+      setActivityErrors(errors);
+      if (!valid) { toast.error("Please explain shortfalls for activities below 75%"); return; }
+    }
+
+    const completedCount = plannedActivities.filter((a) => a.actual_completion_pct >= 75).length;
+    const dailySummary = plannedActivities.length > 0
+      ? `${completedCount} of ${plannedActivities.length} activities completed`
+      : null;
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
