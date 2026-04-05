@@ -140,6 +140,8 @@ export function SiteDiary({ projectId, userRole }: Props) {
         client_visit_notes: clientVisit ? clientVisitNotes.trim() || null : null,
         material_deliveries: materialDeliveries,
         material_delivery_items: deliveryItems.filter((d) => d.material.trim()),
+        planned_activities: plannedActivities.length > 0 ? plannedActivities : null,
+        daily_summary: dailySummary,
         ...qualityMeta,
       });
       if (error) throw error;
