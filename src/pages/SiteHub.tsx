@@ -276,7 +276,10 @@ function SiteHubContent() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="diary"><SiteDiary projectId={selectedProjectId!} userRole={userRole} /></TabsContent>
+        <TabsContent value="diary" className="space-y-4">
+          <SiteDiary projectId={selectedProjectId!} userRole={userRole} />
+          <SubcontractorSchedule projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
+        </TabsContent>
         <TabsContent value="handover">
           <HandoverPack projectId={selectedProjectId!} clientName={selectedProject?.client_name ?? null} userRole={userRole} installationComplete={installationComplete} onHandedOver={fetchData} />
         </TabsContent>
