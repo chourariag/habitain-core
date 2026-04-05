@@ -1123,6 +1123,10 @@ export function QCInspectionWizard({
 
             <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
               <p>
+                <span className="text-muted-foreground">Stage Type:</span>{" "}
+                {stageType === "shell_and_core" ? "Shell and Core" : stageType === "builder_finish" ? "Builder Finish" : "Interiors"}
+              </p>
+              <p>
                 <span className="text-muted-foreground">Stage:</span>{" "}
                 {activeStage}
               </p>
