@@ -16,6 +16,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { BankLedgerSubTab } from "./BankLedgerSubTab";
 import { CreditorLedgerSubTab } from "./CreditorLedgerSubTab";
 import { DebtorLedgerSubTab } from "./DebtorLedgerSubTab";
+import { PaymentApprovalSection } from "./PaymentApprovalSection";
+import { AdvanceManagement } from "./AdvanceManagement";
 
 interface Payment {
   id: string; project_name: string; client_name: string; milestone_description: string;
@@ -363,6 +365,12 @@ export function PaymentsTab() {
   return (
     <div className="space-y-4 mt-2">
       <CashPositionCard />
+
+      {/* Payment Approvals & Advance Management */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <PaymentApprovalSection canUpload={canUpload} />
+        <AdvanceManagement canManage={canUpload} />
+      </div>
 
       <Tabs defaultValue="bank" className="w-full">
         <TabsList className="w-full justify-start">
