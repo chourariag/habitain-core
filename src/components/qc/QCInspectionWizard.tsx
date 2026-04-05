@@ -433,11 +433,12 @@ export function QCInspectionWizard({
           module_id: selectedModuleId,
           inspector_id: inspectorId,
           stage_name: activeStage,
+          stage_type: stageType || null,
           status: "completed",
           submitted_at: new Date().toISOString(),
           ai_response: editableAnalysis as any,
           dispatch_decision: editableAnalysis?.stageDecision || null,
-        })
+        } as any)
         .select("id")
         .single();
 
