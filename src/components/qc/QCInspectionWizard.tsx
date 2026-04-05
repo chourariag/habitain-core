@@ -666,6 +666,31 @@ export function QCInspectionWizard({
               </Select>
             </div>
 
+            <div>
+              <label className="text-sm font-medium text-foreground">
+                Stage Type *
+              </label>
+              <RadioGroup
+                value={stageType}
+                onValueChange={setStageType}
+                disabled={stageTypeLocked}
+                className="mt-2 flex flex-col gap-2"
+              >
+                {[
+                  { value: "shell_and_core", label: "Shell and Core" },
+                  { value: "builder_finish", label: "Builder Finish" },
+                  { value: "interiors", label: "Interiors" },
+                ].map((opt) => (
+                  <div key={opt.value} className="flex items-center gap-2">
+                    <RadioGroupItem value={opt.value} id={`stage-type-${opt.value}`} />
+                    <Label htmlFor={`stage-type-${opt.value}`} className="text-sm font-normal cursor-pointer">
+                      {opt.label}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+
             <div className="flex justify-end">
               <Button
                 onClick={() => {
