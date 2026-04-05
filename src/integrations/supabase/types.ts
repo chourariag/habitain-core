@@ -47,6 +47,80 @@ export type Database = {
         }
         Relationships: []
       }
+      advance_requests: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          carried_forward_amount: number | null
+          carried_forward_date: string | null
+          carry_forward_reminder_sent: boolean | null
+          created_at: string | null
+          employee_id: string
+          employee_name: string | null
+          id: string
+          next_trip_expected_date: string | null
+          project_id: string | null
+          project_name: string | null
+          purpose: string | null
+          settled_amount: number | null
+          settled_at: string | null
+          settlement_method: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          carried_forward_amount?: number | null
+          carried_forward_date?: string | null
+          carry_forward_reminder_sent?: boolean | null
+          created_at?: string | null
+          employee_id: string
+          employee_name?: string | null
+          id?: string
+          next_trip_expected_date?: string | null
+          project_id?: string | null
+          project_name?: string | null
+          purpose?: string | null
+          settled_amount?: number | null
+          settled_at?: string | null
+          settlement_method?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          carried_forward_amount?: number | null
+          carried_forward_date?: string | null
+          carry_forward_reminder_sent?: boolean | null
+          created_at?: string | null
+          employee_id?: string
+          employee_name?: string | null
+          id?: string
+          next_trip_expected_date?: string | null
+          project_id?: string | null
+          project_name?: string | null
+          purpose?: string | null
+          settled_amount?: number | null
+          settled_at?: string | null
+          settlement_method?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advance_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       amc_contracts: {
         Row: {
           annual_fee: number
@@ -1673,7 +1747,9 @@ export type Database = {
           id: string
           is_recurring: boolean | null
           notes: string | null
+          recipient_roles: string[] | null
           recurrence_rule: string | null
+          reminder_days: number | null
           status: string
           updated_at: string
           updated_by: string | null
@@ -1685,7 +1761,9 @@ export type Database = {
           id?: string
           is_recurring?: boolean | null
           notes?: string | null
+          recipient_roles?: string[] | null
           recurrence_rule?: string | null
+          reminder_days?: number | null
           status?: string
           updated_at?: string
           updated_by?: string | null
@@ -1697,7 +1775,9 @@ export type Database = {
           id?: string
           is_recurring?: boolean | null
           notes?: string | null
+          recipient_roles?: string[] | null
           recurrence_rule?: string | null
+          reminder_days?: number | null
           status?: string
           updated_at?: string
           updated_by?: string | null
@@ -2654,6 +2734,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      payment_approvals: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          approver_id: string | null
+          approver_name: string | null
+          category: string
+          created_at: string | null
+          description: string
+          escalation_sent: boolean | null
+          escalation_sent_at: string | null
+          id: string
+          notes: string | null
+          status: string
+          submitted_at: string | null
+          submitted_by: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          approver_id?: string | null
+          approver_name?: string | null
+          category?: string
+          created_at?: string | null
+          description: string
+          escalation_sent?: boolean | null
+          escalation_sent_at?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          approver_id?: string | null
+          approver_name?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string
+          escalation_sent?: boolean | null
+          escalation_sent_at?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       production_stages: {
         Row: {
