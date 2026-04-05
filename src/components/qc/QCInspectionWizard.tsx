@@ -21,6 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
   ArrowRight,
@@ -34,6 +36,7 @@ import {
   Brain,
   Shield,
 } from "lucide-react";
+import { STAGE_TYPE_SECTIONS } from "@/lib/design-checklist-data";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
