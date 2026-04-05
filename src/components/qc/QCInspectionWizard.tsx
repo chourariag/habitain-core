@@ -267,6 +267,7 @@ export function QCInspectionWizard({
   );
 
   const setResult = (itemId: string, result: "pass" | "fail" | "na") => {
+    if (!stageTypeLocked) setStageTypeLocked(true);
     setItemResults((prev) => ({
       ...prev,
       [itemId]: { ...prev[itemId], result },
