@@ -227,6 +227,13 @@ export const TOTAL_CHECKLIST_ITEMS = QC_CHECKLIST_SECTIONS.reduce(
   0
 );
 
+/** Stage type → QC checklist section numbers mapping */
+export const STAGE_TYPE_SECTIONS: Record<string, number[]> = {
+  shell_and_core: [1, 2, 3, 4, 5, 16, 17],
+  builder_finish: [6, 7, 8, 9, 10, 11, 15, 18],
+  interiors: [12, 13, 14],
+};
+
 export const STANDARD_DETAILS = [
   "Steel module base frame detail",
   "Module-to-foundation connection detail",

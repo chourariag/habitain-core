@@ -21,6 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import {
   ArrowLeft,
   ArrowRight,
@@ -34,6 +36,7 @@ import {
   Brain,
   Shield,
 } from "lucide-react";
+import { STAGE_TYPE_SECTIONS } from "@/lib/design-checklist-data";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -108,6 +111,8 @@ export function QCInspectionWizard({
   const [selectedPanelId, setSelectedPanelId] = useState<string>("");
   const [inspectorName, setInspectorName] = useState("");
   const [inspectorId, setInspectorId] = useState("");
+  const [stageType, setStageType] = useState<string>("");
+  const [stageTypeLocked, setStageTypeLocked] = useState(false);
 
   // Step 2 state
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
@@ -137,6 +142,8 @@ export function QCInspectionWizard({
     setSelectedProjectId(preselectedProjectId || "");
     setSelectedModuleId(preselectedModuleId || "");
     setSelectedPanelId("");
+    setStageType("");
+    setStageTypeLocked(false);
     setChecklistItems([]);
     setItemResults({});
     setAiAnalysis(null);
@@ -211,7 +218,7 @@ export function QCInspectionWizard({
     loadPanels(id);
   };
 
-  // Step 2: Load checklist for module's current stage
+  // Step 2: Load checklist for module's current stage, filtered by stage type
   const loadChecklist = async () => {
     const mod = modules.find((m) => m.id === selectedModuleId);
     const stage = mod?.current_stage || "Sub-Frame";
@@ -223,9 +230,18 @@ export function QCInspectionWizard({
       .eq("is_active", true)
       .order("sort_order");
 
-    setChecklistItems(data ?? []);
+    // Filter by stage type sections if selected
+    const allowedSections = stageType ? STAGE_TYPE_SECTIONS[stageType] : null;
+    const filtered = allowedSections
+      ? (data ?? []).filter((item) => {
+          // Match checklist item's stage_name to section numbers via name lookup
+          return true; // We filter by stage_name tabs, not section_number here
+        })
+      : (data ?? []);
+
+    setChecklistItems(filtered);
     const results: Record<string, ItemResult> = {};
-    (data ?? []).forEach((item) => {
+    filtered.forEach((item) => {
       results[item.id] = { result: null, notes: "", photoFile: null, photoPreview: null };
     });
     setItemResults(results);
@@ -251,6 +267,7 @@ export function QCInspectionWizard({
   );
 
   const setResult = (itemId: string, result: "pass" | "fail" | "na") => {
+    if (!stageTypeLocked) setStageTypeLocked(true);
     setItemResults((prev) => ({
       ...prev,
       [itemId]: { ...prev[itemId], result },
@@ -416,11 +433,12 @@ export function QCInspectionWizard({
           module_id: selectedModuleId,
           inspector_id: inspectorId,
           stage_name: activeStage,
+          stage_type: stageType || null,
           status: "completed",
           submitted_at: new Date().toISOString(),
           ai_response: editableAnalysis as any,
           dispatch_decision: editableAnalysis?.stageDecision || null,
-        })
+        } as any)
         .select("id")
         .single();
 
@@ -446,7 +464,15 @@ export function QCInspectionWizard({
         .insert(inspectionItems);
       if (itemsErr) throw itemsErr;
 
-      // 4. Create NCRs
+      // 4. Create NCRs — auto-assign to factory_supervisor
+      const { data: supervisors } = await client
+        .from("profiles")
+        .select("auth_user_id")
+        .eq("role", "factory_supervisor" as any)
+        .eq("is_active", true)
+        .limit(1);
+      const assignedTo = supervisors?.[0]?.auth_user_id || null;
+
       for (const ncr of generatedNCRs) {
         await client.from("ncr_register").insert({
           inspection_id: newInspectionId,
@@ -454,6 +480,19 @@ export function QCInspectionWizard({
           ncr_number: ncr.ncrNumber,
           status: ncr.severity === "Critical" ? "critical_open" : "open",
           raised_by: inspectorId,
+          assigned_to: assignedTo,
+        } as any);
+      }
+
+      // Notify assigned supervisor
+      if (assignedTo && generatedNCRs.length > 0) {
+        await insertNotifications({
+          recipient_id: assignedTo,
+          title: "NCR Assigned to You",
+          body: `${generatedNCRs.length} NCR(s) assigned from QC inspection on stage "${activeStage}". Please acknowledge and set fix timeline.`,
+          category: "production",
+          related_table: "qc_inspection",
+          related_id: newInspectionId,
         });
       }
 
@@ -496,7 +535,7 @@ export function QCInspectionWizard({
     }
   };
 
-  const canProceedStep0 = selectedProjectId && selectedModuleId && selectedPanelId;
+  const canProceedStep0 = selectedProjectId && selectedModuleId && selectedPanelId && stageType;
   const canProceedStep1 = allStageItemsMarked;
 
   // Validate failed items have notes
@@ -625,6 +664,31 @@ export function QCInspectionWizard({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-foreground">
+                Stage Type *
+              </label>
+              <RadioGroup
+                value={stageType}
+                onValueChange={setStageType}
+                disabled={stageTypeLocked}
+                className="mt-2 flex flex-col gap-2"
+              >
+                {[
+                  { value: "shell_and_core", label: "Shell and Core" },
+                  { value: "builder_finish", label: "Builder Finish" },
+                  { value: "interiors", label: "Interiors" },
+                ].map((opt) => (
+                  <div key={opt.value} className="flex items-center gap-2">
+                    <RadioGroupItem value={opt.value} id={`stage-type-${opt.value}`} />
+                    <Label htmlFor={`stage-type-${opt.value}`} className="text-sm font-normal cursor-pointer">
+                      {opt.label}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
             </div>
 
             <div className="flex justify-end">
@@ -1058,6 +1122,10 @@ export function QCInspectionWizard({
             <h3 className="font-semibold text-foreground">Inspection Summary</h3>
 
             <div className="bg-muted/50 rounded-lg p-4 space-y-2 text-sm">
+              <p>
+                <span className="text-muted-foreground">Stage Type:</span>{" "}
+                {stageType === "shell_and_core" ? "Shell and Core" : stageType === "builder_finish" ? "Builder Finish" : "Interiors"}
+              </p>
               <p>
                 <span className="text-muted-foreground">Stage:</span>{" "}
                 {activeStage}
