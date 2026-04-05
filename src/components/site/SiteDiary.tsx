@@ -188,6 +188,14 @@ export function SiteDiary({ projectId, userRole }: Props) {
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-3 space-y-3">
+            {/* Daily Progress — Planned vs Actual */}
+            <DailyProgressSection
+              projectId={projectId}
+              activities={plannedActivities}
+              onChange={setPlannedActivities}
+              validationErrors={activityErrors}
+            />
+
             <div>
               <label className="text-xs font-medium text-muted-foreground">Weather Condition</label>
               <Select value={weather} onValueChange={setWeather}>
