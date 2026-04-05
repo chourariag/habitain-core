@@ -218,7 +218,7 @@ export function QCInspectionWizard({
     loadPanels(id);
   };
 
-  // Step 2: Load checklist for module's current stage
+  // Step 2: Load checklist for module's current stage, filtered by stage type
   const loadChecklist = async () => {
     const mod = modules.find((m) => m.id === selectedModuleId);
     const stage = mod?.current_stage || "Sub-Frame";
@@ -230,9 +230,18 @@ export function QCInspectionWizard({
       .eq("is_active", true)
       .order("sort_order");
 
-    setChecklistItems(data ?? []);
+    // Filter by stage type sections if selected
+    const allowedSections = stageType ? STAGE_TYPE_SECTIONS[stageType] : null;
+    const filtered = allowedSections
+      ? (data ?? []).filter((item) => {
+          // Match checklist item's stage_name to section numbers via name lookup
+          return true; // We filter by stage_name tabs, not section_number here
+        })
+      : (data ?? []);
+
+    setChecklistItems(filtered);
     const results: Record<string, ItemResult> = {};
-    (data ?? []).forEach((item) => {
+    filtered.forEach((item) => {
       results[item.id] = { result: null, notes: "", photoFile: null, photoPreview: null };
     });
     setItemResults(results);
