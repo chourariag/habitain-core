@@ -62,6 +62,10 @@ export function SiteDiary({ projectId, userRole }: Props) {
   const [materialDeliveries, setMaterialDeliveries] = useState(false);
   const [deliveryItems, setDeliveryItems] = useState<MaterialDeliveryRow[]>([]);
 
+  // Planned activities state
+  const [plannedActivities, setPlannedActivities] = useState<PlannedActivity[]>([]);
+  const [activityErrors, setActivityErrors] = useState<Record<number, string>>({});
+
   const canAdd = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
 
   useEffect(() => { loadEntries(); }, [projectId]);
