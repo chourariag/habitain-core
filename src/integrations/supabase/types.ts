@@ -2463,41 +2463,71 @@ export type Database = {
       }
       ncr_register: {
         Row: {
+          assigned_to: string | null
           checklist_item_id: string | null
           closed_at: string | null
           closed_by: string | null
           created_at: string | null
+          fix_timeline: string | null
+          fix_timeline_due_date: string | null
+          fix_timeline_set_at: string | null
+          fix_timeline_set_by: string | null
           id: string
           inspection_id: string | null
           is_archived: boolean | null
           ncr_number: string
           raised_by: string | null
+          reinspection_completed_at: string | null
+          reinspection_completed_by: string | null
+          reinspection_failed: boolean | null
+          reinspection_notes: string | null
+          reinspection_photo_url: string | null
           status: string | null
           updated_at: string | null
         }
         Insert: {
+          assigned_to?: string | null
           checklist_item_id?: string | null
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string | null
+          fix_timeline?: string | null
+          fix_timeline_due_date?: string | null
+          fix_timeline_set_at?: string | null
+          fix_timeline_set_by?: string | null
           id?: string
           inspection_id?: string | null
           is_archived?: boolean | null
           ncr_number: string
           raised_by?: string | null
+          reinspection_completed_at?: string | null
+          reinspection_completed_by?: string | null
+          reinspection_failed?: boolean | null
+          reinspection_notes?: string | null
+          reinspection_photo_url?: string | null
           status?: string | null
           updated_at?: string | null
         }
         Update: {
+          assigned_to?: string | null
           checklist_item_id?: string | null
           closed_at?: string | null
           closed_by?: string | null
           created_at?: string | null
+          fix_timeline?: string | null
+          fix_timeline_due_date?: string | null
+          fix_timeline_set_at?: string | null
+          fix_timeline_set_by?: string | null
           id?: string
           inspection_id?: string | null
           is_archived?: boolean | null
           ncr_number?: string
           raised_by?: string | null
+          reinspection_completed_at?: string | null
+          reinspection_completed_by?: string | null
+          reinspection_failed?: boolean | null
+          reinspection_notes?: string | null
+          reinspection_photo_url?: string | null
           status?: string | null
           updated_at?: string | null
         }
@@ -3141,6 +3171,7 @@ export type Database = {
           is_archived: boolean | null
           module_id: string
           stage_name: string
+          stage_type: string | null
           status: string | null
           submitted_at: string | null
           updated_at: string | null
@@ -3154,6 +3185,7 @@ export type Database = {
           is_archived?: boolean | null
           module_id: string
           stage_name: string
+          stage_type?: string | null
           status?: string | null
           submitted_at?: string | null
           updated_at?: string | null
@@ -3167,6 +3199,7 @@ export type Database = {
           is_archived?: boolean | null
           module_id?: string
           stage_name?: string
+          stage_type?: string | null
           status?: string | null
           submitted_at?: string | null
           updated_at?: string | null
