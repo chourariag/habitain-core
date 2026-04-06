@@ -481,6 +481,9 @@ export function MISTab() {
         </>
       )}
 
+      {/* WIP Statement Section */}
+      <WIPStatement />
+
       {(!currentUpload || entries.length === 0) && (
         <Card className="py-12">
           <CardContent className="text-center">

@@ -100,7 +100,7 @@ export function WIPStatement() {
 
         // Billing milestone: 10% per stage, based on max stage across modules
         const projModules = (modules || []).filter(m => m.project_id === p.id);
-        const maxStage = projModules.reduce((mx, m) => Math.max(mx, m.current_stage || 0), 0);
+        const maxStage = projModules.reduce((mx, m) => Math.max(mx, Number(m.current_stage) || 0), 0);
         const billingPct = Math.min(maxStage * 10, 100);
 
         return {
