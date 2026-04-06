@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { WIPStatement } from "@/components/finance/WIPStatement";
 
 const MIS_CATEGORIES = {
   revenue: "Sales Revenue",
@@ -480,6 +481,9 @@ export function MISTab() {
           </Collapsible>
         </>
       )}
+
+      {/* WIP Statement Section */}
+      <WIPStatement />
 
       {(!currentUpload || entries.length === 0) && (
         <Card className="py-12">
