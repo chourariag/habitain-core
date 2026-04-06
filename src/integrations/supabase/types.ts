@@ -3053,6 +3053,9 @@ export type Database = {
           type: string | null
           updated_at: string | null
           updated_by: string | null
+          wip_close_date: string | null
+          wip_start_date: string | null
+          wip_status: string
         }
         Insert: {
           client_email?: string | null
@@ -3077,6 +3080,9 @@ export type Database = {
           type?: string | null
           updated_at?: string | null
           updated_by?: string | null
+          wip_close_date?: string | null
+          wip_start_date?: string | null
+          wip_status?: string
         }
         Update: {
           client_email?: string | null
@@ -3101,6 +3107,9 @@ export type Database = {
           type?: string | null
           updated_at?: string | null
           updated_by?: string | null
+          wip_close_date?: string | null
+          wip_start_date?: string | null
+          wip_status?: string
         }
         Relationships: []
       }
