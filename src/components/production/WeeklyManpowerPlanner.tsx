@@ -296,13 +296,13 @@ export function WeeklyManpowerPlanner({ projectId, userRole }: Props) {
                         <div
                           key={w.id}
                           draggable
-                          onDragStart={() => handleDragStart(w.id, w.full_name || w.email)}
+                          onDragStart={() => handleDragStart(w.id, w.display_name || w.email)}
                           className="flex items-center gap-2 p-2 rounded-md border border-border bg-background cursor-grab hover:border-primary/50 transition-colors"
                         >
                           <GripVertical className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-foreground truncate">
-                              {w.full_name || w.email}
+                              {w.display_name || w.email}
                             </p>
                             <p className="text-xs text-muted-foreground">{w.role.replace(/_/g, " ")}</p>
                           </div>
@@ -367,7 +367,7 @@ export function WeeklyManpowerPlanner({ projectId, userRole }: Props) {
                                         className="flex items-center gap-1 bg-primary/10 text-primary rounded px-1.5 py-0.5 mb-1 text-[11px]"
                                       >
                                         <span className="truncate flex-1">
-                                          {worker?.full_name || "Worker"}
+                                          {worker?.display_name || "Worker"}
                                         </span>
                                         <button
                                           type="button"
