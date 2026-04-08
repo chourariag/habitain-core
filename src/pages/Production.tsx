@@ -100,8 +100,12 @@ function ProductionContent() {
           <Button variant="ghost" size="sm" className={viewMode === "table" ? "bg-background shadow-sm" : ""} onClick={() => setView("table")}>
             <TableIcon className="h-4 w-4 mr-1" /> Table
           </Button>
-          <Button variant="ghost" size="sm" className={viewMode === "board" ? "bg-background shadow-sm" : ""} onClick={() => setView("board")}>
-            <LayoutGrid className="h-4 w-4 mr-1" /> Board
+           <Button variant="ghost" size="sm" className={viewMode === "board" ? "bg-background shadow-sm" : ""} onClick={() => setView("board")}>
+              <LayoutGrid className="h-4 w-4 mr-1" /> Board
+            </Button>
+            <Button variant="ghost" size="sm" className={viewMode === "gantt" ? "bg-background shadow-sm" : ""} onClick={() => setView("gantt")}>
+              <BarChart3 className="h-4 w-4 mr-1" /> Gantt
+            </Button>
           </Button>
         </div>
       </div>
