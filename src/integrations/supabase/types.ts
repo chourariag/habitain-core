@@ -1741,6 +1741,50 @@ export type Database = {
           },
         ]
       }
+      experience_centre_visits: {
+        Row: {
+          client_name: string
+          created_at: string
+          deal_id: string | null
+          hosted_by: string | null
+          hosted_by_name: string | null
+          id: string
+          notes: string | null
+          outcome: string | null
+          visit_date: string
+        }
+        Insert: {
+          client_name: string
+          created_at?: string
+          deal_id?: string | null
+          hosted_by?: string | null
+          hosted_by_name?: string | null
+          id?: string
+          notes?: string | null
+          outcome?: string | null
+          visit_date?: string
+        }
+        Update: {
+          client_name?: string
+          created_at?: string
+          deal_id?: string | null
+          hosted_by?: string | null
+          hosted_by_name?: string | null
+          id?: string
+          notes?: string | null
+          outcome?: string | null
+          visit_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experience_centre_visits_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "sales_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_cashflow: {
         Row: {
           amount: number
@@ -4115,6 +4159,65 @@ export type Database = {
           },
         ]
       }
+      quotation_versions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date_sent: string
+          deal_id: string
+          id: string
+          payment_terms: string | null
+          prev_value: number | null
+          price_change_amount: number | null
+          price_change_pct: number | null
+          scope_changes: string | null
+          sent_to: string | null
+          timeline: string | null
+          total_value: number
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date_sent?: string
+          deal_id: string
+          id?: string
+          payment_terms?: string | null
+          prev_value?: number | null
+          price_change_amount?: number | null
+          price_change_pct?: number | null
+          scope_changes?: string | null
+          sent_to?: string | null
+          timeline?: string | null
+          total_value?: number
+          version_number?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date_sent?: string
+          deal_id?: string
+          id?: string
+          payment_terms?: string | null
+          prev_value?: number | null
+          price_change_amount?: number | null
+          price_change_pct?: number | null
+          scope_changes?: string | null
+          sent_to?: string | null
+          timeline?: string | null
+          total_value?: number
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_versions_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "sales_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_cards: {
         Row: {
           created_at: string | null
@@ -4345,13 +4448,18 @@ export type Database = {
       }
       sales_deals: {
         Row: {
+          accepted_quotation_version: number | null
           amc_interest: string | null
           assigned_to: string | null
           client_name: string
+          client_type: string
           contact_number: string | null
           contract_value: number
+          converted_from_ads_deal_id: string | null
           created_at: string
           created_by: string | null
+          delivery_city: string | null
+          division: string
           email: string | null
           estimated_sqft: number | null
           id: string
@@ -4360,19 +4468,30 @@ export type Database = {
           lost_reason: string | null
           next_followup_date: string | null
           notes: string | null
+          persona_tag: string | null
           project_type: string
+          re_engaged_at: string | null
+          re_engaged_from_deal_id: string | null
+          referral_count: number | null
           stage: string
+          stagnation_alerted_at: string | null
           temperature: string
           updated_at: string
+          within_350km: boolean | null
         }
         Insert: {
+          accepted_quotation_version?: number | null
           amc_interest?: string | null
           assigned_to?: string | null
           client_name: string
+          client_type?: string
           contact_number?: string | null
           contract_value?: number
+          converted_from_ads_deal_id?: string | null
           created_at?: string
           created_by?: string | null
+          delivery_city?: string | null
+          division?: string
           email?: string | null
           estimated_sqft?: number | null
           id?: string
@@ -4381,19 +4500,30 @@ export type Database = {
           lost_reason?: string | null
           next_followup_date?: string | null
           notes?: string | null
+          persona_tag?: string | null
           project_type?: string
+          re_engaged_at?: string | null
+          re_engaged_from_deal_id?: string | null
+          referral_count?: number | null
           stage?: string
+          stagnation_alerted_at?: string | null
           temperature?: string
           updated_at?: string
+          within_350km?: boolean | null
         }
         Update: {
+          accepted_quotation_version?: number | null
           amc_interest?: string | null
           assigned_to?: string | null
           client_name?: string
+          client_type?: string
           contact_number?: string | null
           contract_value?: number
+          converted_from_ads_deal_id?: string | null
           created_at?: string
           created_by?: string | null
+          delivery_city?: string | null
+          division?: string
           email?: string | null
           estimated_sqft?: number | null
           id?: string
@@ -4402,12 +4532,117 @@ export type Database = {
           lost_reason?: string | null
           next_followup_date?: string | null
           notes?: string | null
+          persona_tag?: string | null
           project_type?: string
+          re_engaged_at?: string | null
+          re_engaged_from_deal_id?: string | null
+          referral_count?: number | null
           stage?: string
+          stagnation_alerted_at?: string | null
           temperature?: string
           updated_at?: string
+          within_350km?: boolean | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sales_deals_converted_from_ads_deal_id_fkey"
+            columns: ["converted_from_ads_deal_id"]
+            isOneToOne: false
+            referencedRelation: "sales_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_deals_re_engaged_from_deal_id_fkey"
+            columns: ["re_engaged_from_deal_id"]
+            isOneToOne: false
+            referencedRelation: "sales_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_handover_checklists: {
+        Row: {
+          ads_to_habitainer: boolean | null
+          completed: boolean | null
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          deal_id: string
+          delivery_address: string | null
+          design_preferences: string | null
+          floor_plans_uploaded: boolean | null
+          floor_plans_url: string | null
+          id: string
+          linked_ads_deal_id: string | null
+          payment_terms: string | null
+          sow_uploaded: boolean | null
+          sow_url: string | null
+          special_requirements: string | null
+          updated_at: string
+          visualization_uploaded: boolean | null
+          visualization_url: string | null
+          within_350km: boolean | null
+        }
+        Insert: {
+          ads_to_habitainer?: boolean | null
+          completed?: boolean | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          deal_id: string
+          delivery_address?: string | null
+          design_preferences?: string | null
+          floor_plans_uploaded?: boolean | null
+          floor_plans_url?: string | null
+          id?: string
+          linked_ads_deal_id?: string | null
+          payment_terms?: string | null
+          sow_uploaded?: boolean | null
+          sow_url?: string | null
+          special_requirements?: string | null
+          updated_at?: string
+          visualization_uploaded?: boolean | null
+          visualization_url?: string | null
+          within_350km?: boolean | null
+        }
+        Update: {
+          ads_to_habitainer?: boolean | null
+          completed?: boolean | null
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          deal_id?: string
+          delivery_address?: string | null
+          design_preferences?: string | null
+          floor_plans_uploaded?: boolean | null
+          floor_plans_url?: string | null
+          id?: string
+          linked_ads_deal_id?: string | null
+          payment_terms?: string | null
+          sow_uploaded?: boolean | null
+          sow_url?: string | null
+          special_requirements?: string | null
+          updated_at?: string
+          visualization_uploaded?: boolean | null
+          visualization_url?: string | null
+          within_350km?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_handover_checklists_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: true
+            referencedRelation: "sales_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_handover_checklists_linked_ads_deal_id_fkey"
+            columns: ["linked_ads_deal_id"]
+            isOneToOne: false
+            referencedRelation: "sales_deals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sales_stage_history: {
         Row: {
@@ -4443,6 +4678,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sales_targets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          division: string
+          fiscal_year: string
+          id: string
+          monthly_target: number
+          quarterly_target: number
+          salesperson_id: string
+          salesperson_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          division?: string
+          fiscal_year?: string
+          id?: string
+          monthly_target?: number
+          quarterly_target?: number
+          salesperson_id: string
+          salesperson_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          division?: string
+          fiscal_year?: string
+          id?: string
+          monthly_target?: number
+          quarterly_target?: number
+          salesperson_id?: string
+          salesperson_name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       site_diary: {
         Row: {
