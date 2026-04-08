@@ -395,7 +395,7 @@ export default function DesignPortal() {
 
       toast.success(`Design Query ${dqCode} raised`);
       setDqOpen(false);
-      setDqForm({ project_id: "", module_id: "", drawing_id: "", description: "", query_type: "Other", urgency: "Normal", affected_area: "" });
+      setDqForm({ project_id: "", module_id: "", drawing_id: "", description: "", query_type: "Other", urgency: "Normal", affected_area: "", dq_category: "" });
       setDqPhoto(null);
       setDqVoice(null);
       fetchData();
