@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus, Package } from "lucide-react";
+import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus, Package, Users, ClipboardList } from "lucide-react";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
@@ -17,6 +17,8 @@ import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPa
 import { DispatchPacksTab } from "@/components/site/DispatchPacksTab";
 import { SiteReceiptChecklist } from "@/components/site/SiteReceiptChecklist";
 import { SubcontractorSchedule } from "@/components/site/SubcontractorSchedule";
+import { SubcontractorManagement } from "@/components/site/SubcontractorManagement";
+import { PunchListModule } from "@/components/site/PunchListModule";
 import { SiteInventoryTab } from "@/components/site/SiteInventoryTab";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
