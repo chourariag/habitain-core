@@ -39,7 +39,7 @@ function ProductionContent() {
     try { return (sessionStorage.getItem("prodViewMode") as "table" | "board" | "gantt") ?? "table"; } catch { return "table"; }
   });
 
-  const setView = (mode: "table" | "board") => {
+  const setView = (mode: "table" | "board" | "gantt") => {
     setViewMode(mode);
     try { sessionStorage.setItem("prodViewMode", mode); } catch {}
   };
