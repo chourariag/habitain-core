@@ -205,6 +205,8 @@ function SiteHubContent() {
             <TabsTrigger value="site-inventory" className="gap-1.5"><Boxes className="h-4 w-4" /> Site Inventory</TabsTrigger>
             <TabsTrigger value="subcontractors" className="gap-1.5"><Users className="h-4 w-4" /> Subcontractors</TabsTrigger>
             <TabsTrigger value="punch-list" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Punch List</TabsTrigger>
+            <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Install Sequence</TabsTrigger>
+            <TabsTrigger value="factory-feedback" className="gap-1.5"><MessageSquareWarning className="h-4 w-4" /> Factory Feedback</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
