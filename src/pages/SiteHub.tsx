@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -143,6 +144,7 @@ function SiteHubContent() {
 
   const canManageReadiness = ["site_installation_mgr", "super_admin", "managing_director"].includes(userRole ?? "");
   const canCreateDispatchPack = ["factory_floor_supervisor", "production_head", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canRequestAdvance = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
 
   const Cond = ({ met, label }: { met: boolean; label: string }) => (
     <div className="flex items-center gap-1.5 text-xs">
@@ -174,6 +176,17 @@ function SiteHubContent() {
         </div>
         <Badge variant="outline" style={badgeStyle(summary.tone)}>{summary.label}</Badge>
       </div>
+
+      {canRequestAdvance && selectedProjectId && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => navigate(`/site-hub/advance-request?projectId=${selectedProjectId}&projectName=${encodeURIComponent(selectedProject?.name ?? "")}`)}
+        >
+          <Wallet className="h-4 w-4" /> Request Advance
+        </Button>
+      )}
 
       <Tabs defaultValue="pipeline" className="space-y-4">
         <ScrollableTabsWrapper>

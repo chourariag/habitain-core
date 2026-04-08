@@ -36,6 +36,7 @@ import Finance from "@/pages/Finance";
 import KPI from "@/pages/KPI";
 import KPISettings from "@/pages/KPISettings";
 import Alerts from "@/pages/Alerts";
+import AdvanceRequest from "@/pages/AdvanceRequest";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
                 <Route path="/production/delivery-checklist/:projectId" element={<DeliveryChecklist />} />
                 <Route path="/site-hub" element={<SiteHub />} />
                 <Route path="/site-hub/dispatch-pack" element={<DispatchPackForm />} />
+                <Route path="/site-hub/advance-request" element={<AdvanceRequest />} />
                 <Route path="/design" element={<DesignRouteGuard><DesignPortal /></DesignRouteGuard>} />
                 <Route path="/drawings" element={<DesignRouteGuard><Drawings /></DesignRouteGuard>} />
                 <Route path="/qc" element={<QualityControl />} />
