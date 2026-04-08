@@ -17,6 +17,7 @@ import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPa
 import { DispatchPacksTab } from "@/components/site/DispatchPacksTab";
 import { SiteReceiptChecklist } from "@/components/site/SiteReceiptChecklist";
 import { SubcontractorSchedule } from "@/components/site/SubcontractorSchedule";
+import { SiteInventoryTab } from "@/components/site/SiteInventoryTab";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
