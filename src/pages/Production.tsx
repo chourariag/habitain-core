@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon, BarChart3 } from "lucide-react";
+import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon, BarChart3, CalendarDays } from "lucide-react";
 import { GanttChart } from "@/components/production/GanttChart";
 import { SupervisorDailyLog } from "@/components/production/SupervisorDailyLog";
 import { ModuleSchedule } from "@/components/production/ModuleSchedule";
