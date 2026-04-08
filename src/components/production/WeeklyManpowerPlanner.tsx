@@ -90,11 +90,11 @@ export function WeeklyManpowerPlanner({ projectId, userRole }: Props) {
 
   const weekLabel = `${format(weekStart, "dd/MM/yyyy")} – ${format(addDays(weekStart, 5), "dd/MM/yyyy")}`;
 
-  const factoryRoles = [
+  const factoryRoles: Array<Worker["role"]> = [
     "factory_floor_supervisor", "fabrication_foreman", "electrical_installer",
     "elec_plumbing_installer", "stores_executive",
   ];
-  const siteRoles = [
+  const siteRoles: Array<Worker["role"]> = [
     "site_installation_mgr", "site_engineer", "delivery_rm_lead",
   ];
 
@@ -104,8 +104,8 @@ export function WeeklyManpowerPlanner({ projectId, userRole }: Props) {
     const targetRoles = planTab === "factory" ? factoryRoles : siteRoles;
     const { data: workerData } = await supabase
       .from("profiles")
-      .select("id, full_name, email, role")
-      .in("role", targetRoles)
+      .select("id, display_name, email, role")
+      .in("role", targetRoles as any)
       .eq("is_active", true);
     setWorkers((workerData as Worker[]) ?? []);
 
