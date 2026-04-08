@@ -705,6 +705,17 @@ export default function DesignPortal() {
                   </Select>
                 </div>
                 <div>
+                  <Label className="text-xs">DQ Category *</Label>
+                  <Select value={dqForm.dq_category} onValueChange={(v) => setDqForm({ ...dqForm, dq_category: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                    <SelectContent>
+                      {["Missing Dimension", "Vendor Detail", "Design Detail", "Material Change", "Coordination Issue", "Structural Query", "MEP Query", "Other"].map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label className="text-xs">Urgency *</Label>
                   <Select value={dqForm.urgency} onValueChange={(v) => setDqForm({ ...dqForm, urgency: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
