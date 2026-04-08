@@ -1115,8 +1115,17 @@ export default function DesignPortal() {
                   style={d.status === "archived" ? { opacity: 0.6 } : {}}>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <FileText className="h-4 w-4 shrink-0" style={{ color: "hsl(var(--primary))" }} />
+                      {(d.file_format === "dwg" || d.file_format === "dxf") ? (
+                        <FileCode2 className="h-4 w-4 shrink-0" style={{ color: "#D4860A" }} />
+                      ) : (
+                        <FileText className="h-4 w-4 shrink-0" style={{ color: "hsl(var(--primary))" }} />
+                      )}
                       <span className="font-mono text-sm font-semibold">{d.drawing_id_code}</span>
+                      {(d.file_format === "dwg" || d.file_format === "dxf") && (
+                        <Badge variant="outline" className="text-[9px]" style={{ backgroundColor: "#FFF8E8", color: "#D4860A", border: "none" }}>
+                          {d.file_format?.toUpperCase()}
+                        </Badge>
+                      )}
                       {d.drawing_title && <span className="text-xs text-muted-foreground">— {d.drawing_title}</span>}
                       <Badge variant="outline" style={d.status === "active" ? { backgroundColor: "hsl(var(--accent))", color: "hsl(var(--primary))", border: "none" } : { backgroundColor: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", border: "none" }}>
                         {d.status === "active" ? "Active" : `Archived R${d.revision}`}
