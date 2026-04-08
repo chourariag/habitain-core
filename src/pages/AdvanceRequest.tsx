@@ -183,7 +183,9 @@ export default function AdvanceRequest() {
       : `₹${totalAmount.toLocaleString("en-IN")}. ${abovePolicy > 0 ? `${lineItems.filter((i) => i.above_policy).length} items above policy.` : ""} Please review and approve.`;
 
     // Notify HOD (production_head) or MD for emergency
-    const targetRoles = isEmergency ? ["managing_director"] : ["production_head", "head_operations"];
+    const targetRoles = isEmergency
+      ? ["managing_director" as const]
+      : ["production_head" as const, "head_operations" as const];
     const { data: targets } = await supabase
       .from("profiles")
       .select("auth_user_id")
@@ -193,11 +195,11 @@ export default function AdvanceRequest() {
     if (targets?.length) {
       await insertNotifications(
         targets.map((t) => ({
-          user_id: t.auth_user_id!,
+          recipient_id: t.auth_user_id!,
           title: notifTitle,
           body: notifBody,
           category: "finance",
-          link: "/finance",
+          navigate_to: "/finance",
         }))
       );
     }
