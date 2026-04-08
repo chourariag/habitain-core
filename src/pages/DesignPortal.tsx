@@ -1131,6 +1131,19 @@ export default function DesignPortal() {
                         {d.status === "active" ? "Active" : `Archived R${d.revision}`}
                       </Badge>
                     </div>
+                    {/* Category tags */}
+                    {(d.category_tags ?? []).length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {(d.category_tags as string[]).map((tag: string) => (
+                          <Badge key={tag} variant="outline" className="text-[9px]" style={{ backgroundColor: `${CATEGORY_COLOURS[tag] ?? "#666"}15`, color: CATEGORY_COLOURS[tag] ?? "#666", border: "none" }}>
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    {d.revision_reason && (
+                      <span className="text-[10px] mt-0.5 block" style={{ color: "#D4860A" }}>Revision: {d.revision_reason}</span>
+                    )}
                     <div className="flex items-center gap-3 mt-1 text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
                       <span>{projectMap[d.project_id]?.name}</span>
                       <span>{d.drawing_type}</span>
