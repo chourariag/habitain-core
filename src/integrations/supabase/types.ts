@@ -3549,6 +3549,68 @@ export type Database = {
         }
         Relationships: []
       }
+      retention_records: {
+        Row: {
+          actual_release_date: string | null
+          amount_received: number | null
+          client_name: string
+          contract_value: number
+          created_at: string
+          created_by: string
+          expected_release_date: string
+          hold_start_date: string
+          id: string
+          payment_reference: string | null
+          project_id: string
+          retention_amount: number
+          retention_pct: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          actual_release_date?: string | null
+          amount_received?: number | null
+          client_name: string
+          contract_value?: number
+          created_at?: string
+          created_by: string
+          expected_release_date: string
+          hold_start_date: string
+          id?: string
+          payment_reference?: string | null
+          project_id: string
+          retention_amount?: number
+          retention_pct?: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          actual_release_date?: string | null
+          amount_received?: number | null
+          client_name?: string
+          contract_value?: number
+          created_at?: string
+          created_by?: string
+          expected_release_date?: string
+          hold_start_date?: string
+          id?: string
+          payment_reference?: string | null
+          project_id?: string
+          retention_amount?: number
+          retention_pct?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retention_records_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rm_tickets: {
         Row: {
           ai_analysis: Json | null
