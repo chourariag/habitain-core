@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { FileText, Plus, Eye, CheckCircle, Send, IndianRupee, AlertTriangle } from "lucide-react";
+import { RetentionSection } from "./RetentionSection";
 
 type Invoice = {
   id: string;
@@ -255,8 +257,14 @@ export function InvoicesTab() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Summary Tiles */}
+    <Tabs defaultValue="invoices" className="w-full space-y-4">
+      <TabsList>
+        <TabsTrigger value="invoices">Invoices</TabsTrigger>
+        <TabsTrigger value="retention">Retention</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="invoices">
+      <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card><CardContent className="p-4">
           <p className="text-xs text-muted-foreground">Invoiced This Month</p>
@@ -591,5 +599,11 @@ export function InvoicesTab() {
         </DialogContent>
       </Dialog>
     </div>
+    </TabsContent>
+
+    <TabsContent value="retention">
+      <RetentionSection />
+    </TabsContent>
+    </Tabs>
   );
 }
