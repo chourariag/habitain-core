@@ -331,13 +331,14 @@ export default function DesignPortal() {
       if (drawingFilterProject !== "all" && d.project_id !== drawingFilterProject) return false;
       if (drawingFilterType !== "all" && d.drawing_type !== drawingFilterType) return false;
       if (drawingFilterStatus !== "all" && d.status !== drawingFilterStatus) return false;
+      if (drawingFilterCategory !== "all" && !(d.category_tags ?? []).includes(drawingFilterCategory)) return false;
       if (searchTerm) {
         const t = searchTerm.toLowerCase();
         if (!d.drawing_id_code.toLowerCase().includes(t) && !d.file_name?.toLowerCase().includes(t)) return false;
       }
       return true;
     });
-  }, [drawings, drawingFilterProject, drawingFilterType, drawingFilterStatus, searchTerm]);
+  }, [drawings, drawingFilterProject, drawingFilterType, drawingFilterStatus, drawingFilterCategory, searchTerm]);
 
   // ──── Actions ────
   const handleRaiseDQ = async () => {
