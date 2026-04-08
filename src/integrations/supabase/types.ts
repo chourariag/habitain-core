@@ -339,6 +339,65 @@ export type Database = {
         }
         Relationships: []
       }
+      asset_register: {
+        Row: {
+          actual_return_date: string | null
+          asset_id: string
+          asset_name: string
+          assigned_project_id: string | null
+          category: string
+          condition: string
+          created_at: string
+          current_location: string
+          dispatch_date: string | null
+          expected_return_date: string | null
+          id: string
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          actual_return_date?: string | null
+          asset_id: string
+          asset_name: string
+          assigned_project_id?: string | null
+          category?: string
+          condition?: string
+          created_at?: string
+          current_location?: string
+          dispatch_date?: string | null
+          expected_return_date?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          actual_return_date?: string | null
+          asset_id?: string
+          asset_name?: string
+          assigned_project_id?: string | null
+          category?: string
+          condition?: string
+          created_at?: string
+          current_location?: string
+          dispatch_date?: string | null
+          expected_return_date?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_register_assigned_project_id_fkey"
+            columns: ["assigned_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attendance_exports: {
         Row: {
           created_at: string | null
@@ -2868,6 +2927,53 @@ export type Database = {
           },
         ]
       }
+      material_returns: {
+        Row: {
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          id: string
+          initiated_at: string
+          initiated_by: string | null
+          items: Json
+          project_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          initiated_at?: string
+          initiated_by?: string | null
+          items?: Json
+          project_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          initiated_at?: string
+          initiated_by?: string | null
+          items?: Json
+          project_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_returns_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       module_schedule: {
         Row: {
           actual_end: string | null
@@ -4337,6 +4443,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "site_direct_receipts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_inventory: {
+        Row: {
+          created_at: string
+          id: string
+          last_updated_at: string
+          last_updated_by: string | null
+          material_name: string
+          project_id: string
+          qty_received: number
+          qty_remaining: number | null
+          qty_used: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_updated_at?: string
+          last_updated_by?: string | null
+          material_name: string
+          project_id: string
+          qty_received?: number
+          qty_remaining?: number | null
+          qty_used?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_updated_at?: string
+          last_updated_by?: string | null
+          material_name?: string
+          project_id?: string
+          qty_received?: number
+          qty_remaining?: number | null
+          qty_used?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_inventory_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"

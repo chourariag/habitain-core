@@ -24,8 +24,9 @@ import { TallyPOUploadTab } from "@/components/procurement/TallyPOUploadTab";
 import { MaterialAvailabilityGate } from "@/components/procurement/MaterialAvailabilityGate";
 import { ThirtyDayPlanTab } from "@/components/procurement/ThirtyDayPlanTab";
 import { ProcurementDashboardStrip } from "@/components/procurement/ProcurementDashboardStrip";
+import { AssetRegisterTab } from "@/components/procurement/AssetRegisterTab";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
-import { Calendar } from "lucide-react";
+import { Calendar, Hammer } from "lucide-react";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
@@ -291,6 +292,7 @@ export default function Procurement() {
             <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>
             <TabsTrigger value="transfers" className="gap-1.5"><Truck className="h-4 w-4" /> Transfers</TabsTrigger>
             <TabsTrigger value="30-day-plan" className="gap-1.5"><Calendar className="h-4 w-4" /> 30-Day Plan</TabsTrigger>
+            <TabsTrigger value="asset-register" className="gap-1.5"><Hammer className="h-4 w-4" /> Asset Register</TabsTrigger>
             <TabsTrigger value="tally-po" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
@@ -680,6 +682,10 @@ export default function Procurement() {
 
         <TabsContent value="30-day-plan">
           <ThirtyDayPlanTab />
+        </TabsContent>
+
+        <TabsContent value="asset-register">
+          <AssetRegisterTab userRole={userRole} />
         </TabsContent>
 
         <TabsContent value="tally-po">

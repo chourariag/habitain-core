@@ -17,6 +17,7 @@ import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPa
 import { DispatchPacksTab } from "@/components/site/DispatchPacksTab";
 import { SiteReceiptChecklist } from "@/components/site/SiteReceiptChecklist";
 import { SubcontractorSchedule } from "@/components/site/SubcontractorSchedule";
+import { SiteInventoryTab } from "@/components/site/SiteInventoryTab";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
@@ -197,6 +198,7 @@ function SiteHubContent() {
             <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Pack</TabsTrigger>
             <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
             <TabsTrigger value="dispatch-packs" className="gap-1.5"><Package className="h-4 w-4" /> Dispatch Packs</TabsTrigger>
+            <TabsTrigger value="site-inventory" className="gap-1.5"><Boxes className="h-4 w-4" /> Site Inventory</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -301,6 +303,9 @@ function SiteHubContent() {
         </TabsContent>
         <TabsContent value="dispatch-packs">
           <DispatchPacksTab projectId={selectedProjectId!} />
+        </TabsContent>
+        <TabsContent value="site-inventory">
+          <SiteInventoryTab projectId={selectedProjectId!} userRole={userRole} />
         </TabsContent>
       </Tabs>
     </div>
