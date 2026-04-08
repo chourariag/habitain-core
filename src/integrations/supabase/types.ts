@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_dependencies: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          predecessor_module_id: string
+          predecessor_stage: number
+          successor_module_id: string
+          successor_stage: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          predecessor_module_id: string
+          predecessor_stage: number
+          successor_module_id: string
+          successor_stage: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          predecessor_module_id?: string
+          predecessor_stage?: number
+          successor_module_id?: string
+          successor_stage?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_dependencies_predecessor_module_id_fkey"
+            columns: ["predecessor_module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_dependencies_successor_module_id_fkey"
+            columns: ["successor_module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_audit_log: {
         Row: {
           action: string

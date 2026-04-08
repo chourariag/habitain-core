@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon } from "lucide-react";
+import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon, BarChart3 } from "lucide-react";
+import { GanttChart } from "@/components/production/GanttChart";
 import { SupervisorDailyLog } from "@/components/production/SupervisorDailyLog";
 import { ModuleSchedule } from "@/components/production/ModuleSchedule";
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
@@ -34,11 +35,11 @@ function ProductionContent() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [projectTab, setProjectTab] = useState("modules");
-  const [viewMode, setViewMode] = useState<"table" | "board">(() => {
-    try { return (sessionStorage.getItem("prodViewMode") as "table" | "board") ?? "table"; } catch { return "table"; }
+  const [viewMode, setViewMode] = useState<"table" | "board" | "gantt">(() => {
+    try { return (sessionStorage.getItem("prodViewMode") as "table" | "board" | "gantt") ?? "table"; } catch { return "table"; }
   });
 
-  const setView = (mode: "table" | "board") => {
+  const setView = (mode: "table" | "board" | "gantt") => {
     setViewMode(mode);
     try { sessionStorage.setItem("prodViewMode", mode); } catch {}
   };
@@ -99,9 +100,13 @@ function ProductionContent() {
           <Button variant="ghost" size="sm" className={viewMode === "table" ? "bg-background shadow-sm" : ""} onClick={() => setView("table")}>
             <TableIcon className="h-4 w-4 mr-1" /> Table
           </Button>
-          <Button variant="ghost" size="sm" className={viewMode === "board" ? "bg-background shadow-sm" : ""} onClick={() => setView("board")}>
-            <LayoutGrid className="h-4 w-4 mr-1" /> Board
-          </Button>
+           <Button variant="ghost" size="sm" className={viewMode === "board" ? "bg-background shadow-sm" : ""} onClick={() => setView("board")}>
+              <LayoutGrid className="h-4 w-4 mr-1" /> Board
+            </Button>
+            <Button variant="ghost" size="sm" className={viewMode === "gantt" ? "bg-background shadow-sm" : ""} onClick={() => setView("gantt")}>
+              <BarChart3 className="h-4 w-4 mr-1" /> Gantt
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -111,6 +116,8 @@ function ProductionContent() {
         <div className="bg-card rounded-lg p-8 text-center shadow-sm">
           <p className="text-muted-foreground text-sm">No modules yet. Create modules from the project detail page.</p>
         </div>
+      ) : viewMode === "gantt" ? (
+        <GanttChart projectId={selectedProjectId!} modules={modules} userRole={userRole} />
       ) : viewMode === "board" ? (
         <ProductionKanban modules={modules} onRefresh={fetchModules} />
       ) : (
