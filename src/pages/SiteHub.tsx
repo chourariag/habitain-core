@@ -72,7 +72,13 @@ function SiteHubContent() {
     const isReady = (readinessData ?? []).length > 0;
     setSiteReady(isReady);
 
-    // Dispatch conditions
+    // Installation sequence check
+    const { data: seqDoc } = await (supabase.from("installation_sequence_docs") as any)
+      .select("document_url, azad_signed_at, awaiz_signed_at, karthik_signed_at")
+      .eq("project_id", selectedProjectId).maybeSingle();
+    const seqApproved = !!(seqDoc?.document_url && seqDoc?.azad_signed_at && seqDoc?.awaiz_signed_at && seqDoc?.karthik_signed_at);
+    setInstallSeqApproved(seqApproved);
+
     if (moduleIds.length) {
       const [ncrRes, inspRes, signoffRes] = await Promise.all([
         supabase.from("ncr_register").select("inspection_id,status").eq("is_archived", false).in("status", ["open", "critical_open"]),
