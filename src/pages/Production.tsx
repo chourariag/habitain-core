@@ -35,8 +35,8 @@ function ProductionContent() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [projectTab, setProjectTab] = useState("modules");
-  const [viewMode, setViewMode] = useState<"table" | "board">(() => {
-    try { return (sessionStorage.getItem("prodViewMode") as "table" | "board") ?? "table"; } catch { return "table"; }
+  const [viewMode, setViewMode] = useState<"table" | "board" | "gantt">(() => {
+    try { return (sessionStorage.getItem("prodViewMode") as "table" | "board" | "gantt") ?? "table"; } catch { return "table"; }
   });
 
   const setView = (mode: "table" | "board") => {
