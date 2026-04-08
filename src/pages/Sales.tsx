@@ -7,6 +7,8 @@ import { SalesMetricsBar } from "@/components/sales/SalesMetricsBar";
 import { PipelineKanban } from "@/components/sales/PipelineKanban";
 import { AmcUpsellTab } from "@/components/sales/AmcUpsellTab";
 import { DealDrawer } from "@/components/sales/DealDrawer";
+import { SalesSettingsTab } from "@/components/sales/SalesSettingsTab";
+import { ClientDatabaseTab } from "@/components/sales/ClientDatabaseTab";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 
 export default function Sales() {
@@ -39,7 +41,9 @@ export default function Sales() {
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+            <TabsTrigger value="clients">Clients</TabsTrigger>
             <TabsTrigger value="amc">AMC Upsell</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -52,8 +56,16 @@ export default function Sales() {
           )}
         </TabsContent>
 
+        <TabsContent value="clients">
+          <ClientDatabaseTab deals={deals} />
+        </TabsContent>
+
         <TabsContent value="amc">
           <AmcUpsellTab deals={deals.filter(d => d.stage === "Won")} />
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <SalesSettingsTab deals={deals} />
         </TabsContent>
       </Tabs>
 
