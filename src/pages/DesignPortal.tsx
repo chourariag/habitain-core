@@ -505,7 +505,7 @@ export default function DesignPortal() {
       toast.success("Drawing uploaded");
       setUploadOpen(false);
       setUploadFile(null);
-      setUploadForm({ project_id: "", module_id: "", drawing_type: "Architectural", drawing_id_code: "", notes: "", revision: 1, existing_drawing_code: "" });
+      setUploadForm({ project_id: "", module_id: "", drawing_type: "Architectural", drawing_id_code: "", notes: "", revision: 1, existing_drawing_code: "", category_tags: [], revision_reason: "" });
       fetchData();
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
