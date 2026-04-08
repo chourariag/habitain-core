@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { FileText, Plus, Eye, CheckCircle, Send, IndianRupee, AlertTriangle } from "lucide-react";
+import { RetentionSection } from "./RetentionSection";
 
 type Invoice = {
   id: string;
