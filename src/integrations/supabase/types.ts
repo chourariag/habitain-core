@@ -1486,6 +1486,9 @@ export type Database = {
           approved_by: string | null
           approved_by_name: string | null
           category_tags: string[] | null
+          client_approved_at: string | null
+          client_approved_name: string | null
+          client_query_text: string | null
           created_at: string
           drawing_id_code: string
           drawing_title: string | null
@@ -1517,6 +1520,9 @@ export type Database = {
           approved_by?: string | null
           approved_by_name?: string | null
           category_tags?: string[] | null
+          client_approved_at?: string | null
+          client_approved_name?: string | null
+          client_query_text?: string | null
           created_at?: string
           drawing_id_code: string
           drawing_title?: string | null
@@ -1548,6 +1554,9 @@ export type Database = {
           approved_by?: string | null
           approved_by_name?: string | null
           category_tags?: string[] | null
+          client_approved_at?: string | null
+          client_approved_name?: string | null
+          client_query_text?: string | null
           created_at?: string
           drawing_id_code?: string
           drawing_title?: string | null
@@ -2217,8 +2226,11 @@ export type Database = {
       handover_pack: {
         Row: {
           client_name: string
+          client_signed_at: string | null
+          client_signed_name: string | null
           client_signoff_name: string
           created_at: string | null
+          dlp_start_date: string | null
           handover_date: string
           handover_notes: string | null
           id: string
@@ -2231,8 +2243,11 @@ export type Database = {
         }
         Insert: {
           client_name: string
+          client_signed_at?: string | null
+          client_signed_name?: string | null
           client_signoff_name: string
           created_at?: string | null
+          dlp_start_date?: string | null
           handover_date?: string
           handover_notes?: string | null
           id?: string
@@ -2245,8 +2260,11 @@ export type Database = {
         }
         Update: {
           client_name?: string
+          client_signed_at?: string | null
+          client_signed_name?: string | null
           client_signoff_name?: string
           created_at?: string | null
+          dlp_start_date?: string | null
           handover_date?: string
           handover_notes?: string | null
           id?: string
@@ -5388,6 +5406,56 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      variation_orders: {
+        Row: {
+          client_approved_at: string | null
+          client_response_note: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          project_id: string
+          status: string
+          updated_at: string
+          value: number
+          vo_code: string
+        }
+        Insert: {
+          client_approved_at?: string | null
+          client_response_note?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          project_id: string
+          status?: string
+          updated_at?: string
+          value?: number
+          vo_code: string
+        }
+        Update: {
+          client_approved_at?: string | null
+          client_response_note?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          project_id?: string
+          status?: string
+          updated_at?: string
+          value?: number
+          vo_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "variation_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_digests: {
         Row: {
