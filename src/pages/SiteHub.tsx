@@ -304,6 +304,9 @@ function SiteHubContent() {
         <TabsContent value="dispatch-packs">
           <DispatchPacksTab projectId={selectedProjectId!} />
         </TabsContent>
+        <TabsContent value="site-inventory">
+          <SiteInventoryTab projectId={selectedProjectId!} userRole={userRole} />
+        </TabsContent>
       </Tabs>
     </div>
     </div>
