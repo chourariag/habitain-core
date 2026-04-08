@@ -37,6 +37,7 @@ import KPI from "@/pages/KPI";
 import KPISettings from "@/pages/KPISettings";
 import Alerts from "@/pages/Alerts";
 import AdvanceRequest from "@/pages/AdvanceRequest";
+import FactoryFloorMap from "@/pages/FactoryFloorMap";
 
 const queryClient = new QueryClient();
 
@@ -79,6 +80,7 @@ const App = () => (
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/attendance" element={<Attendance />} />
                 <Route path="/alerts" element={<Alerts />} />
+                <Route path="/factory/floor-map" element={<FactoryFloorMap />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

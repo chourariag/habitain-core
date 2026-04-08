@@ -482,6 +482,56 @@ export type Database = {
         }
         Relationships: []
       }
+      bay_assignments: {
+        Row: {
+          assigned_at: string | null
+          assigned_by: string | null
+          bay_number: number
+          bay_type: string | null
+          created_at: string | null
+          id: string
+          module_id: string
+          move_reason: string | null
+          moved_from: number | null
+          project_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          bay_number: number
+          bay_type?: string | null
+          created_at?: string | null
+          id?: string
+          module_id: string
+          move_reason?: string | null
+          moved_from?: number | null
+          project_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_by?: string | null
+          bay_number?: number
+          bay_type?: string | null
+          created_at?: string | null
+          id?: string
+          module_id?: string
+          move_reason?: string | null
+          moved_from?: number | null
+          project_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bay_assignments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creditor_ledger_entries: {
         Row: {
           amount: number
