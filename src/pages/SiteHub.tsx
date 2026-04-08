@@ -198,6 +198,7 @@ function SiteHubContent() {
             <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Pack</TabsTrigger>
             <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
             <TabsTrigger value="dispatch-packs" className="gap-1.5"><Package className="h-4 w-4" /> Dispatch Packs</TabsTrigger>
+            <TabsTrigger value="site-inventory" className="gap-1.5"><Boxes className="h-4 w-4" /> Site Inventory</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
