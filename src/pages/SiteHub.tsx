@@ -19,6 +19,8 @@ import { SiteReceiptChecklist } from "@/components/site/SiteReceiptChecklist";
 import { SubcontractorSchedule } from "@/components/site/SubcontractorSchedule";
 import { SubcontractorManagement } from "@/components/site/SubcontractorManagement";
 import { PunchListModule } from "@/components/site/PunchListModule";
+import { InstallationSequenceDoc } from "@/components/site/InstallationSequenceDoc";
+import { SiteFactoryFeedback } from "@/components/site/SiteFactoryFeedback";
 import { SiteInventoryTab } from "@/components/site/SiteInventoryTab";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
