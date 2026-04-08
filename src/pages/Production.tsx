@@ -159,6 +159,10 @@ function ProductionContent() {
               ))}
             </TabsContent>
 
+            <TabsContent value="manpower">
+              <WeeklyManpowerPlanner projectId={selectedProjectId!} userRole={userRole} />
+            </TabsContent>
+
             <TabsContent value="drawings">
               <div className="bg-card rounded-lg border border-border p-4">
                 <ModuleDrawingsTab projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
