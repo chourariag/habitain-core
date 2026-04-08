@@ -12,10 +12,11 @@ import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Loader2, Search, Upload, Download, FileText, MessageSquare,
   Plus, Clock, AlertTriangle, CheckCircle2, XCircle,
-  ArrowLeft, Flame, Eye
+  ArrowLeft, Flame, Eye, FileCode2
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -28,12 +29,27 @@ import { DetailLibraryTab } from "@/components/design/DetailLibraryTab";
 import { DrawingApprovalSheet } from "@/components/design/DrawingApprovalSheet";
 import { DQStatsBar, DQEscalationBadge } from "@/components/design/DQStatsBar";
 import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
+import { GFCStatusCard } from "@/components/design/GFCStatusCard";
 
 const DRAWING_TYPES = ["Architectural", "Structural", "MEP", "BOQ Reference", "Site Plan"];
 const DESIGN_STAGES_ORDER = ["Concept Design", "Schematic Design", "Design Development", "Working Drawings", "GFC Issue"];
 const STAGE_STATUSES = ["not_started", "in_progress", "submitted_to_client", "revision_requested", "client_approved"];
-const DQ_QUERY_TYPES = ["Dimension Clarification", "Material Specification", "Structural Query", "MEP Routing", "Opening Position", "Finishing Detail", "Other"];
-const DQ_URGENCY = ["Critical", "High", "Normal"];
+const DQ_QUERY_TYPES = ["Missing Dimension", "Vendor Detail", "Design Detail", "Material Change", "Coordination Issue", "Structural Query", "MEP Query", "Other"];
+const DQ_URGENCY = ["Critical", "High", "Normal", "Low"];
+const DRAWING_CATEGORIES = [
+  "Architectural", "Structural", "LGSF / Light Gauge Steel",
+  "MEP — Electrical", "MEP — Plumbing", "HVAC",
+  "Landscape", "Detail Sheet", "Client Sign-Off Drawing", "Other",
+];
+const CATEGORY_COLOURS: Record<string, string> = {
+  "Architectural": "#006039", "Structural": "#8B8B8B", "LGSF / Light Gauge Steel": "#E67E22",
+  "MEP — Electrical": "#F1C40F", "MEP — Plumbing": "#3498DB", "HVAC": "#1ABC9C",
+  "Landscape": "#9B59B6", "Detail Sheet": "#E91E63", "Client Sign-Off Drawing": "#5B8DD9", "Other": "#666",
+};
+const REVISION_REASONS = [
+  "Client Design Change", "Structural Input", "MEP Coordination",
+  "Material Change", "Production Advice", "Regulatory Requirement", "Other",
+];
 
 const stageStatusLabel = (s: string) => ({
   not_started: "Not Started", in_progress: "In Progress", submitted_to_client: "Submitted to Client",
