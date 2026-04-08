@@ -678,6 +678,10 @@ export default function Procurement() {
           <TransfersTab />
         </TabsContent>
 
+        <TabsContent value="30-day-plan">
+          <ThirtyDayPlanTab />
+        </TabsContent>
+
         <TabsContent value="tally-po">
           <TallyPOUploadTab />
         </TabsContent>
