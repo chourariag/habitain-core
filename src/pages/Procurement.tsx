@@ -278,6 +278,9 @@ export default function Procurement() {
         <p className="text-sm mt-1" style={{ color: "#666666" }}>Material planning, purchase orders & inventory</p>
       </div>
 
+      {/* Vijay's Daily View Strip */}
+      <ProcurementDashboardStrip userRole={userRole} />
+
       <Tabs defaultValue="dashboard" className="space-y-4">
         <ScrollableTabsWrapper>
           <TabsList>
