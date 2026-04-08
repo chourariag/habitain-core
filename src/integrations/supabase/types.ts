@@ -3729,6 +3729,80 @@ export type Database = {
         }
         Relationships: []
       }
+      punch_list_items: {
+        Row: {
+          after_photo_url: string | null
+          before_photo_url: string | null
+          category: string | null
+          closed_at: string | null
+          closed_by: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string
+          fix_description: string | null
+          id: string
+          location: string | null
+          project_id: string
+          punch_list_id: string
+          responsible_party: string | null
+          status: string | null
+          target_close_date: string | null
+          updated_at: string | null
+          waive_reason: string | null
+          waived: boolean | null
+        }
+        Insert: {
+          after_photo_url?: string | null
+          before_photo_url?: string | null
+          category?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          fix_description?: string | null
+          id?: string
+          location?: string | null
+          project_id: string
+          punch_list_id: string
+          responsible_party?: string | null
+          status?: string | null
+          target_close_date?: string | null
+          updated_at?: string | null
+          waive_reason?: string | null
+          waived?: boolean | null
+        }
+        Update: {
+          after_photo_url?: string | null
+          before_photo_url?: string | null
+          category?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          fix_description?: string | null
+          id?: string
+          location?: string | null
+          project_id?: string
+          punch_list_id?: string
+          responsible_party?: string | null
+          status?: string | null
+          target_close_date?: string | null
+          updated_at?: string | null
+          waive_reason?: string | null
+          waived?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "punch_list_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       purchase_orders: {
         Row: {
           amount: number
@@ -4697,6 +4771,89 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      subcontractor_assignments: {
+        Row: {
+          actual_completion: string | null
+          actual_start: string | null
+          company_name: string
+          confirmed: boolean | null
+          confirmed_at: string | null
+          contact_person: string | null
+          created_at: string | null
+          created_by: string | null
+          escalation_sent: boolean | null
+          id: string
+          phone: string | null
+          pricing_type: string | null
+          project_id: string
+          reminder_14d_sent: boolean | null
+          reminder_1d_sent: boolean | null
+          reminder_5d_sent: boolean | null
+          scheduled_completion: string | null
+          scheduled_start: string | null
+          scope: string | null
+          status: string | null
+          updated_at: string | null
+          work_type: string | null
+        }
+        Insert: {
+          actual_completion?: string | null
+          actual_start?: string | null
+          company_name: string
+          confirmed?: boolean | null
+          confirmed_at?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          escalation_sent?: boolean | null
+          id?: string
+          phone?: string | null
+          pricing_type?: string | null
+          project_id: string
+          reminder_14d_sent?: boolean | null
+          reminder_1d_sent?: boolean | null
+          reminder_5d_sent?: boolean | null
+          scheduled_completion?: string | null
+          scheduled_start?: string | null
+          scope?: string | null
+          status?: string | null
+          updated_at?: string | null
+          work_type?: string | null
+        }
+        Update: {
+          actual_completion?: string | null
+          actual_start?: string | null
+          company_name?: string
+          confirmed?: boolean | null
+          confirmed_at?: string | null
+          contact_person?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          escalation_sent?: boolean | null
+          id?: string
+          phone?: string | null
+          pricing_type?: string | null
+          project_id?: string
+          reminder_14d_sent?: boolean | null
+          reminder_1d_sent?: boolean | null
+          reminder_5d_sent?: boolean | null
+          scheduled_completion?: string | null
+          scheduled_start?: string | null
+          scope?: string | null
+          status?: string | null
+          updated_at?: string | null
+          work_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_assignments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subcontractor_schedules: {
         Row: {
