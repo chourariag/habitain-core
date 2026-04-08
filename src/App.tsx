@@ -37,6 +37,7 @@ import KPI from "@/pages/KPI";
 import KPISettings from "@/pages/KPISettings";
 import Alerts from "@/pages/Alerts";
 import AdvanceRequest from "@/pages/AdvanceRequest";
+import FactoryFloorMap from "@/pages/FactoryFloorMap";
 
 const queryClient = new QueryClient();
 
