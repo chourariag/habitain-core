@@ -2301,6 +2301,71 @@ export type Database = {
           },
         ]
       }
+      installation_sequence_docs: {
+        Row: {
+          awaiz_signed_at: string | null
+          awaiz_signed_by: string | null
+          azad_signed_at: string | null
+          azad_signed_by: string | null
+          created_at: string | null
+          document_url: string | null
+          escalation_sent: boolean | null
+          id: string
+          karthik_signed_at: string | null
+          karthik_signed_by: string | null
+          project_id: string
+          reminder_7d_sent: boolean | null
+          updated_at: string | null
+          uploaded_at: string | null
+          uploaded_by: string | null
+          video_url: string | null
+        }
+        Insert: {
+          awaiz_signed_at?: string | null
+          awaiz_signed_by?: string | null
+          azad_signed_at?: string | null
+          azad_signed_by?: string | null
+          created_at?: string | null
+          document_url?: string | null
+          escalation_sent?: boolean | null
+          id?: string
+          karthik_signed_at?: string | null
+          karthik_signed_by?: string | null
+          project_id: string
+          reminder_7d_sent?: boolean | null
+          updated_at?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          awaiz_signed_at?: string | null
+          awaiz_signed_by?: string | null
+          azad_signed_at?: string | null
+          azad_signed_by?: string | null
+          created_at?: string | null
+          document_url?: string | null
+          escalation_sent?: boolean | null
+          id?: string
+          karthik_signed_at?: string | null
+          karthik_signed_by?: string | null
+          project_id?: string
+          reminder_7d_sent?: boolean | null
+          updated_at?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installation_sequence_docs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inventory_items: {
         Row: {
           category: string
@@ -4517,6 +4582,80 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "site_direct_receipts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_factory_feedback: {
+        Row: {
+          azad_explanation: string | null
+          azad_responded_at: string | null
+          azad_response: string | null
+          created_at: string | null
+          description: string
+          escalated: boolean | null
+          escalation_sent_at: string | null
+          feedback_id: string
+          id: string
+          issue_type: string
+          linked_ncr_id: string | null
+          module_id: string | null
+          photos: string[] | null
+          project_id: string
+          raised_at: string | null
+          raised_by: string | null
+          raised_by_name: string | null
+          severity: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          azad_explanation?: string | null
+          azad_responded_at?: string | null
+          azad_response?: string | null
+          created_at?: string | null
+          description: string
+          escalated?: boolean | null
+          escalation_sent_at?: string | null
+          feedback_id: string
+          id?: string
+          issue_type: string
+          linked_ncr_id?: string | null
+          module_id?: string | null
+          photos?: string[] | null
+          project_id: string
+          raised_at?: string | null
+          raised_by?: string | null
+          raised_by_name?: string | null
+          severity?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          azad_explanation?: string | null
+          azad_responded_at?: string | null
+          azad_response?: string | null
+          created_at?: string | null
+          description?: string
+          escalated?: boolean | null
+          escalation_sent_at?: string | null
+          feedback_id?: string
+          id?: string
+          issue_type?: string
+          linked_ncr_id?: string | null
+          module_id?: string | null
+          photos?: string[] | null
+          project_id?: string
+          raised_at?: string | null
+          raised_by?: string | null
+          raised_by_name?: string | null
+          severity?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_factory_feedback_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"

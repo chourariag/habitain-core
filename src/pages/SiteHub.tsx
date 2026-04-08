@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus, Package, Users, ClipboardList } from "lucide-react";
+import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus, Package, Users, ClipboardList, MessageSquareWarning, FileCheck } from "lucide-react";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
@@ -19,6 +19,8 @@ import { SiteReceiptChecklist } from "@/components/site/SiteReceiptChecklist";
 import { SubcontractorSchedule } from "@/components/site/SubcontractorSchedule";
 import { SubcontractorManagement } from "@/components/site/SubcontractorManagement";
 import { PunchListModule } from "@/components/site/PunchListModule";
+import { InstallationSequenceDoc } from "@/components/site/InstallationSequenceDoc";
+import { SiteFactoryFeedback } from "@/components/site/SiteFactoryFeedback";
 import { SiteInventoryTab } from "@/components/site/SiteInventoryTab";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
@@ -33,6 +35,7 @@ function SiteHubContent() {
   const [panelsByModule, setPanelsByModule] = useState<Record<string, any[]>>({});
   const [userRole, setUserRole] = useState<string | null>(null);
   const [installationComplete, setInstallationComplete] = useState(false);
+  const [installSeqApproved, setInstallSeqApproved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [siteReady, setSiteReady] = useState(false);
   const [dispatchConditions, setDispatchConditions] = useState<Record<string, { qc: boolean; inspection: boolean; site: boolean; signoff: boolean }>>({});
@@ -69,7 +72,13 @@ function SiteHubContent() {
     const isReady = (readinessData ?? []).length > 0;
     setSiteReady(isReady);
 
-    // Dispatch conditions
+    // Installation sequence check
+    const { data: seqDoc } = await (supabase.from("installation_sequence_docs") as any)
+      .select("document_url, azad_signed_at, awaiz_signed_at, karthik_signed_at")
+      .eq("project_id", selectedProjectId).maybeSingle();
+    const seqApproved = !!(seqDoc?.document_url && seqDoc?.azad_signed_at && seqDoc?.awaiz_signed_at && seqDoc?.karthik_signed_at);
+    setInstallSeqApproved(seqApproved);
+
     if (moduleIds.length) {
       const [ncrRes, inspRes, signoffRes] = await Promise.all([
         supabase.from("ncr_register").select("inspection_id,status").eq("is_archived", false).in("status", ["open", "critical_open"]),
@@ -203,6 +212,8 @@ function SiteHubContent() {
             <TabsTrigger value="site-inventory" className="gap-1.5"><Boxes className="h-4 w-4" /> Site Inventory</TabsTrigger>
             <TabsTrigger value="subcontractors" className="gap-1.5"><Users className="h-4 w-4" /> Subcontractors</TabsTrigger>
             <TabsTrigger value="punch-list" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Punch List</TabsTrigger>
+            <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Install Sequence</TabsTrigger>
+            <TabsTrigger value="factory-feedback" className="gap-1.5"><MessageSquareWarning className="h-4 w-4" /> Factory Feedback</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -269,8 +280,9 @@ function SiteHubContent() {
                       <Cond met={conds?.inspection ?? false} label="Final Inspection" />
                       <Cond met={conds?.site ?? false} label="Site Readiness" />
                       <Cond met={conds?.signoff ?? false} label="Production Head Sign-off" />
+                      <Cond met={installSeqApproved} label="Install Sequence Doc" />
                     </div>
-                    {conds?.qc && conds?.inspection && conds?.site && conds?.signoff && canCreateDispatchPack && module.production_status !== "dispatched" && (
+                    {conds?.qc && conds?.inspection && conds?.site && conds?.signoff && installSeqApproved && canCreateDispatchPack && module.production_status !== "dispatched" && (
                       <Button
                         size="sm"
                         className="w-full mt-2 font-display"
@@ -279,6 +291,11 @@ function SiteHubContent() {
                       >
                         Create Dispatch Pack
                       </Button>
+                    )}
+                    {!installSeqApproved && conds?.qc && conds?.inspection && conds?.site && conds?.signoff && (
+                      <p className="text-[10px] mt-1" style={{ color: "#D4860A" }}>
+                        Dispatch requires completed Installation Sequence Document with all three approvals.
+                      </p>
                     )}
                   </div>
                 </div>
@@ -316,6 +333,12 @@ function SiteHubContent() {
         </TabsContent>
         <TabsContent value="punch-list">
           <PunchListModule projectId={selectedProjectId!} userRole={userRole} />
+        </TabsContent>
+        <TabsContent value="install-seq">
+          <InstallationSequenceDoc projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
+        </TabsContent>
+        <TabsContent value="factory-feedback">
+          <SiteFactoryFeedback projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} modules={modules.map(m => ({ id: m.id, name: m.name, module_code: m.module_code || m.name }))} />
         </TabsContent>
       </Tabs>
     </div>
