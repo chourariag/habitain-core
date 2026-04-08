@@ -488,6 +488,9 @@ export default function DesignPortal() {
         }
       }
 
+      const fileExt = uploadFile.name.split(".").pop()?.toLowerCase() ?? "";
+      const fileFormat = ["dwg"].includes(fileExt) ? "dwg" : ["dxf"].includes(fileExt) ? "dxf" : ["jpg", "jpeg", "png"].includes(fileExt) ? "jpg" : "pdf";
+
       const { client } = await getAuthedClient();
       await (client.from("drawings") as any).insert({
         project_id: uploadForm.project_id,
@@ -497,11 +500,53 @@ export default function DesignPortal() {
         revision: uploadForm.revision,
         file_url: urlData.publicUrl,
         file_name: uploadFile.name,
+        file_format: fileFormat,
+        category_tags: uploadForm.category_tags.length > 0 ? uploadForm.category_tags : null,
+        revision_reason: uploadForm.revision > 1 ? (uploadForm.revision_reason || null) : null,
         uploaded_by: user.id,
         uploaded_by_name: userName,
         notes: uploadForm.notes || null,
         status: "active",
       });
+
+      // Send 48h review notification for new drawings
+      const { data: reviewProfiles } = await supabase.from("profiles")
+        .select("auth_user_id").in("role", ["site_installation_mgr", "factory_floor_supervisor", "production_head"] as any[]).eq("is_active", true);
+      if (reviewProfiles?.length) {
+        const projName = projectMap[uploadForm.project_id]?.name ?? "Project";
+        await insertNotifications(
+          reviewProfiles.map((p: any) => ({
+            recipient_id: p.auth_user_id,
+            title: "New Drawings Uploaded",
+            body: `New drawings uploaded for ${projName}. Please review within 48 hours and raise any Design Queries now — not when work starts.`,
+            category: "design",
+            related_table: "drawing",
+            navigate_to: "/design",
+          }))
+        );
+      }
+
+      // If revision > 1 and post-GFC, alert concerned roles
+      if (uploadForm.revision > 1 && uploadForm.revision_reason) {
+        const { data: gfcCheck } = await supabase.from("gfc_records").select("id").eq("project_id", uploadForm.project_id).limit(1);
+        if (gfcCheck?.length) {
+          const { data: alertProfiles } = await supabase.from("profiles")
+            .select("auth_user_id").in("role", ["production_head", "site_installation_mgr", "planning_engineer", "principal_architect"] as any[]).eq("is_active", true);
+          if (alertProfiles?.length) {
+            const projName = projectMap[uploadForm.project_id]?.name ?? "Project";
+            await insertNotifications(
+              alertProfiles.map((p: any) => ({
+                recipient_id: p.auth_user_id,
+                title: "Drawing Revised Post-GFC",
+                body: `Drawing ${uploadForm.drawing_id_code} updated to R${uploadForm.revision}. Reason: ${uploadForm.revision_reason}. Please review.`,
+                category: "design",
+                related_table: "drawing",
+                navigate_to: "/design",
+              }))
+            );
+          }
+        }
+      }
 
       toast.success("Drawing uploaded");
       setUploadOpen(false);
