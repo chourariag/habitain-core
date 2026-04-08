@@ -999,6 +999,7 @@ export type Database = {
           assigned_architect_id: string | null
           created_at: string
           description: string
+          dq_category: string | null
           dq_code: string
           drawing_id: string | null
           id: string
@@ -1009,6 +1010,8 @@ export type Database = {
           query_type: string
           raised_by: string
           raised_by_name: string | null
+          resolution_reminder_sent: boolean | null
+          resolution_timeline: string | null
           resolved_at: string | null
           responded_at: string | null
           responded_by: string | null
@@ -1025,6 +1028,7 @@ export type Database = {
           assigned_architect_id?: string | null
           created_at?: string
           description: string
+          dq_category?: string | null
           dq_code: string
           drawing_id?: string | null
           id?: string
@@ -1035,6 +1039,8 @@ export type Database = {
           query_type?: string
           raised_by: string
           raised_by_name?: string | null
+          resolution_reminder_sent?: boolean | null
+          resolution_timeline?: string | null
           resolved_at?: string | null
           responded_at?: string | null
           responded_by?: string | null
@@ -1051,6 +1057,7 @@ export type Database = {
           assigned_architect_id?: string | null
           created_at?: string
           description?: string
+          dq_category?: string | null
           dq_code?: string
           drawing_id?: string | null
           id?: string
@@ -1061,6 +1068,8 @@ export type Database = {
           query_type?: string
           raised_by?: string
           raised_by_name?: string | null
+          resolution_reminder_sent?: boolean | null
+          resolution_timeline?: string | null
           resolved_at?: string | null
           responded_at?: string | null
           responded_by?: string | null
@@ -1382,10 +1391,12 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           approved_by_name: string | null
+          category_tags: string[] | null
           created_at: string
           drawing_id_code: string
           drawing_title: string | null
           drawing_type: string
+          file_format: string | null
           file_name: string | null
           file_url: string
           id: string
@@ -1393,7 +1404,10 @@ export type Database = {
           module_id: string | null
           notes: string | null
           project_id: string
+          reviewed_at: string | null
+          reviewed_by_ids: string[] | null
           revision: number
+          revision_reason: string | null
           status: string
           updated_at: string
           uploaded_by: string
@@ -1408,10 +1422,12 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           approved_by_name?: string | null
+          category_tags?: string[] | null
           created_at?: string
           drawing_id_code: string
           drawing_title?: string | null
           drawing_type?: string
+          file_format?: string | null
           file_name?: string | null
           file_url: string
           id?: string
@@ -1419,7 +1435,10 @@ export type Database = {
           module_id?: string | null
           notes?: string | null
           project_id: string
+          reviewed_at?: string | null
+          reviewed_by_ids?: string[] | null
           revision?: number
+          revision_reason?: string | null
           status?: string
           updated_at?: string
           uploaded_by: string
@@ -1434,10 +1453,12 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           approved_by_name?: string | null
+          category_tags?: string[] | null
           created_at?: string
           drawing_id_code?: string
           drawing_title?: string | null
           drawing_type?: string
+          file_format?: string | null
           file_name?: string | null
           file_url?: string
           id?: string
@@ -1445,7 +1466,10 @@ export type Database = {
           module_id?: string | null
           notes?: string | null
           project_id?: string
+          reviewed_at?: string | null
+          reviewed_by_ids?: string[] | null
           revision?: number
+          revision_reason?: string | null
           status?: string
           updated_at?: string
           uploaded_by?: string
@@ -1998,6 +2022,59 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      gfc_records: {
+        Row: {
+          created_at: string | null
+          gfc_stage: string
+          id: string
+          issued_at: string | null
+          issued_by: string | null
+          module_group: string[] | null
+          notes: string | null
+          pdf_url: string | null
+          project_id: string
+          sections_complete: number | null
+          sections_total: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          gfc_stage: string
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          module_group?: string[] | null
+          notes?: string | null
+          pdf_url?: string | null
+          project_id: string
+          sections_complete?: number | null
+          sections_total?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          gfc_stage?: string
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          module_group?: string[] | null
+          notes?: string | null
+          pdf_url?: string | null
+          project_id?: string
+          sections_complete?: number | null
+          sections_total?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gfc_records_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       handover_pack: {
         Row: {
