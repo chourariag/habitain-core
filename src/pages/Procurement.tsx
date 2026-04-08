@@ -684,6 +684,10 @@ export default function Procurement() {
           <ThirtyDayPlanTab />
         </TabsContent>
 
+        <TabsContent value="asset-register">
+          <AssetRegisterTab userRole={userRole} />
+        </TabsContent>
+
         <TabsContent value="tally-po">
           <TallyPOUploadTab />
         </TabsContent>
