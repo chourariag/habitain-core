@@ -38,6 +38,7 @@ import KPISettings from "@/pages/KPISettings";
 import Alerts from "@/pages/Alerts";
 import AdvanceRequest from "@/pages/AdvanceRequest";
 import FactoryFloorMap from "@/pages/FactoryFloorMap";
+import ClientPortal from "@/pages/ClientPortal";
 
 const queryClient = new QueryClient();
 
@@ -82,6 +83,7 @@ const App = () => (
                 <Route path="/alerts" element={<Alerts />} />
                 <Route path="/factory/floor-map" element={<FactoryFloorMap />} />
               </Route>
+              <Route path="/client/:projectToken" element={<ClientPortal />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>

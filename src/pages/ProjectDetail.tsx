@@ -12,6 +12,7 @@ import { AddModuleDialog } from "@/components/projects/AddModuleDialog";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
+import { ClientPortalManager } from "@/components/projects/ClientPortalManager";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { useProjectContext } from "@/contexts/ProjectContext";
 
@@ -142,6 +143,8 @@ export default function ProjectDetail() {
           </div>
         )}
       </div>
+
+      <ClientPortalManager projectId={id!} userRole={userRole} />
 
       <Tabs defaultValue="modules">
         <ScrollableTabsWrapper>

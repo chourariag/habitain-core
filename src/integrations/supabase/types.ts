@@ -591,6 +591,41 @@ export type Database = {
           },
         ]
       }
+      client_portal_access_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          project_id: string
+          token_used: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          project_id: string
+          token_used: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          project_id?: string
+          token_used?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_portal_access_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creditor_ledger_entries: {
         Row: {
           amount: number
@@ -3753,6 +3788,10 @@ export type Database = {
           client_email: string | null
           client_name: string | null
           client_phone: string | null
+          client_portal_enabled: boolean
+          client_portal_expires_at: string | null
+          client_portal_status_message: string | null
+          client_portal_token: string | null
           construction_type: string | null
           created_at: string | null
           created_by: string | null
@@ -3782,6 +3821,10 @@ export type Database = {
           client_email?: string | null
           client_name?: string | null
           client_phone?: string | null
+          client_portal_enabled?: boolean
+          client_portal_expires_at?: string | null
+          client_portal_status_message?: string | null
+          client_portal_token?: string | null
           construction_type?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -3811,6 +3854,10 @@ export type Database = {
           client_email?: string | null
           client_name?: string | null
           client_phone?: string | null
+          client_portal_enabled?: boolean
+          client_portal_expires_at?: string | null
+          client_portal_status_message?: string | null
+          client_portal_token?: string | null
           construction_type?: string | null
           created_at?: string | null
           created_by?: string | null
