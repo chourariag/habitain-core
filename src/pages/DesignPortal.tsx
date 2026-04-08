@@ -779,14 +779,46 @@ export default function DesignPortal() {
                     <Input value={uploadForm.existing_drawing_code} onChange={(e) => setUploadForm({ ...uploadForm, existing_drawing_code: e.target.value })} placeholder="Leave blank for new drawing" />
                   </div>
                   <div>
-                    <Label className="text-xs">File (PDF or DWG) *</Label>
-                    <Input type="file" accept=".pdf,.dwg" onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)} />
+                    <Label className="text-xs">File (PDF, DWG, or DXF) *</Label>
+                    <Input type="file" accept=".pdf,.dwg,.dxf,.jpg,.jpeg,.png" onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)} />
                   </div>
+                  <div>
+                    <Label className="text-xs">Category Tags *</Label>
+                    <div className="grid grid-cols-2 gap-1.5 mt-1">
+                      {DRAWING_CATEGORIES.map((cat) => (
+                        <label key={cat} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                          <Checkbox
+                            checked={uploadForm.category_tags.includes(cat)}
+                            onCheckedChange={(checked) => {
+                              setUploadForm((prev) => ({
+                                ...prev,
+                                category_tags: checked
+                                  ? [...prev.category_tags, cat]
+                                  : prev.category_tags.filter((c) => c !== cat),
+                              }));
+                            }}
+                          />
+                          {cat}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  {uploadForm.revision > 1 && (
+                    <div>
+                      <Label className="text-xs">Revision Reason *</Label>
+                      <Select value={uploadForm.revision_reason} onValueChange={(v) => setUploadForm({ ...uploadForm, revision_reason: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select reason" /></SelectTrigger>
+                        <SelectContent>
+                          {REVISION_REASONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div>
                     <Label className="text-xs">Notes</Label>
                     <Textarea value={uploadForm.notes} onChange={(e) => setUploadForm({ ...uploadForm, notes: e.target.value })} rows={2} />
                   </div>
-                  <Button className="w-full" onClick={handleUploadDrawing} disabled={uploading}>
+                  <Button className="w-full" onClick={handleUploadDrawing} disabled={uploading || uploadForm.category_tags.length === 0 || (uploadForm.revision > 1 && !uploadForm.revision_reason)}>
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} Upload
                   </Button>
                 </div>
