@@ -7,6 +7,7 @@ import { CashFlowTab } from "@/components/finance/CashFlowTab";
 import { ProjectBudgetsTab } from "@/components/finance/ProjectBudgetsTab";
 import { PaymentsTab } from "@/components/finance/PaymentsTab";
 import { StatutoryTab } from "@/components/finance/StatutoryTab";
+import { InvoicesTab } from "@/components/finance/InvoicesTab";
 
 export default function Finance() {
   return (
@@ -29,6 +30,7 @@ export default function Finance() {
             <TabsTrigger value="budgets">Project Budgets</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="statutory">Statutory</TabsTrigger>
+            <TabsTrigger value="invoices">Invoices</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -38,6 +40,7 @@ export default function Finance() {
         <TabsContent value="budgets"><ProjectBudgetsTab /></TabsContent>
         <TabsContent value="payments"><PaymentsTab /></TabsContent>
         <TabsContent value="statutory"><StatutoryTab /></TabsContent>
+        <TabsContent value="invoices"><InvoicesTab /></TabsContent>
       </Tabs>
     </div>
   );

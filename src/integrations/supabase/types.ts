@@ -2009,6 +2009,88 @@ export type Database = {
           },
         ]
       }
+      invoice_payments: {
+        Row: {
+          amount_received: number
+          created_at: string
+          id: string
+          invoice_id: string
+          payment_date: string
+          payment_reference: string | null
+          recorded_by: string
+        }
+        Insert: {
+          amount_received?: number
+          created_at?: string
+          id?: string
+          invoice_id: string
+          payment_date?: string
+          payment_reference?: string | null
+          recorded_by: string
+        }
+        Update: {
+          amount_received?: number
+          created_at?: string
+          id?: string
+          invoice_id?: string
+          payment_date?: string
+          payment_reference?: string | null
+          recorded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "project_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_variations: {
+        Row: {
+          approved_date: string | null
+          client_approval_ref: string | null
+          contribution_margin_pct: number | null
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          invoice_id: string
+          value: number
+        }
+        Insert: {
+          approved_date?: string | null
+          client_approval_ref?: string | null
+          contribution_margin_pct?: number | null
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          invoice_id: string
+          value?: number
+        }
+        Update: {
+          approved_date?: string | null
+          client_approval_ref?: string | null
+          contribution_margin_pct?: number | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          invoice_id?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_variations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "project_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kpi_definitions: {
         Row: {
           coaching_template_above: string | null
@@ -2988,6 +3070,80 @@ export type Database = {
             foreignKeyName: "project_design_files_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_invoices: {
+        Row: {
+          amount_outstanding: number | null
+          amount_paid: number
+          amount_total: number
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string
+          dispatch_event_id: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string
+          invoice_type: string
+          notes: string | null
+          project_id: string
+          raised_date: string
+          sent_date: string | null
+          sent_to_email: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_outstanding?: number | null
+          amount_paid?: number
+          amount_total?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by: string
+          dispatch_event_id?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number: string
+          invoice_type: string
+          notes?: string | null
+          project_id: string
+          raised_date?: string
+          sent_date?: string | null
+          sent_to_email?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_outstanding?: number | null
+          amount_paid?: number
+          amount_total?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          dispatch_event_id?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string
+          invoice_type?: string
+          notes?: string | null
+          project_id?: string
+          raised_date?: string
+          sent_date?: string | null
+          sent_to_email?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
