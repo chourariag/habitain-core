@@ -311,6 +311,12 @@ function SiteHubContent() {
         <TabsContent value="site-inventory">
           <SiteInventoryTab projectId={selectedProjectId!} userRole={userRole} />
         </TabsContent>
+        <TabsContent value="subcontractors">
+          <SubcontractorManagement projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
+        </TabsContent>
+        <TabsContent value="punch-list">
+          <PunchListModule projectId={selectedProjectId!} userRole={userRole} />
+        </TabsContent>
       </Tabs>
     </div>
     </div>
