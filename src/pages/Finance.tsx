@@ -43,6 +43,7 @@ export default function Finance() {
         <TabsContent value="payments"><PaymentsTab /></TabsContent>
         <TabsContent value="statutory"><StatutoryTab /></TabsContent>
         <TabsContent value="invoices"><InvoicesTab /></TabsContent>
+        <TabsContent value="project-pl"><ProjectPLTab /></TabsContent>
       </Tabs>
     </div>
   );
