@@ -177,6 +177,17 @@ function SiteHubContent() {
         <Badge variant="outline" style={badgeStyle(summary.tone)}>{summary.label}</Badge>
       </div>
 
+      {canRequestAdvance && selectedProjectId && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => navigate(`/site-hub/advance-request?projectId=${selectedProjectId}&projectName=${encodeURIComponent(selectedProject?.name ?? "")}`)}
+        >
+          <Wallet className="h-4 w-4" /> Request Advance
+        </Button>
+      )}
+
       <Tabs defaultValue="pipeline" className="space-y-4">
         <ScrollableTabsWrapper>
           <TabsList>
