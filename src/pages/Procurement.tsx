@@ -21,7 +21,11 @@ import { NewMaterialRequestDialog } from "@/components/materials/NewMaterialRequ
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TransfersTab } from "@/components/procurement/TransfersTab";
 import { TallyPOUploadTab } from "@/components/procurement/TallyPOUploadTab";
+import { MaterialAvailabilityGate } from "@/components/procurement/MaterialAvailabilityGate";
+import { ThirtyDayPlanTab } from "@/components/procurement/ThirtyDayPlanTab";
+import { ProcurementDashboardStrip } from "@/components/procurement/ProcurementDashboardStrip";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
+import { Calendar } from "lucide-react";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
@@ -274,6 +278,9 @@ export default function Procurement() {
         <p className="text-sm mt-1" style={{ color: "#666666" }}>Material planning, purchase orders & inventory</p>
       </div>
 
+      {/* Vijay's Daily View Strip */}
+      <ProcurementDashboardStrip userRole={userRole} />
+
       <Tabs defaultValue="dashboard" className="space-y-4">
         <ScrollableTabsWrapper>
           <TabsList>
@@ -283,6 +290,7 @@ export default function Procurement() {
             <TabsTrigger value="purchase-orders" className="gap-1.5"><FileText className="h-4 w-4" /> Purchase Orders</TabsTrigger>
             <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>
             <TabsTrigger value="transfers" className="gap-1.5"><Truck className="h-4 w-4" /> Transfers</TabsTrigger>
+            <TabsTrigger value="30-day-plan" className="gap-1.5"><Calendar className="h-4 w-4" /> 30-Day Plan</TabsTrigger>
             <TabsTrigger value="tally-po" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
@@ -337,6 +345,9 @@ export default function Procurement() {
               </Card>
             </div>
           )}
+
+          {/* Material Availability Gate */}
+          <MaterialAvailabilityGate />
         </TabsContent>
 
         {/* Material Plan Tab */}
@@ -665,6 +676,10 @@ export default function Procurement() {
         {/* Transfers Tab */}
         <TabsContent value="transfers">
           <TransfersTab />
+        </TabsContent>
+
+        <TabsContent value="30-day-plan">
+          <ThirtyDayPlanTab />
         </TabsContent>
 
         <TabsContent value="tally-po">
