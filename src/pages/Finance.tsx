@@ -7,6 +7,7 @@ import { CashFlowTab } from "@/components/finance/CashFlowTab";
 import { ProjectBudgetsTab } from "@/components/finance/ProjectBudgetsTab";
 import { PaymentsTab } from "@/components/finance/PaymentsTab";
 import { StatutoryTab } from "@/components/finance/StatutoryTab";
+import { InvoicesTab } from "@/components/finance/InvoicesTab";
 
 export default function Finance() {
   return (
