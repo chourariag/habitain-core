@@ -16,6 +16,7 @@ import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import { DeliveryChecklistButton } from "@/components/production/DeliveryChecklistButton";
+import { WeeklyManpowerPlanner } from "@/components/production/WeeklyManpowerPlanner";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
