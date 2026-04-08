@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon, BarChart3 } from "lucide-react";
+import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon, BarChart3, CalendarDays } from "lucide-react";
 import { GanttChart } from "@/components/production/GanttChart";
 import { SupervisorDailyLog } from "@/components/production/SupervisorDailyLog";
 import { ModuleSchedule } from "@/components/production/ModuleSchedule";
@@ -16,6 +16,7 @@ import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import { DeliveryChecklistButton } from "@/components/production/DeliveryChecklistButton";
+import { WeeklyManpowerPlanner } from "@/components/production/WeeklyManpowerPlanner";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
@@ -124,6 +125,7 @@ function ProductionContent() {
             <ScrollableTabsWrapper>
               <TabsList>
                 <TabsTrigger value="modules" className="gap-1.5"><Factory className="h-4 w-4" /> Modules</TabsTrigger>
+                <TabsTrigger value="manpower" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Manpower</TabsTrigger>
                 <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
                 <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
               </TabsList>
@@ -155,6 +157,10 @@ function ProductionContent() {
                   )}
                 </div>
               ))}
+            </TabsContent>
+
+            <TabsContent value="manpower">
+              <WeeklyManpowerPlanner projectId={selectedProjectId!} userRole={userRole} />
             </TabsContent>
 
             <TabsContent value="drawings">

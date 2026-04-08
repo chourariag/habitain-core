@@ -461,6 +461,66 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_actuals: {
+        Row: {
+          created_at: string | null
+          date: string
+          hours_worked: number | null
+          id: string
+          logged_by: string
+          module_id: string | null
+          pct_stage_completed: number | null
+          project_id: string | null
+          skill_type: string | null
+          stage_task: string | null
+          updated_at: string | null
+          worker_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          hours_worked?: number | null
+          id?: string
+          logged_by: string
+          module_id?: string | null
+          pct_stage_completed?: number | null
+          project_id?: string | null
+          skill_type?: string | null
+          stage_task?: string | null
+          updated_at?: string | null
+          worker_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          hours_worked?: number | null
+          id?: string
+          logged_by?: string
+          module_id?: string | null
+          pct_stage_completed?: number | null
+          project_id?: string | null
+          skill_type?: string | null
+          stage_task?: string | null
+          updated_at?: string | null
+          worker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_actuals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_actuals_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_production_logs: {
         Row: {
           ai_quality_checked: boolean | null
@@ -4345,6 +4405,69 @@ export type Database = {
           wins?: Json | null
         }
         Relationships: []
+      }
+      weekly_manpower_plans: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          day_of_week: string
+          id: string
+          module_id: string | null
+          plan_type: string
+          planned_hours: number | null
+          project_id: string | null
+          stage_task: string | null
+          status: string | null
+          updated_at: string | null
+          week_start_date: string
+          worker_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          day_of_week: string
+          id?: string
+          module_id?: string | null
+          plan_type: string
+          planned_hours?: number | null
+          project_id?: string | null
+          stage_task?: string | null
+          status?: string | null
+          updated_at?: string | null
+          week_start_date: string
+          worker_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          day_of_week?: string
+          id?: string
+          module_id?: string | null
+          plan_type?: string
+          planned_hours?: number | null
+          project_id?: string | null
+          stage_task?: string | null
+          status?: string | null
+          updated_at?: string | null
+          week_start_date?: string
+          worker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_manpower_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_manpower_plans_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
