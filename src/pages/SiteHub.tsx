@@ -144,6 +144,7 @@ function SiteHubContent() {
 
   const canManageReadiness = ["site_installation_mgr", "super_admin", "managing_director"].includes(userRole ?? "");
   const canCreateDispatchPack = ["factory_floor_supervisor", "production_head", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canRequestAdvance = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
 
   const Cond = ({ met, label }: { met: boolean; label: string }) => (
     <div className="flex items-center gap-1.5 text-xs">
