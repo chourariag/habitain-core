@@ -106,7 +106,7 @@ function ProductionContent() {
             <Button variant="ghost" size="sm" className={viewMode === "gantt" ? "bg-background shadow-sm" : ""} onClick={() => setView("gantt")}>
               <BarChart3 className="h-4 w-4 mr-1" /> Gantt
             </Button>
-          </Button>
+          </div>
         </div>
       </div>
 
@@ -116,6 +116,8 @@ function ProductionContent() {
         <div className="bg-card rounded-lg p-8 text-center shadow-sm">
           <p className="text-muted-foreground text-sm">No modules yet. Create modules from the project detail page.</p>
         </div>
+      ) : viewMode === "gantt" ? (
+        <GanttChart projectId={selectedProjectId!} modules={modules} userRole={userRole} />
       ) : viewMode === "board" ? (
         <ProductionKanban modules={modules} onRefresh={fetchModules} />
       ) : (
