@@ -35,6 +35,7 @@ function SiteHubContent() {
   const [panelsByModule, setPanelsByModule] = useState<Record<string, any[]>>({});
   const [userRole, setUserRole] = useState<string | null>(null);
   const [installationComplete, setInstallationComplete] = useState(false);
+  const [installSeqApproved, setInstallSeqApproved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [siteReady, setSiteReady] = useState(false);
   const [dispatchConditions, setDispatchConditions] = useState<Record<string, { qc: boolean; inspection: boolean; site: boolean; signoff: boolean }>>({});
