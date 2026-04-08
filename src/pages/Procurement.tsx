@@ -345,6 +345,9 @@ export default function Procurement() {
               </Card>
             </div>
           )}
+
+          {/* Material Availability Gate */}
+          <MaterialAvailabilityGate />
         </TabsContent>
 
         {/* Material Plan Tab */}
