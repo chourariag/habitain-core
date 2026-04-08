@@ -42,6 +42,7 @@ const sectionConfig = [
     label: "Production",
     items: [
       { to: "/production", label: "Factory Floor", icon: Factory },
+      { to: "/factory/floor-map", label: "Floor Map", icon: LayoutDashboard },
       { to: "/qc", label: "QC & NCR", icon: ClipboardCheck },
       { to: "/site-hub", label: "Site Hub", icon: Truck },
     ],
