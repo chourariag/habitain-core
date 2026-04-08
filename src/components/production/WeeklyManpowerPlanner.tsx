@@ -29,7 +29,7 @@ const UNAVAILABILITY_REASONS = ["On Leave", "Sick", "Personal", "No Show"];
 
 interface Worker {
   id: string;
-  full_name: string | null;
+  display_name: string | null;
   email: string;
   role: string;
 }
