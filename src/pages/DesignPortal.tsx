@@ -12,10 +12,11 @@ import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Loader2, Search, Upload, Download, FileText, MessageSquare,
   Plus, Clock, AlertTriangle, CheckCircle2, XCircle,
-  ArrowLeft, Flame, Eye
+  ArrowLeft, Flame, Eye, FileCode2
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -28,12 +29,27 @@ import { DetailLibraryTab } from "@/components/design/DetailLibraryTab";
 import { DrawingApprovalSheet } from "@/components/design/DrawingApprovalSheet";
 import { DQStatsBar, DQEscalationBadge } from "@/components/design/DQStatsBar";
 import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
+import { GFCStatusCard } from "@/components/design/GFCStatusCard";
 
 const DRAWING_TYPES = ["Architectural", "Structural", "MEP", "BOQ Reference", "Site Plan"];
 const DESIGN_STAGES_ORDER = ["Concept Design", "Schematic Design", "Design Development", "Working Drawings", "GFC Issue"];
 const STAGE_STATUSES = ["not_started", "in_progress", "submitted_to_client", "revision_requested", "client_approved"];
-const DQ_QUERY_TYPES = ["Dimension Clarification", "Material Specification", "Structural Query", "MEP Routing", "Opening Position", "Finishing Detail", "Other"];
-const DQ_URGENCY = ["Critical", "High", "Normal"];
+const DQ_QUERY_TYPES = ["Missing Dimension", "Vendor Detail", "Design Detail", "Material Change", "Coordination Issue", "Structural Query", "MEP Query", "Other"];
+const DQ_URGENCY = ["Critical", "High", "Normal", "Low"];
+const DRAWING_CATEGORIES = [
+  "Architectural", "Structural", "LGSF / Light Gauge Steel",
+  "MEP — Electrical", "MEP — Plumbing", "HVAC",
+  "Landscape", "Detail Sheet", "Client Sign-Off Drawing", "Other",
+];
+const CATEGORY_COLOURS: Record<string, string> = {
+  "Architectural": "#006039", "Structural": "#8B8B8B", "LGSF / Light Gauge Steel": "#E67E22",
+  "MEP — Electrical": "#F1C40F", "MEP — Plumbing": "#3498DB", "HVAC": "#1ABC9C",
+  "Landscape": "#9B59B6", "Detail Sheet": "#E91E63", "Client Sign-Off Drawing": "#5B8DD9", "Other": "#666",
+};
+const REVISION_REASONS = [
+  "Client Design Change", "Structural Input", "MEP Coordination",
+  "Material Change", "Production Advice", "Regulatory Requirement", "Other",
+];
 
 const stageStatusLabel = (s: string) => ({
   not_started: "Not Started", in_progress: "In Progress", submitted_to_client: "Submitted to Client",
@@ -78,7 +94,7 @@ export default function DesignPortal() {
   const [dqOpen, setDqOpen] = useState(false);
   const [dqForm, setDqForm] = useState({
     project_id: "", module_id: "", drawing_id: "", description: "",
-    query_type: "Other", urgency: "Normal", affected_area: "",
+    query_type: "Other", urgency: "Normal", affected_area: "", dq_category: "",
   });
   const [dqPhoto, setDqPhoto] = useState<File | null>(null);
   const [dqVoice, setDqVoice] = useState<File | null>(null);
@@ -89,9 +105,16 @@ export default function DesignPortal() {
   const [uploadForm, setUploadForm] = useState({
     project_id: "", module_id: "", drawing_type: "Architectural",
     drawing_id_code: "", notes: "", revision: 1, existing_drawing_code: "",
+    category_tags: [] as string[], revision_reason: "",
   });
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  // Category filter for drawings
+  const [drawingFilterCategory, setDrawingFilterCategory] = useState("all");
+
+  // Modules for GFC
+  const [projectModules, setProjectModules] = useState<any[]>([]);
 
   // DQ detail
   const [selectedDq, setSelectedDq] = useState<any>(null);
@@ -308,13 +331,14 @@ export default function DesignPortal() {
       if (drawingFilterProject !== "all" && d.project_id !== drawingFilterProject) return false;
       if (drawingFilterType !== "all" && d.drawing_type !== drawingFilterType) return false;
       if (drawingFilterStatus !== "all" && d.status !== drawingFilterStatus) return false;
+      if (drawingFilterCategory !== "all" && !(d.category_tags ?? []).includes(drawingFilterCategory)) return false;
       if (searchTerm) {
         const t = searchTerm.toLowerCase();
         if (!d.drawing_id_code.toLowerCase().includes(t) && !d.file_name?.toLowerCase().includes(t)) return false;
       }
       return true;
     });
-  }, [drawings, drawingFilterProject, drawingFilterType, drawingFilterStatus, searchTerm]);
+  }, [drawings, drawingFilterProject, drawingFilterType, drawingFilterStatus, drawingFilterCategory, searchTerm]);
 
   // ──── Actions ────
   const handleRaiseDQ = async () => {
@@ -350,6 +374,7 @@ export default function DesignPortal() {
         description: dqForm.description,
         query_type: dqForm.query_type,
         urgency: dqForm.urgency,
+        dq_category: dqForm.dq_category || null,
         affected_area: dqForm.affected_area || null,
         photo_url: photoUrl,
         voice_note_url: voiceUrl,
@@ -372,7 +397,7 @@ export default function DesignPortal() {
 
       toast.success(`Design Query ${dqCode} raised`);
       setDqOpen(false);
-      setDqForm({ project_id: "", module_id: "", drawing_id: "", description: "", query_type: "Other", urgency: "Normal", affected_area: "" });
+      setDqForm({ project_id: "", module_id: "", drawing_id: "", description: "", query_type: "Other", urgency: "Normal", affected_area: "", dq_category: "" });
       setDqPhoto(null);
       setDqVoice(null);
       fetchData();
@@ -464,6 +489,9 @@ export default function DesignPortal() {
         }
       }
 
+      const fileExt = uploadFile.name.split(".").pop()?.toLowerCase() ?? "";
+      const fileFormat = ["dwg"].includes(fileExt) ? "dwg" : ["dxf"].includes(fileExt) ? "dxf" : ["jpg", "jpeg", "png"].includes(fileExt) ? "jpg" : "pdf";
+
       const { client } = await getAuthedClient();
       await (client.from("drawings") as any).insert({
         project_id: uploadForm.project_id,
@@ -473,16 +501,58 @@ export default function DesignPortal() {
         revision: uploadForm.revision,
         file_url: urlData.publicUrl,
         file_name: uploadFile.name,
+        file_format: fileFormat,
+        category_tags: uploadForm.category_tags.length > 0 ? uploadForm.category_tags : null,
+        revision_reason: uploadForm.revision > 1 ? (uploadForm.revision_reason || null) : null,
         uploaded_by: user.id,
         uploaded_by_name: userName,
         notes: uploadForm.notes || null,
         status: "active",
       });
 
+      // Send 48h review notification for new drawings
+      const { data: reviewProfiles } = await supabase.from("profiles")
+        .select("auth_user_id").in("role", ["site_installation_mgr", "factory_floor_supervisor", "production_head"] as any[]).eq("is_active", true);
+      if (reviewProfiles?.length) {
+        const projName = projectMap[uploadForm.project_id]?.name ?? "Project";
+        await insertNotifications(
+          reviewProfiles.map((p: any) => ({
+            recipient_id: p.auth_user_id,
+            title: "New Drawings Uploaded",
+            body: `New drawings uploaded for ${projName}. Please review within 48 hours and raise any Design Queries now — not when work starts.`,
+            category: "design",
+            related_table: "drawing",
+            navigate_to: "/design",
+          }))
+        );
+      }
+
+      // If revision > 1 and post-GFC, alert concerned roles
+      if (uploadForm.revision > 1 && uploadForm.revision_reason) {
+        const { data: gfcCheck } = await supabase.from("gfc_records").select("id").eq("project_id", uploadForm.project_id).limit(1);
+        if (gfcCheck?.length) {
+          const { data: alertProfiles } = await supabase.from("profiles")
+            .select("auth_user_id").in("role", ["production_head", "site_installation_mgr", "planning_engineer", "principal_architect"] as any[]).eq("is_active", true);
+          if (alertProfiles?.length) {
+            const projName = projectMap[uploadForm.project_id]?.name ?? "Project";
+            await insertNotifications(
+              alertProfiles.map((p: any) => ({
+                recipient_id: p.auth_user_id,
+                title: "Drawing Revised Post-GFC",
+                body: `Drawing ${uploadForm.drawing_id_code} updated to R${uploadForm.revision}. Reason: ${uploadForm.revision_reason}. Please review.`,
+                category: "design",
+                related_table: "drawing",
+                navigate_to: "/design",
+              }))
+            );
+          }
+        }
+      }
+
       toast.success("Drawing uploaded");
       setUploadOpen(false);
       setUploadFile(null);
-      setUploadForm({ project_id: "", module_id: "", drawing_type: "Architectural", drawing_id_code: "", notes: "", revision: 1, existing_drawing_code: "" });
+      setUploadForm({ project_id: "", module_id: "", drawing_type: "Architectural", drawing_id_code: "", notes: "", revision: 1, existing_drawing_code: "", category_tags: [], revision_reason: "" });
       fetchData();
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
@@ -503,6 +573,9 @@ export default function DesignPortal() {
       await (client.from("design_stages") as any).insert(stageInserts);
       await fetchData();
     }
+    // Fetch modules for this project (for GFC)
+    const { data: mods } = await supabase.from("modules").select("id, name, module_code").eq("project_id", projId).eq("is_archived", false);
+    setProjectModules(mods ?? []);
     setSelectedProjectId(projId);
     setActiveTab("project-file");
   };
@@ -632,6 +705,17 @@ export default function DesignPortal() {
                   </Select>
                 </div>
                 <div>
+                  <Label className="text-xs">DQ Category *</Label>
+                  <Select value={dqForm.dq_category} onValueChange={(v) => setDqForm({ ...dqForm, dq_category: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
+                    <SelectContent>
+                      {["Missing Dimension", "Vendor Detail", "Design Detail", "Material Change", "Coordination Issue", "Structural Query", "MEP Query", "Other"].map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label className="text-xs">Urgency *</Label>
                   <Select value={dqForm.urgency} onValueChange={(v) => setDqForm({ ...dqForm, urgency: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
@@ -695,14 +779,46 @@ export default function DesignPortal() {
                     <Input value={uploadForm.existing_drawing_code} onChange={(e) => setUploadForm({ ...uploadForm, existing_drawing_code: e.target.value })} placeholder="Leave blank for new drawing" />
                   </div>
                   <div>
-                    <Label className="text-xs">File (PDF or DWG) *</Label>
-                    <Input type="file" accept=".pdf,.dwg" onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)} />
+                    <Label className="text-xs">File (PDF, DWG, or DXF) *</Label>
+                    <Input type="file" accept=".pdf,.dwg,.dxf,.jpg,.jpeg,.png" onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)} />
                   </div>
+                  <div>
+                    <Label className="text-xs">Category Tags *</Label>
+                    <div className="grid grid-cols-2 gap-1.5 mt-1">
+                      {DRAWING_CATEGORIES.map((cat) => (
+                        <label key={cat} className="flex items-center gap-1.5 text-xs cursor-pointer">
+                          <Checkbox
+                            checked={uploadForm.category_tags.includes(cat)}
+                            onCheckedChange={(checked) => {
+                              setUploadForm((prev) => ({
+                                ...prev,
+                                category_tags: checked
+                                  ? [...prev.category_tags, cat]
+                                  : prev.category_tags.filter((c) => c !== cat),
+                              }));
+                            }}
+                          />
+                          {cat}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  {uploadForm.revision > 1 && (
+                    <div>
+                      <Label className="text-xs">Revision Reason *</Label>
+                      <Select value={uploadForm.revision_reason} onValueChange={(v) => setUploadForm({ ...uploadForm, revision_reason: v })}>
+                        <SelectTrigger><SelectValue placeholder="Select reason" /></SelectTrigger>
+                        <SelectContent>
+                          {REVISION_REASONS.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div>
                     <Label className="text-xs">Notes</Label>
                     <Textarea value={uploadForm.notes} onChange={(e) => setUploadForm({ ...uploadForm, notes: e.target.value })} rows={2} />
                   </div>
-                  <Button className="w-full" onClick={handleUploadDrawing} disabled={uploading}>
+                  <Button className="w-full" onClick={handleUploadDrawing} disabled={uploading || uploadForm.category_tags.length === 0 || (uploadForm.revision > 1 && !uploadForm.revision_reason)}>
                     {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} Upload
                   </Button>
                 </div>
@@ -984,6 +1100,13 @@ export default function DesignPortal() {
                   <SelectItem value="archived">Archived</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={drawingFilterCategory} onValueChange={setDrawingFilterCategory}>
+                <SelectTrigger className="w-40"><SelectValue placeholder="Category" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {DRAWING_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               {filteredDrawings.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No drawings found.</p>}
@@ -992,13 +1115,35 @@ export default function DesignPortal() {
                   style={d.status === "archived" ? { opacity: 0.6 } : {}}>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <FileText className="h-4 w-4 shrink-0" style={{ color: "hsl(var(--primary))" }} />
+                      {(d.file_format === "dwg" || d.file_format === "dxf") ? (
+                        <FileCode2 className="h-4 w-4 shrink-0" style={{ color: "#D4860A" }} />
+                      ) : (
+                        <FileText className="h-4 w-4 shrink-0" style={{ color: "hsl(var(--primary))" }} />
+                      )}
                       <span className="font-mono text-sm font-semibold">{d.drawing_id_code}</span>
+                      {(d.file_format === "dwg" || d.file_format === "dxf") && (
+                        <Badge variant="outline" className="text-[9px]" style={{ backgroundColor: "#FFF8E8", color: "#D4860A", border: "none" }}>
+                          {d.file_format?.toUpperCase()}
+                        </Badge>
+                      )}
                       {d.drawing_title && <span className="text-xs text-muted-foreground">— {d.drawing_title}</span>}
                       <Badge variant="outline" style={d.status === "active" ? { backgroundColor: "hsl(var(--accent))", color: "hsl(var(--primary))", border: "none" } : { backgroundColor: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", border: "none" }}>
                         {d.status === "active" ? "Active" : `Archived R${d.revision}`}
                       </Badge>
                     </div>
+                    {/* Category tags */}
+                    {(d.category_tags ?? []).length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {(d.category_tags as string[]).map((tag: string) => (
+                          <Badge key={tag} variant="outline" className="text-[9px]" style={{ backgroundColor: `${CATEGORY_COLOURS[tag] ?? "#666"}15`, color: CATEGORY_COLOURS[tag] ?? "#666", border: "none" }}>
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                    {d.revision_reason && (
+                      <span className="text-[10px] mt-0.5 block" style={{ color: "#D4860A" }}>Revision: {d.revision_reason}</span>
+                    )}
                     <div className="flex items-center gap-3 mt-1 text-[10px]" style={{ color: "hsl(var(--muted-foreground))" }}>
                       <span>{projectMap[d.project_id]?.name}</span>
                       <span>{d.drawing_type}</span>
@@ -1027,6 +1172,19 @@ export default function DesignPortal() {
               designFile={selectedDF}
               designStages={designStages}
               architects={[]}
+            />
+          )}
+
+          {selectedProjectId && (
+            <GFCStatusCard
+              projectId={selectedProjectId}
+              projectName={selectedProject?.name ?? ""}
+              isPrincipal={isPrincipal}
+              userId={userId}
+              userName={userName}
+              modules={projectModules}
+              designFile={selectedDF}
+              onRefresh={fetchData}
             />
           )}
 
