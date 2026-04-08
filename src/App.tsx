@@ -36,6 +36,7 @@ import Finance from "@/pages/Finance";
 import KPI from "@/pages/KPI";
 import KPISettings from "@/pages/KPISettings";
 import Alerts from "@/pages/Alerts";
+import AdvanceRequest from "@/pages/AdvanceRequest";
 
 const queryClient = new QueryClient();
 
