@@ -599,5 +599,11 @@ export function InvoicesTab() {
         </DialogContent>
       </Dialog>
     </div>
+    </TabsContent>
+
+    <TabsContent value="retention">
+      <RetentionSection />
+    </TabsContent>
+    </Tabs>
   );
 }
