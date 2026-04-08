@@ -144,6 +144,8 @@ export default function ProjectDetail() {
         )}
       </div>
 
+      <ClientPortalManager projectId={id!} userRole={userRole} />
+
       <Tabs defaultValue="modules">
         <ScrollableTabsWrapper>
           <TabsList>
