@@ -94,67 +94,127 @@ export type Database = {
       }
       advance_requests: {
         Row: {
+          above_policy_amount: number | null
+          advance_id: string | null
           amount: number
           approved_at: string | null
           approved_by: string | null
+          bank_account_name: string | null
+          bank_account_number: string | null
           carried_forward_amount: number | null
           carried_forward_date: string | null
           carry_forward_reminder_sent: boolean | null
           created_at: string | null
+          days_on_site: number | null
+          dispatch_date: string | null
           employee_id: string
           employee_name: string | null
+          hod_approved_at: string | null
+          hod_approved_by: string | null
           id: string
+          is_emergency: boolean | null
+          labour_count: number | null
+          line_items: Json | null
+          md_approved_at: string | null
+          md_approved_by: string | null
           next_trip_expected_date: string | null
+          payment_method: string | null
           project_id: string | null
           project_name: string | null
           purpose: string | null
+          released_at: string | null
+          released_by: string | null
           settled_amount: number | null
           settled_at: string | null
           settlement_method: string | null
+          staff_count: number | null
           status: string
+          total_amount: number | null
+          transfer_reference: string | null
           updated_at: string | null
+          within_policy_amount: number | null
         }
         Insert: {
+          above_policy_amount?: number | null
+          advance_id?: string | null
           amount?: number
           approved_at?: string | null
           approved_by?: string | null
+          bank_account_name?: string | null
+          bank_account_number?: string | null
           carried_forward_amount?: number | null
           carried_forward_date?: string | null
           carry_forward_reminder_sent?: boolean | null
           created_at?: string | null
+          days_on_site?: number | null
+          dispatch_date?: string | null
           employee_id: string
           employee_name?: string | null
+          hod_approved_at?: string | null
+          hod_approved_by?: string | null
           id?: string
+          is_emergency?: boolean | null
+          labour_count?: number | null
+          line_items?: Json | null
+          md_approved_at?: string | null
+          md_approved_by?: string | null
           next_trip_expected_date?: string | null
+          payment_method?: string | null
           project_id?: string | null
           project_name?: string | null
           purpose?: string | null
+          released_at?: string | null
+          released_by?: string | null
           settled_amount?: number | null
           settled_at?: string | null
           settlement_method?: string | null
+          staff_count?: number | null
           status?: string
+          total_amount?: number | null
+          transfer_reference?: string | null
           updated_at?: string | null
+          within_policy_amount?: number | null
         }
         Update: {
+          above_policy_amount?: number | null
+          advance_id?: string | null
           amount?: number
           approved_at?: string | null
           approved_by?: string | null
+          bank_account_name?: string | null
+          bank_account_number?: string | null
           carried_forward_amount?: number | null
           carried_forward_date?: string | null
           carry_forward_reminder_sent?: boolean | null
           created_at?: string | null
+          days_on_site?: number | null
+          dispatch_date?: string | null
           employee_id?: string
           employee_name?: string | null
+          hod_approved_at?: string | null
+          hod_approved_by?: string | null
           id?: string
+          is_emergency?: boolean | null
+          labour_count?: number | null
+          line_items?: Json | null
+          md_approved_at?: string | null
+          md_approved_by?: string | null
           next_trip_expected_date?: string | null
+          payment_method?: string | null
           project_id?: string | null
           project_name?: string | null
           purpose?: string | null
+          released_at?: string | null
+          released_by?: string | null
           settled_amount?: number | null
           settled_at?: string | null
           settlement_method?: string | null
+          staff_count?: number | null
           status?: string
+          total_amount?: number | null
+          transfer_reference?: string | null
           updated_at?: string | null
+          within_policy_amount?: number | null
         }
         Relationships: [
           {
