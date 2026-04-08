@@ -83,6 +83,7 @@ const App = () => (
                 <Route path="/alerts" element={<Alerts />} />
                 <Route path="/factory/floor-map" element={<FactoryFloorMap />} />
               </Route>
+              <Route path="/client/:projectToken" element={<ClientPortal />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
