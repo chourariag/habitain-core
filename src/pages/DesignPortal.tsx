@@ -1100,6 +1100,13 @@ export default function DesignPortal() {
                   <SelectItem value="archived">Archived</SelectItem>
                 </SelectContent>
               </Select>
+              <Select value={drawingFilterCategory} onValueChange={setDrawingFilterCategory}>
+                <SelectTrigger className="w-40"><SelectValue placeholder="Category" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {DRAWING_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               {filteredDrawings.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No drawings found.</p>}
