@@ -94,7 +94,7 @@ export default function DesignPortal() {
   const [dqOpen, setDqOpen] = useState(false);
   const [dqForm, setDqForm] = useState({
     project_id: "", module_id: "", drawing_id: "", description: "",
-    query_type: "Other", urgency: "Normal", affected_area: "",
+    query_type: "Other", urgency: "Normal", affected_area: "", dq_category: "",
   });
   const [dqPhoto, setDqPhoto] = useState<File | null>(null);
   const [dqVoice, setDqVoice] = useState<File | null>(null);
@@ -105,9 +105,16 @@ export default function DesignPortal() {
   const [uploadForm, setUploadForm] = useState({
     project_id: "", module_id: "", drawing_type: "Architectural",
     drawing_id_code: "", notes: "", revision: 1, existing_drawing_code: "",
+    category_tags: [] as string[], revision_reason: "",
   });
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  // Category filter for drawings
+  const [drawingFilterCategory, setDrawingFilterCategory] = useState("all");
+
+  // Modules for GFC
+  const [projectModules, setProjectModules] = useState<any[]>([]);
 
   // DQ detail
   const [selectedDq, setSelectedDq] = useState<any>(null);
