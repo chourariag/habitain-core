@@ -257,8 +257,14 @@ export function InvoicesTab() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Summary Tiles */}
+    <Tabs defaultValue="invoices" className="w-full space-y-4">
+      <TabsList>
+        <TabsTrigger value="invoices">Invoices</TabsTrigger>
+        <TabsTrigger value="retention">Retention</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="invoices">
+      <div className="space-y-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card><CardContent className="p-4">
           <p className="text-xs text-muted-foreground">Invoiced This Month</p>
