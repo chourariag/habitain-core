@@ -2663,6 +2663,62 @@ export type Database = {
         }
         Relationships: []
       }
+      material_availability_confirmations: {
+        Row: {
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          id: string
+          materials_confirmed: string | null
+          materials_missing: string | null
+          missing_eta: string | null
+          module_id: string
+          project_id: string | null
+          stage_number: number
+          stage_start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          materials_confirmed?: string | null
+          materials_missing?: string | null
+          missing_eta?: string | null
+          module_id: string
+          project_id?: string | null
+          stage_number: number
+          stage_start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          id?: string
+          materials_confirmed?: string | null
+          materials_missing?: string | null
+          missing_eta?: string | null
+          module_id?: string
+          project_id?: string | null
+          stage_number?: number
+          stage_start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_availability_confirmations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_plan_items: {
         Row: {
           category: string
