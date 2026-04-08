@@ -373,6 +373,7 @@ export default function DesignPortal() {
         description: dqForm.description,
         query_type: dqForm.query_type,
         urgency: dqForm.urgency,
+        dq_category: dqForm.dq_category || null,
         affected_area: dqForm.affected_area || null,
         photo_url: photoUrl,
         voice_note_url: voiceUrl,
