@@ -572,6 +572,9 @@ export default function DesignPortal() {
       await (client.from("design_stages") as any).insert(stageInserts);
       await fetchData();
     }
+    // Fetch modules for this project (for GFC)
+    const { data: mods } = await supabase.from("modules").select("id, name, module_code").eq("project_id", projId).eq("is_archived", false);
+    setProjectModules(mods ?? []);
     setSelectedProjectId(projId);
     setActiveTab("project-file");
   };
