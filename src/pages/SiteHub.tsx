@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus, Package } from "lucide-react";
+import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus, Package, Users, ClipboardList } from "lucide-react";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
@@ -17,6 +17,8 @@ import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPa
 import { DispatchPacksTab } from "@/components/site/DispatchPacksTab";
 import { SiteReceiptChecklist } from "@/components/site/SiteReceiptChecklist";
 import { SubcontractorSchedule } from "@/components/site/SubcontractorSchedule";
+import { SubcontractorManagement } from "@/components/site/SubcontractorManagement";
+import { PunchListModule } from "@/components/site/PunchListModule";
 import { SiteInventoryTab } from "@/components/site/SiteInventoryTab";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
@@ -199,6 +201,8 @@ function SiteHubContent() {
             <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
             <TabsTrigger value="dispatch-packs" className="gap-1.5"><Package className="h-4 w-4" /> Dispatch Packs</TabsTrigger>
             <TabsTrigger value="site-inventory" className="gap-1.5"><Boxes className="h-4 w-4" /> Site Inventory</TabsTrigger>
+            <TabsTrigger value="subcontractors" className="gap-1.5"><Users className="h-4 w-4" /> Subcontractors</TabsTrigger>
+            <TabsTrigger value="punch-list" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Punch List</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -306,6 +310,12 @@ function SiteHubContent() {
         </TabsContent>
         <TabsContent value="site-inventory">
           <SiteInventoryTab projectId={selectedProjectId!} userRole={userRole} />
+        </TabsContent>
+        <TabsContent value="subcontractors">
+          <SubcontractorManagement projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
+        </TabsContent>
+        <TabsContent value="punch-list">
+          <PunchListModule projectId={selectedProjectId!} userRole={userRole} />
         </TabsContent>
       </Tabs>
     </div>
