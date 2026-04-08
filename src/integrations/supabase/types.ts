@@ -3487,11 +3487,13 @@ export type Database = {
           created_by: string | null
           division: string
           est_completion: string | null
+          gfc_budget: number | null
           id: string
           is_archived: boolean | null
           is_design_only: boolean
           location: string | null
           name: string
+          planned_labour_cost: number | null
           site_lat: number | null
           site_lng: number | null
           site_radius: number | null
@@ -3514,11 +3516,13 @@ export type Database = {
           created_by?: string | null
           division?: string
           est_completion?: string | null
+          gfc_budget?: number | null
           id?: string
           is_archived?: boolean | null
           is_design_only?: boolean
           location?: string | null
           name: string
+          planned_labour_cost?: number | null
           site_lat?: number | null
           site_lng?: number | null
           site_radius?: number | null
@@ -3541,11 +3545,13 @@ export type Database = {
           created_by?: string | null
           division?: string
           est_completion?: string | null
+          gfc_budget?: number | null
           id?: string
           is_archived?: boolean | null
           is_design_only?: boolean
           location?: string | null
           name?: string
+          planned_labour_cost?: number | null
           site_lat?: number | null
           site_lng?: number | null
           site_radius?: number | null
