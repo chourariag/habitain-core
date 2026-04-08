@@ -169,7 +169,7 @@ function ProductionContent() {
           </TabsContent>
         </Tabs>
       )}
-    </div>
+      </div>
     </div>
   );
 }
