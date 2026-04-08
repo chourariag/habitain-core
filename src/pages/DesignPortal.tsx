@@ -1175,6 +1175,19 @@ export default function DesignPortal() {
             />
           )}
 
+          {selectedProjectId && (
+            <GFCStatusCard
+              projectId={selectedProjectId}
+              projectName={selectedProject?.name ?? ""}
+              isPrincipal={isPrincipal}
+              userId={userId}
+              userName={userName}
+              modules={projectModules}
+              designFile={selectedDF}
+              onRefresh={fetchData}
+            />
+          )}
+
           <Tabs value={projectFileTab} onValueChange={setProjectFileTab}>
             <ScrollableTabsWrapper>
               <TabsList>
