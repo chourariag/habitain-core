@@ -21,7 +21,11 @@ import { NewMaterialRequestDialog } from "@/components/materials/NewMaterialRequ
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { TransfersTab } from "@/components/procurement/TransfersTab";
 import { TallyPOUploadTab } from "@/components/procurement/TallyPOUploadTab";
+import { MaterialAvailabilityGate } from "@/components/procurement/MaterialAvailabilityGate";
+import { ThirtyDayPlanTab } from "@/components/procurement/ThirtyDayPlanTab";
+import { ProcurementDashboardStrip } from "@/components/procurement/ProcurementDashboardStrip";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
+import { Calendar } from "lucide-react";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
