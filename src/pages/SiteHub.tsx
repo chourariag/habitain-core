@@ -280,8 +280,9 @@ function SiteHubContent() {
                       <Cond met={conds?.inspection ?? false} label="Final Inspection" />
                       <Cond met={conds?.site ?? false} label="Site Readiness" />
                       <Cond met={conds?.signoff ?? false} label="Production Head Sign-off" />
+                      <Cond met={installSeqApproved} label="Install Sequence Doc" />
                     </div>
-                    {conds?.qc && conds?.inspection && conds?.site && conds?.signoff && canCreateDispatchPack && module.production_status !== "dispatched" && (
+                    {conds?.qc && conds?.inspection && conds?.site && conds?.signoff && installSeqApproved && canCreateDispatchPack && module.production_status !== "dispatched" && (
                       <Button
                         size="sm"
                         className="w-full mt-2 font-display"
@@ -290,6 +291,11 @@ function SiteHubContent() {
                       >
                         Create Dispatch Pack
                       </Button>
+                    )}
+                    {!installSeqApproved && conds?.qc && conds?.inspection && conds?.site && conds?.signoff && (
+                      <p className="text-[10px] mt-1" style={{ color: "#D4860A" }}>
+                        Dispatch requires completed Installation Sequence Document with all three approvals.
+                      </p>
                     )}
                   </div>
                 </div>
