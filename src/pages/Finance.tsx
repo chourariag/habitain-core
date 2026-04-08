@@ -32,6 +32,7 @@ export default function Finance() {
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="statutory">Statutory</TabsTrigger>
             <TabsTrigger value="invoices">Invoices</TabsTrigger>
+            <TabsTrigger value="project-pl">Project P&L</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
