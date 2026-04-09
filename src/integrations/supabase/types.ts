@@ -1595,6 +1595,62 @@ export type Database = {
           },
         ]
       }
+      dry_assembly_checks: {
+        Row: {
+          azad_signed_at: string | null
+          azad_signed_by: string | null
+          checklist_items: Json
+          created_at: string
+          id: string
+          issues_found: boolean
+          linked_ncr_id: string | null
+          project_id: string
+          stage2_unlocked_at: string | null
+          tagore_signed_at: string | null
+          tagore_signed_by: string | null
+          triggered_at: string
+          updated_at: string
+        }
+        Insert: {
+          azad_signed_at?: string | null
+          azad_signed_by?: string | null
+          checklist_items?: Json
+          created_at?: string
+          id?: string
+          issues_found?: boolean
+          linked_ncr_id?: string | null
+          project_id: string
+          stage2_unlocked_at?: string | null
+          tagore_signed_at?: string | null
+          tagore_signed_by?: string | null
+          triggered_at?: string
+          updated_at?: string
+        }
+        Update: {
+          azad_signed_at?: string | null
+          azad_signed_by?: string | null
+          checklist_items?: Json
+          created_at?: string
+          id?: string
+          issues_found?: boolean
+          linked_ncr_id?: string | null
+          project_id?: string
+          stage2_unlocked_at?: string | null
+          tagore_signed_at?: string | null
+          tagore_signed_by?: string | null
+          triggered_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dry_assembly_checks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_entries: {
         Row: {
           amount: number

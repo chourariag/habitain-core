@@ -27,9 +27,10 @@ interface Props {
   productionStatus: string | null;
   canAdvance: boolean;
   onAdvanced: () => void;
+  dryAssemblyRequired?: boolean;
 }
 
-export function ProductionStageTracker({ moduleId, projectId, currentStage, productionStatus, canAdvance, onAdvanced }: Props) {
+export function ProductionStageTracker({ moduleId, projectId, currentStage, productionStatus, canAdvance, onAdvanced, dryAssemblyRequired }: Props) {
   const currentIdx = currentStage ? PRODUCTION_STAGES.indexOf(currentStage as any) : -1;
   const isCompleted = productionStatus === "completed";
   const isOnHold = productionStatus === "hold";
@@ -65,10 +66,16 @@ export function ProductionStageTracker({ moduleId, projectId, currentStage, prod
 
   const canStartInspection = ["qc_inspector", "production_head", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
   const isBlocked = isOnHold && openNCRCount > 0;
+  // Block advancing from Stage 1 to Stage 2 if dry assembly check not done
+  const isDryAssemblyBlocked = dryAssemblyRequired && currentStage === "Sub-Frame";
 
   const handleAdvance = async () => {
     if (isBlocked) {
       toast.error("Module is locked. Close all open NCRs before advancing.");
+      return;
+    }
+    if (isDryAssemblyBlocked) {
+      toast.error("Dry Assembly Check must be completed before advancing to Stage 2.");
       return;
     }
 
@@ -146,7 +153,7 @@ export function ProductionStageTracker({ moduleId, projectId, currentStage, prod
 
       <div className="flex items-center gap-2 flex-wrap">
         {canAdvance && !isCompleted && (
-          <Button size="sm" variant="outline" onClick={handleAdvance} disabled={isBlocked} className="text-xs">
+          <Button size="sm" variant="outline" onClick={handleAdvance} disabled={isBlocked || isDryAssemblyBlocked} className="text-xs">
             {currentIdx === -1
               ? `Start → ${PRODUCTION_STAGES[0]}`
               : currentIdx + 1 < PRODUCTION_STAGES.length
