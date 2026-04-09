@@ -193,6 +193,30 @@ export function TallyPOUploadTab() {
           }
         }
 
+        // Parse expected delivery date
+        let expectedDeliveryDate: string | null = null;
+        const edd = row["Expected Delivery Date"];
+        if (edd) {
+          if (typeof edd === "number") {
+            const d = XLSX.SSF.parse_date_code(edd);
+            expectedDeliveryDate = `${d.y}-${String(d.m).padStart(2, "0")}-${String(d.d).padStart(2, "0")}`;
+          } else {
+            const parts = String(edd).split(/[\/\-\.]/);
+            if (parts.length === 3) {
+              const [a, b, c] = parts;
+              if (Number(a) > 31) expectedDeliveryDate = `${a}-${b.padStart(2, "0")}-${c.padStart(2, "0")}`;
+              else expectedDeliveryDate = `${c.length === 2 ? "20" + c : c}-${b.padStart(2, "0")}-${a.padStart(2, "0")}`;
+            }
+          }
+        }
+
+        // Compute lead_time_promised
+        let leadTimePromised: number | null = null;
+        if (parsedDate && expectedDeliveryDate) {
+          const diff = differenceInDays(parseISO(expectedDeliveryDate), parseISO(parsedDate));
+          if (diff > 0) leadTimePromised = diff;
+        }
+
         toInsert.push({
           po_number: poNum,
           po_date: parsedDate,
@@ -208,6 +232,8 @@ export function TallyPOUploadTab() {
           project_name: String(row["Project Name"] ?? "").trim() || null,
           category: String(row["Category"] ?? "").trim() || null,
           delivery_date: deliveryDate,
+          expected_delivery_date: expectedDeliveryDate,
+          lead_time_promised: leadTimePromised,
           notes: String(row["Notes"] ?? "").trim() || null,
           status,
           source: "tally_upload",
