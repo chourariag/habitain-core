@@ -3194,40 +3194,49 @@ export type Database = {
       }
       module_schedule: {
         Row: {
+          actual_duration_days: number | null
           actual_end: string | null
           actual_start: string | null
           created_at: string | null
           created_by: string | null
           id: string
           module_id: string
+          planned_duration_days: number | null
           stage_name: string
           target_end: string | null
           target_start: string | null
           updated_at: string | null
+          velocity_ratio: number | null
         }
         Insert: {
+          actual_duration_days?: number | null
           actual_end?: string | null
           actual_start?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
           module_id: string
+          planned_duration_days?: number | null
           stage_name: string
           target_end?: string | null
           target_start?: string | null
           updated_at?: string | null
+          velocity_ratio?: number | null
         }
         Update: {
+          actual_duration_days?: number | null
           actual_end?: string | null
           actual_start?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
           module_id?: string
+          planned_duration_days?: number | null
           stage_name?: string
           target_end?: string | null
           target_start?: string | null
           updated_at?: string | null
+          velocity_ratio?: number | null
         }
         Relationships: [
           {
@@ -5686,6 +5695,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "variation_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      velocity_alerts: {
+        Row: {
+          coaching_message: string | null
+          created_at: string
+          days_behind: number
+          forecast_completion: string | null
+          id: string
+          module_id: string
+          planned_completion: string | null
+          project_id: string
+          resolved_at: string | null
+          stage_number: number
+          sunday_approved: boolean | null
+          sunday_approved_by: string | null
+          sunday_recommended: boolean
+          updated_at: string
+        }
+        Insert: {
+          coaching_message?: string | null
+          created_at?: string
+          days_behind?: number
+          forecast_completion?: string | null
+          id?: string
+          module_id: string
+          planned_completion?: string | null
+          project_id: string
+          resolved_at?: string | null
+          stage_number: number
+          sunday_approved?: boolean | null
+          sunday_approved_by?: string | null
+          sunday_recommended?: boolean
+          updated_at?: string
+        }
+        Update: {
+          coaching_message?: string | null
+          created_at?: string
+          days_behind?: number
+          forecast_completion?: string | null
+          id?: string
+          module_id?: string
+          planned_completion?: string | null
+          project_id?: string
+          resolved_at?: string | null
+          stage_number?: number
+          sunday_approved?: boolean | null
+          sunday_approved_by?: string | null
+          sunday_recommended?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "velocity_alerts_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
