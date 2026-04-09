@@ -21,7 +21,7 @@ const DIRECTOR_ROLES = ["super_admin", "managing_director", "finance_director", 
 const TEMPLATE_HEADERS = [
   "PO Number", "PO Date", "Vendor Name", "Vendor Code", "Item Description",
   "Quantity", "Unit", "Unit Rate", "Total Amount", "Project Name",
-  "Category", "Delivery Date", "Notes",
+  "Category", "Delivery Date", "Expected Delivery Date", "Notes",
 ];
 
 interface TallyPO {
