@@ -309,16 +309,22 @@ export function GanttChart({ projectId, modules, userRole }: Props) {
                   })();
 
                   // Schedule conflict flag (>2 days behind)
-                  const hasConflict = mSchedule.some((s) => {
-                    if (!s.target_end || !s.actual_end) {
-                      if (s.target_end && !s.actual_end) {
-                        const tEnd = parseISO(s.target_end);
-                        return differenceInDays(new Date(), tEnd) > 2;
-                      }
-                      return false;
+                  const conflictStage = mSchedule.find((s) => {
+                    if (s.target_end && !s.actual_end) {
+                      const tEnd = parseISO(s.target_end);
+                      return differenceInDays(new Date(), tEnd) > 2;
                     }
-                    return differenceInDays(parseISO(s.actual_end), parseISO(s.target_end)) > 2;
+                    if (s.target_end && s.actual_end) {
+                      return differenceInDays(parseISO(s.actual_end), parseISO(s.target_end)) > 2;
+                    }
+                    return false;
                   });
+                  const hasConflict = !!conflictStage;
+                  const conflictDays = conflictStage
+                    ? conflictStage.actual_end
+                      ? differenceInDays(parseISO(conflictStage.actual_end), parseISO(conflictStage.target_end!))
+                      : differenceInDays(new Date(), parseISO(conflictStage.target_end!))
+                    : 0;
 
                   return (
                     <div key={m.id} className="absolute w-full border-b border-border/30" style={{ top: topY, height: MODULE_ROW_HEIGHT }}>
@@ -380,8 +386,20 @@ export function GanttChart({ projectId, modules, userRole }: Props) {
 
                       {/* Conflict flag */}
                       {hasConflict && (
-                        <div className="absolute text-[9px] font-bold rounded px-1" style={{ right: 4, top: 14, backgroundColor: "#FFF3CD", color: "#D4860A" }}>
-                          ⚠ Conflict
+                        <div
+                          className="absolute text-[9px] font-bold rounded px-1 cursor-pointer"
+                          style={{ right: 4, top: 14, backgroundColor: "#FFF3CD", color: "#D4860A" }}
+                          onMouseEnter={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setTooltip({
+                              x: rect.left + rect.width / 2,
+                              y: rect.top - 10,
+                              content: `${m.module_code || m.name} is ${conflictDays} days behind plan. Planned completion: ${conflictStage?.target_end ? format(parseISO(conflictStage.target_end), "dd/MM/yyyy") : "—"}.`,
+                            });
+                          }}
+                          onMouseLeave={() => setTooltip(null)}
+                        >
+                          ⚠ {conflictDays}d behind
                         </div>
                       )}
                     </div>
