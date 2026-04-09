@@ -693,6 +693,10 @@ export default function Procurement() {
         <TabsContent value="tally-po">
           <TallyPOUploadTab />
         </TabsContent>
+
+        <TabsContent value="supplier-intel">
+          <SupplierIntelligenceTab />
+        </TabsContent>
       </Tabs>
 
       <NewMaterialRequestDialog open={addOpen} onOpenChange={setAddOpen} onCreated={fetchData} />
