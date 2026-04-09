@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { QCInspectionWizard } from "@/components/qc/QCInspectionWizard";
 import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
 import { ReworkSummaryTab } from "@/components/qc/ReworkSummaryTab";
+import { ReworkLogSection } from "@/components/production/ReworkLogSection";
 
 const FIX_TIMELINE_OPTIONS = [
   { value: "same_day", label: "Same day" },
