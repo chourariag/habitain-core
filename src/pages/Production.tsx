@@ -124,6 +124,12 @@ function ProductionContent() {
           </div>
         </div>
 
+        {/* Factory Intelligence Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <FactoryCapacityCard userRole={userRole} />
+          <StageVelocityMonitor userRole={userRole} />
+        </div>
+
         {loading ? (
           <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         ) : modules.length === 0 ? (
