@@ -18,10 +18,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, ClipboardCheck, AlertTriangle, Loader2, Camera, RotateCcw } from "lucide-react";
+import { Plus, ClipboardCheck, AlertTriangle, Loader2, Camera, RotateCcw, ArrowDownLeft } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { QCInspectionWizard } from "@/components/qc/QCInspectionWizard";
+import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
+import { ReworkSummaryTab } from "@/components/qc/ReworkSummaryTab";
+import { ReworkLogSection } from "@/components/production/ReworkLogSection";
 
 const FIX_TIMELINE_OPTIONS = [
   { value: "same_day", label: "Same day" },
@@ -48,6 +51,11 @@ export default function QualityControl() {
   const [fixTimeline, setFixTimeline] = useState("");
   const [fixTimelineNote, setFixTimelineNote] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Regression state
+  const [regressionToggle, setRegressionToggle] = useState(false);
+  const [regressionToStage, setRegressionToStage] = useState("");
+  const [regressionReason, setRegressionReason] = useState("");
 
   // Re-inspection state
   const [reinspChecks, setReinspChecks] = useState([false, false, false]);
@@ -103,6 +111,9 @@ export default function QualityControl() {
   useEffect(() => {
     setFixTimeline(selectedNCR?.fix_timeline || "");
     setFixTimelineNote("");
+    setRegressionToggle(selectedNCR?.requires_regression || false);
+    setRegressionToStage("");
+    setRegressionReason("");
     setReinspChecks([false, false, false]);
     setReinspNotes("");
     setReinspPhoto(null);
@@ -131,13 +142,51 @@ export default function QualityControl() {
         dueDate = d.toISOString();
       }
 
-      await (client.from("ncr_register") as any).update({
+      const updatePayload: any = {
         status: "fix_in_progress",
         fix_timeline: fixTimeline,
         fix_timeline_set_by: userId,
         fix_timeline_set_at: new Date().toISOString(),
         fix_timeline_due_date: dueDate,
-      }).eq("id", ncrId);
+      };
+
+      // Handle stage regression
+      if (regressionToggle && regressionToStage && regressionReason.trim()) {
+        const currentStageIdx = PRODUCTION_STAGES.indexOf(getNCRStage(selectedNCR) as any);
+        const toIdx = parseInt(regressionToStage);
+        updatePayload.requires_regression = true;
+        updatePayload.regression_from_stage = currentStageIdx >= 0 ? currentStageIdx : null;
+        updatePayload.regression_to_stage = toIdx;
+        updatePayload.regression_reason = regressionReason.trim();
+        updatePayload.regression_start_date = new Date().toISOString().split("T")[0];
+
+        // Regress the module stage
+        const moduleId = selectedNCR.qc_inspections?.module_id;
+        if (moduleId && toIdx >= 0 && toIdx < PRODUCTION_STAGES.length) {
+          await (client.from("modules") as any).update({
+            current_stage: PRODUCTION_STAGES[toIdx],
+            production_status: "hold",
+          }).eq("id", moduleId);
+        }
+
+        // Notify planning engineer about schedule conflict
+        const { data: planners } = await supabase.from("profiles")
+          .select("auth_user_id")
+          .eq("role", "planning_engineer" as any)
+          .eq("is_active", true);
+        for (const p of planners ?? []) {
+          await insertNotifications({
+            recipient_id: p.auth_user_id,
+            title: "Stage Regression — Schedule Impact",
+            body: `${selectedNCR?.ncr_number}: Module regressed from ${PRODUCTION_STAGES[currentStageIdx] || "?"} to ${PRODUCTION_STAGES[toIdx]}. Update production schedule.`,
+            category: "production",
+            related_table: "ncr_register",
+            related_id: ncrId,
+          });
+        }
+      }
+
+      await (client.from("ncr_register") as any).update(updatePayload).eq("id", ncrId);
 
       // Notify QC inspector + production head
       const { data: notifyProfiles } = await supabase.from("profiles")
@@ -368,6 +417,7 @@ export default function QualityControl() {
                 <AlertTriangle className="h-4 w-4" /> NCRs
                 {openNCRs.length > 0 && <Badge variant="destructive" className="ml-1 text-[10px] px-1.5 py-0">{openNCRs.length}</Badge>}
               </TabsTrigger>
+              <TabsTrigger value="rework" className="gap-1.5"><ArrowDownLeft className="h-4 w-4" /> Rework Summary</TabsTrigger>
             </TabsList>
           </ScrollableTabsWrapper>
 
@@ -416,6 +466,10 @@ export default function QualityControl() {
             {ncrs.length === 0 && (
               <Card><CardContent className="py-8 text-center"><p className="text-muted-foreground text-sm">No NCRs recorded yet.</p></CardContent></Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="rework" className="mt-4">
+            <ReworkSummaryTab />
           </TabsContent>
         </Tabs>
       )}
@@ -518,19 +572,74 @@ export default function QualityControl() {
                         className="text-sm"
                       />
                     )}
+
+                    {/* Regression toggle */}
+                    <div className="border border-border rounded-md p-3 space-y-2">
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={regressionToggle} onCheckedChange={(v) => setRegressionToggle(!!v)} />
+                        <span className="font-medium">Does this fix require stage regression?</span>
+                      </label>
+                      {regressionToggle && (
+                        <div className="space-y-2 ml-6">
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Regressing from: <span className="font-medium text-foreground">{getNCRStage(selectedNCR)}</span></p>
+                          </div>
+                          <Select value={regressionToStage} onValueChange={setRegressionToStage}>
+                            <SelectTrigger className="text-sm"><SelectValue placeholder="Regress to stage..." /></SelectTrigger>
+                            <SelectContent>
+                              {PRODUCTION_STAGES.map((s, idx) => {
+                                const currentIdx = PRODUCTION_STAGES.indexOf(getNCRStage(selectedNCR) as any);
+                                if (idx >= currentIdx) return null;
+                                return <SelectItem key={s} value={String(idx)}>{s}</SelectItem>;
+                              })}
+                            </SelectContent>
+                          </Select>
+                          <Textarea
+                            placeholder="Reason for regression (required)..."
+                            value={regressionReason}
+                            onChange={(e) => setRegressionReason(e.target.value)}
+                            className="text-sm min-h-[60px]"
+                          />
+                        </div>
+                      )}
+                    </div>
+
                     <Button
                       onClick={() => handleAcknowledgeNCR(selectedNCR.id)}
-                      disabled={!fixTimeline || actionLoading}
+                      disabled={!fixTimeline || actionLoading || (regressionToggle && (!regressionToStage || !regressionReason.trim()))}
                       className="w-full"
                       style={{ backgroundColor: "#006039" }}
                     >
                       {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                      Acknowledge — Start Fix
+                      {regressionToggle ? "Acknowledge — Regress & Start Fix" : "Acknowledge — Start Fix"}
                     </Button>
                   </div>
                 )}
 
-                {/* ACTION: Supervisor marks fix as done */}
+                {/* Rework log section for regression NCRs */}
+                {selectedNCR.requires_regression && isFixInProgress && selectedNCR.qc_inspections?.module_id && (
+                  <div className="border-t pt-3">
+                    <ReworkLogSection
+                      moduleId={selectedNCR.qc_inspections.module_id}
+                      ncrId={selectedNCR.id}
+                      ncrNumber={selectedNCR.ncr_number}
+                      projectId={selectedNCR.qc_inspections?.modules?.project_id || ""}
+                      userRole={userRole}
+                    />
+                  </div>
+                )}
+
+                {/* Rework cost display for any NCR with rework */}
+                {(selectedNCR.total_rework_cost > 0 || selectedNCR.total_rework_hours > 0) && (
+                  <div className="border-t pt-3">
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-muted-foreground">Rework:</span>
+                      <span className="font-semibold text-foreground">{selectedNCR.total_rework_hours}h</span>
+                      <span className="font-semibold text-destructive">₹{selectedNCR.total_rework_cost?.toLocaleString("en-IN")}</span>
+                    </div>
+                  </div>
+                )}
+
                 {isFixInProgress && isSupervisor && isAssignedToMe && (
                   <div className="border-t pt-3 space-y-3">
                     <h4 className="font-semibold text-card-foreground">Mark Fix Complete</h4>
