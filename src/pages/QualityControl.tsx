@@ -566,14 +566,46 @@ export default function QualityControl() {
                         className="text-sm"
                       />
                     )}
+
+                    {/* Regression toggle */}
+                    <div className="border border-border rounded-md p-3 space-y-2">
+                      <label className="flex items-center gap-2 text-sm">
+                        <Checkbox checked={regressionToggle} onCheckedChange={(v) => setRegressionToggle(!!v)} />
+                        <span className="font-medium">Does this fix require stage regression?</span>
+                      </label>
+                      {regressionToggle && (
+                        <div className="space-y-2 ml-6">
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Regressing from: <span className="font-medium text-foreground">{getNCRStage(selectedNCR)}</span></p>
+                          </div>
+                          <Select value={regressionToStage} onValueChange={setRegressionToStage}>
+                            <SelectTrigger className="text-sm"><SelectValue placeholder="Regress to stage..." /></SelectTrigger>
+                            <SelectContent>
+                              {PRODUCTION_STAGES.map((s, idx) => {
+                                const currentIdx = PRODUCTION_STAGES.indexOf(getNCRStage(selectedNCR) as any);
+                                if (idx >= currentIdx) return null;
+                                return <SelectItem key={s} value={String(idx)}>{s}</SelectItem>;
+                              })}
+                            </SelectContent>
+                          </Select>
+                          <Textarea
+                            placeholder="Reason for regression (required)..."
+                            value={regressionReason}
+                            onChange={(e) => setRegressionReason(e.target.value)}
+                            className="text-sm min-h-[60px]"
+                          />
+                        </div>
+                      )}
+                    </div>
+
                     <Button
                       onClick={() => handleAcknowledgeNCR(selectedNCR.id)}
-                      disabled={!fixTimeline || actionLoading}
+                      disabled={!fixTimeline || actionLoading || (regressionToggle && (!regressionToStage || !regressionReason.trim()))}
                       className="w-full"
                       style={{ backgroundColor: "#006039" }}
                     >
                       {actionLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                      Acknowledge — Start Fix
+                      {regressionToggle ? "Acknowledge — Regress & Start Fix" : "Acknowledge — Start Fix"}
                     </Button>
                   </div>
                 )}
