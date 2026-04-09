@@ -18,10 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, ClipboardCheck, AlertTriangle, Loader2, Camera, RotateCcw } from "lucide-react";
+import { Plus, ClipboardCheck, AlertTriangle, Loader2, Camera, RotateCcw, ArrowDownLeft } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { QCInspectionWizard } from "@/components/qc/QCInspectionWizard";
+import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
+import { ReworkSummaryTab } from "@/components/qc/ReworkSummaryTab";
 
 const FIX_TIMELINE_OPTIONS = [
   { value: "same_day", label: "Same day" },
@@ -48,6 +50,11 @@ export default function QualityControl() {
   const [fixTimeline, setFixTimeline] = useState("");
   const [fixTimelineNote, setFixTimelineNote] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+
+  // Regression state
+  const [regressionToggle, setRegressionToggle] = useState(false);
+  const [regressionToStage, setRegressionToStage] = useState("");
+  const [regressionReason, setRegressionReason] = useState("");
 
   // Re-inspection state
   const [reinspChecks, setReinspChecks] = useState([false, false, false]);
@@ -103,6 +110,9 @@ export default function QualityControl() {
   useEffect(() => {
     setFixTimeline(selectedNCR?.fix_timeline || "");
     setFixTimelineNote("");
+    setRegressionToggle(selectedNCR?.requires_regression || false);
+    setRegressionToStage("");
+    setRegressionReason("");
     setReinspChecks([false, false, false]);
     setReinspNotes("");
     setReinspPhoto(null);
