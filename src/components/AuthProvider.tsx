@@ -17,7 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
-const PUBLIC_ROUTES = ["/login", "/setup", "/welcome"];
+const PUBLIC_ROUTES = ["/login", "/setup", "/welcome", "/onboarding"];
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -106,8 +106,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loading, session, location.pathname, navigate]);
 
   useEffect(() => {
-    if (!loading && session && PUBLIC_ROUTES.includes(location.pathname)) {
-      navigate("/dashboard", { replace: true });
+    if (!loading && session && PUBLIC_ROUTES.includes(location.pathname) && location.pathname !== "/onboarding") {
+      // Check onboarding status before redirecting to dashboard
+      const checkOnboarding = async () => {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("onboarding_completed")
+          .eq("auth_user_id", session.user.id)
+          .maybeSingle();
+
+        if (profile && !profile.onboarding_completed) {
+          navigate("/onboarding", { replace: true });
+        } else {
+          navigate("/dashboard", { replace: true });
+        }
+      };
+      checkOnboarding();
     }
   }, [loading, session, location.pathname, navigate]);
 

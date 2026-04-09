@@ -39,6 +39,7 @@ import Alerts from "@/pages/Alerts";
 import AdvanceRequest from "@/pages/AdvanceRequest";
 import FactoryFloorMap from "@/pages/FactoryFloorMap";
 import ClientPortal from "@/pages/ClientPortal";
+import Onboarding from "@/pages/Onboarding";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/setup" element={<Setup />} />
               <Route path="/welcome" element={<Welcome />} />
+              <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
