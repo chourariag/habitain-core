@@ -19,6 +19,8 @@ import { DeliveryChecklistButton } from "@/components/production/DeliveryCheckli
 import { WeeklyManpowerPlanner } from "@/components/production/WeeklyManpowerPlanner";
 import { DryAssemblyCheck } from "@/components/production/DryAssemblyCheck";
 import { ScheduleConflictBanner } from "@/components/production/ScheduleConflictBanner";
+import { FactoryCapacityCard } from "@/components/production/FactoryCapacityCard";
+import { StageVelocityMonitor } from "@/components/production/StageVelocityMonitor";
 import { useUserRole } from "@/hooks/useUserRole";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -120,6 +122,12 @@ function ProductionContent() {
               <BarChart3 className="h-4 w-4 mr-1" /> Gantt
             </Button>
           </div>
+        </div>
+
+        {/* Factory Intelligence Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <FactoryCapacityCard userRole={userRole} />
+          <StageVelocityMonitor userRole={userRole} />
         </div>
 
         {loading ? (
