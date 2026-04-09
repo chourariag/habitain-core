@@ -74,7 +74,7 @@ export function DryAssemblyCheck({ projectId, projectName, userRole, userId, all
       .select("*")
       .eq("project_id", projectId)
       .maybeSingle();
-    setRecord(data as DryAssemblyRecord | null);
+    setRecord(data as unknown as DryAssemblyRecord | null);
     setLoading(false);
   }, [projectId]);
 
@@ -243,13 +243,13 @@ export function DryAssemblyCheck({ projectId, projectName, userRole, userId, all
         const { data: targets } = await supabase
           .from("profiles")
           .select("auth_user_id, role")
-          .in("role", ["factory_supervisor", "planning_engineer"])
+          .in("role", ["factory_floor_supervisor", "planning_engineer"])
           .eq("is_active", true);
         if (targets?.length) {
           await insertNotifications(targets.map(t => ({
             recipient_id: t.auth_user_id,
             title: "Stage 2 Unlocked",
-            body: t.role === "planning_engineer"
+            body: t.role === "planning_engineer" as string
               ? `Dry Assembly Check signed off for ${projectName}. Update production schedule — Stage 2 can begin.`
               : `Dry Assembly Check complete for ${projectName}. Stage 2 — MEP Rough-In is now unlocked for all modules. Proceed as per weekly plan.`,
             category: "production",
