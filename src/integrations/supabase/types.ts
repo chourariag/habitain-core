@@ -3642,6 +3642,9 @@ export type Database = {
           kiosk_pin: string | null
           language: string | null
           login_type: Database["public"]["Enums"]["login_type"] | null
+          onboarding_completed: boolean
+          onboarding_completed_at: string | null
+          onboarding_quiz_scores: Json | null
           phone: string | null
           reporting_manager_id: string | null
           role: Database["public"]["Enums"]["app_role"]
@@ -3663,6 +3666,9 @@ export type Database = {
           kiosk_pin?: string | null
           language?: string | null
           login_type?: Database["public"]["Enums"]["login_type"] | null
+          onboarding_completed?: boolean
+          onboarding_completed_at?: string | null
+          onboarding_quiz_scores?: Json | null
           phone?: string | null
           reporting_manager_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
@@ -3684,6 +3690,9 @@ export type Database = {
           kiosk_pin?: string | null
           language?: string | null
           login_type?: Database["public"]["Enums"]["login_type"] | null
+          onboarding_completed?: boolean
+          onboarding_completed_at?: string | null
+          onboarding_quiz_scores?: Json | null
           phone?: string | null
           reporting_manager_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
@@ -5832,6 +5841,50 @@ export type Database = {
           wins?: Json | null
         }
         Relationships: []
+      }
+      weekly_habit_tracking: {
+        Row: {
+          calculated_at: string
+          daily_logs_completed: number
+          daily_logs_expected: number
+          feature_usage_score: number
+          gps_checkins: number
+          id: string
+          login_days: number
+          user_id: string
+          week_start_date: string
+        }
+        Insert: {
+          calculated_at?: string
+          daily_logs_completed?: number
+          daily_logs_expected?: number
+          feature_usage_score?: number
+          gps_checkins?: number
+          id?: string
+          login_days?: number
+          user_id: string
+          week_start_date: string
+        }
+        Update: {
+          calculated_at?: string
+          daily_logs_completed?: number
+          daily_logs_expected?: number
+          feature_usage_score?: number
+          gps_checkins?: number
+          id?: string
+          login_days?: number
+          user_id?: string
+          week_start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_habit_tracking_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       weekly_manpower_plans: {
         Row: {
