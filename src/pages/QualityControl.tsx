@@ -416,6 +416,7 @@ export default function QualityControl() {
                 <AlertTriangle className="h-4 w-4" /> NCRs
                 {openNCRs.length > 0 && <Badge variant="destructive" className="ml-1 text-[10px] px-1.5 py-0">{openNCRs.length}</Badge>}
               </TabsTrigger>
+              <TabsTrigger value="rework" className="gap-1.5"><ArrowDownLeft className="h-4 w-4" /> Rework Summary</TabsTrigger>
             </TabsList>
           </ScrollableTabsWrapper>
 
