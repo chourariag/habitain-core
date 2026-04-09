@@ -280,7 +280,7 @@ export function DryAssemblyCheck({ projectId, projectName, userRole, userId, all
     <>
       {/* Trigger button when not yet created */}
       {showTriggerOption && (
-        <Button size="sm" variant="outline" onClick={triggerCheck} className="text-xs border-amber-400 text-amber-700 hover:bg-amber-50">
+        <Button size="sm" variant="outline" onClick={triggerCheck} className="text-xs border-warning text-warning-foreground hover:bg-warning/10">
           <ShieldCheck className="h-4 w-4 mr-1" /> Trigger Dry Assembly Check
         </Button>
       )}
@@ -292,7 +292,7 @@ export function DryAssemblyCheck({ projectId, projectName, userRole, userId, all
             <Button size="sm" variant={isFullySigned ? "default" : "outline"}
               className={isFullySigned
                 ? "text-xs bg-primary text-primary-foreground"
-                : "text-xs border-amber-400 text-amber-700 hover:bg-amber-50"}>
+                : "text-xs border-warning text-warning-foreground hover:bg-warning/10"}>
               <ShieldCheck className="h-4 w-4 mr-1" />
               Dry Assembly Check
               {isFullySigned && <Check className="h-3.5 w-3.5 ml-1" />}
@@ -425,7 +425,7 @@ export function DryAssemblyCheck({ projectId, projectName, userRole, userId, all
 
       {/* Stage 2 locked banner */}
       {isTriggered && !isFullySigned && (
-        <div className="bg-amber-50 border border-amber-300 rounded-md p-2 flex items-center gap-2 text-xs text-amber-800">
+        <div className="bg-warning/10 border border-warning/30 rounded-md p-2 flex items-center gap-2 text-xs text-warning-foreground">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
           Stage 2 locked — Dry Assembly Check pending.
         </div>
