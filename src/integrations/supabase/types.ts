@@ -4059,16 +4059,21 @@ export type Database = {
       }
       purchase_orders: {
         Row: {
+          actual_delivery_date: string | null
           amount: number
           approved_at: string | null
           approved_by: string | null
           category: string | null
           created_at: string
           delivery_date: string | null
+          expected_delivery_date: string | null
           id: string
           is_archived: boolean
           item_description: string | null
           items_summary: string
+          lead_time_actual: number | null
+          lead_time_promised: number | null
+          lead_time_variance: number | null
           notes: string | null
           po_date: string
           po_number: string | null
@@ -4088,16 +4093,21 @@ export type Database = {
           vendor_name: string
         }
         Insert: {
+          actual_delivery_date?: string | null
           amount?: number
           approved_at?: string | null
           approved_by?: string | null
           category?: string | null
           created_at?: string
           delivery_date?: string | null
+          expected_delivery_date?: string | null
           id?: string
           is_archived?: boolean
           item_description?: string | null
           items_summary: string
+          lead_time_actual?: number | null
+          lead_time_promised?: number | null
+          lead_time_variance?: number | null
           notes?: string | null
           po_date?: string
           po_number?: string | null
@@ -4117,16 +4127,21 @@ export type Database = {
           vendor_name: string
         }
         Update: {
+          actual_delivery_date?: string | null
           amount?: number
           approved_at?: string | null
           approved_by?: string | null
           category?: string | null
           created_at?: string
           delivery_date?: string | null
+          expected_delivery_date?: string | null
           id?: string
           is_archived?: boolean
           item_description?: string | null
           items_summary?: string
+          lead_time_actual?: number | null
+          lead_time_promised?: number | null
+          lead_time_variance?: number | null
           notes?: string | null
           po_date?: string
           po_number?: string | null
@@ -4936,6 +4951,74 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_conflicts: {
+        Row: {
+          conflict_status: string
+          created_at: string
+          days_behind: number
+          detected_at: string
+          forecast_end: string | null
+          id: string
+          module_id: string
+          planned_end: string | null
+          project_id: string
+          resolved_at: string | null
+          stage_name: string
+          sunday_work_approved_at: string | null
+          sunday_work_approved_by: string | null
+          sunday_work_date: string | null
+          sunday_work_rejected_reason: string | null
+          sunday_work_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          conflict_status?: string
+          created_at?: string
+          days_behind?: number
+          detected_at?: string
+          forecast_end?: string | null
+          id?: string
+          module_id: string
+          planned_end?: string | null
+          project_id: string
+          resolved_at?: string | null
+          stage_name: string
+          sunday_work_approved_at?: string | null
+          sunday_work_approved_by?: string | null
+          sunday_work_date?: string | null
+          sunday_work_rejected_reason?: string | null
+          sunday_work_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          conflict_status?: string
+          created_at?: string
+          days_behind?: number
+          detected_at?: string
+          forecast_end?: string | null
+          id?: string
+          module_id?: string
+          planned_end?: string | null
+          project_id?: string
+          resolved_at?: string | null
+          stage_name?: string
+          sunday_work_approved_at?: string | null
+          sunday_work_approved_by?: string | null
+          sunday_work_date?: string | null
+          sunday_work_rejected_reason?: string | null
+          sunday_work_status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_conflicts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_diary: {
         Row: {
           ai_quality_checked: boolean | null
@@ -5609,6 +5692,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      vendor_lead_time_summary: {
+        Row: {
+          avg_actual_days: number | null
+          avg_delay_days: number | null
+          avg_promised_days: number | null
+          id: string
+          last_delivery_date: string | null
+          last_updated: string
+          on_time_pct: number | null
+          reliability_rating: string | null
+          total_pos: number
+          vendor_name: string
+        }
+        Insert: {
+          avg_actual_days?: number | null
+          avg_delay_days?: number | null
+          avg_promised_days?: number | null
+          id?: string
+          last_delivery_date?: string | null
+          last_updated?: string
+          on_time_pct?: number | null
+          reliability_rating?: string | null
+          total_pos?: number
+          vendor_name: string
+        }
+        Update: {
+          avg_actual_days?: number | null
+          avg_delay_days?: number | null
+          avg_promised_days?: number | null
+          id?: string
+          last_delivery_date?: string | null
+          last_updated?: string
+          on_time_pct?: number | null
+          reliability_rating?: string | null
+          total_pos?: number
+          vendor_name?: string
+        }
+        Relationships: []
       }
       weekly_digests: {
         Row: {
