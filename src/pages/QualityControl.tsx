@@ -466,6 +466,10 @@ export default function QualityControl() {
               <Card><CardContent className="py-8 text-center"><p className="text-muted-foreground text-sm">No NCRs recorded yet.</p></CardContent></Card>
             )}
           </TabsContent>
+
+          <TabsContent value="rework" className="mt-4">
+            <ReworkSummaryTab />
+          </TabsContent>
         </Tabs>
       )}
 
