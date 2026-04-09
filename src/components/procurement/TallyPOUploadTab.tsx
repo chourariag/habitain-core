@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Upload, Download, Loader2, Check, X, AlertTriangle, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { format, differenceInDays, parseISO } from "date-fns";
 import * as XLSX from "xlsx";
 
 const UPLOAD_ROLES = ["procurement", "production_head", "super_admin", "managing_director"];
