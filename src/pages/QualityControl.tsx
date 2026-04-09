@@ -615,7 +615,30 @@ export default function QualityControl() {
                   </div>
                 )}
 
-                {/* ACTION: Supervisor marks fix as done */}
+                {/* Rework log section for regression NCRs */}
+                {selectedNCR.requires_regression && isFixInProgress && selectedNCR.qc_inspections?.module_id && (
+                  <div className="border-t pt-3">
+                    <ReworkLogSection
+                      moduleId={selectedNCR.qc_inspections.module_id}
+                      ncrId={selectedNCR.id}
+                      ncrNumber={selectedNCR.ncr_number}
+                      projectId={selectedNCR.qc_inspections?.modules?.project_id || ""}
+                      userRole={userRole}
+                    />
+                  </div>
+                )}
+
+                {/* Rework cost display for any NCR with rework */}
+                {(selectedNCR.total_rework_cost > 0 || selectedNCR.total_rework_hours > 0) && (
+                  <div className="border-t pt-3">
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-muted-foreground">Rework:</span>
+                      <span className="font-semibold text-foreground">{selectedNCR.total_rework_hours}h</span>
+                      <span className="font-semibold text-destructive">₹{selectedNCR.total_rework_cost?.toLocaleString("en-IN")}</span>
+                    </div>
+                  </div>
+                )}
+
                 {isFixInProgress && isSupervisor && isAssignedToMe && (
                   <div className="border-t pt-3 space-y-3">
                     <h4 className="font-semibold text-card-foreground">Mark Fix Complete</h4>
