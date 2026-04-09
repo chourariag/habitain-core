@@ -3311,12 +3311,20 @@ export type Database = {
           is_archived: boolean | null
           ncr_number: string
           raised_by: string | null
+          regression_end_date: string | null
+          regression_from_stage: number | null
+          regression_reason: string | null
+          regression_start_date: string | null
+          regression_to_stage: number | null
           reinspection_completed_at: string | null
           reinspection_completed_by: string | null
           reinspection_failed: boolean | null
           reinspection_notes: string | null
           reinspection_photo_url: string | null
+          requires_regression: boolean
           status: string | null
+          total_rework_cost: number
+          total_rework_hours: number
           updated_at: string | null
         }
         Insert: {
@@ -3334,12 +3342,20 @@ export type Database = {
           is_archived?: boolean | null
           ncr_number: string
           raised_by?: string | null
+          regression_end_date?: string | null
+          regression_from_stage?: number | null
+          regression_reason?: string | null
+          regression_start_date?: string | null
+          regression_to_stage?: number | null
           reinspection_completed_at?: string | null
           reinspection_completed_by?: string | null
           reinspection_failed?: boolean | null
           reinspection_notes?: string | null
           reinspection_photo_url?: string | null
+          requires_regression?: boolean
           status?: string | null
+          total_rework_cost?: number
+          total_rework_hours?: number
           updated_at?: string | null
         }
         Update: {
@@ -3357,12 +3373,20 @@ export type Database = {
           is_archived?: boolean | null
           ncr_number?: string
           raised_by?: string | null
+          regression_end_date?: string | null
+          regression_from_stage?: number | null
+          regression_reason?: string | null
+          regression_start_date?: string | null
+          regression_to_stage?: number | null
           reinspection_completed_at?: string | null
           reinspection_completed_by?: string | null
           reinspection_failed?: boolean | null
           reinspection_notes?: string | null
           reinspection_photo_url?: string | null
+          requires_regression?: boolean
           status?: string | null
+          total_rework_cost?: number
+          total_rework_hours?: number
           updated_at?: string | null
         }
         Relationships: [
@@ -4427,6 +4451,79 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "retention_records_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rework_log_entries: {
+        Row: {
+          created_at: string
+          daily_rate_used: number
+          hours_worked: number
+          id: string
+          log_date: string
+          logged_by: string | null
+          module_id: string
+          ncr_id: string
+          project_id: string
+          rework_cost: number
+          skill_type: string
+          task_description: string | null
+          updated_at: string
+          worker_name: string
+        }
+        Insert: {
+          created_at?: string
+          daily_rate_used?: number
+          hours_worked: number
+          id?: string
+          log_date: string
+          logged_by?: string | null
+          module_id: string
+          ncr_id: string
+          project_id: string
+          rework_cost?: number
+          skill_type: string
+          task_description?: string | null
+          updated_at?: string
+          worker_name: string
+        }
+        Update: {
+          created_at?: string
+          daily_rate_used?: number
+          hours_worked?: number
+          id?: string
+          log_date?: string
+          logged_by?: string | null
+          module_id?: string
+          ncr_id?: string
+          project_id?: string
+          rework_cost?: number
+          skill_type?: string
+          task_description?: string | null
+          updated_at?: string
+          worker_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rework_log_entries_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rework_log_entries_ncr_id_fkey"
+            columns: ["ncr_id"]
+            isOneToOne: false
+            referencedRelation: "ncr_register"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rework_log_entries_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
