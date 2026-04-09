@@ -68,7 +68,6 @@ export function ProductionStageTracker({ moduleId, projectId, currentStage, prod
   const isBlocked = isOnHold && openNCRCount > 0;
   // Block advancing from Stage 1 to Stage 2 if dry assembly check not done
   const isDryAssemblyBlocked = dryAssemblyRequired && currentStage === "Sub-Frame";
-  const isBlocked = isOnHold && openNCRCount > 0;
 
   const handleAdvance = async () => {
     if (isBlocked) {
