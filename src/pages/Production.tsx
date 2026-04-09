@@ -18,6 +18,7 @@ import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import { DeliveryChecklistButton } from "@/components/production/DeliveryChecklistButton";
 import { WeeklyManpowerPlanner } from "@/components/production/WeeklyManpowerPlanner";
 import { DryAssemblyCheck } from "@/components/production/DryAssemblyCheck";
+import { ScheduleConflictBanner } from "@/components/production/ScheduleConflictBanner";
 import { useUserRole } from "@/hooks/useUserRole";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -96,6 +97,9 @@ function ProductionContent() {
               onUnlocked={fetchModules}
             />
           </div>
+        )}
+        {selectedProjectId && (
+          <ScheduleConflictBanner projectId={selectedProjectId} userRole={userRole} />
         )}
         <div className="flex items-center justify-between">
           <div>

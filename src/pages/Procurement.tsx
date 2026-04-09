@@ -25,6 +25,7 @@ import { MaterialAvailabilityGate } from "@/components/procurement/MaterialAvail
 import { ThirtyDayPlanTab } from "@/components/procurement/ThirtyDayPlanTab";
 import { ProcurementDashboardStrip } from "@/components/procurement/ProcurementDashboardStrip";
 import { AssetRegisterTab } from "@/components/procurement/AssetRegisterTab";
+import { SupplierIntelligenceTab } from "@/components/procurement/SupplierIntelligenceTab";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
 import { Calendar, Hammer } from "lucide-react";
 
@@ -294,6 +295,7 @@ export default function Procurement() {
             <TabsTrigger value="30-day-plan" className="gap-1.5"><Calendar className="h-4 w-4" /> 30-Day Plan</TabsTrigger>
             <TabsTrigger value="asset-register" className="gap-1.5"><Hammer className="h-4 w-4" /> Asset Register</TabsTrigger>
             <TabsTrigger value="tally-po" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
+            <TabsTrigger value="supplier-intel" className="gap-1.5"><TrendingUp className="h-4 w-4" /> Supplier Intelligence</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
