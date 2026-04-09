@@ -17,6 +17,8 @@ import { useProjectContext } from "@/contexts/ProjectContext";
 import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import { DeliveryChecklistButton } from "@/components/production/DeliveryChecklistButton";
 import { WeeklyManpowerPlanner } from "@/components/production/WeeklyManpowerPlanner";
+import { DryAssemblyCheck } from "@/components/production/DryAssemblyCheck";
+import { useUserRole } from "@/hooks/useUserRole";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
@@ -31,9 +33,9 @@ const STAGE_COLORS: Record<string, string> = {
 
 function ProductionContent() {
   const { selectedProjectId, selectedProject } = useProjectContext();
+  const { role: userRole, userId } = useUserRole();
   const [modules, setModules] = useState<ModuleWithProject[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<string | null>(null);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [projectTab, setProjectTab] = useState("modules");
   const [viewMode, setViewMode] = useState<"table" | "board" | "gantt">(() => {
@@ -60,13 +62,11 @@ function ProductionContent() {
 
   useEffect(() => { fetchModules(); }, [fetchModules]);
 
-  useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) return;
-      const { data } = await supabase.rpc("get_user_role", { _user_id: user.id });
-      setUserRole(data as string | null);
-    });
-  }, []);
+  // Determine if all modules completed Stage 1 (Sub-Frame)
+  const allStage1Complete = modules.length > 0 && modules.every(m => {
+    const stageIdx = m.current_stage ? ["Sub-Frame","MEP Rough-In","Insulation","Drywall","Paint","MEP Final","Windows & Doors","Finishing","QC Inspection","Dispatch"].indexOf(m.current_stage) : -1;
+    return stageIdx > 0 || m.production_status === "completed";
+  });
 
   useEffect(() => {
     const channel = supabase
@@ -85,8 +85,16 @@ function ProductionContent() {
           <ProjectChatButton projectId={selectedProjectId} projectName={selectedProject.name} projectType="production" />
         )}
         {selectedProjectId && (
-          <div className="flex items-center justify-between">
+         <div className="flex items-center justify-between gap-2 flex-wrap">
             <DeliveryChecklistButton projectId={selectedProjectId} />
+            <DryAssemblyCheck
+              projectId={selectedProjectId}
+              projectName={selectedProject?.name ?? ""}
+              userRole={userRole}
+              userId={userId}
+              allStage1Complete={allStage1Complete}
+              onUnlocked={fetchModules}
+            />
           </div>
         )}
         <div className="flex items-center justify-between">
