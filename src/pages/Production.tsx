@@ -19,6 +19,8 @@ import { DeliveryChecklistButton } from "@/components/production/DeliveryCheckli
 import { WeeklyManpowerPlanner } from "@/components/production/WeeklyManpowerPlanner";
 import { DryAssemblyCheck } from "@/components/production/DryAssemblyCheck";
 import { ScheduleConflictBanner } from "@/components/production/ScheduleConflictBanner";
+import { FactoryCapacityCard } from "@/components/production/FactoryCapacityCard";
+import { StageVelocityMonitor } from "@/components/production/StageVelocityMonitor";
 import { useUserRole } from "@/hooks/useUserRole";
 import type { Tables } from "@/integrations/supabase/types";
 
