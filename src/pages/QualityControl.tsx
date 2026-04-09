@@ -141,13 +141,51 @@ export default function QualityControl() {
         dueDate = d.toISOString();
       }
 
-      await (client.from("ncr_register") as any).update({
+      const updatePayload: any = {
         status: "fix_in_progress",
         fix_timeline: fixTimeline,
         fix_timeline_set_by: userId,
         fix_timeline_set_at: new Date().toISOString(),
         fix_timeline_due_date: dueDate,
-      }).eq("id", ncrId);
+      };
+
+      // Handle stage regression
+      if (regressionToggle && regressionToStage && regressionReason.trim()) {
+        const currentStageIdx = PRODUCTION_STAGES.indexOf(getNCRStage(selectedNCR) as any);
+        const toIdx = parseInt(regressionToStage);
+        updatePayload.requires_regression = true;
+        updatePayload.regression_from_stage = currentStageIdx >= 0 ? currentStageIdx : null;
+        updatePayload.regression_to_stage = toIdx;
+        updatePayload.regression_reason = regressionReason.trim();
+        updatePayload.regression_start_date = new Date().toISOString().split("T")[0];
+
+        // Regress the module stage
+        const moduleId = selectedNCR.qc_inspections?.module_id;
+        if (moduleId && toIdx >= 0 && toIdx < PRODUCTION_STAGES.length) {
+          await (client.from("modules") as any).update({
+            current_stage: PRODUCTION_STAGES[toIdx],
+            production_status: "hold",
+          }).eq("id", moduleId);
+        }
+
+        // Notify planning engineer about schedule conflict
+        const { data: planners } = await supabase.from("profiles")
+          .select("auth_user_id")
+          .eq("role", "planning_engineer" as any)
+          .eq("is_active", true);
+        for (const p of planners ?? []) {
+          await insertNotifications({
+            recipient_id: p.auth_user_id,
+            title: "Stage Regression — Schedule Impact",
+            body: `${selectedNCR?.ncr_number}: Module regressed from ${PRODUCTION_STAGES[currentStageIdx] || "?"} to ${PRODUCTION_STAGES[toIdx]}. Update production schedule.`,
+            category: "production",
+            related_table: "ncr_register",
+            related_id: ncrId,
+          });
+        }
+      }
+
+      await (client.from("ncr_register") as any).update(updatePayload).eq("id", ncrId);
 
       // Notify QC inspector + production head
       const { data: notifyProfiles } = await supabase.from("profiles")
