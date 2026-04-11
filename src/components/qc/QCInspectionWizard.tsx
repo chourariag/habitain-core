@@ -104,10 +104,15 @@ export function QCInspectionWizard({
   const [inspectorName, setInspectorName] = useState("");
   const [inspectorId, setInspectorId] = useState("");
 
+  // Stage type selector
+  const [stageType, setStageType] = useState<"shell_core" | "builder_finish" | "interiors">("shell_core");
+  const [factoryFloorSupervisorId, setFactoryFloorSupervisorId] = useState<string | null>(null);
+
   // Step 2 state
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
   const [itemResults, setItemResults] = useState<Record<string, ItemResult>>({});
   const [activeStage, setActiveStage] = useState<string>("");
+  const [ncrWhenCanBeFixed, setNcrWhenCanBeFixed] = useState<Record<string, string>>({});
 
   // Step 3 state
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
@@ -132,8 +137,10 @@ export function QCInspectionWizard({
     setSelectedProjectId(preselectedProjectId || "");
     setSelectedModuleId(preselectedModuleId || "");
     setSelectedPanelId("");
+    setStageType("shell_core");
     setChecklistItems([]);
     setItemResults({});
+    setNcrWhenCanBeFixed({});
     setAiAnalysis(null);
     setEditableAnalysis(null);
     setGeneratedNCRs([]);
@@ -162,6 +169,16 @@ export function QCInspectionWizard({
         setInspectorId(userRes.data.user.id);
       }
     }
+
+    // Load factory floor supervisor for auto-assignment
+    const { data: ffsProfile } = await supabase
+      .from("profiles")
+      .select("auth_user_id")
+      .eq("role", "factory_floor_supervisor" as any)
+      .eq("is_active", true)
+      .limit(1)
+      .maybeSingle();
+    setFactoryFloorSupervisorId((ffsProfile as any)?.auth_user_id ?? null);
 
     if (preselectedProjectId) {
       loadModules(preselectedProjectId);
@@ -212,11 +229,14 @@ export function QCInspectionWizard({
     const stage = mod?.current_stage || "Sub-Frame";
     setActiveStage(stage);
 
-    const { data } = await supabase
+    let query = supabase
       .from("qc_checklist_items")
       .select("*")
       .eq("is_active", true)
       .order("sort_order");
+
+    // Filter by stage_type if set on items
+    const { data } = await (query as any).or(`stage_type.eq.${stageType},stage_type.is.null`);
 
     setChecklistItems(data ?? []);
     const results: Record<string, ItemResult> = {};
@@ -411,7 +431,9 @@ export function QCInspectionWizard({
           ncr_number: ncr.ncrNumber,
           status: ncr.severity === "Critical" ? "critical_open" : "open",
           raised_by: inspectorId,
-        });
+          assigned_to: factoryFloorSupervisorId || null,
+          when_can_be_fixed: ncrWhenCanBeFixed[ncr.checklistItemId] || null,
+        } as any);
       }
 
       // 5. Dispatch gate: if REWORK REQUIRED or any Critical NCR, lock module
@@ -580,6 +602,20 @@ export function QCInspectionWizard({
                       {p.panel_code} ({p.panel_type})
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-foreground">Stage Type *</label>
+              <Select value={stageType} onValueChange={(v: any) => setStageType(v)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="shell_core">Shell and Core</SelectItem>
+                  <SelectItem value="builder_finish">Builder Finish</SelectItem>
+                  <SelectItem value="interiors">Interiors</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -949,7 +985,7 @@ export function QCInspectionWizard({
                     </Badge>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="px-4 pb-3 space-y-1 text-sm">
+                <CardContent className="px-4 pb-3 space-y-2 text-sm">
                   <p>
                     <span className="text-muted-foreground">Issue:</span>{" "}
                     {ncr.description}
@@ -962,6 +998,20 @@ export function QCInspectionWizard({
                     <span className="text-muted-foreground">Action:</span>{" "}
                     {ncr.immediateAction}
                   </p>
+                  {factoryFloorSupervisorId && (
+                    <p className="text-xs" style={{ color: "#006039" }}>
+                      Auto-assigned to Factory Floor Supervisor
+                    </p>
+                  )}
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">When can this be fixed? *</label>
+                    <input
+                      type="date"
+                      value={ncrWhenCanBeFixed[ncr.checklistItemId] || ""}
+                      onChange={(e) => setNcrWhenCanBeFixed((prev) => ({ ...prev, [ncr.checklistItemId]: e.target.value }))}
+                      className="mt-1 w-full border rounded px-2 py-1 text-sm"
+                    />
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -970,7 +1020,11 @@ export function QCInspectionWizard({
               <Button variant="outline" onClick={() => setStep(2)}>
                 <ArrowLeft className="h-4 w-4 mr-1" /> Back
               </Button>
-              <Button onClick={() => setStep(4)}>
+              <Button onClick={() => {
+                const missing = generatedNCRs.filter((n) => !ncrWhenCanBeFixed[n.checklistItemId]);
+                if (missing.length > 0) { toast.error("Please set 'When can this be fixed?' for all NCRs"); return; }
+                setStep(4);
+              }}>
                 Review & Submit <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </div>

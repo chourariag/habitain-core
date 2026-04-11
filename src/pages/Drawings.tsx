@@ -44,7 +44,7 @@ export default function Drawings() {
   const [uploadForm, setUploadForm] = useState({
     project_id: "", module_id: "", drawing_type: "Architectural",
     drawing_id_code: "", notes: "", revision: 1,
-    existing_drawing_code: "",
+    existing_drawing_code: "", revision_reason: "",
   });
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -200,6 +200,7 @@ export default function Drawings() {
         uploaded_by: user.id,
         uploaded_by_name: userName,
         notes: uploadForm.notes || null,
+        revision_reason: uploadForm.revision_reason || null,
         status: "active",
       });
       if (error) throw error;
@@ -207,7 +208,7 @@ export default function Drawings() {
       toast.success("Drawing uploaded successfully");
       setUploadOpen(false);
       setUploadFile(null);
-      setUploadForm({ project_id: "", module_id: "", drawing_type: "Architectural", drawing_id_code: "", notes: "", revision: 1, existing_drawing_code: "" });
+      setUploadForm({ project_id: "", module_id: "", drawing_type: "Architectural", drawing_id_code: "", notes: "", revision: 1, existing_drawing_code: "", revision_reason: "" });
       fetchData();
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
@@ -481,8 +482,19 @@ export default function Drawings() {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-xs">File (PDF or DWG) *</Label>
-                    <Input type="file" accept=".pdf,.dwg,.DWG,.PDF" onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)} />
+                    <Label className="text-xs">Revision Reason</Label>
+                    <Select value={uploadForm.revision_reason} onValueChange={(v) => setUploadForm({ ...uploadForm, revision_reason: v })}>
+                      <SelectTrigger><SelectValue placeholder="Select reason (optional)" /></SelectTrigger>
+                      <SelectContent>
+                        {["Client Design Change", "Structural Input", "MEP Coordination", "Material Change", "Site Constraint", "Other"].map((r) => (
+                          <SelectItem key={r} value={r}>{r}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">File (PDF, DWG or DXF) *</Label>
+                    <Input type="file" accept=".pdf,.dwg,.DWG,.PDF,.dxf,.DXF" onChange={(e) => setUploadFile(e.target.files?.[0] ?? null)} />
                   </div>
                   <div>
                     <Label className="text-xs">Notes (optional)</Label>

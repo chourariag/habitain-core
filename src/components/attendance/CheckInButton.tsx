@@ -12,13 +12,11 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { saveOfflineRecord, type OfflineAttendanceRecord } from "@/lib/offline-attendance";
 
-const ARCHITECT_ROLES = ["principal_architect", "project_architect", "structural_architect"];
-
 interface Props {
   userRole: string | null;
 }
 
-export function CheckInButton({ userRole }: Props) {
+export function CheckInButton({ userRole: _userRole }: Props) {
   const { user } = useAuth();
   const { projects } = useProjectContext();
   const connectionStatus = useConnectionStatus();
@@ -40,8 +38,6 @@ export function CheckInButton({ userRole }: Props) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [offlineCheckedIn, setOfflineCheckedIn] = useState(false);
 
-  const isArchitect = userRole && ARCHITECT_ROLES.includes(userRole);
-
   // Live clock
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -49,7 +45,7 @@ export function CheckInButton({ userRole }: Props) {
   }, []);
 
   useEffect(() => {
-    if (!user || isArchitect) return;
+    if (!user) return;
     fetchToday();
   }, [user]);
 
@@ -68,7 +64,7 @@ export function CheckInButton({ userRole }: Props) {
     setLoading(false);
   };
 
-  if (isArchitect || !user) return null;
+  if (!user) return null;
 
   const getGPS = (): Promise<GeolocationPosition> =>
     new Promise((resolve, reject) =>

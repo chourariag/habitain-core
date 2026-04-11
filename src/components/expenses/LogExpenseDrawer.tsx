@@ -208,7 +208,19 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
               </div>
               <div>
                 <Label className="text-xs font-inter" style={{ color: "#666" }}>Amount (₹) *</Label>
-                <Input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" className="mt-1 font-inter" style={{ fontSize: 15 }} />
+                <Input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0"
+                  className="mt-1 font-inter"
+                  style={{ fontSize: 15, borderColor: Number(amount) > 5000 ? "#D4860A" : undefined, backgroundColor: Number(amount) > 5000 ? "#FFF8E8" : undefined }}
+                />
+                {Number(amount) > 5000 && (
+                  <p className="text-[10px] mt-1 font-medium" style={{ color: "#D4860A" }}>
+                    ⚠ Amount exceeds ₹5,000 — this expense will be flagged for Finance review.
+                  </p>
+                )}
               </div>
               <div>
                 <Label className="text-xs font-inter" style={{ color: "#666" }}>Project (optional)</Label>

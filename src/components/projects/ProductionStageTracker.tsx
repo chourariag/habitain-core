@@ -37,6 +37,8 @@ export function ProductionStageTracker({ moduleId, projectId, currentStage, prod
   const [openNCRCount, setOpenNCRCount] = useState(0);
   const [qcWizardOpen, setQcWizardOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [gfcH1Approved, setGfcH1Approved] = useState<boolean | null>(null);
+  const [gfcH2Approved, setGfcH2Approved] = useState<boolean | null>(null);
 
   useEffect(() => {
     const checkNCRs = async () => {
@@ -54,7 +56,19 @@ export function ProductionStageTracker({ moduleId, projectId, currentStage, prod
         .in("inspection_id", inspectionIds);
       setOpenNCRCount(count ?? 0);
     };
+
+    const checkGFC = async () => {
+      const { data } = await supabase
+        .from("modules")
+        .select("gfc_h1_approved, gfc_h2_approved")
+        .eq("id", moduleId)
+        .maybeSingle();
+      setGfcH1Approved(!!(data as any)?.gfc_h1_approved);
+      setGfcH2Approved(!!(data as any)?.gfc_h2_approved);
+    };
+
     checkNCRs();
+    checkGFC();
 
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
@@ -64,11 +78,33 @@ export function ProductionStageTracker({ moduleId, projectId, currentStage, prod
   }, [moduleId]);
 
   const canStartInspection = ["qc_inspector", "production_head", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canApproveGFC = ["managing_director", "architecture_director", "super_admin", "principal_architect"].includes(userRole ?? "");
   const isBlocked = isOnHold && openNCRCount > 0;
+
+  // GFC gates: Stage 0 (Sub-Frame) requires H1, Stage 1 (MEP Rough-In) requires H2
+  const isGfcH1Blocked = currentIdx === -1 && gfcH1Approved === false;
+  const isGfcH2Blocked = currentIdx === 0 && gfcH2Approved === false;
+
+  const handleApproveGFC = async (half: "h1" | "h2") => {
+    const field = half === "h1" ? "gfc_h1_approved" : "gfc_h2_approved";
+    const { error } = await supabase.from("modules").update({ [field]: true } as any).eq("id", moduleId);
+    if (error) { toast.error(error.message); return; }
+    if (half === "h1") setGfcH1Approved(true);
+    else setGfcH2Approved(true);
+    toast.success(`GFC ${half.toUpperCase()} approved — production gate cleared`);
+  };
 
   const handleAdvance = async () => {
     if (isBlocked) {
       toast.error("Module is locked. Close all open NCRs before advancing.");
+      return;
+    }
+    if (isGfcH1Blocked) {
+      toast.error("GFC H1 drawings must be approved before starting production.");
+      return;
+    }
+    if (isGfcH2Blocked) {
+      toast.error("GFC H2 drawings must be approved before MEP Rough-In.");
       return;
     }
 
@@ -105,6 +141,34 @@ export function ProductionStageTracker({ moduleId, projectId, currentStage, prod
 
   return (
     <div className="space-y-3">
+      {/* GFC gates */}
+      {gfcH1Approved === false && (
+        <div className="rounded-md p-2 flex items-center justify-between gap-2 text-xs" style={{ backgroundColor: "#FFF8E8", border: "1px solid #F5C842" }}>
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" style={{ color: "#D4860A" }} />
+            <span style={{ color: "#D4860A" }}>GFC H1 not approved — production blocked</span>
+          </div>
+          {canApproveGFC && (
+            <Button size="sm" className="h-6 text-[10px] text-white" style={{ backgroundColor: "#006039" }} onClick={() => handleApproveGFC("h1")}>
+              Approve H1
+            </Button>
+          )}
+        </div>
+      )}
+      {gfcH1Approved === true && gfcH2Approved === false && currentIdx >= 0 && (
+        <div className="rounded-md p-2 flex items-center justify-between gap-2 text-xs" style={{ backgroundColor: "#FFF8E8", border: "1px solid #F5C842" }}>
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" style={{ color: "#D4860A" }} />
+            <span style={{ color: "#D4860A" }}>GFC H2 not approved — MEP Rough-In blocked</span>
+          </div>
+          {canApproveGFC && (
+            <Button size="sm" className="h-6 text-[10px] text-white" style={{ backgroundColor: "#006039" }} onClick={() => handleApproveGFC("h2")}>
+              Approve H2
+            </Button>
+          )}
+        </div>
+      )}
+
       <div className="flex items-center gap-1 overflow-x-auto pb-1">
         {PRODUCTION_STAGES.map((stage, idx) => {
           const isComplete = idx < currentIdx || isCompleted;
@@ -146,7 +210,7 @@ export function ProductionStageTracker({ moduleId, projectId, currentStage, prod
 
       <div className="flex items-center gap-2 flex-wrap">
         {canAdvance && !isCompleted && (
-          <Button size="sm" variant="outline" onClick={handleAdvance} disabled={isBlocked} className="text-xs">
+          <Button size="sm" variant="outline" onClick={handleAdvance} disabled={isBlocked || isGfcH1Blocked || isGfcH2Blocked} className="text-xs">
             {currentIdx === -1
               ? `Start → ${PRODUCTION_STAGES[0]}`
               : currentIdx + 1 < PRODUCTION_STAGES.length

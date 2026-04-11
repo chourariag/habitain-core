@@ -14,12 +14,28 @@ import { format } from "date-fns";
 
 const STATUS_BADGE: Record<string, string> = {
   open: "bg-warning text-warning-foreground",
-  pending_estimate: "bg-primary/20 text-primary",
-  pending_schedule: "bg-primary/20 text-primary",
+  assessed: "bg-primary/10 text-primary",
+  quoted: "bg-primary/20 text-primary",
+  approved: "bg-accent text-accent-foreground",
   scheduled: "bg-accent text-accent-foreground",
   in_progress: "bg-accent text-accent-foreground",
+  awaiting_review: "bg-warning text-warning-foreground",
   closed: "bg-muted text-muted-foreground",
 };
+
+const STATUS_LABEL: Record<string, string> = {
+  open: "Open",
+  assessed: "Assessed",
+  quoted: "Quoted",
+  approved: "Approved",
+  scheduled: "Scheduled",
+  in_progress: "In Progress",
+  awaiting_review: "Awaiting Review",
+  closed: "Closed",
+};
+
+// 8-step flow
+const RM_STEPS = ["open", "assessed", "quoted", "approved", "scheduled", "in_progress", "awaiting_review", "closed"] as const;
 
 const PRIORITY_BADGE: Record<string, string> = {
   urgent: "bg-destructive text-destructive-foreground",
@@ -28,7 +44,9 @@ const PRIORITY_BADGE: Record<string, string> = {
 };
 
 const CAN_RAISE = ["super_admin", "managing_director", "site_installation_mgr", "site_engineer", "delivery_rm_lead", "head_operations", "production_head", "sales_director"];
+const CAN_ASSESS = ["delivery_rm_lead", "site_installation_mgr", "head_operations", "super_admin", "managing_director"];
 const CAN_ESTIMATE = ["costing_engineer", "super_admin", "managing_director"];
+const CAN_APPROVE = ["planning_engineer", "head_operations", "super_admin", "managing_director"];
 const CAN_SCHEDULE = ["planning_engineer", "super_admin", "managing_director"];
 const CAN_COMPLETE = ["delivery_rm_lead", "super_admin", "managing_director"];
 
@@ -259,9 +277,13 @@ export default function RMPage() {
   const [aiError, setAiError] = useState<string | null>(null);
 
   const canRaise = CAN_RAISE.includes(userRole ?? "");
+  const canAssess = CAN_ASSESS.includes(userRole ?? "");
   const canEstimate = CAN_ESTIMATE.includes(userRole ?? "");
+  const canApprove = CAN_APPROVE.includes(userRole ?? "");
   const canSchedule = CAN_SCHEDULE.includes(userRole ?? "");
   const canComplete = CAN_COMPLETE.includes(userRole ?? "");
+
+  const [afterPhotoFile, setAfterPhotoFile] = useState<File | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -334,6 +356,16 @@ export default function RMPage() {
     }
   };
 
+  const handleAssess = async (ticketId: string) => {
+    setSubmitting(true);
+    try {
+      const { error } = await (supabase.from("rm_tickets" as any) as any).update({ status: "assessed" }).eq("id", ticketId);
+      if (error) throw error;
+      toast.success("Ticket marked as assessed");
+      setDetailTicket(null); fetchData();
+    } catch (err: any) { toast.error(err.message); } finally { setSubmitting(false); }
+  };
+
   const handleEstimate = async (ticketId: string) => {
     if (!estimateVal) return;
     setSubmitting(true);
@@ -344,13 +376,23 @@ export default function RMPage() {
         cost_estimate: parseFloat(estimateVal),
         cost_estimated_by: user.id,
         cost_estimated_at: new Date().toISOString(),
-        status: "pending_schedule",
+        status: "quoted",
       }).eq("id", ticketId);
       if (error) throw error;
-      toast.success("Cost estimate added");
+      toast.success("Cost estimate submitted — awaiting approval");
       setDetailTicket(null);
       setEstimateVal("");
       fetchData();
+    } catch (err: any) { toast.error(err.message); } finally { setSubmitting(false); }
+  };
+
+  const handleApprove = async (ticketId: string) => {
+    setSubmitting(true);
+    try {
+      const { error } = await (supabase.from("rm_tickets" as any) as any).update({ status: "approved" }).eq("id", ticketId);
+      if (error) throw error;
+      toast.success("Estimate approved");
+      setDetailTicket(null); fetchData();
     } catch (err: any) { toast.error(err.message); } finally { setSubmitting(false); }
   };
 
@@ -374,24 +416,53 @@ export default function RMPage() {
     } catch (err: any) { toast.error(err.message); } finally { setSubmitting(false); }
   };
 
+  const handleStartWork = async (ticketId: string) => {
+    setSubmitting(true);
+    try {
+      const { error } = await (supabase.from("rm_tickets" as any) as any).update({ status: "in_progress" }).eq("id", ticketId);
+      if (error) throw error;
+      toast.success("Work started — ticket in progress");
+      setDetailTicket(null); fetchData();
+    } catch (err: any) { toast.error(err.message); } finally { setSubmitting(false); }
+  };
+
+  const handleCompleteWork = async (ticketId: string) => {
+    setSubmitting(true);
+    try {
+      const { error } = await (supabase.from("rm_tickets" as any) as any).update({ status: "awaiting_review" }).eq("id", ticketId);
+      if (error) throw error;
+      toast.success("Work complete — awaiting client review");
+      setDetailTicket(null); fetchData();
+    } catch (err: any) { toast.error(err.message); } finally { setSubmitting(false); }
+  };
+
   const handleComplete = async (ticketId: string) => {
     if (!signoffName) { toast.error("Client sign-off name required"); return; }
+    if (!afterPhotoFile) { toast.error("After-photo is mandatory for closure"); return; }
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      // Upload after-photo
+      const ext = afterPhotoFile.name.split(".").pop() ?? "jpg";
+      const path = `${ticketId}/after_${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("rm-media").upload(path, afterPhotoFile);
+      if (upErr) throw upErr;
+      const { data: urlData } = supabase.storage.from("rm-media").getPublicUrl(path);
       const { error } = await (supabase.from("rm_tickets" as any) as any).update({
         completed_by: user.id,
         completed_at: new Date().toISOString(),
         client_signoff_name: signoffName,
         completion_notes: completionNotes,
+        after_photo_url: urlData.publicUrl,
         status: "closed",
       }).eq("id", ticketId);
       if (error) throw error;
-      toast.success("Ticket closed with client sign-off");
+      toast.success("Ticket closed with client sign-off ✓");
       setDetailTicket(null);
       setSignoffName("");
       setCompletionNotes("");
+      setAfterPhotoFile(null);
       fetchData();
     } catch (err: any) { toast.error(err.message); } finally { setSubmitting(false); }
   };
@@ -514,7 +585,7 @@ export default function RMPage() {
                   </div>
                   <div className="flex gap-1.5 shrink-0">
                     <Badge className={PRIORITY_BADGE[t.priority] ?? "bg-muted text-muted-foreground"}>{t.priority}</Badge>
-                    <Badge className={STATUS_BADGE[t.status] ?? "bg-muted text-muted-foreground"}>{t.status.replace(/_/g, " ")}</Badge>
+                    <Badge className={STATUS_BADGE[t.status] ?? "bg-muted text-muted-foreground"}>{STATUS_LABEL[t.status] ?? t.status.replace(/_/g, " ")}</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -570,7 +641,7 @@ export default function RMPage() {
                 <div><p className="text-xs" style={{ color: "#666666" }}>Project</p><p className="font-medium" style={{ color: "#1A1A1A" }}>{detailTicket.projects?.name || "—"}</p></div>
                 <div><p className="text-xs" style={{ color: "#666666" }}>Client</p><p className="font-medium" style={{ color: "#1A1A1A" }}>{detailTicket.projects?.client_name || detailTicket.client_name || "—"}</p></div>
                 <div><p className="text-xs" style={{ color: "#666666" }}>Priority</p><Badge className={PRIORITY_BADGE[detailTicket.priority] ?? ""}>{detailTicket.priority}</Badge></div>
-                <div><p className="text-xs" style={{ color: "#666666" }}>Status</p><Badge className={STATUS_BADGE[detailTicket.status] ?? ""}>{detailTicket.status.replace(/_/g, " ")}</Badge></div>
+                <div><p className="text-xs" style={{ color: "#666666" }}>Status</p><Badge className={STATUS_BADGE[detailTicket.status] ?? ""}>{STATUS_LABEL[detailTicket.status] ?? detailTicket.status.replace(/_/g, " ")}</Badge></div>
                 <div><p className="text-xs" style={{ color: "#666666" }}>Date Raised</p><p style={{ color: "#1A1A1A" }}>{format(new Date(detailTicket.created_at), "dd MMM yyyy")}</p></div>
               </div>
               <div>
@@ -657,14 +728,43 @@ export default function RMPage() {
                 <div><p className="text-xs" style={{ color: "#666666" }}>Completion Notes</p><p style={{ color: "#1A1A1A" }}>{detailTicket.completion_notes}</p></div>
               )}
 
-              {detailTicket.status === "open" && canEstimate && (
+              {/* Step progress indicator */}
+              <div className="border-t pt-3" style={{ borderColor: "#E0E0E0" }}>
+                <div className="flex items-center gap-1 overflow-x-auto pb-1">
+                  {RM_STEPS.map((s, i) => {
+                    const currentIdx = RM_STEPS.indexOf(detailTicket.status as any);
+                    const done = i < currentIdx;
+                    const active = i === currentIdx;
+                    return (
+                      <div key={s} className="flex items-center shrink-0">
+                        {i > 0 && <div className={`w-3 h-0.5 ${done ? "bg-primary" : "bg-border"}`} />}
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded-full border ${active ? "border-primary text-primary bg-primary/10 font-semibold" : done ? "border-primary/40 text-primary/70 bg-primary/5" : "border-border text-muted-foreground"}`}>
+                          {STATUS_LABEL[s]}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {detailTicket.status === "open" && canAssess && (
+                <div className="border-t pt-3" style={{ borderColor: "#E0E0E0" }}>
+                  <Button size="sm" onClick={() => handleAssess(detailTicket.id)} disabled={submitting} style={{ backgroundColor: "#006039" }} className="text-white w-full">Mark as Assessed</Button>
+                </div>
+              )}
+              {detailTicket.status === "assessed" && canEstimate && (
                 <div className="border-t pt-3 space-y-2" style={{ borderColor: "#E0E0E0" }}>
                   <Label style={{ color: "#1A1A1A" }}>Cost Estimate (₹)</Label>
                   <Input type="number" value={estimateVal} onChange={(e) => setEstimateVal(e.target.value)} placeholder="Enter estimate" />
-                  <Button size="sm" onClick={() => handleEstimate(detailTicket.id)} disabled={submitting} style={{ backgroundColor: "#006039" }} className="text-white">Submit Estimate</Button>
+                  <Button size="sm" onClick={() => handleEstimate(detailTicket.id)} disabled={submitting} style={{ backgroundColor: "#006039" }} className="text-white">Submit Quote</Button>
                 </div>
               )}
-              {detailTicket.status === "pending_schedule" && canSchedule && (
+              {detailTicket.status === "quoted" && canApprove && (
+                <div className="border-t pt-3" style={{ borderColor: "#E0E0E0" }}>
+                  <Button size="sm" onClick={() => handleApprove(detailTicket.id)} disabled={submitting} style={{ backgroundColor: "#006039" }} className="text-white w-full">Approve Estimate</Button>
+                </div>
+              )}
+              {detailTicket.status === "approved" && canSchedule && (
                 <div className="border-t pt-3 space-y-2" style={{ borderColor: "#E0E0E0" }}>
                   <Label style={{ color: "#1A1A1A" }}>Visit Date</Label>
                   <Input type="date" value={scheduleDate} onChange={(e) => setScheduleDate(e.target.value)} />
@@ -672,12 +772,25 @@ export default function RMPage() {
                 </div>
               )}
               {detailTicket.status === "scheduled" && canComplete && (
+                <div className="border-t pt-3" style={{ borderColor: "#E0E0E0" }}>
+                  <Button size="sm" onClick={() => handleStartWork(detailTicket.id)} disabled={submitting} style={{ backgroundColor: "#006039" }} className="text-white w-full">Start Work</Button>
+                </div>
+              )}
+              {detailTicket.status === "in_progress" && canComplete && (
+                <div className="border-t pt-3" style={{ borderColor: "#E0E0E0" }}>
+                  <Button size="sm" onClick={() => handleCompleteWork(detailTicket.id)} disabled={submitting} style={{ backgroundColor: "#D4860A" }} className="text-white w-full">Work Done — Submit for Review</Button>
+                </div>
+              )}
+              {detailTicket.status === "awaiting_review" && canComplete && (
                 <div className="border-t pt-3 space-y-2" style={{ borderColor: "#E0E0E0" }}>
                   <Label style={{ color: "#1A1A1A" }}>Completion Notes</Label>
                   <Textarea value={completionNotes} onChange={(e) => setCompletionNotes(e.target.value)} placeholder="Work done..." />
+                  <Label style={{ color: "#1A1A1A" }}>After-Photo * (mandatory)</Label>
+                  <Input type="file" accept="image/jpeg,image/png" onChange={(e) => setAfterPhotoFile(e.target.files?.[0] ?? null)} />
+                  {afterPhotoFile && <p className="text-xs" style={{ color: "#006039" }}>Selected: {afterPhotoFile.name}</p>}
                   <Label style={{ color: "#1A1A1A" }}>Client Sign-off Name *</Label>
                   <Input value={signoffName} onChange={(e) => setSignoffName(e.target.value)} placeholder="Client name as digital signature" />
-                  <Button size="sm" onClick={() => handleComplete(detailTicket.id)} disabled={submitting} style={{ backgroundColor: "#006039" }} className="text-white">Close Ticket</Button>
+                  <Button size="sm" onClick={() => handleComplete(detailTicket.id)} disabled={submitting} style={{ backgroundColor: "#006039" }} className="text-white w-full">Close Ticket</Button>
                 </div>
               )}
             </div>

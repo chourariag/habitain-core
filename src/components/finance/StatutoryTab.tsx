@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { differenceInDays } from "date-fns";
+import { differenceInDays, format, parseISO } from "date-fns";
 
 interface Filing {
   id: string; filing_type: string; due_date: string; status: string; notes: string | null;
@@ -28,9 +28,19 @@ function getUpcomingStatutoryDates(): { filing_type: string; due_date: string }[
     const nextM = String(((m + 1) % 12) + 1).padStart(2, "0");
     const nextY = m === 11 ? y + 1 : y;
 
-    entries.push({ filing_type: "GST Return", due_date: `${nextY}-${nextM}-20` });
-    entries.push({ filing_type: "TDS Payment", due_date: `${nextY}-${nextM}-07` });
+    // GSTR-1 due on 8th of following month
+    entries.push({ filing_type: "GSTR-1", due_date: `${nextY}-${nextM}-08` });
+    // GSTR-3B due on 18th of following month
+    entries.push({ filing_type: "GSTR-3B", due_date: `${nextY}-${nextM}-18` });
+    // TDS Payment due on 5th of following month
+    entries.push({ filing_type: "TDS Payment", due_date: `${nextY}-${nextM}-05` });
+    // Professional Tax on 15th of current month
     entries.push({ filing_type: "PT (Professional Tax)", due_date: `${y}-${mm}-15` });
+    // Factory Act and Shops & Establishments annual renewal — 31 Jan
+    if (m === 0) {
+      entries.push({ filing_type: "Factory Act Annual Return", due_date: `${y}-01-31` });
+      entries.push({ filing_type: "Shops & Establishments Renewal", due_date: `${y}-01-31` });
+    }
   }
 
   // Quarterly TDS Returns
@@ -88,8 +98,6 @@ export function StatutoryTab() {
     fetchData();
   };
 
-  const today = new Date().toISOString().slice(0, 10);
-
   return (
     <div className="space-y-4 mt-2">
       <div className="flex justify-between items-center">
@@ -111,10 +119,13 @@ export function StatutoryTab() {
               const daysLeft = differenceInDays(new Date(f.due_date), new Date());
               const isFiled = f.status === "filed";
               const rowBg = isFiled ? undefined : daysLeft < 7 ? "#FFF0F0" : daysLeft < 30 ? "#FFF8E8" : undefined;
+              const displayDate = (() => {
+                try { return format(parseISO(f.due_date), "dd/MM/yyyy"); } catch { return f.due_date; }
+              })();
               return (
                 <tr key={f.id} className="border-b" style={{ backgroundColor: rowBg, opacity: isFiled ? 0.6 : 1 }}>
                   <td className="py-1.5 text-xs font-medium" style={{ color: isFiled ? "#006039" : "#1A1A1A" }}>{f.filing_type}</td>
-                  <td className="py-1.5 text-xs">{f.due_date}</td>
+                  <td className="py-1.5 text-xs">{displayDate}</td>
                   <td className="text-right py-1.5 text-xs font-mono" style={{ color: daysLeft < 7 ? "#F40009" : daysLeft < 30 ? "#D4860A" : "#006039" }}>
                     {isFiled ? "✓" : daysLeft}
                   </td>

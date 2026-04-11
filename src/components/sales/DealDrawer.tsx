@@ -7,15 +7,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
+import { CalendarIcon, AlertTriangle } from "lucide-react";
+import { format, differenceInDays } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 const STAGES = ["Inquiry", "Site Visit Done", "Proposal Sent", "Negotiation", "Won", "Lost"];
 const PROJECT_TYPES = ["Residential Modular", "Residential Panel", "Villa", "Commercial", "Other"];
-const LEAD_SOURCES = ["Referral", "Instagram", "Architect Partner", "Cold Outreach", "Exhibition", "Other"];
+const LEAD_SOURCES = [
+  "Referral", "Instagram", "YouTube", "Google", "Architect Partner",
+  "Cold Outreach", "Exhibition", "Direct Call", "WhatsApp Marketing", "Other",
+];
 const TEMPERATURES = [
   { value: "hot", label: "🔥 Hot" },
   { value: "warm", label: "~ Warm" },
@@ -27,6 +30,18 @@ const AMC_OPTIONS = [
   { value: "not_discussed", label: "Not Discussed" },
 ];
 const LOST_REASONS = ["Price Too High", "Went with Competitor", "Project Cancelled", "No Response", "Budget Cut", "Other"];
+const CLIENT_TYPES = [
+  { value: "b2c", label: "B2C (Individual)" },
+  { value: "b2b", label: "B2B (Corporate)" },
+  { value: "resort", label: "Resort / Hospitality" },
+];
+const DIVISIONS = [
+  { value: "habitainer", label: "Habitainer" },
+  { value: "ads", label: "ADS" },
+];
+
+// Stagnation thresholds per client type (days)
+const STAGNATION_DAYS: Record<string, number> = { b2b: 45, b2c: 90, resort: 180 };
 
 interface DealDrawerProps {
   open: boolean;
@@ -50,6 +65,9 @@ export function DealDrawer({ open, onClose, deal, onSaved }: DealDrawerProps) {
     amc_interest: "not_discussed",
     lost_reason: "",
     next_followup_date: null as Date | null,
+    client_type: "b2c",
+    experience_centre_visit: false,
+    division: "habitainer",
   });
   const [saving, setSaving] = useState(false);
 
@@ -69,16 +87,27 @@ export function DealDrawer({ open, onClose, deal, onSaved }: DealDrawerProps) {
         amc_interest: deal.amc_interest || "not_discussed",
         lost_reason: deal.lost_reason || "",
         next_followup_date: deal.next_followup_date ? new Date(deal.next_followup_date) : null,
+        client_type: deal.client_type || "b2c",
+        experience_centre_visit: deal.experience_centre_visit || false,
+        division: deal.division || "habitainer",
       });
     } else {
       setForm({
         client_name: "", contact_number: "", email: "", project_type: "Other",
         temperature: "warm", lead_source: "Other", estimated_sqft: "",
         contract_value: "", stage: "Inquiry", notes: "", amc_interest: "not_discussed",
-        lost_reason: "", next_followup_date: null,
+        lost_reason: "", next_followup_date: null, client_type: "b2c",
+        experience_centre_visit: false, division: "habitainer",
       });
     }
   }, [deal, open]);
+
+  // Stagnation detection
+  const stagnationDays = deal?.updated_at
+    ? differenceInDays(new Date(), new Date(deal.updated_at))
+    : 0;
+  const stagnationThreshold = STAGNATION_DAYS[form.client_type] ?? 90;
+  const isStagnant = deal && stagnationDays >= stagnationThreshold && !["Won", "Lost"].includes(form.stage);
 
   const handleSave = async () => {
     if (!form.client_name || !form.contract_value) {
@@ -105,6 +134,9 @@ export function DealDrawer({ open, onClose, deal, onSaved }: DealDrawerProps) {
       amc_interest: form.amc_interest,
       lost_reason: form.stage === "Lost" ? form.lost_reason : null,
       next_followup_date: form.next_followup_date ? format(form.next_followup_date, "yyyy-MM-dd") : null,
+      client_type: form.client_type,
+      experience_centre_visit: form.experience_centre_visit,
+      division: form.division,
     };
 
     if (deal) {
@@ -150,9 +182,31 @@ export function DealDrawer({ open, onClose, deal, onSaved }: DealDrawerProps) {
           <SheetTitle style={{ color: "#1A1A1A" }}>{deal ? "Edit Deal" : "New Deal"}</SheetTitle>
         </SheetHeader>
         <div className="space-y-3 mt-4">
+          {/* Stagnation warning */}
+          {isStagnant && (
+            <div className="rounded-md p-2 flex items-start gap-2 text-xs" style={{ backgroundColor: "#FFF8E8", color: "#D4860A", border: "1px solid #F5C842" }}>
+              <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span>Deal stagnant for <strong>{stagnationDays} days</strong> (threshold: {stagnationThreshold}d for {form.client_type.toUpperCase()}). Action needed.</span>
+            </div>
+          )}
+
           <div><Label>Client Name *</Label><Input value={form.client_name} onChange={e => set("client_name", e.target.value)} /></div>
           <div><Label>Contact Number</Label><Input value={form.contact_number} onChange={e => set("contact_number", e.target.value)} /></div>
           <div><Label>Email</Label><Input value={form.email} onChange={e => set("email", e.target.value)} /></div>
+
+          <div><Label>Client Type</Label>
+            <Select value={form.client_type} onValueChange={v => set("client_type", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{CLIENT_TYPES.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+
+          <div><Label>Division</Label>
+            <Select value={form.division} onValueChange={v => set("division", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>{DIVISIONS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
 
           <div><Label>Project Type</Label>
             <Select value={form.project_type} onValueChange={v => set("project_type", v)}>
@@ -173,6 +227,17 @@ export function DealDrawer({ open, onClose, deal, onSaved }: DealDrawerProps) {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{LEAD_SOURCES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
             </Select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input
+              id="exp-centre-visit"
+              type="checkbox"
+              checked={form.experience_centre_visit}
+              onChange={e => set("experience_centre_visit", e.target.checked)}
+              className="rounded"
+            />
+            <Label htmlFor="exp-centre-visit" className="cursor-pointer">Experience Centre Visit Done</Label>
           </div>
 
           <div><Label>Estimated sqft</Label><Input type="number" value={form.estimated_sqft} onChange={e => set("estimated_sqft", e.target.value)} /></div>
