@@ -3,10 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Receipt, Send, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { getSubmissionWindow } from "@/lib/expense-utils";
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
   draft: { color: "#666", bg: "#F7F7F7" },
@@ -26,21 +28,12 @@ const STATUS_LABELS: Record<string, string> = {
   paid: "Paid",
 };
 
-function getSubmissionWindow(): { isOpen: boolean; label: string; nextWindow: string } {
-  const now = new Date();
-  const day = now.getDate();
-  if (day >= 1 && day <= 5) return { isOpen: true, label: "Submit expenses for 16th–end of last month", nextWindow: "" };
-  if (day >= 16 && day <= 20) return { isOpen: true, label: "Submit expenses for 1st–15th of this month", nextWindow: "" };
-  if (day < 16) return { isOpen: false, label: "", nextWindow: `16th–20th ${format(now, "MMMM")}` };
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  return { isOpen: false, label: "", nextWindow: `1st–5th ${format(nextMonth, "MMMM yyyy")}` };
-}
-
 export function MyExpenses() {
   const { user } = useAuth();
   const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [flagResponses, setFlagResponses] = useState<Record<string, string>>({});
 
   const fetchData = async () => {
     if (!user) return;
@@ -70,6 +63,15 @@ export function MyExpenses() {
   const handleDelete = async (id: string) => {
     await supabase.from("expense_entries").delete().eq("id", id);
     toast.success("Draft deleted");
+    fetchData();
+  };
+
+  const handleFlagResponse = async (id: string) => {
+    const response = flagResponses[id];
+    if (!response?.trim()) return;
+    await supabase.from("expense_entries").update({ hr_flag_response: response.trim() } as any).eq("id", id);
+    toast.success("Response sent to HR ✓");
+    setFlagResponses((prev) => ({ ...prev, [id]: "" }));
     fetchData();
   };
 
@@ -104,23 +106,51 @@ export function MyExpenses() {
           <p className="text-xs text-center py-4" style={{ color: "#999" }}>No expenses logged yet.</p>
         ) : (
           <div className="space-y-2 max-h-[300px] overflow-y-auto">
-            {entries.slice(0, 20).map((e) => {
+            {entries.map((e) => {
               const sc = STATUS_COLORS[e.status] || STATUS_COLORS.draft;
               return (
-                <div key={e.id} className="flex items-center justify-between flex-wrap gap-2 p-2 rounded-md border border-border bg-white text-xs">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate" style={{ color: "#1A1A1A" }}>{e.expense_type === "conveyance" ? `🚗 ${e.description}` : e.category}</p>
-                    <p style={{ color: "#999" }}>{format(new Date(e.entry_date), "dd/MM/yyyy")}</p>
+                <div key={e.id} className="flex flex-col gap-1 p-2 rounded-md border border-border bg-white text-xs">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate" style={{ color: "#1A1A1A" }}>{e.expense_type === "conveyance" ? `🚗 ${e.description}` : e.category}</p>
+                      <p style={{ color: "#999" }}>{format(new Date(e.entry_date), "dd/MM/yyyy")}</p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="font-bold font-inter" style={{ color: "#006039" }}>₹{Number(e.amount).toLocaleString("en-IN")}</span>
+                      <Badge variant="outline" className="text-[10px]" style={{ color: sc.color, borderColor: sc.color, backgroundColor: sc.bg }}>{STATUS_LABELS[e.status] || e.status}</Badge>
+                      {e.status === "draft" && (
+                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleDelete(e.id)}>
+                          <Trash2 className="h-3 w-3" style={{ color: "#F40009" }} />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <span className="font-bold font-inter" style={{ color: "#006039" }}>₹{Number(e.amount).toLocaleString("en-IN")}</span>
-                    <Badge variant="outline" className="text-[10px]" style={{ color: sc.color, borderColor: sc.color, backgroundColor: sc.bg }}>{STATUS_LABELS[e.status] || e.status}</Badge>
-                    {e.status === "draft" && (
-                      <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleDelete(e.id)}>
-                        <Trash2 className="h-3 w-3" style={{ color: "#F40009" }} />
-                      </Button>
-                    )}
-                  </div>
+                  {e.hr_flag_note && (
+                    <div className="rounded-md p-2 border" style={{ backgroundColor: "#FFF8E8" }}>
+                      <p className="text-[10px] font-semibold" style={{ color: "#D4860A" }}>HR query: {e.hr_flag_note}</p>
+                      {e.hr_flag_response ? (
+                        <p className="text-[10px] mt-0.5" style={{ color: "#006039" }}>Your response: {e.hr_flag_response}</p>
+                      ) : (
+                        <div className="mt-1 flex gap-1">
+                          <Input
+                            placeholder="Your response..."
+                            value={flagResponses[e.id] || ""}
+                            onChange={(ev) => setFlagResponses((prev) => ({ ...prev, [e.id]: ev.target.value }))}
+                            className="h-6 text-[10px] font-inter"
+                          />
+                          <Button
+                            size="sm"
+                            className="h-6 text-[10px] px-2 text-white"
+                            style={{ backgroundColor: "#006039" }}
+                            onClick={() => handleFlagResponse(e.id)}
+                            disabled={!flagResponses[e.id]?.trim()}
+                          >
+                            Send
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

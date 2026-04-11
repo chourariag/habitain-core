@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, Check, X, FileDown, AlertTriangle, Eye, MessageCircle } from "lucide-react";
+import { Loader2, Check, X, FileDown, AlertTriangle, Eye, MessageCircle, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import * as XLSX from "xlsx";
+
+const EXPENSE_FLAG_THRESHOLD = 5000;
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
   draft: { color: "#666", bg: "#F7F7F7" },
@@ -34,6 +36,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 const PRODUCTION_ROLES = ["factory_floor_supervisor", "fabrication_foreman", "electrical_installer", "elec_plumbing_installer", "production_head"];
 const OPS_ROLES = ["head_operations", "site_installation_mgr", "site_engineer", "delivery_rm_lead"];
+const MD_AND_DIRECTORS = ["managing_director", "finance_director", "sales_director", "architecture_director", "super_admin"];
 
 function getHodForRole(submitterRole: string): string {
   if (PRODUCTION_ROLES.includes(submitterRole)) return "production_head";
@@ -49,7 +52,7 @@ export function ExpensesTab() {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [subTab, setSubTab] = useState<"pending" | "all">("pending");
-  const [rejectId, setRejectId] = useState<string | null>(null);
+  const [rejectIds, setRejectIds] = useState<string[]>([]);
   const [rejectReason, setRejectReason] = useState("");
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const [flagId, setFlagId] = useState<string | null>(null);
@@ -78,14 +81,17 @@ export function ExpensesTab() {
 
   const isHR = role === "hr_executive" || role === "super_admin" || role === "managing_director";
   const isHOD = ["production_head", "head_operations", "managing_director", "finance_director", "sales_director", "architecture_director", "super_admin"].includes(role || "");
+  const isFinance = ["finance_director", "accounts_executive", "managing_director", "super_admin"].includes(role || "");
 
-  // Group entries by report_period + submitted_by for pending_hr
+  // Group entries by report_period + submitted_by for pending
   const pendingEntries = entries.filter((e) => {
     if (isHR && e.status === "pending_hr") return true;
     if (isHOD && e.status === "pending_hod") {
       const submitterRole = getRole(e.submitted_by);
       const target = getHodForRole(submitterRole);
-      return role === target || role === "managing_director" || role === "super_admin";
+      // Directors (equivalent to MD) see all entries routed to managing_director
+      if (MD_AND_DIRECTORS.includes(role ?? "")) return target === "managing_director" || target === role;
+      return role === target;
     }
     return false;
   });
@@ -110,11 +116,17 @@ export function ExpensesTab() {
   const handleHRApprove = async (entryIds: string[]) => {
     if (!user) return;
     for (const id of entryIds) {
-      await supabase.from("expense_entries").update({
+      const entry = entries.find((e) => e.id === id);
+      const updates: any = {
         status: "pending_hod",
         hr_reviewed_by: user.id,
         hr_reviewed_at: new Date().toISOString(),
-      } as any).eq("id", id);
+      };
+      if (entry && Number(entry.amount) > EXPENSE_FLAG_THRESHOLD) {
+        updates.budget_flag = true;
+      }
+      const { error } = await supabase.from("expense_entries").update(updates).eq("id", id);
+      if (error) toast.error(`Failed to approve entry: ${error.message}`);
     }
     toast.success("Sent to HOD for approval");
     fetchData();
@@ -123,25 +135,39 @@ export function ExpensesTab() {
   const handleHODApprove = async (entryIds: string[]) => {
     if (!user) return;
     for (const id of entryIds) {
-      await supabase.from("expense_entries").update({
+      const { error } = await supabase.from("expense_entries").update({
         status: "approved",
         hod_approved_by: user.id,
         hod_approved_at: new Date().toISOString(),
       } as any).eq("id", id);
+      if (error) toast.error(`Failed to approve entry: ${error.message}`);
     }
     toast.success("Expenses approved for payment ✓");
     fetchData();
   };
 
   const handleReject = async () => {
-    if (!rejectId || !rejectReason.trim()) return;
-    await supabase.from("expense_entries").update({
+    if (!rejectIds.length || !rejectReason.trim()) return;
+    const { error } = await supabase.from("expense_entries").update({
       status: "rejected",
       rejection_reason: rejectReason.trim(),
-    } as any).eq("id", rejectId);
+    } as any).in("id", rejectIds);
+    if (error) { toast.error("Failed to reject: " + error.message); return; }
     toast.success("Expense rejected");
-    setRejectId(null);
+    setRejectIds([]);
     setRejectReason("");
+    fetchData();
+  };
+
+  const handleMarkPaid = async (id: string) => {
+    if (!user) return;
+    const { error } = await supabase.from("expense_entries").update({
+      status: "paid",
+      finance_paid_by: user.id,
+      finance_paid_at: new Date().toISOString(),
+    } as any).eq("id", id);
+    if (error) { toast.error("Failed to mark paid: " + error.message); return; }
+    toast.success("Marked as paid ✓");
     fetchData();
   };
 
@@ -273,8 +299,8 @@ export function ExpensesTab() {
                       <Check className="h-3 w-3 mr-1" /> Approve for Payment
                     </Button>
                   )}
-                  <Button size="sm" variant="outline" onClick={() => setRejectId(items[0].id)} className="text-xs" style={{ color: "#F40009", borderColor: "#F40009" }}>
-                    <X className="h-3 w-3 mr-1" /> Reject Report
+                  <Button size="sm" variant="outline" onClick={() => setRejectIds(items.map((e: any) => e.id))} className="text-xs" style={{ color: "#F40009", borderColor: "#F40009" }}>
+                    <X className="h-3 w-3 mr-1" /> Reject
                   </Button>
                 </div>
               </div>
@@ -304,14 +330,14 @@ export function ExpensesTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ backgroundColor: "#F7F7F7" }}>
-                  {["Employee", "Date", "Type", "Category", "Amount ₹", "Status", "Flag"].map((h) => (
+                  {["Employee", "Date", "Type", "Category", "Amount ₹", "Status", "Flag", ...(isFinance ? ["Action"] : [])].map((h) => (
                     <th key={h} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "#666" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {allFiltered.length === 0 ? (
-                  <tr><td colSpan={7} className="px-3 py-8 text-center text-sm" style={{ color: "#999" }}>No expenses found.</td></tr>
+                  <tr><td colSpan={isFinance ? 8 : 7} className="px-3 py-8 text-center text-sm" style={{ color: "#999" }}>No expenses found.</td></tr>
                 ) : allFiltered.map((e) => {
                   const sc = STATUS_COLORS[e.status] || STATUS_COLORS.draft;
                   return (
@@ -327,6 +353,15 @@ export function ExpensesTab() {
                         </Badge>
                       </td>
                       <td className="px-3 py-2">{e.budget_flag && <AlertTriangle className="h-3 w-3" style={{ color: "#D4860A" }} />}</td>
+                      {isFinance && (
+                        <td className="px-3 py-2">
+                          {e.status === "approved" && (
+                            <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 gap-1" style={{ color: "#006039", borderColor: "#006039" }} onClick={() => handleMarkPaid(e.id)}>
+                              <CreditCard className="h-3 w-3" /> Mark Paid
+                            </Button>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -342,7 +377,7 @@ export function ExpensesTab() {
       )}
 
       {/* Reject dialog */}
-      <Dialog open={!!rejectId} onOpenChange={(v) => { if (!v) { setRejectId(null); setRejectReason(""); } }}>
+      <Dialog open={rejectIds.length > 0} onOpenChange={(v) => { if (!v) { setRejectIds([]); setRejectReason(""); } }}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>Reject Expense Report</DialogTitle></DialogHeader>
           <Textarea placeholder="Reason for rejection" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} rows={3} />

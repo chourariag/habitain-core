@@ -26,7 +26,7 @@ export function LogExpenseButton({ userRole }: Props) {
             <Receipt className="h-5 w-5" style={{ color: "#006039" }} />
           </div>
           <div>
-            <p className="text-sm font-semibold font-display" style={{ color: "#1A1A1A" }}>Expense Report</p>
+            <p className="text-sm font-semibold font-display" style={{ color: "#1A1A1A" }}>Log Expense</p>
             <p className="text-xs" style={{ color: "#666" }}>Log daily expenses & conveyance claims</p>
           </div>
         </div>

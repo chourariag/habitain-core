@@ -13,6 +13,7 @@ import { CalendarIcon, Loader2, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { getSubmissionWindow } from "@/lib/expense-utils";
 
 const REGULAR_CATEGORIES = [
   "Site Materials (small purchase)",
@@ -110,10 +111,6 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
         }
       }
 
-      const now = new Date();
-      const day = now.getDate();
-      const month = now.getMonth(); // 0-indexed
-      const year = now.getFullYear();
       // Determine report period
       let reportPeriod: string;
       if (entryDate.getDate() <= 15) {
@@ -296,9 +293,18 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
             {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Save as Draft
           </Button>
-          <p className="text-[10px] text-center" style={{ color: "#999" }}>
-            Drafts can be submitted during the next submission window.
-          </p>
+          {(() => {
+            const win = getSubmissionWindow();
+            return win.isOpen ? (
+              <p className="text-[10px] text-center font-inter" style={{ color: "#006039" }}>
+                {win.label}
+              </p>
+            ) : (
+              <p className="text-[10px] text-center font-inter" style={{ color: "#999" }}>
+                Next submission window: {win.nextWindow}
+              </p>
+            );
+          })()}
         </div>
       </SheetContent>
     </Sheet>

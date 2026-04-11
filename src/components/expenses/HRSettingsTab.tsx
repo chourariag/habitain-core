@@ -59,6 +59,7 @@ export function HRSettingsTab() {
         proposed_value: val,
         proposed_by: user?.id,
         effective_date: effectiveDate,
+        reason: reason.trim() || null,
         status: "pending_approval",
       } as any).eq("key", key);
     }
@@ -139,13 +140,19 @@ export function HRSettingsTab() {
               <p className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "#666" }}>Car Rate</p>
               <p className="text-xl font-bold font-display mt-1" style={{ color: "#006039" }}>₹{carSetting?.value || "9.5"}/km</p>
               {carSetting?.status === "pending_approval" && (
-                <div className="mt-2 text-xs" style={{ color: "#D4860A" }}>
-                  Proposed: ₹{carSetting.proposed_value}/km
+                <div className="mt-2 text-xs space-y-1" style={{ color: "#D4860A" }}>
+                  <p>Proposed: ₹{carSetting.proposed_value}/km</p>
+                  {carSetting.reason && <p className="text-[10px]" style={{ color: "#666" }}>Reason: {carSetting.reason}</p>}
+                  {carSetting.approval1_by && (
+                    <p className="text-[10px]" style={{ color: "#006039" }}>
+                      1st approval: {profiles.find((p) => p.auth_user_id === carSetting.approval1_by)?.display_name || "—"}
+                    </p>
+                  )}
                   {canApprove && !carSetting.approval1_by && (
-                    <Button size="sm" className="ml-2 h-5 text-[10px]" style={{ backgroundColor: "#006039" }} onClick={() => handleApprove("car_rate_per_km")}>Approve</Button>
+                    <Button size="sm" className="h-5 text-[10px]" style={{ backgroundColor: "#006039" }} onClick={() => handleApprove("car_rate_per_km")}>Approve</Button>
                   )}
                   {canApprove && carSetting.approval1_by && !carSetting.approval2_by && carSetting.approval1_by !== user?.id && (
-                    <Button size="sm" className="ml-2 h-5 text-[10px]" style={{ backgroundColor: "#006039" }} onClick={() => handleApprove("car_rate_per_km")}>2nd Approve</Button>
+                    <Button size="sm" className="h-5 text-[10px]" style={{ backgroundColor: "#006039" }} onClick={() => handleApprove("car_rate_per_km")}>2nd Approve</Button>
                   )}
                 </div>
               )}
@@ -154,13 +161,19 @@ export function HRSettingsTab() {
               <p className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "#666" }}>Bike Rate</p>
               <p className="text-xl font-bold font-display mt-1" style={{ color: "#006039" }}>₹{bikeSetting?.value || "3.5"}/km</p>
               {bikeSetting?.status === "pending_approval" && (
-                <div className="mt-2 text-xs" style={{ color: "#D4860A" }}>
-                  Proposed: ₹{bikeSetting.proposed_value}/km
+                <div className="mt-2 text-xs space-y-1" style={{ color: "#D4860A" }}>
+                  <p>Proposed: ₹{bikeSetting.proposed_value}/km</p>
+                  {bikeSetting.reason && <p className="text-[10px]" style={{ color: "#666" }}>Reason: {bikeSetting.reason}</p>}
+                  {bikeSetting.approval1_by && (
+                    <p className="text-[10px]" style={{ color: "#006039" }}>
+                      1st approval: {profiles.find((p) => p.auth_user_id === bikeSetting.approval1_by)?.display_name || "—"}
+                    </p>
+                  )}
                   {canApprove && !bikeSetting.approval1_by && (
-                    <Button size="sm" className="ml-2 h-5 text-[10px]" style={{ backgroundColor: "#006039" }} onClick={() => handleApprove("bike_rate_per_km")}>Approve</Button>
+                    <Button size="sm" className="h-5 text-[10px]" style={{ backgroundColor: "#006039" }} onClick={() => handleApprove("bike_rate_per_km")}>Approve</Button>
                   )}
                   {canApprove && bikeSetting.approval1_by && !bikeSetting.approval2_by && bikeSetting.approval1_by !== user?.id && (
-                    <Button size="sm" className="ml-2 h-5 text-[10px]" style={{ backgroundColor: "#006039" }} onClick={() => handleApprove("bike_rate_per_km")}>2nd Approve</Button>
+                    <Button size="sm" className="h-5 text-[10px]" style={{ backgroundColor: "#006039" }} onClick={() => handleApprove("bike_rate_per_km")}>2nd Approve</Button>
                   )}
                 </div>
               )}
