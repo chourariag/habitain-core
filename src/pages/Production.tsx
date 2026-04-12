@@ -4,12 +4,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon } from "lucide-react";
+import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon, Map, GanttChart } from "lucide-react";
 import { SupervisorDailyLog } from "@/components/production/SupervisorDailyLog";
 import { ModuleSchedule } from "@/components/production/ModuleSchedule";
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPanel";
 import { ProductionKanban } from "@/components/production/ProductionKanban";
+import { FactoryFloorMap } from "@/components/production/FactoryFloorMap";
+import { GanttView } from "@/components/production/GanttView";
+import { WeeklyManpowerPlanner } from "@/components/production/WeeklyManpowerPlanner";
+import { ReworkTracker } from "@/components/production/ReworkTracker";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
@@ -34,11 +38,11 @@ function ProductionContent() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [projectTab, setProjectTab] = useState("modules");
-  const [viewMode, setViewMode] = useState<"table" | "board">(() => {
-    try { return (sessionStorage.getItem("prodViewMode") as "table" | "board") ?? "table"; } catch { return "table"; }
+  const [viewMode, setViewMode] = useState<"table" | "board" | "floor" | "gantt">(() => {
+    try { return (sessionStorage.getItem("prodViewMode") as "table" | "board" | "floor" | "gantt") ?? "table"; } catch { return "table"; }
   });
 
-  const setView = (mode: "table" | "board") => {
+  const setView = (mode: "table" | "board" | "floor" | "gantt") => {
     setViewMode(mode);
     try { sessionStorage.setItem("prodViewMode", mode); } catch {}
   };
@@ -102,6 +106,12 @@ function ProductionContent() {
           <Button variant="ghost" size="sm" className={viewMode === "board" ? "bg-background shadow-sm" : ""} onClick={() => setView("board")}>
             <LayoutGrid className="h-4 w-4 mr-1" /> Board
           </Button>
+          <Button variant="ghost" size="sm" className={viewMode === "floor" ? "bg-background shadow-sm" : ""} onClick={() => setView("floor")}>
+            <Map className="h-4 w-4 mr-1" /> Floor
+          </Button>
+          <Button variant="ghost" size="sm" className={viewMode === "gantt" ? "bg-background shadow-sm" : ""} onClick={() => setView("gantt")}>
+            <GanttChart className="h-4 w-4 mr-1" /> Gantt
+          </Button>
         </div>
       </div>
 
@@ -111,6 +121,10 @@ function ProductionContent() {
         <div className="bg-card rounded-lg p-8 text-center shadow-sm">
           <p className="text-muted-foreground text-sm">No modules yet. Create modules from the project detail page.</p>
         </div>
+      ) : viewMode === "floor" ? (
+        <FactoryFloorMap />
+      ) : viewMode === "gantt" ? (
+        <GanttView />
       ) : viewMode === "board" ? (
         <ProductionKanban modules={modules} onRefresh={fetchModules} />
       ) : (
@@ -120,6 +134,8 @@ function ProductionContent() {
               <TabsTrigger value="modules" className="gap-1.5"><Factory className="h-4 w-4" /> Modules</TabsTrigger>
               <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
               <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
+              <TabsTrigger value="manpower">Manpower</TabsTrigger>
+              <TabsTrigger value="rework">Rework</TabsTrigger>
             </TabsList>
           </ScrollableTabsWrapper>
 
@@ -159,6 +175,12 @@ function ProductionContent() {
 
           <TabsContent value="materials">
             <MaterialRequestsPanel projectId={selectedProjectId!} />
+          </TabsContent>
+          <TabsContent value="manpower">
+            <WeeklyManpowerPlanner />
+          </TabsContent>
+          <TabsContent value="rework">
+            <ReworkTracker />
           </TabsContent>
         </Tabs>
       )}

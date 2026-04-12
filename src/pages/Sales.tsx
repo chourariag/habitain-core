@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { SalesMetricsBar } from "@/components/sales/SalesMetricsBar";
 import { PipelineKanban } from "@/components/sales/PipelineKanban";
+import { SalesDualPipeline } from "@/components/sales/SalesDualPipeline";
 import { AmcUpsellTab } from "@/components/sales/AmcUpsellTab";
 import { DealDrawer } from "@/components/sales/DealDrawer";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
@@ -39,6 +40,7 @@ export default function Sales() {
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
+            <TabsTrigger value="dual">Dual Pipeline</TabsTrigger>
             <TabsTrigger value="amc">AMC Upsell</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
@@ -49,6 +51,15 @@ export default function Sales() {
             <div className="text-center py-12" style={{ color: "#999" }}>Loading…</div>
           ) : (
             <PipelineKanban deals={deals} onRefresh={fetchDeals} />
+          )}
+        </TabsContent>
+
+        <TabsContent value="dual" className="space-y-4">
+          <SalesMetricsBar deals={deals} />
+          {loading ? (
+            <div className="text-center py-12" style={{ color: "#999" }}>Loading…</div>
+          ) : (
+            <SalesDualPipeline deals={deals} onRefresh={fetchDeals} />
           )}
         </TabsContent>
 

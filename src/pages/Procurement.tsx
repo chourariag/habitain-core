@@ -14,13 +14,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, LayoutDashboard, Truck, Upload } from "lucide-react";
+import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, LayoutDashboard, Truck, Upload, Factory } from "lucide-react";
 import { toast } from "sonner";
 import { NewMaterialRequestDialog } from "@/components/materials/NewMaterialRequestDialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
 import { TallyPOUploadTab } from "@/components/procurement/TallyPOUploadTab";
 import { TransfersTab } from "@/components/procurement/TransfersTab";
+import { MaterialAvailability } from "@/components/procurement/MaterialAvailability";
+import { AssetRegister } from "@/components/procurement/AssetRegister";
+import { SiteInventory } from "@/components/procurement/SiteInventory";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PLANNER_ROLES = ["planning_engineer", "super_admin", "managing_director"];
@@ -101,6 +104,11 @@ export default function Procurement() {
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
   const [planForm, setPlanForm] = useState({ project_id: "", material_name: "", category: "", quantity: "", unit: "units", required_by: "", lead_time_days: "7", supplier: "" });
   const [planSaving, setPlanSaving] = useState(false);
+
+  // GRN destination dialog
+  const [grnDialogOpen, setGrnDialogOpen] = useState(false);
+  const [grnRequestId, setGrnRequestId] = useState<string | null>(null);
+  const [grnDestination, setGrnDestination] = useState<"factory" | "direct_to_site" | "">("");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -227,6 +235,27 @@ export default function Procurement() {
     } catch (err: any) { toast.error(err.message); }
   };
 
+  const handleGrnConfirm = async () => {
+    if (!grnRequestId || !grnDestination) { toast.error("Please select a delivery destination"); return; }
+    try {
+      const { client, session } = await getAuthedClient();
+      const { error } = await (client.from("material_requests") as any)
+        .update({
+          status: "received",
+          received_by: session.user.id,
+          received_at: new Date().toISOString(),
+          grn_destination: grnDestination,
+        })
+        .eq("id", grnRequestId);
+      if (error) throw error;
+      toast.success(`GRN recorded — materials arriving at ${grnDestination === "factory" ? "Factory" : "Site directly"}`);
+      setGrnDialogOpen(false);
+      setGrnRequestId(null);
+      setGrnDestination("");
+      fetchData();
+    } catch (err: any) { toast.error(err.message); }
+  };
+
   const handleRejectRequest = async () => {
     if (!rejectReqId || !rejectReqReason.trim()) { toast.error("Rejection reason required"); return; }
     setRejectReqSaving(true);
@@ -266,6 +295,9 @@ export default function Procurement() {
             <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>
             <TabsTrigger value="transfers" className="gap-1.5"><Truck className="h-4 w-4" /> Transfers</TabsTrigger>
             <TabsTrigger value="tally-po" className="gap-1.5"><Upload className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
+            <TabsTrigger value="availability" className="gap-1.5"><AlertTriangle className="h-4 w-4" /> Availability</TabsTrigger>
+            <TabsTrigger value="assets" className="gap-1.5"><Factory className="h-4 w-4" /> Assets</TabsTrigger>
+            <TabsTrigger value="site-inventory" className="gap-1.5"><Truck className="h-4 w-4" /> Site Stock</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -448,7 +480,13 @@ export default function Procurement() {
                                   <SoDButton label="Raise PO" onClick={() => handleAction(r.id, "raise_po")} sodReason={isBlockedBySoD(r, userId, "raise_po")} />
                                 )}
                                 {r.status === "po_raised" && ["stores_executive", "super_admin", "managing_director"].includes(userRole ?? "") && (
-                                  <SoDButton label="Received" onClick={() => handleAction(r.id, "mark_received")} sodReason={isBlockedBySoD(r, userId, "mark_received")} />
+                                  isBlockedBySoD(r, userId, "mark_received") ? (
+                                    <SoDButton label="Received" onClick={() => {}} sodReason={isBlockedBySoD(r, userId, "mark_received")} />
+                                  ) : (
+                                    <Button size="sm" variant="outline" onClick={() => { setGrnRequestId(r.id); setGrnDestination(""); setGrnDialogOpen(true); }}>
+                                      Received (GRN)
+                                    </Button>
+                                  )
                                 )}
                                 {/* Reject button: available on any pending status before received */}
                                 {["pending_budget", "pending_director_approval", "pending_po"].includes(r.status) && (
@@ -581,6 +619,30 @@ export default function Procurement() {
           </div>
           <TallyPOUploadTab />
         </TabsContent>
+
+        {/* Material Availability Tab */}
+        <TabsContent value="availability" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Material Availability</h2>
+          </div>
+          <MaterialAvailability />
+        </TabsContent>
+
+        {/* Asset Register Tab */}
+        <TabsContent value="assets" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Asset Register</h2>
+          </div>
+          <AssetRegister />
+        </TabsContent>
+
+        {/* Site Inventory Tab */}
+        <TabsContent value="site-inventory" className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Site Stock</h2>
+          </div>
+          <SiteInventory />
+        </TabsContent>
       </Tabs>
 
       {/* Reject material request dialog */}
@@ -607,6 +669,52 @@ export default function Procurement() {
               Confirm Rejection
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* GRN Destination Dialog */}
+      <Dialog open={grnDialogOpen} onOpenChange={(v) => { if (!v) { setGrnDialogOpen(false); setGrnRequestId(null); setGrnDestination(""); } }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle className="font-display">GRN — Select Delivery Destination</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-xs" style={{ color: "#666" }}>Where will these materials be delivered? This is mandatory for the Goods Receipt Note (GRN).</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="rounded-lg border-2 p-4 text-center transition-all"
+                style={{
+                  borderColor: grnDestination === "factory" ? "#006039" : "#E5E7EB",
+                  backgroundColor: grnDestination === "factory" ? "#E8F2ED" : "#F9FAFB",
+                }}
+                onClick={() => setGrnDestination("factory")}
+              >
+                <Factory className="h-6 w-6 mx-auto mb-1" style={{ color: "#006039" }} />
+                <p className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>Factory</p>
+                <p className="text-[10px]" style={{ color: "#666" }}>Stores will receive</p>
+              </button>
+              <button
+                type="button"
+                className="rounded-lg border-2 p-4 text-center transition-all"
+                style={{
+                  borderColor: grnDestination === "direct_to_site" ? "#4F46E5" : "#E5E7EB",
+                  backgroundColor: grnDestination === "direct_to_site" ? "#EEF2FF" : "#F9FAFB",
+                }}
+                onClick={() => setGrnDestination("direct_to_site")}
+              >
+                <Truck className="h-6 w-6 mx-auto mb-1" style={{ color: "#4F46E5" }} />
+                <p className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>Direct to Site</p>
+                <p className="text-[10px]" style={{ color: "#666" }}>Bypass factory</p>
+              </button>
+            </div>
+            {!grnDestination && (
+              <p className="text-xs text-center" style={{ color: "#F40009" }}>Destination is mandatory — please select one.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={handleGrnConfirm} disabled={!grnDestination} style={{ backgroundColor: "#006039" }} className="text-white">
+              Confirm GRN
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

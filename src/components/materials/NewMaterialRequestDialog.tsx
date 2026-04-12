@@ -30,8 +30,20 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
   const [projectId, setProjectId] = useState("");
   const [moduleId, setModuleId] = useState("");
   const [notes, setNotes] = useState("");
+  const [estimatedCost, setEstimatedCost] = useState("");
+  const [numQuotesAttached, setNumQuotesAttached] = useState("");
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [modules, setModules] = useState<{ id: string; name: string; module_code: string | null }[]>([]);
+
+  const getQuoteRequirement = (cost: number) => {
+    if (cost <= 0) return null;
+    if (cost < 3000) return { required: 0, label: "No quotes required (<₹3,000)" };
+    if (cost <= 7000) return { required: 1, label: "1 quote required (₹3,000–₹7,000)" };
+    return { required: 3, label: "3 quotes required (>₹7,000)" };
+  };
+
+  const quoteReq = getQuoteRequirement(Number(estimatedCost));
+  const quotesOk = !quoteReq || quoteReq.required === 0 || Number(numQuotesAttached) >= quoteReq.required;
 
   useEffect(() => {
     if (open) {
@@ -58,6 +70,10 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
       toast.error("Material name, quantity, and project are required");
       return;
     }
+    if (!quotesOk) {
+      toast.error(`Quote requirement not met: ${quoteReq?.label}. Please attach ${quoteReq?.required} quote(s).`);
+      return;
+    }
     setLoading(true);
     try {
       const { client, session } = await getAuthedClient();
@@ -70,6 +86,8 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
         module_id: moduleId || null,
         notes: notes.trim() || null,
         requested_by: session.user.id,
+        estimated_cost: estimatedCost ? Number(estimatedCost) : null,
+        num_quotes_attached: numQuotesAttached ? Number(numQuotesAttached) : null,
       });
       if (error) throw error;
       toast.success("Material request submitted");
@@ -80,6 +98,8 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
       setProjectId("");
       setModuleId("");
       setNotes("");
+      setEstimatedCost("");
+      setNumQuotesAttached("");
       onOpenChange(false);
       onCreated();
     } catch (err: any) {
@@ -156,6 +176,51 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
             </Select>
           </div>
 
+          {/* Quote Threshold Enforcement */}
+          <div className="space-y-2">
+            <Label htmlFor="estimatedCost">Estimated Cost (₹)</Label>
+            <Input
+              id="estimatedCost"
+              type="number"
+              min={0}
+              value={estimatedCost}
+              onChange={(e) => setEstimatedCost(e.target.value)}
+              placeholder="Optional — triggers quote requirement"
+            />
+            {quoteReq && (
+              <div
+                className="rounded-md p-2 text-xs"
+                style={{
+                  backgroundColor: quoteReq.required === 0 ? "#E8F2ED" : quotesOk ? "#E8F2ED" : "#FFF8E8",
+                  color: quoteReq.required === 0 ? "#006039" : quotesOk ? "#006039" : "#D4860A",
+                }}
+              >
+                {quoteReq.label}
+              </div>
+            )}
+          </div>
+
+          {quoteReq && quoteReq.required > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="numQuotes">Number of Quotes Attached *</Label>
+              <Input
+                id="numQuotes"
+                type="number"
+                min={0}
+                max={10}
+                value={numQuotesAttached}
+                onChange={(e) => setNumQuotesAttached(e.target.value)}
+                placeholder={`Minimum ${quoteReq.required} required`}
+                style={{ borderColor: !quotesOk ? "#D4860A" : undefined }}
+              />
+              {!quotesOk && (
+                <p className="text-xs" style={{ color: "#D4860A" }}>
+                  ⚠ You must attach at least {quoteReq.required} quote(s) before submitting.
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
             <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Additional details..." rows={3} />
@@ -163,7 +228,7 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
 
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" disabled={loading}>{loading ? "Submitting…" : "Submit Request"}</Button>
+            <Button type="submit" disabled={loading || !quotesOk}>{loading ? "Submitting…" : "Submit Request"}</Button>
           </div>
         </form>
       </DialogContent>

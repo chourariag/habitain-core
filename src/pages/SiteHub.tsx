@@ -5,13 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus } from "lucide-react";
+import { Loader2, Truck, BookOpen, FileText, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus, ListTodo, Wallet, HardHat, MessageSquare } from "lucide-react";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPanel";
+import { PunchListPanel } from "@/components/site/PunchListPanel";
+import { AdvanceRequestPanel } from "@/components/site/AdvanceRequestPanel";
+import { SubcontractorPanel } from "@/components/site/SubcontractorPanel";
+import { SiteToFactoryFeedback } from "@/components/site/SiteToFactoryFeedback";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
@@ -173,6 +177,10 @@ function SiteHubContent() {
             <TabsTrigger value="diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
             <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Pack</TabsTrigger>
             <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
+            <TabsTrigger value="punch" className="gap-1.5"><ListTodo className="h-4 w-4" /> Punch List</TabsTrigger>
+            <TabsTrigger value="advance" className="gap-1.5"><Wallet className="h-4 w-4" /> Advances</TabsTrigger>
+            <TabsTrigger value="subcontractors" className="gap-1.5"><HardHat className="h-4 w-4" /> Subcontractors</TabsTrigger>
+            <TabsTrigger value="feedback" className="gap-1.5"><MessageSquare className="h-4 w-4" /> Factory Feedback</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -249,6 +257,18 @@ function SiteHubContent() {
         </TabsContent>
         <TabsContent value="materials">
           <MaterialRequestsPanel projectId={selectedProjectId!} />
+        </TabsContent>
+        <TabsContent value="punch">
+          <PunchListPanel projectId={selectedProjectId!} userRole={userRole} />
+        </TabsContent>
+        <TabsContent value="advance">
+          <AdvanceRequestPanel projectId={selectedProjectId!} />
+        </TabsContent>
+        <TabsContent value="subcontractors">
+          <SubcontractorPanel projectId={selectedProjectId!} />
+        </TabsContent>
+        <TabsContent value="feedback">
+          <SiteToFactoryFeedback projectId={selectedProjectId!} />
         </TabsContent>
       </Tabs>
     </div>
