@@ -691,6 +691,20 @@ export function MISTab() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      {/* Replace Confirmation Dialog */}
+      <Dialog open={confirmReplace} onOpenChange={setConfirmReplace}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="font-display">Replace Existing Trial Balance?</DialogTitle></DialogHeader>
+          <p className="text-sm" style={{ color: "#666" }}>
+            A Trial Balance for <strong>{periodLabel}</strong> already exists. Uploading will replace it.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setConfirmReplace(false); setPendingFile(null); }}>Cancel</Button>
+            <Button onClick={async () => { setConfirmReplace(false); if (pendingFile) { await doUpload(pendingFile); setPendingFile(null); } }} style={{ backgroundColor: "#F40009", color: "white" }}>Replace & Import</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
