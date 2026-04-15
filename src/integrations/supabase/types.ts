@@ -4852,6 +4852,81 @@ export type Database = {
         }
         Relationships: []
       }
+      red_flag_alerts: {
+        Row: {
+          benchmark_avg: number
+          created_at: string
+          current_duration: number
+          days_over: number
+          id: string
+          module_count_band: string
+          most_common_cause: string | null
+          notified_user_ids: string[] | null
+          project_id: string
+          responded_at: string | null
+          responded_by: string | null
+          response_note: string | null
+          status: string
+          task_category: string
+          task_id: string
+          task_name: string
+          updated_at: string
+        }
+        Insert: {
+          benchmark_avg: number
+          created_at?: string
+          current_duration: number
+          days_over: number
+          id?: string
+          module_count_band: string
+          most_common_cause?: string | null
+          notified_user_ids?: string[] | null
+          project_id: string
+          responded_at?: string | null
+          responded_by?: string | null
+          response_note?: string | null
+          status?: string
+          task_category: string
+          task_id: string
+          task_name: string
+          updated_at?: string
+        }
+        Update: {
+          benchmark_avg?: number
+          created_at?: string
+          current_duration?: number
+          days_over?: number
+          id?: string
+          module_count_band?: string
+          most_common_cause?: string | null
+          notified_user_ids?: string[] | null
+          project_id?: string
+          responded_at?: string | null
+          responded_by?: string | null
+          response_note?: string | null
+          status?: string
+          task_category?: string
+          task_id?: string
+          task_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "red_flag_alerts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "red_flag_alerts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       retention_records: {
         Row: {
           actual_release_date: string | null
@@ -6062,6 +6137,60 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      task_benchmarks: {
+        Row: {
+          actual_duration_days: number
+          cause_category: string | null
+          created_at: string
+          delay_days: number
+          id: string
+          module_count: number
+          module_count_band: string
+          project_id: string
+          task_category: string
+          task_id: string
+        }
+        Insert: {
+          actual_duration_days: number
+          cause_category?: string | null
+          created_at?: string
+          delay_days?: number
+          id?: string
+          module_count?: number
+          module_count_band: string
+          project_id: string
+          task_category: string
+          task_id: string
+        }
+        Update: {
+          actual_duration_days?: number
+          cause_category?: string | null
+          created_at?: string
+          delay_days?: number
+          id?: string
+          module_count?: number
+          module_count_band?: string
+          project_id?: string
+          task_category?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_benchmarks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "task_benchmarks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
             referencedColumns: ["id"]
           },
         ]
