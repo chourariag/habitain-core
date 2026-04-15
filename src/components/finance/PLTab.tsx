@@ -50,7 +50,6 @@ export function PLTab() {
   };
 
   const downloadTemplate = () => {
-    const { downloadXlsxTemplate, TEMPLATES } = require("@/lib/xlsx-templates");
     const t = TEMPLATES.plUpload;
     downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };

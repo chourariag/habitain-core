@@ -54,7 +54,7 @@ export function ProjectBudgetsTab() {
 
   const downloadTemplate = () => {
     const t = TEMPLATES.budget;
-    downloadXlsxTemplate(t.filename, t.sheet, t.headers, [...t.sample]);
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
 
   return (

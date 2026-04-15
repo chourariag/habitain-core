@@ -176,7 +176,6 @@ export function PaymentsTab() {
   };
 
   const downloadTemplate = () => {
-    const { downloadXlsxTemplate, TEMPLATES } = require("@/lib/xlsx-templates");
     const t = TEMPLATES.payments;
     downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };

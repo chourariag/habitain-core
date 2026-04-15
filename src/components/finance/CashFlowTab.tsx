@@ -97,7 +97,6 @@ export function CashFlowTab() {
   };
 
   const downloadTemplate = () => {
-    const { downloadXlsxTemplate, TEMPLATES } = require("@/lib/xlsx-templates");
     const t = TEMPLATES.cashflow;
     downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };

@@ -340,7 +340,6 @@ export function MISTab() {
   };
 
   const downloadTemplate = () => {
-    const { downloadXlsxTemplate, TEMPLATES } = require("@/lib/xlsx-templates");
     const t = TEMPLATES.trialBalance;
     downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
