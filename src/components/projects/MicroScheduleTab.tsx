@@ -80,6 +80,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   const [overrideTask, setOverrideTask] = useState<ProjectTask | null>(null);
   const [overrideReason, setOverrideReason] = useState("");
   const [scheduleFlags, setScheduleFlags] = useState<{ task: string; message: string; level: "yellow" | "amber" }[]>([]);
+  const [materialRiskTaskIds, setMaterialRiskTaskIds] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
   const canUpload = UPLOAD_ROLES.includes(userRole ?? "");
@@ -88,12 +89,17 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("project_tasks")
-      .select("*")
-      .eq("project_id", projectId)
-      .order("task_id_in_schedule", { ascending: true });
-    setTasks((data as any as ProjectTask[]) ?? []);
+    const [taskRes, alertRes] = await Promise.all([
+      supabase.from("project_tasks").select("*").eq("project_id", projectId).order("task_id_in_schedule", { ascending: true }),
+      supabase.from("material_alerts").select("related_task_id, material_name").eq("project_id", projectId).eq("status", "active").not("related_task_id", "is", null),
+    ]);
+    setTasks((taskRes.data as any as ProjectTask[]) ?? []);
+    // Build map of task_id -> material_name for risk badges
+    const riskMap: Record<string, string> = {};
+    (alertRes.data ?? []).forEach((a: any) => {
+      if (a.related_task_id) riskMap[a.related_task_id] = a.material_name ?? "Material";
+    });
+    setMaterialRiskTaskIds(riskMap);
     setLoading(false);
   }, [projectId]);
 
