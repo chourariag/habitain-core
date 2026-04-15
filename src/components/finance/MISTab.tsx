@@ -416,6 +416,50 @@ export function MISTab() {
         </CardContent>
       </Card>
 
+      {/* Upload Summary */}
+      {uploadSummary && (
+        <Card>
+          <CardContent className="pt-4 space-y-2">
+            <p className="text-sm font-semibold font-display" style={{ color: "#006039" }}>
+              ✓ Uploaded Successfully — {uploadSummary.total} ledger accounts imported
+            </p>
+            <p className="text-xs" style={{ color: "#1A1A1A" }}>Period: {uploadSummary.period}</p>
+            <div className="flex flex-wrap gap-3 text-xs">
+              {Object.entries(uploadSummary.categories).map(([cat, count]) => (
+                <span key={cat} className="px-2 py-1 rounded" style={{
+                  backgroundColor: cat === "Bank" ? "#E8F2ED" : cat === "Debtor" ? "#EBF5FF" : cat === "Creditor" ? "#FFF3CD" : cat === "Inventory" ? "#F3E8FF" : "#F7F7F7",
+                  color: "#1A1A1A",
+                }}>
+                  {cat} ({count})
+                </span>
+              ))}
+            </div>
+            {(() => {
+              const invEntries = (currentUpload?.raw_data || []).filter((e: any) => e.category === "Inventory");
+              const invTotal = invEntries.reduce((s: number, e: any) => s + Math.abs(e.closing_balance || e.debit - e.credit), 0);
+              return invEntries.length > 0 ? (
+                <p className="text-xs font-mono" style={{ color: "#006039" }}>Opening Stock Value: ₹{invTotal.toLocaleString("en-IN")}</p>
+              ) : null;
+            })()}
+            {uploadSummary.skipped.length > 0 && (
+              <Collapsible>
+                <CollapsibleTrigger className="text-xs cursor-pointer flex items-center gap-1" style={{ color: "#D4860A" }}>
+                  <ChevronRight className="h-3 w-3" /> {uploadSummary.skipped.length} rows skipped
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="pl-4 pt-1 space-y-0.5 max-h-32 overflow-y-auto">
+                    {uploadSummary.skipped.map((s, i) => (
+                      <p key={i} className="text-[10px]" style={{ color: "#999" }}>Row {s.row}: {s.reason}</p>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+            <Button variant="ghost" size="sm" className="text-xs" onClick={() => setUploadSummary(null)}>Dismiss</Button>
+          </CardContent>
+        </Card>
+      )}
+
       {currentUpload && entries.length > 0 && (
         <>
           {/* Section A: Contribution Analysis */}
