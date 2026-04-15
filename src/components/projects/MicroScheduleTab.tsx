@@ -80,6 +80,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   const [overrideTask, setOverrideTask] = useState<ProjectTask | null>(null);
   const [overrideReason, setOverrideReason] = useState("");
   const [scheduleFlags, setScheduleFlags] = useState<{ task: string; message: string; level: "yellow" | "amber" }[]>([]);
+  const [materialRiskTaskIds, setMaterialRiskTaskIds] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
   const canUpload = UPLOAD_ROLES.includes(userRole ?? "");
@@ -88,12 +89,17 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("project_tasks")
-      .select("*")
-      .eq("project_id", projectId)
-      .order("task_id_in_schedule", { ascending: true });
-    setTasks((data as any as ProjectTask[]) ?? []);
+    const [taskRes, alertRes] = await Promise.all([
+      supabase.from("project_tasks").select("*").eq("project_id", projectId).order("task_id_in_schedule", { ascending: true }),
+      supabase.from("material_alerts").select("related_task_id, material_name").eq("project_id", projectId).eq("status", "active").not("related_task_id", "is", null),
+    ]);
+    setTasks((taskRes.data as any as ProjectTask[]) ?? []);
+    // Build map of task_id -> material_name for risk badges
+    const riskMap: Record<string, string> = {};
+    (alertRes.data ?? []).forEach((a: any) => {
+      if (a.related_task_id) riskMap[a.related_task_id] = a.material_name ?? "Material";
+    });
+    setMaterialRiskTaskIds(riskMap);
     setLoading(false);
   }, [projectId]);
 
@@ -423,7 +429,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
           </div>
 
           {viewMode === "list" && (
-            <ListView tasks={filteredTasks} taskMap={taskMap} canEdit={canEdit} liveStatus={liveStatus} getDelay={getDelay} getBlockingName={getBlockingName} onStart={handleStartTask} onUpdate={updateTask} />
+            <ListView tasks={filteredTasks} taskMap={taskMap} canEdit={canEdit} liveStatus={liveStatus} getDelay={getDelay} getBlockingName={getBlockingName} onStart={handleStartTask} onUpdate={updateTask} materialRiskMap={materialRiskTaskIds} />
           )}
           {viewMode === "phase" && (
             <PhaseBoard tasks={filteredTasks} liveStatus={liveStatus} />
@@ -460,11 +466,12 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
 }
 
 /* ===================== LIST VIEW ===================== */
-function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingName, onStart, onUpdate }: {
+function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingName, onStart, onUpdate, materialRiskMap = {} }: {
   tasks: ProjectTask[]; taskMap: Record<string, ProjectTask>; canEdit: boolean;
   liveStatus: (t: ProjectTask) => string; getDelay: (t: ProjectTask) => number;
   getBlockingName: (t: ProjectTask) => string | null;
   onStart: (t: ProjectTask) => void; onUpdate: (id: string, u: Partial<ProjectTask>) => void;
+  materialRiskMap?: Record<string, string>;
 }) {
   return (
     <div className="overflow-x-auto border rounded-lg">
@@ -491,6 +498,7 @@ function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingNa
             const delay = getDelay(task);
             const blocking = getBlockingName(task);
             const Icon = cfg.icon;
+            const materialRisk = materialRiskMap[task.id];
             return (
               <TableRow key={task.id} className={status === "Overdue" ? "bg-red-50/50" : ""}>
                 <TableCell className="font-mono text-xs">{task.task_id_in_schedule}</TableCell>
@@ -501,6 +509,14 @@ function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingNa
                         <Tooltip>
                           <TooltipTrigger><Lock className="h-3.5 w-3.5 text-muted-foreground" /></TooltipTrigger>
                           <TooltipContent>Waiting for: {blocking ?? "predecessor"}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    {materialRisk && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger><AlertTriangle className="h-3.5 w-3.5" style={{ color: "#D4860A" }} /></TooltipTrigger>
+                          <TooltipContent className="max-w-xs">Material "{materialRisk}" not yet delivered — task start may be impacted.</TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     )}

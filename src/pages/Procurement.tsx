@@ -26,8 +26,9 @@ import { ThirtyDayPlanTab } from "@/components/procurement/ThirtyDayPlanTab";
 import { ProcurementDashboardStrip } from "@/components/procurement/ProcurementDashboardStrip";
 import { AssetRegisterTab } from "@/components/procurement/AssetRegisterTab";
 import { SupplierIntelligenceTab } from "@/components/procurement/SupplierIntelligenceTab";
+import { MaterialAlertsTab } from "@/components/procurement/MaterialAlertsTab";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
-import { Calendar, Hammer } from "lucide-react";
+import { Calendar, Hammer, Bell } from "lucide-react";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
@@ -296,6 +297,7 @@ export default function Procurement() {
             <TabsTrigger value="asset-register" className="gap-1.5"><Hammer className="h-4 w-4" /> Asset Register</TabsTrigger>
             <TabsTrigger value="tally-po" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
             <TabsTrigger value="supplier-intel" className="gap-1.5"><TrendingUp className="h-4 w-4" /> Supplier Intelligence</TabsTrigger>
+            <TabsTrigger value="material-alerts" className="gap-1.5"><Bell className="h-4 w-4" /> Material Alerts</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -696,6 +698,10 @@ export default function Procurement() {
 
         <TabsContent value="supplier-intel">
           <SupplierIntelligenceTab />
+        </TabsContent>
+
+        <TabsContent value="material-alerts">
+          <MaterialAlertsTab userRole={userRole} />
         </TabsContent>
       </Tabs>
 
