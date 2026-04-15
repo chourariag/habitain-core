@@ -40,6 +40,8 @@ export default function ClientPortal() {
   const [handover, setHandover] = useState<any>(null);
   const [variationOrders, setVariationOrders] = useState<any[]>([]);
   const [billingMilestones, setBillingMilestones] = useState<any[]>([]);
+  const [milestonePhotos, setMilestonePhotos] = useState<any[]>([]);
+  const [journalEntries, setJournalEntries] = useState<any[]>([]);
 
   // Action states
   const [queryDrawingId, setQueryDrawingId] = useState<string | null>(null);
