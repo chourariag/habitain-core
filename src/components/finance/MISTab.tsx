@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Download, ChevronDown, ChevronRight, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { WIPStatement } from "@/components/finance/WIPStatement";
@@ -31,6 +32,9 @@ interface LedgerEntry {
   ledger_name: string;
   debit: number;
   credit: number;
+  opening_balance?: number;
+  closing_balance?: number;
+  category?: string;
 }
 
 interface MISUpload {
@@ -89,6 +93,22 @@ function DoubleDivider() {
   return <div className="border-t-2 my-2" style={{ borderColor: "#006039" }} />;
 }
 
+function categorizeLedger(name: string): string {
+  const n = name.toLowerCase();
+  if (/bank|hdfc|icici|sbi|axis bank|kotak|yes bank|indusind/.test(n)) return "Bank";
+  if (/receivable|sundry debtors/.test(n)) return "Debtor";
+  if (/payable|sundry creditors/.test(n)) return "Creditor";
+  if (/stock|inventory|opening stock|closing stock/.test(n)) return "Inventory";
+  return "Other";
+}
+
+interface UploadSummary {
+  total: number;
+  categories: Record<string, number>;
+  skipped: { row: number; reason: string }[];
+  period: string;
+}
+
 export function MISTab() {
   const [uploads, setUploads] = useState<MISUpload[]>([]);
   const [mappings, setMappings] = useState<Record<string, string>>({});
@@ -99,6 +119,9 @@ export function MISTab() {
   const [unmappedLedgers, setUnmappedLedgers] = useState<string[]>([]);
   const [mappingDrawerOpen, setMappingDrawerOpen] = useState(false);
   const [newMappings, setNewMappings] = useState<Record<string, string>>({});
+  const [uploadSummary, setUploadSummary] = useState<UploadSummary | null>(null);
+  const [confirmReplace, setConfirmReplace] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const initialFetchDone = useRef(false);
 
   const currentUpload = uploads.find(u => u.id === currentUploadId) || null;
@@ -132,32 +155,92 @@ export function MISTab() {
     }
   }, [fetchData]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!periodLabel.trim()) { toast.error("Enter a period label first"); return; }
+  const parseTallyTB = async (file: File): Promise<{ entries: LedgerEntry[]; skipped: { row: number; reason: string }[]; detectedPeriod: string }> => {
+    const XLSX = await import("xlsx");
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows: any[] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
 
+    // Find header row: scan for row containing "Particulars" in column A
+    let headerRowIdx = -1;
+    let detectedPeriod = "";
+    for (let i = 0; i < Math.min(rows.length, 20); i++) {
+      const cellA = String(rows[i]?.[0] || "").trim().toLowerCase();
+      // Detect period from date range row (e.g. "1-Apr-25 to 31-Mar-26")
+      if (/\d{1,2}-[a-z]{3}-\d{2,4}\s+to\s+\d{1,2}-[a-z]{3}-\d{2,4}/i.test(String(rows[i]?.[0] || ""))) {
+        detectedPeriod = String(rows[i][0]).trim();
+      }
+      if (cellA === "particulars" || cellA.startsWith("particulars")) {
+        headerRowIdx = i;
+        break;
+      }
+    }
+
+    // Fallback: if no "Particulars" header found, try old format (row 0 = header)
+    const dataStartIdx = headerRowIdx >= 0 ? headerRowIdx + 2 : 1; // +2 to skip sub-header row
+
+    const entries: LedgerEntry[] = [];
+    const skipped: { row: number; reason: string }[] = [];
+
+    for (let i = dataStartIdx; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row) { skipped.push({ row: i + 1, reason: "Empty row" }); continue; }
+
+      const particulars = row[0] != null ? String(row[0]).trim() : "";
+      if (!particulars) { continue; } // Skip blank particulars silently
+
+      const openingBal = Number(row[1]) || 0;
+      const debitAmt = Number(row[headerRowIdx >= 0 ? 2 : 1]) || 0;
+      const creditAmt = Number(row[headerRowIdx >= 0 ? 3 : 2]) || 0;
+      const closingRaw = row[headerRowIdx >= 0 ? 4 : undefined];
+
+      // Skip rows where all numeric columns are zero/null (formatting rows)
+      if (headerRowIdx >= 0 && openingBal === 0 && debitAmt === 0 && creditAmt === 0 && (closingRaw == null || Number(closingRaw) === 0)) {
+        skipped.push({ row: i + 1, reason: `All values zero: "${particulars}"` });
+        continue;
+      }
+
+      // For old format (no header detected), skip zero rows too
+      if (headerRowIdx < 0 && debitAmt === 0 && creditAmt === 0) {
+        skipped.push({ row: i + 1, reason: `All values zero: "${particulars}"` });
+        continue;
+      }
+
+      const closingBalance = closingRaw != null ? Number(closingRaw) : (openingBal + debitAmt - creditAmt);
+      const category = categorizeLedger(particulars);
+
+      entries.push({
+        ledger_name: particulars,
+        debit: debitAmt,
+        credit: creditAmt,
+        opening_balance: headerRowIdx >= 0 ? openingBal : undefined,
+        closing_balance: headerRowIdx >= 0 ? closingBalance : undefined,
+        category,
+      });
+    }
+
+    return { entries, skipped, detectedPeriod };
+  };
+
+  const doUpload = async (file: File) => {
     try {
-      const XLSX = await import("xlsx");
-      const data = await file.arrayBuffer();
-      const wb = XLSX.read(data);
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows: any[] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      const { entries, skipped, detectedPeriod } = await parseTallyTB(file);
 
-      const entries: LedgerEntry[] = [];
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        if (!row[0]) continue;
-        entries.push({
-          ledger_name: String(row[0]).trim(),
-          debit: Number(row[1]) || 0,
-          credit: Number(row[2]) || 0,
-        });
+      if (entries.length === 0) { toast.error("No data rows found in file"); return; }
+
+      // Use detected period or user-entered label
+      const finalPeriod = periodLabel.trim() || detectedPeriod || "Unknown Period";
+
+      // Delete existing uploads for same period
+      const existing = uploads.find(u => u.period_label === finalPeriod);
+      if (existing) {
+        await supabase.from("finance_mis_uploads").delete().eq("id", existing.id);
       }
 
       const { data: { user } } = await supabase.auth.getUser();
       const { data: inserted, error } = await supabase.from("finance_mis_uploads").insert({
-        period_label: periodLabel.trim(),
+        period_label: finalPeriod,
         uploaded_by: user?.id,
         raw_data: entries as any,
       }).select().single();
@@ -173,20 +256,41 @@ export function MISTab() {
         setMappingDrawerOpen(true);
       }
 
-      // Add to local state directly
       const newUpload: MISUpload = {
         id: inserted.id,
         period_label: inserted.period_label,
         raw_data: entries,
         ads_split: {},
       };
-      setUploads(prev => [newUpload, ...prev]);
+      setUploads(prev => [newUpload, ...prev.filter(u => u.id !== existing?.id)]);
       setCurrentUploadId(inserted.id);
 
-      toast.success("Trial Balance uploaded successfully");
+      // Build category summary
+      const categories: Record<string, number> = {};
+      entries.forEach(e => {
+        const cat = e.category || "Other";
+        categories[cat] = (categories[cat] || 0) + 1;
+      });
+
+      setUploadSummary({ total: entries.length, categories, skipped, period: finalPeriod });
+      toast.success(`${entries.length} ledger accounts imported`);
       setPeriodLabel("");
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check if period already exists
+    const label = periodLabel.trim();
+    if (label && uploads.find(u => u.period_label === label)) {
+      setPendingFile(file);
+      setConfirmReplace(true);
+    } else {
+      await doUpload(file);
     }
     e.target.value = "";
   };
@@ -235,7 +339,7 @@ export function MISTab() {
   };
 
   const downloadTemplate = () => {
-    const csv = "Ledger Name,Debit Amount,Credit Amount\nSales - Domestic,0,500000\nRaw Material Purchased,300000,0\nFactory Rent,50000,0\nSalaries & Wages,100000,0";
+    const csv = "Particulars,Opening Balance,Debit,Credit,Closing Balance\nSales - Domestic,0,0,500000,500000\nRaw Material Purchased,0,300000,0,300000\nFactory Rent,0,50000,0,50000\nSalaries & Wages,0,100000,0,100000\nHDFC Bank,250000,100000,80000,270000\nSundry Debtors,150000,50000,30000,170000\nSundry Creditors,0,20000,90000,70000\nOpening Stock,75000,0,0,75000";
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a"); a.href = url; a.download = "TB_Template.csv"; a.click();
@@ -311,6 +415,50 @@ export function MISTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Upload Summary */}
+      {uploadSummary && (
+        <Card>
+          <CardContent className="pt-4 space-y-2">
+            <p className="text-sm font-semibold font-display" style={{ color: "#006039" }}>
+              ✓ Uploaded Successfully — {uploadSummary.total} ledger accounts imported
+            </p>
+            <p className="text-xs" style={{ color: "#1A1A1A" }}>Period: {uploadSummary.period}</p>
+            <div className="flex flex-wrap gap-3 text-xs">
+              {Object.entries(uploadSummary.categories).map(([cat, count]) => (
+                <span key={cat} className="px-2 py-1 rounded" style={{
+                  backgroundColor: cat === "Bank" ? "#E8F2ED" : cat === "Debtor" ? "#EBF5FF" : cat === "Creditor" ? "#FFF3CD" : cat === "Inventory" ? "#F3E8FF" : "#F7F7F7",
+                  color: "#1A1A1A",
+                }}>
+                  {cat} ({count})
+                </span>
+              ))}
+            </div>
+            {(() => {
+              const invEntries = (currentUpload?.raw_data || []).filter((e: any) => e.category === "Inventory");
+              const invTotal = invEntries.reduce((s: number, e: any) => s + Math.abs(e.closing_balance || e.debit - e.credit), 0);
+              return invEntries.length > 0 ? (
+                <p className="text-xs font-mono" style={{ color: "#006039" }}>Opening Stock Value: ₹{invTotal.toLocaleString("en-IN")}</p>
+              ) : null;
+            })()}
+            {uploadSummary.skipped.length > 0 && (
+              <Collapsible>
+                <CollapsibleTrigger className="text-xs cursor-pointer flex items-center gap-1" style={{ color: "#D4860A" }}>
+                  <ChevronRight className="h-3 w-3" /> {uploadSummary.skipped.length} rows skipped
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="pl-4 pt-1 space-y-0.5 max-h-32 overflow-y-auto">
+                    {uploadSummary.skipped.map((s, i) => (
+                      <p key={i} className="text-[10px]" style={{ color: "#999" }}>Row {s.row}: {s.reason}</p>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
+            <Button variant="ghost" size="sm" className="text-xs" onClick={() => setUploadSummary(null)}>Dismiss</Button>
+          </CardContent>
+        </Card>
+      )}
 
       {currentUpload && entries.length > 0 && (
         <>
@@ -543,6 +691,20 @@ export function MISTab() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      {/* Replace Confirmation Dialog */}
+      <Dialog open={confirmReplace} onOpenChange={setConfirmReplace}>
+        <DialogContent>
+          <DialogHeader><DialogTitle className="font-display">Replace Existing Trial Balance?</DialogTitle></DialogHeader>
+          <p className="text-sm" style={{ color: "#666" }}>
+            A Trial Balance for <strong>{periodLabel}</strong> already exists. Uploading will replace it.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setConfirmReplace(false); setPendingFile(null); }}>Cancel</Button>
+            <Button onClick={async () => { setConfirmReplace(false); if (pendingFile) { await doUpload(pendingFile); setPendingFile(null); } }} style={{ backgroundColor: "#F40009", color: "white" }}>Replace & Import</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
