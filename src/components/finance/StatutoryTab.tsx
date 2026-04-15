@@ -23,11 +23,9 @@ interface Filing {
 
 // Statutory reminder configuration
 const STATUTORY_CONFIG: { type: string; dayOfMonth: number; reminderDays: number; message: string }[] = [
-  { type: "TDS Payment", dayOfMonth: 7, reminderDays: 2, message: "TDS payment due on 7th. Please upload to bank portal and send for Director approval." },
-  { type: "GSTR-1", dayOfMonth: 10, reminderDays: 2, message: "GSTR-1 filing due on 10th. Please send workings to CA for verification." },
-  { type: "GSTR-3B", dayOfMonth: 20, reminderDays: 2, message: "GSTR-3B filing due on 20th. Please send workings to CA for verification." },
-  { type: "PT (Professional Tax)", dayOfMonth: 20, reminderDays: 2, message: "PT payment due on 20th. Please process payment." },
-  { type: "PF Payment", dayOfMonth: 15, reminderDays: 2, message: "PF payment due on 15th. Please process payment." },
+  { type: "TDS Payment", dayOfMonth: 5, reminderDays: 2, message: "TDS payment due on 5th. Please upload challan and send for Director approval." },
+  { type: "GSTR-1", dayOfMonth: 11, reminderDays: 2, message: "GSTR-1 filing due on 11th. Alert at 4th and 9th. Please send workings to CA." },
+  { type: "GSTR-3B", dayOfMonth: 20, reminderDays: 2, message: "GSTR-3B filing due on 20th. Alert at 13th and 18th. Please send workings to CA." },
 ];
 
 function getUpcomingStatutoryDates(): { filing_type: string; due_date: string; reminder_days: number }[] {
@@ -36,40 +34,58 @@ function getUpcomingStatutoryDates(): { filing_type: string; due_date: string; r
   const month = today.getMonth();
   const entries: { filing_type: string; due_date: string; reminder_days: number }[] = [];
 
-  // Next 3 months of recurring filings
+  // Next 3 months of monthly recurring filings
   for (let i = 0; i < 3; i++) {
     const m = (month + i) % 12;
     const y = year + Math.floor((month + i) / 12);
     const mm = String(m + 1).padStart(2, "0");
 
-    entries.push({ filing_type: "TDS Payment", due_date: `${y}-${mm}-07`, reminder_days: 2 });
-    entries.push({ filing_type: "GSTR-1", due_date: `${y}-${mm}-10`, reminder_days: 2 });
-    entries.push({ filing_type: "GSTR-3B", due_date: `${y}-${mm}-20`, reminder_days: 2 });
-    entries.push({ filing_type: "PT (Professional Tax)", due_date: `${y}-${mm}-20`, reminder_days: 2 });
-    entries.push({ filing_type: "PF Payment", due_date: `${y}-${mm}-15`, reminder_days: 2 });
+    // TDS — 5th of each month
+    entries.push({ filing_type: "TDS Payment", due_date: `${y}-${mm}-05`, reminder_days: 2 });
+    // GSTR-1 — 11th of each month (alerts at 4th and 9th)
+    entries.push({ filing_type: "GSTR-1", due_date: `${y}-${mm}-11`, reminder_days: 7 });
+    // GSTR-3B — 20th of each month (alerts at 13th and 18th)
+    entries.push({ filing_type: "GSTR-3B", due_date: `${y}-${mm}-20`, reminder_days: 7 });
   }
 
-  // Quarterly TDS Returns — 15 days reminder
-  [
-    { m: "07", d: "30" },
-    { m: "10", d: "31" },
-    { m: "01", d: "31" },
-    { m: "05", d: "31" },
-  ].forEach(({ m, d }) => {
-    const dueYear = Number(m) < 6 ? year + 1 : year;
+  // Quarterly TDS Returns — 15th of last month of quarter, 15 days reminder
+  const quarterEnds = [
+    { m: "06", d: "15" }, // Q1 — June 15
+    { m: "09", d: "15" }, // Q2 — Sep 15
+    { m: "12", d: "15" }, // Q3 — Dec 15
+    { m: "03", d: "15" }, // Q4 — Mar 15 (next year)
+  ];
+  quarterEnds.forEach(({ m, d }) => {
+    const dueYear = Number(m) <= 3 ? year + 1 : year;
     const due = `${dueYear}-${m}-${d}`;
     if (due >= today.toISOString().slice(0, 10)) {
-      entries.push({ filing_type: "TDS Return (Quarterly)", due_date: due, reminder_days: 15 });
+      entries.push({ filing_type: "Quarterly TDS Return", due_date: due, reminder_days: 15 });
     }
   });
 
-  // Annual filings
-  entries.push({ filing_type: "GST Annual Return", due_date: `${year}-12-31`, reminder_days: 30 });
-  entries.push({ filing_type: "Income Tax", due_date: `${year}-10-31`, reminder_days: 30 });
+  // Annual Income Tax Filing — Oct 31, alerts at 30 days and 7 days before
+  const itDue = `${year}-10-31`;
+  if (itDue >= today.toISOString().slice(0, 10)) {
+    entries.push({ filing_type: "Annual Income Tax Filing", due_date: itDue, reminder_days: 30 });
+  } else {
+    entries.push({ filing_type: "Annual Income Tax Filing", due_date: `${year + 1}-10-31`, reminder_days: 30 });
+  }
 
-  // New: Factory Act Compliance — annual, configurable
-  entries.push({ filing_type: "Factory Act Compliance", due_date: `${year}-03-31`, reminder_days: 30 });
-  entries.push({ filing_type: "Shops & Establishment Act", due_date: `${year}-03-31`, reminder_days: 30 });
+  // Factory Act Renewal — annual, alert 30 days before expiry (Mar 31 default)
+  const factoryDue = `${year}-03-31`;
+  if (factoryDue >= today.toISOString().slice(0, 10)) {
+    entries.push({ filing_type: "Factory Act Renewal", due_date: factoryDue, reminder_days: 30 });
+  } else {
+    entries.push({ filing_type: "Factory Act Renewal", due_date: `${year + 1}-03-31`, reminder_days: 30 });
+  }
+
+  // Shops & Establishment Renewal — annual, alert 30 days before expiry (Mar 31 default)
+  const shopsDue = `${year}-03-31`;
+  if (shopsDue >= today.toISOString().slice(0, 10)) {
+    entries.push({ filing_type: "Shops & Establishment Renewal", due_date: shopsDue, reminder_days: 30 });
+  } else {
+    entries.push({ filing_type: "Shops & Establishment Renewal", due_date: `${year + 1}-03-31`, reminder_days: 30 });
+  }
 
   return entries
     .filter((e) => e.due_date >= today.toISOString().slice(0, 10))
