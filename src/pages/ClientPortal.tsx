@@ -36,6 +36,7 @@ export default function ClientPortal() {
   const [drawings, setDrawings] = useState<any[]>([]);
   const [handover, setHandover] = useState<any>(null);
   const [variationOrders, setVariationOrders] = useState<any[]>([]);
+  const [billingMilestones, setBillingMilestones] = useState<any[]>([]);
 
   // Action states
   const [queryDrawingId, setQueryDrawingId] = useState<string | null>(null);
@@ -77,7 +78,7 @@ export default function ClientPortal() {
       action: "page_view",
     }).then(() => {});
 
-    const [modRes, gfcRes, drawRes, handRes, voRes] = await Promise.all([
+    const [modRes, gfcRes, drawRes, handRes, voRes, msRes] = await Promise.all([
       supabase.from("modules").select("id, module_code, current_stage, production_status, created_at")
         .eq("project_id", proj.id).eq("is_archived", false).order("created_at"),
       supabase.from("gfc_records").select("*").eq("project_id", proj.id).order("created_at"),
@@ -86,6 +87,7 @@ export default function ClientPortal() {
         .in("approval_status", ["approved", "pending"]).order("created_at"),
       supabase.from("handover_pack").select("*").eq("project_id", proj.id).maybeSingle(),
       supabase.from("variation_orders" as any).select("*").eq("project_id", proj.id).order("created_at"),
+      supabase.from("project_billing_milestones").select("*").eq("project_id", proj.id).order("milestone_number"),
     ]);
 
     setModules(modRes.data ?? []);
@@ -93,6 +95,7 @@ export default function ClientPortal() {
     setDrawings(drawRes.data ?? []);
     setHandover(handRes.data ?? null);
     setVariationOrders((voRes.data as any[]) ?? []);
+    setBillingMilestones((msRes.data as any[]) ?? []);
     setLoading(false);
   }, [projectToken]);
 
@@ -534,6 +537,48 @@ export default function ClientPortal() {
             )}
           </CardContent>
         </Card>
+
+        {/* Payment Timeline */}
+        {billingMilestones.length > 0 && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="font-heading text-base font-bold flex items-center gap-2">
+                <IndianRupee className="h-4 w-4" /> Payment Timeline
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {billingMilestones.map((m: any) => {
+                const statusLabel = m.status === "received" ? "Paid" : m.status === "billed" ? "Billed" : "Upcoming";
+                const statusColor = m.status === "received" ? "bg-primary text-primary-foreground"
+                  : m.status === "billed" ? "bg-warning/20 text-warning"
+                  : "bg-muted text-muted-foreground";
+                return (
+                  <div key={m.id} className="flex items-center justify-between p-3 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                        m.status === "received" ? "bg-primary text-primary-foreground"
+                          : m.status === "billed" ? "bg-warning text-warning-foreground"
+                          : "bg-muted text-muted-foreground"
+                      }`}>
+                        {m.status === "received" ? <Check className="h-4 w-4" /> : m.milestone_number}
+                      </div>
+                      <div>
+                        <p className="text-sm font-heading font-semibold text-foreground">{m.description}</p>
+                        <p className="text-xs font-body text-muted-foreground">{m.percentage}% of contract</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-heading font-bold text-foreground">
+                        ₹{Number(m.amount_incl_gst).toLocaleString("en-IN")}
+                      </p>
+                      <Badge className={`text-[10px] ${statusColor}`}>{statusLabel}</Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Design Timeline */}
         <Card>
