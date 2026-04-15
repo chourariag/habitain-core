@@ -10,8 +10,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Upload, Download, List, Columns3, BarChart3, Lock, Unlock, Loader2, Monitor, CheckCircle2, Clock, AlertTriangle, Ban, Circle } from "lucide-react";
+import { Upload, Download, List, Columns3, BarChart3, Lock, Unlock, Loader2, Monitor, CheckCircle2, Clock, AlertTriangle, Ban, Circle, Timer, Ruler } from "lucide-react";
 import { format, parseISO, differenceInDays, eachWeekOfInterval, addDays } from "date-fns";
+import { DelayDashboard } from "./DelayDashboard";
+import { MeasurementSheet } from "./MeasurementSheet";
 import * as XLSX from "xlsx";
 
 interface ProjectTask {
