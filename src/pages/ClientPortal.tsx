@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
@@ -18,6 +19,9 @@ import {
 import { MilestoneTimeline } from "@/components/portal/MilestoneTimeline";
 import { ConstructionJournal } from "@/components/portal/ConstructionJournal";
 import { VariationApproval } from "@/components/portal/VariationApproval";
+import { ClientPaymentsInvoices } from "@/components/portal/ClientPaymentsInvoices";
+import { ClientDocuments } from "@/components/portal/ClientDocuments";
+import { ClientPostHandover } from "@/components/portal/ClientPostHandover";
 
 const STAGES = [
   "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
@@ -42,6 +46,8 @@ export default function ClientPortal() {
   const [billingMilestones, setBillingMilestones] = useState<any[]>([]);
   const [milestonePhotos, setMilestonePhotos] = useState<any[]>([]);
   const [journalEntries, setJournalEntries] = useState<any[]>([]);
+  const [portalDocuments, setPortalDocuments] = useState<any[]>([]);
+  const [amcContract, setAmcContract] = useState<any>(null);
 
   // Action states
   const [queryDrawingId, setQueryDrawingId] = useState<string | null>(null);
@@ -83,7 +89,7 @@ export default function ClientPortal() {
       action: "page_view",
     }).then(() => {});
 
-    const [modRes, gfcRes, drawRes, handRes, voRes, msRes, mpRes, cjRes] = await Promise.all([
+    const [modRes, gfcRes, drawRes, handRes, voRes, msRes, mpRes, cjRes, docRes, amcRes] = await Promise.all([
       supabase.from("modules").select("id, module_code, current_stage, production_status, created_at")
         .eq("project_id", proj.id).eq("is_archived", false).order("created_at"),
       supabase.from("gfc_records").select("*").eq("project_id", proj.id).order("created_at"),
@@ -95,6 +101,8 @@ export default function ClientPortal() {
       supabase.from("project_billing_milestones").select("*").eq("project_id", proj.id).order("milestone_number"),
       supabase.from("client_milestone_photos" as any).select("*").eq("project_id", proj.id).order("created_at"),
       supabase.from("construction_journal" as any).select("*").eq("project_id", proj.id).eq("is_approved", true).order("entry_date", { ascending: false }).limit(20),
+      supabase.from("client_portal_documents").select("*").eq("project_id", proj.id).order("uploaded_at", { ascending: false }),
+      supabase.from("amc_contracts").select("*").eq("project_id", proj.id).eq("is_archived", false).maybeSingle(),
     ]);
 
     setModules(modRes.data ?? []);
@@ -105,6 +113,8 @@ export default function ClientPortal() {
     setBillingMilestones((msRes.data as any[]) ?? []);
     setMilestonePhotos((mpRes.data as any[]) ?? []);
     setJournalEntries((cjRes.data as any[]) ?? []);
+    setPortalDocuments(docRes.data ?? []);
+    setAmcContract(amcRes.data ?? null);
     setLoading(false);
   }, [projectToken]);
 
@@ -185,6 +195,19 @@ export default function ClientPortal() {
       dlp_start_date: now.toISOString().split("T")[0],
     } as any).eq("id", handover.id);
 
+    // Update project status
+    await supabase.from("projects").update({
+      status: "handed_over",
+    } as any).eq("id", project.id);
+
+    // Start AMC timer if contract exists
+    if (amcContract && amcContract.status !== "active") {
+      await supabase.from("amc_contracts").update({
+        status: "active",
+        start_date: now.toISOString().split("T")[0],
+      }).eq("id", amcContract.id);
+    }
+
     // Log action
     supabase.from("client_portal_access_log").insert({
       project_id: project.id,
@@ -235,6 +258,7 @@ export default function ClientPortal() {
   const pendingVOs = variationOrders.filter((v: any) => v.status === "pending");
   const handoverReady = handover && !(handover as any).client_signed_at;
   const handoverSigned = handover && (handover as any).client_signed_at;
+  const isHandedOver = handoverSigned || project.status === "handed_over";
 
   const totalActions = pendingDrawings.length + pendingVOs.length + (handoverReady ? 1 : 0);
 
@@ -282,413 +306,395 @@ export default function ClientPortal() {
           </div>
         )}
 
-        {/* Milestone Photo Timeline */}
-        {milestonePhotos.length > 0 && (
-          <MilestoneTimeline photos={milestonePhotos} projectStartDate={project.start_date} />
-        )}
+        {/* Tabs */}
+        <Tabs defaultValue="overview">
+          <TabsList className="w-full">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="payments">Payments</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+            {isHandedOver && <TabsTrigger value="post-handover">Post-Handover</TabsTrigger>}
+          </TabsList>
 
-        {/* Construction Journal */}
-        <ConstructionJournal entries={journalEntries} />
+          {/* OVERVIEW TAB */}
+          <TabsContent value="overview" className="space-y-6 mt-4">
+            {/* Milestone Photo Timeline */}
+            {milestonePhotos.length > 0 && (
+              <MilestoneTimeline photos={milestonePhotos} projectStartDate={project.start_date} />
+            )}
 
-        {/* Variation Approval (Phase C) */}
-        <VariationApproval
-          variations={variationOrders}
-          projectId={project.id}
-          projectName={project.name}
-          clientName={project.client_name || "Client"}
-          portalToken={projectToken!}
-          onRefresh={fetchData}
-        />
+            {/* Construction Journal */}
+            <ConstructionJournal entries={journalEntries} />
 
-        {/* Drawing Approvals */}
-        {pendingDrawings.length > 0 && (
-          <Card className="border-destructive/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="font-heading text-base font-bold flex items-center gap-2">
-                <PenLine className="h-4 w-4 text-destructive" /> Drawings Awaiting Approval
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {pendingDrawings.map((d) => (
-                <div key={d.id} className="rounded-lg border p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-heading font-semibold text-foreground">
-                        {d.drawing_title || d.drawing_id_code}
-                      </p>
-                      <p className="text-xs font-body text-muted-foreground mt-0.5">
-                        Uploaded {fmtDate(d.created_at)}
-                      </p>
+            {/* Variation Approval (Phase C) */}
+            <VariationApproval
+              variations={variationOrders}
+              projectId={project.id}
+              projectName={project.name}
+              clientName={project.client_name || "Client"}
+              portalToken={projectToken!}
+              onRefresh={fetchData}
+            />
+
+            {/* Drawing Approvals */}
+            {pendingDrawings.length > 0 && (
+              <Card className="border-destructive/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-heading text-base font-bold flex items-center gap-2">
+                    <PenLine className="h-4 w-4 text-destructive" /> Drawings Awaiting Approval
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {pendingDrawings.map((d) => (
+                    <div key={d.id} className="rounded-lg border p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-heading font-semibold text-foreground">
+                            {d.drawing_title || d.drawing_id_code}
+                          </p>
+                          <p className="text-xs font-body text-muted-foreground mt-0.5">
+                            Uploaded {fmtDate(d.created_at)}
+                          </p>
+                        </div>
+                        {d.file_url && (
+                          <Button size="sm" variant="outline" className="h-7 text-xs shrink-0" asChild>
+                            <a href={d.file_url} target="_blank" rel="noopener noreferrer">
+                              <Download className="h-3 w-3 mr-1" /> View
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+
+                      {queryDrawingId === d.id ? (
+                        <div className="space-y-2">
+                          <Textarea
+                            placeholder="What is your question about this drawing?"
+                            value={queryText}
+                            onChange={(e) => setQueryText(e.target.value)}
+                            className="text-sm h-20"
+                          />
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => handleSubmitDrawingQuery(d.id)}
+                              disabled={submittingAction === d.id}>
+                              <MessageSquare className="h-3 w-3 mr-1" /> Submit Query
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => { setQueryDrawingId(null); setQueryText(""); }}>
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Button size="sm" className="bg-primary" onClick={() => handleApproveDrawing(d.id)}
+                            disabled={submittingAction === d.id}>
+                            <ThumbsUp className="h-3 w-3 mr-1" /> Approve
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setQueryDrawingId(d.id)}>
+                            <HelpCircle className="h-3 w-3 mr-1" /> Raise a Query
+                          </Button>
+                        </div>
+                      )}
                     </div>
-                    {d.file_url && (
-                      <Button size="sm" variant="outline" className="h-7 text-xs shrink-0" asChild>
-                        <a href={d.file_url} target="_blank" rel="noopener noreferrer">
-                          <Download className="h-3 w-3 mr-1" /> View
-                        </a>
-                      </Button>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Variation Orders */}
+            {pendingVOs.length > 0 && (
+              <Card className="border-warning/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-heading text-base font-bold flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-warning" /> Variation Orders
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {pendingVOs.map((vo: any) => (
+                    <div key={vo.id} className="rounded-lg border p-4 space-y-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-heading font-bold text-foreground">{vo.vo_code}</p>
+                          <Badge variant="outline" className="text-xs">Pending</Badge>
+                        </div>
+                        <p className="text-sm font-body text-foreground mt-1">{vo.description}</p>
+                        <p className="text-base font-heading font-bold text-foreground mt-2">
+                          ₹{Number(vo.value).toLocaleString("en-IN")}
+                        </p>
+                        <p className="text-xs font-body text-muted-foreground mt-1">
+                          This is additional work outside your original scope. Your approval is required.
+                        </p>
+                      </div>
+
+                      {voResponseId === vo.id ? (
+                        <div className="space-y-2">
+                          <Textarea
+                            placeholder="Add a note (optional)"
+                            value={voResponseNote}
+                            onChange={(e) => setVoResponseNote(e.target.value)}
+                            className="text-sm h-16"
+                          />
+                          <div className="flex gap-2 flex-wrap">
+                            <Button size="sm" className="bg-primary" onClick={() => handleVOAction(vo.id, "approved")}
+                              disabled={submittingAction === vo.id}>
+                              <ThumbsUp className="h-3 w-3 mr-1" /> Approve
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => handleVOAction(vo.id, "discussion_requested")}
+                              disabled={submittingAction === vo.id}>
+                              <MessageSquare className="h-3 w-3 mr-1" /> Request Discussion
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => handleVOAction(vo.id, "rejected")}
+                              disabled={submittingAction === vo.id}>
+                              <ThumbsDown className="h-3 w-3 mr-1" /> Reject
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button size="sm" variant="outline" onClick={() => setVoResponseId(vo.id)}>
+                          Respond
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Handover Sign-Off */}
+            {handoverReady && (
+              <Card className="border-primary/30">
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-heading text-base font-bold flex items-center gap-2">
+                    <PenLine className="h-4 w-4 text-primary" /> Handover Certificate
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2 text-sm font-body">
+                    <p className="text-foreground"><strong>Project:</strong> {project.name}</p>
+                    <p className="text-foreground"><strong>Modules delivered:</strong> {modules.length}</p>
+                    {handover.snag_list && (
+                      <p className="text-foreground"><strong>Punch list:</strong> All items closed</p>
                     )}
                   </div>
 
-                  {queryDrawingId === d.id ? (
-                    <div className="space-y-2">
-                      <Textarea
-                        placeholder="What is your question about this drawing?"
-                        value={queryText}
-                        onChange={(e) => setQueryText(e.target.value)}
-                        className="text-sm h-20"
-                      />
+                  {showHandoverConfirm ? (
+                    <div className="rounded-lg bg-accent p-4 space-y-3">
+                      <p className="text-sm font-body text-accent-foreground">
+                        By signing, you confirm that <strong>{project.name}</strong> has been
+                        handed over to your satisfaction on {format(new Date(), "dd/MM/yyyy")}.
+                      </p>
+                      <div>
+                        <label className="text-xs font-body text-muted-foreground block mb-1">
+                          Type your full name to sign
+                        </label>
+                        <Input
+                          value={handoverSignName}
+                          onChange={(e) => setHandoverSignName(e.target.value)}
+                          placeholder="Your full name"
+                          className="text-sm"
+                        />
+                      </div>
                       <div className="flex gap-2">
-                        <Button size="sm" onClick={() => handleSubmitDrawingQuery(d.id)}
-                          disabled={submittingAction === d.id}>
-                          <MessageSquare className="h-3 w-3 mr-1" /> Submit Query
+                        <Button size="sm" className="bg-primary" onClick={handleSignHandover}
+                          disabled={submittingAction === "handover" || handoverSignName.trim().length < 2}>
+                          <PenLine className="h-3 w-3 mr-1" /> Confirm &amp; Sign
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => { setQueryDrawingId(null); setQueryText(""); }}>
+                        <Button size="sm" variant="ghost" onClick={() => setShowHandoverConfirm(false)}>
                           Cancel
                         </Button>
                       </div>
                     </div>
                   ) : (
-                    <div className="flex gap-2">
-                      <Button size="sm" className="bg-primary" onClick={() => handleApproveDrawing(d.id)}
-                        disabled={submittingAction === d.id}>
-                        <ThumbsUp className="h-3 w-3 mr-1" /> Approve
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => setQueryDrawingId(d.id)}>
-                        <HelpCircle className="h-3 w-3 mr-1" /> Raise a Query
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Variation Orders */}
-        {pendingVOs.length > 0 && (
-          <Card className="border-warning/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="font-heading text-base font-bold flex items-center gap-2">
-                <FileText className="h-4 w-4 text-warning" /> Variation Orders
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {pendingVOs.map((vo: any) => (
-                <div key={vo.id} className="rounded-lg border p-4 space-y-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-heading font-bold text-foreground">{vo.vo_code}</p>
-                      <Badge variant="outline" className="text-xs">Pending</Badge>
-                    </div>
-                    <p className="text-sm font-body text-foreground mt-1">{vo.description}</p>
-                    <p className="text-base font-heading font-bold text-foreground mt-2">
-                      ₹{Number(vo.value).toLocaleString("en-IN")}
-                    </p>
-                    <p className="text-xs font-body text-muted-foreground mt-1">
-                      This is additional work outside your original scope. Your approval is required.
-                    </p>
-                  </div>
-
-                  {voResponseId === vo.id ? (
-                    <div className="space-y-2">
-                      <Textarea
-                        placeholder="Add a note (optional)"
-                        value={voResponseNote}
-                        onChange={(e) => setVoResponseNote(e.target.value)}
-                        className="text-sm h-16"
-                      />
-                      <div className="flex gap-2 flex-wrap">
-                        <Button size="sm" className="bg-primary" onClick={() => handleVOAction(vo.id, "approved")}
-                          disabled={submittingAction === vo.id}>
-                          <ThumbsUp className="h-3 w-3 mr-1" /> Approve
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => handleVOAction(vo.id, "discussion_requested")}
-                          disabled={submittingAction === vo.id}>
-                          <MessageSquare className="h-3 w-3 mr-1" /> Request Discussion
-                        </Button>
-                        <Button size="sm" variant="destructive" onClick={() => handleVOAction(vo.id, "rejected")}
-                          disabled={submittingAction === vo.id}>
-                          <ThumbsDown className="h-3 w-3 mr-1" /> Reject
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    <Button size="sm" variant="outline" onClick={() => setVoResponseId(vo.id)}>
-                      Respond
+                    <Button onClick={() => setShowHandoverConfirm(true)}>
+                      <PenLine className="h-4 w-4 mr-1" /> Sign Handover Certificate
                     </Button>
                   )}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+                </CardContent>
+              </Card>
+            )}
 
-        {/* Handover Sign-Off */}
-        {handoverReady && (
-          <Card className="border-primary/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="font-heading text-base font-bold flex items-center gap-2">
-                <PenLine className="h-4 w-4 text-primary" /> Handover Certificate
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2 text-sm font-body">
-                <p className="text-foreground"><strong>Project:</strong> {project.name}</p>
-                <p className="text-foreground"><strong>Modules delivered:</strong> {modules.length}</p>
-                {handover.snag_list && (
-                  <p className="text-foreground"><strong>Punch list:</strong> All items closed</p>
-                )}
-              </div>
-
-              {showHandoverConfirm ? (
-                <div className="rounded-lg bg-accent p-4 space-y-3">
-                  <p className="text-sm font-body text-accent-foreground">
-                    By signing, you confirm that <strong>{project.name}</strong> has been
-                    handed over to your satisfaction on {format(new Date(), "dd/MM/yyyy")}.
+            {handoverSigned && (
+              <Card className="border-primary/30 bg-accent/30">
+                <CardContent className="pt-6 text-center space-y-2">
+                  <Check className="h-8 w-8 text-primary mx-auto" />
+                  <p className="font-heading font-bold text-foreground">Handover Complete</p>
+                  <p className="text-sm font-body text-muted-foreground">
+                    Signed by {(handover as any).client_signed_name} on {fmtDate((handover as any).client_signed_at)}
                   </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Project Overview */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="font-heading text-base font-bold">Project Overview</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4 text-sm font-body">
                   <div>
-                    <label className="text-xs font-body text-muted-foreground block mb-1">
-                      Type your full name to sign
-                    </label>
-                    <Input
-                      value={handoverSignName}
-                      onChange={(e) => setHandoverSignName(e.target.value)}
-                      placeholder="Your full name"
-                      className="text-sm"
-                    />
+                    <span className="text-muted-foreground">Start Date</span>
+                    <p className="font-medium text-foreground">{fmtDate(project.start_date) ?? "—"}</p>
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" className="bg-primary" onClick={handleSignHandover}
-                      disabled={submittingAction === "handover" || handoverSignName.trim().length < 2}>
-                      <PenLine className="h-3 w-3 mr-1" /> Confirm &amp; Sign
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => setShowHandoverConfirm(false)}>
-                      Cancel
-                    </Button>
+                  <div>
+                    <span className="text-muted-foreground">Expected Handover</span>
+                    <p className="font-medium text-foreground">{fmtDate(project.expected_handover_date) ?? "—"}</p>
                   </div>
                 </div>
-              ) : (
-                <Button onClick={() => setShowHandoverConfirm(true)}>
-                  <PenLine className="h-4 w-4 mr-1" /> Sign Handover Certificate
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {handoverSigned && (
-          <Card className="border-primary/30 bg-accent/30">
-            <CardContent className="pt-6 text-center space-y-2">
-              <Check className="h-8 w-8 text-primary mx-auto" />
-              <p className="font-heading font-bold text-foreground">Handover Complete</p>
-              <p className="text-sm font-body text-muted-foreground">
-                Signed by {(handover as any).client_signed_name} on {fmtDate((handover as any).client_signed_at)}
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Project Overview */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="font-heading text-base font-bold">Project Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4 text-sm font-body">
-              <div>
-                <span className="text-muted-foreground">Start Date</span>
-                <p className="font-medium text-foreground">{fmtDate(project.start_date) ?? "—"}</p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Expected Handover</span>
-                <p className="font-medium text-foreground">{fmtDate(project.expected_handover_date) ?? "—"}</p>
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-body text-muted-foreground">Overall Progress</span>
-                <span className="text-sm font-heading font-bold text-primary">{overallPct}%</span>
-              </div>
-              <Progress value={overallPct} className="h-3" />
-            </div>
-            {project.client_portal_status_message && (
-              <div className="rounded-lg bg-accent p-3">
-                <p className="text-sm font-body text-accent-foreground">{project.client_portal_status_message}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Production Progress */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="font-heading text-base font-bold">Production Progress</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {modules.length === 0 ? (
-              <p className="text-sm font-body text-muted-foreground">
-                Production stages will appear here once modules are created.
-              </p>
-            ) : (
-              modules.map((mod) => {
-                const currentIdx = stageIndex(mod.current_stage);
-                return (
-                  <div key={mod.id} className="space-y-2">
-                    <p className="text-sm font-heading font-semibold text-foreground">{mod.module_code}</p>
-                    <div className="flex items-center gap-0.5 overflow-x-auto pb-1">
-                      {STAGES.map((stage, idx) => {
-                        const isComplete = idx < currentIdx;
-                        const isCurrent = idx === currentIdx;
-                        return (
-                          <div key={stage} className="flex flex-col items-center min-w-[72px]">
-                            <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                              isComplete ? "bg-primary text-primary-foreground"
-                                : isCurrent ? "bg-warning text-warning-foreground"
-                                : "bg-muted text-muted-foreground"
-                            }`}>
-                              {isComplete ? <Check className="h-3.5 w-3.5" /> : idx + 1}
-                            </div>
-                            <span className={`text-[10px] font-body mt-1 text-center leading-tight ${
-                              isComplete ? "text-primary font-medium"
-                                : isCurrent ? "text-warning font-medium"
-                                : "text-muted-foreground"
-                            }`}>{stage}</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <Separator />
-                  </div>
-                );
-              })
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Payment Timeline */}
-        {billingMilestones.length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="font-heading text-base font-bold flex items-center gap-2">
-                <IndianRupee className="h-4 w-4" /> Payment Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {billingMilestones.map((m: any) => {
-                const statusLabel = m.status === "received" ? "Paid" : m.status === "billed" ? "Billed" : "Upcoming";
-                const statusColor = m.status === "received" ? "bg-primary text-primary-foreground"
-                  : m.status === "billed" ? "bg-warning/20 text-warning"
-                  : "bg-muted text-muted-foreground";
-                return (
-                  <div key={m.id} className="flex items-center justify-between p-3 rounded-lg border">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                        m.status === "received" ? "bg-primary text-primary-foreground"
-                          : m.status === "billed" ? "bg-warning text-warning-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }`}>
-                        {m.status === "received" ? <Check className="h-4 w-4" /> : m.milestone_number}
-                      </div>
-                      <div>
-                        <p className="text-sm font-heading font-semibold text-foreground">{m.description}</p>
-                        <p className="text-xs font-body text-muted-foreground">{m.percentage}% of contract</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-heading font-bold text-foreground">
-                        ₹{Number(m.amount_incl_gst).toLocaleString("en-IN")}
-                      </p>
-                      <Badge className={`text-[10px] ${statusColor}`}>{statusLabel}</Badge>
-                    </div>
-                  </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Design Timeline */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="font-heading text-base font-bold">Design Timeline</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <GFCMilestone label="H1 — Advance GFC" record={h1} />
-              <GFCMilestone label="H2 — Final GFC" record={h2} />
-            </div>
-
-            {approvedDrawings.length > 0 && (
-              <>
-                <Separator />
                 <div>
-                  <p className="text-sm font-heading font-semibold text-foreground mb-2">
-                    Approved Drawings
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-body text-muted-foreground">Overall Progress</span>
+                    <span className="text-sm font-heading font-bold text-primary">{overallPct}%</span>
+                  </div>
+                  <Progress value={overallPct} className="h-3" />
+                </div>
+                {project.client_portal_status_message && (
+                  <div className="rounded-lg bg-accent p-3">
+                    <p className="text-sm font-body text-accent-foreground">{project.client_portal_status_message}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Production Progress */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="font-heading text-base font-bold">Production Progress</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {modules.length === 0 ? (
+                  <p className="text-sm font-body text-muted-foreground">
+                    Production stages will appear here once modules are created.
                   </p>
-                  <div className="space-y-2">
-                    {approvedDrawings.map((d) => (
-                      <div key={d.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                        <div className="flex items-center gap-2">
-                          <Check className="h-4 w-4 text-primary" />
-                          <span className="text-sm font-body text-foreground">
-                            {d.drawing_title || d.drawing_id_code}
-                          </span>
+                ) : (
+                  modules.map((mod) => {
+                    const currentIdx = stageIndex(mod.current_stage);
+                    return (
+                      <div key={mod.id} className="space-y-2">
+                        <p className="text-sm font-heading font-semibold text-foreground">{mod.module_code}</p>
+                        <div className="flex items-center gap-0.5 overflow-x-auto pb-1">
+                          {STAGES.map((stage, idx) => {
+                            const isComplete = idx < currentIdx;
+                            const isCurrent = idx === currentIdx;
+                            return (
+                              <div key={stage} className="flex flex-col items-center min-w-[72px]">
+                                <div className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                                  isComplete ? "bg-primary text-primary-foreground"
+                                    : isCurrent ? "bg-warning text-warning-foreground"
+                                    : "bg-muted text-muted-foreground"
+                                }`}>
+                                  {isComplete ? <Check className="h-3.5 w-3.5" /> : idx + 1}
+                                </div>
+                                <span className={`text-[10px] font-body mt-1 text-center leading-tight ${
+                                  isComplete ? "text-primary font-medium"
+                                    : isCurrent ? "text-warning font-medium"
+                                    : "text-muted-foreground"
+                                }`}>{stage}</span>
+                              </div>
+                            );
+                          })}
                         </div>
-                        <span className="text-xs font-body text-muted-foreground">
-                          {fmtDate(d.client_approved_at || d.approved_at)}
+                        <Separator />
+                      </div>
+                    );
+                  })
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Design Timeline */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="font-heading text-base font-bold">Design Timeline</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <GFCMilestone label="H1 — Advance GFC" record={h1} />
+                  <GFCMilestone label="H2 — Final GFC" record={h2} />
+                </div>
+
+                {approvedDrawings.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className="text-sm font-heading font-semibold text-foreground mb-2">
+                        Approved Drawings
+                      </p>
+                      <div className="space-y-2">
+                        {approvedDrawings.map((d) => (
+                          <div key={d.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                            <div className="flex items-center gap-2">
+                              <Check className="h-4 w-4 text-primary" />
+                              <span className="text-sm font-body text-foreground">
+                                {d.drawing_title || d.drawing_id_code}
+                              </span>
+                            </div>
+                            <span className="text-xs font-body text-muted-foreground">
+                              {fmtDate(d.client_approved_at || d.approved_at)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Variation Orders History */}
+            {variationOrders.filter((v: any) => v.status !== "pending").length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="font-heading text-base font-bold">Variation Orders</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {variationOrders.filter((v: any) => v.status !== "pending").map((vo: any) => (
+                    <div key={vo.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
+                      <div>
+                        <span className="text-sm font-heading font-semibold text-foreground">{vo.vo_code}</span>
+                        <span className="text-sm font-body text-muted-foreground ml-2">
+                          ₹{Number(vo.value).toLocaleString("en-IN")}
                         </span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </>
+                      <Badge variant={vo.status === "approved" ? "default" : "outline"}
+                        className={vo.status === "approved" ? "bg-primary text-primary-foreground" : vo.status === "rejected" ? "text-destructive" : ""}>
+                        {vo.status === "approved" ? "Approved" : vo.status === "rejected" ? "Rejected" : "Discussion"}
+                      </Badge>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
             )}
-          </CardContent>
-        </Card>
+          </TabsContent>
 
-        {/* Variation Orders History */}
-        {variationOrders.filter((v: any) => v.status !== "pending").length > 0 && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="font-heading text-base font-bold">Variation Orders</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {variationOrders.filter((v: any) => v.status !== "pending").map((vo: any) => (
-                <div key={vo.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50">
-                  <div>
-                    <span className="text-sm font-heading font-semibold text-foreground">{vo.vo_code}</span>
-                    <span className="text-sm font-body text-muted-foreground ml-2">
-                      ₹{Number(vo.value).toLocaleString("en-IN")}
-                    </span>
-                  </div>
-                  <Badge variant={vo.status === "approved" ? "default" : "outline"}
-                    className={vo.status === "approved" ? "bg-primary text-primary-foreground" : vo.status === "rejected" ? "text-destructive" : ""}>
-                    {vo.status === "approved" ? "Approved" : vo.status === "rejected" ? "Rejected" : "Discussion"}
-                  </Badge>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+          {/* PAYMENTS TAB */}
+          <TabsContent value="payments" className="mt-4">
+            <ClientPaymentsInvoices
+              milestones={billingMilestones}
+              projectName={project.name}
+            />
+          </TabsContent>
 
-        {/* Documents */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="font-heading text-base font-bold">Documents</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <DocumentCard title="GFC Certificate — H1" available={!!h1?.issued_at} url={h1?.pdf_url}
-                pendingText="Will be available after Advance GFC issuance." />
-              <DocumentCard title="GFC Certificate — H2" available={!!h2?.issued_at} url={h2?.pdf_url}
-                pendingText="Will be available after Final GFC issuance." />
-              <DocumentCard title="QC Certificate" available={false} url={null}
-                pendingText="Will be available after QC certification." />
-              <DocumentCard title="Handover Pack" available={!!handover} url={null}
-                pendingText="Will be available after project handover." />
-            </div>
-          </CardContent>
-        </Card>
+          {/* DOCUMENTS TAB */}
+          <TabsContent value="documents" className="mt-4">
+            <ClientDocuments
+              documents={portalDocuments}
+              gfcRecords={gfcRecords}
+              handover={handover}
+            />
+          </TabsContent>
+
+          {/* POST-HANDOVER TAB */}
+          {isHandedOver && (
+            <TabsContent value="post-handover" className="mt-4">
+              <ClientPostHandover
+                projectId={project.id}
+                projectName={project.name}
+                clientName={project.client_name || "Client"}
+                handover={handover}
+                amcContract={amcContract}
+              />
+            </TabsContent>
+          )}
+        </Tabs>
 
         <div className="text-center py-6">
           <p className="text-xs font-body text-muted-foreground">
@@ -718,36 +724,6 @@ function GFCMilestone({ label, record }: { label: string; record: any }) {
           <span className="text-sm font-body text-muted-foreground">Pending</span>
         </div>
       )}
-    </div>
-  );
-}
-
-function DocumentCard({ title, available, url, pendingText }: {
-  title: string; available: boolean; url: string | null; pendingText: string;
-}) {
-  return (
-    <div className={`rounded-lg border p-4 flex items-start gap-3 ${available ? "" : "opacity-60"}`}>
-      {available ? (
-        <FileText className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-      ) : (
-        <Lock className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
-      )}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-heading font-semibold text-foreground">{title}</p>
-        {available ? (
-          url ? (
-            <Button size="sm" variant="outline" className="mt-2 h-7 text-xs" asChild>
-              <a href={url} target="_blank" rel="noopener noreferrer">
-                <Download className="h-3 w-3 mr-1" /> Download
-              </a>
-            </Button>
-          ) : (
-            <span className="text-xs font-body text-primary">Available</span>
-          )
-        ) : (
-          <p className="text-xs font-body text-muted-foreground mt-1">{pendingText}</p>
-        )}
-      </div>
     </div>
   );
 }
