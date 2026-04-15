@@ -59,7 +59,7 @@ const STATUS_CONFIG: Record<string, { label: string; className: string; icon: an
   "Upcoming": { label: "Upcoming", className: "bg-muted text-muted-foreground border-border", icon: Clock },
 };
 
-type ViewMode = "list" | "phase" | "gantt";
+type ViewMode = "list" | "phase" | "gantt" | "delays" | "measurement";
 
 const UPLOAD_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const EDIT_ROLES = ["planning_engineer", "production_head", "site_installation_manager", "site_manager", "super_admin", "managing_director"];
@@ -363,8 +363,8 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
         <>
           {/* Controls */}
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex border rounded-md overflow-hidden">
-              {([["list", List, "List"], ["phase", Columns3, "Phase Board"], ["gantt", BarChart3, "Gantt"]] as const).map(([mode, Icon, label]) => (
+            <div className="flex border rounded-md overflow-hidden flex-wrap">
+              {([["list", List, "List"], ["phase", Columns3, "Phase"], ["gantt", BarChart3, "Gantt"], ["delays", Timer, "Delays"], ["measurement", Ruler, "Costs"]] as const).map(([mode, Icon, label]) => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
@@ -374,13 +374,15 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
                 </button>
               ))}
             </div>
-            <Select value={phaseFilter} onValueChange={setPhaseFilter}>
-              <SelectTrigger className="w-[180px] h-8 text-sm"><SelectValue placeholder="All Phases" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Phases</SelectItem>
-                {PHASES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            {(viewMode === "list" || viewMode === "phase" || viewMode === "gantt") && (
+              <Select value={phaseFilter} onValueChange={setPhaseFilter}>
+                <SelectTrigger className="w-[180px] h-8 text-sm"><SelectValue placeholder="All Phases" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Phases</SelectItem>
+                  {PHASES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {viewMode === "list" && (
@@ -391,6 +393,12 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
           )}
           {viewMode === "gantt" && (
             <GanttView tasks={filteredTasks} taskMap={taskMap} getDelay={getDelay} />
+          )}
+          {viewMode === "delays" && (
+            <DelayDashboard tasks={tasks as any} />
+          )}
+          {viewMode === "measurement" && (
+            <MeasurementSheet projectId={projectId} />
           )}
         </>
       )}
