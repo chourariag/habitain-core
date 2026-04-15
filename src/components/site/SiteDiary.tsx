@@ -201,6 +201,7 @@ export function SiteDiary({ projectId, userRole }: Props) {
     setClientVisit(false); setClientVisitName(""); setClientVisitPurpose(""); setClientVisitNotes("");
     setMaterialDeliveries(false); setDeliveryItems([]);
     setPlannedActivities([]); setActivityErrors({});
+    setShareWithClient(false); setMilestoneTag(""); setClientNote("");
   };
 
   const weatherLabel = (val: string | null) => WEATHER_OPTIONS.find((w) => w.value === val)?.label ?? val;
