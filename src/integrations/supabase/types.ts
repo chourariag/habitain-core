@@ -4531,6 +4531,119 @@ export type Database = {
           },
         ]
       }
+      project_variations: {
+        Row: {
+          basic_rate: number | null
+          created_at: string
+          date_raised: string | null
+          description: string
+          final_cost: number | null
+          final_rate: number | null
+          finance_approved_at: string | null
+          finance_approved_by: string | null
+          gfc_qty: number | null
+          id: string
+          initiated_by: string | null
+          labour_rate: number | null
+          linked_boq_item_id: string | null
+          margin_amount: number | null
+          margin_pct: number | null
+          margin_rate: number | null
+          material_rate: number | null
+          md_approved_at: string | null
+          md_approved_by: string | null
+          notes: string | null
+          project_id: string
+          rejection_reason: string | null
+          scope_approved_at: string | null
+          scope_approved_by: string | null
+          scope_change_type: string
+          status: string
+          supporting_doc_urls: string[] | null
+          tender_qty: number | null
+          unit: string | null
+          updated_at: string
+          variance_qty: number | null
+          variation_number: string
+        }
+        Insert: {
+          basic_rate?: number | null
+          created_at?: string
+          date_raised?: string | null
+          description: string
+          final_cost?: number | null
+          final_rate?: number | null
+          finance_approved_at?: string | null
+          finance_approved_by?: string | null
+          gfc_qty?: number | null
+          id?: string
+          initiated_by?: string | null
+          labour_rate?: number | null
+          linked_boq_item_id?: string | null
+          margin_amount?: number | null
+          margin_pct?: number | null
+          margin_rate?: number | null
+          material_rate?: number | null
+          md_approved_at?: string | null
+          md_approved_by?: string | null
+          notes?: string | null
+          project_id: string
+          rejection_reason?: string | null
+          scope_approved_at?: string | null
+          scope_approved_by?: string | null
+          scope_change_type?: string
+          status?: string
+          supporting_doc_urls?: string[] | null
+          tender_qty?: number | null
+          unit?: string | null
+          updated_at?: string
+          variance_qty?: number | null
+          variation_number: string
+        }
+        Update: {
+          basic_rate?: number | null
+          created_at?: string
+          date_raised?: string | null
+          description?: string
+          final_cost?: number | null
+          final_rate?: number | null
+          finance_approved_at?: string | null
+          finance_approved_by?: string | null
+          gfc_qty?: number | null
+          id?: string
+          initiated_by?: string | null
+          labour_rate?: number | null
+          linked_boq_item_id?: string | null
+          margin_amount?: number | null
+          margin_pct?: number | null
+          margin_rate?: number | null
+          material_rate?: number | null
+          md_approved_at?: string | null
+          md_approved_by?: string | null
+          notes?: string | null
+          project_id?: string
+          rejection_reason?: string | null
+          scope_approved_at?: string | null
+          scope_approved_by?: string | null
+          scope_change_type?: string
+          status?: string
+          supporting_doc_urls?: string[] | null
+          tender_qty?: number | null
+          unit?: string | null
+          updated_at?: string
+          variance_qty?: number | null
+          variation_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_variations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           client_email: string | null
