@@ -297,6 +297,7 @@ export default function Procurement() {
             <TabsTrigger value="asset-register" className="gap-1.5"><Hammer className="h-4 w-4" /> Asset Register</TabsTrigger>
             <TabsTrigger value="tally-po" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
             <TabsTrigger value="supplier-intel" className="gap-1.5"><TrendingUp className="h-4 w-4" /> Supplier Intelligence</TabsTrigger>
+            <TabsTrigger value="material-alerts" className="gap-1.5"><Bell className="h-4 w-4" /> Material Alerts</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -697,6 +698,10 @@ export default function Procurement() {
 
         <TabsContent value="supplier-intel">
           <SupplierIntelligenceTab />
+        </TabsContent>
+
+        <TabsContent value="material-alerts">
+          <MaterialAlertsTab userRole={userRole} />
         </TabsContent>
       </Tabs>
 
