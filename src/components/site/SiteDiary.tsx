@@ -357,6 +357,42 @@ export function SiteDiary({ projectId, userRole }: Props) {
               <PhotoQualitySummary photos={aiPhotos} />
             </div>
 
+            {/* Share with Client */}
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-3">
+              <div className="flex items-center gap-3">
+                <Switch checked={shareWithClient} onCheckedChange={setShareWithClient} />
+                <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                  <Share2 className="h-3.5 w-3.5" /> Share with Client
+                </label>
+              </div>
+              {shareWithClient && (
+                <>
+                  <Select value={milestoneTag} onValueChange={setMilestoneTag}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Tag as milestone photo (optional)..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["Production Start", "Foundation Confirmed", "Frame Erected", "Shell Complete",
+                        "Boarding Complete", "Flooring Done", "Delivery from Factory", "Site Erection",
+                        "Builder Finish", "Handover"].map((m) => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Textarea
+                    value={clientNote}
+                    onChange={(e) => setClientNote(e.target.value)}
+                    placeholder="Write a client-facing note (e.g. 'All 7 modules erected and levelled')"
+                    className="text-sm"
+                    rows={2}
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    This note and photo will appear on the client portal. Write as if the client will read it.
+                  </p>
+                </>
+              )}
+            </div>
+
             <p className="text-xs text-muted-foreground">📍 GPS location auto-captured on submission</p>
 
             <div className="flex gap-2">
