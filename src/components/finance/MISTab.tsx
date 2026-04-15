@@ -92,6 +92,22 @@ function DoubleDivider() {
   return <div className="border-t-2 my-2" style={{ borderColor: "#006039" }} />;
 }
 
+function categorizeLedger(name: string): string {
+  const n = name.toLowerCase();
+  if (/bank|hdfc|icici|sbi|axis bank|kotak|yes bank|indusind/.test(n)) return "Bank";
+  if (/receivable|sundry debtors/.test(n)) return "Debtor";
+  if (/payable|sundry creditors/.test(n)) return "Creditor";
+  if (/stock|inventory|opening stock|closing stock/.test(n)) return "Inventory";
+  return "Other";
+}
+
+interface UploadSummary {
+  total: number;
+  categories: Record<string, number>;
+  skipped: { row: number; reason: string }[];
+  period: string;
+}
+
 export function MISTab() {
   const [uploads, setUploads] = useState<MISUpload[]>([]);
   const [mappings, setMappings] = useState<Record<string, string>>({});
@@ -102,6 +118,9 @@ export function MISTab() {
   const [unmappedLedgers, setUnmappedLedgers] = useState<string[]>([]);
   const [mappingDrawerOpen, setMappingDrawerOpen] = useState(false);
   const [newMappings, setNewMappings] = useState<Record<string, string>>({});
+  const [uploadSummary, setUploadSummary] = useState<UploadSummary | null>(null);
+  const [confirmReplace, setConfirmReplace] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const initialFetchDone = useRef(false);
 
   const currentUpload = uploads.find(u => u.id === currentUploadId) || null;
