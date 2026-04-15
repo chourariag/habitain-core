@@ -2940,6 +2940,88 @@ export type Database = {
         }
         Relationships: []
       }
+      material_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          days_overdue: number | null
+          days_remaining: number | null
+          id: string
+          material_name: string | null
+          material_plan_item_id: string | null
+          message: string
+          notes: string | null
+          priority: string
+          project_id: string
+          related_task_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          updated_at: string
+          vendor_name: string | null
+        }
+        Insert: {
+          alert_type?: string
+          created_at?: string
+          days_overdue?: number | null
+          days_remaining?: number | null
+          id?: string
+          material_name?: string | null
+          material_plan_item_id?: string | null
+          message: string
+          notes?: string | null
+          priority?: string
+          project_id: string
+          related_task_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+          vendor_name?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          days_overdue?: number | null
+          days_remaining?: number | null
+          id?: string
+          material_name?: string | null
+          material_plan_item_id?: string | null
+          message?: string
+          notes?: string | null
+          priority?: string
+          project_id?: string
+          related_task_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          updated_at?: string
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_alerts_material_plan_item_id_fkey"
+            columns: ["material_plan_item_id"]
+            isOneToOne: false
+            referencedRelation: "project_material_plan_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_alerts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_alerts_related_task_id_fkey"
+            columns: ["related_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_availability_confirmations: {
         Row: {
           confirmed_at: string | null
