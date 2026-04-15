@@ -498,6 +498,7 @@ function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingNa
             const delay = getDelay(task);
             const blocking = getBlockingName(task);
             const Icon = cfg.icon;
+            const materialRisk = materialRiskMap[task.id];
             return (
               <TableRow key={task.id} className={status === "Overdue" ? "bg-red-50/50" : ""}>
                 <TableCell className="font-mono text-xs">{task.task_id_in_schedule}</TableCell>
@@ -508,6 +509,14 @@ function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingNa
                         <Tooltip>
                           <TooltipTrigger><Lock className="h-3.5 w-3.5 text-muted-foreground" /></TooltipTrigger>
                           <TooltipContent>Waiting for: {blocking ?? "predecessor"}</TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                    {materialRisk && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger><AlertTriangle className="h-3.5 w-3.5" style={{ color: "#D4860A" }} /></TooltipTrigger>
+                          <TooltipContent className="max-w-xs">Material "{materialRisk}" not yet delivered — task start may be impacted.</TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     )}
