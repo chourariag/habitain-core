@@ -64,15 +64,16 @@ export function BoardPaperDraft({ data, onBack, onSaveDraft }: BoardPaperDraftPr
           }),
         }
       );
-      if (!resp.ok) throw new Error("Failed to generate PDF");
-      const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Board_Paper_${data.reportDate}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success("Board paper PDF downloaded");
+      if (!resp.ok) throw new Error("Failed to generate board paper");
+      const html = await resp.text();
+      // Open in new window for print-to-PDF
+      const win = window.open("", "_blank");
+      if (win) {
+        win.document.write(html);
+        win.document.close();
+        setTimeout(() => win.print(), 500);
+      }
+      toast.success("Board paper ready — use Print → Save as PDF");
     } catch (err: any) {
       toast.error(err.message || "Failed to generate PDF");
     } finally {
