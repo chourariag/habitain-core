@@ -349,6 +349,8 @@ export function TallyPOUploadTab() {
       setUploadResult(result);
       toast.success(`${result.imported} records imported (${result.totalPOs} POs, ${result.totalWOs} Work Orders)`);
       fetchData();
+      // Trigger Agent 10 — PO Anomaly Detector
+      supabase.functions.invoke("ai-agents", { body: { agent: "po_anomaly" } }).catch(() => {});
     } catch (err: any) {
       toast.error("Upload failed: " + err.message);
     } finally {
