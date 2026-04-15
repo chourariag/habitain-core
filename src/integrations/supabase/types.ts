@@ -4052,6 +4052,139 @@ export type Database = {
           },
         ]
       }
+      project_material_plan_items: {
+        Row: {
+          actual_delivery_date: string | null
+          actual_po_release_date: string | null
+          actual_procurement_date: string | null
+          created_at: string
+          delay_days: number | null
+          gfc_qty: number | null
+          id: string
+          indent_qty: number | null
+          indent_received: string | null
+          indent_unit: string | null
+          item_id: string
+          material_description: string
+          material_qty_ordered: number | null
+          material_qty_received: number | null
+          notes: string | null
+          plan_id: string
+          planned_delivery_date: string | null
+          planned_po_release_date: string | null
+          planned_procurement_date: string | null
+          qty_variation_note: string | null
+          reason_for_delay: string | null
+          section: string
+          status: string
+          supplier_committed_date: string | null
+          tender_qty: number | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_delivery_date?: string | null
+          actual_po_release_date?: string | null
+          actual_procurement_date?: string | null
+          created_at?: string
+          delay_days?: number | null
+          gfc_qty?: number | null
+          id?: string
+          indent_qty?: number | null
+          indent_received?: string | null
+          indent_unit?: string | null
+          item_id?: string
+          material_description: string
+          material_qty_ordered?: number | null
+          material_qty_received?: number | null
+          notes?: string | null
+          plan_id: string
+          planned_delivery_date?: string | null
+          planned_po_release_date?: string | null
+          planned_procurement_date?: string | null
+          qty_variation_note?: string | null
+          reason_for_delay?: string | null
+          section?: string
+          status?: string
+          supplier_committed_date?: string | null
+          tender_qty?: number | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_delivery_date?: string | null
+          actual_po_release_date?: string | null
+          actual_procurement_date?: string | null
+          created_at?: string
+          delay_days?: number | null
+          gfc_qty?: number | null
+          id?: string
+          indent_qty?: number | null
+          indent_received?: string | null
+          indent_unit?: string | null
+          item_id?: string
+          material_description?: string
+          material_qty_ordered?: number | null
+          material_qty_received?: number | null
+          notes?: string | null
+          plan_id?: string
+          planned_delivery_date?: string | null
+          planned_po_release_date?: string | null
+          planned_procurement_date?: string | null
+          qty_variation_note?: string | null
+          reason_for_delay?: string | null
+          section?: string
+          status?: string
+          supplier_committed_date?: string | null
+          tender_qty?: number | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_material_plan_items_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "project_material_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_material_plans: {
+        Row: {
+          created_at: string
+          id: string
+          project_id: string
+          uploaded_at: string
+          uploaded_by: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          project_id: string
+          uploaded_at?: string
+          uploaded_by: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          project_id?: string
+          uploaded_at?: string
+          uploaded_by?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_material_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_messages: {
         Row: {
           attachment_urls: string[] | null
