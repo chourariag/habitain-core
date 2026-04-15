@@ -26,8 +26,9 @@ import { ThirtyDayPlanTab } from "@/components/procurement/ThirtyDayPlanTab";
 import { ProcurementDashboardStrip } from "@/components/procurement/ProcurementDashboardStrip";
 import { AssetRegisterTab } from "@/components/procurement/AssetRegisterTab";
 import { SupplierIntelligenceTab } from "@/components/procurement/SupplierIntelligenceTab";
+import { MaterialAlertsTab } from "@/components/procurement/MaterialAlertsTab";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
-import { Calendar, Hammer } from "lucide-react";
+import { Calendar, Hammer, Bell } from "lucide-react";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
