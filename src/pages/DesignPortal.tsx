@@ -1195,6 +1195,7 @@ export default function DesignPortal() {
                 <TabsTrigger value="detail-library">Detail Library</TabsTrigger>
                 <TabsTrigger value="consultants">Consultants</TabsTrigger>
                 <TabsTrigger value="drawings">Drawings</TabsTrigger>
+                <TabsTrigger value="boq">BOQ</TabsTrigger>
               </TabsList>
             </ScrollableTabsWrapper>
 
