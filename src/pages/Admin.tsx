@@ -3,10 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Users, ShieldOff } from "lucide-react";
+import { Search, Users, ShieldOff, TrendingUp } from "lucide-react";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
 import { UserRow } from "@/components/admin/UserRow";
 import { ROLE_LABELS, AppRole } from "@/lib/roles";
+import { BenchmarksView } from "@/components/kpi/BenchmarksView";
 
 export default function Admin() {
   const [search, setSearch] = useState("");
@@ -76,15 +77,19 @@ export default function Admin() {
             <ShieldOff className="h-3.5 w-3.5" />
             Inactive ({inactiveCount})
           </TabsTrigger>
+          <TabsTrigger value="benchmarks" className="gap-1.5">
+            <TrendingUp className="h-3.5 w-3.5" />
+            Benchmarks
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value={tab} className="mt-4">
+        <TabsContent value="active" className="mt-4">
           <div className="bg-card rounded-lg shadow-sm overflow-hidden">
             {isLoading ? (
               <div className="p-8 text-center text-card-foreground/60 text-sm">Loading users…</div>
             ) : filtered.length === 0 ? (
               <div className="p-8 text-center text-card-foreground/60 text-sm">
-                {search ? "No users match your search." : tab === "active" ? "No active users yet." : "No deactivated users."}
+                {search ? "No users match your search." : "No active users yet."}
               </div>
             ) : (
               <div className="divide-y divide-border">
@@ -94,6 +99,28 @@ export default function Admin() {
               </div>
             )}
           </div>
+        </TabsContent>
+
+        <TabsContent value="inactive" className="mt-4">
+          <div className="bg-card rounded-lg shadow-sm overflow-hidden">
+            {isLoading ? (
+              <div className="p-8 text-center text-card-foreground/60 text-sm">Loading users…</div>
+            ) : filtered.length === 0 ? (
+              <div className="p-8 text-center text-card-foreground/60 text-sm">
+                {search ? "No users match your search." : "No deactivated users."}
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {filtered.map((profile) => (
+                  <UserRow key={profile.id} profile={profile} onUpdate={refetch} />
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="benchmarks" className="mt-4">
+          <BenchmarksView />
         </TabsContent>
       </Tabs>
     </div>
