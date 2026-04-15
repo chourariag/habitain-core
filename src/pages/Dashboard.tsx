@@ -33,6 +33,9 @@ export default function Dashboard() {
       {/* Weekly KPI Digest */}
       <WeeklyDigestCard />
 
+      {/* My Tasks */}
+      <MyTasksSection userRole={userRole} />
+
       {tier === 1 ? (
         <Tier1Dashboard today={today} />
       ) : tier === 2 ? (
