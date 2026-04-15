@@ -30,6 +30,7 @@ import { DrawingApprovalSheet } from "@/components/design/DrawingApprovalSheet";
 import { DQStatsBar, DQEscalationBadge } from "@/components/design/DQStatsBar";
 import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import { GFCStatusCard } from "@/components/design/GFCStatusCard";
+import { BOQManager } from "@/components/design/BOQManager";
 
 const DRAWING_TYPES = ["Architectural", "Structural", "MEP", "BOQ Reference", "Site Plan"];
 const DESIGN_STAGES_ORDER = ["Concept Design", "Schematic Design", "Design Development", "Working Drawings", "GFC Issue"];
@@ -1195,6 +1196,7 @@ export default function DesignPortal() {
                 <TabsTrigger value="detail-library">Detail Library</TabsTrigger>
                 <TabsTrigger value="consultants">Consultants</TabsTrigger>
                 <TabsTrigger value="drawings">Drawings</TabsTrigger>
+                <TabsTrigger value="boq">BOQ</TabsTrigger>
               </TabsList>
             </ScrollableTabsWrapper>
 
@@ -1312,6 +1314,10 @@ export default function DesignPortal() {
                   </div>
                 </div>
               ))}
+            </TabsContent>
+
+            <TabsContent value="boq" className="space-y-4">
+              <BOQManager projectId={selectedProjectId!} />
             </TabsContent>
           </Tabs>
         </div>

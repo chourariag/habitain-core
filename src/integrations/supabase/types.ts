@@ -3774,6 +3774,130 @@ export type Database = {
           },
         ]
       }
+      project_boq: {
+        Row: {
+          blended_margin_pct: number
+          civil_scope_value: number
+          created_at: string
+          factory_scope_value: number
+          id: string
+          project_id: string
+          total_boq_value: number
+          updated_at: string
+          uploaded_at: string
+          uploaded_by: string | null
+          uploaded_by_name: string | null
+          version_number: number
+        }
+        Insert: {
+          blended_margin_pct?: number
+          civil_scope_value?: number
+          created_at?: string
+          factory_scope_value?: number
+          id?: string
+          project_id: string
+          total_boq_value?: number
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          uploaded_by_name?: string | null
+          version_number?: number
+        }
+        Update: {
+          blended_margin_pct?: number
+          civil_scope_value?: number
+          created_at?: string
+          factory_scope_value?: number
+          id?: string
+          project_id?: string
+          total_boq_value?: number
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+          uploaded_by_name?: string | null
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_boq_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_boq_items: {
+        Row: {
+          actual_qty: number
+          boq_id: string
+          boq_qty: number
+          boq_rate: number
+          category: string
+          created_at: string
+          id: string
+          item_description: string
+          labour_rate: number
+          margin_pct: number | null
+          material_rate: number
+          oh_rate: number
+          procured_qty: number
+          scope: string
+          sno: number
+          total_amount: number
+          unit: string | null
+          wastage_pct: number
+        }
+        Insert: {
+          actual_qty?: number
+          boq_id: string
+          boq_qty?: number
+          boq_rate?: number
+          category?: string
+          created_at?: string
+          id?: string
+          item_description?: string
+          labour_rate?: number
+          margin_pct?: number | null
+          material_rate?: number
+          oh_rate?: number
+          procured_qty?: number
+          scope?: string
+          sno?: number
+          total_amount?: number
+          unit?: string | null
+          wastage_pct?: number
+        }
+        Update: {
+          actual_qty?: number
+          boq_id?: string
+          boq_qty?: number
+          boq_rate?: number
+          category?: string
+          created_at?: string
+          id?: string
+          item_description?: string
+          labour_rate?: number
+          margin_pct?: number | null
+          material_rate?: number
+          oh_rate?: number
+          procured_qty?: number
+          scope?: string
+          sno?: number
+          total_amount?: number
+          unit?: string | null
+          wastage_pct?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_boq_items_boq_id_fkey"
+            columns: ["boq_id"]
+            isOneToOne: false
+            referencedRelation: "project_boq"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_design_files: {
         Row: {
           budget_discussed: boolean
