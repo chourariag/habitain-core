@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Upload, Search, ChevronRight } from "lucide-react";
+import { Upload, Search, ChevronRight, Download } from "lucide-react";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import { toast } from "sonner";
 import { format, isValid } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -302,6 +303,9 @@ export function BankLedgerSubTab({ canUpload }: { canUpload: boolean }) {
 
       {canUpload && (
         <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => { const t = TEMPLATES.bankLedger; downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample); }} className="gap-1.5" style={{ borderColor: "#006039", color: "#006039" }}>
+            <Download className="h-4 w-4" /> Download Template
+          </Button>
           <label>
             <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleUpload} />
             <Button variant="default" asChild style={{ backgroundColor: "#006039" }}>

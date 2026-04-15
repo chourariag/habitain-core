@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Upload, Download, Plus, FileDown, ChevronDown, Check } from "lucide-react";
 import { toast } from "sonner";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { differenceInDays, format } from "date-fns";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from "recharts";
@@ -175,9 +176,8 @@ export function PaymentsTab() {
   };
 
   const downloadTemplate = () => {
-    const csv = "Project_Name,Client_Name,Milestone_Description,Due_Date,Amount\nProject Alpha,Client A,Foundation Complete,2026-04-15,500000";
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Payments_Template.csv"; a.click();
+    const t = TEMPLATES.payments;
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
 
   const exportCSV = () => {

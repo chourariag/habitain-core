@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Upload, Search } from "lucide-react";
+import { Upload, Search, Download } from "lucide-react";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import { toast } from "sonner";
 import { format, parse, isValid, differenceInDays } from "date-fns";
 
@@ -108,12 +109,17 @@ export function DebtorLedgerSubTab({ canUpload }: { canUpload: boolean }) {
       </div>
 
       {canUpload && (
-        <label>
-          <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleUpload} />
-          <Button variant="default" asChild style={{ backgroundColor: "#006039" }}>
-            <span className="cursor-pointer flex items-center gap-2"><Upload className="h-4 w-4" /> Upload Debtor Ledger</span>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => { const t = TEMPLATES.debtorLedger; downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample); }} className="gap-1.5" style={{ borderColor: "#006039", color: "#006039" }}>
+            <Download className="h-4 w-4" /> Download Template
           </Button>
-        </label>
+          <label>
+            <input type="file" accept=".xlsx,.xls" className="hidden" onChange={handleUpload} />
+            <Button variant="default" asChild style={{ backgroundColor: "#006039" }}>
+              <span className="cursor-pointer flex items-center gap-2"><Upload className="h-4 w-4" /> Upload Debtor Ledger</span>
+            </Button>
+          </label>
+        </div>
       )}
 
       {entries.length > 0 && (

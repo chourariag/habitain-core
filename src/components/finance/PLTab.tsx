@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Download } from "lucide-react";
 import { toast } from "sonner";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from "recharts";
 
 interface PLRow {
@@ -49,9 +50,8 @@ export function PLTab() {
   };
 
   const downloadTemplate = () => {
-    const csv = "Month,Year,Revenue,Materials,Labour,Logistics,Other_COGS,Office_Admin,Marketing,RM_Costs,Depreciation,Other_Opex\n1,2026,0,0,0,0,0,0,0,0,0,0";
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "PL_Template.csv"; a.click();
+    const t = TEMPLATES.plUpload;
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
 
   const last6 = data.slice(0, 6).reverse();

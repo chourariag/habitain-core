@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Upload, Download, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AreaChart, Area, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
@@ -96,9 +97,8 @@ export function CashFlowTab() {
   };
 
   const downloadTemplate = () => {
-    const csv = "Date,Type,Description,Project_Name,Amount,Category\n2026-03-01,inflow,Client Payment - Phase 1,Project Alpha,500000,Client Payment";
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "CashFlow_Template.csv"; a.click();
+    const t = TEMPLATES.cashflow;
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
 
   const openAdd = (type: "inflow" | "outflow") => { setAddType(type); setForm({ date: "", amount: "", category: "", description: "", project: "" }); setAddOpen(true); };
