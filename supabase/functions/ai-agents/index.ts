@@ -41,6 +41,18 @@ Deno.serve(async (req) => {
       case "site_diary_verify":
         result = await runSiteDiaryVerify(supabase, payload);
         break;
+      case "reorder_alert":
+        result = await runReorderAlert(supabase);
+        break;
+      case "po_anomaly":
+        result = await runPOAnomalyDetector(supabase, payload);
+        break;
+      case "cashflow_predictor":
+        result = await runCashFlowPredictor(supabase);
+        break;
+      case "statutory_reminder":
+        result = await runStatutoryReminder(supabase);
+        break;
       default:
         return new Response(JSON.stringify({ error: "Unknown agent" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -507,10 +519,313 @@ async function runSiteDiaryVerify(supabase: any, payload?: any) {
 }
 
 function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371000; // metres
+  const R = 6371000;
   const toRad = (d: number) => (d * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
   const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/* ───────────── AGENT 9 — REORDER ALERT ───────────── */
+async function runReorderAlert(supabase: any): Promise<string> {
+  // Get inventory items with current stock
+  const { data: inventory } = await supabase
+    .from("opening_inventory")
+    .select("id, material_name, current_stock, unit")
+    .gt("current_stock", 0);
+
+  if (!inventory?.length) return "No inventory items to check";
+
+  const fourWeeksAgo = new Date(Date.now() - 28 * 86400000).toISOString();
+  const alerts: string[] = [];
+
+  for (const item of inventory) {
+    // Calculate consumption from GRNs / material usage in last 4 weeks
+    const { data: usage } = await supabase
+      .from("grn_entries")
+      .select("quantity_received")
+      .eq("material_name", item.material_name)
+      .gte("received_date", fourWeeksAgo);
+
+    // Approximate weekly consumption from dispatched materials
+    const { data: dispatched } = await supabase
+      .from("dispatch_material_log")
+      .select("qty_dispatched")
+      .eq("material_name", item.material_name)
+      .gte("created_at", fourWeeksAgo);
+
+    const totalDispatched = (dispatched || []).reduce((s: number, d: any) => s + (d.qty_dispatched || 0), 0);
+    const weeklyConsumption = totalDispatched / 4;
+
+    if (weeklyConsumption <= 0) continue;
+
+    const daysRemaining = (item.current_stock / weeklyConsumption) * 7;
+
+    if (daysRemaining < 21) {
+      const suggestedReorder = Math.ceil(weeklyConsumption * 6); // 6-week buffer
+
+      // Find last vendor from PO register
+      const { data: lastPO } = await supabase
+        .from("purchase_orders")
+        .select("vendor_name")
+        .eq("item_description", item.material_name)
+        .order("po_date", { ascending: false })
+        .limit(1);
+
+      const vendor = lastPO?.[0]?.vendor_name || "Unknown";
+
+      // Notify Vijay (procurement roles)
+      const { data: procUsers } = await supabase
+        .from("profiles")
+        .select("auth_user_id")
+        .in("role", ["procurement_manager", "stores_manager"])
+        .eq("is_active", true);
+
+      for (const u of procUsers || []) {
+        await supabase.from("notifications").insert({
+          recipient_id: u.auth_user_id,
+          title: `Reorder Required — ${item.material_name}`,
+          body: `Current stock: ${item.current_stock} ${item.unit || "units"}. At current consumption, stock runs out in ${Math.round(daysRemaining)} days. Suggested reorder qty: ${suggestedReorder} (6-week buffer). Last ordered from: ${vendor}.`,
+          category: "reorder_alert",
+          type: "reorder_alert",
+          content: `Stock runs out in ${Math.round(daysRemaining)} days`,
+        });
+      }
+      alerts.push(item.material_name);
+    }
+  }
+
+  return alerts.length ? `Reorder alerts sent for: ${alerts.join(", ")}` : "All stock levels healthy";
+}
+
+/* ───────────── AGENT 10 — PO ANOMALY DETECTOR ───────────── */
+async function runPOAnomalyDetector(supabase: any, payload?: any): Promise<string> {
+  // Get recently uploaded POs (or specific batch if payload provided)
+  const query = supabase
+    .from("purchase_orders")
+    .select("id, po_number, vendor_name, item_description, amount, po_date, grn_date")
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (payload?.since) {
+    query.gte("created_at", payload.since);
+  } else {
+    // Default: last 24 hours
+    query.gte("created_at", new Date(Date.now() - 86400000).toISOString());
+  }
+
+  const { data: newPOs } = await query;
+  if (!newPOs?.length) return "No new POs to analyse";
+
+  const anomalies: string[] = [];
+
+  // Get procurement + MD users for notifications
+  const { data: notifyUsers } = await supabase
+    .from("profiles")
+    .select("auth_user_id, role")
+    .in("role", ["procurement_manager", "stores_manager", "managing_director"])
+    .eq("is_active", true);
+
+  const vijayIds = (notifyUsers || []).filter((u: any) => ["procurement_manager", "stores_manager"].includes(u.role)).map((u: any) => u.auth_user_id);
+  const mdIds = (notifyUsers || []).filter((u: any) => u.role === "managing_director").map((u: any) => u.auth_user_id);
+
+  for (const po of newPOs) {
+    const flags: string[] = [];
+
+    // Check 1: Amount >50% higher than historical average for same vendor
+    const { data: historicalPOs } = await supabase
+      .from("purchase_orders")
+      .select("amount")
+      .eq("vendor_name", po.vendor_name)
+      .neq("id", po.id);
+
+    if (historicalPOs?.length) {
+      const avgAmount = historicalPOs.reduce((s: number, p: any) => s + (p.amount || 0), 0) / historicalPOs.length;
+      if (avgAmount > 0 && po.amount > avgAmount * 1.5) {
+        const pctOver = Math.round(((po.amount - avgAmount) / avgAmount) * 100);
+        flags.push(`Amount is ${pctOver}% higher than average (₹${Math.round(avgAmount).toLocaleString()}) for this vendor`);
+      }
+    } else if (po.amount > 50000) {
+      // Check 2: New vendor above ₹50K
+      flags.push(`New vendor with PO above ₹50,000 (₹${po.amount.toLocaleString()})`);
+    }
+
+    // Check 3: PO >₹50K without GRN for 30+ days
+    if (po.amount > 50000 && !po.grn_date) {
+      const poDate = new Date(po.po_date).getTime();
+      const daysSince = (Date.now() - poDate) / 86400000;
+      if (daysSince > 30) {
+        flags.push(`₹${po.amount.toLocaleString()} PO undelivered for ${Math.round(daysSince)} days — no GRN linked`);
+      }
+    }
+
+    if (flags.length) {
+      const body = `PO Anomaly — ${po.po_number} [${po.vendor_name}]: ${flags.join(". ")}. Please verify before GRN is accepted.`;
+      const recipients = [...vijayIds];
+      // Escalate new vendor >50K or large anomaly to MD
+      if (flags.some(f => f.includes("New vendor") || f.includes("higher than average"))) {
+        recipients.push(...mdIds);
+      }
+      const unique = [...new Set(recipients)];
+      for (const rid of unique) {
+        await supabase.from("notifications").insert({
+          recipient_id: rid,
+          title: `PO Anomaly — ${po.po_number}`,
+          body,
+          category: "po_anomaly",
+          type: "po_anomaly",
+          content: body,
+        });
+      }
+      anomalies.push(po.po_number);
+    }
+  }
+
+  return anomalies.length ? `Anomalies flagged: ${anomalies.join(", ")}` : "No PO anomalies detected";
+}
+
+/* ───────────── AGENT 11 — CASH FLOW PREDICTOR ───────────── */
+async function runCashFlowPredictor(supabase: any): Promise<string> {
+  const now = new Date();
+  const thirtyDaysLater = new Date(now.getTime() + 30 * 86400000).toISOString().slice(0, 10);
+  const today = now.toISOString().slice(0, 10);
+
+  // Inflows: billing milestones due in next 30 days
+  const { data: milestones } = await supabase
+    .from("finance_payments")
+    .select("amount, due_date, milestone_description, project_name")
+    .in("status", ["pending", "overdue"])
+    .gte("due_date", today)
+    .lte("due_date", thirtyDaysLater);
+
+  const totalInflows = (milestones || []).reduce((s: number, m: any) => s + (m.amount || 0), 0);
+
+  // Outflows: unpaid POs
+  const { data: unpaidPOs } = await supabase
+    .from("purchase_orders")
+    .select("amount")
+    .is("grn_date", null)
+    .gt("amount", 0);
+
+  const poOutflow = (unpaidPOs || []).reduce((s: number, p: any) => s + (p.amount || 0), 0);
+
+  // Outflows: statutory dues in next 30 days
+  const { data: statutory } = await supabase
+    .from("finance_statutory")
+    .select("filing_type, due_date, notes")
+    .in("status", ["upcoming", "pending"])
+    .gte("due_date", today)
+    .lte("due_date", thirtyDaysLater);
+
+  const statutoryOutflow = 0; // Statutory table doesn't store amounts directly
+
+  // Outflows: estimated labour (from weekly manpower × 4 weeks)
+  const { data: manpower } = await supabase
+    .from("weekly_manpower_plans")
+    .select("total_workers")
+    .order("week_start", { ascending: false })
+    .limit(1);
+
+  const weeklyWorkers = manpower?.[0]?.total_workers || 0;
+  const labourOutflow = weeklyWorkers * 500 * 6 * 4; // ₹500/day × 6 days × 4 weeks
+
+  const totalOutflows = poOutflow + statutoryOutflow + labourOutflow;
+  const netPosition = totalInflows - totalOutflows;
+
+  const status = netPosition > 0 ? "Healthy ✅" : netPosition > -500000 ? "Watch ⚠️" : "Critical 🔴";
+
+  // Find next large outflow
+  const nextLargeOutflow = (milestones || [])
+    .sort((a: any, b: any) => (b.amount || 0) - (a.amount || 0))[0];
+
+  const weekLabel = `${now.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
+
+  const body = `30-Day Cash Flow Forecast — Week of ${weekLabel}:
+Expected inflows: ₹${Math.round(totalInflows).toLocaleString()} (from ${(milestones || []).length} billing milestones)
+Expected outflows: ₹${Math.round(totalOutflows).toLocaleString()} (POs: ₹${Math.round(poOutflow).toLocaleString()} | Statutory: TBD | Labour: ₹${Math.round(labourOutflow).toLocaleString()})
+Net position: ₹${Math.round(netPosition).toLocaleString()} — ${status}${nextLargeOutflow ? `\nNext large inflow: ₹${Math.round(nextLargeOutflow.amount).toLocaleString()} due ${nextLargeOutflow.due_date} (${nextLargeOutflow.milestone_description})` : ""}`;
+
+  // Send to Finance Director + MD
+  const { data: recipients } = await supabase
+    .from("profiles")
+    .select("auth_user_id")
+    .in("role", ["finance_director", "managing_director"])
+    .eq("is_active", true);
+
+  for (const u of recipients || []) {
+    await supabase.from("notifications").insert({
+      recipient_id: u.auth_user_id,
+      title: "30-Day Cash Flow Forecast",
+      body,
+      category: "cashflow_forecast",
+      type: "cashflow_forecast",
+      content: body,
+    });
+  }
+
+  return `Cash flow forecast sent — net: ₹${Math.round(netPosition).toLocaleString()} (${status})`;
+}
+
+/* ───────────── AGENT 12 — STATUTORY COMPLIANCE REMINDER ───────────── */
+async function runStatutoryReminder(supabase: any): Promise<string> {
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+
+  // Get all upcoming/pending statutory items
+  const { data: items } = await supabase
+    .from("finance_statutory")
+    .select("id, filing_type, due_date, status, notes")
+    .in("status", ["upcoming", "pending"])
+    .gte("due_date", today);
+
+  if (!items?.length) return "No upcoming statutory deadlines";
+
+  // Get finance/accounts users
+  const { data: recipients } = await supabase
+    .from("profiles")
+    .select("auth_user_id")
+    .in("role", ["finance_director", "accounts_manager"])
+    .eq("is_active", true);
+
+  const alerts: string[] = [];
+
+  for (const item of items) {
+    const dueDate = new Date(item.due_date);
+    const daysRemaining = Math.ceil((dueDate.getTime() - now.getTime()) / 86400000);
+
+    // Determine reminder thresholds based on filing type
+    let shouldAlert = false;
+    if (item.filing_type.toLowerCase().includes("annual") || 
+        item.filing_type.toLowerCase().includes("factory act") || 
+        item.filing_type.toLowerCase().includes("shops")) {
+      // Annual/renewal: alert at 30 days and 7 days
+      shouldAlert = daysRemaining === 30 || daysRemaining === 7;
+    } else if (item.filing_type.toLowerCase().includes("quarterly")) {
+      // Quarterly: alert at 15 days and 7 days
+      shouldAlert = daysRemaining === 15 || daysRemaining === 7;
+    } else {
+      // Monthly (TDS, GSTR-1, GSTR-3B): alert at 7 days and 2 days
+      shouldAlert = daysRemaining === 7 || daysRemaining === 2;
+    }
+
+    if (shouldAlert) {
+      const dueDateStr = dueDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+      const body = `Statutory Reminder — ${item.filing_type} is due on ${dueDateStr} (${daysRemaining} days remaining).${item.notes ? ` Notes: ${item.notes}` : ""} Last status: ${item.status}.`;
+
+      for (const u of recipients || []) {
+        await supabase.from("notifications").insert({
+          recipient_id: u.auth_user_id,
+          title: `Statutory Reminder — ${item.filing_type}`,
+          body,
+          category: "statutory_reminder",
+          type: "statutory_reminder",
+          content: body,
+        });
+      }
+      alerts.push(item.filing_type);
+    }
+  }
+
+  return alerts.length ? `Reminders sent for: ${alerts.join(", ")}` : "No statutory reminders due today";
 }
