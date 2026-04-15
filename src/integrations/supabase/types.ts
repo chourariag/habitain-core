@@ -3964,6 +3964,59 @@ export type Database = {
         }
         Relationships: []
       }
+      project_revenue_margin: {
+        Row: {
+          anticipated_delivery_date: string | null
+          anticipated_handover_date: string | null
+          created_at: string
+          expected_final_cost: number
+          expected_variations: number
+          gfc_margin_pct: number | null
+          id: string
+          notes: string | null
+          original_valuation: number
+          project_id: string
+          tender_margin_pct: number | null
+          updated_at: string
+        }
+        Insert: {
+          anticipated_delivery_date?: string | null
+          anticipated_handover_date?: string | null
+          created_at?: string
+          expected_final_cost?: number
+          expected_variations?: number
+          gfc_margin_pct?: number | null
+          id?: string
+          notes?: string | null
+          original_valuation?: number
+          project_id: string
+          tender_margin_pct?: number | null
+          updated_at?: string
+        }
+        Update: {
+          anticipated_delivery_date?: string | null
+          anticipated_handover_date?: string | null
+          created_at?: string
+          expected_final_cost?: number
+          expected_variations?: number
+          gfc_margin_pct?: number | null
+          id?: string
+          notes?: string | null
+          original_valuation?: number
+          project_id?: string
+          tender_margin_pct?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_revenue_margin_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           client_email: string | null

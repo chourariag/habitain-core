@@ -9,6 +9,7 @@ import { PaymentsTab } from "@/components/finance/PaymentsTab";
 import { StatutoryTab } from "@/components/finance/StatutoryTab";
 import { InvoicesTab } from "@/components/finance/InvoicesTab";
 import { ProjectPLTab } from "@/components/finance/ProjectPLTab";
+import { RevenueMarginTab } from "@/components/finance/RevenueMarginTab";
 
 export default function Finance() {
   return (
@@ -26,6 +27,7 @@ export default function Finance() {
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="mis">MIS</TabsTrigger>
+            <TabsTrigger value="revenue-margin">Revenue & Margin</TabsTrigger>
             <TabsTrigger value="pl">P&L</TabsTrigger>
             <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
             <TabsTrigger value="budgets">Project Budgets</TabsTrigger>
@@ -37,6 +39,7 @@ export default function Finance() {
         </ScrollableTabsWrapper>
 
         <TabsContent value="mis"><MISTab /></TabsContent>
+        <TabsContent value="revenue-margin"><RevenueMarginTab /></TabsContent>
         <TabsContent value="pl"><PLTab /></TabsContent>
         <TabsContent value="cashflow"><CashFlowTab /></TabsContent>
         <TabsContent value="budgets"><ProjectBudgetsTab /></TabsContent>
