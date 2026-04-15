@@ -154,32 +154,92 @@ export function MISTab() {
     }
   }, [fetchData]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!periodLabel.trim()) { toast.error("Enter a period label first"); return; }
+  const parseTallyTB = async (file: File): Promise<{ entries: LedgerEntry[]; skipped: { row: number; reason: string }[]; detectedPeriod: string }> => {
+    const XLSX = await import("xlsx");
+    const data = await file.arrayBuffer();
+    const wb = XLSX.read(data);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows: any[] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
 
+    // Find header row: scan for row containing "Particulars" in column A
+    let headerRowIdx = -1;
+    let detectedPeriod = "";
+    for (let i = 0; i < Math.min(rows.length, 20); i++) {
+      const cellA = String(rows[i]?.[0] || "").trim().toLowerCase();
+      // Detect period from date range row (e.g. "1-Apr-25 to 31-Mar-26")
+      if (/\d{1,2}-[a-z]{3}-\d{2,4}\s+to\s+\d{1,2}-[a-z]{3}-\d{2,4}/i.test(String(rows[i]?.[0] || ""))) {
+        detectedPeriod = String(rows[i][0]).trim();
+      }
+      if (cellA === "particulars" || cellA.startsWith("particulars")) {
+        headerRowIdx = i;
+        break;
+      }
+    }
+
+    // Fallback: if no "Particulars" header found, try old format (row 0 = header)
+    const dataStartIdx = headerRowIdx >= 0 ? headerRowIdx + 2 : 1; // +2 to skip sub-header row
+
+    const entries: LedgerEntry[] = [];
+    const skipped: { row: number; reason: string }[] = [];
+
+    for (let i = dataStartIdx; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row) { skipped.push({ row: i + 1, reason: "Empty row" }); continue; }
+
+      const particulars = row[0] != null ? String(row[0]).trim() : "";
+      if (!particulars) { continue; } // Skip blank particulars silently
+
+      const openingBal = Number(row[1]) || 0;
+      const debitAmt = Number(row[headerRowIdx >= 0 ? 2 : 1]) || 0;
+      const creditAmt = Number(row[headerRowIdx >= 0 ? 3 : 2]) || 0;
+      const closingRaw = row[headerRowIdx >= 0 ? 4 : undefined];
+
+      // Skip rows where all numeric columns are zero/null (formatting rows)
+      if (headerRowIdx >= 0 && openingBal === 0 && debitAmt === 0 && creditAmt === 0 && (closingRaw == null || Number(closingRaw) === 0)) {
+        skipped.push({ row: i + 1, reason: `All values zero: "${particulars}"` });
+        continue;
+      }
+
+      // For old format (no header detected), skip zero rows too
+      if (headerRowIdx < 0 && debitAmt === 0 && creditAmt === 0) {
+        skipped.push({ row: i + 1, reason: `All values zero: "${particulars}"` });
+        continue;
+      }
+
+      const closingBalance = closingRaw != null ? Number(closingRaw) : (openingBal + debitAmt - creditAmt);
+      const category = categorizeLedger(particulars);
+
+      entries.push({
+        ledger_name: particulars,
+        debit: debitAmt,
+        credit: creditAmt,
+        opening_balance: headerRowIdx >= 0 ? openingBal : undefined,
+        closing_balance: headerRowIdx >= 0 ? closingBalance : undefined,
+        category,
+      });
+    }
+
+    return { entries, skipped, detectedPeriod };
+  };
+
+  const doUpload = async (file: File) => {
     try {
-      const XLSX = await import("xlsx");
-      const data = await file.arrayBuffer();
-      const wb = XLSX.read(data);
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows: any[] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+      const { entries, skipped, detectedPeriod } = await parseTallyTB(file);
 
-      const entries: LedgerEntry[] = [];
-      for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        if (!row[0]) continue;
-        entries.push({
-          ledger_name: String(row[0]).trim(),
-          debit: Number(row[1]) || 0,
-          credit: Number(row[2]) || 0,
-        });
+      if (entries.length === 0) { toast.error("No data rows found in file"); return; }
+
+      // Use detected period or user-entered label
+      const finalPeriod = periodLabel.trim() || detectedPeriod || "Unknown Period";
+
+      // Delete existing uploads for same period
+      const existing = uploads.find(u => u.period_label === finalPeriod);
+      if (existing) {
+        await supabase.from("finance_mis_uploads").delete().eq("id", existing.id);
       }
 
       const { data: { user } } = await supabase.auth.getUser();
       const { data: inserted, error } = await supabase.from("finance_mis_uploads").insert({
-        period_label: periodLabel.trim(),
+        period_label: finalPeriod,
         uploaded_by: user?.id,
         raw_data: entries as any,
       }).select().single();
@@ -195,20 +255,41 @@ export function MISTab() {
         setMappingDrawerOpen(true);
       }
 
-      // Add to local state directly
       const newUpload: MISUpload = {
         id: inserted.id,
         period_label: inserted.period_label,
         raw_data: entries,
         ads_split: {},
       };
-      setUploads(prev => [newUpload, ...prev]);
+      setUploads(prev => [newUpload, ...prev.filter(u => u.id !== existing?.id)]);
       setCurrentUploadId(inserted.id);
 
-      toast.success("Trial Balance uploaded successfully");
+      // Build category summary
+      const categories: Record<string, number> = {};
+      entries.forEach(e => {
+        const cat = e.category || "Other";
+        categories[cat] = (categories[cat] || 0) + 1;
+      });
+
+      setUploadSummary({ total: entries.length, categories, skipped, period: finalPeriod });
+      toast.success(`${entries.length} ledger accounts imported`);
       setPeriodLabel("");
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check if period already exists
+    const label = periodLabel.trim();
+    if (label && uploads.find(u => u.period_label === label)) {
+      setPendingFile(file);
+      setConfirmReplace(true);
+    } else {
+      await doUpload(file);
     }
     e.target.value = "";
   };
