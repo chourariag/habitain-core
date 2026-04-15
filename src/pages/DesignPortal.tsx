@@ -386,6 +386,9 @@ export default function DesignPortal() {
       });
       if (error) throw error;
 
+      // Fetch the just-created DQ to get its ID for consequence analysis
+      const { data: newDq } = await client.from("design_queries").select("id").eq("dq_code", dqCode).single();
+
       if (assignedArchitect) {
         await insertNotifications({
           recipient_id: assignedArchitect.auth_user_id,
@@ -394,6 +397,11 @@ export default function DesignPortal() {
           category: "design",
           related_table: "design_query",
         });
+      }
+
+      // Trigger Agent 6: DQ Consequence Statement
+      if (newDq?.id) {
+        supabase.functions.invoke("ai-agents", { body: { agent: "dq_consequence", payload: { dq_id: newDq.id } } }).catch(() => {});
       }
 
       toast.success(`Design Query ${dqCode} raised`);

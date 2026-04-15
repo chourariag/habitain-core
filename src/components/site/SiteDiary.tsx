@@ -146,6 +146,12 @@ export function SiteDiary({ projectId, userRole }: Props) {
       });
       if (error) throw error;
 
+      // Trigger Agent 8: Site Diary Location Photo Verify
+      const { data: latestDiary } = await client.from("site_diary").select("id").eq("project_id", projectId).order("created_at", { ascending: false }).limit(1).single();
+      if (latestDiary?.id) {
+        supabase.functions.invoke("ai-agents", { body: { agent: "site_diary_verify", payload: { diary_id: latestDiary.id } } }).catch(() => {});
+      }
+
       toast.success("Site diary entry saved!");
       resetForm();
       await loadEntries();

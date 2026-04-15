@@ -261,6 +261,8 @@ export default function Drawings() {
       });
       if (error) throw error;
 
+      const { data: newDq } = await client.from("design_queries").select("id").eq("dq_code", dqCode).single();
+
       // Notify architect
       if (assignedArchitect) {
         await insertNotifications({
@@ -270,6 +272,11 @@ export default function Drawings() {
           category: "design",
           related_table: "design_query",
         });
+      }
+
+      // Trigger Agent 6: DQ Consequence Statement
+      if (newDq?.id) {
+        supabase.functions.invoke("ai-agents", { body: { agent: "dq_consequence", payload: { dq_id: newDq.id } } }).catch(() => {});
       }
 
       toast.success(`Design Query ${dqCode} raised successfully`);
