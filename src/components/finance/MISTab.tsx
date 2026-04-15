@@ -31,6 +31,9 @@ interface LedgerEntry {
   ledger_name: string;
   debit: number;
   credit: number;
+  opening_balance?: number;
+  closing_balance?: number;
+  category?: string;
 }
 
 interface MISUpload {
