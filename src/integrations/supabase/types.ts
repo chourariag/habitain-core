@@ -591,6 +591,51 @@ export type Database = {
           },
         ]
       }
+      board_papers: {
+        Row: {
+          commentary: Json | null
+          created_at: string
+          finalized_at: string | null
+          generated_by: string
+          generated_by_name: string | null
+          id: string
+          pdf_url: string | null
+          period_type: string
+          report_date: string
+          sections_data: Json
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          commentary?: Json | null
+          created_at?: string
+          finalized_at?: string | null
+          generated_by: string
+          generated_by_name?: string | null
+          id?: string
+          pdf_url?: string | null
+          period_type?: string
+          report_date: string
+          sections_data?: Json
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          commentary?: Json | null
+          created_at?: string
+          finalized_at?: string | null
+          generated_by?: string
+          generated_by_name?: string | null
+          id?: string
+          pdf_url?: string | null
+          period_type?: string
+          report_date?: string
+          sections_data?: Json
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_milestone_photos: {
         Row: {
           completed_at: string | null
