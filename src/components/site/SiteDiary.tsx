@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, MapPin, BookOpen, Loader2, Plus, Cloud, Sun, CloudRain, Trash2 } from "lucide-react";
+import { Camera, MapPin, BookOpen, Loader2, Plus, Cloud, Sun, CloudRain, Trash2, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { PhotoGuidanceCard, PhotoFeedback, PhotoQualitySummary, usePhotoWithAI } from "@/components/photos/PhotoGuidance";
