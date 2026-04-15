@@ -14,6 +14,7 @@ import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { ClientPortalManager } from "@/components/projects/ClientPortalManager";
 import { BillingMilestonesSection } from "@/components/projects/BillingMilestonesSection";
+import { MicroScheduleTab } from "@/components/projects/MicroScheduleTab";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { useProjectContext } from "@/contexts/ProjectContext";
 
