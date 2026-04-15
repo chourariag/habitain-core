@@ -83,7 +83,7 @@ export default function ClientPortal() {
       action: "page_view",
     }).then(() => {});
 
-    const [modRes, gfcRes, drawRes, handRes, voRes, msRes] = await Promise.all([
+    const [modRes, gfcRes, drawRes, handRes, voRes, msRes, mpRes, cjRes] = await Promise.all([
       supabase.from("modules").select("id, module_code, current_stage, production_status, created_at")
         .eq("project_id", proj.id).eq("is_archived", false).order("created_at"),
       supabase.from("gfc_records").select("*").eq("project_id", proj.id).order("created_at"),
@@ -93,6 +93,8 @@ export default function ClientPortal() {
       supabase.from("handover_pack").select("*").eq("project_id", proj.id).maybeSingle(),
       supabase.from("variation_orders" as any).select("*").eq("project_id", proj.id).order("created_at"),
       supabase.from("project_billing_milestones").select("*").eq("project_id", proj.id).order("milestone_number"),
+      supabase.from("client_milestone_photos" as any).select("*").eq("project_id", proj.id).order("created_at"),
+      supabase.from("construction_journal" as any).select("*").eq("project_id", proj.id).eq("is_approved", true).order("entry_date", { ascending: false }).limit(20),
     ]);
 
     setModules(modRes.data ?? []);
@@ -101,6 +103,8 @@ export default function ClientPortal() {
     setHandover(handRes.data ?? null);
     setVariationOrders((voRes.data as any[]) ?? []);
     setBillingMilestones((msRes.data as any[]) ?? []);
+    setMilestonePhotos((mpRes.data as any[]) ?? []);
+    setJournalEntries((cjRes.data as any[]) ?? []);
     setLoading(false);
   }, [projectToken]);
 
