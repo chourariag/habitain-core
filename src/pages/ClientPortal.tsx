@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import {
   Check, Clock, Lock, Download, FileText,
   Building2, Loader2, AlertTriangle, MessageSquare,
-  ThumbsUp, ThumbsDown, HelpCircle, PenLine
+  ThumbsUp, ThumbsDown, HelpCircle, PenLine, IndianRupee
 } from "lucide-react";
 
 const STAGES = [
