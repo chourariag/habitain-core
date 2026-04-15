@@ -4141,6 +4141,121 @@ export type Database = {
           },
         ]
       }
+      project_task_schedule_uploads: {
+        Row: {
+          id: string
+          project_id: string
+          task_count: number
+          uploaded_at: string
+          uploaded_by: string
+          version: number
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          task_count?: number
+          uploaded_at?: string
+          uploaded_by: string
+          version?: number
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          task_count?: number
+          uploaded_at?: string
+          uploaded_by?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_task_schedule_uploads_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_tasks: {
+        Row: {
+          actual_finish_date: string | null
+          actual_start_date: string | null
+          completion_percentage: number
+          created_at: string
+          delay_days: number | null
+          duration_days: number | null
+          id: string
+          is_locked: boolean
+          lock_override_by: string | null
+          lock_override_reason: string | null
+          phase: string
+          planned_finish_date: string | null
+          planned_start_date: string | null
+          predecessor_ids: string[] | null
+          project_id: string
+          remarks: string | null
+          responsible_role: string | null
+          status: string
+          task_id_in_schedule: string
+          task_name: string
+          updated_at: string
+        }
+        Insert: {
+          actual_finish_date?: string | null
+          actual_start_date?: string | null
+          completion_percentage?: number
+          created_at?: string
+          delay_days?: number | null
+          duration_days?: number | null
+          id?: string
+          is_locked?: boolean
+          lock_override_by?: string | null
+          lock_override_reason?: string | null
+          phase?: string
+          planned_finish_date?: string | null
+          planned_start_date?: string | null
+          predecessor_ids?: string[] | null
+          project_id: string
+          remarks?: string | null
+          responsible_role?: string | null
+          status?: string
+          task_id_in_schedule: string
+          task_name: string
+          updated_at?: string
+        }
+        Update: {
+          actual_finish_date?: string | null
+          actual_start_date?: string | null
+          completion_percentage?: number
+          created_at?: string
+          delay_days?: number | null
+          duration_days?: number | null
+          id?: string
+          is_locked?: boolean
+          lock_override_by?: string | null
+          lock_override_reason?: string | null
+          phase?: string
+          planned_finish_date?: string | null
+          planned_start_date?: string | null
+          predecessor_ids?: string[] | null
+          project_id?: string
+          remarks?: string | null
+          responsible_role?: string | null
+          status?: string
+          task_id_in_schedule?: string
+          task_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           client_email: string | null
