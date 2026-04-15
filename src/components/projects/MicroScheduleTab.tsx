@@ -466,11 +466,12 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
 }
 
 /* ===================== LIST VIEW ===================== */
-function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingName, onStart, onUpdate }: {
+function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingName, onStart, onUpdate, materialRiskMap = {} }: {
   tasks: ProjectTask[]; taskMap: Record<string, ProjectTask>; canEdit: boolean;
   liveStatus: (t: ProjectTask) => string; getDelay: (t: ProjectTask) => number;
   getBlockingName: (t: ProjectTask) => string | null;
   onStart: (t: ProjectTask) => void; onUpdate: (id: string, u: Partial<ProjectTask>) => void;
+  materialRiskMap?: Record<string, string>;
 }) {
   return (
     <div className="overflow-x-auto border rounded-lg">
