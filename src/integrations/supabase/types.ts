@@ -4356,6 +4356,150 @@ export type Database = {
           },
         ]
       }
+      project_scope_exclusions: {
+        Row: {
+          created_at: string
+          exclusion_text: string
+          id: string
+          is_standard: boolean
+          scope_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          exclusion_text: string
+          id?: string
+          is_standard?: boolean
+          scope_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          exclusion_text?: string
+          id?: string
+          is_standard?: boolean
+          scope_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_scope_exclusions_scope_id_fkey"
+            columns: ["scope_id"]
+            isOneToOne: false
+            referencedRelation: "project_scope_of_work"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_scope_items: {
+        Row: {
+          area_sqft: number | null
+          created_at: string
+          id: string
+          item_name: string
+          remarks: string | null
+          responsibility: string
+          scope_id: string
+          section: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          area_sqft?: number | null
+          created_at?: string
+          id?: string
+          item_name: string
+          remarks?: string | null
+          responsibility?: string
+          scope_id: string
+          section: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          area_sqft?: number | null
+          created_at?: string
+          id?: string
+          item_name?: string
+          remarks?: string | null
+          responsibility?: string
+          scope_id?: string
+          section?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_scope_items_scope_id_fkey"
+            columns: ["scope_id"]
+            isOneToOne: false
+            referencedRelation: "project_scope_of_work"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_scope_of_work: {
+        Row: {
+          built_up_area: number | null
+          category: string | null
+          client_name: string | null
+          created_at: string
+          created_by: string
+          deck_area: number | null
+          division: string | null
+          id: string
+          location: string | null
+          module_count: number | null
+          notes: string | null
+          pdf_url: string | null
+          project_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          built_up_area?: number | null
+          category?: string | null
+          client_name?: string | null
+          created_at?: string
+          created_by: string
+          deck_area?: number | null
+          division?: string | null
+          id?: string
+          location?: string | null
+          module_count?: number | null
+          notes?: string | null
+          pdf_url?: string | null
+          project_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          built_up_area?: number | null
+          category?: string | null
+          client_name?: string | null
+          created_at?: string
+          created_by?: string
+          deck_area?: number | null
+          division?: string | null
+          id?: string
+          location?: string | null
+          module_count?: number | null
+          notes?: string | null
+          pdf_url?: string | null
+          project_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_scope_of_work_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_subtasks: {
         Row: {
           completed_at: string | null
