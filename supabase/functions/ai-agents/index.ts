@@ -841,3 +841,365 @@ async function runStatutoryReminder(supabase: any): Promise<string> {
 
   return alerts.length ? `Reminders sent for: ${alerts.join(", ")}` : "No statutory reminders due today";
 }
+
+/* ───────────── AGENT 13 — LOST DEAL PATTERN ANALYST ───────────── */
+async function runLostDealPatternAnalyst(supabase: any): Promise<string> {
+  const ninetyDaysAgo = new Date(Date.now() - 90 * 86400000).toISOString();
+
+  const { data: lostDeals } = await supabase
+    .from("sales_deals")
+    .select("id, deal_name, stage, client_type, lead_source, deal_value, loss_reason, assigned_to, location, updated_at")
+    .eq("status", "lost")
+    .gte("updated_at", ninetyDaysAgo);
+
+  if (!lostDeals?.length) return "No lost deals in the past 90 days";
+
+  // Also get won deals for comparison
+  const { data: wonDeals } = await supabase
+    .from("sales_deals")
+    .select("id, client_type, lead_source, deal_value")
+    .eq("status", "won")
+    .gte("updated_at", ninetyDaysAgo);
+
+  const totalLost = lostDeals.length;
+  const totalWon = (wonDeals || []).length;
+
+  // Most common loss reason
+  const reasonCounts: Record<string, number> = {};
+  for (const d of lostDeals) {
+    const r = d.loss_reason || "Not specified";
+    reasonCounts[r] = (reasonCounts[r] || 0) + 1;
+  }
+  const topReason = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1])[0];
+  const topReasonPct = Math.round((topReason[1] / totalLost) * 100);
+
+  // Stage where most deals lost
+  const stageCounts: Record<string, number> = {};
+  for (const d of lostDeals) {
+    const s = d.stage || "Unknown";
+    stageCounts[s] = (stageCounts[s] || 0) + 1;
+  }
+  const topStage = Object.entries(stageCounts).sort((a, b) => b[1] - a[1])[0];
+
+  // Client type win rates
+  const clientTypeLost: Record<string, number> = {};
+  const clientTypeWon: Record<string, number> = {};
+  for (const d of lostDeals) { clientTypeLost[d.client_type || "Unknown"] = (clientTypeLost[d.client_type || "Unknown"] || 0) + 1; }
+  for (const d of wonDeals || []) { clientTypeWon[d.client_type || "Unknown"] = (clientTypeWon[d.client_type || "Unknown"] || 0) + 1; }
+  const allClientTypes = new Set([...Object.keys(clientTypeLost), ...Object.keys(clientTypeWon)]);
+  let worstClientType = "";
+  let worstWinRate = 100;
+  for (const ct of allClientTypes) {
+    const won = clientTypeWon[ct] || 0;
+    const lost = clientTypeLost[ct] || 0;
+    const rate = (won / (won + lost)) * 100;
+    if (rate < worstWinRate) { worstWinRate = rate; worstClientType = ct; }
+  }
+
+  // Lead source conversion rates
+  const srcLost: Record<string, number> = {};
+  const srcWon: Record<string, number> = {};
+  for (const d of lostDeals) { srcLost[d.lead_source || "Unknown"] = (srcLost[d.lead_source || "Unknown"] || 0) + 1; }
+  for (const d of wonDeals || []) { srcWon[d.lead_source || "Unknown"] = (srcWon[d.lead_source || "Unknown"] || 0) + 1; }
+  const allSrcs = new Set([...Object.keys(srcLost), ...Object.keys(srcWon)]);
+  let worstSrc = "";
+  let worstSrcRate = 100;
+  for (const s of allSrcs) {
+    const won = srcWon[s] || 0;
+    const lost = srcLost[s] || 0;
+    const rate = (won / (won + lost)) * 100;
+    if (rate < worstSrcRate) { worstSrcRate = rate; worstSrc = s; }
+  }
+
+  // Average deal size comparison
+  const avgLost = lostDeals.reduce((s: number, d: any) => s + (d.deal_value || 0), 0) / totalLost;
+  const avgWon = totalWon > 0 ? (wonDeals || []).reduce((s: number, d: any) => s + (d.deal_value || 0), 0) / totalWon : 0;
+
+  const body = `Lost Deal Insights (past 90 days) — ${totalLost} deals lost:
+• Most common reason: ${topReason[0]} (${topReasonPct}%)
+• Most deals lost at: ${topStage[0]} stage (${topStage[1]} deals)
+• ${worstClientType} has ${Math.round(worstWinRate)}% win rate — lowest in portfolio
+• ${worstSrc} leads converting at ${Math.round(worstSrcRate)}% — consider reviewing investment
+• Avg deal size: Lost ₹${Math.round(avgLost).toLocaleString()} vs Won ₹${Math.round(avgWon).toLocaleString()}`;
+
+  const { data: recipients } = await supabase
+    .from("profiles")
+    .select("auth_user_id")
+    .in("role", ["sales_director", "managing_director"])
+    .eq("is_active", true);
+
+  for (const u of recipients || []) {
+    await supabase.from("notifications").insert({
+      recipient_id: u.auth_user_id,
+      title: "Lost Deal Insights — Fortnightly Report",
+      body, category: "lost_deal_pattern", type: "lost_deal_pattern", content: body,
+    });
+  }
+
+  return `Lost deal report sent — ${totalLost} deals analysed`;
+}
+
+/* ───────────── AGENT 14 — DEAL STAGNATION ALERT ───────────── */
+async function runDealStagnationAlert(supabase: any): Promise<string> {
+  const thresholds: Record<string, number> = {
+    "B2B": 45, "Corporate": 45,
+    "B2C": 90, "Residential": 90,
+    "Resort": 180, "Hospitality": 180,
+  };
+  const defaultThreshold = 60;
+
+  const { data: deals } = await supabase
+    .from("sales_deals")
+    .select("id, deal_name, stage, client_type, assigned_to, last_stage_change, updated_at")
+    .not("status", "in", '("won","lost")');
+
+  if (!deals?.length) return "No active deals to check";
+
+  const now = Date.now();
+  const alerts: string[] = [];
+
+  const stageSuggestions: Record<string, string> = {
+    "Inquiry": "Qualify the lead — schedule a discovery call.",
+    "Site Visit": "Schedule experience centre visit.",
+    "Proposal": "Follow up on quotation status.",
+    "Negotiation": "Escalate pricing discussion to director.",
+    "Closing": "Confirm final terms and prepare handover docs.",
+  };
+
+  const { data: salesUsers } = await supabase
+    .from("profiles")
+    .select("auth_user_id, role")
+    .in("role", ["sales_director", "managing_director", "sales_executive"])
+    .eq("is_active", true);
+
+  const johnIds = (salesUsers || []).filter((u: any) => u.role === "sales_director").map((u: any) => u.auth_user_id);
+  const mdIds = (salesUsers || []).filter((u: any) => u.role === "managing_director").map((u: any) => u.auth_user_id);
+
+  for (const deal of deals) {
+    const lastChange = deal.last_stage_change || deal.updated_at;
+    if (!lastChange) continue;
+    const daysSince = Math.floor((now - new Date(lastChange).getTime()) / 86400000);
+    const threshold = thresholds[deal.client_type] || defaultThreshold;
+
+    if (daysSince > threshold) {
+      const suggestion = stageSuggestions[deal.stage] || "Review deal status and next steps.";
+      const body = `${deal.deal_name} — ${deal.client_type || "Unknown"} has been in ${deal.stage} for ${daysSince} days (threshold: ${threshold} days). Last activity: ${new Date(lastChange).toLocaleDateString("en-IN")}. Recommended: ${suggestion}`;
+
+      // Notify assigned salesperson + John
+      const recipients = [...johnIds];
+      if (deal.assigned_to) recipients.push(deal.assigned_to);
+
+      // Escalate at 2× threshold
+      if (daysSince > threshold * 2) {
+        recipients.push(...mdIds);
+      }
+
+      const unique = [...new Set(recipients)];
+      for (const rid of unique) {
+        await supabase.from("notifications").insert({
+          recipient_id: rid,
+          title: `Deal Stagnation — ${deal.deal_name}`,
+          body, category: "deal_stagnation", type: "deal_stagnation", content: body,
+        });
+      }
+      alerts.push(deal.deal_name);
+    }
+  }
+
+  return alerts.length ? `Stagnation alerts: ${alerts.join(", ")}` : "No stagnant deals";
+}
+
+/* ───────────── AGENT 15 — WEEKLY COACHING DIGEST ───────────── */
+async function runWeeklyCoachingDigest(supabase: any): Promise<string> {
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  monthStart.setHours(0, 0, 0, 0);
+
+  // Get all sales reps
+  const { data: salesReps } = await supabase
+    .from("profiles")
+    .select("auth_user_id, full_name, role")
+    .in("role", ["sales_executive", "sales_director"])
+    .eq("is_active", true);
+
+  if (!salesReps?.length) return "No sales reps found";
+
+  const johnIds = (salesReps || []).filter((u: any) => u.role === "sales_director").map((u: any) => u.auth_user_id);
+
+  const teamLines: string[] = [];
+  let teamWon = 0, teamLost = 0, teamPipelineAdded = 0;
+
+  for (const rep of salesReps) {
+    // Deals won this week
+    const { data: won } = await supabase.from("sales_deals").select("id, deal_value")
+      .eq("assigned_to", rep.auth_user_id).eq("status", "won").gte("updated_at", weekAgo);
+    // Deals lost this week
+    const { data: lost } = await supabase.from("sales_deals").select("id")
+      .eq("assigned_to", rep.auth_user_id).eq("status", "lost").gte("updated_at", weekAgo);
+    // Stage changes this week (deals advanced)
+    const { data: advanced } = await supabase.from("sales_deals").select("id")
+      .eq("assigned_to", rep.auth_user_id).gte("last_stage_change", weekAgo)
+      .not("status", "in", '("won","lost")');
+    // New leads this week
+    const { data: newLeads } = await supabase.from("sales_deals").select("id, deal_value")
+      .eq("assigned_to", rep.auth_user_id).gte("created_at", weekAgo);
+    // EC visits
+    const { data: visits } = await supabase.from("experience_centre_visits").select("id")
+      .eq("hosted_by", rep.auth_user_id).gte("visit_date", weekAgo);
+
+    const wonCount = (won || []).length;
+    const wonValue = (won || []).reduce((s: number, d: any) => s + (d.deal_value || 0), 0);
+    const lostCount = (lost || []).length;
+    const advancedCount = (advanced || []).length;
+    const newLeadCount = (newLeads || []).length;
+    const pipelineAdded = (newLeads || []).reduce((s: number, d: any) => s + (d.deal_value || 0), 0);
+    const visitCount = (visits || []).length;
+
+    teamWon += wonCount;
+    teamLost += lostCount;
+    teamPipelineAdded += pipelineAdded;
+
+    const card = `${rep.full_name || "Rep"}:
+🏆 Won: ${wonCount} (₹${wonValue.toLocaleString()}) | ❌ Lost: ${lostCount}
+📊 Deals advanced: ${advancedCount} | 🆕 New leads: ${newLeadCount}
+🏢 EC Visits: ${visitCount} | 💰 Pipeline added: ₹${pipelineAdded.toLocaleString()}`;
+
+    teamLines.push(card);
+
+    // Send individual card to each rep (except director who gets full summary)
+    if (!johnIds.includes(rep.auth_user_id)) {
+      await supabase.from("notifications").insert({
+        recipient_id: rep.auth_user_id,
+        title: "Your Weekly Sales Summary",
+        body: card, category: "weekly_coaching", type: "weekly_coaching", content: card,
+      });
+    }
+  }
+
+  // Team summary for John
+  const teamSummary = `Weekly Sales Digest — Team Summary:
+🏆 Total Won: ${teamWon} | ❌ Total Lost: ${teamLost}
+💰 Pipeline Added: ₹${teamPipelineAdded.toLocaleString()}
+---
+${teamLines.join("\n---\n")}`;
+
+  for (const jid of johnIds) {
+    await supabase.from("notifications").insert({
+      recipient_id: jid,
+      title: "Weekly Sales Team Digest",
+      body: teamSummary, category: "weekly_coaching", type: "weekly_coaching", content: teamSummary,
+    });
+  }
+
+  // Also send to MD
+  const { data: mdUsers } = await supabase.from("profiles").select("auth_user_id")
+    .eq("role", "managing_director").eq("is_active", true);
+  for (const u of mdUsers || []) {
+    await supabase.from("notifications").insert({
+      recipient_id: u.auth_user_id,
+      title: "Weekly Sales Team Digest",
+      body: teamSummary, category: "weekly_coaching", type: "weekly_coaching", content: teamSummary,
+    });
+  }
+
+  return `Coaching digest sent for ${salesReps.length} reps`;
+}
+
+/* ───────────── AGENT 16 — LONG LEAVE EARLY WARNING ───────────── */
+async function runLongLeaveEarlyWarning(supabase: any): Promise<string> {
+  const now = new Date();
+  const twentyOneDaysLater = new Date(now.getTime() + 21 * 86400000).toISOString().slice(0, 10);
+  const today = now.toISOString().slice(0, 10);
+  const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString().slice(0, 10);
+
+  const alerts: string[] = [];
+
+  // Get MD + Planning Engineer for notifications
+  const { data: notifyUsers } = await supabase.from("profiles").select("auth_user_id, role")
+    .in("role", ["managing_director", "planning_engineer"]).eq("is_active", true);
+  const recipientIds = (notifyUsers || []).map((u: any) => u.auth_user_id);
+
+  // Part 1: Approved leave requests for 5+ consecutive days starting within 21 days
+  const { data: leaveRequests } = await supabase
+    .from("leave_requests")
+    .select("id, user_id, start_date, end_date, leave_type, status")
+    .eq("status", "approved")
+    .gte("start_date", today)
+    .lte("start_date", twentyOneDaysLater);
+
+  for (const leave of leaveRequests || []) {
+    const startD = new Date(leave.start_date);
+    const endD = new Date(leave.end_date);
+    const days = Math.ceil((endD.getTime() - startD.getTime()) / 86400000) + 1;
+
+    if (days >= 5) {
+      // Get user details
+      const { data: profile } = await supabase.from("profiles").select("full_name, role")
+        .eq("auth_user_id", leave.user_id).single();
+
+      // Check if they are primary responsible for any active project
+      const { data: projectAssignments } = await supabase.from("projects").select("id, name")
+        .or(`site_lead.eq.${leave.user_id},factory_supervisor.eq.${leave.user_id},project_manager.eq.${leave.user_id}`)
+        .eq("status", "active");
+
+      const projectList = (projectAssignments || []).map((p: any) => p.name).join(", ") || "No active project assignments";
+
+      const body = `${profile?.full_name || "Employee"} (${profile?.role || "unknown role"}) will be on leave from ${leave.start_date} to ${leave.end_date} (${days} days). They are primary responsible for: ${projectList}. Arrange coverage before ${leave.start_date}.`;
+
+      for (const rid of recipientIds) {
+        await supabase.from("notifications").insert({
+          recipient_id: rid,
+          title: `Long Leave Warning — ${profile?.full_name || "Employee"}`,
+          body, category: "long_leave_warning", type: "long_leave_warning", content: body,
+        });
+      }
+      alerts.push(profile?.full_name || leave.user_id);
+    }
+  }
+
+  // Part 2: Unplanned absence — 3+ days absent in past week without approved leave
+  const { data: allActiveUsers } = await supabase.from("profiles").select("auth_user_id, full_name, role, reporting_manager_id")
+    .eq("is_active", true);
+
+  for (const user of allActiveUsers || []) {
+    // Count attendance records in past 7 days
+    const { data: attendance } = await supabase.from("attendance_records").select("id")
+      .eq("user_id", user.auth_user_id)
+      .gte("date", weekAgo)
+      .lte("date", today);
+
+    // Count approved leaves in same period
+    const { data: approvedLeaves } = await supabase.from("leave_requests").select("id")
+      .eq("user_id", user.auth_user_id).eq("status", "approved")
+      .lte("start_date", today).gte("end_date", weekAgo);
+
+    const workDays = 6; // 6-day work week
+    const daysPresent = (attendance || []).length;
+    const daysOnLeave = (approvedLeaves || []).length;
+    const unaccountedAbsent = workDays - daysPresent - daysOnLeave;
+
+    if (unaccountedAbsent >= 3) {
+      // Check project responsibilities
+      const { data: projects } = await supabase.from("projects").select("name")
+        .or(`site_lead.eq.${user.auth_user_id},factory_supervisor.eq.${user.auth_user_id},project_manager.eq.${user.auth_user_id}`)
+        .eq("status", "active");
+
+      const projectList = (projects || []).map((p: any) => p.name).join(", ") || "None";
+      const managerNote = user.reporting_manager_id ? ` Please clarify with their reporting manager.` : "";
+
+      const body = `⚠️ ${user.full_name || "Employee"} has been absent ${unaccountedAbsent} days in the past week without approved leave. Responsibilities: ${projectList}.${managerNote}`;
+
+      for (const rid of recipientIds) {
+        await supabase.from("notifications").insert({
+          recipient_id: rid,
+          title: `Unplanned Absence — ${user.full_name || "Employee"}`,
+          body, category: "long_leave_warning", type: "long_leave_warning", content: body,
+        });
+      }
+      alerts.push(`${user.full_name} (unplanned)`);
+    }
+  }
+
+  return alerts.length ? `Leave warnings sent: ${alerts.join(", ")}` : "No long leave concerns";
+}
