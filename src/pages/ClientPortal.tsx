@@ -282,6 +282,24 @@ export default function ClientPortal() {
           </div>
         )}
 
+        {/* Milestone Photo Timeline */}
+        {milestonePhotos.length > 0 && (
+          <MilestoneTimeline photos={milestonePhotos} projectStartDate={project.start_date} />
+        )}
+
+        {/* Construction Journal */}
+        <ConstructionJournal entries={journalEntries} />
+
+        {/* Variation Approval (Phase C) */}
+        <VariationApproval
+          variations={variationOrders}
+          projectId={project.id}
+          projectName={project.name}
+          clientName={project.client_name || "Client"}
+          portalToken={projectToken!}
+          onRefresh={fetchData}
+        />
+
         {/* Drawing Approvals */}
         {pendingDrawings.length > 0 && (
           <Card className="border-destructive/30">
