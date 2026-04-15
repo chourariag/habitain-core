@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, MapPin, BookOpen, Loader2, Plus, Cloud, Sun, CloudRain, Trash2 } from "lucide-react";
+import { Camera, MapPin, BookOpen, Loader2, Plus, Cloud, Sun, CloudRain, Trash2, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { PhotoGuidanceCard, PhotoFeedback, PhotoQualitySummary, usePhotoWithAI } from "@/components/photos/PhotoGuidance";
@@ -61,6 +61,9 @@ export function SiteDiary({ projectId, userRole }: Props) {
   const [clientVisitNotes, setClientVisitNotes] = useState("");
   const [materialDeliveries, setMaterialDeliveries] = useState(false);
   const [deliveryItems, setDeliveryItems] = useState<MaterialDeliveryRow[]>([]);
+  const [shareWithClient, setShareWithClient] = useState(false);
+  const [milestoneTag, setMilestoneTag] = useState("");
+  const [clientNote, setClientNote] = useState("");
 
   // Planned activities state
   const [plannedActivities, setPlannedActivities] = useState<PlannedActivity[]>([]);
@@ -142,9 +145,38 @@ export function SiteDiary({ projectId, userRole }: Props) {
         material_delivery_items: deliveryItems.filter((d) => d.material.trim()),
         planned_activities: plannedActivities.length > 0 ? plannedActivities : null,
         daily_summary: dailySummary,
+        share_with_client: shareWithClient,
+        milestone_tag: milestoneTag || null,
         ...qualityMeta,
       });
       if (error) throw error;
+
+      // If shared with client, create construction journal entry
+      if (shareWithClient && clientNote.trim()) {
+        const { data: latestEntry } = await client.from("site_diary").select("id")
+          .eq("project_id", projectId).order("created_at", { ascending: false }).limit(1).single();
+        await (client.from("construction_journal") as any).insert({
+          project_id: projectId,
+          diary_entry_id: latestEntry?.id || null,
+          note: clientNote.trim(),
+          photo_url: urls[0] || null,
+          entry_date: new Date().toISOString().slice(0, 10),
+          shared_by: user.id,
+          shared_by_id: user.id,
+          is_approved: false,
+        });
+      }
+
+      // If milestone photo shared, create milestone photo record
+      if (shareWithClient && milestoneTag && urls.length > 0) {
+        await (client.from("client_milestone_photos") as any).insert({
+          project_id: projectId,
+          milestone_name: milestoneTag,
+          photo_url: urls[0],
+          completed_at: new Date().toISOString(),
+          shared_by: user.id,
+        });
+      }
 
       // Trigger Agent 8: Site Diary Location Photo Verify
       const { data: latestDiary } = await client.from("site_diary").select("id").eq("project_id", projectId).order("created_at", { ascending: false }).limit(1).single();
@@ -169,6 +201,7 @@ export function SiteDiary({ projectId, userRole }: Props) {
     setClientVisit(false); setClientVisitName(""); setClientVisitPurpose(""); setClientVisitNotes("");
     setMaterialDeliveries(false); setDeliveryItems([]);
     setPlannedActivities([]); setActivityErrors({});
+    setShareWithClient(false); setMilestoneTag(""); setClientNote("");
   };
 
   const weatherLabel = (val: string | null) => WEATHER_OPTIONS.find((w) => w.value === val)?.label ?? val;
@@ -322,6 +355,42 @@ export function SiteDiary({ projectId, userRole }: Props) {
                 <p className="text-xs text-destructive mt-1">Please add at least 3 photos ({3 - aiPhotos.length} more needed)</p>
               )}
               <PhotoQualitySummary photos={aiPhotos} />
+            </div>
+
+            {/* Share with Client */}
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-3">
+              <div className="flex items-center gap-3">
+                <Switch checked={shareWithClient} onCheckedChange={setShareWithClient} />
+                <label className="text-xs font-medium text-foreground flex items-center gap-1.5">
+                  <Share2 className="h-3.5 w-3.5" /> Share with Client
+                </label>
+              </div>
+              {shareWithClient && (
+                <>
+                  <Select value={milestoneTag} onValueChange={setMilestoneTag}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Tag as milestone photo (optional)..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["Production Start", "Foundation Confirmed", "Frame Erected", "Shell Complete",
+                        "Boarding Complete", "Flooring Done", "Delivery from Factory", "Site Erection",
+                        "Builder Finish", "Handover"].map((m) => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Textarea
+                    value={clientNote}
+                    onChange={(e) => setClientNote(e.target.value)}
+                    placeholder="Write a client-facing note (e.g. 'All 7 modules erected and levelled')"
+                    className="text-sm"
+                    rows={2}
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    This note and photo will appear on the client portal. Write as if the client will read it.
+                  </p>
+                </>
+              )}
             </div>
 
             <p className="text-xs text-muted-foreground">📍 GPS location auto-captured on submission</p>

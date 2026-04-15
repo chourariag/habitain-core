@@ -591,6 +591,50 @@ export type Database = {
           },
         ]
       }
+      client_milestone_photos: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          diary_entry_id: string | null
+          id: string
+          milestone_name: string
+          photo_url: string
+          project_id: string
+          shared_by: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          diary_entry_id?: string | null
+          id?: string
+          milestone_name: string
+          photo_url: string
+          project_id: string
+          shared_by?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          diary_entry_id?: string | null
+          id?: string
+          milestone_name?: string
+          photo_url?: string
+          project_id?: string
+          shared_by?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_milestone_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_portal_access_log: {
         Row: {
           action: string
@@ -619,6 +663,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "client_portal_access_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      construction_journal: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          diary_entry_id: string | null
+          entry_date: string
+          id: string
+          is_approved: boolean | null
+          note: string
+          photo_url: string | null
+          project_id: string
+          shared_by: string | null
+          shared_by_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          diary_entry_id?: string | null
+          entry_date?: string
+          id?: string
+          is_approved?: boolean | null
+          note: string
+          photo_url?: string | null
+          project_id: string
+          shared_by?: string | null
+          shared_by_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          diary_entry_id?: string | null
+          entry_date?: string
+          id?: string
+          is_approved?: boolean | null
+          note?: string
+          photo_url?: string | null
+          project_id?: string
+          shared_by?: string | null
+          shared_by_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "construction_journal_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
@@ -6023,6 +6123,7 @@ export type Database = {
           manpower_count: number | null
           material_deliveries: boolean | null
           material_delivery_items: Json | null
+          milestone_tag: string | null
           notes: string | null
           photo_urls: string[]
           planned_activities: Json | null
@@ -6031,6 +6132,7 @@ export type Database = {
           project_id: string
           quality_issues: string[] | null
           quality_override: boolean | null
+          share_with_client: boolean | null
           subcontractor_attendance: Json | null
           submitted_by: string
           updated_at: string | null
@@ -6051,6 +6153,7 @@ export type Database = {
           manpower_count?: number | null
           material_deliveries?: boolean | null
           material_delivery_items?: Json | null
+          milestone_tag?: string | null
           notes?: string | null
           photo_urls?: string[]
           planned_activities?: Json | null
@@ -6059,6 +6162,7 @@ export type Database = {
           project_id: string
           quality_issues?: string[] | null
           quality_override?: boolean | null
+          share_with_client?: boolean | null
           subcontractor_attendance?: Json | null
           submitted_by: string
           updated_at?: string | null
@@ -6079,6 +6183,7 @@ export type Database = {
           manpower_count?: number | null
           material_deliveries?: boolean | null
           material_delivery_items?: Json | null
+          milestone_tag?: string | null
           notes?: string | null
           photo_urls?: string[]
           planned_activities?: Json | null
@@ -6087,6 +6192,7 @@ export type Database = {
           project_id?: string
           quality_issues?: string[] | null
           quality_override?: boolean | null
+          share_with_client?: boolean | null
           subcontractor_attendance?: Json | null
           submitted_by?: string
           updated_at?: string | null
@@ -6688,6 +6794,11 @@ export type Database = {
       variation_orders: {
         Row: {
           client_approved_at: string | null
+          client_approved_by_name: string | null
+          client_facing_description: string | null
+          client_facing_reason: string | null
+          client_query_responded: boolean | null
+          client_query_text: string | null
           client_response_note: string | null
           created_at: string
           created_by: string | null
@@ -6701,6 +6812,11 @@ export type Database = {
         }
         Insert: {
           client_approved_at?: string | null
+          client_approved_by_name?: string | null
+          client_facing_description?: string | null
+          client_facing_reason?: string | null
+          client_query_responded?: boolean | null
+          client_query_text?: string | null
           client_response_note?: string | null
           created_at?: string
           created_by?: string | null
@@ -6714,6 +6830,11 @@ export type Database = {
         }
         Update: {
           client_approved_at?: string | null
+          client_approved_by_name?: string | null
+          client_facing_description?: string | null
+          client_facing_reason?: string | null
+          client_query_responded?: boolean | null
+          client_query_text?: string | null
           client_response_note?: string | null
           created_at?: string
           created_by?: string | null

@@ -15,6 +15,9 @@ import {
   Building2, Loader2, AlertTriangle, MessageSquare,
   ThumbsUp, ThumbsDown, HelpCircle, PenLine, IndianRupee
 } from "lucide-react";
+import { MilestoneTimeline } from "@/components/portal/MilestoneTimeline";
+import { ConstructionJournal } from "@/components/portal/ConstructionJournal";
+import { VariationApproval } from "@/components/portal/VariationApproval";
 
 const STAGES = [
   "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
@@ -37,6 +40,8 @@ export default function ClientPortal() {
   const [handover, setHandover] = useState<any>(null);
   const [variationOrders, setVariationOrders] = useState<any[]>([]);
   const [billingMilestones, setBillingMilestones] = useState<any[]>([]);
+  const [milestonePhotos, setMilestonePhotos] = useState<any[]>([]);
+  const [journalEntries, setJournalEntries] = useState<any[]>([]);
 
   // Action states
   const [queryDrawingId, setQueryDrawingId] = useState<string | null>(null);
@@ -78,7 +83,7 @@ export default function ClientPortal() {
       action: "page_view",
     }).then(() => {});
 
-    const [modRes, gfcRes, drawRes, handRes, voRes, msRes] = await Promise.all([
+    const [modRes, gfcRes, drawRes, handRes, voRes, msRes, mpRes, cjRes] = await Promise.all([
       supabase.from("modules").select("id, module_code, current_stage, production_status, created_at")
         .eq("project_id", proj.id).eq("is_archived", false).order("created_at"),
       supabase.from("gfc_records").select("*").eq("project_id", proj.id).order("created_at"),
@@ -88,6 +93,8 @@ export default function ClientPortal() {
       supabase.from("handover_pack").select("*").eq("project_id", proj.id).maybeSingle(),
       supabase.from("variation_orders" as any).select("*").eq("project_id", proj.id).order("created_at"),
       supabase.from("project_billing_milestones").select("*").eq("project_id", proj.id).order("milestone_number"),
+      supabase.from("client_milestone_photos" as any).select("*").eq("project_id", proj.id).order("created_at"),
+      supabase.from("construction_journal" as any).select("*").eq("project_id", proj.id).eq("is_approved", true).order("entry_date", { ascending: false }).limit(20),
     ]);
 
     setModules(modRes.data ?? []);
@@ -96,6 +103,8 @@ export default function ClientPortal() {
     setHandover(handRes.data ?? null);
     setVariationOrders((voRes.data as any[]) ?? []);
     setBillingMilestones((msRes.data as any[]) ?? []);
+    setMilestonePhotos((mpRes.data as any[]) ?? []);
+    setJournalEntries((cjRes.data as any[]) ?? []);
     setLoading(false);
   }, [projectToken]);
 
@@ -272,6 +281,24 @@ export default function ClientPortal() {
             </ul>
           </div>
         )}
+
+        {/* Milestone Photo Timeline */}
+        {milestonePhotos.length > 0 && (
+          <MilestoneTimeline photos={milestonePhotos} projectStartDate={project.start_date} />
+        )}
+
+        {/* Construction Journal */}
+        <ConstructionJournal entries={journalEntries} />
+
+        {/* Variation Approval (Phase C) */}
+        <VariationApproval
+          variations={variationOrders}
+          projectId={project.id}
+          projectName={project.name}
+          clientName={project.client_name || "Client"}
+          portalToken={projectToken!}
+          onRefresh={fetchData}
+        />
 
         {/* Drawing Approvals */}
         {pendingDrawings.length > 0 && (
