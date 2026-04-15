@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Upload, Download } from "lucide-react";
 import { toast } from "sonner";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, Legend } from "recharts";
 
@@ -52,9 +53,8 @@ export function ProjectBudgetsTab() {
   };
 
   const downloadTemplate = () => {
-    const { downloadXlsxTemplate, TEMPLATES } = require("@/lib/xlsx-templates");
     const t = TEMPLATES.budget;
-    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, [...t.sample]);
   };
 
   return (
