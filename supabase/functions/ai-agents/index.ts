@@ -53,6 +53,18 @@ Deno.serve(async (req) => {
       case "statutory_reminder":
         result = await runStatutoryReminder(supabase);
         break;
+      case "lost_deal_pattern":
+        result = await runLostDealPatternAnalyst(supabase);
+        break;
+      case "deal_stagnation":
+        result = await runDealStagnationAlert(supabase);
+        break;
+      case "weekly_coaching":
+        result = await runWeeklyCoachingDigest(supabase);
+        break;
+      case "long_leave_warning":
+        result = await runLongLeaveEarlyWarning(supabase);
+        break;
       default:
         return new Response(JSON.stringify({ error: "Unknown agent" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
