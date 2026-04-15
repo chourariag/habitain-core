@@ -8,6 +8,7 @@ import { SharedDashboardBottom } from "@/components/dashboard/SharedDashboardBot
 import { CheckInButton } from "@/components/attendance/CheckInButton";
 import { LogExpenseButton } from "@/components/expenses/LogExpenseButton";
 import { WeeklyDigestCard } from "@/components/kpi/WeeklyDigestCard";
+import { MyTasksSection } from "@/components/tasks/MyTasksSection";
 
 export default function Dashboard() {
   const { role, loading } = useUserRole();
