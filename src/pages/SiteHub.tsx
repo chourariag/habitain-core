@@ -27,6 +27,7 @@ import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import type { Tables } from "@/integrations/supabase/types";
+import { MyTasksSection } from "@/components/tasks/MyTasksSection";
 
 function SiteHubContent() {
   const navigate = useNavigate();
@@ -199,6 +200,9 @@ function SiteHubContent() {
           <Wallet className="h-4 w-4" /> Request Advance
         </Button>
       )}
+
+      {/* My Site Tasks */}
+      <MyTasksSection userRole={userRole} phaseFilter={["Site Installation", "Finishing"]} title="My Site Tasks" showProjectName={false} />
 
       <Tabs defaultValue="pipeline" className="space-y-4">
         <ScrollableTabsWrapper>

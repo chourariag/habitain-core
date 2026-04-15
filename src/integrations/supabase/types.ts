@@ -4141,6 +4141,50 @@ export type Database = {
           },
         ]
       }
+      project_subtasks: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          is_complete: boolean
+          sort_order: number
+          task_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          is_complete?: boolean
+          sort_order?: number
+          task_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          is_complete?: boolean
+          sort_order?: number
+          task_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_subtasks_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_task_schedule_uploads: {
         Row: {
           id: string
@@ -4182,12 +4226,15 @@ export type Database = {
           actual_start_date: string | null
           completion_percentage: number
           created_at: string
+          delay_cause: string | null
           delay_days: number | null
+          delay_resolution: string | null
           duration_days: number | null
           id: string
           is_locked: boolean
           lock_override_by: string | null
           lock_override_reason: string | null
+          parent_task_id: string | null
           phase: string
           planned_finish_date: string | null
           planned_start_date: string | null
@@ -4205,12 +4252,15 @@ export type Database = {
           actual_start_date?: string | null
           completion_percentage?: number
           created_at?: string
+          delay_cause?: string | null
           delay_days?: number | null
+          delay_resolution?: string | null
           duration_days?: number | null
           id?: string
           is_locked?: boolean
           lock_override_by?: string | null
           lock_override_reason?: string | null
+          parent_task_id?: string | null
           phase?: string
           planned_finish_date?: string | null
           planned_start_date?: string | null
@@ -4228,12 +4278,15 @@ export type Database = {
           actual_start_date?: string | null
           completion_percentage?: number
           created_at?: string
+          delay_cause?: string | null
           delay_days?: number | null
+          delay_resolution?: string | null
           duration_days?: number | null
           id?: string
           is_locked?: boolean
           lock_override_by?: string | null
           lock_override_reason?: string | null
+          parent_task_id?: string | null
           phase?: string
           planned_finish_date?: string | null
           planned_start_date?: string | null
@@ -4247,6 +4300,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "project_tasks_parent_task_id_fkey"
+            columns: ["parent_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_tasks_project_id_fkey"
             columns: ["project_id"]
