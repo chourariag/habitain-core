@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Users, ShieldOff, TrendingUp } from "lucide-react";
+import { Search, Users, ShieldOff, TrendingUp, FileText } from "lucide-react";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
 import { UserRow } from "@/components/admin/UserRow";
 import { ROLE_LABELS, AppRole } from "@/lib/roles";
 import { BenchmarksView } from "@/components/kpi/BenchmarksView";
+import { BoardPaperGenerator } from "@/components/admin/BoardPaperGenerator";
 
 export default function Admin() {
   const [search, setSearch] = useState("");
@@ -48,24 +49,26 @@ export default function Admin() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
-            User Management
+            Admin
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
             {activeCount} active user{activeCount !== 1 ? "s" : ""} · {inactiveCount} deactivated
           </p>
         </div>
-        <AddUserDialog onUserCreated={refetch} />
+        {(tab === "active" || tab === "inactive") && <AddUserDialog onUserCreated={refetch} />}
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by name, email, or role…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10 bg-card text-card-foreground border-border"
-        />
-      </div>
+      {(tab === "active" || tab === "inactive") && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, email, or role…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10 bg-card text-card-foreground border-border"
+          />
+        </div>
+      )}
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-muted">
@@ -80,6 +83,10 @@ export default function Admin() {
           <TabsTrigger value="benchmarks" className="gap-1.5">
             <TrendingUp className="h-3.5 w-3.5" />
             Benchmarks
+          </TabsTrigger>
+          <TabsTrigger value="reports" className="gap-1.5">
+            <FileText className="h-3.5 w-3.5" />
+            Reports
           </TabsTrigger>
         </TabsList>
 
@@ -121,6 +128,10 @@ export default function Admin() {
 
         <TabsContent value="benchmarks" className="mt-4">
           <BenchmarksView />
+        </TabsContent>
+
+        <TabsContent value="reports" className="mt-4">
+          <BoardPaperGenerator />
         </TabsContent>
       </Tabs>
     </div>
