@@ -22,6 +22,7 @@ import { ScheduleConflictBanner } from "@/components/production/ScheduleConflict
 import { FactoryCapacityCard } from "@/components/production/FactoryCapacityCard";
 import { StageVelocityMonitor } from "@/components/production/StageVelocityMonitor";
 import { useUserRole } from "@/hooks/useUserRole";
+import { MyTasksSection } from "@/components/tasks/MyTasksSection";
 import type { Tables } from "@/integrations/supabase/types";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
@@ -123,6 +124,9 @@ function ProductionContent() {
             </Button>
           </div>
         </div>
+
+        {/* My Factory Tasks */}
+        <MyTasksSection userRole={userRole} phaseFilter={["Factory Production"]} title="My Factory Tasks" showProjectName={false} />
 
         {/* Factory Intelligence Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
