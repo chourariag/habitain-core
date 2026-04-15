@@ -429,7 +429,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
           </div>
 
           {viewMode === "list" && (
-            <ListView tasks={filteredTasks} taskMap={taskMap} canEdit={canEdit} liveStatus={liveStatus} getDelay={getDelay} getBlockingName={getBlockingName} onStart={handleStartTask} onUpdate={updateTask} />
+            <ListView tasks={filteredTasks} taskMap={taskMap} canEdit={canEdit} liveStatus={liveStatus} getDelay={getDelay} getBlockingName={getBlockingName} onStart={handleStartTask} onUpdate={updateTask} materialRiskMap={materialRiskTaskIds} />
           )}
           {viewMode === "phase" && (
             <PhaseBoard tasks={filteredTasks} liveStatus={liveStatus} />
