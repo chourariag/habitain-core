@@ -15,6 +15,9 @@ import {
   Building2, Loader2, AlertTriangle, MessageSquare,
   ThumbsUp, ThumbsDown, HelpCircle, PenLine, IndianRupee
 } from "lucide-react";
+import { MilestoneTimeline } from "@/components/portal/MilestoneTimeline";
+import { ConstructionJournal } from "@/components/portal/ConstructionJournal";
+import { VariationApproval } from "@/components/portal/VariationApproval";
 
 const STAGES = [
   "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
