@@ -4340,6 +4340,7 @@ export type Database = {
           notes: string | null
           po_date: string
           po_number: string | null
+          po_type: string
           project_id: string | null
           project_name: string | null
           quantity: number | null
@@ -4374,6 +4375,7 @@ export type Database = {
           notes?: string | null
           po_date?: string
           po_number?: string | null
+          po_type?: string
           project_id?: string | null
           project_name?: string | null
           quantity?: number | null
@@ -4408,6 +4410,7 @@ export type Database = {
           notes?: string | null
           po_date?: string
           po_number?: string | null
+          po_type?: string
           project_id?: string | null
           project_name?: string | null
           quantity?: number | null
