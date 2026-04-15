@@ -14,6 +14,8 @@ import { Upload, Download, List, Columns3, BarChart3, Lock, Unlock, Loader2, Mon
 import { format, parseISO, differenceInDays, eachWeekOfInterval, addDays } from "date-fns";
 import { DelayDashboard } from "./DelayDashboard";
 import { MeasurementSheet } from "./MeasurementSheet";
+import { RedFlagAlerts } from "./RedFlagAlerts";
+import { fetchBenchmarkStats, getModuleCountBand, BenchmarkStats } from "@/lib/task-benchmarks";
 import * as XLSX from "xlsx";
 
 interface ProjectTask {
@@ -59,7 +61,7 @@ const STATUS_CONFIG: Record<string, { label: string; className: string; icon: an
   "Upcoming": { label: "Upcoming", className: "bg-muted text-muted-foreground border-border", icon: Clock },
 };
 
-type ViewMode = "list" | "phase" | "gantt" | "delays" | "measurement";
+type ViewMode = "list" | "phase" | "gantt" | "delays" | "measurement" | "flags";
 
 const UPLOAD_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const EDIT_ROLES = ["planning_engineer", "production_head", "site_installation_manager", "site_manager", "super_admin", "managing_director"];
@@ -77,6 +79,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   const [uploadSummary, setUploadSummary] = useState<{ taskCount: number; phases: number } | null>(null);
   const [overrideTask, setOverrideTask] = useState<ProjectTask | null>(null);
   const [overrideReason, setOverrideReason] = useState("");
+  const [scheduleFlags, setScheduleFlags] = useState<{ task: string; message: string; level: "yellow" | "amber" }[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const canUpload = UPLOAD_ROLES.includes(userRole ?? "");
@@ -235,6 +238,27 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
 
         const uniquePhases = new Set(parsedTasks.map((t) => t.phase));
         setUploadSummary({ taskCount: parsedTasks.length, phases: uniquePhases.size });
+
+        // Schedule Intelligence: compare planned durations vs benchmarks
+        try {
+          const { count: modCount } = await supabase.from("modules").select("*", { count: "exact", head: true }).eq("project_id", projectId);
+          const band = getModuleCountBand(modCount ?? 0);
+          const allBenchmarks = await fetchBenchmarkStats();
+          const flags: { task: string; message: string; level: "yellow" | "amber" }[] = [];
+          for (const t of parsedTasks) {
+            const bm = allBenchmarks.find((b) => b.task_category === t.task_name && b.module_count_band === band && b.data_points >= 3);
+            if (!bm) continue;
+            const planned = t.duration_days;
+            if (planned > 0 && planned < bm.fastest) {
+              flags.push({ task: t.task_name, message: `May be optimistic — fastest recorded: ${bm.fastest}d, you planned ${planned}d`, level: "yellow" });
+            }
+            if (planned > 0 && planned > bm.slowest * 1.5) {
+              flags.push({ task: t.task_name, message: `Much longer than typical — slowest: ${bm.slowest}d, you planned ${planned}d`, level: "amber" });
+            }
+          }
+          setScheduleFlags(flags);
+        } catch { /* benchmarks advisory only */ }
+
         toast.success(`${parsedTasks.length} tasks imported across ${uniquePhases.size} phases`);
         fetchTasks();
       } catch (err: any) {
@@ -353,6 +377,19 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
         </Card>
       )}
 
+      {scheduleFlags.length > 0 && (
+        <Card className="border-amber-200 bg-amber-50">
+          <CardContent className="py-3 px-4 space-y-1">
+            <p className="text-sm font-medium text-amber-800">⚠ Schedule Intelligence Flags</p>
+            {scheduleFlags.map((f, i) => (
+              <p key={i} className="text-xs" style={{ color: f.level === "yellow" ? "#b45309" : "#92400e" }}>
+                <strong>{f.task}:</strong> {f.message}
+              </p>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
       {tasks.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -364,7 +401,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
           {/* Controls */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex border rounded-md overflow-hidden flex-wrap">
-              {([["list", List, "List"], ["phase", Columns3, "Phase"], ["gantt", BarChart3, "Gantt"], ["delays", Timer, "Delays"], ["measurement", Ruler, "Costs"]] as const).map(([mode, Icon, label]) => (
+              {([["list", List, "List"], ["phase", Columns3, "Phase"], ["gantt", BarChart3, "Gantt"], ["delays", Timer, "Delays"], ["measurement", Ruler, "Costs"], ["flags", AlertTriangle, "Flags"]] as const).map(([mode, Icon, label]) => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
@@ -399,6 +436,9 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
           )}
           {viewMode === "measurement" && (
             <MeasurementSheet projectId={projectId} />
+          )}
+          {viewMode === "flags" && (
+            <RedFlagAlerts projectId={projectId} />
           )}
         </>
       )}

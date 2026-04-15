@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Play, CheckCircle2, AlertTriangle, Plus, Loader2, Calendar, Clock, Link2 } from "lucide-react";
+import { recordTaskBenchmark } from "@/lib/task-benchmarks";
 
 const DELAY_CAUSES = [
   "Internal — Method",
@@ -156,14 +157,21 @@ export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks 
       return;
     }
     setSaving(true);
+    const finishDate = format(new Date(), "yyyy-MM-dd");
     await supabase.from("project_tasks").update({
-      actual_finish_date: format(new Date(), "yyyy-MM-dd"),
+      actual_finish_date: finishDate,
       status: "Completed",
       completion_percentage: 100,
       remarks: remarks || null,
       delay_cause: delayCause || null,
       delay_resolution: delayResolution || null,
     } as any).eq("id", task.id);
+    // Record benchmark data point
+    recordTaskBenchmark({
+      ...task,
+      actual_finish_date: finishDate,
+      delay_cause: delayCause || null,
+    }).catch(() => {});
     toast.success("Task completed");
     setSaving(false);
     onUpdated();
@@ -191,6 +199,15 @@ export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks 
       updates.status = "Completed";
     }
     await supabase.from("project_tasks").update(updates).eq("id", task.id);
+    // Record benchmark if completed
+    if (percentage === 100) {
+      recordTaskBenchmark({
+        ...task,
+        actual_start_date: updates.actual_start_date || task.actual_start_date,
+        actual_finish_date: updates.actual_finish_date,
+        delay_cause: delayCause || null,
+      }).catch(() => {});
+    }
     toast.success("Progress saved");
     setSaving(false);
     onUpdated();
