@@ -4,11 +4,11 @@ import * as XLSX from "xlsx";
 export function downloadXlsxTemplate(
   filename: string,
   sheetName: string,
-  headers: string[],
-  sampleRows: (string | number | null)[][] = []
+  headers: readonly string[],
+  sampleRows: readonly (readonly (string | number | null)[])[] = []
 ) {
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...sampleRows]);
+  const ws = XLSX.utils.aoa_to_sheet([[...headers], ...sampleRows.map(r => [...r])]);
 
   // Auto-width columns
   ws["!cols"] = headers.map((h) => ({ wch: Math.max(h.length + 4, 14) }));
