@@ -190,6 +190,10 @@ export default function ProjectDetail() {
           />
         </TabsContent>
 
+        <TabsContent value="schedule" className="space-y-4">
+          <MicroScheduleTab projectId={id!} userRole={userRole} />
+        </TabsContent>
+
         <TabsContent value="site-diary" className="space-y-4">
           <SiteDiary projectId={id!} userRole={userRole} />
         </TabsContent>
