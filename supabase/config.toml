@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.qc-analysis]
 verify_jwt = false
+
+[functions.ai-agents]
+verify_jwt = false
