@@ -59,28 +59,23 @@ export function ProjectPLTab() {
 
   async function loadData() {
     setLoading(true);
-    const { data: projects } = await supabase
-      .from("projects")
-      .select("id, name, status, contract_value, gfc_budget, planned_labour_cost")
-      .in("status", ["active", "completed", "in_progress"]);
+    const [projRes, budgetRes, mrsRes, actualsRes, milestonesRes] = await Promise.all([
+      supabase.from("projects").select("id, name, status, contract_value, gfc_budget, planned_labour_cost")
+        .in("status", ["active", "completed", "in_progress"]),
+      supabase.from("finance_project_budgets").select("project_id, sanctioned_budget, labour_budget"),
+      supabase.from("material_requests").select("project_id, quantity, unit_cost"),
+      supabase.from("daily_actuals").select("project_id, hours_worked"),
+      supabase.from("project_billing_milestones").select("project_id, status, amount_excl_gst"),
+    ]);
 
-    // Get budget data
-    const { data: budgets } = await supabase
-      .from("finance_project_budgets")
-      .select("project_id, sanctioned_budget, labour_budget");
-
-    // Get material request totals per project as proxy for purchases
-    const { data: mrs } = await supabase
-      .from("material_requests")
-      .select("project_id, quantity, unit_cost");
-
-    // Get daily actuals for labour costs
-    const { data: actuals } = await supabase
-      .from("daily_actuals")
-      .select("project_id, hours_worked");
+    const projects = projRes.data || [];
+    const budgets = budgetRes.data || [];
+    const mrs = mrsRes.data || [];
+    const actuals = actualsRes.data || [];
+    const milestones = milestonesRes.data || [];
 
     const budgetMap: Record<string, { budget: number; labour: number }> = {};
-    (budgets || []).forEach((b: any) => {
+    budgets.forEach((b: any) => {
       if (b.project_id) budgetMap[b.project_id] = {
         budget: b.sanctioned_budget || 0,
         labour: b.labour_budget || 0,
@@ -88,25 +83,39 @@ export function ProjectPLTab() {
     });
 
     const matMap: Record<string, number> = {};
-    (mrs || []).forEach((r: any) => {
+    mrs.forEach((r: any) => {
       if (r.project_id) {
         matMap[r.project_id] = (matMap[r.project_id] || 0) + ((r.quantity || 0) * (r.unit_cost || 0));
       }
     });
 
     const labourMap: Record<string, number> = {};
-    (actuals || []).forEach((a: any) => {
+    actuals.forEach((a: any) => {
       if (a.project_id) {
-        // Approximate: hours × ₹250/hr average rate
         labourMap[a.project_id] = (labourMap[a.project_id] || 0) + ((a.hours_worked || 0) * 250);
       }
     });
 
-    const built: ProjectRow[] = (projects || []).map((p: any) => {
-      const contractValue = p.contract_value || 0;
+    // Milestone-based billing aggregation
+    const billedMap: Record<string, number> = {};
+    const receivedMap: Record<string, number> = {};
+    const contractFromMilestones: Record<string, number> = {};
+    (milestones as any[]).forEach((m: any) => {
+      if (!m.project_id) return;
+      contractFromMilestones[m.project_id] = (contractFromMilestones[m.project_id] || 0) + Number(m.amount_excl_gst || 0);
+      if (m.status === "billed" || m.status === "received") {
+        billedMap[m.project_id] = (billedMap[m.project_id] || 0) + Number(m.amount_excl_gst || 0);
+      }
+      if (m.status === "received") {
+        receivedMap[m.project_id] = (receivedMap[m.project_id] || 0) + Number(m.amount_excl_gst || 0);
+      }
+    });
+
+    const built: ProjectRow[] = projects.map((p: any) => {
+      const contractValue = contractFromMilestones[p.id] || p.contract_value || 0;
       const gfcBudget = p.gfc_budget || budgetMap[p.id]?.budget || 0;
       const materialsPurchased = matMap[p.id] || 0;
-      const actualConsumption = materialsPurchased * 0.85; // ~85% consumed
+      const actualConsumption = materialsPurchased * 0.85;
       const labourCost = labourMap[p.id] || 0;
       const plannedLabour = p.planned_labour_cost || budgetMap[p.id]?.labour || 0;
       const overhead = (materialsPurchased + labourCost) * 0.1;

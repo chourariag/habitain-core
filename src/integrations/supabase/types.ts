@@ -3709,6 +3709,71 @@ export type Database = {
           },
         ]
       }
+      project_billing_milestones: {
+        Row: {
+          amount_excl_gst: number
+          amount_incl_gst: number
+          billed_date: string | null
+          created_at: string
+          description: string
+          gst_amount: number
+          gst_applicable: boolean
+          id: string
+          invoice_id: string | null
+          milestone_number: number
+          percentage: number
+          project_id: string
+          received_date: string | null
+          status: string
+          trigger_event: string
+          updated_at: string
+        }
+        Insert: {
+          amount_excl_gst?: number
+          amount_incl_gst?: number
+          billed_date?: string | null
+          created_at?: string
+          description: string
+          gst_amount?: number
+          gst_applicable?: boolean
+          id?: string
+          invoice_id?: string | null
+          milestone_number: number
+          percentage?: number
+          project_id: string
+          received_date?: string | null
+          status?: string
+          trigger_event?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_excl_gst?: number
+          amount_incl_gst?: number
+          billed_date?: string | null
+          created_at?: string
+          description?: string
+          gst_amount?: number
+          gst_applicable?: boolean
+          id?: string
+          invoice_id?: string | null
+          milestone_number?: number
+          percentage?: number
+          project_id?: string
+          received_date?: string | null
+          status?: string
+          trigger_event?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_billing_milestones_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_design_files: {
         Row: {
           budget_discussed: boolean
@@ -3918,6 +3983,7 @@ export type Database = {
           is_archived: boolean | null
           is_design_only: boolean
           location: string | null
+          milestones_locked: boolean
           name: string
           planned_labour_cost: number | null
           site_lat: number | null
@@ -3951,6 +4017,7 @@ export type Database = {
           is_archived?: boolean | null
           is_design_only?: boolean
           location?: string | null
+          milestones_locked?: boolean
           name: string
           planned_labour_cost?: number | null
           site_lat?: number | null
@@ -3984,6 +4051,7 @@ export type Database = {
           is_archived?: boolean | null
           is_design_only?: boolean
           location?: string | null
+          milestones_locked?: boolean
           name?: string
           planned_labour_cost?: number | null
           site_lat?: number | null
