@@ -49,9 +49,9 @@ export function PLTab() {
   };
 
   const downloadTemplate = () => {
-    const csv = "Month,Year,Revenue,Materials,Labour,Logistics,Other_COGS,Office_Admin,Marketing,RM_Costs,Depreciation,Other_Opex\n1,2026,0,0,0,0,0,0,0,0,0,0";
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "PL_Template.csv"; a.click();
+    const { downloadXlsxTemplate, TEMPLATES } = require("@/lib/xlsx-templates");
+    const t = TEMPLATES.plUpload;
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
 
   const last6 = data.slice(0, 6).reverse();

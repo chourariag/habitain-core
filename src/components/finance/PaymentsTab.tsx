@@ -175,9 +175,9 @@ export function PaymentsTab() {
   };
 
   const downloadTemplate = () => {
-    const csv = "Project_Name,Client_Name,Milestone_Description,Due_Date,Amount\nProject Alpha,Client A,Foundation Complete,2026-04-15,500000";
-    const blob = new Blob([csv], { type: "text/csv" });
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Payments_Template.csv"; a.click();
+    const { downloadXlsxTemplate, TEMPLATES } = require("@/lib/xlsx-templates");
+    const t = TEMPLATES.payments;
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
 
   const exportCSV = () => {

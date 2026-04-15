@@ -339,11 +339,9 @@ export function MISTab() {
   };
 
   const downloadTemplate = () => {
-    const csv = "Particulars,Opening Balance,Debit,Credit,Closing Balance\nSales - Domestic,0,0,500000,500000\nRaw Material Purchased,0,300000,0,300000\nFactory Rent,0,50000,0,50000\nSalaries & Wages,0,100000,0,100000\nHDFC Bank,250000,100000,80000,270000\nSundry Debtors,150000,50000,30000,170000\nSundry Creditors,0,20000,90000,70000\nOpening Stock,75000,0,0,75000";
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = "TB_Template.csv"; a.click();
-    URL.revokeObjectURL(url);
+    const { downloadXlsxTemplate, TEMPLATES } = require("@/lib/xlsx-templates");
+    const t = TEMPLATES.trialBalance;
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
 
   const entries = currentUpload?.raw_data || [];
