@@ -145,9 +145,38 @@ export function SiteDiary({ projectId, userRole }: Props) {
         material_delivery_items: deliveryItems.filter((d) => d.material.trim()),
         planned_activities: plannedActivities.length > 0 ? plannedActivities : null,
         daily_summary: dailySummary,
+        share_with_client: shareWithClient,
+        milestone_tag: milestoneTag || null,
         ...qualityMeta,
       });
       if (error) throw error;
+
+      // If shared with client, create construction journal entry
+      if (shareWithClient && clientNote.trim()) {
+        const { data: latestEntry } = await client.from("site_diary").select("id")
+          .eq("project_id", projectId).order("created_at", { ascending: false }).limit(1).single();
+        await (client.from("construction_journal") as any).insert({
+          project_id: projectId,
+          diary_entry_id: latestEntry?.id || null,
+          note: clientNote.trim(),
+          photo_url: urls[0] || null,
+          entry_date: new Date().toISOString().slice(0, 10),
+          shared_by: user.id,
+          shared_by_id: user.id,
+          is_approved: false,
+        });
+      }
+
+      // If milestone photo shared, create milestone photo record
+      if (shareWithClient && milestoneTag && urls.length > 0) {
+        await (client.from("client_milestone_photos") as any).insert({
+          project_id: projectId,
+          milestone_name: milestoneTag,
+          photo_url: urls[0],
+          completed_at: new Date().toISOString(),
+          shared_by: user.id,
+        });
+      }
 
       // Trigger Agent 8: Site Diary Location Photo Verify
       const { data: latestDiary } = await client.from("site_diary").select("id").eq("project_id", projectId).order("created_at", { ascending: false }).limit(1).single();
