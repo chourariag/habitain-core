@@ -61,6 +61,9 @@ export function SiteDiary({ projectId, userRole }: Props) {
   const [clientVisitNotes, setClientVisitNotes] = useState("");
   const [materialDeliveries, setMaterialDeliveries] = useState(false);
   const [deliveryItems, setDeliveryItems] = useState<MaterialDeliveryRow[]>([]);
+  const [shareWithClient, setShareWithClient] = useState(false);
+  const [milestoneTag, setMilestoneTag] = useState("");
+  const [clientNote, setClientNote] = useState("");
 
   // Planned activities state
   const [plannedActivities, setPlannedActivities] = useState<PlannedActivity[]>([]);
