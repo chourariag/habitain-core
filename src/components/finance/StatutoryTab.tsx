@@ -201,7 +201,7 @@ export function StatutoryTab() {
     fetchData();
   };
 
-  const isCritical = (type: string) => ["Factory Act Compliance", "Shops & Establishment Act"].includes(type);
+  const isCritical = (type: string) => ["Factory Act Renewal", "Shops & Establishment Renewal", "Annual Income Tax Filing"].includes(type);
 
   return (
     <div className="space-y-4 mt-2">
