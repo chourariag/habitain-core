@@ -670,6 +670,50 @@ export type Database = {
           },
         ]
       }
+      client_portal_documents: {
+        Row: {
+          category: string
+          created_at: string
+          document_name: string
+          file_url: string
+          id: string
+          project_id: string
+          updated_at: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          document_name: string
+          file_url: string
+          id?: string
+          project_id: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          document_name?: string
+          file_url?: string
+          id?: string
+          project_id?: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_portal_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       construction_journal: {
         Row: {
           approved_at: string | null
@@ -3902,6 +3946,8 @@ export type Database = {
           gst_applicable: boolean
           id: string
           invoice_id: string | null
+          invoice_number: string | null
+          invoice_url: string | null
           milestone_number: number
           percentage: number
           project_id: string
@@ -3920,6 +3966,8 @@ export type Database = {
           gst_applicable?: boolean
           id?: string
           invoice_id?: string | null
+          invoice_number?: string | null
+          invoice_url?: string | null
           milestone_number: number
           percentage?: number
           project_id: string
@@ -3938,6 +3986,8 @@ export type Database = {
           gst_applicable?: boolean
           id?: string
           invoice_id?: string | null
+          invoice_number?: string | null
+          invoice_url?: string | null
           milestone_number?: number
           percentage?: number
           project_id?: string
