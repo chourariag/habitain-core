@@ -119,6 +119,110 @@ async function buildProcurementBrief(): Promise<BriefLine[]> {
   ];
 }
 
+async function buildFinanceBrief(): Promise<BriefLine[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const in7 = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+  const [statRes, invRaiseRes, overdueInvRes, bankRes, expRes, poRes] = await Promise.all([
+    supabase.from("finance_statutory").select("filing_type, due_date").gte("due_date", today).lte("due_date", in7).neq("status", "Filed").order("due_date").limit(1),
+    supabase.from("project_invoices").select("id").eq("status", "Pending").eq("raised_date", today),
+    supabase.from("project_invoices").select("amount_outstanding, due_date").lt("due_date", today).gt("amount_outstanding", 0),
+    supabase.from("bank_ledger_entries").select("balance, entry_date").order("entry_date", { ascending: false }).limit(1),
+    supabase.from("expense_reports").select("id").eq("status", "Pending"),
+    supabase.from("purchase_orders" as any).select("id").eq("status", "Pending Approval"),
+  ]);
+  const stat = statRes.data?.[0] as any;
+  const overdueCount = (overdueInvRes.data || []).length;
+  const overdueTotal = (overdueInvRes.data || []).reduce((s: number, r: any) => s + Number(r.amount_outstanding || 0), 0);
+  const bal = (bankRes.data?.[0] as any)?.balance ?? 0;
+  const inr = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
+  return [
+    { kind: stat ? "action" : "done", text: stat ? `Statutory due this week: ${stat.filing_type} on ${stat.due_date}` : "No statutory filings due this week", to: "/finance" },
+    { kind: (invRaiseRes.data?.length || 0) > 0 ? "action" : "info", text: `Invoices to raise today: ${invRaiseRes.data?.length || 0} milestones triggered`, to: "/finance" },
+    { kind: overdueCount > 0 ? "action" : "done", text: `Overdue collections: ${overdueCount} invoices, ${inr(overdueTotal)}`, to: "/finance" },
+    { kind: "info", text: `Bank balance (last uploaded): ${inr(Number(bal))}`, to: "/finance" },
+    { kind: ((expRes.data?.length || 0) + (poRes.data?.length || 0)) > 0 ? "action" : "done", text: `Pending approvals: ${expRes.data?.length || 0} expense reports, ${poRes.data?.length || 0} POs`, to: "/finance" },
+  ];
+}
+
+async function buildSalesBrief(_uid: string): Promise<BriefLine[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const monthStart = new Date(); monthStart.setDate(1);
+  const weekStart = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const stagnantCutoff = new Date(Date.now() - 14 * 86400000).toISOString();
+  const [activeRes, stagnantRes, followupRes, wonRes, leadsRes] = await Promise.all([
+    supabase.from("sales_deals").select("id").not("stage", "in", "(Won,Lost)").eq("is_archived", false),
+    supabase.from("sales_deals").select("id").not("stage", "in", "(Won,Lost)").lt("updated_at", stagnantCutoff).eq("is_archived", false),
+    supabase.from("sales_deals").select("client_name").eq("next_followup_date", today).eq("is_archived", false),
+    supabase.from("sales_deals").select("id").eq("stage", "Won").gte("updated_at", monthStart.toISOString()),
+    supabase.from("sales_deals").select("id").gte("created_at", weekStart),
+  ]);
+  const followupNames = (followupRes.data || []).slice(0, 3).map((d: any) => d.client_name).join(", ") || "none";
+  return [
+    { kind: "info", text: `Pipeline today: ${activeRes.data?.length || 0} deals active`, to: "/sales" },
+    { kind: (stagnantRes.data?.length || 0) > 0 ? "action" : "done", text: `Stagnant deals needing action: ${stagnantRes.data?.length || 0}`, to: "/sales" },
+    { kind: (followupRes.data?.length || 0) > 0 ? "action" : "info", text: `Follow-ups due today: ${followupNames}`, to: "/sales" },
+    { kind: "info", text: `Deals won this month: ${wonRes.data?.length || 0}`, to: "/sales" },
+    { kind: "info", text: `New leads this week: ${leadsRes.data?.length || 0}`, to: "/sales" },
+  ];
+}
+
+async function buildQCBrief(): Promise<BriefLine[]> {
+  const weekStart = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const [pendingRes, reinspectRes, weekDoneRes, openRes] = await Promise.all([
+    supabase.from("qc_inspections").select("id, module_id, modules(module_id)").eq("status", "Pending"),
+    supabase.from("ncr_register").select("id").eq("status", "Open").not("fix_timeline_due_date", "is", null),
+    supabase.from("qc_inspections").select("id").eq("status", "Passed").gte("submitted_at", weekStart),
+    supabase.from("ncr_register").select("id, regression_to_stage").eq("status", "Open"),
+  ]);
+  const moduleIds = (pendingRes.data || []).slice(0, 3).map((q: any) => q.modules?.module_id || (q.module_id || "").slice(0, 6)).filter(Boolean).join(", ") || "none";
+  const stageBreakdown: Record<string, number> = {};
+  (openRes.data || []).forEach((n: any) => {
+    const k = `Stage ${n.regression_to_stage ?? "?"}`;
+    stageBreakdown[k] = (stageBreakdown[k] || 0) + 1;
+  });
+  const stageList = Object.entries(stageBreakdown).slice(0, 3).map(([k, v]) => `${k}:${v}`).join(", ") || "none";
+  return [
+    { kind: (pendingRes.data?.length || 0) > 0 ? "action" : "done", text: `Inspections due today: ${pendingRes.data?.length || 0} (${moduleIds})`, to: "/qc" },
+    { kind: (reinspectRes.data?.length || 0) > 0 ? "action" : "done", text: `NCRs awaiting re-inspection: ${reinspectRes.data?.length || 0}`, to: "/qc" },
+    { kind: "info", text: `Completed inspections this week: ${weekDoneRes.data?.length || 0}`, to: "/qc" },
+    { kind: (openRes.data?.length || 0) > 0 ? "action" : "done", text: `Outstanding NCRs by stage: ${stageList}`, to: "/qc" },
+  ];
+}
+
+async function buildDesignBrief(uid: string): Promise<BriefLine[]> {
+  const [dqRes, drawRes, gfcRes] = await Promise.all([
+    supabase.from("design_queries").select("id").eq("status", "Open").or(`assigned_architect_id.eq.${uid},assigned_architect_id.is.null`),
+    supabase.from("drawings").select("id").eq("status", "Pending Review").eq("is_archived", false),
+    supabase.from("gfc_records").select("project_id, projects(name)").is("issued_at", null),
+  ]);
+  const gfcProjects = Array.from(new Set((gfcRes.data || []).map((g: any) => g.projects?.name).filter(Boolean))).slice(0, 3).join(", ") || "none";
+  return [
+    { kind: (dqRes.data?.length || 0) > 0 ? "action" : "done", text: `Open DQs requiring your input: ${dqRes.data?.length || 0}`, to: "/design" },
+    { kind: (drawRes.data?.length || 0) > 0 ? "action" : "done", text: `Drawings due for review: ${drawRes.data?.length || 0}`, to: "/drawings" },
+    { kind: (gfcRes.data?.length || 0) > 0 ? "action" : "done", text: `GFC sign-off pending: ${gfcProjects}`, to: "/design" },
+  ];
+}
+
+async function buildDirectorBrief(): Promise<BriefLine[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const [projectsRes, ncrsRes, overdueInvRes, escalatedRes, dispatchRes] = await Promise.all([
+    supabase.from("projects").select("id").neq("status", "Completed"),
+    supabase.from("ncr_register").select("id").eq("status", "Open"),
+    supabase.from("project_invoices").select("amount_outstanding").lt("due_date", today).gt("amount_outstanding", 0),
+    supabase.from("project_tasks").select("id, delay_days").gt("delay_days", 5).neq("status", "Completed"),
+    supabase.from("dispatch_packs").select("id").eq("dispatch_date", today),
+  ]);
+  const overdueTotal = (overdueInvRes.data || []).reduce((s: number, r: any) => s + Number(r.amount_outstanding || 0), 0);
+  const inr = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
+  return [
+    { kind: "info", text: `Active projects: ${projectsRes.data?.length || 0}`, to: "/projects" },
+    { kind: (dispatchRes.data?.length || 0) > 0 ? "info" : "done", text: `Dispatches today: ${dispatchRes.data?.length || 0}`, to: "/site-hub" },
+    { kind: (ncrsRes.data?.length || 0) > 0 ? "action" : "done", text: `Open NCRs across factory: ${ncrsRes.data?.length || 0}`, to: "/qc" },
+    { kind: overdueTotal > 0 ? "action" : "done", text: `Overdue receivables: ${inr(overdueTotal)}`, to: "/finance" },
+    { kind: (escalatedRes.data?.length || 0) > 0 ? "action" : "done", text: `Level 3 escalations: ${escalatedRes.data?.length || 0} — review needed`, to: "/alerts" },
+  ];
+}
+
 async function buildBriefForRole(role: AppRole, uid: string): Promise<BriefLine[]> {
   try {
     if (["production_head", "factory_floor_supervisor", "fabrication_foreman", "electrical_installer", "elec_plumbing_installer"].includes(role)) {
@@ -129,6 +233,11 @@ async function buildBriefForRole(role: AppRole, uid: string): Promise<BriefLine[
     }
     if (role === "planning_engineer") return await buildPlanningBrief();
     if (["procurement", "stores_executive"].includes(role)) return await buildProcurementBrief();
+    if (["finance_director", "finance_manager", "accounts_executive"].includes(role)) return await buildFinanceBrief();
+    if (role === "sales_director") return await buildSalesBrief(uid);
+    if (role === "qc_inspector") return await buildQCBrief();
+    if (["principal_architect", "project_architect", "structural_architect", "architecture_director"].includes(role)) return await buildDesignBrief(uid);
+    if (["super_admin", "managing_director"].includes(role)) return await buildDirectorBrief();
   } catch (e) {
     console.warn("Daily brief fetch error", e);
   }
