@@ -932,11 +932,13 @@ function BayCard({
 
 /* ──────── PANEL BAY CARD ──────── */
 function PanelBayCard({
-  bayNumber, bayLabel, batch,
+  bayNumber, bayLabel, batch, canManage, onMarkReady,
 }: {
   bayNumber: number;
   bayLabel: string;
   batch?: PanelBatch;
+  canManage?: boolean;
+  onMarkReady?: (b: PanelBatch) => void;
 }) {
   const occupied = !!batch;
   const stage = batch?.current_stage ?? "";
