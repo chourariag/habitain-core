@@ -143,7 +143,7 @@ export default function FactoryFloorMap() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [bayRes, modRes, workerRes, mpRes, panelRes] = await Promise.all([
+    const [bayRes, modRes, workerRes, mpRes, panelRes, handoverRes] = await Promise.all([
       supabase.from("bay_assignments").select("*").is("moved_from", null),
       supabase.from("modules").select("id, name, module_code, current_stage, production_status, project_id, projects(name)").eq("is_archived", false),
       supabase.from("profiles").select("id, display_name, role").in("role", [
@@ -167,6 +167,7 @@ export default function FactoryFloorMap() {
     setWorkers((workerRes.data as WorkerRow[] | null) ?? []);
     setManpower((mpRes.data as ManpowerPlan[] | null) ?? []);
     setPanelBatches((panelRes.data as PanelBatch[] | null) ?? []);
+    setHandovers((handoverRes.data as PanelHandover[] | null) ?? []);
     setLoading(false);
   }, [weekStart]);
 
