@@ -137,10 +137,54 @@ export default function CapacityPlanning() {
         .gte("target_end", today).lte("target_end", next30),
       supabase.from("projects").select("id, name, client_name, est_completion, status")
         .eq("is_archived", false).neq("status", "completed"),
-      supabase.from("project_tasks").select("project_id, planned_finish_date, actual_finish_date, completion_percentage, status"),
-      supabase.from("design_queries").select("project_id, status").eq("is_archived", false),
+      supabase.from("project_tasks").select("project_id, planned_finish_date, actual_finish_date, completion_percentage, status, delay_cause, delay_days"),
+      supabase.from("design_queries").select("project_id, status, created_at, resolved_at").eq("is_archived", false),
       supabase.from("material_requests").select("project_id, status, urgency, created_at, received_at").eq("is_archived", false),
     ]);
+
+    // Bay assignments — latest per bay (already ordered by assigned_at via subquery; we dedupe client-side)
+    const { data: bayRows } = await supabase
+      .from("bay_assignments")
+      .select("bay_type, bay_number, module_id, project_id, assigned_at")
+      .order("assigned_at", { ascending: false });
+
+    // Pull module stage + project name for each unique bay
+    const seen = new Set<string>();
+    const latestBays: { bay_type: string; bay_number: number; module_id: string; project_id: string | null; assigned_at: string | null }[] = [];
+    for (const b of bayRows ?? []) {
+      const key = `${b.bay_type}-${b.bay_number}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      latestBays.push(b as any);
+    }
+    const moduleIds = latestBays.map(b => b.module_id).filter(Boolean);
+    const projIds = latestBays.map(b => b.project_id).filter(Boolean) as string[];
+    const [{ data: bayMods }, { data: bayProjs }, { data: ncrTasks }] = await Promise.all([
+      moduleIds.length
+        ? supabase.from("modules").select("id, current_stage, production_status").in("id", moduleIds)
+        : Promise.resolve({ data: [] as any[] }),
+      projIds.length
+        ? supabase.from("projects").select("id, name").in("id", projIds)
+        : Promise.resolve({ data: [] as any[] }),
+      supabase.from("project_tasks").select("delay_days, delay_cause")
+        .or("task_name.ilike.%rework%,task_name.ilike.%ncr%,delay_cause.ilike.%rework%"),
+    ]);
+    const modMap = new Map((bayMods ?? []).map((m: any) => [m.id, m]));
+    const projMap = new Map((bayProjs ?? []).map((p: any) => [p.id, p.name]));
+    const enrichedBays: BayRow[] = latestBays.map(b => {
+      const mod: any = modMap.get(b.module_id);
+      const isOccupied = mod && mod.production_status !== "completed" && mod.production_status !== "dispatched";
+      return {
+        bay_type: b.bay_type,
+        bay_number: b.bay_number,
+        module_id: isOccupied ? b.module_id : null,
+        project_id: isOccupied ? b.project_id : null,
+        current_stage: isOccupied ? mod?.current_stage ?? null : null,
+        project_name: isOccupied ? (projMap.get(b.project_id ?? "") ?? null) : null,
+        assigned_at: isOccupied ? b.assigned_at : null,
+      };
+    });
+    setBays(enrichedBays);
 
     if (settingsRow) {
       setSettings({
