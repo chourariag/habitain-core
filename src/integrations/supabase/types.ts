@@ -636,6 +636,39 @@ export type Database = {
         }
         Relationships: []
       }
+      capacity_forecast_settings: {
+        Row: {
+          active_days_per_week: number
+          id: string
+          module_bay_stage_days: number
+          panel_bay_cycle_days: number
+          singleton: boolean
+          target_modules_per_month: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active_days_per_week?: number
+          id?: string
+          module_bay_stage_days?: number
+          panel_bay_cycle_days?: number
+          singleton?: boolean
+          target_modules_per_month?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active_days_per_week?: number
+          id?: string
+          module_bay_stage_days?: number
+          panel_bay_cycle_days?: number
+          singleton?: boolean
+          target_modules_per_month?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       client_milestone_photos: {
         Row: {
           completed_at: string | null
