@@ -89,6 +89,9 @@ export default function CapacityPlanning() {
     estCapacityPerMonth: 0,
   });
   const [risks, setRisks] = useState<ProjectRisk[]>([]);
+  const [bottlenecks, setBottlenecks] = useState<BottleneckRow[]>([]);
+  const [overdueMaterialCount, setOverdueMaterialCount] = useState(0);
+  const [bays, setBays] = useState<BayRow[]>([]);
   const [settings, setSettings] = useState({
     panel_bay_cycle_days: 14,
     module_bay_stage_days: 5,
