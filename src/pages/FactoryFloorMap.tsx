@@ -85,6 +85,19 @@ type ManpowerPlan = {
   stage_task: string | null;
 };
 
+type PanelBatch = {
+  id: string;
+  bay_number: number;
+  project_id: string | null;
+  panel_type: string;
+  total_panels: number;
+  completed_panels: number;
+  current_stage: string;
+  status: string;
+  expected_completion: string | null;
+  projects?: { name: string } | null;
+};
+
 /* ──────────────── COMPONENT ──────────────── */
 export default function FactoryFloorMap() {
   const { role, userId, loading: roleLoading } = useUserRole();
@@ -104,6 +117,7 @@ export default function FactoryFloorMap() {
   const [modules, setModules] = useState<ModuleRow[]>([]);
   const [workers, setWorkers] = useState<WorkerRow[]>([]);
   const [manpower, setManpower] = useState<ManpowerPlan[]>([]);
+  const [panelBatches, setPanelBatches] = useState<PanelBatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBay, setSelectedBay] = useState<number | null>(null);
 
@@ -129,7 +143,7 @@ export default function FactoryFloorMap() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [bayRes, modRes, workerRes, mpRes] = await Promise.all([
+    const [bayRes, modRes, workerRes, mpRes, panelRes] = await Promise.all([
       supabase.from("bay_assignments").select("*").is("moved_from", null),
       supabase.from("modules").select("id, name, module_code, current_stage, production_status, project_id, projects(name)").eq("is_archived", false),
       supabase.from("profiles").select("id, display_name, role").in("role", [
@@ -140,11 +154,15 @@ export default function FactoryFloorMap() {
         .eq("plan_type", "factory")
         .gte("week_start_date", format(weekStart, "yyyy-MM-dd"))
         .lte("week_start_date", format(addDays(weekStart, 6), "yyyy-MM-dd")),
+      supabase.from("panel_batches")
+        .select("id, bay_number, project_id, panel_type, total_panels, completed_panels, current_stage, status, expected_completion, projects(name)")
+        .neq("status", "dispatched"),
     ]);
     setBays((bayRes.data as BayAssignment[] | null) ?? []);
     setModules((modRes.data as ModuleRow[] | null) ?? []);
     setWorkers((workerRes.data as WorkerRow[] | null) ?? []);
     setManpower((mpRes.data as ManpowerPlan[] | null) ?? []);
+    setPanelBatches((panelRes.data as PanelBatch[] | null) ?? []);
     setLoading(false);
   }, [weekStart]);
 
