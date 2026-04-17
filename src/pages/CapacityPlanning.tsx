@@ -447,6 +447,37 @@ export default function CapacityPlanning() {
         </CardContent>
       </Card>
 
+      {/* Panel Production Throughput */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Layers className="h-4 w-4" style={{ color: "#D4860A" }} />
+            Panel Production Throughput
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: "Active Panel Batches", value: panelThroughput.activeBatches, sub: `of ${PANEL_BAYS} bays` },
+              { label: "Ready for Handover", value: panelThroughput.readyForHandover, highlight: panelThroughput.readyForHandover > 0 },
+              { label: "Panels Completed", value: panelThroughput.panelsCompleted },
+              { label: "Panels in Progress", value: Math.max(0, panelThroughput.panelsTotal - panelThroughput.panelsCompleted) },
+            ].map((s, i) => (
+              <div key={i} className="rounded-md p-3 text-center" style={{
+                backgroundColor: s.highlight ? "#FFF8E8" : "#F7F7F7",
+                border: s.highlight ? "1px solid #D4860A" : "1px solid #E0E0E0",
+              }}>
+                <p className="text-2xl font-bold font-display" style={{ color: s.highlight ? "#D4860A" : "#1A1A1A" }}>
+                  {s.value}
+                </p>
+                <p className="text-[10px] mt-1" style={{ color: "#666" }}>{s.label}</p>
+                {s.sub && <p className="text-[10px]" style={{ color: "#999" }}>{s.sub}</p>}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Bottleneck Analysis */}
       <Card>
         <CardHeader className="pb-2">
