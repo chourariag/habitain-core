@@ -98,6 +98,18 @@ type PanelBatch = {
   projects?: { name: string } | null;
 };
 
+type PanelHandover = {
+  id: string;
+  panel_batch_id: string;
+  source_panel_bay: number;
+  target_module_bay: number;
+  project_id: string | null;
+  status: string;
+  ready_at: string;
+  projects?: { name: string } | null;
+  panel_batches?: { panel_type: string; total_panels: number } | null;
+};
+
 /* ──────────────── COMPONENT ──────────────── */
 export default function FactoryFloorMap() {
   const { role, userId, loading: roleLoading } = useUserRole();
@@ -118,6 +130,7 @@ export default function FactoryFloorMap() {
   const [workers, setWorkers] = useState<WorkerRow[]>([]);
   const [manpower, setManpower] = useState<ManpowerPlan[]>([]);
   const [panelBatches, setPanelBatches] = useState<PanelBatch[]>([]);
+  const [handovers, setHandovers] = useState<PanelHandover[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBay, setSelectedBay] = useState<number | null>(null);
 
