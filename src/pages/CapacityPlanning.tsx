@@ -275,6 +275,40 @@ export default function CapacityPlanning() {
     });
 
     setRisks(projectRisks);
+
+    // Bottleneck analysis — aggregate delay_cause from project_tasks (last 90 days of finished tasks)
+    const cutoff = subDays(new Date(), 90);
+    const buckets: Record<string, { count: number; days: number }> = {};
+    ALL_CATEGORIES.forEach(c => { buckets[c] = { count: 0, days: 0 }; });
+
+    (tasks ?? []).forEach((t: any) => {
+      if (!t.delay_cause || !t.delay_days || t.delay_days <= 0) return;
+      if (t.actual_finish_date && new Date(t.actual_finish_date) < cutoff) return;
+      const cat = CAUSE_TO_CATEGORY[t.delay_cause];
+      if (!cat) return;
+      buckets[cat].count += 1;
+      buckets[cat].days += Number(t.delay_days);
+    });
+    // Rework / NCR bucket from rework-keyword tasks
+    (ncrTasks ?? []).forEach((t: any) => {
+      if (!t.delay_days || t.delay_days <= 0) return;
+      buckets["Rework / NCR"].count += 1;
+      buckets["Rework / NCR"].days += Number(t.delay_days);
+    });
+
+    const bnRows: BottleneckRow[] = ALL_CATEGORIES.map(cat => ({
+      category: cat,
+      count: buckets[cat].count,
+      totalDays: buckets[cat].days,
+      avgDays: buckets[cat].count > 0 ? Math.round((buckets[cat].days / buckets[cat].count) * 10) / 10 : 0,
+    })).sort((a, b) => b.totalDays - a.totalDays);
+    setBottlenecks(bnRows);
+
+    // Total overdue materials count for action insight
+    let totalOverdue = 0;
+    matOverdueByProj.forEach(v => { totalOverdue += v; });
+    setOverdueMaterialCount(totalOverdue);
+
     setLoading(false);
   }
 
