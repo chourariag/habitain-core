@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, FolderKanban, Factory, Truck,
   BarChart3, DollarSign, ClipboardCheck, ShoppingCart, Compass,
-  Wrench, Users, Settings, Clock,
+  Wrench, Users, Settings, Clock, BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -20,6 +20,7 @@ const allTabs = [
   { to: "/finance", label: "Finance", icon: DollarSign, section: "business" },
   { to: "/procurement", label: "Procurement", icon: ShoppingCart, section: "procurement" },
   { to: "/design", label: "Design", icon: Compass, section: "design" },
+  { to: "/sops", label: "SOPs", icon: BookOpen, section: "dashboard" },
   { to: "/rm", label: "R&M", icon: Wrench, section: "business" },
   { to: "/attendance", label: "HR", icon: Clock, section: "admin" },
   { to: "/admin", label: "Admin", icon: Users, section: "admin" },
