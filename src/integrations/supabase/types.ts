@@ -7022,6 +7022,71 @@ export type Database = {
         }
         Relationships: []
       }
+      sop_versions: {
+        Row: {
+          common_mistakes: string | null
+          created_at: string
+          edited_by: string | null
+          edited_by_name: string | null
+          escalation: string | null
+          id: string
+          materials_tools: string | null
+          purpose: string | null
+          quality_criteria: string | null
+          role_performs: string | null
+          safety: string | null
+          scope: string | null
+          sop_id: string
+          steps: string | null
+          title: string
+          version_number: number
+        }
+        Insert: {
+          common_mistakes?: string | null
+          created_at?: string
+          edited_by?: string | null
+          edited_by_name?: string | null
+          escalation?: string | null
+          id?: string
+          materials_tools?: string | null
+          purpose?: string | null
+          quality_criteria?: string | null
+          role_performs?: string | null
+          safety?: string | null
+          scope?: string | null
+          sop_id: string
+          steps?: string | null
+          title: string
+          version_number: number
+        }
+        Update: {
+          common_mistakes?: string | null
+          created_at?: string
+          edited_by?: string | null
+          edited_by_name?: string | null
+          escalation?: string | null
+          id?: string
+          materials_tools?: string | null
+          purpose?: string | null
+          quality_criteria?: string | null
+          role_performs?: string | null
+          safety?: string | null
+          scope?: string | null
+          sop_id?: string
+          steps?: string | null
+          title?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sop_versions_sop_id_fkey"
+            columns: ["sop_id"]
+            isOneToOne: false
+            referencedRelation: "sop_procedures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sop_view_log: {
         Row: {
           id: string
