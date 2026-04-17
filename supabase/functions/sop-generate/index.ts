@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const { data: profile } = await admin
       .from("profiles")
-      .select("id, full_name, role")
+      .select("id, display_name, role")
       .eq("auth_user_id", user.id)
       .maybeSingle();
     if (!profile) return jsonErr(403, "No profile");

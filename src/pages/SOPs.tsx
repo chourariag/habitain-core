@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ScrollableTabs } from "@/components/ui/scrollable-tabs";
+import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Sparkles, BookOpen, ArrowLeft, Loader2, CheckCircle2, Eye, Pencil } from "lucide-react";
 
@@ -163,11 +164,23 @@ export default function SOPs() {
         </Select>
       </div>
 
-      <ScrollableTabs
-        tabs={tabs.map((t) => ({ value: t, label: t }))}
-        value={dept}
-        onValueChange={setDept}
-      />
+      <ScrollableTabsWrapper>
+        <div className="flex gap-1">
+          {tabs.map((t) => (
+            <button
+              key={t}
+              onClick={() => setDept(t)}
+              className={cn(
+                "px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
+                dept === t ? "text-white" : "text-muted-foreground hover:bg-muted"
+              )}
+              style={dept === t ? { backgroundColor: "#006039" } : undefined}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </ScrollableTabsWrapper>
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
@@ -322,13 +335,13 @@ function SOPDetail({
   const approve = async () => {
     setBusy(true);
     const { data: prof } = await supabase
-      .from("profiles").select("full_name").eq("auth_user_id", userId!).maybeSingle();
+      .from("profiles").select("id, display_name").eq("auth_user_id", userId!).maybeSingle();
     const { error } = await supabase
       .from("sop_procedures")
       .update({
         status: "approved",
-        approved_by: (await supabase.from("profiles").select("id").eq("auth_user_id", userId!).maybeSingle()).data?.id,
-        approved_by_name: prof?.full_name,
+        approved_by: prof?.id,
+        approved_by_name: prof?.display_name,
         approved_at: new Date().toISOString(),
       })
       .eq("id", sop.id);
