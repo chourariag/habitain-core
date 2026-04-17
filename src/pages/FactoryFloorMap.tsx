@@ -157,6 +157,10 @@ export default function FactoryFloorMap() {
       supabase.from("panel_batches")
         .select("id, bay_number, project_id, panel_type, total_panels, completed_panels, current_stage, status, expected_completion, projects(name)")
         .neq("status", "dispatched"),
+      supabase.from("panel_handovers")
+        .select("id, panel_batch_id, source_panel_bay, target_module_bay, project_id, status, ready_at, projects(name), panel_batches(panel_type, total_panels)")
+        .eq("status", "pending")
+        .order("ready_at", { ascending: false }),
     ]);
     setBays((bayRes.data as BayAssignment[] | null) ?? []);
     setModules((modRes.data as ModuleRow[] | null) ?? []);
