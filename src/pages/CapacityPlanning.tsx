@@ -11,10 +11,12 @@ import { Loader2, Factory, Target, AlertTriangle, TrendingUp, Save, Activity, La
 import { differenceInDays, startOfMonth, endOfMonth, addDays, subDays } from "date-fns";
 import { toast } from "sonner";
 
-const INDOOR_BAYS = 10;
-const OUTDOOR_BAYS = 7;
+// Floor map: 5 indoor module bays (1-5), 7 outdoor module bays (11-17), 3 panel bays (101-103)
+const INDOOR_MODULE_BAYS = 5;
+const OUTDOOR_MODULE_BAYS = 7;
+const TOTAL_MODULE_BAYS = INDOOR_MODULE_BAYS + OUTDOOR_MODULE_BAYS;
 const PANEL_BAYS = 3;
-const MODULE_BAYS = 6;
+const MODULE_BAYS = TOTAL_MODULE_BAYS;
 
 // Map DELAY_CAUSES → bottleneck categories
 const CAUSE_TO_CATEGORY: Record<string, string> = {
