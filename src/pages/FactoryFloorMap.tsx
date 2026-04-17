@@ -19,8 +19,19 @@ import {
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 
 /* ──── CONSTANTS ──── */
-const TOTAL_BAYS = 17;
-const INDOOR_BAYS = 10;
+// Module bay numbering: 1-5 indoor, 11-17 outdoor (legacy used 1-10 indoor; bays 6-10 still rendered as legacy if occupied).
+const INDOOR_MODULE_BAYS = 5;
+const OUTDOOR_MODULE_BAYS = 7;
+const OUTDOOR_BAY_START = 11;
+const PANEL_BAYS = 3;
+const PANEL_BAY_START = 101; // 101, 102, 103
+const PANEL_STAGES = ["Cutting", "Framing", "Insulation", "Boarding", "Finishing", "QC", "Ready"] as const;
+const PANEL_TYPE_LABELS: Record<string, string> = {
+  wall_panel: "Wall Panel",
+  floor_panel: "Floor Panel",
+  roof_panel: "Roof Panel",
+  external_cladding_panel: "External Cladding Panel",
+};
 
 const STAGE_NAMES = [
   "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
@@ -74,6 +85,19 @@ type ManpowerPlan = {
   stage_task: string | null;
 };
 
+type PanelBatch = {
+  id: string;
+  bay_number: number;
+  project_id: string | null;
+  panel_type: string;
+  total_panels: number;
+  completed_panels: number;
+  current_stage: string;
+  status: string;
+  expected_completion: string | null;
+  projects?: { name: string } | null;
+};
+
 /* ──────────────── COMPONENT ──────────────── */
 export default function FactoryFloorMap() {
   const { role, userId, loading: roleLoading } = useUserRole();
@@ -93,6 +117,7 @@ export default function FactoryFloorMap() {
   const [modules, setModules] = useState<ModuleRow[]>([]);
   const [workers, setWorkers] = useState<WorkerRow[]>([]);
   const [manpower, setManpower] = useState<ManpowerPlan[]>([]);
+  const [panelBatches, setPanelBatches] = useState<PanelBatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBay, setSelectedBay] = useState<number | null>(null);
 
@@ -118,7 +143,7 @@ export default function FactoryFloorMap() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [bayRes, modRes, workerRes, mpRes] = await Promise.all([
+    const [bayRes, modRes, workerRes, mpRes, panelRes] = await Promise.all([
       supabase.from("bay_assignments").select("*").is("moved_from", null),
       supabase.from("modules").select("id, name, module_code, current_stage, production_status, project_id, projects(name)").eq("is_archived", false),
       supabase.from("profiles").select("id, display_name, role").in("role", [
@@ -129,11 +154,15 @@ export default function FactoryFloorMap() {
         .eq("plan_type", "factory")
         .gte("week_start_date", format(weekStart, "yyyy-MM-dd"))
         .lte("week_start_date", format(addDays(weekStart, 6), "yyyy-MM-dd")),
+      supabase.from("panel_batches")
+        .select("id, bay_number, project_id, panel_type, total_panels, completed_panels, current_stage, status, expected_completion, projects(name)")
+        .neq("status", "dispatched"),
     ]);
     setBays((bayRes.data as BayAssignment[] | null) ?? []);
     setModules((modRes.data as ModuleRow[] | null) ?? []);
     setWorkers((workerRes.data as WorkerRow[] | null) ?? []);
     setManpower((mpRes.data as ManpowerPlan[] | null) ?? []);
+    setPanelBatches((panelRes.data as PanelBatch[] | null) ?? []);
     setLoading(false);
   }, [weekStart]);
 
@@ -336,8 +365,21 @@ export default function FactoryFloorMap() {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs font-semibold" style={{ color: "#999" }}>STAGES:</span>
+      <div className="flex flex-wrap gap-3 items-center">
+        <span className="text-xs font-semibold" style={{ color: "#999" }}>BAY TYPES:</span>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-3 rounded-sm border-l-4" style={{ borderLeftColor: "#D4860A", backgroundColor: "#FFF" }} />
+          <span className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#666" }}>Panel Production</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-3 rounded-sm border-l-4" style={{ borderLeftColor: "#006039", backgroundColor: "#FFF" }} />
+          <span className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#666" }}>Module Bay (Indoor)</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-3 rounded-sm border-l-4" style={{ borderLeftColor: "#999", backgroundColor: "#FFF" }} />
+          <span className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#666" }}>Outdoor Bay</span>
+        </div>
+        <span className="text-xs font-semibold ml-3" style={{ color: "#999" }}>STAGES:</span>
         {STAGE_NAMES.map((name, i) => (
           <div key={name} className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: STAGE_COLOURS[i] }} />
@@ -350,31 +392,55 @@ export default function FactoryFloorMap() {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Floor zones */}
         <div className="flex-1 space-y-6">
-          {/* Indoor Zone */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-bold" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
-                Indoor Production Floor — Bay 1 to 10
-              </span>
-              <Badge className="text-xs" style={{ backgroundColor: "#006039", color: "#fff" }}>Indoor</Badge>
+          {/* Two production zones side-by-side on desktop */}
+          <div className="grid grid-cols-1 xl:grid-cols-[auto_1fr] gap-6">
+            {/* ZONE A — Panel Production */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-sm font-bold" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
+                  PANEL PRODUCTION ZONE
+                </span>
+                <Badge className="text-xs" style={{ backgroundColor: "#D4860A", color: "#fff" }}>3 Bays</Badge>
+              </div>
+              <div className="grid grid-cols-3 xl:grid-cols-1 gap-3">
+                {Array.from({ length: PANEL_BAYS }, (_, i) => i + PANEL_BAY_START).map((n, idx) => (
+                  <PanelBayCard
+                    key={n}
+                    bayNumber={n}
+                    bayLabel={`Panel Bay ${idx + 1}`}
+                    batch={panelBatches.find((b) => b.bay_number === n)}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              {Array.from({ length: INDOOR_BAYS }, (_, i) => i + 1).map((n) => (
-                <BayCard
-                  key={n}
-                  bayNumber={n}
-                  assignment={bayMap.get(n)}
-                  module={bayMap.get(n) ? moduleMap.get(bayMap.get(n)!.module_id) : undefined}
-                  workers={bayMap.get(n) ? moduleWorkers.get(bayMap.get(n)!.module_id) : undefined}
-                  workerMap={workerMap}
-                  selected={selectedBay === n}
-                  canAssign={canAssign}
-                  onSelect={() => setSelectedBay(selectedBay === n ? null : n)}
-                  onDrop={() => handleDrop(n)}
-                  onDragOver={(e) => { e.preventDefault(); }}
-                  onTapAssign={() => isMobile && tapWorkerId ? handleTapAssign(n) : undefined}
-                />
-              ))}
+
+            {/* ZONE B — Module Production (Indoor) */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-sm font-bold" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
+                  MODULE PRODUCTION ZONE — Indoor
+                </span>
+                <Badge className="text-xs" style={{ backgroundColor: "#006039", color: "#fff" }}>{INDOOR_MODULE_BAYS} Bays</Badge>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                {Array.from({ length: INDOOR_MODULE_BAYS }, (_, i) => i + 1).map((n) => (
+                  <BayCard
+                    key={n}
+                    bayNumber={n}
+                    bayLabel={`Module Bay ${n} (Indoor)`}
+                    assignment={bayMap.get(n)}
+                    module={bayMap.get(n) ? moduleMap.get(bayMap.get(n)!.module_id) : undefined}
+                    workers={bayMap.get(n) ? moduleWorkers.get(bayMap.get(n)!.module_id) : undefined}
+                    workerMap={workerMap}
+                    selected={selectedBay === n}
+                    canAssign={canAssign}
+                    onSelect={() => setSelectedBay(selectedBay === n ? null : n)}
+                    onDrop={() => handleDrop(n)}
+                    onDragOver={(e) => { e.preventDefault(); }}
+                    onTapAssign={() => isMobile && tapWorkerId ? handleTapAssign(n) : undefined}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
@@ -389,15 +455,16 @@ export default function FactoryFloorMap() {
             </div>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-sm font-bold" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
-                Open Yard — Bay 11 to 17
+                Open Yard — Module Bays {OUTDOOR_BAY_START} to {OUTDOOR_BAY_START + OUTDOOR_MODULE_BAYS - 1}
               </span>
-              <Badge className="text-xs" style={{ backgroundColor: "#D4860A", color: "#fff" }}>Outdoor</Badge>
+              <Badge className="text-xs" style={{ backgroundColor: "#999", color: "#fff" }}>Outdoor</Badge>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {Array.from({ length: TOTAL_BAYS - INDOOR_BAYS }, (_, i) => i + INDOOR_BAYS + 1).map((n) => (
+              {Array.from({ length: OUTDOOR_MODULE_BAYS }, (_, i) => i + OUTDOOR_BAY_START).map((n) => (
                 <BayCard
                   key={n}
                   bayNumber={n}
+                  bayLabel={`Module Bay ${n - OUTDOOR_BAY_START + 1} (Outdoor)`}
                   assignment={bayMap.get(n)}
                   module={bayMap.get(n) ? moduleMap.get(bayMap.get(n)!.module_id) : undefined}
                   workers={bayMap.get(n) ? moduleWorkers.get(bayMap.get(n)!.module_id) : undefined}
@@ -408,6 +475,7 @@ export default function FactoryFloorMap() {
                   onDrop={() => handleDrop(n)}
                   onDragOver={(e) => { e.preventDefault(); }}
                   onTapAssign={() => isMobile && tapWorkerId ? handleTapAssign(n) : undefined}
+                  outdoor
                 />
               ))}
             </div>
@@ -593,10 +661,16 @@ export default function FactoryFloorMap() {
           <Select value={moveToBay} onValueChange={setMoveToBay}>
             <SelectTrigger><SelectValue placeholder="Target bay" /></SelectTrigger>
             <SelectContent>
-              {Array.from({ length: TOTAL_BAYS }, (_, i) => i + 1)
+              {[
+                ...Array.from({ length: INDOOR_MODULE_BAYS }, (_, i) => i + 1),
+                ...Array.from({ length: OUTDOOR_MODULE_BAYS }, (_, i) => i + OUTDOOR_BAY_START),
+              ]
                 .filter((n) => !bayMap.has(n))
                 .map((n) => (
-                  <SelectItem key={n} value={String(n)}>Bay {n} {n <= INDOOR_BAYS ? "(Indoor)" : "(Outdoor)"}</SelectItem>
+                  <SelectItem key={n} value={String(n)}>
+                    Module Bay {n < OUTDOOR_BAY_START ? n : n - OUTDOOR_BAY_START + 1}{" "}
+                    {n < OUTDOOR_BAY_START ? "(Indoor)" : "(Outdoor)"}
+                  </SelectItem>
                 ))}
             </SelectContent>
           </Select>
@@ -623,10 +697,11 @@ export default function FactoryFloorMap() {
 
 /* ──────── BAY CARD ──────── */
 function BayCard({
-  bayNumber, assignment, module, workers, workerMap, selected, canAssign,
-  onSelect, onDrop, onDragOver, onTapAssign,
+  bayNumber, bayLabel, assignment, module, workers, workerMap, selected, canAssign,
+  onSelect, onDrop, onDragOver, onTapAssign, outdoor,
 }: {
   bayNumber: number;
+  bayLabel?: string;
   assignment?: BayAssignment;
   module?: ModuleRow;
   workers?: { workerId: string; task: string | null }[];
@@ -637,11 +712,13 @@ function BayCard({
   onDrop: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onTapAssign?: () => void;
+  outdoor?: boolean;
 }) {
   const occupied = !!assignment && !!module;
   const si = occupied ? stageIndex(module!.current_stage) : 0;
   const stageColour = STAGE_COLOURS[si];
   const status = module?.production_status;
+  const leftBorderColor = outdoor ? "#999" : "#006039";
 
   const flagColor = status === "hold" ? "#D4860A" : si === 9 ? "#F40009" : si === 8 ? "#006039" : "#006039";
   const flagIcon = status === "hold" ? "⚠" : si === 9 ? "🚚" : si === 8 ? "!" : "✓";
@@ -659,14 +736,16 @@ function BayCard({
       style={{
         backgroundColor: occupied ? "#FFFFFF" : "#FAFAFA",
         borderColor: occupied ? (selected ? undefined : "#E0E0E0") : "#E0E0E0",
+        borderLeftWidth: 4,
+        borderLeftColor: leftBorderColor,
         borderTopWidth: occupied ? 4 : undefined,
         borderTopColor: occupied ? stageColour : undefined,
         minHeight: 120,
       }}
     >
-      {/* Bay number */}
+      {/* Bay label */}
       <span className="absolute top-1 left-2 text-[10px] font-bold" style={{ color: "#999" }}>
-        {bayNumber}
+        {bayLabel ?? `Bay ${bayNumber}`}
       </span>
 
       {occupied ? (
@@ -716,6 +795,83 @@ function BayCard({
       ) : (
         <div className="flex items-center justify-center h-full min-h-[100px]">
           <span className="text-xs" style={{ color: "#999" }}>Available</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ──────── PANEL BAY CARD ──────── */
+function PanelBayCard({
+  bayNumber, bayLabel, batch,
+}: {
+  bayNumber: number;
+  bayLabel: string;
+  batch?: PanelBatch;
+}) {
+  const occupied = !!batch;
+  const stage = batch?.current_stage ?? "";
+  const stageLabel = stage.charAt(0).toUpperCase() + stage.slice(1);
+  const isReady = stage === "ready" || batch?.status === "ready_for_dispatch";
+  const statusLabel = !occupied
+    ? "Empty"
+    : isReady
+      ? "Ready for Dispatch"
+      : "In Progress";
+  const statusColor = !occupied ? "#999" : isReady ? "#006039" : "#D4860A";
+
+  return (
+    <div
+      className="relative rounded-lg border shadow-sm transition-all"
+      style={{
+        backgroundColor: occupied ? "#FFFFFF" : "#FAFAFA",
+        borderColor: "#E0E0E0",
+        borderLeftWidth: 4,
+        borderLeftColor: "#D4860A",
+        minHeight: 120,
+      }}
+    >
+      <span className="absolute top-1 left-2 text-[10px] font-bold" style={{ color: "#999" }}>
+        {bayLabel} · #{bayNumber}
+      </span>
+
+      {occupied ? (
+        <div className="p-2 pt-5 space-y-1">
+          <span
+            className="absolute top-1 right-2 text-[9px] px-1.5 py-0.5 rounded-full"
+            style={{ backgroundColor: `${statusColor}20`, color: statusColor, border: `1px solid ${statusColor}40` }}
+          >
+            {statusLabel}
+          </span>
+          <p className="font-bold text-sm truncate" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
+            {PANEL_TYPE_LABELS[batch.panel_type] ?? batch.panel_type}
+          </p>
+          <p className="text-[11px] truncate" style={{ fontFamily: "var(--font-input)", color: "#666" }}>
+            {batch.projects?.name ?? "—"}
+          </p>
+          <p className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#1A1A1A" }}>
+            {batch.completed_panels} of {batch.total_panels} panels
+          </p>
+          <Progress
+            value={batch.total_panels > 0 ? (batch.completed_panels / batch.total_panels) * 100 : 0}
+            className="h-1.5"
+          />
+          <Badge
+            className="text-[10px] mt-1"
+            style={{ backgroundColor: "#FFF3CD", color: "#856404", border: "1px solid #D4860A" }}
+          >
+            {stageLabel || "—"}
+          </Badge>
+          {batch.expected_completion && (
+            <p className="text-[10px]" style={{ color: "#999" }}>
+              ETA {format(new Date(batch.expected_completion), "dd MMM")}
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full min-h-[100px] gap-1 pt-4">
+          <span className="text-xs" style={{ color: "#999" }}>Empty</span>
+          <span className="text-[10px]" style={{ color: "#bbb" }}>Panel Production</span>
         </div>
       )}
     </div>
