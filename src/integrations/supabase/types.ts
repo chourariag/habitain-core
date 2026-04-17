@@ -3842,6 +3842,79 @@ export type Database = {
           },
         ]
       }
+      panel_handovers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          notes: string | null
+          panel_batch_id: string
+          project_id: string | null
+          ready_at: string
+          received_at: string | null
+          received_by: string | null
+          related_task_id: string | null
+          source_panel_bay: number
+          status: string
+          target_module_bay: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          panel_batch_id: string
+          project_id?: string | null
+          ready_at?: string
+          received_at?: string | null
+          received_by?: string | null
+          related_task_id?: string | null
+          source_panel_bay: number
+          status?: string
+          target_module_bay: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          notes?: string | null
+          panel_batch_id?: string
+          project_id?: string | null
+          ready_at?: string
+          received_at?: string | null
+          received_by?: string | null
+          related_task_id?: string | null
+          source_panel_bay?: number
+          status?: string
+          target_module_bay?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "panel_handovers_panel_batch_id_fkey"
+            columns: ["panel_batch_id"]
+            isOneToOne: false
+            referencedRelation: "panel_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "panel_handovers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "panel_handovers_related_task_id_fkey"
+            columns: ["related_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       panels: {
         Row: {
           created_at: string | null
