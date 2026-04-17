@@ -328,9 +328,7 @@ export default function CapacityPlanning() {
   const forecast = useMemo(() => {
     const { module_bay_stage_days, active_days_per_week, target_modules_per_month } = settings;
     const STAGES = 10;
-    const MODULE_BAYS = 6;
     const daysPerModule = module_bay_stage_days * STAGES;
-    // throughput per bay per month: (active days/week * 4.33) / days per module
     const monthDays = active_days_per_week * 4.33;
     const modulesPerBayPerMonth = monthDays / daysPerModule;
     const achievable = Math.round(MODULE_BAYS * modulesPerBayPerMonth);
@@ -338,6 +336,22 @@ export default function CapacityPlanning() {
     const extraBayDaysNeeded = gap < 0 ? Math.ceil((Math.abs(gap) * daysPerModule) / 4.33) : 0;
     return { achievable, gap, extraBayDaysNeeded };
   }, [settings]);
+
+  // Bay utilisation calc
+  const bayStats = useMemo(() => {
+    const indoorBays = bays.filter(b => b.bay_type !== "outdoor");
+    const outdoorBays = bays.filter(b => b.bay_type === "outdoor");
+    const indoorOccupied = indoorBays.filter(b => b.module_id).length;
+    const outdoorOccupied = outdoorBays.filter(b => b.module_id).length;
+    const moduleBayUtil = INDOOR_BAYS > 0 ? Math.round((indoorOccupied / INDOOR_BAYS) * 100) : 0;
+    const panelBayUtil = OUTDOOR_BAYS > 0 ? Math.round((outdoorOccupied / OUTDOOR_BAYS) * 100) : 0;
+    // 4-week projected: assume current pace continues; nudge by gap
+    const baseUtil = Math.round((moduleBayUtil + panelBayUtil) / 2);
+    const projected = [0, 1, 2, 3].map(i => Math.min(100, Math.max(0, baseUtil + (i * 2))));
+    return { indoorOccupied, outdoorOccupied, moduleBayUtil, panelBayUtil, indoorBays, outdoorBays, projected };
+  }, [bays]);
+
+  const topBottleneck = bottlenecks.find(b => b.totalDays > 0);
 
   if (roleLoading || loading) {
     return (
