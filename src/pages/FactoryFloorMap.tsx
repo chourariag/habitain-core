@@ -800,3 +800,80 @@ function BayCard({
     </div>
   );
 }
+
+/* ──────── PANEL BAY CARD ──────── */
+function PanelBayCard({
+  bayNumber, bayLabel, batch,
+}: {
+  bayNumber: number;
+  bayLabel: string;
+  batch?: PanelBatch;
+}) {
+  const occupied = !!batch;
+  const stage = batch?.current_stage ?? "";
+  const stageLabel = stage.charAt(0).toUpperCase() + stage.slice(1);
+  const isReady = stage === "ready" || batch?.status === "ready_for_dispatch";
+  const statusLabel = !occupied
+    ? "Empty"
+    : isReady
+      ? "Ready for Dispatch"
+      : "In Progress";
+  const statusColor = !occupied ? "#999" : isReady ? "#006039" : "#D4860A";
+
+  return (
+    <div
+      className="relative rounded-lg border shadow-sm transition-all"
+      style={{
+        backgroundColor: occupied ? "#FFFFFF" : "#FAFAFA",
+        borderColor: "#E0E0E0",
+        borderLeftWidth: 4,
+        borderLeftColor: "#D4860A",
+        minHeight: 120,
+      }}
+    >
+      <span className="absolute top-1 left-2 text-[10px] font-bold" style={{ color: "#999" }}>
+        {bayLabel} · #{bayNumber}
+      </span>
+
+      {occupied ? (
+        <div className="p-2 pt-5 space-y-1">
+          <span
+            className="absolute top-1 right-2 text-[9px] px-1.5 py-0.5 rounded-full"
+            style={{ backgroundColor: `${statusColor}20`, color: statusColor, border: `1px solid ${statusColor}40` }}
+          >
+            {statusLabel}
+          </span>
+          <p className="font-bold text-sm truncate" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
+            {PANEL_TYPE_LABELS[batch.panel_type] ?? batch.panel_type}
+          </p>
+          <p className="text-[11px] truncate" style={{ fontFamily: "var(--font-input)", color: "#666" }}>
+            {batch.projects?.name ?? "—"}
+          </p>
+          <p className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#1A1A1A" }}>
+            {batch.completed_panels} of {batch.total_panels} panels
+          </p>
+          <Progress
+            value={batch.total_panels > 0 ? (batch.completed_panels / batch.total_panels) * 100 : 0}
+            className="h-1.5"
+          />
+          <Badge
+            className="text-[10px] mt-1"
+            style={{ backgroundColor: "#FFF3CD", color: "#856404", border: "1px solid #D4860A" }}
+          >
+            {stageLabel || "—"}
+          </Badge>
+          {batch.expected_completion && (
+            <p className="text-[10px]" style={{ color: "#999" }}>
+              ETA {format(new Date(batch.expected_completion), "dd MMM")}
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full min-h-[100px] gap-1 pt-4">
+          <span className="text-xs" style={{ color: "#999" }}>Empty</span>
+          <span className="text-[10px]" style={{ color: "#bbb" }}>Panel Production</span>
+        </div>
+      )}
+    </div>
+  );
+}
