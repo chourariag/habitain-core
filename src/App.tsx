@@ -38,6 +38,7 @@ import KPISettings from "@/pages/KPISettings";
 import Alerts from "@/pages/Alerts";
 import AdvanceRequest from "@/pages/AdvanceRequest";
 import FactoryFloorMap from "@/pages/FactoryFloorMap";
+import CapacityPlanning from "@/pages/CapacityPlanning";
 import ClientPortal from "@/pages/ClientPortal";
 import Onboarding from "@/pages/Onboarding";
 
@@ -84,6 +85,7 @@ const App = () => (
                 <Route path="/attendance" element={<Attendance />} />
                 <Route path="/alerts" element={<Alerts />} />
                 <Route path="/factory/floor-map" element={<FactoryFloorMap />} />
+                <Route path="/capacity" element={<CapacityPlanning />} />
               </Route>
               <Route path="/client/:projectToken" element={<ClientPortal />} />
               <Route path="*" element={<NotFound />} />
