@@ -6935,6 +6935,122 @@ export type Database = {
           },
         ]
       }
+      sop_procedures: {
+        Row: {
+          ai_generated: boolean
+          approved_at: string | null
+          approved_by: string | null
+          approved_by_name: string | null
+          common_mistakes: string | null
+          created_at: string
+          created_by: string
+          created_by_name: string | null
+          department: string
+          escalation: string | null
+          id: string
+          last_updated_by: string | null
+          last_updated_by_name: string | null
+          linked_module: string | null
+          materials_tools: string | null
+          process_name: string | null
+          purpose: string | null
+          quality_criteria: string | null
+          role_performs: string | null
+          safety: string | null
+          scope: string | null
+          status: string
+          steps: string | null
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          ai_generated?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_name?: string | null
+          common_mistakes?: string | null
+          created_at?: string
+          created_by: string
+          created_by_name?: string | null
+          department: string
+          escalation?: string | null
+          id?: string
+          last_updated_by?: string | null
+          last_updated_by_name?: string | null
+          linked_module?: string | null
+          materials_tools?: string | null
+          process_name?: string | null
+          purpose?: string | null
+          quality_criteria?: string | null
+          role_performs?: string | null
+          safety?: string | null
+          scope?: string | null
+          status?: string
+          steps?: string | null
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          ai_generated?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_name?: string | null
+          common_mistakes?: string | null
+          created_at?: string
+          created_by?: string
+          created_by_name?: string | null
+          department?: string
+          escalation?: string | null
+          id?: string
+          last_updated_by?: string | null
+          last_updated_by_name?: string | null
+          linked_module?: string | null
+          materials_tools?: string | null
+          process_name?: string | null
+          purpose?: string | null
+          quality_criteria?: string | null
+          role_performs?: string | null
+          safety?: string | null
+          scope?: string | null
+          status?: string
+          steps?: string | null
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
+      sop_view_log: {
+        Row: {
+          id: string
+          sop_id: string
+          viewed_at: string
+          viewed_by: string
+        }
+        Insert: {
+          id?: string
+          sop_id: string
+          viewed_at?: string
+          viewed_by: string
+        }
+        Update: {
+          id?: string
+          sop_id?: string
+          viewed_at?: string
+          viewed_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sop_view_log_sop_id_fkey"
+            columns: ["sop_id"]
+            isOneToOne: false
+            referencedRelation: "sop_procedures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores_inventory: {
         Row: {
           available_qty: number
@@ -7487,6 +7603,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_edit_sop_dept: {
+        Args: { _department: string; _user_id: string }
+        Returns: boolean
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
