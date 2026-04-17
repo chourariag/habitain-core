@@ -19,8 +19,19 @@ import {
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 
 /* ──── CONSTANTS ──── */
-const TOTAL_BAYS = 17;
-const INDOOR_BAYS = 10;
+// Module bay numbering: 1-5 indoor, 11-17 outdoor (legacy used 1-10 indoor; bays 6-10 still rendered as legacy if occupied).
+const INDOOR_MODULE_BAYS = 5;
+const OUTDOOR_MODULE_BAYS = 7;
+const OUTDOOR_BAY_START = 11;
+const PANEL_BAYS = 3;
+const PANEL_BAY_START = 101; // 101, 102, 103
+const PANEL_STAGES = ["Cutting", "Framing", "Insulation", "Boarding", "Finishing", "QC", "Ready"] as const;
+const PANEL_TYPE_LABELS: Record<string, string> = {
+  wall_panel: "Wall Panel",
+  floor_panel: "Floor Panel",
+  roof_panel: "Roof Panel",
+  external_cladding_panel: "External Cladding Panel",
+};
 
 const STAGE_NAMES = [
   "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
