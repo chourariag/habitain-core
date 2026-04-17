@@ -1000,6 +1000,11 @@ function PanelBayCard({
               ETA {format(new Date(batch.expected_completion), "dd MMM")}
             </p>
           )}
+          {canManage && batch && !isReady && batch.completed_panels >= batch.total_panels && batch.total_panels > 0 && (
+            <Button size="sm" variant="outline" className="w-full mt-1 h-7 text-[10px]" onClick={() => onMarkReady?.(batch)}>
+              <Check className="h-3 w-3 mr-1" /> Mark Ready for Handover
+            </Button>
+          )}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center h-full min-h-[100px] gap-1 pt-4">
