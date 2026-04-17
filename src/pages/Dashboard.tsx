@@ -9,9 +9,10 @@ import { CheckInButton } from "@/components/attendance/CheckInButton";
 import { LogExpenseButton } from "@/components/expenses/LogExpenseButton";
 import { WeeklyDigestCard } from "@/components/kpi/WeeklyDigestCard";
 import { MyTasksSection } from "@/components/tasks/MyTasksSection";
+import { DailyReadinessBrief } from "@/components/dashboard/DailyReadinessBrief";
 
 export default function Dashboard() {
-  const { role, loading } = useUserRole();
+  const { role, userId, loading } = useUserRole();
   const userRole = role as AppRole | null;
 
   if (loading) {
@@ -24,7 +25,10 @@ export default function Dashboard() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      {/* Check-in card at the very top */}
+      {/* Daily Readiness Brief — pinned above check-in, hidden after 10am */}
+      <DailyReadinessBrief userRole={userRole} userId={userId} displayName={roleName.split(" ")[0]} />
+
+      {/* Check-in card */}
       <CheckInButton userRole={userRole} />
 
       {/* Submit Expense button */}
