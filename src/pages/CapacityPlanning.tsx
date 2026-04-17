@@ -7,9 +7,48 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Loader2, Factory, Target, AlertTriangle, TrendingUp, Save } from "lucide-react";
-import { differenceInDays, startOfMonth, endOfMonth, addDays } from "date-fns";
+import { Loader2, Factory, Target, AlertTriangle, TrendingUp, Save, Activity, Layers } from "lucide-react";
+import { differenceInDays, startOfMonth, endOfMonth, addDays, subDays } from "date-fns";
 import { toast } from "sonner";
+
+const INDOOR_BAYS = 10;
+const OUTDOOR_BAYS = 7;
+const PANEL_BAYS = 3;
+const MODULE_BAYS = 6;
+
+// Map DELAY_CAUSES → bottleneck categories
+const CAUSE_TO_CATEGORY: Record<string, string> = {
+  "Internal — Material": "Material delays",
+  "External — Vendor": "Material delays",
+  "Internal — Manpower": "Manpower shortage",
+  "Internal — Method": "Manpower shortage",
+  "Internal — Equipment": "Equipment / tools",
+  "External — Client": "Client decisions",
+  "External — Approvals": "Design queries / GFC delays",
+  "External — Payment": "Client decisions",
+  "External — Weather": "External / weather",
+};
+const ALL_CATEGORIES = [
+  "Material delays", "Manpower shortage", "Design queries / GFC delays",
+  "Rework / NCR", "Equipment / tools", "Client decisions", "External / weather",
+];
+
+interface BottleneckRow {
+  category: string;
+  count: number;
+  totalDays: number;
+  avgDays: number;
+}
+
+interface BayRow {
+  bay_type: string;
+  bay_number: number;
+  module_id: string | null;
+  project_id: string | null;
+  current_stage: string | null;
+  project_name: string | null;
+  assigned_at: string | null;
+}
 
 const ALLOWED = [
   "production_head", "head_operations", "managing_director", "super_admin",
