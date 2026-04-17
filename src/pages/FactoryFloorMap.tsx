@@ -295,7 +295,80 @@ export default function FactoryFloorMap() {
     fetchAll();
   };
 
-  /* ── MOVE BAY ── */
+  /* ── PANEL → MODULE HANDOVER ── */
+  const handleMarkReady = async (batch: PanelBatch) => {
+    if (!canAssign) { toast.error("You don't have permission"); return; }
+    // Default target: first empty indoor module bay
+    const occupiedBays = new Set(bays.map(b => b.bay_number));
+    const target = Array.from({ length: INDOOR_MODULE_BAYS }, (_, i) => i + 1).find(n => !occupiedBays.has(n))
+      ?? Array.from({ length: OUTDOOR_MODULE_BAYS }, (_, i) => i + OUTDOOR_BAY_START).find(n => !occupiedBays.has(n));
+    if (!target) { toast.error("No empty module bay available for handover"); return; }
+
+    // 1. Create project task for receiving supervisor
+    let taskId: string | null = null;
+    if (batch.project_id) {
+      const { data: taskRow } = await supabase.from("project_tasks").insert({
+        project_id: batch.project_id,
+        task_id_in_schedule: `PHO-${Date.now()}`,
+        task_name: `Collect panels from Panel Bay ${batch.bay_number - PANEL_BAY_START + 1}`,
+        phase: "Production",
+        responsible_role: "factory_floor_supervisor",
+        status: "Upcoming",
+        planned_start_date: format(new Date(), "yyyy-MM-dd"),
+        planned_finish_date: format(addDays(new Date(), 1), "yyyy-MM-dd"),
+      }).select("id").single();
+      taskId = taskRow?.id ?? null;
+    }
+
+    // 2. Create handover record
+    const { error: hError } = await supabase.from("panel_handovers").insert({
+      panel_batch_id: batch.id,
+      source_panel_bay: batch.bay_number,
+      target_module_bay: target,
+      project_id: batch.project_id,
+      related_task_id: taskId,
+      status: "pending",
+      created_by: userId,
+    });
+    if (hError) { toast.error("Failed to create handover"); return; }
+
+    // 3. Mark panel batch as ready
+    await supabase.from("panel_batches").update({
+      status: "ready_for_dispatch",
+      current_stage: "ready",
+    }).eq("id", batch.id);
+
+    toast.success(`Handover created for Module Bay ${target}`);
+    fetchAll();
+  };
+
+  const handleReceiveHandover = async (h: PanelHandover) => {
+    if (!canAssign) { toast.error("You don't have permission"); return; }
+    const { error } = await supabase.from("panel_handovers").update({
+      status: "received",
+      received_at: new Date().toISOString(),
+      received_by: userId,
+    }).eq("id", h.id);
+    if (error) { toast.error("Failed to mark received"); return; }
+
+    // Reset panel bay to empty (mark batch dispatched)
+    await supabase.from("panel_batches").update({ status: "dispatched" }).eq("id", h.panel_batch_id);
+
+    // Mark related task complete
+    if (h.id) {
+      const { data: hr } = await supabase.from("panel_handovers").select("related_task_id").eq("id", h.id).maybeSingle();
+      if (hr?.related_task_id) {
+        await supabase.from("project_tasks").update({
+          status: "Completed",
+          completion_percentage: 100,
+          actual_finish_date: format(new Date(), "yyyy-MM-dd"),
+        }).eq("id", hr.related_task_id);
+      }
+    }
+    toast.success("Handover marked received — panel bay reset");
+    fetchAll();
+  };
+
   const confirmMove = async () => {
     if (!moveDialog || !moveToBay) return;
     const newBay = parseInt(moveToBay);
