@@ -538,6 +538,8 @@ export default function FactoryFloorMap() {
                     bayNumber={n}
                     bayLabel={`Panel Bay ${idx + 1}`}
                     batch={panelBatches.find((b) => b.bay_number === n)}
+                    canManage={canAssign}
+                    onMarkReady={handleMarkReady}
                   />
                 ))}
               </div>
