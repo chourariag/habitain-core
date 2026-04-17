@@ -37,6 +37,7 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
     ...DIRECTORS, "hr_executive", "head_operations",
   ],
   system: [], // everyone
+  knowledge: [], // everyone — SOP library
 };
 
 // Roles that need the sidebar project selector
