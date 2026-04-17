@@ -19,13 +19,19 @@ interface Props {
   displayName?: string;
 }
 
-// Roles that get a Phase-1 brief
+// Roles supported by the brief
 const SUPPORTED: AppRole[] = [
   "production_head", "factory_floor_supervisor", "fabrication_foreman",
   "electrical_installer", "elec_plumbing_installer",
   "site_installation_mgr", "site_engineer", "delivery_rm_lead",
   "planning_engineer",
   "procurement", "stores_executive",
+  // Phase 2
+  "finance_director", "finance_manager", "accounts_executive",
+  "sales_director",
+  "qc_inspector",
+  "principal_architect", "project_architect", "structural_architect", "architecture_director",
+  "super_admin", "managing_director",
 ];
 
 const dismissKey = (uid: string) => `daily-brief-dismissed:${uid}:${new Date().toISOString().slice(0, 10)}`;
@@ -40,7 +46,7 @@ async function buildProductionBrief(): Promise<BriefLine[]> {
     supabase.from("modules").select("id, current_stage").not("current_stage", "in", "(Dispatched,Installed)"),
     supabase.from("bay_assignments").select("bay_number"),
     supabase.from("project_tasks").select("id, planned_finish_date, status").lte("planned_finish_date", today).neq("status", "Completed"),
-    supabase.from("ncrs" as any).select("id, status").eq("status", "Open"),
+    supabase.from("ncr_register").select("id, status").eq("status", "Open"),
     supabase.from("material_requests" as any).select("id, project_id, projects(name)").eq("expected_delivery_date", today),
   ]);
   const overdue = (tasksRes.data || []).filter((t: any) => t.planned_finish_date < today).length;
