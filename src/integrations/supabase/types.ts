@@ -3773,6 +3773,75 @@ export type Database = {
         }
         Relationships: []
       }
+      panel_batches: {
+        Row: {
+          bay_assignment_id: string | null
+          bay_number: number
+          completed_panels: number
+          created_at: string
+          created_by: string | null
+          current_stage: string
+          expected_completion: string | null
+          id: string
+          notes: string | null
+          panel_type: string
+          project_id: string | null
+          status: string
+          target_module_bay: number | null
+          total_panels: number
+          updated_at: string
+        }
+        Insert: {
+          bay_assignment_id?: string | null
+          bay_number: number
+          completed_panels?: number
+          created_at?: string
+          created_by?: string | null
+          current_stage?: string
+          expected_completion?: string | null
+          id?: string
+          notes?: string | null
+          panel_type?: string
+          project_id?: string | null
+          status?: string
+          target_module_bay?: number | null
+          total_panels?: number
+          updated_at?: string
+        }
+        Update: {
+          bay_assignment_id?: string | null
+          bay_number?: number
+          completed_panels?: number
+          created_at?: string
+          created_by?: string | null
+          current_stage?: string
+          expected_completion?: string | null
+          id?: string
+          notes?: string | null
+          panel_type?: string
+          project_id?: string | null
+          status?: string
+          target_module_bay?: number | null
+          total_panels?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "panel_batches_bay_assignment_id_fkey"
+            columns: ["bay_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "bay_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "panel_batches_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       panels: {
         Row: {
           created_at: string | null
