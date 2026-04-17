@@ -98,6 +98,18 @@ type PanelBatch = {
   projects?: { name: string } | null;
 };
 
+type PanelHandover = {
+  id: string;
+  panel_batch_id: string;
+  source_panel_bay: number;
+  target_module_bay: number;
+  project_id: string | null;
+  status: string;
+  ready_at: string;
+  projects?: { name: string } | null;
+  panel_batches?: { panel_type: string; total_panels: number } | null;
+};
+
 /* ──────────────── COMPONENT ──────────────── */
 export default function FactoryFloorMap() {
   const { role, userId, loading: roleLoading } = useUserRole();
@@ -118,6 +130,7 @@ export default function FactoryFloorMap() {
   const [workers, setWorkers] = useState<WorkerRow[]>([]);
   const [manpower, setManpower] = useState<ManpowerPlan[]>([]);
   const [panelBatches, setPanelBatches] = useState<PanelBatch[]>([]);
+  const [handovers, setHandovers] = useState<PanelHandover[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedBay, setSelectedBay] = useState<number | null>(null);
 
@@ -143,7 +156,7 @@ export default function FactoryFloorMap() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [bayRes, modRes, workerRes, mpRes, panelRes] = await Promise.all([
+    const [bayRes, modRes, workerRes, mpRes, panelRes, handoverRes] = await Promise.all([
       supabase.from("bay_assignments").select("*").is("moved_from", null),
       supabase.from("modules").select("id, name, module_code, current_stage, production_status, project_id, projects(name)").eq("is_archived", false),
       supabase.from("profiles").select("id, display_name, role").in("role", [
@@ -157,12 +170,17 @@ export default function FactoryFloorMap() {
       supabase.from("panel_batches")
         .select("id, bay_number, project_id, panel_type, total_panels, completed_panels, current_stage, status, expected_completion, projects(name)")
         .neq("status", "dispatched"),
+      supabase.from("panel_handovers")
+        .select("id, panel_batch_id, source_panel_bay, target_module_bay, project_id, status, ready_at, projects(name), panel_batches(panel_type, total_panels)")
+        .eq("status", "pending")
+        .order("ready_at", { ascending: false }),
     ]);
     setBays((bayRes.data as BayAssignment[] | null) ?? []);
     setModules((modRes.data as ModuleRow[] | null) ?? []);
     setWorkers((workerRes.data as WorkerRow[] | null) ?? []);
     setManpower((mpRes.data as ManpowerPlan[] | null) ?? []);
     setPanelBatches((panelRes.data as PanelBatch[] | null) ?? []);
+    setHandovers((handoverRes.data as PanelHandover[] | null) ?? []);
     setLoading(false);
   }, [weekStart]);
 
@@ -277,7 +295,80 @@ export default function FactoryFloorMap() {
     fetchAll();
   };
 
-  /* ── MOVE BAY ── */
+  /* ── PANEL → MODULE HANDOVER ── */
+  const handleMarkReady = async (batch: PanelBatch) => {
+    if (!canAssign) { toast.error("You don't have permission"); return; }
+    // Default target: first empty indoor module bay
+    const occupiedBays = new Set(bays.map(b => b.bay_number));
+    const target = Array.from({ length: INDOOR_MODULE_BAYS }, (_, i) => i + 1).find(n => !occupiedBays.has(n))
+      ?? Array.from({ length: OUTDOOR_MODULE_BAYS }, (_, i) => i + OUTDOOR_BAY_START).find(n => !occupiedBays.has(n));
+    if (!target) { toast.error("No empty module bay available for handover"); return; }
+
+    // 1. Create project task for receiving supervisor
+    let taskId: string | null = null;
+    if (batch.project_id) {
+      const { data: taskRow } = await supabase.from("project_tasks").insert({
+        project_id: batch.project_id,
+        task_id_in_schedule: `PHO-${Date.now()}`,
+        task_name: `Collect panels from Panel Bay ${batch.bay_number - PANEL_BAY_START + 1}`,
+        phase: "Production",
+        responsible_role: "factory_floor_supervisor",
+        status: "Upcoming",
+        planned_start_date: format(new Date(), "yyyy-MM-dd"),
+        planned_finish_date: format(addDays(new Date(), 1), "yyyy-MM-dd"),
+      }).select("id").single();
+      taskId = taskRow?.id ?? null;
+    }
+
+    // 2. Create handover record
+    const { error: hError } = await supabase.from("panel_handovers").insert({
+      panel_batch_id: batch.id,
+      source_panel_bay: batch.bay_number,
+      target_module_bay: target,
+      project_id: batch.project_id,
+      related_task_id: taskId,
+      status: "pending",
+      created_by: userId,
+    });
+    if (hError) { toast.error("Failed to create handover"); return; }
+
+    // 3. Mark panel batch as ready
+    await supabase.from("panel_batches").update({
+      status: "ready_for_dispatch",
+      current_stage: "ready",
+    }).eq("id", batch.id);
+
+    toast.success(`Handover created for Module Bay ${target}`);
+    fetchAll();
+  };
+
+  const handleReceiveHandover = async (h: PanelHandover) => {
+    if (!canAssign) { toast.error("You don't have permission"); return; }
+    const { error } = await supabase.from("panel_handovers").update({
+      status: "received",
+      received_at: new Date().toISOString(),
+      received_by: userId,
+    }).eq("id", h.id);
+    if (error) { toast.error("Failed to mark received"); return; }
+
+    // Reset panel bay to empty (mark batch dispatched)
+    await supabase.from("panel_batches").update({ status: "dispatched" }).eq("id", h.panel_batch_id);
+
+    // Mark related task complete
+    if (h.id) {
+      const { data: hr } = await supabase.from("panel_handovers").select("related_task_id").eq("id", h.id).maybeSingle();
+      if (hr?.related_task_id) {
+        await supabase.from("project_tasks").update({
+          status: "Completed",
+          completion_percentage: 100,
+          actual_finish_date: format(new Date(), "yyyy-MM-dd"),
+        }).eq("id", hr.related_task_id);
+      }
+    }
+    toast.success("Handover marked received — panel bay reset");
+    fetchAll();
+  };
+
   const confirmMove = async () => {
     if (!moveDialog || !moveToBay) return;
     const newBay = parseInt(moveToBay);
@@ -388,7 +479,45 @@ export default function FactoryFloorMap() {
         ))}
       </div>
 
-      {/* Main layout: Floor + Worker Pool */}
+      {/* Pending Panel → Module Handovers */}
+      {handovers.length > 0 && (
+        <Card className="border-border" style={{ borderLeft: "4px solid #D4860A" }}>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
+                Pending Panel → Module Handovers
+              </span>
+              <Badge className="text-xs" style={{ backgroundColor: "#FFF8E8", color: "#D4860A", border: "1px solid #D4860A" }}>
+                {handovers.length} pending
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {handovers.map((h) => (
+                <div key={h.id} className="rounded-md p-3 flex items-center justify-between gap-2"
+                  style={{ backgroundColor: "#FFF8E8", border: "1px solid #D4860A" }}>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold truncate" style={{ color: "#1A1A1A" }}>
+                      Panels ready for Module Bay {h.target_module_bay >= OUTDOOR_BAY_START
+                        ? `${h.target_module_bay - OUTDOOR_BAY_START + 1} (Outdoor)`
+                        : `${h.target_module_bay} (Indoor)`}
+                    </p>
+                    <p className="text-[11px] truncate" style={{ color: "#666" }}>
+                      {h.projects?.name ?? "—"} · {PANEL_TYPE_LABELS[h.panel_batches?.panel_type ?? ""] ?? "Panels"}
+                      {" · "}From Panel Bay {h.source_panel_bay - PANEL_BAY_START + 1}
+                    </p>
+                  </div>
+                  {canAssign && (
+                    <Button size="sm" variant="outline" onClick={() => handleReceiveHandover(h)}>
+                      <Check className="h-3 w-3 mr-1" /> Received
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Floor zones */}
         <div className="flex-1 space-y-6">
@@ -409,6 +538,8 @@ export default function FactoryFloorMap() {
                     bayNumber={n}
                     bayLabel={`Panel Bay ${idx + 1}`}
                     batch={panelBatches.find((b) => b.bay_number === n)}
+                    canManage={canAssign}
+                    onMarkReady={handleMarkReady}
                   />
                 ))}
               </div>
@@ -803,11 +934,13 @@ function BayCard({
 
 /* ──────── PANEL BAY CARD ──────── */
 function PanelBayCard({
-  bayNumber, bayLabel, batch,
+  bayNumber, bayLabel, batch, canManage, onMarkReady,
 }: {
   bayNumber: number;
   bayLabel: string;
   batch?: PanelBatch;
+  canManage?: boolean;
+  onMarkReady?: (b: PanelBatch) => void;
 }) {
   const occupied = !!batch;
   const stage = batch?.current_stage ?? "";
@@ -866,6 +999,11 @@ function PanelBayCard({
             <p className="text-[10px]" style={{ color: "#999" }}>
               ETA {format(new Date(batch.expected_completion), "dd MMM")}
             </p>
+          )}
+          {canManage && batch && !isReady && batch.completed_panels >= batch.total_panels && batch.total_panels > 0 && (
+            <Button size="sm" variant="outline" className="w-full mt-1 h-7 text-[10px]" onClick={() => onMarkReady?.(batch)}>
+              <Check className="h-3 w-3 mr-1" /> Mark Ready for Handover
+            </Button>
           )}
         </div>
       ) : (

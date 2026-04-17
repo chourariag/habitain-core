@@ -11,10 +11,12 @@ import { Loader2, Factory, Target, AlertTriangle, TrendingUp, Save, Activity, La
 import { differenceInDays, startOfMonth, endOfMonth, addDays, subDays } from "date-fns";
 import { toast } from "sonner";
 
-const INDOOR_BAYS = 10;
-const OUTDOOR_BAYS = 7;
+// Floor map: 5 indoor module bays (1-5), 7 outdoor module bays (11-17), 3 panel bays (101-103)
+const INDOOR_MODULE_BAYS = 5;
+const OUTDOOR_MODULE_BAYS = 7;
+const TOTAL_MODULE_BAYS = INDOOR_MODULE_BAYS + OUTDOOR_MODULE_BAYS;
 const PANEL_BAYS = 3;
-const MODULE_BAYS = 6;
+const MODULE_BAYS = TOTAL_MODULE_BAYS;
 
 // Map DELAY_CAUSES → bottleneck categories
 const CAUSE_TO_CATEGORY: Record<string, string> = {
@@ -88,6 +90,12 @@ export default function CapacityPlanning() {
     plannedNext30: 0,
     estCapacityPerMonth: 0,
   });
+  const [panelThroughput, setPanelThroughput] = useState({
+    activeBatches: 0,
+    panelsCompleted: 0,
+    panelsTotal: 0,
+    readyForHandover: 0,
+  });
   const [risks, setRisks] = useState<ProjectRisk[]>([]);
   const [bottlenecks, setBottlenecks] = useState<BottleneckRow[]>([]);
   const [overdueMaterialCount, setOverdueMaterialCount] = useState(0);
@@ -124,6 +132,7 @@ export default function CapacityPlanning() {
       { data: tasks },
       { data: dqs },
       { data: matReqs },
+      { data: panelBatchRows },
     ] = await Promise.all([
       supabase.from("capacity_forecast_settings").select("*").eq("singleton", true).maybeSingle(),
       supabase.from("modules").select("id, project_id, current_stage, production_status")
@@ -140,7 +149,19 @@ export default function CapacityPlanning() {
       supabase.from("project_tasks").select("project_id, planned_finish_date, actual_finish_date, completion_percentage, status, delay_cause, delay_days"),
       supabase.from("design_queries").select("project_id, status, created_at, resolved_at").eq("is_archived", false),
       supabase.from("material_requests").select("project_id, status, urgency, created_at, received_at").eq("is_archived", false),
+      supabase.from("panel_batches").select("id, total_panels, completed_panels, status, current_stage").neq("status", "dispatched"),
     ]);
+
+    // Panel throughput
+    const panelRows = panelBatchRows ?? [];
+    const activeBatches = panelRows.filter((b: any) => b.status !== "ready_for_dispatch" && b.current_stage !== "ready").length;
+    const readyForHandover = panelRows.filter((b: any) => b.status === "ready_for_dispatch" || b.current_stage === "ready").length;
+    setPanelThroughput({
+      activeBatches,
+      readyForHandover,
+      panelsCompleted: panelRows.reduce((acc: number, b: any) => acc + (b.completed_panels ?? 0), 0),
+      panelsTotal: panelRows.reduce((acc: number, b: any) => acc + (b.total_panels ?? 0), 0),
+    });
 
     // Bay assignments — latest per bay (already ordered by assigned_at via subquery; we dedupe client-side)
     const { data: bayRows } = await supabase
@@ -337,19 +358,20 @@ export default function CapacityPlanning() {
     return { achievable, gap, extraBayDaysNeeded };
   }, [settings]);
 
-  // Bay utilisation calc
+  // Bay utilisation calc — module bays only (indoor + outdoor); panel bays tracked separately
   const bayStats = useMemo(() => {
-    const indoorBays = bays.filter(b => b.bay_type !== "outdoor");
-    const outdoorBays = bays.filter(b => b.bay_type === "outdoor");
+    const indoorBays = bays.filter(b => b.bay_number < 11);
+    const outdoorBays = bays.filter(b => b.bay_number >= 11 && b.bay_number < 100);
     const indoorOccupied = indoorBays.filter(b => b.module_id).length;
     const outdoorOccupied = outdoorBays.filter(b => b.module_id).length;
-    const moduleBayUtil = INDOOR_BAYS > 0 ? Math.round((indoorOccupied / INDOOR_BAYS) * 100) : 0;
-    const panelBayUtil = OUTDOOR_BAYS > 0 ? Math.round((outdoorOccupied / OUTDOOR_BAYS) * 100) : 0;
-    // 4-week projected: assume current pace continues; nudge by gap
-    const baseUtil = Math.round((moduleBayUtil + panelBayUtil) / 2);
+    const indoorUtil = INDOOR_MODULE_BAYS > 0 ? Math.round((indoorOccupied / INDOOR_MODULE_BAYS) * 100) : 0;
+    const outdoorUtil = OUTDOOR_MODULE_BAYS > 0 ? Math.round((outdoorOccupied / OUTDOOR_MODULE_BAYS) * 100) : 0;
+    const panelBayUtil = PANEL_BAYS > 0 ? Math.round((panelThroughput.activeBatches / PANEL_BAYS) * 100) : 0;
+    // 4-week projected: assume current pace continues
+    const baseUtil = Math.round((indoorUtil + outdoorUtil) / 2);
     const projected = [0, 1, 2, 3].map(i => Math.min(100, Math.max(0, baseUtil + (i * 2))));
-    return { indoorOccupied, outdoorOccupied, moduleBayUtil, panelBayUtil, indoorBays, outdoorBays, projected };
-  }, [bays]);
+    return { indoorOccupied, outdoorOccupied, indoorUtil, outdoorUtil, panelBayUtil, indoorBays, outdoorBays, projected };
+  }, [bays, panelThroughput.activeBatches]);
 
   const topBottleneck = bottlenecks.find(b => b.totalDays > 0);
 
@@ -425,6 +447,37 @@ export default function CapacityPlanning() {
         </CardContent>
       </Card>
 
+      {/* Panel Production Throughput */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Layers className="h-4 w-4" style={{ color: "#D4860A" }} />
+            Panel Production Throughput
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: "Active Panel Batches", value: panelThroughput.activeBatches, sub: `of ${PANEL_BAYS} bays` },
+              { label: "Ready for Handover", value: panelThroughput.readyForHandover, highlight: panelThroughput.readyForHandover > 0 },
+              { label: "Panels Completed", value: panelThroughput.panelsCompleted },
+              { label: "Panels in Progress", value: Math.max(0, panelThroughput.panelsTotal - panelThroughput.panelsCompleted) },
+            ].map((s, i) => (
+              <div key={i} className="rounded-md p-3 text-center" style={{
+                backgroundColor: s.highlight ? "#FFF8E8" : "#F7F7F7",
+                border: s.highlight ? "1px solid #D4860A" : "1px solid #E0E0E0",
+              }}>
+                <p className="text-2xl font-bold font-display" style={{ color: s.highlight ? "#D4860A" : "#1A1A1A" }}>
+                  {s.value}
+                </p>
+                <p className="text-[10px] mt-1" style={{ color: "#666" }}>{s.label}</p>
+                {s.sub && <p className="text-[10px]" style={{ color: "#999" }}>{s.sub}</p>}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Bottleneck Analysis */}
       <Card>
         <CardHeader className="pb-2">
@@ -487,23 +540,32 @@ export default function CapacityPlanning() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-md p-3" style={{ backgroundColor: "#F7F7F7", border: "1px solid #E0E0E0" }}>
-              <p className="text-[10px]" style={{ color: "#666" }}>Module Bays (Indoor)</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-md p-3" style={{ backgroundColor: "#FFF8E8", border: "1px solid #D4860A" }}>
+              <p className="text-[10px]" style={{ color: "#666" }}>Panel Bays (Production)</p>
               <p className="text-2xl font-bold font-display" style={{ color: "#1A1A1A" }}>
-                {bayStats.indoorOccupied}/{INDOOR_BAYS}
+                {panelThroughput.activeBatches}/{PANEL_BAYS}
               </p>
-              <p className="text-[10px] mt-1" style={{ color: bayStats.moduleBayUtil >= 80 ? "#F40009" : "#006039" }}>
-                {bayStats.moduleBayUtil}% utilised this week
+              <p className="text-[10px] mt-1" style={{ color: bayStats.panelBayUtil >= 80 ? "#F40009" : "#D4860A" }}>
+                {bayStats.panelBayUtil}% utilised this week
               </p>
             </div>
             <div className="rounded-md p-3" style={{ backgroundColor: "#F7F7F7", border: "1px solid #E0E0E0" }}>
-              <p className="text-[10px]" style={{ color: "#666" }}>Panel Bays (Outdoor)</p>
+              <p className="text-[10px]" style={{ color: "#666" }}>Module Bays (Indoor)</p>
               <p className="text-2xl font-bold font-display" style={{ color: "#1A1A1A" }}>
-                {bayStats.outdoorOccupied}/{OUTDOOR_BAYS}
+                {bayStats.indoorOccupied}/{INDOOR_MODULE_BAYS}
               </p>
-              <p className="text-[10px] mt-1" style={{ color: bayStats.panelBayUtil >= 80 ? "#F40009" : "#006039" }}>
-                {bayStats.panelBayUtil}% utilised this week
+              <p className="text-[10px] mt-1" style={{ color: bayStats.indoorUtil >= 80 ? "#F40009" : "#006039" }}>
+                {bayStats.indoorUtil}% utilised this week
+              </p>
+            </div>
+            <div className="rounded-md p-3" style={{ backgroundColor: "#F7F7F7", border: "1px solid #E0E0E0" }}>
+              <p className="text-[10px]" style={{ color: "#666" }}>Module Bays (Outdoor)</p>
+              <p className="text-2xl font-bold font-display" style={{ color: "#1A1A1A" }}>
+                {bayStats.outdoorOccupied}/{OUTDOOR_MODULE_BAYS}
+              </p>
+              <p className="text-[10px] mt-1" style={{ color: bayStats.outdoorUtil >= 80 ? "#F40009" : "#006039" }}>
+                {bayStats.outdoorUtil}% utilised this week
               </p>
             </div>
           </div>
