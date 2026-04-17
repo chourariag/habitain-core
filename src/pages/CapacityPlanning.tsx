@@ -425,6 +425,138 @@ export default function CapacityPlanning() {
         </CardContent>
       </Card>
 
+      {/* Bottleneck Analysis */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Activity className="h-4 w-4" style={{ color: "#F40009" }} />
+            Bottleneck Analysis
+            <Badge variant="outline" className="ml-2 text-[10px]">last 90 days</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {bottlenecks.every(b => b.totalDays === 0) ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              No delay data logged yet. Bottlenecks appear once tasks are marked complete with a delay cause.
+            </p>
+          ) : (
+            <>
+              <div className="space-y-2">
+                {bottlenecks.map((b, idx) => {
+                  const max = Math.max(...bottlenecks.map(x => x.totalDays), 1);
+                  const pct = (b.totalDays / max) * 100;
+                  const isTop = idx === 0 && b.totalDays > 0;
+                  const barColor = isTop ? "#F40009" : b.totalDays > 0 ? "#D4860A" : "#E0E0E0";
+                  return (
+                    <div key={b.category} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium" style={{ color: "#1A1A1A" }}>{b.category}</span>
+                        <span style={{ color: "#666" }}>
+                          {b.count} delay{b.count !== 1 ? "s" : ""} · {b.totalDays}d total · avg {b.avgDays}d
+                        </span>
+                      </div>
+                      <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: "#F0F0F0" }}>
+                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {topBottleneck && (
+                <div className="rounded-md p-3 mt-3 text-xs" style={{ backgroundColor: "#FFF0F0", border: "1px solid #F40009" }}>
+                  <p className="font-bold" style={{ color: "#F40009" }}>Action insight</p>
+                  <p className="mt-1" style={{ color: "#1A1A1A" }}>
+                    <strong>{topBottleneck.category}</strong> is causing the most production downtime
+                    ({topBottleneck.totalDays} days across {topBottleneck.count} task{topBottleneck.count !== 1 ? "s" : ""}).
+                    {topBottleneck.category === "Material delays" && overdueMaterialCount > 0 &&
+                      ` Procurement has ${overdueMaterialCount} overdue material request${overdueMaterialCount !== 1 ? "s" : ""} right now.`}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Bay Utilisation */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Layers className="h-4 w-4" style={{ color: "#006039" }} />
+            Bay Utilisation
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-md p-3" style={{ backgroundColor: "#F7F7F7", border: "1px solid #E0E0E0" }}>
+              <p className="text-[10px]" style={{ color: "#666" }}>Module Bays (Indoor)</p>
+              <p className="text-2xl font-bold font-display" style={{ color: "#1A1A1A" }}>
+                {bayStats.indoorOccupied}/{INDOOR_BAYS}
+              </p>
+              <p className="text-[10px] mt-1" style={{ color: bayStats.moduleBayUtil >= 80 ? "#F40009" : "#006039" }}>
+                {bayStats.moduleBayUtil}% utilised this week
+              </p>
+            </div>
+            <div className="rounded-md p-3" style={{ backgroundColor: "#F7F7F7", border: "1px solid #E0E0E0" }}>
+              <p className="text-[10px]" style={{ color: "#666" }}>Panel Bays (Outdoor)</p>
+              <p className="text-2xl font-bold font-display" style={{ color: "#1A1A1A" }}>
+                {bayStats.outdoorOccupied}/{OUTDOOR_BAYS}
+              </p>
+              <p className="text-[10px] mt-1" style={{ color: bayStats.panelBayUtil >= 80 ? "#F40009" : "#006039" }}>
+                {bayStats.panelBayUtil}% utilised this week
+              </p>
+            </div>
+          </div>
+
+          {/* Bay-by-bay */}
+          {bays.length > 0 && (
+            <div className="overflow-x-auto border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-20">Bay</TableHead>
+                    <TableHead className="w-20">Type</TableHead>
+                    <TableHead>Project</TableHead>
+                    <TableHead className="w-32">Stage</TableHead>
+                    <TableHead className="w-24">Started</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bays.map(b => (
+                    <TableRow key={`${b.bay_type}-${b.bay_number}`}>
+                      <TableCell className="text-xs font-bold">#{b.bay_number}</TableCell>
+                      <TableCell className="text-xs capitalize">{b.bay_type ?? "indoor"}</TableCell>
+                      <TableCell className="text-xs">
+                        {b.project_name ?? <span className="text-muted-foreground italic">empty</span>}
+                      </TableCell>
+                      <TableCell className="text-xs">{b.current_stage ?? "-"}</TableCell>
+                      <TableCell className="text-xs">
+                        {b.assigned_at ? new Date(b.assigned_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {/* 4-week projection */}
+          <div>
+            <p className="text-xs font-medium mb-2" style={{ color: "#1A1A1A" }}>Projected utilisation — next 4 weeks</p>
+            <div className="grid grid-cols-4 gap-2">
+              {bayStats.projected.map((p, i) => (
+                <div key={i} className="rounded-md p-2 text-center" style={{ backgroundColor: "#F7F7F7", border: "1px solid #E0E0E0" }}>
+                  <p className="text-[10px]" style={{ color: "#666" }}>Week {i + 1}</p>
+                  <p className="text-lg font-bold font-display" style={{ color: p >= 80 ? "#F40009" : p >= 60 ? "#D4860A" : "#006039" }}>
+                    {p}%
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Capacity Forecast */}
       <Card>
         <CardHeader className="pb-2">
