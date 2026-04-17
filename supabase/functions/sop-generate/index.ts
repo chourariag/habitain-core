@@ -172,9 +172,9 @@ Deno.serve(async (req) => {
           escalation: sop.escalation,
           ai_generated: true,
           created_by: profile.id,
-          created_by_name: profile.full_name,
+          created_by_name: profile.display_name,
           last_updated_by: profile.id,
-          last_updated_by_name: profile.full_name,
+          last_updated_by_name: profile.display_name,
         })
         .select()
         .single();
@@ -212,9 +212,9 @@ Deno.serve(async (req) => {
             escalation: sop.escalation,
             ai_generated: true,
             created_by: profile.id,
-            created_by_name: profile.full_name,
+            created_by_name: profile.display_name,
             last_updated_by: profile.id,
-            last_updated_by_name: profile.full_name,
+            last_updated_by_name: profile.display_name,
           });
           inserted++;
           await new Promise((r) => setTimeout(r, 600));
