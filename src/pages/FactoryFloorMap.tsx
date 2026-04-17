@@ -406,7 +406,45 @@ export default function FactoryFloorMap() {
         ))}
       </div>
 
-      {/* Main layout: Floor + Worker Pool */}
+      {/* Pending Panel → Module Handovers */}
+      {handovers.length > 0 && (
+        <Card className="border-border" style={{ borderLeft: "4px solid #D4860A" }}>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
+                Pending Panel → Module Handovers
+              </span>
+              <Badge className="text-xs" style={{ backgroundColor: "#FFF8E8", color: "#D4860A", border: "1px solid #D4860A" }}>
+                {handovers.length} pending
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {handovers.map((h) => (
+                <div key={h.id} className="rounded-md p-3 flex items-center justify-between gap-2"
+                  style={{ backgroundColor: "#FFF8E8", border: "1px solid #D4860A" }}>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold truncate" style={{ color: "#1A1A1A" }}>
+                      Panels ready for Module Bay {h.target_module_bay >= OUTDOOR_BAY_START
+                        ? `${h.target_module_bay - OUTDOOR_BAY_START + 1} (Outdoor)`
+                        : `${h.target_module_bay} (Indoor)`}
+                    </p>
+                    <p className="text-[11px] truncate" style={{ color: "#666" }}>
+                      {h.projects?.name ?? "—"} · {PANEL_TYPE_LABELS[h.panel_batches?.panel_type ?? ""] ?? "Panels"}
+                      {" · "}From Panel Bay {h.source_panel_bay - PANEL_BAY_START + 1}
+                    </p>
+                  </div>
+                  {canAssign && (
+                    <Button size="sm" variant="outline" onClick={() => handleReceiveHandover(h)}>
+                      <Check className="h-3 w-3 mr-1" /> Received
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Floor zones */}
         <div className="flex-1 space-y-6">
