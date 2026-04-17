@@ -4175,6 +4175,62 @@ export type Database = {
           },
         ]
       }
+      project_budget_manual_entries: {
+        Row: {
+          amount_excl_gst: number
+          boq_category: string
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          description: string | null
+          entry_date: string
+          id: string
+          invoice_no: string | null
+          project_id: string
+          remark: string | null
+          updated_at: string
+          vendor_name: string | null
+        }
+        Insert: {
+          amount_excl_gst?: number
+          boq_category: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          description?: string | null
+          entry_date?: string
+          id?: string
+          invoice_no?: string | null
+          project_id: string
+          remark?: string | null
+          updated_at?: string
+          vendor_name?: string | null
+        }
+        Update: {
+          amount_excl_gst?: number
+          boq_category?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          description?: string | null
+          entry_date?: string
+          id?: string
+          invoice_no?: string | null
+          project_id?: string
+          remark?: string | null
+          updated_at?: string
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_budget_manual_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_design_files: {
         Row: {
           budget_discussed: boolean
@@ -4250,6 +4306,68 @@ export type Database = {
             foreignKeyName: "project_design_files_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_grns: {
+        Row: {
+          basic_amount_excl_gst: number
+          boq_category: string
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          description: string | null
+          gst_amount: number | null
+          id: string
+          invoice_date: string | null
+          invoice_no: string | null
+          project_id: string
+          received_at: string
+          remark: string | null
+          updated_at: string
+          vendor_name: string
+        }
+        Insert: {
+          basic_amount_excl_gst?: number
+          boq_category: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          description?: string | null
+          gst_amount?: number | null
+          id?: string
+          invoice_date?: string | null
+          invoice_no?: string | null
+          project_id: string
+          received_at?: string
+          remark?: string | null
+          updated_at?: string
+          vendor_name: string
+        }
+        Update: {
+          basic_amount_excl_gst?: number
+          boq_category?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          description?: string | null
+          gst_amount?: number | null
+          id?: string
+          invoice_date?: string | null
+          invoice_no?: string | null
+          project_id?: string
+          received_at?: string
+          remark?: string | null
+          updated_at?: string
+          vendor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_grns_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
