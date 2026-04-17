@@ -7,9 +7,48 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUserRole } from "@/hooks/useUserRole";
-import { Loader2, Factory, Target, AlertTriangle, TrendingUp, Save } from "lucide-react";
-import { differenceInDays, startOfMonth, endOfMonth, addDays } from "date-fns";
+import { Loader2, Factory, Target, AlertTriangle, TrendingUp, Save, Activity, Layers } from "lucide-react";
+import { differenceInDays, startOfMonth, endOfMonth, addDays, subDays } from "date-fns";
 import { toast } from "sonner";
+
+const INDOOR_BAYS = 10;
+const OUTDOOR_BAYS = 7;
+const PANEL_BAYS = 3;
+const MODULE_BAYS = 6;
+
+// Map DELAY_CAUSES → bottleneck categories
+const CAUSE_TO_CATEGORY: Record<string, string> = {
+  "Internal — Material": "Material delays",
+  "External — Vendor": "Material delays",
+  "Internal — Manpower": "Manpower shortage",
+  "Internal — Method": "Manpower shortage",
+  "Internal — Equipment": "Equipment / tools",
+  "External — Client": "Client decisions",
+  "External — Approvals": "Design queries / GFC delays",
+  "External — Payment": "Client decisions",
+  "External — Weather": "External / weather",
+};
+const ALL_CATEGORIES = [
+  "Material delays", "Manpower shortage", "Design queries / GFC delays",
+  "Rework / NCR", "Equipment / tools", "Client decisions", "External / weather",
+];
+
+interface BottleneckRow {
+  category: string;
+  count: number;
+  totalDays: number;
+  avgDays: number;
+}
+
+interface BayRow {
+  bay_type: string;
+  bay_number: number;
+  module_id: string | null;
+  project_id: string | null;
+  current_stage: string | null;
+  project_name: string | null;
+  assigned_at: string | null;
+}
 
 const ALLOWED = [
   "production_head", "head_operations", "managing_director", "super_admin",
@@ -50,6 +89,9 @@ export default function CapacityPlanning() {
     estCapacityPerMonth: 0,
   });
   const [risks, setRisks] = useState<ProjectRisk[]>([]);
+  const [bottlenecks, setBottlenecks] = useState<BottleneckRow[]>([]);
+  const [overdueMaterialCount, setOverdueMaterialCount] = useState(0);
+  const [bays, setBays] = useState<BayRow[]>([]);
   const [settings, setSettings] = useState({
     panel_bay_cycle_days: 14,
     module_bay_stage_days: 5,
@@ -95,10 +137,54 @@ export default function CapacityPlanning() {
         .gte("target_end", today).lte("target_end", next30),
       supabase.from("projects").select("id, name, client_name, est_completion, status")
         .eq("is_archived", false).neq("status", "completed"),
-      supabase.from("project_tasks").select("project_id, planned_finish_date, actual_finish_date, completion_percentage, status"),
-      supabase.from("design_queries").select("project_id, status").eq("is_archived", false),
+      supabase.from("project_tasks").select("project_id, planned_finish_date, actual_finish_date, completion_percentage, status, delay_cause, delay_days"),
+      supabase.from("design_queries").select("project_id, status, created_at, resolved_at").eq("is_archived", false),
       supabase.from("material_requests").select("project_id, status, urgency, created_at, received_at").eq("is_archived", false),
     ]);
+
+    // Bay assignments — latest per bay (already ordered by assigned_at via subquery; we dedupe client-side)
+    const { data: bayRows } = await supabase
+      .from("bay_assignments")
+      .select("bay_type, bay_number, module_id, project_id, assigned_at")
+      .order("assigned_at", { ascending: false });
+
+    // Pull module stage + project name for each unique bay
+    const seen = new Set<string>();
+    const latestBays: { bay_type: string; bay_number: number; module_id: string; project_id: string | null; assigned_at: string | null }[] = [];
+    for (const b of bayRows ?? []) {
+      const key = `${b.bay_type}-${b.bay_number}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      latestBays.push(b as any);
+    }
+    const moduleIds = latestBays.map(b => b.module_id).filter(Boolean);
+    const projIds = latestBays.map(b => b.project_id).filter(Boolean) as string[];
+    const [{ data: bayMods }, { data: bayProjs }, { data: ncrTasks }] = await Promise.all([
+      moduleIds.length
+        ? supabase.from("modules").select("id, current_stage, production_status").in("id", moduleIds)
+        : Promise.resolve({ data: [] as any[] }),
+      projIds.length
+        ? supabase.from("projects").select("id, name").in("id", projIds)
+        : Promise.resolve({ data: [] as any[] }),
+      supabase.from("project_tasks").select("delay_days, delay_cause")
+        .or("task_name.ilike.%rework%,task_name.ilike.%ncr%,delay_cause.ilike.%rework%"),
+    ]);
+    const modMap = new Map((bayMods ?? []).map((m: any) => [m.id, m]));
+    const projMap = new Map((bayProjs ?? []).map((p: any) => [p.id, p.name]));
+    const enrichedBays: BayRow[] = latestBays.map(b => {
+      const mod: any = modMap.get(b.module_id);
+      const isOccupied = mod && mod.production_status !== "completed" && mod.production_status !== "dispatched";
+      return {
+        bay_type: b.bay_type,
+        bay_number: b.bay_number,
+        module_id: isOccupied ? b.module_id : null,
+        project_id: isOccupied ? b.project_id : null,
+        current_stage: isOccupied ? mod?.current_stage ?? null : null,
+        project_name: isOccupied ? (projMap.get(b.project_id ?? "") ?? null) : null,
+        assigned_at: isOccupied ? b.assigned_at : null,
+      };
+    });
+    setBays(enrichedBays);
 
     if (settingsRow) {
       setSettings({
@@ -189,6 +275,40 @@ export default function CapacityPlanning() {
     });
 
     setRisks(projectRisks);
+
+    // Bottleneck analysis — aggregate delay_cause from project_tasks (last 90 days of finished tasks)
+    const cutoff = subDays(new Date(), 90);
+    const buckets: Record<string, { count: number; days: number }> = {};
+    ALL_CATEGORIES.forEach(c => { buckets[c] = { count: 0, days: 0 }; });
+
+    (tasks ?? []).forEach((t: any) => {
+      if (!t.delay_cause || !t.delay_days || t.delay_days <= 0) return;
+      if (t.actual_finish_date && new Date(t.actual_finish_date) < cutoff) return;
+      const cat = CAUSE_TO_CATEGORY[t.delay_cause];
+      if (!cat) return;
+      buckets[cat].count += 1;
+      buckets[cat].days += Number(t.delay_days);
+    });
+    // Rework / NCR bucket from rework-keyword tasks
+    (ncrTasks ?? []).forEach((t: any) => {
+      if (!t.delay_days || t.delay_days <= 0) return;
+      buckets["Rework / NCR"].count += 1;
+      buckets["Rework / NCR"].days += Number(t.delay_days);
+    });
+
+    const bnRows: BottleneckRow[] = ALL_CATEGORIES.map(cat => ({
+      category: cat,
+      count: buckets[cat].count,
+      totalDays: buckets[cat].days,
+      avgDays: buckets[cat].count > 0 ? Math.round((buckets[cat].days / buckets[cat].count) * 10) / 10 : 0,
+    })).sort((a, b) => b.totalDays - a.totalDays);
+    setBottlenecks(bnRows);
+
+    // Total overdue materials count for action insight
+    let totalOverdue = 0;
+    matOverdueByProj.forEach(v => { totalOverdue += v; });
+    setOverdueMaterialCount(totalOverdue);
+
     setLoading(false);
   }
 
@@ -208,9 +328,7 @@ export default function CapacityPlanning() {
   const forecast = useMemo(() => {
     const { module_bay_stage_days, active_days_per_week, target_modules_per_month } = settings;
     const STAGES = 10;
-    const MODULE_BAYS = 6;
     const daysPerModule = module_bay_stage_days * STAGES;
-    // throughput per bay per month: (active days/week * 4.33) / days per module
     const monthDays = active_days_per_week * 4.33;
     const modulesPerBayPerMonth = monthDays / daysPerModule;
     const achievable = Math.round(MODULE_BAYS * modulesPerBayPerMonth);
@@ -218,6 +336,22 @@ export default function CapacityPlanning() {
     const extraBayDaysNeeded = gap < 0 ? Math.ceil((Math.abs(gap) * daysPerModule) / 4.33) : 0;
     return { achievable, gap, extraBayDaysNeeded };
   }, [settings]);
+
+  // Bay utilisation calc
+  const bayStats = useMemo(() => {
+    const indoorBays = bays.filter(b => b.bay_type !== "outdoor");
+    const outdoorBays = bays.filter(b => b.bay_type === "outdoor");
+    const indoorOccupied = indoorBays.filter(b => b.module_id).length;
+    const outdoorOccupied = outdoorBays.filter(b => b.module_id).length;
+    const moduleBayUtil = INDOOR_BAYS > 0 ? Math.round((indoorOccupied / INDOOR_BAYS) * 100) : 0;
+    const panelBayUtil = OUTDOOR_BAYS > 0 ? Math.round((outdoorOccupied / OUTDOOR_BAYS) * 100) : 0;
+    // 4-week projected: assume current pace continues; nudge by gap
+    const baseUtil = Math.round((moduleBayUtil + panelBayUtil) / 2);
+    const projected = [0, 1, 2, 3].map(i => Math.min(100, Math.max(0, baseUtil + (i * 2))));
+    return { indoorOccupied, outdoorOccupied, moduleBayUtil, panelBayUtil, indoorBays, outdoorBays, projected };
+  }, [bays]);
+
+  const topBottleneck = bottlenecks.find(b => b.totalDays > 0);
 
   if (roleLoading || loading) {
     return (
@@ -287,6 +421,138 @@ export default function CapacityPlanning() {
                 {s.sub && <p className="text-[10px]" style={{ color: "#999" }}>{s.sub}</p>}
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bottleneck Analysis */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Activity className="h-4 w-4" style={{ color: "#F40009" }} />
+            Bottleneck Analysis
+            <Badge variant="outline" className="ml-2 text-[10px]">last 90 days</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {bottlenecks.every(b => b.totalDays === 0) ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              No delay data logged yet. Bottlenecks appear once tasks are marked complete with a delay cause.
+            </p>
+          ) : (
+            <>
+              <div className="space-y-2">
+                {bottlenecks.map((b, idx) => {
+                  const max = Math.max(...bottlenecks.map(x => x.totalDays), 1);
+                  const pct = (b.totalDays / max) * 100;
+                  const isTop = idx === 0 && b.totalDays > 0;
+                  const barColor = isTop ? "#F40009" : b.totalDays > 0 ? "#D4860A" : "#E0E0E0";
+                  return (
+                    <div key={b.category} className="space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium" style={{ color: "#1A1A1A" }}>{b.category}</span>
+                        <span style={{ color: "#666" }}>
+                          {b.count} delay{b.count !== 1 ? "s" : ""} · {b.totalDays}d total · avg {b.avgDays}d
+                        </span>
+                      </div>
+                      <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: "#F0F0F0" }}>
+                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {topBottleneck && (
+                <div className="rounded-md p-3 mt-3 text-xs" style={{ backgroundColor: "#FFF0F0", border: "1px solid #F40009" }}>
+                  <p className="font-bold" style={{ color: "#F40009" }}>Action insight</p>
+                  <p className="mt-1" style={{ color: "#1A1A1A" }}>
+                    <strong>{topBottleneck.category}</strong> is causing the most production downtime
+                    ({topBottleneck.totalDays} days across {topBottleneck.count} task{topBottleneck.count !== 1 ? "s" : ""}).
+                    {topBottleneck.category === "Material delays" && overdueMaterialCount > 0 &&
+                      ` Procurement has ${overdueMaterialCount} overdue material request${overdueMaterialCount !== 1 ? "s" : ""} right now.`}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Bay Utilisation */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Layers className="h-4 w-4" style={{ color: "#006039" }} />
+            Bay Utilisation
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-md p-3" style={{ backgroundColor: "#F7F7F7", border: "1px solid #E0E0E0" }}>
+              <p className="text-[10px]" style={{ color: "#666" }}>Module Bays (Indoor)</p>
+              <p className="text-2xl font-bold font-display" style={{ color: "#1A1A1A" }}>
+                {bayStats.indoorOccupied}/{INDOOR_BAYS}
+              </p>
+              <p className="text-[10px] mt-1" style={{ color: bayStats.moduleBayUtil >= 80 ? "#F40009" : "#006039" }}>
+                {bayStats.moduleBayUtil}% utilised this week
+              </p>
+            </div>
+            <div className="rounded-md p-3" style={{ backgroundColor: "#F7F7F7", border: "1px solid #E0E0E0" }}>
+              <p className="text-[10px]" style={{ color: "#666" }}>Panel Bays (Outdoor)</p>
+              <p className="text-2xl font-bold font-display" style={{ color: "#1A1A1A" }}>
+                {bayStats.outdoorOccupied}/{OUTDOOR_BAYS}
+              </p>
+              <p className="text-[10px] mt-1" style={{ color: bayStats.panelBayUtil >= 80 ? "#F40009" : "#006039" }}>
+                {bayStats.panelBayUtil}% utilised this week
+              </p>
+            </div>
+          </div>
+
+          {/* Bay-by-bay */}
+          {bays.length > 0 && (
+            <div className="overflow-x-auto border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="w-20">Bay</TableHead>
+                    <TableHead className="w-20">Type</TableHead>
+                    <TableHead>Project</TableHead>
+                    <TableHead className="w-32">Stage</TableHead>
+                    <TableHead className="w-24">Started</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bays.map(b => (
+                    <TableRow key={`${b.bay_type}-${b.bay_number}`}>
+                      <TableCell className="text-xs font-bold">#{b.bay_number}</TableCell>
+                      <TableCell className="text-xs capitalize">{b.bay_type ?? "indoor"}</TableCell>
+                      <TableCell className="text-xs">
+                        {b.project_name ?? <span className="text-muted-foreground italic">empty</span>}
+                      </TableCell>
+                      <TableCell className="text-xs">{b.current_stage ?? "-"}</TableCell>
+                      <TableCell className="text-xs">
+                        {b.assigned_at ? new Date(b.assigned_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short" }) : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+
+          {/* 4-week projection */}
+          <div>
+            <p className="text-xs font-medium mb-2" style={{ color: "#1A1A1A" }}>Projected utilisation — next 4 weeks</p>
+            <div className="grid grid-cols-4 gap-2">
+              {bayStats.projected.map((p, i) => (
+                <div key={i} className="rounded-md p-2 text-center" style={{ backgroundColor: "#F7F7F7", border: "1px solid #E0E0E0" }}>
+                  <p className="text-[10px]" style={{ color: "#666" }}>Week {i + 1}</p>
+                  <p className="text-lg font-bold font-display" style={{ color: p >= 80 ? "#F40009" : p >= 60 ? "#D4860A" : "#006039" }}>
+                    {p}%
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
