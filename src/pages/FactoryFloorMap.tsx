@@ -661,10 +661,16 @@ export default function FactoryFloorMap() {
           <Select value={moveToBay} onValueChange={setMoveToBay}>
             <SelectTrigger><SelectValue placeholder="Target bay" /></SelectTrigger>
             <SelectContent>
-              {Array.from({ length: TOTAL_BAYS }, (_, i) => i + 1)
+              {[
+                ...Array.from({ length: INDOOR_MODULE_BAYS }, (_, i) => i + 1),
+                ...Array.from({ length: OUTDOOR_MODULE_BAYS }, (_, i) => i + OUTDOOR_BAY_START),
+              ]
                 .filter((n) => !bayMap.has(n))
                 .map((n) => (
-                  <SelectItem key={n} value={String(n)}>Bay {n} {n <= INDOOR_BAYS ? "(Indoor)" : "(Outdoor)"}</SelectItem>
+                  <SelectItem key={n} value={String(n)}>
+                    Module Bay {n < OUTDOOR_BAY_START ? n : n - OUTDOOR_BAY_START + 1}{" "}
+                    {n < OUTDOOR_BAY_START ? "(Indoor)" : "(Outdoor)"}
+                  </SelectItem>
                 ))}
             </SelectContent>
           </Select>
@@ -691,10 +697,11 @@ export default function FactoryFloorMap() {
 
 /* ──────── BAY CARD ──────── */
 function BayCard({
-  bayNumber, assignment, module, workers, workerMap, selected, canAssign,
-  onSelect, onDrop, onDragOver, onTapAssign,
+  bayNumber, bayLabel, assignment, module, workers, workerMap, selected, canAssign,
+  onSelect, onDrop, onDragOver, onTapAssign, outdoor,
 }: {
   bayNumber: number;
+  bayLabel?: string;
   assignment?: BayAssignment;
   module?: ModuleRow;
   workers?: { workerId: string; task: string | null }[];
@@ -705,11 +712,13 @@ function BayCard({
   onDrop: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onTapAssign?: () => void;
+  outdoor?: boolean;
 }) {
   const occupied = !!assignment && !!module;
   const si = occupied ? stageIndex(module!.current_stage) : 0;
   const stageColour = STAGE_COLOURS[si];
   const status = module?.production_status;
+  const leftBorderColor = outdoor ? "#999" : "#006039";
 
   const flagColor = status === "hold" ? "#D4860A" : si === 9 ? "#F40009" : si === 8 ? "#006039" : "#006039";
   const flagIcon = status === "hold" ? "⚠" : si === 9 ? "🚚" : si === 8 ? "!" : "✓";
@@ -727,14 +736,16 @@ function BayCard({
       style={{
         backgroundColor: occupied ? "#FFFFFF" : "#FAFAFA",
         borderColor: occupied ? (selected ? undefined : "#E0E0E0") : "#E0E0E0",
+        borderLeftWidth: 4,
+        borderLeftColor: leftBorderColor,
         borderTopWidth: occupied ? 4 : undefined,
         borderTopColor: occupied ? stageColour : undefined,
         minHeight: 120,
       }}
     >
-      {/* Bay number */}
+      {/* Bay label */}
       <span className="absolute top-1 left-2 text-[10px] font-bold" style={{ color: "#999" }}>
-        {bayNumber}
+        {bayLabel ?? `Bay ${bayNumber}`}
       </span>
 
       {occupied ? (
