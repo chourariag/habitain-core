@@ -365,8 +365,21 @@ export default function FactoryFloorMap() {
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-2 items-center">
-        <span className="text-xs font-semibold" style={{ color: "#999" }}>STAGES:</span>
+      <div className="flex flex-wrap gap-3 items-center">
+        <span className="text-xs font-semibold" style={{ color: "#999" }}>BAY TYPES:</span>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-3 rounded-sm border-l-4" style={{ borderLeftColor: "#D4860A", backgroundColor: "#FFF" }} />
+          <span className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#666" }}>Panel Production</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-3 rounded-sm border-l-4" style={{ borderLeftColor: "#006039", backgroundColor: "#FFF" }} />
+          <span className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#666" }}>Module Bay (Indoor)</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="w-4 h-3 rounded-sm border-l-4" style={{ borderLeftColor: "#999", backgroundColor: "#FFF" }} />
+          <span className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#666" }}>Outdoor Bay</span>
+        </div>
+        <span className="text-xs font-semibold ml-3" style={{ color: "#999" }}>STAGES:</span>
         {STAGE_NAMES.map((name, i) => (
           <div key={name} className="flex items-center gap-1">
             <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: STAGE_COLOURS[i] }} />
@@ -379,31 +392,55 @@ export default function FactoryFloorMap() {
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Floor zones */}
         <div className="flex-1 space-y-6">
-          {/* Indoor Zone */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-bold" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
-                Indoor Production Floor — Bay 1 to 10
-              </span>
-              <Badge className="text-xs" style={{ backgroundColor: "#006039", color: "#fff" }}>Indoor</Badge>
+          {/* Two production zones side-by-side on desktop */}
+          <div className="grid grid-cols-1 xl:grid-cols-[auto_1fr] gap-6">
+            {/* ZONE A — Panel Production */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-sm font-bold" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
+                  PANEL PRODUCTION ZONE
+                </span>
+                <Badge className="text-xs" style={{ backgroundColor: "#D4860A", color: "#fff" }}>3 Bays</Badge>
+              </div>
+              <div className="grid grid-cols-3 xl:grid-cols-1 gap-3">
+                {Array.from({ length: PANEL_BAYS }, (_, i) => i + PANEL_BAY_START).map((n, idx) => (
+                  <PanelBayCard
+                    key={n}
+                    bayNumber={n}
+                    bayLabel={`Panel Bay ${idx + 1}`}
+                    batch={panelBatches.find((b) => b.bay_number === n)}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              {Array.from({ length: INDOOR_BAYS }, (_, i) => i + 1).map((n) => (
-                <BayCard
-                  key={n}
-                  bayNumber={n}
-                  assignment={bayMap.get(n)}
-                  module={bayMap.get(n) ? moduleMap.get(bayMap.get(n)!.module_id) : undefined}
-                  workers={bayMap.get(n) ? moduleWorkers.get(bayMap.get(n)!.module_id) : undefined}
-                  workerMap={workerMap}
-                  selected={selectedBay === n}
-                  canAssign={canAssign}
-                  onSelect={() => setSelectedBay(selectedBay === n ? null : n)}
-                  onDrop={() => handleDrop(n)}
-                  onDragOver={(e) => { e.preventDefault(); }}
-                  onTapAssign={() => isMobile && tapWorkerId ? handleTapAssign(n) : undefined}
-                />
-              ))}
+
+            {/* ZONE B — Module Production (Indoor) */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-sm font-bold" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
+                  MODULE PRODUCTION ZONE — Indoor
+                </span>
+                <Badge className="text-xs" style={{ backgroundColor: "#006039", color: "#fff" }}>{INDOOR_MODULE_BAYS} Bays</Badge>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                {Array.from({ length: INDOOR_MODULE_BAYS }, (_, i) => i + 1).map((n) => (
+                  <BayCard
+                    key={n}
+                    bayNumber={n}
+                    bayLabel={`Module Bay ${n} (Indoor)`}
+                    assignment={bayMap.get(n)}
+                    module={bayMap.get(n) ? moduleMap.get(bayMap.get(n)!.module_id) : undefined}
+                    workers={bayMap.get(n) ? moduleWorkers.get(bayMap.get(n)!.module_id) : undefined}
+                    workerMap={workerMap}
+                    selected={selectedBay === n}
+                    canAssign={canAssign}
+                    onSelect={() => setSelectedBay(selectedBay === n ? null : n)}
+                    onDrop={() => handleDrop(n)}
+                    onDragOver={(e) => { e.preventDefault(); }}
+                    onTapAssign={() => isMobile && tapWorkerId ? handleTapAssign(n) : undefined}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
@@ -418,15 +455,16 @@ export default function FactoryFloorMap() {
             </div>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-sm font-bold" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
-                Open Yard — Bay 11 to 17
+                Open Yard — Module Bays {OUTDOOR_BAY_START} to {OUTDOOR_BAY_START + OUTDOOR_MODULE_BAYS - 1}
               </span>
-              <Badge className="text-xs" style={{ backgroundColor: "#D4860A", color: "#fff" }}>Outdoor</Badge>
+              <Badge className="text-xs" style={{ backgroundColor: "#999", color: "#fff" }}>Outdoor</Badge>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {Array.from({ length: TOTAL_BAYS - INDOOR_BAYS }, (_, i) => i + INDOOR_BAYS + 1).map((n) => (
+              {Array.from({ length: OUTDOOR_MODULE_BAYS }, (_, i) => i + OUTDOOR_BAY_START).map((n) => (
                 <BayCard
                   key={n}
                   bayNumber={n}
+                  bayLabel={`Module Bay ${n - OUTDOOR_BAY_START + 1} (Outdoor)`}
                   assignment={bayMap.get(n)}
                   module={bayMap.get(n) ? moduleMap.get(bayMap.get(n)!.module_id) : undefined}
                   workers={bayMap.get(n) ? moduleWorkers.get(bayMap.get(n)!.module_id) : undefined}
@@ -437,6 +475,7 @@ export default function FactoryFloorMap() {
                   onDrop={() => handleDrop(n)}
                   onDragOver={(e) => { e.preventDefault(); }}
                   onTapAssign={() => isMobile && tapWorkerId ? handleTapAssign(n) : undefined}
+                  outdoor
                 />
               ))}
             </div>
