@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
@@ -8,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { Sparkles, BookOpen, ArrowLeft, Loader2, CheckCircle2, Eye, Pencil } from "lucide-react";
+import { Sparkles, BookOpen, ArrowLeft, Loader2, CheckCircle2, Eye, Pencil, History } from "lucide-react";
 
 const DEPARTMENTS = [
   "Factory Production",
@@ -60,6 +62,7 @@ type SOP = {
 export default function SOPs() {
   const { role, userId } = useUserRole();
   const isHOD = role ? HOD_ROLES.has(role) : false;
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [sops, setSops] = useState<SOP[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +71,32 @@ export default function SOPs() {
   const [sortBy, setSortBy] = useState<"updated" | "views" | "alpha">("updated");
   const [selected, setSelected] = useState<SOP | null>(null);
   const [genOpen, setGenOpen] = useState(false);
+
+  // Deep-link: open the best-matching approved SOP for a given task name (?taskName=...)
+  useEffect(() => {
+    const taskName = searchParams.get("taskName");
+    if (!taskName || loading || sops.length === 0 || selected) return;
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]/g, "").trim();
+    const target = norm(taskName);
+    const approved = sops.filter((s) => s.status === "approved");
+    let best: { sop: SOP; score: number } | null = null;
+    for (const s of approved) {
+      const hay = norm(`${s.title} ${s.process_name ?? ""}`);
+      let score = 0;
+      if (hay === target) score = 100;
+      else if (hay.includes(target) || target.includes(hay)) score = 60;
+      else {
+        const words = target.split(" ").filter((w) => w.length > 2);
+        score = words.filter((w) => hay.includes(w)).length * 10;
+      }
+      if (!best || score > best.score) best = { sop: s, score };
+    }
+    if (best && best.score >= 20) setSelected(best.sop);
+    else toast.info(`No approved SOP found for "${taskName}".`);
+    // Clear param so reopening list isn't sticky
+    searchParams.delete("taskName");
+    setSearchParams(searchParams, { replace: true });
+  }, [searchParams, loading, sops, selected, setSearchParams]);
 
   const load = async () => {
     setLoading(true);
@@ -436,6 +465,95 @@ function SOPDetail({
         Last updated by {sop.last_updated_by_name ?? "—"} · {new Date(sop.updated_at).toLocaleString()}
         {sop.approved_by_name && <> · Approved by {sop.approved_by_name}</>}
       </div>
+
+      <VersionHistory sopId={sop.id} />
     </div>
+  );
+}
+
+type SOPVersion = {
+  id: string;
+  version_number: number;
+  title: string;
+  role_performs: string | null;
+  purpose: string | null;
+  scope: string | null;
+  materials_tools: string | null;
+  steps: string | null;
+  quality_criteria: string | null;
+  common_mistakes: string | null;
+  safety: string | null;
+  escalation: string | null;
+  edited_by_name: string | null;
+  created_at: string;
+};
+
+function VersionHistory({ sopId }: { sopId: string }) {
+  const [versions, setVersions] = useState<SOPVersion[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("sop_versions")
+        .select("*")
+        .eq("sop_id", sopId)
+        .order("version_number", { ascending: false });
+      setVersions((data ?? []) as SOPVersion[]);
+      setLoaded(true);
+    })();
+  }, [sopId]);
+
+  if (!loaded) return null;
+  if (versions.length === 0)
+    return (
+      <Card className="p-4 mt-2" style={{ borderColor: "#E0E0E0" }}>
+        <div className="flex items-center gap-2 text-sm" style={{ color: "#666" }}>
+          <History className="h-4 w-4" /> No previous versions yet.
+        </div>
+      </Card>
+    );
+
+  const sections: Array<[string, keyof SOPVersion]> = [
+    ["Purpose", "purpose"],
+    ["Scope", "scope"],
+    ["Materials & Tools", "materials_tools"],
+    ["Steps", "steps"],
+    ["Quality Criteria", "quality_criteria"],
+    ["Common Mistakes", "common_mistakes"],
+    ["Safety", "safety"],
+    ["Escalation", "escalation"],
+  ];
+
+  return (
+    <Card className="p-4 mt-2" style={{ borderColor: "#E0E0E0" }}>
+      <div className="flex items-center gap-2 mb-2 font-semibold" style={{ color: "#006039" }}>
+        <History className="h-4 w-4" /> Version History ({versions.length})
+      </div>
+      <Accordion type="single" collapsible className="w-full">
+        {versions.map((v) => (
+          <AccordionItem key={v.id} value={v.id}>
+            <AccordionTrigger className="text-sm hover:no-underline">
+              <div className="flex flex-col items-start text-left">
+                <span className="font-medium">v{v.version_number} — {v.title}</span>
+                <span className="text-xs" style={{ color: "#999" }}>
+                  {v.edited_by_name ?? "Unknown"} · {new Date(v.created_at).toLocaleString()}
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-2 text-sm">
+                {sections.map(([label, key]) => (
+                  <div key={key}>
+                    <div className="font-medium text-xs uppercase tracking-wide" style={{ color: "#666" }}>{label}</div>
+                    <p className="whitespace-pre-wrap" style={{ color: "#333" }}>{(v[key] as string) || "—"}</p>
+                  </div>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </Card>
   );
 }

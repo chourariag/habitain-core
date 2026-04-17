@@ -10,7 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Upload, Download, List, Columns3, BarChart3, Lock, Unlock, Loader2, Monitor, CheckCircle2, Clock, AlertTriangle, Ban, Circle, Timer, Ruler } from "lucide-react";
+import { Upload, Download, List, Columns3, BarChart3, Lock, Unlock, Loader2, Monitor, CheckCircle2, Clock, AlertTriangle, Ban, Circle, Timer, Ruler, BookOpen } from "lucide-react";
 import { format, parseISO, differenceInDays, eachWeekOfInterval, addDays } from "date-fns";
 import { DelayDashboard } from "./DelayDashboard";
 import { MeasurementSheet } from "./MeasurementSheet";
@@ -521,6 +521,23 @@ function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingNa
                       </TooltipProvider>
                     )}
                     {task.task_name}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <a
+                            href={`/sops?taskName=${encodeURIComponent(task.task_name)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center text-muted-foreground hover:text-[#006039] transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label="View SOP for this task"
+                          >
+                            <BookOpen className="h-3.5 w-3.5" />
+                          </a>
+                        </TooltipTrigger>
+                        <TooltipContent>View SOP for this task</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </TableCell>
                 <TableCell><span className="text-xs">{task.phase}</span></TableCell>
