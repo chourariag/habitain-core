@@ -132,6 +132,7 @@ export default function CapacityPlanning() {
       { data: tasks },
       { data: dqs },
       { data: matReqs },
+      { data: panelBatchRows },
     ] = await Promise.all([
       supabase.from("capacity_forecast_settings").select("*").eq("singleton", true).maybeSingle(),
       supabase.from("modules").select("id, project_id, current_stage, production_status")
@@ -148,7 +149,19 @@ export default function CapacityPlanning() {
       supabase.from("project_tasks").select("project_id, planned_finish_date, actual_finish_date, completion_percentage, status, delay_cause, delay_days"),
       supabase.from("design_queries").select("project_id, status, created_at, resolved_at").eq("is_archived", false),
       supabase.from("material_requests").select("project_id, status, urgency, created_at, received_at").eq("is_archived", false),
+      supabase.from("panel_batches").select("id, total_panels, completed_panels, status, current_stage").neq("status", "dispatched"),
     ]);
+
+    // Panel throughput
+    const panelRows = panelBatchRows ?? [];
+    const activeBatches = panelRows.filter((b: any) => b.status !== "ready_for_dispatch" && b.current_stage !== "ready").length;
+    const readyForHandover = panelRows.filter((b: any) => b.status === "ready_for_dispatch" || b.current_stage === "ready").length;
+    setPanelThroughput({
+      activeBatches,
+      readyForHandover,
+      panelsCompleted: panelRows.reduce((acc: number, b: any) => acc + (b.completed_panels ?? 0), 0),
+      panelsTotal: panelRows.reduce((acc: number, b: any) => acc + (b.total_panels ?? 0), 0),
+    });
 
     // Bay assignments — latest per bay (already ordered by assigned_at via subquery; we dedupe client-side)
     const { data: bayRows } = await supabase
