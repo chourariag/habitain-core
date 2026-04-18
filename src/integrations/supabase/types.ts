@@ -4155,6 +4155,125 @@ export type Database = {
           },
         ]
       }
+      profit_loss_line_items: {
+        Row: {
+          account_name: string
+          amount: number
+          created_at: string
+          display_order: number
+          hstack_category: string | null
+          id: string
+          is_section_header: boolean
+          is_subtotal: boolean
+          section_name: string
+          side: string
+          upload_id: string
+        }
+        Insert: {
+          account_name: string
+          amount?: number
+          created_at?: string
+          display_order?: number
+          hstack_category?: string | null
+          id?: string
+          is_section_header?: boolean
+          is_subtotal?: boolean
+          section_name: string
+          side: string
+          upload_id: string
+        }
+        Update: {
+          account_name?: string
+          amount?: number
+          created_at?: string
+          display_order?: number
+          hstack_category?: string | null
+          id?: string
+          is_section_header?: boolean
+          is_subtotal?: boolean
+          section_name?: string
+          side?: string
+          upload_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profit_loss_line_items_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "profit_loss_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profit_loss_uploads: {
+        Row: {
+          created_at: string
+          financial_year: string
+          gross_profit: number
+          gross_profit_pct: number
+          id: string
+          is_current: boolean
+          is_loss: boolean
+          net_margin_pct: number
+          net_profit_loss: number
+          period_end: string | null
+          period_start: string | null
+          source_file_name: string | null
+          total_cogs: number
+          total_direct_expenses: number
+          total_indirect_expenses: number
+          total_other_income: number
+          total_revenue: number
+          uploaded_at: string
+          uploaded_by: string | null
+          uploaded_by_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          financial_year: string
+          gross_profit?: number
+          gross_profit_pct?: number
+          id?: string
+          is_current?: boolean
+          is_loss?: boolean
+          net_margin_pct?: number
+          net_profit_loss?: number
+          period_end?: string | null
+          period_start?: string | null
+          source_file_name?: string | null
+          total_cogs?: number
+          total_direct_expenses?: number
+          total_indirect_expenses?: number
+          total_other_income?: number
+          total_revenue?: number
+          uploaded_at?: string
+          uploaded_by?: string | null
+          uploaded_by_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          financial_year?: string
+          gross_profit?: number
+          gross_profit_pct?: number
+          id?: string
+          is_current?: boolean
+          is_loss?: boolean
+          net_margin_pct?: number
+          net_profit_loss?: number
+          period_end?: string | null
+          period_start?: string | null
+          source_file_name?: string | null
+          total_cogs?: number
+          total_direct_expenses?: number
+          total_indirect_expenses?: number
+          total_other_income?: number
+          total_revenue?: number
+          uploaded_at?: string
+          uploaded_by?: string | null
+          uploaded_by_name?: string | null
+        }
+        Relationships: []
+      }
       project_billing_milestones: {
         Row: {
           amount_excl_gst: number
@@ -7672,6 +7791,7 @@ export type Database = {
         Args: { _department: string; _user_id: string }
         Returns: boolean
       }
+      can_manage_finance_pl: { Args: { _user_id: string }; Returns: boolean }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
