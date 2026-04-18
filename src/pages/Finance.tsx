@@ -2,7 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 import { FinanceOverviewStrip } from "@/components/finance/FinanceOverviewStrip";
 import { MISTab } from "@/components/finance/MISTab";
-import { PLTab } from "@/components/finance/PLTab";
+import { ProfitLossTab } from "@/components/finance/ProfitLossTab";
 import { CashFlowTab } from "@/components/finance/CashFlowTab";
 import { ProjectBudgetsTab } from "@/components/finance/ProjectBudgetsTab";
 import { PaymentsTab } from "@/components/finance/PaymentsTab";
@@ -40,7 +40,7 @@ export default function Finance() {
 
         <TabsContent value="mis"><MISTab /></TabsContent>
         <TabsContent value="revenue-margin"><RevenueMarginTab /></TabsContent>
-        <TabsContent value="pl"><PLTab /></TabsContent>
+        <TabsContent value="pl"><ProfitLossTab /></TabsContent>
         <TabsContent value="cashflow"><CashFlowTab /></TabsContent>
         <TabsContent value="budgets"><ProjectBudgetsTab /></TabsContent>
         <TabsContent value="payments"><PaymentsTab /></TabsContent>
