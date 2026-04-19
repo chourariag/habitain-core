@@ -18,7 +18,8 @@ interface PunchListPanelProps {
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
   open: { color: "#F40009", bg: "#FEE2E2" },
-  resolved: { color: "#006039", bg: "#E8F2ED" },
+  in_progress: { color: "#D4860A", bg: "#FFF8E8" },
+  closed: { color: "#006039", bg: "#E8F2ED" },
   waived: { color: "#999", bg: "#F7F7F7" },
 };
 
@@ -79,7 +80,7 @@ export function PunchListPanel({ projectId }: PunchListPanelProps) {
     fetchData();
   };
 
-  const openItems = items.filter((i) => i.status === "open");
+  const openItems = items.filter((i) => i.status === "open" || i.status === "in_progress");
   const handoverBlocked = openItems.length > 0;
   const canClose = ["site_installation_mgr", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
 
@@ -131,13 +132,18 @@ export function PunchListPanel({ projectId }: PunchListPanelProps) {
                       </Badge>
                       {canClose && item.status === "open" && (
                         <div className="flex gap-1">
-                          <Button size="sm" className="h-5 text-[9px] text-white px-1.5" style={{ backgroundColor: "#006039" }} onClick={() => updateStatus(item.id, "resolved")}>
-                            Resolve
+                          <Button size="sm" className="h-5 text-[9px] text-white px-1.5" style={{ backgroundColor: "#D4860A" }} onClick={() => updateStatus(item.id, "in_progress")}>
+                            Start
                           </Button>
                           <Button size="sm" variant="ghost" className="h-5 text-[9px] px-1.5" style={{ color: "#999" }} onClick={() => updateStatus(item.id, "waived")}>
                             Waive
                           </Button>
                         </div>
+                      )}
+                      {canClose && item.status === "in_progress" && (
+                        <Button size="sm" className="h-5 text-[9px] text-white px-1.5" style={{ backgroundColor: "#006039" }} onClick={() => updateStatus(item.id, "closed")}>
+                          Close
+                        </Button>
                       )}
                     </div>
                   </div>

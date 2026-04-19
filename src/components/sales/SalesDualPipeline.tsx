@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Building2, Home } from "lucide-react";
 
-const STAGES = ["Inquiry", "Site Visit Done", "Proposal Sent", "Negotiation", "Won", "Lost"];
+const STAGES = ["Lead", "Qualified", "Site Visit", "Proposal Sent", "Negotiation", "Won", "Lost"];
 
 const DIVISION_CONFIG = {
   habitainer: {

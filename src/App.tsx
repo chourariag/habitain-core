@@ -35,6 +35,9 @@ import Finance from "@/pages/Finance";
 import KPI from "@/pages/KPI";
 import KPISettings from "@/pages/KPISettings";
 import Alerts from "@/pages/Alerts";
+import Variations from "@/pages/Variations";
+import ClientPortal from "@/pages/ClientPortal";
+import SOPLibrary from "@/pages/SOPLibrary";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +78,9 @@ const App = () => (
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/attendance" element={<Attendance />} />
                 <Route path="/alerts" element={<Alerts />} />
+                <Route path="/variations" element={<Variations />} />
+                <Route path="/client-portal" element={<ClientPortal />} />
+                <Route path="/sop-library" element={<SOPLibrary />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

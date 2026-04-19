@@ -8,9 +8,12 @@ import { SharedDashboardBottom } from "@/components/dashboard/SharedDashboardBot
 import { CheckInButton } from "@/components/attendance/CheckInButton";
 import { LogExpenseButton } from "@/components/expenses/LogExpenseButton";
 import { WeeklyDigestCard } from "@/components/kpi/WeeklyDigestCard";
+import { DailyReadinessBrief } from "@/components/home/DailyReadinessBrief";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function Dashboard() {
   const { role, loading } = useUserRole();
+  const { user } = useAuth();
   const userRole = role as AppRole | null;
 
   if (loading) {
@@ -20,9 +23,13 @@ export default function Dashboard() {
   const tier = getDashboardTier(userRole);
   const roleName = userRole ? ROLE_LABELS[userRole] ?? userRole : "User";
   const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+  const userName = (user as any)?.user_metadata?.full_name ?? (user as any)?.email?.split("@")[0] ?? "there";
 
   return (
     <div className="p-4 md:p-6 space-y-6">
+      {/* Morning readiness brief — only visible before 10am */}
+      <DailyReadinessBrief userRole={userRole} userName={userName} />
+
       {/* Check-in card at the very top */}
       <CheckInButton userRole={userRole} />
 

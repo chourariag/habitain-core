@@ -97,7 +97,7 @@ export default function DesignPortal() {
   const [dqResponse, setDqResponse] = useState("");
   const [respondingDq, setRespondingDq] = useState(false);
 
-  const isPrincipal = userRole === "principal_architect";
+  const isPrincipal = ["principal_architect", "architecture_director"].includes(userRole ?? "");
   const canUpload = ["principal_architect", "project_architect", "structural_architect", "super_admin", "managing_director"].includes(userRole ?? "");
   const isArchitect = ["principal_architect", "project_architect", "structural_architect"].includes(userRole ?? "");
 
@@ -663,7 +663,25 @@ export default function DesignPortal() {
                 <Button size="sm" className="gap-1.5"><Upload className="h-4 w-4" /> Upload Drawing</Button>
               </DialogTrigger>
               <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
-                <DialogHeader><DialogTitle>Upload Drawing</DialogTitle></DialogHeader>
+                <DialogHeader>
+                  <DialogTitle>Upload Drawing</DialogTitle>
+                  <div className="flex justify-end mt-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-7"
+                      onClick={() => {
+                        const headers = ["Drawing ID", "Drawing Type", "Revision", "Description", "Scale", "Notes"];
+                        const csv = headers.join(",") + "\n" + "VV-ARCH-001,Architectural,1,Ground Floor Plan,1:100,";
+                        const blob = new Blob([csv], { type: "text/csv" });
+                        const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
+                        a.download = "boq-drawing-template.csv"; a.click();
+                      }}
+                    >
+                      <Download className="h-3 w-3 mr-1" />Download Template
+                    </Button>
+                  </div>
+                </DialogHeader>
                 <div className="space-y-3">
                   <div>
                     <Label className="text-xs">Project *</Label>

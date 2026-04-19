@@ -28,10 +28,10 @@ function getUpcomingStatutoryDates(): { filing_type: string; due_date: string }[
     const nextM = String(((m + 1) % 12) + 1).padStart(2, "0");
     const nextY = m === 11 ? y + 1 : y;
 
-    // GSTR-1 due on 8th of following month
-    entries.push({ filing_type: "GSTR-1", due_date: `${nextY}-${nextM}-08` });
-    // GSTR-3B due on 18th of following month
-    entries.push({ filing_type: "GSTR-3B", due_date: `${nextY}-${nextM}-18` });
+    // GSTR-1 due on 11th of following month
+    entries.push({ filing_type: "GSTR-1", due_date: `${nextY}-${nextM}-11` });
+    // GSTR-3B due on 20th of following month
+    entries.push({ filing_type: "GSTR-3B", due_date: `${nextY}-${nextM}-20` });
     // TDS Payment due on 5th of following month
     entries.push({ filing_type: "TDS Payment", due_date: `${nextY}-${nextM}-05` });
     // Professional Tax on 15th of current month

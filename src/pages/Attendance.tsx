@@ -93,8 +93,12 @@ function OverviewTab() {
 
   const present = records.filter((r) => r.check_in_time && r.location_type !== "remote").length;
   const remote = records.filter((r) => r.location_type === "remote").length;
-  const onLeave = 0; // TODO: count from leave_requests
-  const notChecked = profiles.length - records.length;
+  const today2 = format(new Date(), "yyyy-MM-dd");
+  const onLeaveIds = new Set(
+    records.filter((r) => r.location_type === "leave" || r.leave_approved === true).map((r) => r.user_id)
+  );
+  const onLeave = onLeaveIds.size;
+  const notChecked = Math.max(0, profiles.length - records.length - onLeave);
 
   const tiles = [
     { label: "Present Today", value: present, color: "#006039" },

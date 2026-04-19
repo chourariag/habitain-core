@@ -4,14 +4,15 @@ import { Loader2 } from "lucide-react";
 import { format, addDays, differenceInDays, parseISO } from "date-fns";
 
 const PRODUCTION_STAGES = [
-  "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
-  "MEP Final", "Windows & Doors", "Finishing", "QC Inspection", "Dispatch",
+  "Subframe", "Decking", "Concrete", "Boarding", "Insulation",
+  "Ceiling", "Flooring", "Painting", "MEP", "Openings",
+  "Waterproofing", "QC Pre-Dispatch",
 ];
 
 const STAGE_DAYS: Record<string, number> = {
-  "Sub-Frame": 7, "MEP Rough-In": 5, "Insulation": 3, "Drywall": 5,
-  "Paint": 4, "MEP Final": 4, "Windows & Doors": 5, "Finishing": 4,
-  "QC Inspection": 2, "Dispatch": 1,
+  "Subframe": 5, "Decking": 3, "Concrete": 4, "Boarding": 4, "Insulation": 3,
+  "Ceiling": 3, "Flooring": 3, "Painting": 4, "MEP": 5, "Openings": 4,
+  "Waterproofing": 2, "QC Pre-Dispatch": 2,
 };
 
 const STAGE_COLORS = [

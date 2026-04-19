@@ -5,7 +5,7 @@ import { DealDrawer } from "./DealDrawer";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-const STAGES = ["Inquiry", "Site Visit Done", "Proposal Sent", "Negotiation", "Won", "Lost"];
+const STAGES = ["Lead", "Qualified", "Site Visit", "Proposal Sent", "Negotiation", "Won", "Lost"];
 
 interface Deal {
   id: string;

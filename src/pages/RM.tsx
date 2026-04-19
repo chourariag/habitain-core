@@ -716,7 +716,7 @@ export default function RMPage() {
               )}
 
               {detailTicket.cost_estimate != null && (
-                <div><p className="text-xs" style={{ color: "#666666" }}>Cost Estimate</p><p className="font-semibold" style={{ color: "#1A1A1A" }}>₹{Number(detailTicket.cost_estimate).toLocaleString()}</p></div>
+                <div><p className="text-xs" style={{ color: "#666666" }}>Cost Estimate</p><p className="font-semibold" style={{ color: "#1A1A1A" }}>₹{Number(detailTicket.cost_estimate).toLocaleString("en-IN")}</p></div>
               )}
               {detailTicket.visit_scheduled_date && (
                 <div><p className="text-xs" style={{ color: "#666666" }}>Visit Scheduled</p><p style={{ color: "#1A1A1A" }}>{detailTicket.visit_scheduled_date}</p></div>

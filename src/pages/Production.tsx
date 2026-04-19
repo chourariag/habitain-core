@@ -14,6 +14,7 @@ import { FactoryFloorMap } from "@/components/production/FactoryFloorMap";
 import { GanttView } from "@/components/production/GanttView";
 import { WeeklyManpowerPlanner } from "@/components/production/WeeklyManpowerPlanner";
 import { ReworkTracker } from "@/components/production/ReworkTracker";
+import { CapacityPlanning } from "@/components/production/CapacityPlanning";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
@@ -136,6 +137,7 @@ function ProductionContent() {
               <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
               <TabsTrigger value="manpower">Manpower</TabsTrigger>
               <TabsTrigger value="rework">Rework</TabsTrigger>
+              <TabsTrigger value="capacity">Capacity</TabsTrigger>
             </TabsList>
           </ScrollableTabsWrapper>
 
@@ -181,6 +183,9 @@ function ProductionContent() {
           </TabsContent>
           <TabsContent value="rework">
             <ReworkTracker />
+          </TabsContent>
+          <TabsContent value="capacity">
+            <CapacityPlanning />
           </TabsContent>
         </Tabs>
       )}

@@ -49,6 +49,7 @@ export function SiteDiary({ projectId, userRole }: Props) {
   const [clientVisitNotes, setClientVisitNotes] = useState("");
   const [materialDeliveries, setMaterialDeliveries] = useState(false);
   const [deliveryItems, setDeliveryItems] = useState<MaterialDeliveryRow[]>([]);
+  const [shareWithClient, setShareWithClient] = useState(false);
 
   const canAdd = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
 
@@ -118,6 +119,7 @@ export function SiteDiary({ projectId, userRole }: Props) {
         client_visit_notes: clientVisit ? clientVisitNotes.trim() || null : null,
         material_deliveries: materialDeliveries,
         material_delivery_items: deliveryItems.filter((d) => d.material.trim()),
+        share_with_client: shareWithClient,
       });
       if (error) throw error;
 
@@ -136,7 +138,7 @@ export function SiteDiary({ projectId, userRole }: Props) {
     setPhotos([]); setPhotoPreviews([]); setShowForm(false);
     setSubcontractors([]); setPowerCuts(false); setPowerCutDuration("");
     setClientVisit(false); setClientVisitName(""); setClientVisitPurpose(""); setClientVisitNotes("");
-    setMaterialDeliveries(false); setDeliveryItems([]);
+    setMaterialDeliveries(false); setDeliveryItems([]); setShareWithClient(false);
   };
 
   const weatherLabel = (val: string | null) => WEATHER_OPTIONS.find((w) => w.value === val)?.label ?? val;
@@ -281,6 +283,15 @@ export function SiteDiary({ projectId, userRole }: Props) {
             </div>
 
             <p className="text-xs text-muted-foreground">📍 GPS location auto-captured on submission</p>
+
+            {/* Share with Client Portal */}
+            <div className="flex items-center gap-3 rounded-lg p-2" style={{ backgroundColor: "#E8F2ED" }}>
+              <Switch checked={shareWithClient} onCheckedChange={setShareWithClient} />
+              <div>
+                <label className="text-xs font-medium" style={{ color: "#006039" }}>Share with Client Portal</label>
+                <p className="text-[10px]" style={{ color: "#666" }}>Client will see this entry in their construction journal</p>
+              </div>
+            </div>
 
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={resetForm} className="flex-1">Cancel</Button>

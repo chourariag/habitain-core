@@ -12,6 +12,7 @@ import { CashPositionCard } from "@/components/finance/CashPositionCard";
 import { LedgerUpload } from "@/components/finance/LedgerUpload";
 import { InvoiceTracker } from "@/components/finance/InvoiceTracker";
 import { RetentionTracker } from "@/components/finance/RetentionTracker";
+import { RevenueMarginsTab } from "@/components/finance/RevenueMarginsTab";
 
 export default function Finance() {
   return (
@@ -42,6 +43,7 @@ export default function Finance() {
             <TabsTrigger value="ledger">Ledger Upload</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="statutory">Statutory</TabsTrigger>
+            <TabsTrigger value="margins">Revenue & Margins</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -55,6 +57,7 @@ export default function Finance() {
         <TabsContent value="ledger"><LedgerUpload /></TabsContent>
         <TabsContent value="payments"><PaymentsTab /></TabsContent>
         <TabsContent value="statutory"><StatutoryTab /></TabsContent>
+        <TabsContent value="margins"><RevenueMarginsTab /></TabsContent>
       </Tabs>
     </div>
   );

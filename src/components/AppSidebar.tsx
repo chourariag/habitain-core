@@ -4,6 +4,7 @@ import {
   Truck, Package, ShoppingCart, ClipboardList, Compass,
   BarChart3, DollarSign, Wrench, Users, Settings,
   ChevronLeft, ChevronRight, LogOut, Globe, Clock, Target, Bell,
+  GitMerge, BookOpen, Globe2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -64,8 +65,11 @@ const sectionConfig = [
     items: [
       { to: "/sales", label: "Sales", icon: BarChart3 },
       { to: "/finance", label: "Finance", icon: DollarSign },
+      { to: "/variations", label: "Variations", icon: GitMerge },
+      { to: "/client-portal", label: "Client Portal", icon: Globe2 },
       { to: "/rm", label: "R&M", icon: Wrench },
       { to: "/amc", label: "AMC", icon: ShoppingCart },
+      { to: "/sop-library", label: "SOP Library", icon: BookOpen },
     ],
   },
   {
