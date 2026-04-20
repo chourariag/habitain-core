@@ -1,21 +1,20 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
+import { getPhaseForStage } from "@/lib/production-phases";
+import { getStagesForSystem, type ProductionSystem } from "@/lib/production-systems";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
-
-const STAGES = [
-  "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
-  "MEP Final", "Windows & Doors", "Finishing", "QC Inspection", "Dispatch",
-];
 
 interface Props {
   modules: ModuleWithProject[];
   onRefresh: () => void;
+  productionSystem?: ProductionSystem | null;
 }
 
-export function ProductionKanban({ modules, onRefresh }: Props) {
+export function ProductionKanban({ modules, onRefresh, productionSystem }: Props) {
+  const STAGES = getStagesForSystem(productionSystem ?? null) as readonly string[];
   const [ncrModules, setNcrModules] = useState<Set<string>>(new Set());
   const [stageEntryDates, setStageEntryDates] = useState<Record<string, string>>({});
   const [dragging, setDragging] = useState<string | null>(null);
