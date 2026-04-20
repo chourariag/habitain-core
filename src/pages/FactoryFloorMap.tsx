@@ -942,13 +942,14 @@ function BayCard({
 
 /* ──────── PANEL BAY CARD ──────── */
 function PanelBayCard({
-  bayNumber, bayLabel, batch, canManage, onMarkReady,
+  bayNumber, bayLabel, batch, canManage, onMarkReady, productionSystem,
 }: {
   bayNumber: number;
   bayLabel: string;
   batch?: PanelBatch;
   canManage?: boolean;
   onMarkReady?: (b: PanelBatch) => void;
+  productionSystem?: "modular" | "panelised" | "hybrid";
 }) {
   const occupied = !!batch;
   const stage = batch?.current_stage ?? "";
@@ -960,6 +961,7 @@ function PanelBayCard({
       ? "Ready for Dispatch"
       : "In Progress";
   const statusColor = !occupied ? "#999" : isReady ? "#006039" : "#D4860A";
+  const isHybrid = productionSystem === "hybrid";
 
   return (
     <div
@@ -968,7 +970,7 @@ function PanelBayCard({
         backgroundColor: occupied ? "#FFFFFF" : "#FAFAFA",
         borderColor: "#E0E0E0",
         borderLeftWidth: 4,
-        borderLeftColor: "#D4860A",
+        borderLeftColor: isHybrid ? "hsl(270 60% 50%)" : "#D4860A",
         minHeight: 120,
       }}
     >
@@ -984,6 +986,11 @@ function PanelBayCard({
           >
             {statusLabel}
           </span>
+          {isHybrid && (
+            <Badge className="text-[9px]" style={{ backgroundColor: "hsl(270 60% 50% / 0.15)", color: "hsl(270 60% 35%)", border: "1px solid hsl(270 60% 50% / 0.3)" }}>
+              HYBRID — feeding Module Bay
+            </Badge>
+          )}
           <p className="font-bold text-sm truncate" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
             {PANEL_TYPE_LABELS[batch.panel_type] ?? batch.panel_type}
           </p>
