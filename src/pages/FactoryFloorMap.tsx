@@ -131,6 +131,7 @@ export default function FactoryFloorMap() {
   const [manpower, setManpower] = useState<ManpowerPlan[]>([]);
   const [panelBatches, setPanelBatches] = useState<PanelBatch[]>([]);
   const [handovers, setHandovers] = useState<PanelHandover[]>([]);
+  const [projectSystems, setProjectSystems] = useState<Record<string, "modular" | "panelised" | "hybrid">>({});
   const [loading, setLoading] = useState(true);
   const [selectedBay, setSelectedBay] = useState<number | null>(null);
 
@@ -156,7 +157,7 @@ export default function FactoryFloorMap() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [bayRes, modRes, workerRes, mpRes, panelRes, handoverRes] = await Promise.all([
+    const [bayRes, modRes, workerRes, mpRes, panelRes, handoverRes, projRes] = await Promise.all([
       supabase.from("bay_assignments").select("*").is("moved_from", null),
       supabase.from("modules").select("id, name, module_code, current_stage, production_status, project_id, projects(name)").eq("is_archived", false),
       supabase.from("profiles").select("id, display_name, role").in("role", [
@@ -174,6 +175,7 @@ export default function FactoryFloorMap() {
         .select("id, panel_batch_id, source_panel_bay, target_module_bay, project_id, status, ready_at, projects(name), panel_batches(panel_type, total_panels)")
         .eq("status", "pending")
         .order("ready_at", { ascending: false }),
+      supabase.from("projects").select("id, production_system").eq("is_archived", false),
     ]);
     setBays((bayRes.data as BayAssignment[] | null) ?? []);
     setModules((modRes.data as ModuleRow[] | null) ?? []);
@@ -181,6 +183,7 @@ export default function FactoryFloorMap() {
     setManpower((mpRes.data as ManpowerPlan[] | null) ?? []);
     setPanelBatches((panelRes.data as PanelBatch[] | null) ?? []);
     setHandovers((handoverRes.data as PanelHandover[] | null) ?? []);
+    setProjectSystems(((projRes.data as { id: string; production_system: string | null }[] | null) ?? []).reduce((acc, p) => { acc[p.id] = (p.production_system ?? "modular") as any; return acc; }, {} as Record<string, "modular" | "panelised" | "hybrid">));
     setLoading(false);
   }, [weekStart]);
 
