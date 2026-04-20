@@ -598,17 +598,17 @@ function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingNa
 }
 
 /* ===================== PHASE BOARD ===================== */
-function PhaseBoard({ tasks, liveStatus }: { tasks: ProjectTask[]; liveStatus: (t: ProjectTask) => string }) {
+function PhaseBoard({ tasks, liveStatus, phases }: { tasks: ProjectTask[]; liveStatus: (t: ProjectTask) => string; phases: string[] }) {
   const grouped = useMemo(() => {
     const m: Record<string, ProjectTask[]> = {};
-    PHASES.forEach((p) => { m[p] = []; });
+    phases.forEach((p) => { m[p] = []; });
     tasks.forEach((t) => { (m[t.phase] ?? (m[t.phase] = [])).push(t); });
     return m;
-  }, [tasks]);
+  }, [tasks, phases]);
 
   return (
     <div className="flex gap-3 overflow-x-auto pb-4">
-      {PHASES.map((phase) => {
+      {phases.map((phase) => {
         const phaseTasks = grouped[phase] ?? [];
         if (phaseTasks.length === 0) return null;
         return (
