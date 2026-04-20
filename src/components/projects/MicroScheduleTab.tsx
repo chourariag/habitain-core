@@ -17,6 +17,8 @@ import { MeasurementSheet } from "./MeasurementSheet";
 import { RedFlagAlerts } from "./RedFlagAlerts";
 import { fetchBenchmarkStats, getModuleCountBand, BenchmarkStats } from "@/lib/task-benchmarks";
 import * as XLSX from "xlsx";
+import { getPhasesForSystem, TASK_TYPE_META, type TaskTemplateType } from "@/lib/production-phases";
+import { ChevronRight, ChevronDown, ShieldAlert } from "lucide-react";
 
 interface ProjectTask {
   id: string;
@@ -38,9 +40,11 @@ interface ProjectTask {
   is_locked: boolean;
   lock_override_by: string | null;
   lock_override_reason: string | null;
+  task_type?: TaskTemplateType | null;
+  is_qc_gate?: boolean | null;
+  display_order?: number | null;
+  stage_number?: string | null;
 }
-
-const PHASES = ["Pre-Production", "Civil Works", "Factory Production", "Delivery", "Site Installation", "Finishing", "Handover"];
 const ROLE_LABELS: Record<string, string> = {
   production_head: "Production Head",
   factory_supervisor: "Factory Supervisor",
