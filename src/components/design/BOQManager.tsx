@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Upload, Download, AlertTriangle, FileText, Loader2, Eye, List, History } from "lucide-react";
 import * as XLSX from "xlsx";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 
 const CATEGORIES = [
   "Structure", "Insulation", "Wall Boarding", "Ceiling", "Flooring",

@@ -15,6 +15,7 @@ import { Upload, Download, Loader2, Check, X, AlertTriangle, FileSpreadsheet, Ch
 import { toast } from "sonner";
 import { format, differenceInDays, parseISO, isValid } from "date-fns";
 import * as XLSX from "xlsx";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 
 const UPLOAD_ROLES = ["procurement", "production_head", "super_admin", "managing_director"];
 const DIRECTOR_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];

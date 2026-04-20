@@ -10,6 +10,7 @@ import { Loader2, Download, Paperclip, CheckCircle2, XCircle, AlertTriangle } fr
 import { format, parse, isValid, isFuture, startOfMonth, subMonths } from "date-fns";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 
 const VALID_CATEGORIES = [
   "Travel by Car",

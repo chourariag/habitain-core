@@ -12,6 +12,7 @@ import { Upload, Download, Loader2, Package, CheckCircle2, Clock, AlertTriangle,
 import { format, differenceInDays, addDays, isBefore, isAfter } from "date-fns";
 import { cn } from "@/lib/utils";
 import * as XLSX from "xlsx";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 
 const SECTIONS = ["All", "Shell and Core", "Builder Finish", "Add-ons"];
 

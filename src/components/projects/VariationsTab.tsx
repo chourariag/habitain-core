@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { insertNotifications } from "@/lib/notifications";
 import * as XLSX from "xlsx";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 
 const SCOPE_TYPES = [
   "Addition", "Quantity Increase", "Quantity Decrease",
