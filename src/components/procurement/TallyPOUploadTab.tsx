@@ -180,14 +180,8 @@ export function TallyPOUploadTab() {
   }, [pos, filterProject, filterVendor, filterStatus, filterType, filterDateFrom, filterDateTo, filterAbove50k]);
 
   const downloadTemplate = () => {
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([
-      ["PO Number", "PO Date", "Vendor Name", "Vendor Code", "Item Description",
-       "Quantity", "Unit", "Unit Rate", "Total Amount", "Project Name",
-       "Category", "Delivery Date", "Expected Delivery Date", "Notes"],
-    ]);
-    XLSX.utils.book_append_sheet(wb, ws, "PO Template");
-    XLSX.writeFile(wb, "Tally_PO_Template.xlsx");
+    const t = TEMPLATES.tallyPO;
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -284,14 +284,8 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
   };
 
   const downloadTemplate = () => {
-    const ws = XLSX.utils.aoa_to_sheet([
-      ["ID", "Section", "Material Description", "Qty Variation Note", "Tender Qty", "Unit", "GFC Quantity", "Indent Qty", "Indent Unit", "Indent Received (Y/N)", "Material Qty Ordered", "Planned PO Release Date", "Planned Procurement Date", "Planned Delivery Date", "Actual PO Release Date", "Actual Procurement Date", "Supplier Committed Delivery Date", "Actual Delivery Date", "Material Qty Received", "Delay Days", "Reason for Delay", "Status"],
-      ["1", "Shell and Core", "MS Tubes 40x40x2mm", "", "500", "Rft", "520", "520", "Rft", "Y", "520", "01/05/2025", "05/05/2025", "15/05/2025", "", "", "", "", "", "", "", ""],
-      ["2", "Shell and Core", "GI Sheet 0.5mm", "Qty increased per GFC", "200", "Sqm", "230", "230", "Sqm", "Y", "230", "01/05/2025", "08/05/2025", "20/05/2025", "", "", "", "", "", "", "", ""],
-    ]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Material Plan");
-    XLSX.writeFile(wb, "HStack_Material_Plan_Template.xlsx");
+    const t = TEMPLATES.materialPlan;
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
 
   const openEdit = (item: MaterialItem) => {

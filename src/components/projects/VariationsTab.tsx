@@ -333,14 +333,8 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
   };
 
   const downloadTemplate = () => {
-    const headers = [
-      "V.No", "Description", "Scope Change Type", "Tender Qty", "GFC Qty",
-      "Unit", "Material Rate ₹", "Labour Rate ₹", "Margin %", "Notes",
-    ];
-    const ws = XLSX.utils.aoa_to_sheet([headers, ["V001", "Example item", "Addition", 10, 12, "nos", 500, 200, 30, ""]]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Variations");
-    XLSX.writeFile(wb, "variation_register_template.xlsx");
+    const t = TEMPLATES.variationRegister;
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
 
   if (loading) {

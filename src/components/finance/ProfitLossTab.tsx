@@ -172,33 +172,9 @@ export function ProfitLossTab() {
     setConfirmReplace(null);
   };
 
-  const downloadTemplate = async () => {
-    const XLSX = await import("xlsx");
-    const wb = XLSX.utils.book_new();
-    const aoa: any[][] = [
-      ["Altree Habitats Pvt Ltd"],
-      ["Address Line 1"],
-      ["Address Line 2"],
-      ["Address Line 3"],
-      ["UDYAM-XX-00-0000000"],
-      ["Profit & Loss A/c"],
-      ["1-Apr-25 to 31-Mar-26"],
-      ["Altree Habitats Pvt Ltd"],
-      ["Particulars", "", "", "Particulars", "", ""],
-      ["Opening Stock", null, 39524163.86, "Sales Accounts", null, 108595115],
-      ["Purchase Accounts", null, 57068098.28, "Modular Structures", 49737398, null],
-      ["Purchase - Materials", 54033264, null, "Prefabricated Work on Site", 39762849, null],
-      ["Consumables", 2913021, null, "Closing Stock", null, 39524163.86],
-      ["Direct Expenses", null, null, "Indirect Incomes", null, 1228659],
-      ["Labour Charges", 15909076, null, "Discount Received", 492681, null],
-      ["Indirect Expenses", null, null, "", null, null],
-      ["Employee Cost", 16861188, null, "", null, null],
-      ["Total", null, 220088757, "Total", null, 220088757],
-    ];
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    ws["!cols"] = [{ wch: 30 }, { wch: 14 }, { wch: 14 }, { wch: 30 }, { wch: 14 }, { wch: 14 }];
-    XLSX.utils.book_append_sheet(wb, ws, "P&L");
-    XLSX.writeFile(wb, "Tally_PL_Template.xlsx");
+  const downloadTemplate = () => {
+    const t = TEMPLATES.plUpload;
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
 
   // Group lines by section for display
