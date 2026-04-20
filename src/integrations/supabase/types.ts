@@ -5417,6 +5417,7 @@ export type Database = {
           milestones_locked: boolean
           name: string
           planned_labour_cost: number | null
+          production_system: string
           site_lat: number | null
           site_lng: number | null
           site_radius: number | null
@@ -5451,6 +5452,7 @@ export type Database = {
           milestones_locked?: boolean
           name: string
           planned_labour_cost?: number | null
+          production_system?: string
           site_lat?: number | null
           site_lng?: number | null
           site_radius?: number | null
@@ -5485,6 +5487,7 @@ export type Database = {
           milestones_locked?: boolean
           name?: string
           planned_labour_cost?: number | null
+          production_system?: string
           site_lat?: number | null
           site_lng?: number | null
           site_radius?: number | null
