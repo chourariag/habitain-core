@@ -857,7 +857,7 @@ export default function FactoryFloorMap() {
 /* ──────── BAY CARD ──────── */
 function BayCard({
   bayNumber, bayLabel, assignment, module, workers, workerMap, selected, canAssign,
-  onSelect, onDrop, onDragOver, onTapAssign, outdoor,
+  onSelect, onDrop, onDragOver, onTapAssign, outdoor, productionSystem, pendingHandover,
 }: {
   bayNumber: number;
   bayLabel?: string;
@@ -872,15 +872,22 @@ function BayCard({
   onDragOver: (e: React.DragEvent) => void;
   onTapAssign?: () => void;
   outdoor?: boolean;
+  productionSystem?: "modular" | "panelised" | "hybrid";
+  pendingHandover?: PanelHandover;
 }) {
   const occupied = !!assignment && !!module;
   const si = occupied ? stageIndex(module!.current_stage) : 0;
   const stageColour = STAGE_COLOURS[si];
   const status = module?.production_status;
-  const leftBorderColor = outdoor ? "#999" : "#006039";
+  const isHybrid = productionSystem === "hybrid";
+  const leftBorderColor = isHybrid ? "hsl(270 60% 50%)" : outdoor ? "#999" : "#006039";
 
   const flagColor = status === "hold" ? "#D4860A" : si === 9 ? "#F40009" : si === 8 ? "#006039" : "#006039";
   const flagIcon = status === "hold" ? "⚠" : si === 9 ? "🚚" : si === 8 ? "!" : "✓";
+
+  // Hybrid: amber overlay if module is awaiting panels (current_stage = "Awaiting Panels" and no received handover)
+  const isAwaitingPanels = isHybrid && occupied && module?.current_stage === "Awaiting Panels";
+  const showAwaitingOverlay = isAwaitingPanels;
 
   return (
     <div
@@ -893,8 +900,8 @@ function BayCard({
           : "border-2 border-dashed hover:border-muted-foreground/30"
       }`}
       style={{
-        backgroundColor: occupied ? "#FFFFFF" : "#FAFAFA",
-        borderColor: occupied ? (selected ? undefined : "#E0E0E0") : "#E0E0E0",
+        backgroundColor: showAwaitingOverlay ? "hsl(35 95% 95%)" : occupied ? "#FFFFFF" : "#FAFAFA",
+        borderColor: showAwaitingOverlay ? "hsl(35 90% 50%)" : occupied ? (selected ? undefined : "#E0E0E0") : "#E0E0E0",
         borderLeftWidth: 4,
         borderLeftColor: leftBorderColor,
         borderTopWidth: occupied ? 4 : undefined,
@@ -902,14 +909,12 @@ function BayCard({
         minHeight: 120,
       }}
     >
-      {/* Bay label */}
       <span className="absolute top-1 left-2 text-[10px] font-bold" style={{ color: "#999" }}>
         {bayLabel ?? `Bay ${bayNumber}`}
       </span>
 
       {occupied ? (
         <div className="p-2 pt-5 space-y-1">
-          {/* Flag */}
           <span
             className="absolute top-1 right-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px]"
             style={{ backgroundColor: flagColor, color: "#fff" }}
@@ -917,7 +922,12 @@ function BayCard({
             {flagIcon}
           </span>
 
-          {/* Module ID */}
+          {isHybrid && (
+            <Badge className="text-[9px]" style={{ backgroundColor: "hsl(270 60% 50% / 0.15)", color: "hsl(270 60% 35%)", border: "1px solid hsl(270 60% 50% / 0.3)" }}>
+              HYBRID — receiving from Panel Bay
+            </Badge>
+          )}
+
           <p className="font-bold text-sm truncate" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>
             {module!.module_code || module!.name}
           </p>
@@ -925,15 +935,27 @@ function BayCard({
             {module!.projects?.name ?? "—"}
           </p>
 
-          {/* Stage pill */}
-          <Badge
-            className="text-[10px] mt-1"
-            style={{ backgroundColor: `${stageColour}20`, color: stageColour, border: `1px solid ${stageColour}40` }}
-          >
-            {STAGE_NAMES[si]}
-          </Badge>
+          {showAwaitingOverlay ? (
+            <div className="rounded-md p-2 mt-1" style={{ backgroundColor: "hsl(35 90% 50% / 0.18)", border: "1px solid hsl(35 90% 50%)" }}>
+              <div className="flex items-center gap-1">
+                <Lock className="h-3 w-3" style={{ color: "hsl(35 90% 30%)" }} />
+                <span className="text-[10px] font-bold" style={{ color: "hsl(35 90% 25%)" }}>Awaiting panels</span>
+              </div>
+              <p className="text-[9px] mt-0.5" style={{ color: "hsl(35 70% 30%)" }}>
+                {pendingHandover
+                  ? `Panel Bay ${pendingHandover.source_panel_bay - PANEL_BAY_START + 1} · ${pendingHandover.status.replace(/_/g, " ")}`
+                  : "No handover yet"}
+              </p>
+            </div>
+          ) : (
+            <Badge
+              className="text-[10px] mt-1"
+              style={{ backgroundColor: `${stageColour}20`, color: stageColour, border: `1px solid ${stageColour}40` }}
+            >
+              {STAGE_NAMES[si]}
+            </Badge>
+          )}
 
-          {/* Worker chips */}
           {workers && workers.length > 0 && (
             <div className="flex flex-wrap gap-0.5 mt-1">
               {workers.slice(0, 3).map((w) => (
