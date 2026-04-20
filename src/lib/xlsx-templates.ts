@@ -9,10 +9,7 @@ export function downloadXlsxTemplate(
 ) {
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet([[...headers], ...sampleRows.map(r => [...r])]);
-
-  // Auto-width columns
   ws["!cols"] = headers.map((h) => ({ wch: Math.max(h.length + 4, 14) }));
-
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
   XLSX.writeFile(wb, filename);
 }
@@ -23,102 +20,101 @@ export const TEMPLATES = {
   expense: {
     filename: "Expense_Report_Template.xlsx",
     sheet: "Expenses",
-    headers: ["Date (DD/MM/YYYY)", "Category", "Description", "Amount", "Project Name", "Receipt Reference"],
-    sample: [["15/04/2026", "Travel", "Site visit - Bangalore", 2500, "Project Alpha", "REC-001"]],
+    headers: ["Date", "Employee Name", "Category", "Description", "Amount (excl GST)", "GST Amount", "Total Amount", "Receipt Number", "Approved By"] as const,
+    sample: [["15/04/2026", "Karthik M", "Travel", "Site visit — Malur to Bangalore", 2200, 396, 2596, "REC-0042", "Azad"]] as const,
   },
   tallyPO: {
-    filename: "Tally_PO_Template.xlsx",
+    filename: "PO_Register_Template.xlsx",
     sheet: "Purchase Orders",
-    headers: ["Date", "Voucher No", "Party Name", "Type (PO/WO)", "Item Name", "Quantity", "Rate", "Amount", "Narration"],
-    sample: [["15/04/2026", "PO-001", "Steel Corp Ltd", "PO", "MS Steel Plate", 100, 450, 45000, "For Project Alpha - Module M1"]],
+    headers: ["Date", "Particulars", "Vch Type", "Vch No", "Order Ref No", "Order Amount", "Narration (project name)"] as const,
+    sample: [["15/04/2026", "Malur Tubes — MS Steel 40x40", "Purchase Order", "PO-2026-0048", "PO-048", 185000, "Project Whitefield Villa — Module M1"]] as const,
   },
   trialBalance: {
     filename: "Trial_Balance_Template.xlsx",
     sheet: "Trial Balance",
-    headers: ["Particulars", "Opening Balance", "Debit", "Credit", "Closing Balance"],
+    headers: ["Particulars", "Opening Balance", "Debit", "Credit", "Closing Balance"] as const,
     sample: [
-      ["Sales - Domestic", 0, 0, 500000, 500000],
-      ["Raw Material Purchased", 0, 300000, 0, 300000],
-      ["Factory Rent", 0, 50000, 0, 50000],
-      ["HDFC Bank", 250000, 100000, 80000, 270000],
-      ["Sundry Debtors", 150000, 50000, 30000, 170000],
-      ["Sundry Creditors", 0, 20000, 90000, 70000],
-    ],
+      ["Sales — Modular Structures", 0, 0, 4973740, 4973740],
+      ["Purchase — Structural Steel", 0, 3200000, 0, 3200000],
+      ["HDFC Bank — Current A/c", 250000, 100000, 80000, 270000],
+    ] as const,
   },
   bankLedger: {
     filename: "Bank_Ledger_Template.xlsx",
     sheet: "Bank Ledger",
-    headers: ["Date (DD/MM/YYYY)", "Particulars", "Vch Type", "Vch No", "Debit", "Credit"],
+    headers: ["Date", "Dr/Cr", "Particulars", "Vch Type", "Vch No", "Debit", "Credit"] as const,
     sample: [
-      ["01/04/2026", "Opening Balance", "", "", 0, 0],
-      ["05/04/2026", "Client Payment - Project Alpha", "Receipt", "RCP-001", 500000, 0],
-      ["10/04/2026", "Steel Corp Ltd - PO Payment", "Payment", "PAY-001", 0, 150000],
-    ],
+      ["05/04/2026", "Dr", "Client Payment — Whitefield Villa Phase 1", "Receipt", "RCP-001", 500000, 0],
+      ["10/04/2026", "Cr", "Malur Tubes — PO-048 Payment", "Payment", "PAY-001", 0, 185000],
+    ] as const,
   },
   creditorLedger: {
     filename: "Creditor_Ledger_Template.xlsx",
     sheet: "Creditor Ledger",
-    headers: ["Party Name", "Bill Date (DD/MM/YYYY)", "Bill No", "Due Date (DD/MM/YYYY)", "Amount"],
+    headers: ["Ledger Name", "Opening Balance", "Debit", "Credit", "Closing Balance"] as const,
     sample: [
-      ["Steel Corp Ltd", "01/04/2026", "INV-4521", "01/05/2026", 150000],
-      ["Electrical Supplies Co", "10/04/2026", "INV-892", "10/05/2026", 45000],
-    ],
+      ["Malur Tubes", 0, 185000, 0, 185000],
+      ["Shera India — Cera Board", 0, 45000, 0, 45000],
+    ] as const,
   },
   debtorLedger: {
     filename: "Debtor_Ledger_Template.xlsx",
     sheet: "Debtor Ledger",
-    headers: ["Party Name", "Bill Date (DD/MM/YYYY)", "Bill No", "Due Date (DD/MM/YYYY)", "Amount"],
+    headers: ["Ledger Name", "Opening Balance", "Debit", "Credit", "Closing Balance"] as const,
     sample: [
-      ["Client A - Project Alpha", "15/03/2026", "HB-INV-001", "15/04/2026", 500000],
-      ["Client B - Project Beta", "01/04/2026", "HB-INV-002", "01/05/2026", 350000],
-    ],
+      ["Client A — Whitefield Villa", 0, 0, 500000, 500000],
+      ["Client B — HSR Layout", 0, 0, 350000, 350000],
+    ] as const,
   },
   boq: {
     filename: "BOQ_Template.xlsx",
     sheet: "BOQ",
-    headers: ["S.No", "Category", "Item Description", "Unit", "Actual Qty", "Rate (₹)", "Amount (₹)", "Remark"],
-    sample: [[1, "Structure", "MS Steel Plate 3mm", "Kg", 500, 85, 42500, ""]],
+    headers: ["S.No", "Category", "Item Description", "Unit", "Actual Qty", "Wastage %", "BOQ Qty", "Material Rate (₹)", "Labour Rate (₹)", "OH Rate (₹)", "BOQ Rate (₹)", "Total Amount (₹)", "Margin %", "Scope (Factory / On-Site Civil / Both)"] as const,
+    sample: [[1, "Structural Steel", "LGSF C-Channel 89mm", "RFT", 100, 10, 110, 85, 45, 15, 145, 15950, 8.5, "Factory"]] as const,
   },
   budget: {
     filename: "Budget_Template.xlsx",
     sheet: "Budgets",
-    headers: ["Project Name", "Sanctioned Budget", "Labour Budget", "Logistics Budget"],
-    sample: [["Project Alpha", 5000000, 800000, 300000]],
+    headers: ["SL No", "Category", "Client Price", "GFC Budget Allocated", "Vendor", "Invoice No", "Invoice Date", "Description", "Basic Amount Excl GST", "Remark"] as const,
+    sample: [[1, "Structural Steel", 5000000, 4200000, "Malur Tubes", "INV-4521", "15/04/2026", "MS Steel Plates 3mm — Module M1", 185000, ""]] as const,
   },
   materialPlan: {
     filename: "Material_Plan_Template.xlsx",
     sheet: "Material Plan",
-    headers: ["ID", "Section", "Material Description", "Qty Variation Note", "Tender Qty", "Unit", "GFC Quantity", "Indent Qty", "Indent Unit", "Indent Received (Y/N)", "Material Qty Ordered", "Planned PO Release Date", "Planned Procurement Date", "Planned Delivery Date", "Actual PO Release Date", "Actual Procurement Date", "Supplier Committed Delivery Date", "Actual Delivery Date", "Material Qty Received", "Delay Days", "Reason for Delay", "Status"],
-    sample: [["MP-001", "Structure", "MS Steel Plate 3mm", "", 500, "Kg", 520, 520, "Kg", "Y", 520, "01/04/2026", "05/04/2026", "15/04/2026", "", "", "", "", 0, 0, "", "Ordered"]],
+    headers: ["ID", "Section", "Material Description", "Qty Variation Note", "Tender Qty", "Unit", "GFC Quantity", "Indent Qty", "Indent Unit", "Indent Received (Y/N)", "Material Qty Ordered", "Planned PO Release Date", "Planned Procurement Date", "Planned Delivery Date", "Actual PO Release Date", "Actual Procurement Date", "Supplier Committed Delivery Date", "Actual Delivery Date", "Material Qty Received", "Delay Days", "Reason for Delay", "Status"] as const,
+    sample: [["MP-001", "Shell and Core", "MS Tubes 40x40x2mm", "", 500, "Rft", 520, 520, "Rft", "Y", 520, "01/05/2026", "05/05/2026", "15/05/2026", "", "", "", "", 0, 0, "", "Ordered"]] as const,
   },
   schedule: {
     filename: "Schedule_Template.xlsx",
     sheet: "Schedule",
-    headers: ["ID", "Task Name", "Duration (days)", "Predecessors", "Planned Start Date", "Planned Finish Date", "Responsible Role", "Phase"],
-    sample: [["T-001", "Sub-Frame Fabrication", 5, "", "01/04/2026", "05/04/2026", "fabrication_foreman", "Production"]],
+    headers: ["Phase", "Stage #", "Task Type", "Task / Sub-task", "Who Does It", "Input Required", "Output / Deliverable", "HStack Action", "QC Gate?", "Duration (days)", "Notes"] as const,
+    sample: [["Factory Production", "3B.1", "task", "Main frame fabrication and erection", "fabrication_foreman", "Primed steel from 3A", "Erected frame", "Update stage tracker", "Yes — QC at stage end", 5, ""]] as const,
   },
   variationRegister: {
     filename: "Variation_Register_Template.xlsx",
     sheet: "Variations",
-    headers: ["V.No", "Description", "Scope Change Type", "Tender Qty", "GFC Qty", "Unit", "Tender Rate", "GFC Rate", "Tender Amount", "GFC Amount", "Difference", "Category", "Status"],
-    sample: [["V-001", "Additional cladding panel", "Addition", 0, 10, "Nos", 0, 5000, 0, 50000, 50000, "Material", "Pending"]],
+    headers: ["V.No", "Description", "Scope Change Type", "Tender Qty", "GFC Qty", "Variance Qty", "Unit", "Material Rate ₹", "Labour Rate ₹", "Basic Rate ₹", "Margin %", "Final Rate ₹", "Final Cost ₹", "Initiated By", "Date Raised", "Notes"] as const,
+    sample: [["V001", "Additional cladding panel — east wall", "Addition", 0, 10, 10, "Nos", 500, 200, 700, 30, 910, 9100, "Karan", "15/04/2026", ""]] as const,
   },
   plUpload: {
-    filename: "PL_Upload_Template.xlsx",
-    sheet: "P&L Data",
-    headers: ["Month", "Year", "Revenue", "Materials", "Labour", "Logistics", "Other COGS", "Office Admin", "Marketing", "RM Costs", "Depreciation", "Other Opex"],
-    sample: [[4, 2026, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
+    filename: "PL_Template.xlsx",
+    sheet: "P&L",
+    headers: ["Particulars", "Amount", "Sub-total", "Particulars", "Amount", "Sub-total"] as const,
+    sample: [
+      ["Opening Stock", null, 3952416, "Sales Accounts", null, 10859512],
+      ["Purchase — Materials", 5403326, null, "Modular Structures", 4973740, null],
+    ] as const,
   },
   cashflow: {
     filename: "CashFlow_Template.xlsx",
     sheet: "Cash Flow",
-    headers: ["Date (DD/MM/YYYY)", "Type (inflow/outflow)", "Description", "Project Name", "Amount", "Category"],
-    sample: [["01/04/2026", "inflow", "Client Payment - Phase 1", "Project Alpha", 500000, "Client Payment"]],
+    headers: ["Date (DD/MM/YYYY)", "Type (inflow/outflow)", "Description", "Project Name", "Amount", "Category"] as const,
+    sample: [["01/04/2026", "inflow", "Client Payment — Phase 1", "Whitefield Villa", 500000, "Client Payment"]] as const,
   },
   payments: {
     filename: "Payments_Template.xlsx",
     sheet: "Payments",
-    headers: ["Project Name", "Client Name", "Milestone Description", "Due Date (DD/MM/YYYY)", "Amount"],
-    sample: [["Project Alpha", "Client A", "Foundation Complete", "15/04/2026", 500000]],
+    headers: ["Project Name", "Client Name", "Milestone Description", "Due Date (DD/MM/YYYY)", "Amount"] as const,
+    sample: [["Whitefield Villa", "Client A", "Foundation Complete", "15/04/2026", 500000]] as const,
   },
 } as const;

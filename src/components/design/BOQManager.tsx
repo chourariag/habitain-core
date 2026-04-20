@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Upload, Download, AlertTriangle, FileText, Loader2, Eye, List, History } from "lucide-react";
 import * as XLSX from "xlsx";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 
 const CATEGORIES = [
   "Structure", "Insulation", "Wall Boarding", "Ceiling", "Flooring",
@@ -132,32 +133,8 @@ export function BOQManager({ projectId }: Props) {
   useEffect(() => { loadData(); }, [loadData]);
 
   function downloadTemplate() {
-    const headers = [
-      "S.No", "Category", "Item Description", "Unit", "Actual Qty",
-      "Wastage %", "BOQ Qty", "Material Rate (₹)", "Labour Rate (₹)",
-      "OH Rate (₹)", "BOQ Rate (₹)", "Total Amount (₹)", "Margin %",
-      "Scope (Factory / On-Site Civil / Both)",
-    ];
-    const notes = [
-      "", "Notes:", "Wastage % is typically 5-15% added to Actual Qty to get BOQ Qty",
-      "BOQ Rate = Material Rate + Labour Rate + OH Rate",
-      "Total Amount = BOQ Qty × BOQ Rate",
-      "Margin % = (Total Amount - BOQ Rate × Actual Qty) / Total Amount",
-      'Scope must be exactly: Factory, On-Site Civil, or Both',
-      `Category options: ${CATEGORIES.join(", ")}`,
-    ];
-    const sampleRow = [
-      1, "Structure", "LGSF C-Channel 89mm", "RFT", 100, 10, 110, 85, 45, 15, 145, 15950, 8.5, "Factory",
-    ];
-
-    const wb = XLSX.utils.book_new();
-    const wsData = [headers, sampleRow, [], ...notes.map(n => [n])];
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-    // Column widths
-    ws["!cols"] = headers.map((_, i) => ({ wch: i === 2 ? 30 : i === 13 ? 28 : 16 }));
-    XLSX.utils.book_append_sheet(wb, ws, "BOQ Template");
-    XLSX.writeFile(wb, "BOQ_Template.xlsx");
+    const t = TEMPLATES.boq;
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
     toast.success("Template downloaded");
   }
 
@@ -386,7 +363,7 @@ export function BOQManager({ projectId }: Props) {
             <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileSelect} />
           </>
         )}
-        <Button size="sm" variant="outline" onClick={downloadTemplate}>
+        <Button size="sm" variant="outline" onClick={downloadTemplate} style={{ borderColor: "#006039", color: "#006039" }}>
           <Download className="h-4 w-4 mr-1" /> Download Template
         </Button>
 

@@ -10,6 +10,7 @@ import { Loader2, Download, Paperclip, CheckCircle2, XCircle, AlertTriangle } fr
 import { format, parse, isValid, isFuture, startOfMonth, subMonths } from "date-fns";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 
 const VALID_CATEGORIES = [
   "Travel by Car",
@@ -80,55 +81,8 @@ export function ExpenseExcelUpload() {
   }, [isHR]);
 
   const downloadTemplate = () => {
-    const wb = XLSX.utils.book_new();
-    const wsData: any[][] = [];
-
-    // Row 1: Title
-    wsData.push(["HStack Expense Report Template — The Habitainer", "", "", "", "", "", "", ""]);
-    // Row 2: Instructions
-    wsData.push([
-      "Fill one row per expense. Do not change column headers. Submission Window 1: 1st–5th of month. Window 2: 16th–20th. Conveyance is auto-calculated from distance — do not fill Amount for Travel by Car or Travel by Bike rows.",
-      "", "", "", "", "", "", "",
-    ]);
-    // Row 3: Headers
-    wsData.push([
-      "Date (DD/MM/YYYY)", "Category", "Description",
-      "Distance (km) — for travel only", "Amount (₹) — leave blank for travel",
-      "Project Name", "Receipt Available? (Yes/No)", "Notes",
-    ]);
-    // Rows 4–33: 30 blank rows
-    for (let i = 0; i < 30; i++) wsData.push(["", "", "", "", "", "", "", ""]);
-    // Reference block
-    wsData.push([]);
-    wsData.push([]);
-    wsData.push(["CONVEYANCE RATES (auto-applied on upload)"]);
-    wsData.push([`Car: ₹${carRate} per km`]);
-    wsData.push([`Bike / Two-Wheeler: ₹${bikeRate} per km`]);
-    wsData.push(["For Auto/Cab — enter actual amount in Amount column"]);
-
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-    // Merge title & instructions
-    ws["!merges"] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
-    ];
-
-    // Column widths
-    ws["!cols"] = [
-      { wch: 18 }, { wch: 22 }, { wch: 30 }, { wch: 26 },
-      { wch: 28 }, { wch: 20 }, { wch: 22 }, { wch: 20 },
-    ];
-
-    // Category data validation for rows 4–33 (B4:B33)
-    ws["!dataValidation"] = [{
-      sqref: "B4:B33",
-      type: "list",
-      formula1: `"${VALID_CATEGORIES.join(",")}"`,
-    }];
-
-    XLSX.utils.book_append_sheet(wb, ws, "Expense Report");
-    XLSX.writeFile(wb, `HStack_Expense_Template_${format(new Date(), "MMM_yyyy")}.xlsx`);
+    const t = TEMPLATES.expense;
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

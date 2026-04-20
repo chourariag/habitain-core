@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { insertNotifications } from "@/lib/notifications";
 import * as XLSX from "xlsx";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 
 const SCOPE_TYPES = [
   "Addition", "Quantity Increase", "Quantity Decrease",
@@ -333,14 +334,8 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
   };
 
   const downloadTemplate = () => {
-    const headers = [
-      "V.No", "Description", "Scope Change Type", "Tender Qty", "GFC Qty",
-      "Unit", "Material Rate ₹", "Labour Rate ₹", "Margin %", "Notes",
-    ];
-    const ws = XLSX.utils.aoa_to_sheet([headers, ["V001", "Example item", "Addition", 10, 12, "nos", 500, 200, 30, ""]]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Variations");
-    XLSX.writeFile(wb, "variation_register_template.xlsx");
+    const t = TEMPLATES.variationRegister;
+    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
 
   if (loading) {
@@ -355,7 +350,7 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
           {canCreate && (
             <>
               <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleUpload} />
-              <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4 mr-1" /> Template</Button>
+              <Button size="sm" variant="outline" onClick={downloadTemplate} style={{ borderColor: "#006039", color: "#006039" }}><Download className="h-4 w-4 mr-1" /> Template</Button>
               <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4 mr-1" /> Upload</Button>
               <Button size="sm" onClick={() => setFormOpen(true)}><Plus className="h-4 w-4 mr-1" /> New Variation</Button>
             </>
