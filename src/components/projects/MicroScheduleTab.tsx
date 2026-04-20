@@ -85,20 +85,26 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   const [overrideReason, setOverrideReason] = useState("");
   const [scheduleFlags, setScheduleFlags] = useState<{ task: string; message: string; level: "yellow" | "amber" }[]>([]);
   const [materialRiskTaskIds, setMaterialRiskTaskIds] = useState<Record<string, string>>({});
+  const [productionSystem, setProductionSystem] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState<string>("Project");
+  const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set());
   const fileRef = useRef<HTMLInputElement>(null);
 
   const canUpload = UPLOAD_ROLES.includes(userRole ?? "");
   const canEdit = EDIT_ROLES.includes(userRole ?? "");
   const canOverride = ["planning_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
+  const PHASES = useMemo(() => getPhasesForSystem(productionSystem), [productionSystem]);
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
-    const [taskRes, alertRes] = await Promise.all([
-      supabase.from("project_tasks").select("*").eq("project_id", projectId).order("task_id_in_schedule", { ascending: true }),
+    const [taskRes, alertRes, projectRes] = await Promise.all([
+      supabase.from("project_tasks").select("*").eq("project_id", projectId).order("display_order", { ascending: true, nullsFirst: false }).order("task_id_in_schedule", { ascending: true }),
       supabase.from("material_alerts").select("related_task_id, material_name").eq("project_id", projectId).eq("status", "active").not("related_task_id", "is", null),
+      supabase.from("projects").select("name, production_system").eq("id", projectId).maybeSingle(),
     ]);
     setTasks((taskRes.data as any as ProjectTask[]) ?? []);
-    // Build map of task_id -> material_name for risk badges
+    setProductionSystem(((projectRes.data as any)?.production_system as string | null) ?? null);
+    setProjectName(((projectRes.data as any)?.name as string | null) ?? "Project");
     const riskMap: Record<string, string> = {};
     (alertRes.data ?? []).forEach((a: any) => {
       if (a.related_task_id) riskMap[a.related_task_id] = a.material_name ?? "Material";
