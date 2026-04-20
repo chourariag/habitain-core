@@ -553,13 +553,48 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
 }
 
 /* ===================== LIST VIEW ===================== */
-function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingName, onStart, onUpdate, materialRiskMap = {} }: {
-  tasks: ProjectTask[]; taskMap: Record<string, ProjectTask>; canEdit: boolean;
+function ListView({ tasks, taskMap, canEdit, canOverride, liveStatus, getDelay, getBlockingName, onStart, onUpdate, onRequestOverride, materialRiskMap = {}, collapsedParents, setCollapsedParents }: {
+  tasks: ProjectTask[]; taskMap: Record<string, ProjectTask>; canEdit: boolean; canOverride: boolean;
   liveStatus: (t: ProjectTask) => string; getDelay: (t: ProjectTask) => number;
   getBlockingName: (t: ProjectTask) => string | null;
   onStart: (t: ProjectTask) => void; onUpdate: (id: string, u: Partial<ProjectTask>) => void;
+  onRequestOverride: (t: ProjectTask) => void;
   materialRiskMap?: Record<string, string>;
+  collapsedParents: Set<string>;
+  setCollapsedParents: React.Dispatch<React.SetStateAction<Set<string>>>;
 }) {
+  // Group sub-tasks under their parent (parent = nearest preceding non-subtask in display order)
+  const visibleTasks = useMemo(() => {
+    const out: ProjectTask[] = [];
+    let currentParentId: string | null = null;
+    for (const t of tasks) {
+      const isSub = t.task_type === "sub-task";
+      if (!isSub) { currentParentId = t.id; out.push(t); continue; }
+      if (currentParentId && collapsedParents.has(currentParentId)) continue;
+      out.push(t);
+    }
+    return out;
+  }, [tasks, collapsedParents]);
+
+  // Map parent -> sub-tasks for progress computation
+  const subtaskMap = useMemo(() => {
+    const m: Record<string, ProjectTask[]> = {};
+    let parentId: string | null = null;
+    for (const t of tasks) {
+      if (t.task_type !== "sub-task") { parentId = t.id; m[parentId] = m[parentId] ?? []; continue; }
+      if (parentId) (m[parentId] = m[parentId] ?? []).push(t);
+    }
+    return m;
+  }, [tasks]);
+
+  const toggleCollapse = (id: string) => {
+    setCollapsedParents((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
   return (
     <div className="overflow-x-auto border rounded-lg">
       <Table>
