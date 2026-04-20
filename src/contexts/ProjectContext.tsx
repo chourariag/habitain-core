@@ -6,6 +6,7 @@ interface Project {
   name: string;
   client_name: string | null;
   status: string | null;
+  production_system: string | null;
 }
 
 interface ProjectContextType {
@@ -47,10 +48,10 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     const fetch = async () => {
       const { data } = await supabase
         .from("projects")
-        .select("id,name,client_name,status")
+        .select("id,name,client_name,status,production_system")
         .eq("is_archived", false)
         .order("created_at", { ascending: false });
-      setProjects(data ?? []);
+      setProjects((data as Project[] | null) ?? []);
       setLoading(false);
     };
     fetch();
