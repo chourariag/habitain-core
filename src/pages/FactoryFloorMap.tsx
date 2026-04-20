@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import {
   Loader2, ChevronRight, ChevronDown, AlertTriangle,
   Check, Truck, Users, Package, ShieldAlert, Clock,
-  ArrowRight, GripVertical,
+  ArrowRight, GripVertical, Lock,
 } from "lucide-react";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 
