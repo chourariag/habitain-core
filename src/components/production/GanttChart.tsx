@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Monitor } from "lucide-react";
 import { format, parseISO, differenceInDays, addDays, startOfWeek, startOfMonth, startOfQuarter, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from "date-fns";
 import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
+import { getPhaseForStage } from "@/lib/production-phases";
 
 interface ModuleRow {
   id: string;
@@ -43,7 +44,7 @@ const ALLOWED_ROLES = ["planning_engineer", "production_head", "managing_directo
 const DAY_WIDTH: Record<ZoomLevel, number> = { week: 28, month: 10, quarter: 3 };
 const MODULE_ROW_HEIGHT = 44;
 const HEADER_HEIGHT = 50;
-const LEFT_PANEL_WIDTH = 180;
+const LEFT_PANEL_WIDTH = 240;
 
 function dateToDayOffset(date: Date, origin: Date): number {
   return differenceInDays(date, origin);
@@ -98,9 +99,10 @@ interface Props {
   projectId: string;
   modules: ModuleRow[];
   userRole: string | null;
+  productionSystem?: "modular" | "panelised" | "hybrid" | null;
 }
 
-export function GanttChart({ projectId, modules, userRole }: Props) {
+export function GanttChart({ projectId, modules, userRole, productionSystem }: Props) {
   const [schedules, setSchedules] = useState<ScheduleEntry[]>([]);
   const [dependencies, setDependencies] = useState<Dependency[]>([]);
   const [loading, setLoading] = useState(true);
@@ -257,14 +259,20 @@ export function GanttChart({ projectId, modules, userRole }: Props) {
         {/* Gantt body */}
         <Card className="overflow-hidden">
           <div className="flex">
-            {/* Left panel: module names */}
+            {/* Left panel: module names + phase */}
             <div className="shrink-0 border-r border-border" style={{ width: LEFT_PANEL_WIDTH }}>
-              <div className="border-b border-border px-3 flex items-center text-xs font-medium text-muted-foreground" style={{ height: HEADER_HEIGHT }}>
-                Module
+              <div className="border-b border-border px-3 flex items-center justify-between text-xs font-medium text-muted-foreground" style={{ height: HEADER_HEIGHT }}>
+                <span>Module</span>
+                <span className="text-[10px] uppercase tracking-wide">Phase</span>
               </div>
               {filteredModules.map((m) => (
-                <div key={m.id} className="border-b border-border px-3 flex items-center text-xs font-medium truncate" style={{ height: MODULE_ROW_HEIGHT, color: "#1A1A1A" }}>
-                  {m.module_code || m.name}
+                <div key={m.id} className="border-b border-border px-3 flex items-center justify-between gap-2" style={{ height: MODULE_ROW_HEIGHT }}>
+                  <span className="text-xs font-medium truncate" style={{ color: "#1A1A1A" }}>
+                    {m.module_code || m.name}
+                  </span>
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: "#E8F2ED", color: "#006039" }}>
+                    {getPhaseForStage(m.current_stage, productionSystem ?? null)}
+                  </span>
                 </div>
               ))}
             </div>

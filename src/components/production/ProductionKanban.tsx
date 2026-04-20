@@ -1,21 +1,20 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Tables } from "@/integrations/supabase/types";
+import { getPhaseForStage } from "@/lib/production-phases";
+import { getStagesForSystem, type ProductionSystem } from "@/lib/production-systems";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
-
-const STAGES = [
-  "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
-  "MEP Final", "Windows & Doors", "Finishing", "QC Inspection", "Dispatch",
-];
 
 interface Props {
   modules: ModuleWithProject[];
   onRefresh: () => void;
+  productionSystem?: ProductionSystem | null;
 }
 
-export function ProductionKanban({ modules, onRefresh }: Props) {
+export function ProductionKanban({ modules, onRefresh, productionSystem }: Props) {
+  const STAGES = getStagesForSystem(productionSystem ?? null) as readonly string[];
   const [ncrModules, setNcrModules] = useState<Set<string>>(new Set());
   const [stageEntryDates, setStageEntryDates] = useState<Record<string, string>>({});
   const [dragging, setDragging] = useState<string | null>(null);
@@ -116,11 +115,16 @@ export function ProductionKanban({ modules, onRefresh }: Props) {
           >
             {/* Column Header */}
             <div
-              className="px-3 py-2.5 rounded-t-lg flex items-center justify-between"
+              className="px-3 py-2 rounded-t-lg"
               style={{ backgroundColor: "#006039" }}
             >
-              <span className="text-xs font-semibold text-white truncate">{stage}</span>
-              <span className="text-[10px] font-bold text-white/80 bg-white/20 rounded-full px-1.5 py-0.5">{items.length}</span>
+              <div className="text-[9px] font-medium uppercase tracking-wide text-white/70 truncate">
+                {getPhaseForStage(stage, productionSystem ?? null)}
+              </div>
+              <div className="flex items-center justify-between mt-0.5">
+                <span className="text-xs font-semibold text-white truncate">{stage}</span>
+                <span className="text-[10px] font-bold text-white/80 bg-white/20 rounded-full px-1.5 py-0.5">{items.length}</span>
+              </div>
             </div>
 
             {/* Cards */}

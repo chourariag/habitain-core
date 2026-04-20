@@ -141,9 +141,9 @@ function ProductionContent() {
             <p className="text-muted-foreground text-sm">No modules yet. Create modules from the project detail page.</p>
           </div>
         ) : viewMode === "gantt" ? (
-          <GanttChart projectId={selectedProjectId!} modules={modules} userRole={userRole} />
+          <GanttChart projectId={selectedProjectId!} modules={modules} userRole={userRole} productionSystem={(selectedProject as any)?.production_system ?? null} />
         ) : viewMode === "board" ? (
-          <ProductionKanban modules={modules} onRefresh={fetchModules} />
+          <ProductionKanban modules={modules} onRefresh={fetchModules} productionSystem={(selectedProject as any)?.production_system ?? null} />
         ) : (
           <Tabs value={projectTab} onValueChange={setProjectTab}>
             <ScrollableTabsWrapper>

@@ -17,6 +17,7 @@ import {
   ArrowRight, GripVertical, Lock,
 } from "lucide-react";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
+import { getPhaseForStage } from "@/lib/production-phases";
 
 /* ──── CONSTANTS ──── */
 // Module bay numbering: 1-5 indoor, 11-17 outdoor (legacy used 1-10 indoor; bays 6-10 still rendered as legacy if occupied).
@@ -948,12 +949,17 @@ function BayCard({
               </p>
             </div>
           ) : (
-            <Badge
-              className="text-[10px] mt-1"
-              style={{ backgroundColor: `${stageColour}20`, color: stageColour, border: `1px solid ${stageColour}40` }}
-            >
-              {STAGE_NAMES[si]}
-            </Badge>
+            <div className="mt-1">
+              <div className="text-[8px] uppercase tracking-wide font-medium leading-none mb-0.5" style={{ color: "#888" }}>
+                {getPhaseForStage(module!.current_stage, productionSystem ?? null)}
+              </div>
+              <Badge
+                className="text-[10px]"
+                style={{ backgroundColor: `${stageColour}20`, color: stageColour, border: `1px solid ${stageColour}40` }}
+              >
+                {STAGE_NAMES[si]}
+              </Badge>
+            </div>
           )}
 
           {workers && workers.length > 0 && (
