@@ -66,7 +66,7 @@ export function ProjectBudgetsTab() {
             <span className="cursor-pointer flex items-center gap-2"><Upload className="h-4 w-4" /> Upload Budgets</span>
           </Button>
         </label>
-        <Button variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4 mr-2" /> Download Template</Button>
+        <Button variant="outline" onClick={downloadTemplate} style={{ borderColor: "#006039", color: "#006039" }}><Download className="h-4 w-4 mr-2" /> Download Template</Button>
       </div>
 
       {/* Budget Comparison Chart */}
