@@ -44,7 +44,7 @@ const ALLOWED_ROLES = ["planning_engineer", "production_head", "managing_directo
 const DAY_WIDTH: Record<ZoomLevel, number> = { week: 28, month: 10, quarter: 3 };
 const MODULE_ROW_HEIGHT = 44;
 const HEADER_HEIGHT = 50;
-const LEFT_PANEL_WIDTH = 180;
+const LEFT_PANEL_WIDTH = 240;
 
 function dateToDayOffset(date: Date, origin: Date): number {
   return differenceInDays(date, origin);
