@@ -5264,11 +5264,18 @@ export type Database = {
           delay_cause: string | null
           delay_days: number | null
           delay_resolution: string | null
+          display_order: number | null
           duration_days: number | null
+          hstack_action: string | null
           id: string
+          input_required: string | null
           is_locked: boolean
+          is_qc_gate: boolean
+          lock_override_at: string | null
           lock_override_by: string | null
           lock_override_reason: string | null
+          output_deliverable: string | null
+          parent_stage_number: string | null
           parent_task_id: string | null
           phase: string
           planned_finish_date: string | null
@@ -5277,9 +5284,11 @@ export type Database = {
           project_id: string
           remarks: string | null
           responsible_role: string | null
+          stage_number: string | null
           status: string
           task_id_in_schedule: string
           task_name: string
+          task_type: Database["public"]["Enums"]["task_template_type"]
           updated_at: string
         }
         Insert: {
@@ -5290,11 +5299,18 @@ export type Database = {
           delay_cause?: string | null
           delay_days?: number | null
           delay_resolution?: string | null
+          display_order?: number | null
           duration_days?: number | null
+          hstack_action?: string | null
           id?: string
+          input_required?: string | null
           is_locked?: boolean
+          is_qc_gate?: boolean
+          lock_override_at?: string | null
           lock_override_by?: string | null
           lock_override_reason?: string | null
+          output_deliverable?: string | null
+          parent_stage_number?: string | null
           parent_task_id?: string | null
           phase?: string
           planned_finish_date?: string | null
@@ -5303,9 +5319,11 @@ export type Database = {
           project_id: string
           remarks?: string | null
           responsible_role?: string | null
+          stage_number?: string | null
           status?: string
           task_id_in_schedule: string
           task_name: string
+          task_type?: Database["public"]["Enums"]["task_template_type"]
           updated_at?: string
         }
         Update: {
@@ -5316,11 +5334,18 @@ export type Database = {
           delay_cause?: string | null
           delay_days?: number | null
           delay_resolution?: string | null
+          display_order?: number | null
           duration_days?: number | null
+          hstack_action?: string | null
           id?: string
+          input_required?: string | null
           is_locked?: boolean
+          is_qc_gate?: boolean
+          lock_override_at?: string | null
           lock_override_by?: string | null
           lock_override_reason?: string | null
+          output_deliverable?: string | null
+          parent_stage_number?: string | null
           parent_task_id?: string | null
           phase?: string
           planned_finish_date?: string | null
@@ -5329,9 +5354,11 @@ export type Database = {
           project_id?: string
           remarks?: string | null
           responsible_role?: string | null
+          stage_number?: string | null
           status?: string
           task_id_in_schedule?: string
           task_name?: string
+          task_type?: Database["public"]["Enums"]["task_template_type"]
           updated_at?: string
         }
         Relationships: [
@@ -7894,6 +7921,10 @@ export type Database = {
         Returns: boolean
       }
       can_manage_finance_pl: { Args: { _user_id: string }; Returns: boolean }
+      clone_task_templates_to_project: {
+        Args: { _project_id: string; _system: string }
+        Returns: number
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
