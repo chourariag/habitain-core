@@ -614,23 +614,41 @@ function ListView({ tasks, taskMap, canEdit, canOverride, liveStatus, getDelay, 
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tasks.map((task) => {
+          {visibleTasks.map((task) => {
             const status = liveStatus(task);
             const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG["Upcoming"];
             const delay = getDelay(task);
             const blocking = getBlockingName(task);
             const Icon = cfg.icon;
             const materialRisk = materialRiskMap[task.id];
+            const ttype = (task.task_type ?? "task") as TaskTemplateType;
+            const meta = TASK_TYPE_META[ttype];
+            const isSub = ttype === "sub-task";
+            const subs = subtaskMap[task.id] ?? [];
+            const subDoneCount = subs.filter((s) => s.completion_percentage === 100).length;
+            const isCollapsed = collapsedParents.has(task.id);
+            const isQcBlocked = task.is_locked && (status === "Blocked" || status === "Upcoming");
             return (
-              <TableRow key={task.id} className={status === "Overdue" ? "bg-red-50/50" : ""}>
+              <TableRow key={task.id} className={`${status === "Overdue" ? "bg-red-50/50" : ""} ${isSub ? "bg-muted/20" : ""}`}>
                 <TableCell className="font-mono text-xs">{task.task_id_in_schedule}</TableCell>
-                <TableCell className="font-medium text-sm">
-                  <div className="flex items-center gap-1.5">
-                    {task.is_locked && (
+                <TableCell className={`font-medium ${isSub ? "text-xs text-muted-foreground" : "text-sm"}`}>
+                  <div className="flex items-center gap-1.5 flex-wrap" style={{ paddingLeft: isSub ? 16 : 0 }}>
+                    {!isSub && subs.length > 0 && (
+                      <button onClick={() => toggleCollapse(task.id)} className="text-muted-foreground hover:text-foreground">
+                        {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </button>
+                    )}
+                    {meta.icon && (
+                      <span aria-hidden style={{ color: meta.color }} title={meta.label} className="text-sm font-bold leading-none">{meta.icon}</span>
+                    )}
+                    {task.is_qc_gate && !meta.icon && (
+                      <ShieldAlert className="h-3.5 w-3.5" style={{ color: "#F40009" }} aria-label="QC Gate" />
+                    )}
+                    {isQcBlocked && (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger><Lock className="h-3.5 w-3.5 text-muted-foreground" /></TooltipTrigger>
-                          <TooltipContent>Waiting for: {blocking ?? "predecessor"}</TooltipContent>
+                          <TooltipContent>Waiting for QC gate: {blocking ?? "predecessor"}</TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     )}
@@ -642,24 +660,20 @@ function ListView({ tasks, taskMap, canEdit, canOverride, liveStatus, getDelay, 
                         </Tooltip>
                       </TooltipProvider>
                     )}
-                    {task.task_name}
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <a
-                            href={`/sops?taskName=${encodeURIComponent(task.task_name)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center text-muted-foreground hover:text-[#006039] transition-colors"
-                            onClick={(e) => e.stopPropagation()}
-                            aria-label="View SOP for this task"
-                          >
-                            <BookOpen className="h-3.5 w-3.5" />
-                          </a>
-                        </TooltipTrigger>
-                        <TooltipContent>View SOP for this task</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <span>{task.task_name}</span>
+                    {!isSub && subs.length > 0 && (
+                      <span className="text-[10px] text-muted-foreground">({subDoneCount}/{subs.length})</span>
+                    )}
+                    {isQcBlocked && canOverride && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-6 ml-1 px-2 text-[10px] border-[#F40009] text-[#F40009] hover:bg-[#F40009]/10"
+                        onClick={(e) => { e.stopPropagation(); onRequestOverride(task); }}
+                      >
+                        Override Lock
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell><span className="text-xs">{task.phase}</span></TableCell>
