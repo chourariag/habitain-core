@@ -222,6 +222,28 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
               )}
             </div>
 
+            {!isDesignOnly && (
+              <div className="space-y-2">
+                <Label>Production System *</Label>
+                <Select value={productionSystem} onValueChange={(v) => setProductionSystem(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PRODUCTION_SYSTEMS.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{p.label}</span>
+                          <span className="text-[10px] text-muted-foreground">{p.hint}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">
+                  Determines the factory workflow. Hybrid creates a Panel Bay → Module Bay dependency.
+                </p>
+              </div>
+            )}
+
             {/* Division */}
             <div className="space-y-2">
               <Label>Division</Label>
