@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Monitor } from "lucide-react";
 import { format, parseISO, differenceInDays, addDays, startOfWeek, startOfMonth, startOfQuarter, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval } from "date-fns";
 import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
+import { getPhaseForStage } from "@/lib/production-phases";
 
 interface ModuleRow {
   id: string;
@@ -98,9 +99,10 @@ interface Props {
   projectId: string;
   modules: ModuleRow[];
   userRole: string | null;
+  productionSystem?: "modular" | "panelised" | "hybrid" | null;
 }
 
-export function GanttChart({ projectId, modules, userRole }: Props) {
+export function GanttChart({ projectId, modules, userRole, productionSystem }: Props) {
   const [schedules, setSchedules] = useState<ScheduleEntry[]>([]);
   const [dependencies, setDependencies] = useState<Dependency[]>([]);
   const [loading, setLoading] = useState(true);
