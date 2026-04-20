@@ -3848,6 +3848,9 @@ export type Database = {
           created_by: string | null
           id: string
           notes: string | null
+          overridden_at: string | null
+          overridden_by: string | null
+          override_reason: string | null
           panel_batch_id: string
           project_id: string | null
           ready_at: string
@@ -3864,6 +3867,9 @@ export type Database = {
           created_by?: string | null
           id?: string
           notes?: string | null
+          overridden_at?: string | null
+          overridden_by?: string | null
+          override_reason?: string | null
           panel_batch_id: string
           project_id?: string | null
           ready_at?: string
@@ -3880,6 +3886,9 @@ export type Database = {
           created_by?: string | null
           id?: string
           notes?: string | null
+          overridden_at?: string | null
+          overridden_by?: string | null
+          override_reason?: string | null
           panel_batch_id?: string
           project_id?: string | null
           ready_at?: string
@@ -7787,7 +7796,37 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_latest_panel_handover: {
+        Row: {
+          handover_id: string | null
+          overridden_at: string | null
+          overridden_by: string | null
+          override_reason: string | null
+          panel_batch_id: string | null
+          project_id: string | null
+          ready_at: string | null
+          received_at: string | null
+          source_panel_bay: number | null
+          status: string | null
+          target_module_bay: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "panel_handovers_panel_batch_id_fkey"
+            columns: ["panel_batch_id"]
+            isOneToOne: false
+            referencedRelation: "panel_batches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "panel_handovers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       can_edit_sop_dept: {

@@ -37,6 +37,7 @@ interface Props {
   userRole: string | null;
   onPanelCreated: () => void;
   onStageAdvanced: () => void;
+  productionSystem?: "modular" | "panelised" | "hybrid" | null;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -53,7 +54,7 @@ const STATUS_BADGE: Record<string, string> = {
   dispatched: "bg-accent/20 text-accent-foreground",
 };
 
-export function ModulePanelCard({ module, panels, projectId, canEdit, canAdvanceStage, userRole, onPanelCreated, onStageAdvanced }: Props) {
+export function ModulePanelCard({ module, panels, projectId, canEdit, canAdvanceStage, userRole, onPanelCreated, onStageAdvanced, productionSystem }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [addPanelOpen, setAddPanelOpen] = useState(false);
   const [siteReady, setSiteReady] = useState(false);
@@ -112,6 +113,7 @@ export function ModulePanelCard({ module, panels, projectId, canEdit, canAdvance
               productionStatus={module.production_status}
               canAdvance={canAdvanceStage}
               onAdvanced={onStageAdvanced}
+              productionSystem={productionSystem ?? "modular"}
             />
           </div>
 

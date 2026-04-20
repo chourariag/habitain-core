@@ -188,7 +188,7 @@ export default function ProjectDetail() {
           ) : (
             <div className="space-y-3">
               {modules.map((m) => (
-                <ModulePanelCard key={m.id} module={m} panels={panels[m.id] ?? []} projectId={id!} canEdit={canEdit} canAdvanceStage={canAdvanceStage} userRole={userRole} onPanelCreated={fetchData} onStageAdvanced={fetchData} />
+                <ModulePanelCard key={m.id} module={m} panels={panels[m.id] ?? []} projectId={id!} canEdit={canEdit} canAdvanceStage={canAdvanceStage} userRole={userRole} onPanelCreated={fetchData} onStageAdvanced={fetchData} productionSystem={(proj.production_system ?? "modular") as any} />
               ))}
             </div>
           )}
