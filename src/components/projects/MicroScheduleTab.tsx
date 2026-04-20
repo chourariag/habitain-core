@@ -17,6 +17,8 @@ import { MeasurementSheet } from "./MeasurementSheet";
 import { RedFlagAlerts } from "./RedFlagAlerts";
 import { fetchBenchmarkStats, getModuleCountBand, BenchmarkStats } from "@/lib/task-benchmarks";
 import * as XLSX from "xlsx";
+import { getPhasesForSystem, TASK_TYPE_META, type TaskTemplateType } from "@/lib/production-phases";
+import { ChevronRight, ChevronDown, ShieldAlert } from "lucide-react";
 
 interface ProjectTask {
   id: string;
@@ -38,9 +40,11 @@ interface ProjectTask {
   is_locked: boolean;
   lock_override_by: string | null;
   lock_override_reason: string | null;
+  task_type?: TaskTemplateType | null;
+  is_qc_gate?: boolean | null;
+  display_order?: number | null;
+  stage_number?: string | null;
 }
-
-const PHASES = ["Pre-Production", "Civil Works", "Factory Production", "Delivery", "Site Installation", "Finishing", "Handover"];
 const ROLE_LABELS: Record<string, string> = {
   production_head: "Production Head",
   factory_supervisor: "Factory Supervisor",
@@ -81,20 +85,26 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   const [overrideReason, setOverrideReason] = useState("");
   const [scheduleFlags, setScheduleFlags] = useState<{ task: string; message: string; level: "yellow" | "amber" }[]>([]);
   const [materialRiskTaskIds, setMaterialRiskTaskIds] = useState<Record<string, string>>({});
+  const [productionSystem, setProductionSystem] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState<string>("Project");
+  const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set());
   const fileRef = useRef<HTMLInputElement>(null);
 
   const canUpload = UPLOAD_ROLES.includes(userRole ?? "");
   const canEdit = EDIT_ROLES.includes(userRole ?? "");
   const canOverride = ["planning_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
+  const PHASES = useMemo(() => getPhasesForSystem(productionSystem), [productionSystem]);
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
-    const [taskRes, alertRes] = await Promise.all([
-      supabase.from("project_tasks").select("*").eq("project_id", projectId).order("task_id_in_schedule", { ascending: true }),
+    const [taskRes, alertRes, projectRes] = await Promise.all([
+      supabase.from("project_tasks").select("*").eq("project_id", projectId).order("display_order", { ascending: true, nullsFirst: false }).order("task_id_in_schedule", { ascending: true }),
       supabase.from("material_alerts").select("related_task_id, material_name").eq("project_id", projectId).eq("status", "active").not("related_task_id", "is", null),
+      supabase.from("projects").select("name, production_system").eq("id", projectId).maybeSingle(),
     ]);
     setTasks((taskRes.data as any as ProjectTask[]) ?? []);
-    // Build map of task_id -> material_name for risk badges
+    setProductionSystem(((projectRes.data as any)?.production_system as string | null) ?? null);
+    setProjectName(((projectRes.data as any)?.name as string | null) ?? "Project");
     const riskMap: Record<string, string> = {};
     (alertRes.data ?? []).forEach((a: any) => {
       if (a.related_task_id) riskMap[a.related_task_id] = a.material_name ?? "Material";
@@ -275,16 +285,76 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  const downloadTemplate = () => {
-    const ws = XLSX.utils.aoa_to_sheet([
-      ["ID", "Task Name", "Duration (days)", "Predecessors", "Planned Start Date", "Planned Finish Date", "Responsible Role", "Phase"],
-      ["1", "Site survey", "2", "", "01/05/2025", "02/05/2025", "planning_engineer", "Pre-Production"],
-      ["2", "Foundation design", "5", "1", "03/05/2025", "07/05/2025", "design_team", "Pre-Production"],
-      ["3", "Procurement of steel", "10", "2", "08/05/2025", "17/05/2025", "procurement", "Factory Production"],
-    ]);
+  const downloadTemplate = async () => {
+    // Pull master template for the project's production system. Falls back to a generic
+    // template if no system is configured yet.
+    const sys = (productionSystem ?? "").trim();
+    const fileSafeProject = (projectName || "Project").replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "");
+    const sysLabel = sys ? sys.charAt(0).toUpperCase() + sys.slice(1) : "Generic";
+
+    const headers = [
+      "Phase", "Stage #", "Task Type", "Task / Sub-task", "Who Does It",
+      "Input Required", "Output / Deliverable", "HStack Action", "QC Gate?",
+      "Duration (days)", "Notes",
+    ];
+    // Columns by index — only "Duration (days)" (9) and "Notes" (10) are editable.
+    const editableCols = new Set([9, 10]);
+
+    let rows: any[][] = [];
+    if (sys === "modular" || sys === "panelised" || sys === "hybrid") {
+      const { data } = await supabase
+        .from("production_task_templates")
+        .select("phase_name, stage_number, task_type, task_name, responsible_role, input_required, output_deliverable, hstack_action, is_qc_gate, typical_duration_days, notes")
+        .eq("production_system", sys as any)
+        .order("display_order", { ascending: true });
+      rows = (data ?? []).map((t: any) => [
+        t.phase_name ?? "",
+        t.stage_number ?? "",
+        t.task_type ?? "task",
+        t.task_name ?? "",
+        t.responsible_role ?? "",
+        t.input_required ?? "",
+        t.output_deliverable ?? "",
+        t.hstack_action ?? "",
+        t.is_qc_gate ? "Yes" : "No",
+        t.typical_duration_days ?? "",
+        t.notes ?? "",
+      ]);
+    }
+    if (rows.length === 0) {
+      // Generic example so the file always opens
+      rows = [["Pre-Production", "1.1", "task", "Site survey", "planning_engineer", "Site GPS + access", "Survey report filed", "Upload survey to Drawings", "No", 2, ""]];
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    // Auto-width
+    ws["!cols"] = headers.map((h, i) => ({ wch: i === 3 ? 50 : i === 5 || i === 6 || i === 7 || i === 10 ? 30 : Math.max(h.length + 4, 14) }));
+    // Tag locked cells with grey fill (XLSX writer respects fills when style support enabled).
+    // Note: vanilla `xlsx` does not write cell fills. We mark headers + non-editable cells as locked
+    // via per-cell metadata so Excel users see them as protected once they enable Sheet Protection.
+    const range = XLSX.utils.decode_range(ws["!ref"]!);
+    for (let R = range.s.r; R <= range.e.r; R++) {
+      for (let C = range.s.c; C <= range.e.c; C++) {
+        const addr = XLSX.utils.encode_cell({ r: R, c: C });
+        const cell = ws[addr];
+        if (!cell) continue;
+        const isHeader = R === 0;
+        const isEditable = !isHeader && editableCols.has(C);
+        // Always set protection metadata; downstream sheet protection is opt-in by user.
+        cell.s = {
+          ...(cell.s ?? {}),
+          protection: { locked: !isEditable },
+        };
+      }
+    }
+    // Sheet protection (so Excel actually enforces the lock when the user enables protection)
+    (ws as any)["!protect"] = { password: "", sheet: false };
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Schedule");
-    XLSX.writeFile(wb, "HStack_Schedule_Template.xlsx");
+    const filename = `Schedule_${fileSafeProject}_${sysLabel}.xlsx`;
+    XLSX.writeFile(wb, filename);
+    toast.success(`Template downloaded: ${filename}`);
   };
 
   const updateTask = async (taskId: string, updates: Partial<ProjectTask>) => {
@@ -310,15 +380,19 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
 
   const confirmOverride = async () => {
     if (!overrideTask) return;
+    if (overrideReason.trim().length < 20) {
+      toast.error("Override reason must be at least 20 characters.");
+      return;
+    }
     const { data: { user } } = await supabase.auth.getUser();
     await updateTask(overrideTask.id, {
-      status: "In Progress",
-      actual_start_date: format(new Date(), "yyyy-MM-dd"),
-      completion_percentage: 5,
+      status: "Ready to Start",
       is_locked: false,
       lock_override_by: user?.id ?? null,
-      lock_override_reason: overrideReason,
+      lock_override_reason: overrideReason.trim(),
+      lock_override_at: new Date().toISOString(),
     } as any);
+    toast.success(`Lock overridden for "${overrideTask.task_name}".`);
     setOverrideTask(null);
     setOverrideReason("");
   };
@@ -429,10 +503,10 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
           </div>
 
           {viewMode === "list" && (
-            <ListView tasks={filteredTasks} taskMap={taskMap} canEdit={canEdit} liveStatus={liveStatus} getDelay={getDelay} getBlockingName={getBlockingName} onStart={handleStartTask} onUpdate={updateTask} materialRiskMap={materialRiskTaskIds} />
+            <ListView tasks={filteredTasks} taskMap={taskMap} canEdit={canEdit} canOverride={canOverride} liveStatus={liveStatus} getDelay={getDelay} getBlockingName={getBlockingName} onStart={handleStartTask} onUpdate={updateTask} onRequestOverride={(t) => setOverrideTask(t)} materialRiskMap={materialRiskTaskIds} collapsedParents={collapsedParents} setCollapsedParents={setCollapsedParents} />
           )}
           {viewMode === "phase" && (
-            <PhaseBoard tasks={filteredTasks} liveStatus={liveStatus} />
+            <PhaseBoard tasks={filteredTasks} liveStatus={liveStatus} phases={PHASES} />
           )}
           {viewMode === "gantt" && (
             <GanttView tasks={filteredTasks} taskMap={taskMap} getDelay={getDelay} />
@@ -452,12 +526,25 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
       {/* Override dialog */}
       <Dialog open={!!overrideTask} onOpenChange={(o) => { if (!o) { setOverrideTask(null); setOverrideReason(""); } }}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Override Dependency Lock</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">Task "{overrideTask?.task_name}" is blocked by predecessor dependencies. Provide a reason to override.</p>
-          <Textarea placeholder="Reason for override..." value={overrideReason} onChange={(e) => setOverrideReason(e.target.value)} />
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-[#F40009]" /> Override Lock</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm">Task: <strong>{overrideTask?.task_name}</strong></p>
+            <p className="text-xs text-muted-foreground">
+              {overrideTask?.is_qc_gate
+                ? "This is a QC gate. Overriding will release downstream tasks before the gate is signed off."
+                : "This task is blocked by a predecessor (likely a QC gate or sign-off). Provide a clear reason — minimum 20 characters."}
+            </p>
+            <Textarea
+              placeholder="Reason for override (min 20 characters)..."
+              value={overrideReason}
+              onChange={(e) => setOverrideReason(e.target.value)}
+              rows={4}
+            />
+            <p className="text-[11px] text-muted-foreground">{overrideReason.trim().length}/20 characters minimum. Logged with your name and timestamp.</p>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => { setOverrideTask(null); setOverrideReason(""); }}>Cancel</Button>
-            <Button onClick={confirmOverride} disabled={!overrideReason.trim()}>Override & Start</Button>
+            <Button variant="destructive" onClick={confirmOverride} disabled={overrideReason.trim().length < 20}>Confirm Override</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -466,13 +553,48 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
 }
 
 /* ===================== LIST VIEW ===================== */
-function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingName, onStart, onUpdate, materialRiskMap = {} }: {
-  tasks: ProjectTask[]; taskMap: Record<string, ProjectTask>; canEdit: boolean;
+function ListView({ tasks, taskMap, canEdit, canOverride, liveStatus, getDelay, getBlockingName, onStart, onUpdate, onRequestOverride, materialRiskMap = {}, collapsedParents, setCollapsedParents }: {
+  tasks: ProjectTask[]; taskMap: Record<string, ProjectTask>; canEdit: boolean; canOverride: boolean;
   liveStatus: (t: ProjectTask) => string; getDelay: (t: ProjectTask) => number;
   getBlockingName: (t: ProjectTask) => string | null;
   onStart: (t: ProjectTask) => void; onUpdate: (id: string, u: Partial<ProjectTask>) => void;
+  onRequestOverride: (t: ProjectTask) => void;
   materialRiskMap?: Record<string, string>;
+  collapsedParents: Set<string>;
+  setCollapsedParents: React.Dispatch<React.SetStateAction<Set<string>>>;
 }) {
+  // Group sub-tasks under their parent (parent = nearest preceding non-subtask in display order)
+  const visibleTasks = useMemo(() => {
+    const out: ProjectTask[] = [];
+    let currentParentId: string | null = null;
+    for (const t of tasks) {
+      const isSub = t.task_type === "sub-task";
+      if (!isSub) { currentParentId = t.id; out.push(t); continue; }
+      if (currentParentId && collapsedParents.has(currentParentId)) continue;
+      out.push(t);
+    }
+    return out;
+  }, [tasks, collapsedParents]);
+
+  // Map parent -> sub-tasks for progress computation
+  const subtaskMap = useMemo(() => {
+    const m: Record<string, ProjectTask[]> = {};
+    let parentId: string | null = null;
+    for (const t of tasks) {
+      if (t.task_type !== "sub-task") { parentId = t.id; m[parentId] = m[parentId] ?? []; continue; }
+      if (parentId) (m[parentId] = m[parentId] ?? []).push(t);
+    }
+    return m;
+  }, [tasks]);
+
+  const toggleCollapse = (id: string) => {
+    setCollapsedParents((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
   return (
     <div className="overflow-x-auto border rounded-lg">
       <Table>
@@ -492,23 +614,41 @@ function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingNa
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tasks.map((task) => {
+          {visibleTasks.map((task) => {
             const status = liveStatus(task);
             const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG["Upcoming"];
             const delay = getDelay(task);
             const blocking = getBlockingName(task);
             const Icon = cfg.icon;
             const materialRisk = materialRiskMap[task.id];
+            const ttype = (task.task_type ?? "task") as TaskTemplateType;
+            const meta = TASK_TYPE_META[ttype];
+            const isSub = ttype === "sub-task";
+            const subs = subtaskMap[task.id] ?? [];
+            const subDoneCount = subs.filter((s) => s.completion_percentage === 100).length;
+            const isCollapsed = collapsedParents.has(task.id);
+            const isQcBlocked = task.is_locked && (status === "Blocked" || status === "Upcoming");
             return (
-              <TableRow key={task.id} className={status === "Overdue" ? "bg-red-50/50" : ""}>
+              <TableRow key={task.id} className={`${status === "Overdue" ? "bg-red-50/50" : ""} ${isSub ? "bg-muted/20" : ""}`}>
                 <TableCell className="font-mono text-xs">{task.task_id_in_schedule}</TableCell>
-                <TableCell className="font-medium text-sm">
-                  <div className="flex items-center gap-1.5">
-                    {task.is_locked && (
+                <TableCell className={`font-medium ${isSub ? "text-xs text-muted-foreground" : "text-sm"}`}>
+                  <div className="flex items-center gap-1.5 flex-wrap" style={{ paddingLeft: isSub ? 16 : 0 }}>
+                    {!isSub && subs.length > 0 && (
+                      <button onClick={() => toggleCollapse(task.id)} className="text-muted-foreground hover:text-foreground">
+                        {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                      </button>
+                    )}
+                    {meta.icon && (
+                      <span aria-hidden style={{ color: meta.color }} title={meta.label} className="text-sm font-bold leading-none">{meta.icon}</span>
+                    )}
+                    {task.is_qc_gate && !meta.icon && (
+                      <ShieldAlert className="h-3.5 w-3.5" style={{ color: "#F40009" }} aria-label="QC Gate" />
+                    )}
+                    {isQcBlocked && (
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger><Lock className="h-3.5 w-3.5 text-muted-foreground" /></TooltipTrigger>
-                          <TooltipContent>Waiting for: {blocking ?? "predecessor"}</TooltipContent>
+                          <TooltipContent>Waiting for QC gate: {blocking ?? "predecessor"}</TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
                     )}
@@ -520,24 +660,20 @@ function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingNa
                         </Tooltip>
                       </TooltipProvider>
                     )}
-                    {task.task_name}
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <a
-                            href={`/sops?taskName=${encodeURIComponent(task.task_name)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center text-muted-foreground hover:text-[#006039] transition-colors"
-                            onClick={(e) => e.stopPropagation()}
-                            aria-label="View SOP for this task"
-                          >
-                            <BookOpen className="h-3.5 w-3.5" />
-                          </a>
-                        </TooltipTrigger>
-                        <TooltipContent>View SOP for this task</TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <span>{task.task_name}</span>
+                    {!isSub && subs.length > 0 && (
+                      <span className="text-[10px] text-muted-foreground">({subDoneCount}/{subs.length})</span>
+                    )}
+                    {isQcBlocked && canOverride && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-6 ml-1 px-2 text-[10px] border-[#F40009] text-[#F40009] hover:bg-[#F40009]/10"
+                        onClick={(e) => { e.stopPropagation(); onRequestOverride(task); }}
+                      >
+                        Override Lock
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell><span className="text-xs">{task.phase}</span></TableCell>
@@ -588,17 +724,17 @@ function ListView({ tasks, taskMap, canEdit, liveStatus, getDelay, getBlockingNa
 }
 
 /* ===================== PHASE BOARD ===================== */
-function PhaseBoard({ tasks, liveStatus }: { tasks: ProjectTask[]; liveStatus: (t: ProjectTask) => string }) {
+function PhaseBoard({ tasks, liveStatus, phases }: { tasks: ProjectTask[]; liveStatus: (t: ProjectTask) => string; phases: string[] }) {
   const grouped = useMemo(() => {
     const m: Record<string, ProjectTask[]> = {};
-    PHASES.forEach((p) => { m[p] = []; });
+    phases.forEach((p) => { m[p] = []; });
     tasks.forEach((t) => { (m[t.phase] ?? (m[t.phase] = [])).push(t); });
     return m;
-  }, [tasks]);
+  }, [tasks, phases]);
 
   return (
     <div className="flex gap-3 overflow-x-auto pb-4">
-      {PHASES.map((phase) => {
+      {phases.map((phase) => {
         const phaseTasks = grouped[phase] ?? [];
         if (phaseTasks.length === 0) return null;
         return (
