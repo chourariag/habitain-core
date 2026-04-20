@@ -4081,6 +4081,66 @@ export type Database = {
           },
         ]
       }
+      production_task_templates: {
+        Row: {
+          created_at: string
+          display_order: number
+          hstack_action: string | null
+          id: string
+          input_required: string | null
+          is_qc_gate: boolean
+          notes: string | null
+          output_deliverable: string | null
+          phase_name: string
+          predecessor_stage_numbers: string[] | null
+          production_system: Database["public"]["Enums"]["production_system_type"]
+          responsible_role: string | null
+          stage_number: string
+          task_name: string
+          task_type: Database["public"]["Enums"]["task_template_type"]
+          typical_duration_days: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order: number
+          hstack_action?: string | null
+          id?: string
+          input_required?: string | null
+          is_qc_gate?: boolean
+          notes?: string | null
+          output_deliverable?: string | null
+          phase_name: string
+          predecessor_stage_numbers?: string[] | null
+          production_system: Database["public"]["Enums"]["production_system_type"]
+          responsible_role?: string | null
+          stage_number: string
+          task_name: string
+          task_type: Database["public"]["Enums"]["task_template_type"]
+          typical_duration_days?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          hstack_action?: string | null
+          id?: string
+          input_required?: string | null
+          is_qc_gate?: boolean
+          notes?: string | null
+          output_deliverable?: string | null
+          phase_name?: string
+          predecessor_stage_numbers?: string[] | null
+          production_system?: Database["public"]["Enums"]["production_system_type"]
+          responsible_role?: string | null
+          stage_number?: string
+          task_name?: string
+          task_type?: Database["public"]["Enums"]["task_template_type"]
+          typical_duration_days?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           auth_user_id: string
@@ -7877,6 +7937,13 @@ export type Database = {
         | "super_admin"
         | "principal_architect"
       login_type: "email" | "otp"
+      production_system_type: "modular" | "panelised" | "hybrid"
+      task_template_type:
+        | "task"
+        | "sub-task"
+        | "qc_gate"
+        | "sign-off"
+        | "payment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -8033,6 +8100,14 @@ export const Constants = {
         "principal_architect",
       ],
       login_type: ["email", "otp"],
+      production_system_type: ["modular", "panelised", "hybrid"],
+      task_template_type: [
+        "task",
+        "sub-task",
+        "qc_gate",
+        "sign-off",
+        "payment",
+      ],
     },
   },
 } as const
