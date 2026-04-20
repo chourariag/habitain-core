@@ -115,11 +115,16 @@ export function ProductionKanban({ modules, onRefresh, productionSystem }: Props
           >
             {/* Column Header */}
             <div
-              className="px-3 py-2.5 rounded-t-lg flex items-center justify-between"
+              className="px-3 py-2 rounded-t-lg"
               style={{ backgroundColor: "#006039" }}
             >
-              <span className="text-xs font-semibold text-white truncate">{stage}</span>
-              <span className="text-[10px] font-bold text-white/80 bg-white/20 rounded-full px-1.5 py-0.5">{items.length}</span>
+              <div className="text-[9px] font-medium uppercase tracking-wide text-white/70 truncate">
+                {getPhaseForStage(stage, productionSystem ?? null)}
+              </div>
+              <div className="flex items-center justify-between mt-0.5">
+                <span className="text-xs font-semibold text-white truncate">{stage}</span>
+                <span className="text-[10px] font-bold text-white/80 bg-white/20 rounded-full px-1.5 py-0.5">{items.length}</span>
+              </div>
             </div>
 
             {/* Cards */}
