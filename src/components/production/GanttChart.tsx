@@ -259,14 +259,20 @@ export function GanttChart({ projectId, modules, userRole, productionSystem }: P
         {/* Gantt body */}
         <Card className="overflow-hidden">
           <div className="flex">
-            {/* Left panel: module names */}
+            {/* Left panel: module names + phase */}
             <div className="shrink-0 border-r border-border" style={{ width: LEFT_PANEL_WIDTH }}>
-              <div className="border-b border-border px-3 flex items-center text-xs font-medium text-muted-foreground" style={{ height: HEADER_HEIGHT }}>
-                Module
+              <div className="border-b border-border px-3 flex items-center justify-between text-xs font-medium text-muted-foreground" style={{ height: HEADER_HEIGHT }}>
+                <span>Module</span>
+                <span className="text-[10px] uppercase tracking-wide">Phase</span>
               </div>
               {filteredModules.map((m) => (
-                <div key={m.id} className="border-b border-border px-3 flex items-center text-xs font-medium truncate" style={{ height: MODULE_ROW_HEIGHT, color: "#1A1A1A" }}>
-                  {m.module_code || m.name}
+                <div key={m.id} className="border-b border-border px-3 flex items-center justify-between gap-2" style={{ height: MODULE_ROW_HEIGHT }}>
+                  <span className="text-xs font-medium truncate" style={{ color: "#1A1A1A" }}>
+                    {m.module_code || m.name}
+                  </span>
+                  <span className="text-[10px] font-medium px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: "#E8F2ED", color: "#006039" }}>
+                    {getPhaseForStage(m.current_stage, productionSystem ?? null)}
+                  </span>
                 </div>
               ))}
             </div>
