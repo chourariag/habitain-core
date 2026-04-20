@@ -114,6 +114,12 @@ export default function ProjectDetail() {
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{project.name}</h1>
             <Badge className={statusCfg.badgeClass}>{statusCfg.label}</Badge>
+            {(proj as any).production_system && (() => {
+              const ps = (proj as any).production_system as "modular" | "panelised" | "hybrid";
+              const styles = { modular: { bg: "hsl(155 100% 19% / 0.15)", fg: "hsl(155 100% 19%)" }, panelised: { bg: "hsl(210 80% 50% / 0.15)", fg: "hsl(210 80% 40%)" }, hybrid: { bg: "hsl(270 60% 50% / 0.15)", fg: "hsl(270 60% 40%)" } }[ps];
+              const label = { modular: "Modular", panelised: "Panelised", hybrid: "Hybrid" }[ps];
+              return <Badge style={{ backgroundColor: styles.bg, color: styles.fg, border: "none" }}>{label}</Badge>;
+            })()}
           </div>
           {project.client_name && <p className="text-muted-foreground mt-1">{project.client_name}</p>}
         </div>

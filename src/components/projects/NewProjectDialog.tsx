@@ -27,6 +27,11 @@ interface NewProjectDialogProps {
 
 const PROJECT_TYPES = ["Residential", "Commercial", "Hospitality"];
 const CONSTRUCTION_TYPES = ["Modular", "Panel-based"];
+const PRODUCTION_SYSTEMS: { value: "modular" | "panelised" | "hybrid"; label: string; hint: string }[] = [
+  { value: "modular", label: "Modular", hint: "Complete module built in one bay" },
+  { value: "panelised", label: "Panelised", hint: "LGSF panels to site, erected on site" },
+  { value: "hybrid", label: "Hybrid", hint: "LGSF panels from Panel Bay installed into Module Bay" },
+];
 
 export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDialogProps) {
   const [loading, setLoading] = useState(false);
@@ -47,6 +52,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
   const [loadingGps, setLoadingGps] = useState(false);
   const [division, setDivision] = useState("Habitainer");
   const [isDesignOnly, setIsDesignOnly] = useState(false);
+  const [productionSystem, setProductionSystem] = useState<"modular" | "panelised" | "hybrid">("modular");
 
   const resetForm = () => {
     setName(""); setClientName(""); setClientPhone(""); setClientEmail("");
@@ -54,6 +60,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
     setUnitCount(""); setStartDate(undefined); setEstCompletion(undefined);
     setSiteLat(""); setSiteLng(""); setSiteRadius("300");
     setDivision("Habitainer"); setIsDesignOnly(false);
+    setProductionSystem("modular");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,6 +89,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
         site_radius: isDesignOnly ? null : (siteRadius ? parseInt(siteRadius) : 300),
         division,
         is_design_only: isDesignOnly,
+        production_system: isDesignOnly ? "modular" : productionSystem,
       } as any).select("id").single();
 
       if (error) throw error;
@@ -213,6 +221,28 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
                 </div>
               )}
             </div>
+
+            {!isDesignOnly && (
+              <div className="space-y-2">
+                <Label>Production System *</Label>
+                <Select value={productionSystem} onValueChange={(v) => setProductionSystem(v as any)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {PRODUCTION_SYSTEMS.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{p.label}</span>
+                          <span className="text-[10px] text-muted-foreground">{p.hint}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-[10px] text-muted-foreground">
+                  Determines the factory workflow. Hybrid creates a Panel Bay → Module Bay dependency.
+                </p>
+              </div>
+            )}
 
             {/* Division */}
             <div className="space-y-2">
