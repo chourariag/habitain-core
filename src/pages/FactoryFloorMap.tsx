@@ -535,16 +535,21 @@ export default function FactoryFloorMap() {
                 <Badge className="text-xs" style={{ backgroundColor: "#D4860A", color: "#fff" }}>3 Bays</Badge>
               </div>
               <div className="grid grid-cols-3 xl:grid-cols-1 gap-3">
-                {Array.from({ length: PANEL_BAYS }, (_, i) => i + PANEL_BAY_START).map((n, idx) => (
-                  <PanelBayCard
-                    key={n}
-                    bayNumber={n}
-                    bayLabel={`Panel Bay ${idx + 1}`}
-                    batch={panelBatches.find((b) => b.bay_number === n)}
-                    canManage={canAssign}
-                    onMarkReady={handleMarkReady}
-                  />
-                ))}
+                {Array.from({ length: PANEL_BAYS }, (_, i) => i + PANEL_BAY_START).map((n, idx) => {
+                  const batch = panelBatches.find((b) => b.bay_number === n);
+                  const sys = batch?.project_id ? projectSystems[batch.project_id] : undefined;
+                  return (
+                    <PanelBayCard
+                      key={n}
+                      bayNumber={n}
+                      bayLabel={`Panel Bay ${idx + 1}`}
+                      batch={batch}
+                      canManage={canAssign}
+                      onMarkReady={handleMarkReady}
+                      productionSystem={sys}
+                    />
+                  );
+                })}
               </div>
             </div>
 
