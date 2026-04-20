@@ -311,7 +311,7 @@ export function ProfitLossTab() {
               </span>
             </Button>
           </label>
-          <Button variant="outline" onClick={downloadTemplate}>
+          <Button variant="outline" onClick={downloadTemplate} style={{ borderColor: "#006039", color: "#006039" }}>
             <Download className="h-4 w-4 mr-2" /> Download Template
           </Button>
           {activeUpload && (

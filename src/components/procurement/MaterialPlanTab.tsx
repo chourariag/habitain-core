@@ -363,7 +363,7 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
         {canUpload && (
           <div className="flex items-center gap-2">
             <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleUpload} />
-            <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4 mr-1" /> Template</Button>
+            <Button size="sm" variant="outline" onClick={downloadTemplate} style={{ borderColor: "#006039", color: "#006039" }}><Download className="h-4 w-4 mr-1" /> Template</Button>
             <Button size="sm" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4 mr-1" /> Upload Plan</Button>
           </div>
         )}

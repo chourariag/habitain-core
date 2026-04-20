@@ -363,7 +363,7 @@ export function BOQManager({ projectId }: Props) {
             <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileSelect} />
           </>
         )}
-        <Button size="sm" variant="outline" onClick={downloadTemplate}>
+        <Button size="sm" variant="outline" onClick={downloadTemplate} style={{ borderColor: "#006039", color: "#006039" }}>
           <Download className="h-4 w-4 mr-1" /> Download Template
         </Button>
 
