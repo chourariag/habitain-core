@@ -562,23 +562,33 @@ export default function FactoryFloorMap() {
                 <Badge className="text-xs" style={{ backgroundColor: "#006039", color: "#fff" }}>{INDOOR_MODULE_BAYS} Bays</Badge>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                {Array.from({ length: INDOOR_MODULE_BAYS }, (_, i) => i + 1).map((n) => (
-                  <BayCard
-                    key={n}
-                    bayNumber={n}
-                    bayLabel={`Module Bay ${n} (Indoor)`}
-                    assignment={bayMap.get(n)}
-                    module={bayMap.get(n) ? moduleMap.get(bayMap.get(n)!.module_id) : undefined}
-                    workers={bayMap.get(n) ? moduleWorkers.get(bayMap.get(n)!.module_id) : undefined}
-                    workerMap={workerMap}
-                    selected={selectedBay === n}
-                    canAssign={canAssign}
-                    onSelect={() => setSelectedBay(selectedBay === n ? null : n)}
-                    onDrop={() => handleDrop(n)}
-                    onDragOver={(e) => { e.preventDefault(); }}
-                    onTapAssign={() => isMobile && tapWorkerId ? handleTapAssign(n) : undefined}
-                  />
-                ))}
+                {Array.from({ length: INDOOR_MODULE_BAYS }, (_, i) => i + 1).map((n) => {
+                  const ba = bayMap.get(n);
+                  const mod = ba ? moduleMap.get(ba.module_id) : undefined;
+                  const sys = ba?.project_id ? projectSystems[ba.project_id] : undefined;
+                  const projHandover = ba?.project_id
+                    ? handovers.find((h) => h.project_id === ba.project_id)
+                    : undefined;
+                  return (
+                    <BayCard
+                      key={n}
+                      bayNumber={n}
+                      bayLabel={`Module Bay ${n} (Indoor)`}
+                      assignment={ba}
+                      module={mod}
+                      workers={ba ? moduleWorkers.get(ba.module_id) : undefined}
+                      workerMap={workerMap}
+                      selected={selectedBay === n}
+                      canAssign={canAssign}
+                      onSelect={() => setSelectedBay(selectedBay === n ? null : n)}
+                      onDrop={() => handleDrop(n)}
+                      onDragOver={(e) => { e.preventDefault(); }}
+                      onTapAssign={() => isMobile && tapWorkerId ? handleTapAssign(n) : undefined}
+                      productionSystem={sys}
+                      pendingHandover={projHandover}
+                    />
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -599,24 +609,34 @@ export default function FactoryFloorMap() {
               <Badge className="text-xs" style={{ backgroundColor: "#999", color: "#fff" }}>Outdoor</Badge>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {Array.from({ length: OUTDOOR_MODULE_BAYS }, (_, i) => i + OUTDOOR_BAY_START).map((n) => (
-                <BayCard
-                  key={n}
-                  bayNumber={n}
-                  bayLabel={`Module Bay ${n - OUTDOOR_BAY_START + 1} (Outdoor)`}
-                  assignment={bayMap.get(n)}
-                  module={bayMap.get(n) ? moduleMap.get(bayMap.get(n)!.module_id) : undefined}
-                  workers={bayMap.get(n) ? moduleWorkers.get(bayMap.get(n)!.module_id) : undefined}
-                  workerMap={workerMap}
-                  selected={selectedBay === n}
-                  canAssign={canAssign}
-                  onSelect={() => setSelectedBay(selectedBay === n ? null : n)}
-                  onDrop={() => handleDrop(n)}
-                  onDragOver={(e) => { e.preventDefault(); }}
-                  onTapAssign={() => isMobile && tapWorkerId ? handleTapAssign(n) : undefined}
-                  outdoor
-                />
-              ))}
+              {Array.from({ length: OUTDOOR_MODULE_BAYS }, (_, i) => i + OUTDOOR_BAY_START).map((n) => {
+                const ba = bayMap.get(n);
+                const mod = ba ? moduleMap.get(ba.module_id) : undefined;
+                const sys = ba?.project_id ? projectSystems[ba.project_id] : undefined;
+                const projHandover = ba?.project_id
+                  ? handovers.find((h) => h.project_id === ba.project_id)
+                  : undefined;
+                return (
+                  <BayCard
+                    key={n}
+                    bayNumber={n}
+                    bayLabel={`Module Bay ${n - OUTDOOR_BAY_START + 1} (Outdoor)`}
+                    assignment={ba}
+                    module={mod}
+                    workers={ba ? moduleWorkers.get(ba.module_id) : undefined}
+                    workerMap={workerMap}
+                    selected={selectedBay === n}
+                    canAssign={canAssign}
+                    onSelect={() => setSelectedBay(selectedBay === n ? null : n)}
+                    onDrop={() => handleDrop(n)}
+                    onDragOver={(e) => { e.preventDefault(); }}
+                    onTapAssign={() => isMobile && tapWorkerId ? handleTapAssign(n) : undefined}
+                    outdoor
+                    productionSystem={sys}
+                    pendingHandover={projHandover}
+                  />
+                );
+              })}
             </div>
           </div>
 
