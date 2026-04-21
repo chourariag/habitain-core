@@ -22,6 +22,7 @@ import { VariationApproval } from "@/components/portal/VariationApproval";
 import { ClientPaymentsInvoices } from "@/components/portal/ClientPaymentsInvoices";
 import { ClientDocuments } from "@/components/portal/ClientDocuments";
 import { ClientPostHandover } from "@/components/portal/ClientPostHandover";
+import { ClientApprovals } from "@/components/portal/ClientApprovals";
 
 const STAGES = [
   "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
@@ -310,6 +311,12 @@ export default function ClientPortal() {
         <Tabs defaultValue="overview">
           <TabsList className="w-full">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="approvals" className="relative">
+              Approvals
+              {totalActions > 0 && (
+                <Badge variant="destructive" className="ml-1.5 h-5 w-5 p-0 flex items-center justify-center text-[10px] rounded-full">{totalActions}</Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             {isHandedOver && <TabsTrigger value="post-handover">Post-Handover</TabsTrigger>}
