@@ -672,6 +672,16 @@ export default function ClientPortal() {
             )}
           </TabsContent>
 
+          {/* APPROVALS TAB */}
+          <TabsContent value="approvals" className="mt-4">
+            <ClientApprovals
+              projectId={project.id}
+              projectToken={projectToken!}
+              clientName={project.client_name || "Client"}
+              onRefresh={fetchData}
+            />
+          </TabsContent>
+
           {/* PAYMENTS TAB */}
           <TabsContent value="payments" className="mt-4">
             <ClientPaymentsInvoices
