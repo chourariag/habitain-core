@@ -243,6 +243,7 @@ function SummaryCard({ icon, label, value, tone }: { icon: React.ReactNode; labe
 }
 
 function GrnDialog({ open, onOpenChange, projectId, onSaved }: { open: boolean; onOpenChange: (v: boolean) => void; projectId: string; onSaved: () => void }) {
+  const [scanSkipped, setScanSkipped] = useState(false);
   const [form, setForm] = useState({
     boq_category: "Structure", vendor_name: "", invoice_no: "", invoice_date: format(new Date(), "yyyy-MM-dd"),
     description: "", basic_amount_excl_gst: "", gst_amount: "", remark: "",
@@ -287,6 +288,28 @@ function GrnDialog({ open, onOpenChange, projectId, onSaved }: { open: boolean; 
       <SheetContent className="overflow-y-auto">
         <SheetHeader><SheetTitle className="font-display">Add GRN (Goods Receipt Note)</SheetTitle></SheetHeader>
         <div className="space-y-3 py-4">
+          {!scanSkipped && (
+            <InvoiceScanner
+              onExtracted={(data) => {
+                setForm(prev => ({
+                  ...prev,
+                  vendor_name: data.vendor_name || prev.vendor_name,
+                  invoice_no: data.invoice_number || prev.invoice_no,
+                  invoice_date: data.invoice_date
+                    ? (() => {
+                        const parts = data.invoice_date.split("/");
+                        return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : prev.invoice_date;
+                      })()
+                    : prev.invoice_date,
+                  basic_amount_excl_gst: data.subtotal != null ? String(data.subtotal) : prev.basic_amount_excl_gst,
+                  gst_amount: data.gst_amount != null ? String(data.gst_amount) : prev.gst_amount,
+                  description: data.line_items?.map(i => `${i.description} x${i.quantity}`).join(", ") || prev.description,
+                }));
+                setScanSkipped(true);
+              }}
+              onSkip={() => setScanSkipped(true)}
+            />
+          )}
           <Field label="BOQ Category">
             <Select value={form.boq_category} onValueChange={(v) => setForm({ ...form, boq_category: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
