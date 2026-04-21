@@ -26,7 +26,7 @@ export default function Dashboard() {
   return (
     <div className="p-4 md:p-6 space-y-6">
       {/* Daily Readiness Brief — pinned above check-in, hidden after 10am */}
-      <DailyReadinessBrief userRole={userRole} userId={userId} displayName={roleName.split(" ")[0]} />
+      <DailyReadinessBrief userRole={userRole} userId={userId} />
 
       {/* Check-in card */}
       <CheckInButton userRole={userRole} />

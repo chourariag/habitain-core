@@ -244,10 +244,11 @@ async function buildBriefForRole(role: AppRole, uid: string): Promise<BriefLine[
   return [];
 }
 
-export function DailyReadinessBrief({ userRole, userId, displayName }: Props) {
+export function DailyReadinessBrief({ userRole, userId }: Props) {
   const navigate = useNavigate();
   const [lines, setLines] = useState<BriefLine[] | null>(null);
   const [visible, setVisible] = useState(false);
+  const [firstName, setFirstName] = useState<string>("");
 
   useEffect(() => {
     if (!userRole || !userId) return;
@@ -256,6 +257,16 @@ export function DailyReadinessBrief({ userRole, userId, displayName }: Props) {
     if (localStorage.getItem(dismissKey(userId))) return;
     setVisible(true);
     buildBriefForRole(userRole, userId).then(setLines);
+    supabase
+      .from("profiles")
+      .select("full_name, display_name")
+      .eq("auth_user_id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        const raw = data?.full_name || data?.display_name || "";
+        const first = raw.trim().split(/\s+/)[0] || "";
+        setFirstName(first);
+      });
   }, [userRole, userId]);
 
   if (!visible) return null;
@@ -276,7 +287,7 @@ export function DailyReadinessBrief({ userRole, userId, displayName }: Props) {
         <div className="flex items-center gap-2">
           <Sun className="h-5 w-5" />
           <h2 className="text-base font-semibold">
-            Good morning{displayName ? ` ${displayName}` : ""} — here is your day
+            Good morning{firstName ? ` ${firstName}` : ""} — here is your day
           </h2>
         </div>
         <Button size="icon" variant="ghost" onClick={dismiss} className="h-7 w-7 text-white hover:bg-white/10 hover:text-white">
