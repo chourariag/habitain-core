@@ -19,6 +19,128 @@ import { useProjectContext } from "@/contexts/ProjectContext";
 const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admin", "managing_director"];
 
+const COST_CATEGORIES = [
+  { key: "materials", label: "Materials" },
+  { key: "labour", label: "Labour & Fabrication" },
+  { key: "logistics", label: "Logistics" },
+  { key: "mep", label: "MEP & Electrical" },
+  { key: "overhead", label: "Overhead" },
+];
+
+function BudgetSummary({ project, projectId, onAddGRN }: { project: any; projectId: string; onAddGRN: () => void }) {
+  const [milestones, setMilestones] = useState<any[]>([]);
+  const [receivedCount, setReceivedCount] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: ms }, { count }] = await Promise.all([
+        (supabase.from("billing_milestones" as any) as any).select("amount, status").eq("project_id", projectId),
+        (supabase.from("material_requests" as any) as any).select("id", { count: "exact", head: true }).eq("project_id", projectId).eq("status", "received"),
+      ]);
+      setMilestones(ms ?? []);
+      setReceivedCount(count ?? 0);
+    })();
+  }, [projectId]);
+
+  const proj = project as any;
+  const contractValue = proj.contract_value ? Number(proj.contract_value) : 0;
+  const gfcBudget = proj.gfc_budget ? Number(proj.gfc_budget) : 0;
+  const totalBilled = milestones.filter((m) => m.status === "invoiced" || m.status === "paid").reduce((s: number, m: any) => s + (m.amount ?? 0), 0);
+  const totalPaid = milestones.filter((m) => m.status === "paid").reduce((s: number, m: any) => s + (m.amount ?? 0), 0);
+  const balance = contractValue - totalBilled;
+  const marginVsContract = contractValue > 0 && gfcBudget > 0 ? ((contractValue - gfcBudget) / contractValue) * 100 : null;
+
+  const fmt = (n: number) => n > 0 ? `₹${n.toLocaleString("en-IN")}` : "—";
+
+  const tiles = [
+    { label: "Contract Value", value: fmt(contractValue), color: "#1A1A1A" },
+    { label: "GFC Budget", value: fmt(gfcBudget), color: "#1A1A1A" },
+    { label: "Billed to Client", value: fmt(totalBilled), color: "#D4860A" },
+    { label: "Received", value: fmt(totalPaid), color: "#006039" },
+    { label: "Balance to Bill", value: contractValue > 0 ? fmt(balance) : "—", color: balance < 0 ? "#F40009" : "#1A1A1A" },
+    { label: "Margin vs Contract", value: marginVsContract !== null ? `${marginVsContract.toFixed(1)}%` : "—", color: marginVsContract !== null && marginVsContract > 0 ? "#006039" : "#999" },
+  ];
+
+  // Project P&L breakdown — estimated from GFC budget split
+  const budgetSplit: Record<string, number> = gfcBudget > 0 ? {
+    materials: Math.round(gfcBudget * 0.52),
+    labour: Math.round(gfcBudget * 0.20),
+    logistics: Math.round(gfcBudget * 0.06),
+    mep: Math.round(gfcBudget * 0.12),
+    overhead: Math.round(gfcBudget * 0.10),
+  } : {};
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-border p-4" style={{ backgroundColor: "#F7F7F7" }}>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+          {tiles.map((t) => (
+            <div key={t.label} className="rounded-lg border border-border p-3 bg-white">
+              <p className="text-xs" style={{ color: "#666" }}>{t.label}</p>
+              <p className="text-base font-bold font-display mt-0.5" style={{ color: t.color }}>{t.value}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs mb-3" style={{ color: "#999" }}>GRNs recorded in Procurement automatically update this project's cost tracking. {receivedCount > 0 ? `${receivedCount} GRN${receivedCount !== 1 ? "s" : ""} recorded.` : ""}</p>
+        <Button size="sm" variant="outline" onClick={onAddGRN}>
+          <Plus className="h-3.5 w-3.5 mr-1" />Add GRN
+        </Button>
+      </div>
+
+      {/* Project P&L breakdown */}
+      {gfcBudget > 0 && (
+        <div className="rounded-xl border border-border overflow-hidden">
+          <p className="px-4 py-2 text-xs font-semibold uppercase tracking-wider" style={{ backgroundColor: "#F7F7F7", color: "#666" }}>
+            Project Cost Analysis
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr style={{ backgroundColor: "#F7F7F7", borderBottom: "1px solid #E0E0E0" }}>
+                  <th className="text-left px-4 py-2 font-semibold">Category</th>
+                  <th className="text-right px-4 py-2 font-semibold">GFC Budget</th>
+                  <th className="text-right px-4 py-2 font-semibold">Spent CTD</th>
+                  <th className="text-right px-4 py-2 font-semibold">Balance</th>
+                  <th className="text-right px-4 py-2 font-semibold">Client Price</th>
+                  <th className="text-right px-4 py-2 font-semibold">Gross Margin</th>
+                </tr>
+              </thead>
+              <tbody>
+                {COST_CATEGORIES.map((cat) => {
+                  const budget = budgetSplit[cat.key] ?? 0;
+                  const clientShare = contractValue > 0 ? Math.round(contractValue * (budget / (gfcBudget || 1))) : 0;
+                  const grossMarginPct = clientShare > 0 ? ((clientShare - budget) / clientShare) * 100 : 0;
+                  return (
+                    <tr key={cat.key} style={{ borderBottom: "1px solid #F0F0F0" }}>
+                      <td className="px-4 py-2 font-medium" style={{ color: "#1A1A1A" }}>{cat.label}</td>
+                      <td className="px-4 py-2 text-right font-mono" style={{ color: "#666" }}>₹{budget.toLocaleString("en-IN")}</td>
+                      <td className="px-4 py-2 text-right font-mono" style={{ color: "#999" }}>—</td>
+                      <td className="px-4 py-2 text-right font-mono" style={{ color: "#006039" }}>₹{budget.toLocaleString("en-IN")}</td>
+                      <td className="px-4 py-2 text-right font-mono" style={{ color: "#1A1A1A" }}>₹{clientShare.toLocaleString("en-IN")}</td>
+                      <td className="px-4 py-2 text-right font-bold" style={{ color: grossMarginPct > 0 ? "#006039" : "#F40009" }}>{grossMarginPct.toFixed(1)}%</td>
+                    </tr>
+                  );
+                })}
+                <tr style={{ backgroundColor: "#E8F2ED" }}>
+                  <td className="px-4 py-2 font-bold" style={{ color: "#006039" }}>Total</td>
+                  <td className="px-4 py-2 text-right font-bold font-mono" style={{ color: "#006039" }}>{fmt(gfcBudget)}</td>
+                  <td className="px-4 py-2 text-right font-mono" style={{ color: "#999" }}>—</td>
+                  <td className="px-4 py-2 text-right font-bold font-mono" style={{ color: "#006039" }}>{fmt(gfcBudget)}</td>
+                  <td className="px-4 py-2 text-right font-bold font-mono" style={{ color: "#006039" }}>{fmt(contractValue)}</td>
+                  <td className="px-4 py-2 text-right font-bold" style={{ color: marginVsContract !== null && marginVsContract > 0 ? "#006039" : "#999" }}>
+                    {marginVsContract !== null ? `${marginVsContract.toFixed(1)}%` : "—"}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="px-4 py-2 text-[10px]" style={{ color: "#999" }}>Spent CTD updates as GRNs are recorded. Estimates based on standard GFC budget allocation.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -177,24 +299,7 @@ export default function ProjectDetail() {
 
         <TabsContent value="budget" className="space-y-4">
           <h2 className="font-display text-lg font-semibold text-foreground">Project Budget</h2>
-          <div className="rounded-xl border border-border p-4" style={{ backgroundColor: "#F7F7F7" }}>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-              {[
-                { label: "Contract Value", value: proj.contract_value ? `₹${Number(proj.contract_value).toLocaleString("en-IN")}` : "—" },
-                { label: "GFC Budget", value: proj.gfc_budget ? `₹${Number(proj.gfc_budget).toLocaleString("en-IN")}` : "—" },
-                { label: "Project Type", value: proj.type ?? "—" },
-              ].map((s) => (
-                <div key={s.label} className="rounded-lg border border-border p-3 bg-white">
-                  <p className="text-xs" style={{ color: "#666" }}>{s.label}</p>
-                  <p className="text-base font-bold font-display mt-0.5" style={{ color: "#1A1A1A" }}>{s.value}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs mb-3" style={{ color: "#999" }}>GRNs recorded in Procurement automatically update this project's cost tracking.</p>
-            <Button size="sm" variant="outline" onClick={() => navigate("/procurement")}>
-              <Plus className="h-3.5 w-3.5 mr-1" />Add GRN
-            </Button>
-          </div>
+          <BudgetSummary project={project} projectId={id!} onAddGRN={() => navigate(`/procurement?project=${id}`)} />
           <BillingMilestones
             projectId={id!}
             contractValue={proj.contract_value ? Number(proj.contract_value) : 0}

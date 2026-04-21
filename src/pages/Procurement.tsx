@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -78,6 +79,9 @@ function SoDButton({ label, onClick, sodReason }: { label: string; onClick: () =
 }
 
 export default function Procurement() {
+  const [searchParams] = useSearchParams();
+  const preselectedProject = searchParams.get("project") ?? "";
+
   const [items, setItems] = useState<any[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
@@ -111,6 +115,9 @@ export default function Procurement() {
   const [grnDestination, setGrnDestination] = useState<"factory" | "direct_to_site" | "">("");
   const [grnScanMode, setGrnScanMode] = useState<"none" | "scanning" | "extracted" | "failed">("none");
   const [grnExtracted, setGrnExtracted] = useState<{ supplier?: string; amount?: string; invoiceNo?: string } | null>(null);
+
+  // Project filter for requests tab — pre-populated from URL param
+  const [requestProjectFilter, setRequestProjectFilter] = useState<string>(preselectedProject);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -287,7 +294,7 @@ export default function Procurement() {
         <p className="text-sm mt-1" style={{ color: "#666666" }}>Material planning, purchase orders & inventory</p>
       </div>
 
-      <Tabs defaultValue="dashboard" className="space-y-4">
+      <Tabs defaultValue={preselectedProject ? "requests" : "dashboard"} className="space-y-4">
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="dashboard" className="gap-1.5"><LayoutDashboard className="h-4 w-4" /> Dashboard</TabsTrigger>
@@ -435,12 +442,31 @@ export default function Procurement() {
 
         {/* Requests Tab */}
         <TabsContent value="requests" className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Material Requests</h2>
-            {canRequest && <Button onClick={() => setAddOpen(true)} style={{ backgroundColor: "#006039" }}><Plus className="h-4 w-4 mr-1" /> New Request</Button>}
+            <div className="flex gap-2 flex-wrap">
+              <Select value={requestProjectFilter} onValueChange={setRequestProjectFilter}>
+                <SelectTrigger className="h-8 text-xs w-44">
+                  <SelectValue placeholder="All projects" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All projects</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {canRequest && <Button onClick={() => setAddOpen(true)} style={{ backgroundColor: "#006039" }}><Plus className="h-4 w-4 mr-1" /> New Request</Button>}
+            </div>
           </div>
-          {requests.length === 0 ? (
-            <Card><CardContent className="py-10 text-center"><p className="text-sm" style={{ color: "#666666" }}>No material requests yet.</p></CardContent></Card>
+          {requestProjectFilter && (
+            <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs" style={{ backgroundColor: "#E8F2ED" }}>
+              <span style={{ color: "#006039" }}>Showing requests for: <strong>{projectsMap[requestProjectFilter] ?? requestProjectFilter}</strong></span>
+              <button className="underline ml-1" style={{ color: "#006039" }} onClick={() => setRequestProjectFilter("")}>Clear</button>
+            </div>
+          )}
+          {requests.filter((r) => !requestProjectFilter || r.project_id === requestProjectFilter).length === 0 ? (
+            <Card><CardContent className="py-10 text-center"><p className="text-sm" style={{ color: "#666666" }}>No material requests{requestProjectFilter ? " for this project" : ""} yet.</p></CardContent></Card>
           ) : (
             <Card>
               <CardContent className="p-0 overflow-x-auto">
@@ -453,7 +479,7 @@ export default function Procurement() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {requests.map((r) => {
+                    {requests.filter((r) => !requestProjectFilter || r.project_id === requestProjectFilter).map((r) => {
                       const cfg = STATUS_CONFIG[r.status] ?? { label: r.status, style: { backgroundColor: "#F7F7F7", color: "#666666" } };
                       return (
                         <TableRow key={r.id}>

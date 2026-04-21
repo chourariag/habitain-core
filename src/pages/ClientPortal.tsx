@@ -500,6 +500,7 @@ function ClientPortalContent() {
               )}
             </TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
+            <TabsTrigger value="variations">Variations</TabsTrigger>
             <TabsTrigger value="journal">Construction Journal</TabsTrigger>
             <TabsTrigger value="handover">Handover</TabsTrigger>
           </TabsList>
