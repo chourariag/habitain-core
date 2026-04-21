@@ -8,9 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet, Info } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { InvoiceScanner } from "@/components/inventory/InvoiceScanner";
 
 const BOQ_CATEGORIES = [
   "Structure", "Insulation", "Wall Boarding", "Ceiling", "Flooring",
@@ -133,7 +134,7 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
         />
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {canEdit && (
           <>
             <Button size="sm" onClick={() => setGrnOpen(true)}>
@@ -144,6 +145,9 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
             </Button>
           </>
         )}
+        <span className="text-xs text-muted-foreground flex items-center gap-1">
+          <Info className="h-3 w-3" /> GRNs recorded here automatically update this project's budget tracking
+        </span>
       </div>
 
       {/* Per-category tables */}
