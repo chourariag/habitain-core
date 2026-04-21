@@ -152,6 +152,8 @@ export default function Onboarding() {
 
   // ─── RENDER PHASES ───
 
+  const roleSteps = getRoleFirstSteps(role);
+
   if (phase === "welcome") {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 bg-background">
@@ -161,19 +163,36 @@ export default function Onboarding() {
               H
             </div>
             <h1 className="font-display text-2xl font-bold text-foreground">
-              Welcome, {displayName}!
+              Welcome to HStack — your role is {roleLabel}
             </h1>
             <p className="text-muted-foreground text-sm">
-              You are a <span className="font-semibold text-foreground">{roleLabel}</span> at The Habitainer.
-            </p>
-            <p className="text-muted-foreground text-sm">
-              HStack has <span className="font-semibold text-foreground">{totalFeatures} features</span> built for your role.
-              This will take about <span className="font-semibold text-foreground">{onboarding.estimatedMinutes} minutes</span>.
+              Here is what to do first:
             </p>
           </div>
 
+          {roleSteps.length > 0 && (
+            <div className="space-y-2">
+              {roleSteps.map((step, i) => (
+                <button
+                  key={i}
+                  onClick={() => navigate(step.to)}
+                  className="w-full text-left rounded-lg border p-3 hover:bg-muted/50 transition-colors flex items-start gap-3"
+                >
+                  <span className="h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0" style={{ backgroundColor: "#E8F2ED", color: "#006039" }}>
+                    {i + 1}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{step.label}</p>
+                    <p className="text-xs text-muted-foreground">{step.sublabel}</p>
+                  </div>
+                  <ArrowRight className="h-4 w-4 mt-0.5 ml-auto shrink-0 text-muted-foreground" />
+                </button>
+              ))}
+            </div>
+          )}
+
           <Progress value={0} className="h-2" />
-          <p className="text-center text-xs text-muted-foreground">0% complete</p>
+          <p className="text-center text-xs text-muted-foreground">Complete these steps to get started</p>
 
           <Button className="w-full gap-2" onClick={() => setPhase("feature")}>
             Start Training <ArrowRight className="h-4 w-4" />
