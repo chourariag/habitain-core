@@ -11,6 +11,68 @@ import { getOnboardingForRole, type OnboardingFeature, type RoleOnboarding } fro
 import { ROLE_LABELS } from "@/lib/roles";
 import { insertNotifications } from "@/lib/notifications";
 
+interface RoleStep { label: string; sublabel: string; to: string; }
+
+function getRoleFirstSteps(role: string): RoleStep[] {
+  const steps: Record<string, RoleStep[]> = {
+    managing_director: [
+      { label: "Review the Revenue & Margin Dashboard", sublabel: "Finance → Revenue & Margin", to: "/finance" },
+      { label: "Check active project status", sublabel: "Projects overview", to: "/projects" },
+      { label: "Review open escalations", sublabel: "Notifications centre", to: "/alerts" },
+    ],
+    super_admin: [
+      { label: "Review the Revenue & Margin Dashboard", sublabel: "Finance → Revenue & Margin", to: "/finance" },
+      { label: "Check active project status", sublabel: "Projects overview", to: "/projects" },
+      { label: "Review open escalations", sublabel: "Notifications centre", to: "/alerts" },
+    ],
+    planning_engineer: [
+      { label: "Open your active project → Schedule", sublabel: "Projects → Schedule tab", to: "/projects" },
+      { label: "Check tasks due today", sublabel: "My Tasks on Home", to: "/dashboard" },
+      { label: "Review material delivery status", sublabel: "Procurement module", to: "/procurement" },
+    ],
+    production_head: [
+      { label: "Check factory bay status", sublabel: "Factory Floor map", to: "/factory-floor" },
+      { label: "Review today's tasks", sublabel: "My Tasks on Home", to: "/dashboard" },
+      { label: "Log daily production progress", sublabel: "Factory Floor → select bay", to: "/factory-floor" },
+    ],
+    site_installation_mgr: [
+      { label: "Submit today's site diary", sublabel: "Site Hub → Site Diary", to: "/site" },
+      { label: "Check tasks due on site", sublabel: "My Tasks on Home", to: "/dashboard" },
+      { label: "Record any material receipts", sublabel: "Site Hub → GRN", to: "/site" },
+    ],
+    procurement: [
+      { label: "Check overdue material deliveries", sublabel: "Procurement → Alerts", to: "/procurement" },
+      { label: "Record any GRNs from today", sublabel: "Procurement → GRN", to: "/inventory" },
+      { label: "Review pending PO approvals", sublabel: "Procurement → POs", to: "/procurement" },
+    ],
+    stores_executive: [
+      { label: "Check overdue material deliveries", sublabel: "Procurement → Alerts", to: "/procurement" },
+      { label: "Record any GRNs from today", sublabel: "Procurement → GRN", to: "/inventory" },
+      { label: "Review pending PO approvals", sublabel: "Procurement → POs", to: "/procurement" },
+    ],
+    finance_manager: [
+      { label: "Check statutory dues this week", sublabel: "Finance → Statutory", to: "/finance" },
+      { label: "Upload any new Tally exports", sublabel: "Finance → Payments", to: "/finance" },
+      { label: "Review overdue invoices", sublabel: "Finance → Invoices", to: "/finance" },
+    ],
+    accounts_executive: [
+      { label: "Check statutory dues this week", sublabel: "Finance → Statutory", to: "/finance" },
+      { label: "Upload any new Tally exports", sublabel: "Finance → Payments", to: "/finance" },
+      { label: "Review overdue invoices", sublabel: "Finance → Invoices", to: "/finance" },
+    ],
+    finance_director: [
+      { label: "Review the Revenue & Margin Dashboard", sublabel: "Finance → Revenue & Margin", to: "/finance" },
+      { label: "Check statutory dues", sublabel: "Finance → Statutory", to: "/finance" },
+      { label: "Review open escalations", sublabel: "Notifications centre", to: "/alerts" },
+    ],
+  };
+  return steps[role] ?? [
+    { label: "Check your tasks", sublabel: "My Tasks on Home", to: "/dashboard" },
+    { label: "View projects", sublabel: "Projects overview", to: "/projects" },
+    { label: "Review notifications", sublabel: "Notifications centre", to: "/alerts" },
+  ];
+}
+
 type Phase = "welcome" | "feature" | "quiz" | "practice" | "complete";
 
 export default function Onboarding() {
