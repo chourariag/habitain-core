@@ -8,9 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet, Info } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { InvoiceScanner } from "@/components/inventory/InvoiceScanner";
 
 const BOQ_CATEGORIES = [
   "Structure", "Insulation", "Wall Boarding", "Ceiling", "Flooring",
@@ -133,7 +134,7 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
         />
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {canEdit && (
           <>
             <Button size="sm" onClick={() => setGrnOpen(true)}>
@@ -144,6 +145,9 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
             </Button>
           </>
         )}
+        <span className="text-xs text-muted-foreground flex items-center gap-1">
+          <Info className="h-3 w-3" /> GRNs recorded here automatically update this project's budget tracking
+        </span>
       </div>
 
       {/* Per-category tables */}
@@ -239,6 +243,7 @@ function SummaryCard({ icon, label, value, tone }: { icon: React.ReactNode; labe
 }
 
 function GrnDialog({ open, onOpenChange, projectId, onSaved }: { open: boolean; onOpenChange: (v: boolean) => void; projectId: string; onSaved: () => void }) {
+  const [scanSkipped, setScanSkipped] = useState(false);
   const [form, setForm] = useState({
     boq_category: "Structure", vendor_name: "", invoice_no: "", invoice_date: format(new Date(), "yyyy-MM-dd"),
     description: "", basic_amount_excl_gst: "", gst_amount: "", remark: "",
@@ -283,6 +288,28 @@ function GrnDialog({ open, onOpenChange, projectId, onSaved }: { open: boolean; 
       <SheetContent className="overflow-y-auto">
         <SheetHeader><SheetTitle className="font-display">Add GRN (Goods Receipt Note)</SheetTitle></SheetHeader>
         <div className="space-y-3 py-4">
+          {!scanSkipped && (
+            <InvoiceScanner
+              onExtracted={(data) => {
+                setForm(prev => ({
+                  ...prev,
+                  vendor_name: data.vendor_name || prev.vendor_name,
+                  invoice_no: data.invoice_number || prev.invoice_no,
+                  invoice_date: data.invoice_date
+                    ? (() => {
+                        const parts = data.invoice_date.split("/");
+                        return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : prev.invoice_date;
+                      })()
+                    : prev.invoice_date,
+                  basic_amount_excl_gst: data.subtotal != null ? String(data.subtotal) : prev.basic_amount_excl_gst,
+                  gst_amount: data.gst_amount != null ? String(data.gst_amount) : prev.gst_amount,
+                  description: data.line_items?.map(i => `${i.description} x${i.quantity}`).join(", ") || prev.description,
+                }));
+                setScanSkipped(true);
+              }}
+              onSkip={() => setScanSkipped(true)}
+            />
+          )}
           <Field label="BOQ Category">
             <Select value={form.boq_category} onValueChange={(v) => setForm({ ...form, boq_category: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
