@@ -4,14 +4,10 @@ import { FinanceOverviewStrip } from "@/components/finance/FinanceOverviewStrip"
 import { MISTab } from "@/components/finance/MISTab";
 import { PLTab } from "@/components/finance/PLTab";
 import { CashFlowTab } from "@/components/finance/CashFlowTab";
-import { ProjectBudgetsTab } from "@/components/finance/ProjectBudgetsTab";
 import { PaymentsTab } from "@/components/finance/PaymentsTab";
 import { StatutoryTab } from "@/components/finance/StatutoryTab";
-import { WIPStatement } from "@/components/finance/WIPStatement";
 import { CashPositionCard } from "@/components/finance/CashPositionCard";
-import { LedgerUpload } from "@/components/finance/LedgerUpload";
 import { InvoiceTracker } from "@/components/finance/InvoiceTracker";
-import { RetentionTracker } from "@/components/finance/RetentionTracker";
 import { RevenueMarginsTab } from "@/components/finance/RevenueMarginsTab";
 
 export default function Finance() {
@@ -34,30 +30,22 @@ export default function Finance() {
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="mis">MIS</TabsTrigger>
+            <TabsTrigger value="margins">Revenue & Margins</TabsTrigger>
             <TabsTrigger value="pl">P&L</TabsTrigger>
-            <TabsTrigger value="wip">WIP</TabsTrigger>
             <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
-            <TabsTrigger value="budgets">Project Budgets</TabsTrigger>
-            <TabsTrigger value="invoices">Invoices</TabsTrigger>
-            <TabsTrigger value="retention">Retention</TabsTrigger>
-            <TabsTrigger value="ledger">Ledger Upload</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="statutory">Statutory</TabsTrigger>
-            <TabsTrigger value="margins">Revenue & Margins</TabsTrigger>
+            <TabsTrigger value="invoices">Invoices</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
         <TabsContent value="mis"><MISTab /></TabsContent>
+        <TabsContent value="margins"><RevenueMarginsTab /></TabsContent>
         <TabsContent value="pl"><PLTab /></TabsContent>
-        <TabsContent value="wip"><WIPStatement /></TabsContent>
         <TabsContent value="cashflow"><CashFlowTab /></TabsContent>
-        <TabsContent value="budgets"><ProjectBudgetsTab /></TabsContent>
-        <TabsContent value="invoices"><InvoiceTracker /></TabsContent>
-        <TabsContent value="retention"><RetentionTracker /></TabsContent>
-        <TabsContent value="ledger"><LedgerUpload /></TabsContent>
         <TabsContent value="payments"><PaymentsTab /></TabsContent>
         <TabsContent value="statutory"><StatutoryTab /></TabsContent>
-        <TabsContent value="margins"><RevenueMarginsTab /></TabsContent>
+        <TabsContent value="invoices"><InvoiceTracker /></TabsContent>
       </Tabs>
     </div>
   );

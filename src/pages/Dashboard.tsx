@@ -9,6 +9,7 @@ import { CheckInButton } from "@/components/attendance/CheckInButton";
 import { LogExpenseButton } from "@/components/expenses/LogExpenseButton";
 import { WeeklyDigestCard } from "@/components/kpi/WeeklyDigestCard";
 import { DailyReadinessBrief } from "@/components/home/DailyReadinessBrief";
+import { OnboardingChecklist } from "@/components/home/OnboardingChecklist";
 import { useAuth } from "@/components/AuthProvider";
 
 export default function Dashboard() {
@@ -27,6 +28,9 @@ export default function Dashboard() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
+      {/* Role-specific onboarding checklist — dismissed via localStorage */}
+      <OnboardingChecklist userRole={userRole} userName={userName} />
+
       {/* Morning readiness brief — only visible before 10am */}
       <DailyReadinessBrief userRole={userRole} userName={userName} />
 

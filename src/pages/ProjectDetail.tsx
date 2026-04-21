@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Users, Box, BookOpen, FileText, Phone, Mail } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Users, Box, BookOpen, FileText, Phone, Mail, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 import { AddModuleDialog } from "@/components/projects/AddModuleDialog";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
+import { BillingMilestones } from "@/components/finance/BillingMilestones";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { useProjectContext } from "@/contexts/ProjectContext";
 
@@ -147,6 +148,7 @@ export default function ProjectDetail() {
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="modules" className="gap-1.5"><Box className="h-4 w-4" /> Modules</TabsTrigger>
+            <TabsTrigger value="budget" className="gap-1.5"><DollarSign className="h-4 w-4" /> Budget</TabsTrigger>
             <TabsTrigger value="site-diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
             <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover</TabsTrigger>
             <TabsTrigger value="team" className="gap-1.5"><Users className="h-4 w-4" /> Team</TabsTrigger>
@@ -171,6 +173,33 @@ export default function ProjectDetail() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="budget" className="space-y-4">
+          <h2 className="font-display text-lg font-semibold text-foreground">Project Budget</h2>
+          <div className="rounded-xl border border-border p-4" style={{ backgroundColor: "#F7F7F7" }}>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+              {[
+                { label: "Contract Value", value: proj.contract_value ? `₹${Number(proj.contract_value).toLocaleString("en-IN")}` : "—" },
+                { label: "GFC Budget", value: proj.gfc_budget ? `₹${Number(proj.gfc_budget).toLocaleString("en-IN")}` : "—" },
+                { label: "Project Type", value: proj.type ?? "—" },
+              ].map((s) => (
+                <div key={s.label} className="rounded-lg border border-border p-3 bg-white">
+                  <p className="text-xs" style={{ color: "#666" }}>{s.label}</p>
+                  <p className="text-base font-bold font-display mt-0.5" style={{ color: "#1A1A1A" }}>{s.value}</p>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs mb-3" style={{ color: "#999" }}>GRNs recorded in Procurement automatically update this project's cost tracking.</p>
+            <Button size="sm" variant="outline" onClick={() => navigate("/procurement")}>
+              <Plus className="h-3.5 w-3.5 mr-1" />Add GRN
+            </Button>
+          </div>
+          <BillingMilestones
+            projectId={id!}
+            contractValue={proj.contract_value ? Number(proj.contract_value) : 0}
+            userRole={userRole}
+          />
         </TabsContent>
 
         <TabsContent value="site-diary" className="space-y-4">

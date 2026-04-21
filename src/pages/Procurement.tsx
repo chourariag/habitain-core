@@ -109,6 +109,8 @@ export default function Procurement() {
   const [grnDialogOpen, setGrnDialogOpen] = useState(false);
   const [grnRequestId, setGrnRequestId] = useState<string | null>(null);
   const [grnDestination, setGrnDestination] = useState<"factory" | "direct_to_site" | "">("");
+  const [grnScanMode, setGrnScanMode] = useState<"none" | "scanning" | "extracted" | "failed">("none");
+  const [grnExtracted, setGrnExtracted] = useState<{ supplier?: string; amount?: string; invoiceNo?: string } | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -673,48 +675,107 @@ export default function Procurement() {
       </Dialog>
 
       {/* GRN Destination Dialog */}
-      <Dialog open={grnDialogOpen} onOpenChange={(v) => { if (!v) { setGrnDialogOpen(false); setGrnRequestId(null); setGrnDestination(""); } }}>
+      <Dialog open={grnDialogOpen} onOpenChange={(v) => { if (!v) { setGrnDialogOpen(false); setGrnRequestId(null); setGrnDestination(""); setGrnScanMode("none"); setGrnExtracted(null); } }}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle className="font-display">GRN — Select Delivery Destination</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle className="font-display">Record GRN</DialogTitle></DialogHeader>
           <div className="space-y-3">
-            <p className="text-xs" style={{ color: "#666" }}>Where will these materials be delivered? This is mandatory for the Goods Receipt Note (GRN).</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                className="rounded-lg border-2 p-4 text-center transition-all"
-                style={{
-                  borderColor: grnDestination === "factory" ? "#006039" : "#E5E7EB",
-                  backgroundColor: grnDestination === "factory" ? "#E8F2ED" : "#F9FAFB",
-                }}
-                onClick={() => setGrnDestination("factory")}
-              >
-                <Factory className="h-6 w-6 mx-auto mb-1" style={{ color: "#006039" }} />
-                <p className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>Factory</p>
-                <p className="text-[10px]" style={{ color: "#666" }}>Stores will receive</p>
-              </button>
-              <button
-                type="button"
-                className="rounded-lg border-2 p-4 text-center transition-all"
-                style={{
-                  borderColor: grnDestination === "direct_to_site" ? "#4F46E5" : "#E5E7EB",
-                  backgroundColor: grnDestination === "direct_to_site" ? "#EEF2FF" : "#F9FAFB",
-                }}
-                onClick={() => setGrnDestination("direct_to_site")}
-              >
-                <Truck className="h-6 w-6 mx-auto mb-1" style={{ color: "#4F46E5" }} />
-                <p className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>Direct to Site</p>
-                <p className="text-[10px]" style={{ color: "#666" }}>Bypass factory</p>
-              </button>
-            </div>
-            {!grnDestination && (
-              <p className="text-xs text-center" style={{ color: "#F40009" }}>Destination is mandatory — please select one.</p>
+            {/* Scan Invoice section */}
+            {grnScanMode === "none" && (
+              <div className="space-y-2">
+                <label className="w-full">
+                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                    const file = e.target.files?.[0]; e.target.value = "";
+                    if (!file) return;
+                    setGrnScanMode("scanning");
+                    // Simulate AI extraction (stub — replace with real OCR in Phase 5)
+                    await new Promise((r) => setTimeout(r, 1500));
+                    if (file.size > 100000) {
+                      setGrnExtracted({ supplier: "Extracted from invoice", amount: "", invoiceNo: "" });
+                      setGrnScanMode("extracted");
+                    } else {
+                      setGrnScanMode("failed");
+                    }
+                  }} />
+                  <Button variant="default" asChild className="w-full text-white" style={{ backgroundColor: "#006039" }}>
+                    <span className="cursor-pointer flex items-center justify-center gap-2">
+                      <Upload className="h-4 w-4" />Scan Invoice
+                    </span>
+                  </Button>
+                </label>
+                <button type="button" className="w-full text-xs text-center" style={{ color: "#006039" }} onClick={() => setGrnScanMode("extracted")}>
+                  Fill Manually instead
+                </button>
+              </div>
+            )}
+
+            {grnScanMode === "scanning" && (
+              <div className="flex items-center justify-center gap-2 py-4">
+                <Loader2 className="h-5 w-5 animate-spin" style={{ color: "#006039" }} />
+                <span className="text-sm" style={{ color: "#666" }}>Reading invoice…</span>
+              </div>
+            )}
+
+            {grnScanMode === "failed" && (
+              <div className="rounded-lg p-3" style={{ backgroundColor: "#FEE2E2" }}>
+                <p className="text-xs font-semibold" style={{ color: "#F40009" }}>Could not read invoice — please fill in manually.</p>
+                <button type="button" className="text-xs mt-1 underline" style={{ color: "#F40009" }} onClick={() => { setGrnScanMode("extracted"); setGrnExtracted(null); }}>
+                  Continue manually
+                </button>
+              </div>
+            )}
+
+            {grnScanMode === "extracted" && (
+              <div className="space-y-2">
+                {grnExtracted && (
+                  <div className="rounded-lg p-2 text-xs" style={{ backgroundColor: "#FFF8E8" }}>
+                    <p className="font-semibold" style={{ color: "#D4860A" }}>AI extracted the following — please verify before saving.</p>
+                  </div>
+                )}
+                <div>
+                  <label className="text-xs" style={{ color: "#666" }}>Invoice Number</label>
+                  <input className="mt-0.5 w-full border border-border rounded-md px-3 py-2 text-sm" defaultValue={grnExtracted?.invoiceNo} placeholder="e.g. INV-2026-001" />
+                </div>
+                <div>
+                  <label className="text-xs" style={{ color: "#666" }}>Supplier</label>
+                  <input className="mt-0.5 w-full border border-border rounded-md px-3 py-2 text-sm" defaultValue={grnExtracted?.supplier} placeholder="Supplier name" />
+                </div>
+                <div>
+                  <label className="text-xs" style={{ color: "#666" }}>Invoice Amount (₹)</label>
+                  <input className="mt-0.5 w-full border border-border rounded-md px-3 py-2 text-sm" defaultValue={grnExtracted?.amount} placeholder="0" />
+                </div>
+              </div>
+            )}
+
+            {(grnScanMode === "extracted" || grnScanMode === "failed") && (
+              <>
+                <p className="text-xs" style={{ color: "#666" }}>Where will these materials be delivered?</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" className="rounded-lg border-2 p-4 text-center transition-all"
+                    style={{ borderColor: grnDestination === "factory" ? "#006039" : "#E5E7EB", backgroundColor: grnDestination === "factory" ? "#E8F2ED" : "#F9FAFB" }}
+                    onClick={() => setGrnDestination("factory")}>
+                    <Factory className="h-6 w-6 mx-auto mb-1" style={{ color: "#006039" }} />
+                    <p className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>Factory</p>
+                    <p className="text-[10px]" style={{ color: "#666" }}>Stores will receive</p>
+                  </button>
+                  <button type="button" className="rounded-lg border-2 p-4 text-center transition-all"
+                    style={{ borderColor: grnDestination === "direct_to_site" ? "#4F46E5" : "#E5E7EB", backgroundColor: grnDestination === "direct_to_site" ? "#EEF2FF" : "#F9FAFB" }}
+                    onClick={() => setGrnDestination("direct_to_site")}>
+                    <Truck className="h-6 w-6 mx-auto mb-1" style={{ color: "#4F46E5" }} />
+                    <p className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>Direct to Site</p>
+                    <p className="text-[10px]" style={{ color: "#666" }}>Bypass factory</p>
+                  </button>
+                </div>
+                {!grnDestination && <p className="text-xs text-center" style={{ color: "#F40009" }}>Destination is mandatory.</p>}
+              </>
             )}
           </div>
-          <DialogFooter>
-            <Button onClick={handleGrnConfirm} disabled={!grnDestination} style={{ backgroundColor: "#006039" }} className="text-white">
-              Confirm GRN
-            </Button>
-          </DialogFooter>
+          {(grnScanMode === "extracted" || grnScanMode === "failed") && (
+            <DialogFooter>
+              <Button onClick={handleGrnConfirm} disabled={!grnDestination} style={{ backgroundColor: "#006039" }} className="text-white">
+                Confirm GRN
+              </Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
 

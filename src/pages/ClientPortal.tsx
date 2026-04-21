@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, CheckCircle2, Clock, AlertTriangle, Image, FileText, Home, CalendarCheck } from "lucide-react";
+import { Loader2, CheckCircle2, Clock, AlertTriangle, FileText, Home, CalendarCheck, ClipboardCheck, ChevronRight, PenLine } from "lucide-react";
 import { toast } from "sonner";
 import { format, differenceInDays } from "date-fns";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
@@ -321,9 +321,139 @@ function HandoverTab({ projectId }: { projectId: string }) {
   );
 }
 
+function ApprovalsTab({ projectId, onPendingCount }: { projectId: string; onPendingCount: (n: number) => void }) {
+  const [pendingDrawings, setPendingDrawings] = useState<any[]>([]);
+  const [pendingVariations, setPendingVariations] = useState<any[]>([]);
+  const [project, setProject] = useState<any>(null);
+  const [signing, setSigning] = useState(false);
+  const [signName, setSignName] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const [{ data: drawings }, { data: variations }, { data: proj }] = await Promise.all([
+        supabase.from("drawings").select("id, drawing_id_code, drawing_type, revision").eq("project_id", projectId).eq("status", "active").limit(10),
+        (supabase.from("variations" as any) as any).select("id, ref_number, description, final_cost, client_action").eq("project_id", projectId).eq("status", "approved"),
+        supabase.from("projects").select("*").eq("id", projectId).single(),
+      ]);
+      const pendingDraw = (drawings ?? []).filter((d: any) => !d.client_approved);
+      const pendingVars = (variations ?? []).filter((v: any) => !v.client_action || v.client_action === "pending_client");
+      setPendingDrawings(pendingDraw);
+      setPendingVariations(pendingVars);
+      setProject(proj);
+      onPendingCount(pendingDraw.length + pendingVars.length);
+      setLoading(false);
+    })();
+  }, [projectId]);
+
+  const handleSignHandover = async () => {
+    if (!signName.trim()) { toast.error("Please enter your name"); return; }
+    setSigning(true);
+    const { error } = await supabase.from("projects").update({
+      handover_signed_at: new Date().toISOString(),
+      handover_signed_by_client: signName.trim(),
+      status: "handed_over",
+    } as any).eq("id", projectId);
+    if (error) toast.error(error.message);
+    else { toast.success("Handover certificate signed. Project handed over."); setProject((p: any) => ({ ...p, handover_signed_at: new Date().toISOString(), status: "handed_over" })); }
+    setSigning(false);
+  };
+
+  const handleApprovDrawing = async (id: string) => {
+    await supabase.from("drawings").update({ client_approved: true } as any).eq("id", id);
+    setPendingDrawings((prev) => prev.filter((d) => d.id !== id));
+    onPendingCount(pendingDrawings.length - 1 + pendingVariations.length);
+    toast.success("Drawing approved");
+  };
+
+  if (loading) return <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+
+  const isHandoverReady = project?.status === "ready_for_handover" || project?.status === "installation_complete";
+  const isSigned = !!project?.handover_signed_at;
+  const totalPending = pendingDrawings.length + pendingVariations.length;
+
+  return (
+    <div className="space-y-4">
+      {/* Drawings */}
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#666" }}>Drawings Awaiting Approval</p>
+        {pendingDrawings.length === 0 ? (
+          <div className="flex items-center gap-2 rounded-lg p-3" style={{ backgroundColor: "#E8F2ED" }}>
+            <CheckCircle2 className="h-4 w-4" style={{ color: "#006039" }} />
+            <p className="text-xs" style={{ color: "#006039" }}>All drawings approved</p>
+          </div>
+        ) : pendingDrawings.map((d) => (
+          <div key={d.id} className="flex items-center justify-between rounded-lg border border-border p-3 mb-2">
+            <div>
+              <p className="text-sm font-medium" style={{ color: "#1A1A1A" }}>{d.drawing_id_code}</p>
+              <p className="text-xs" style={{ color: "#666" }}>{d.drawing_type} · Rev {d.revision}</p>
+            </div>
+            <Button size="sm" className="h-7 text-xs text-white" style={{ backgroundColor: "#006039" }} onClick={() => handleApprovDrawing(d.id)}>
+              Approve
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      {/* Variations sign-off */}
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#666" }}>Variations Awaiting Sign-off</p>
+        {pendingVariations.length === 0 ? (
+          <div className="flex items-center gap-2 rounded-lg p-3" style={{ backgroundColor: "#E8F2ED" }}>
+            <CheckCircle2 className="h-4 w-4" style={{ color: "#006039" }} />
+            <p className="text-xs" style={{ color: "#006039" }}>All variations agreed</p>
+          </div>
+        ) : pendingVariations.map((v) => (
+          <div key={v.id} className="flex items-center justify-between rounded-lg border border-border p-3 mb-2">
+            <div>
+              <p className="text-sm font-medium" style={{ color: "#1A1A1A" }}>{v.ref_number}: {v.description}</p>
+              <p className="text-xs font-semibold" style={{ color: "#006039" }}>₹{(v.final_cost ?? 0).toLocaleString("en-IN")}</p>
+            </div>
+            <Badge variant="outline" className="text-[9px] h-4 flex-shrink-0" style={{ color: "#D4860A", borderColor: "#D4860A", backgroundColor: "#FFF8E8" }}>
+              Awaiting
+            </Badge>
+          </div>
+        ))}
+      </div>
+
+      {/* Handover Certificate */}
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "#666" }}>Handover Certificate</p>
+        {isSigned ? (
+          <div className="flex items-center gap-2 rounded-lg p-3" style={{ backgroundColor: "#E8F2ED" }}>
+            <CheckCircle2 className="h-4 w-4" style={{ color: "#006039" }} />
+            <p className="text-xs" style={{ color: "#006039" }}>Signed by {project.handover_signed_by_client} on {format(new Date(project.handover_signed_at), "dd MMM yyyy")}</p>
+          </div>
+        ) : isHandoverReady ? (
+          <div className="rounded-xl border border-border p-4 space-y-3">
+            <p className="text-sm font-medium" style={{ color: "#1A1A1A" }}>Project is ready for handover. Sign below to confirm acceptance.</p>
+            <input
+              className="w-full border border-border rounded-md px-3 py-2 text-sm"
+              placeholder="Your full name"
+              value={signName}
+              onChange={(e) => setSignName(e.target.value)}
+            />
+            <Button onClick={handleSignHandover} disabled={signing} className="w-full text-white" style={{ backgroundColor: "#006039" }}>
+              {signing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <PenLine className="h-4 w-4 mr-2" />}
+              Sign Handover Certificate
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 rounded-lg p-3" style={{ backgroundColor: "#F7F7F7" }}>
+            <Clock className="h-4 w-4" style={{ color: "#999" }} />
+            <p className="text-xs" style={{ color: "#999" }}>Handover certificate will appear here when project is ready.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ClientPortalContent() {
   const { selectedProjectId, selectedProject } = useProjectContext();
   const { role: userRole } = useUserRole();
+  const [activeTab, setActiveTab] = useState("overview");
+  const [pendingCount, setPendingCount] = useState(0);
 
   if (!selectedProjectId) return null;
 
@@ -339,15 +469,60 @@ function ClientPortalContent() {
         </div>
       )}
 
-      <Tabs defaultValue="payments">
+      {/* Action Required Banner */}
+      {pendingCount > 0 && activeTab !== "approvals" && (
+        <button
+          type="button"
+          className="w-full flex items-center justify-between rounded-xl px-4 py-3 text-left"
+          style={{ backgroundColor: "#FFF8E8", border: "1px solid #D4860A" }}
+          onClick={() => setActiveTab("approvals")}
+        >
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 shrink-0" style={{ color: "#D4860A" }} />
+            <p className="text-sm font-semibold" style={{ color: "#D4860A" }}>
+              Action Required: {pendingCount} item{pendingCount !== 1 ? "s" : ""} awaiting your response
+            </p>
+          </div>
+          <ChevronRight className="h-4 w-4 shrink-0" style={{ color: "#D4860A" }} />
+        </button>
+      )}
+
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <ScrollableTabsWrapper>
           <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="approvals" className="relative">
+              Approvals
+              {pendingCount > 0 && (
+                <span className="ml-1 inline-flex items-center justify-center rounded-full h-4 min-w-4 px-1 text-[9px] font-bold text-white" style={{ backgroundColor: "#F40009" }}>
+                  {pendingCount}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
-            <TabsTrigger value="variations">Variations</TabsTrigger>
             <TabsTrigger value="journal">Construction Journal</TabsTrigger>
             <TabsTrigger value="handover">Handover</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
+
+        <TabsContent value="overview" className="mt-4 space-y-4">
+          {/* Handover Certificate on Overview */}
+          <div className="rounded-xl border border-border p-4" style={{ backgroundColor: "#F7F7F7" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <ClipboardCheck className="h-4 w-4" style={{ color: "#006039" }} />
+              <p className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>Handover Certificate</p>
+            </div>
+            <p className="text-xs" style={{ color: "#666" }}>Sign your handover certificate in the Approvals tab when the project is ready.</p>
+            <button type="button" className="mt-2 text-xs font-semibold flex items-center gap-1" style={{ color: "#006039" }} onClick={() => setActiveTab("approvals")}>
+              Go to Approvals <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+          <PaymentTimelineTab projectId={selectedProjectId} />
+        </TabsContent>
+
+        <TabsContent value="approvals" className="mt-4">
+          <ApprovalsTab projectId={selectedProjectId} onPendingCount={setPendingCount} />
+        </TabsContent>
         <TabsContent value="payments" className="mt-4">
           <PaymentTimelineTab projectId={selectedProjectId} />
         </TabsContent>
