@@ -259,11 +259,11 @@ export function DailyReadinessBrief({ userRole, userId }: Props) {
     buildBriefForRole(userRole, userId).then(setLines);
     supabase
       .from("profiles")
-      .select("full_name, display_name")
+      .select("display_name")
       .eq("auth_user_id", userId)
       .maybeSingle()
       .then(({ data }) => {
-        const raw = data?.full_name || data?.display_name || "";
+        const raw = data?.display_name || "";
         const first = raw.trim().split(/\s+/)[0] || "";
         setFirstName(first);
       });
