@@ -361,6 +361,80 @@ export function PLTab() {
     setReplaceDialog(null);
   };
 
+  const exportPL = () => {
+    if (!pl) return;
+    const bySec = (s: string) => pl.line_items.filter((l) => l.section === s);
+
+    // Build left-side rows (expenses) and right-side rows (income) separately
+    const L: any[][] = [];
+    const R: any[][] = [];
+
+    // Left: Opening Stock
+    L.push(["Opening Stock", "", ""]); L.push(["", pl.opening_stock, ""]);
+    // Left: Purchases
+    L.push(["Purchase Accounts", "", ""]);
+    bySec("cogs").forEach((i) => L.push([i.account, i.amount, ""]));
+    L.push(["To Purchase Accounts", "", pl.purchase_total]);
+    // Left: Direct Expenses
+    L.push(["Direct Expenses", "", ""]);
+    bySec("direct_expenses").forEach((i) => L.push([i.account, i.amount, ""]));
+    L.push(["To Direct Expenses", "", pl.direct_expenses_total]);
+    // Left: Direct Incomes (as reduction)
+    if (pl.direct_incomes_total > 0) {
+      L.push(["Direct Incomes", "", ""]);
+      bySec("direct_incomes").forEach((i) => L.push([i.account, i.amount, ""]));
+    }
+    // Left: Indirect Expenses
+    L.push(["Indirect Expenses", "", ""]);
+    bySec("indirect_expenses").forEach((i) => L.push([i.account, i.amount, ""]));
+    L.push(["To Indirect Expenses", "", pl.indirect_expenses_total]);
+    if (pl.net_result < 0) L.push(["To Net Loss (Loss)", "", Math.abs(pl.net_result)]);
+
+    // Right: Sales
+    R.push(["Sales Accounts", "", ""]);
+    bySec("sales").forEach((i) => R.push([i.account, i.amount, ""]));
+    R.push(["By Sales Accounts", "", pl.total_revenue]);
+    // Right: Closing Stock
+    R.push(["Closing Stock", "", ""]); R.push(["", pl.closing_stock, ""]);
+    R.push(["By Closing Stock", "", pl.closing_stock]);
+    // Right: Other Income
+    if (pl.other_income_total > 0) {
+      R.push(["Other Income", "", ""]);
+      bySec("other_income").forEach((i) => R.push([i.account, i.amount, ""]));
+      R.push(["By Other Income", "", pl.other_income_total]);
+    }
+    if (pl.net_result >= 0) R.push(["By Net Profit", "", pl.net_result]);
+
+    // Merge into double-column rows
+    const maxLen = Math.max(L.length, R.length);
+    const dataRows: any[][] = [];
+    for (let i = 0; i < maxLen; i++) {
+      const left = L[i] ?? ["", "", ""];
+      const right = R[i] ?? ["", "", ""];
+      dataRows.push([...left, ...right]);
+    }
+
+    const allRows = [
+      [pl.company_name],
+      ["#42, Doddaballapur Industrial Area, Doddaballapur"],
+      ["UDYAM-KR-03-0122680"],
+      [""],
+      ["Profit & Loss A/c"],
+      [""],
+      [pl.period_label],
+      [pl.company_name],
+      ["Particulars", "Amount", "", "Particulars", "Amount", ""],
+      ...dataRows,
+    ];
+
+    import("xlsx").then((XLSX) => {
+      const ws = XLSX.utils.aoa_to_sheet(allRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Profit & Loss");
+      XLSX.writeFile(wb, `${pl.fy.replace(/\s+/g, "_")}_PL_HStack.xlsx`);
+    });
+  };
+
   const downloadTemplate = () => {
     const XLSX_HEADERS = [
       ["Alternate Real Estate Experiences Private Limited"],
@@ -456,6 +530,7 @@ export function PLTab() {
             </Button>
           </label>
           <Button variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4 mr-2" />Download Template</Button>
+          <Button variant="outline" onClick={exportPL}><Download className="h-4 w-4 mr-2" />Export P&L</Button>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline" className="text-xs" style={{ color: balanced ? "#006039" : "#D4860A", borderColor: balanced ? "#006039" : "#D4860A" }}>
