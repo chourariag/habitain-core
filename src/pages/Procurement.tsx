@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,8 +28,9 @@ import { ProcurementDashboardStrip } from "@/components/procurement/ProcurementD
 import { AssetRegisterTab } from "@/components/procurement/AssetRegisterTab";
 import { SupplierIntelligenceTab } from "@/components/procurement/SupplierIntelligenceTab";
 import { MaterialAlertsTab } from "@/components/procurement/MaterialAlertsTab";
+import { GRNTab } from "@/components/procurement/GRNTab";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
-import { Calendar, Hammer, Bell } from "lucide-react";
+import { Calendar, Hammer, Bell, ClipboardCheck } from "lucide-react";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
@@ -84,6 +86,9 @@ function SoDButton({ label, onClick, sodReason }: { label: string; onClick: () =
 }
 
 export default function Procurement() {
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const projectFromUrl = searchParams.get("project");
   const [items, setItems] = useState<any[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
@@ -284,10 +289,11 @@ export default function Procurement() {
       {/* Vijay's Daily View Strip */}
       <ProcurementDashboardStrip userRole={userRole} />
 
-      <Tabs defaultValue="dashboard" className="space-y-4">
+      <Tabs defaultValue={tabFromUrl || "dashboard"} className="space-y-4">
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="dashboard" className="gap-1.5"><LayoutDashboard className="h-4 w-4" /> Dashboard</TabsTrigger>
+            <TabsTrigger value="grn" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> GRN</TabsTrigger>
             <TabsTrigger value="material-plan" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Material Plan</TabsTrigger>
             <TabsTrigger value="requests" className="gap-1.5"><AlertTriangle className="h-4 w-4" /> Requests</TabsTrigger>
             <TabsTrigger value="purchase-orders" className="gap-1.5"><FileText className="h-4 w-4" /> Purchase Orders</TabsTrigger>
@@ -702,6 +708,10 @@ export default function Procurement() {
 
         <TabsContent value="material-alerts">
           <MaterialAlertsTab userRole={userRole} />
+        </TabsContent>
+
+        <TabsContent value="grn">
+          <GRNTab filterProjectId={projectFromUrl} />
         </TabsContent>
       </Tabs>
 

@@ -13,8 +13,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet, Info, Upload, Download, Lock, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { InvoiceScanner } from "@/components/inventory/InvoiceScanner";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
+import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 
 const BOQ_CATEGORIES = [
@@ -57,8 +57,8 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
   const [boqItems, setBoqItems] = useState<BoqItem[]>([]);
   const [grns, setGrns] = useState<Grn[]>([]);
   const [manuals, setManuals] = useState<ManualEntry[]>([]);
-  const [grnOpen, setGrnOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const navigate = useNavigate();
   const [hasH1Signoff, setHasH1Signoff] = useState(false);
   const [tenderBudgetItems, setTenderBudgetItems] = useState<TenderBudgetItem[]>([]);
   const [tenderTotal, setTenderTotal] = useState(0);
@@ -350,18 +350,17 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
 
       <div className="flex flex-wrap items-center gap-2">
         {canEdit && (
-          <>
-            <Button size="sm" onClick={() => setGrnOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" /> Add GRN
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setManualOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" /> Add Manual Entry
-            </Button>
-          </>
+          <Button size="sm" variant="outline" onClick={() => setManualOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" /> Add Manual Entry
+          </Button>
         )}
-        <span className="text-xs text-muted-foreground flex items-center gap-1">
-          <Info className="h-3 w-3" /> GRNs recorded here automatically update this project's budget tracking
-        </span>
+        <button
+          onClick={() => navigate(`/procurement?tab=grn&project=${projectId}`)}
+          className="text-xs font-medium flex items-center gap-1 hover:underline"
+          style={{ color: "#006039" }}
+        >
+          View all GRNs for this project →
+        </button>
       </div>
 
       {/* Per-category tables */}
@@ -438,7 +437,6 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
         })}
       </div>
 
-      <GrnDialog open={grnOpen} onOpenChange={setGrnOpen} projectId={projectId} onSaved={fetchAll} />
       <ManualEntryDialog open={manualOpen} onOpenChange={setManualOpen} projectId={projectId} onSaved={fetchAll} />
     </div>
   );
