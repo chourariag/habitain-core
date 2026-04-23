@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Upload, Download, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QuotationVersionsPanel } from "./QuotationVersionsPanel";
 import { ECVisitLogger } from "./ECVisitLogger";
 import { HandoverChecklist } from "./HandoverChecklist";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
+import * as XLSX from "xlsx";
 
 const STAGES = ["Inquiry", "Site Visit Done", "Proposal Sent", "Negotiation", "Won", "Lost"];
 const PROJECT_TYPES = ["Residential Modular", "Residential Panel", "Villa", "Commercial", "Other"];
@@ -188,6 +190,7 @@ export function DealDrawer({ open, onClose, deal, onSaved }: DealDrawerProps) {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-3">
             <TabsList className="w-full">
               <TabsTrigger value="details" className="flex-1 text-xs">Details</TabsTrigger>
+              <TabsTrigger value="financial" className="flex-1 text-xs">Financial</TabsTrigger>
               <TabsTrigger value="quotations" className="flex-1 text-xs">Quotes</TabsTrigger>
               <TabsTrigger value="ec" className="flex-1 text-xs">EC Visit</TabsTrigger>
               {deal.stage === "Won" && <TabsTrigger value="handover" className="flex-1 text-xs">Handover</TabsTrigger>}
@@ -195,6 +198,9 @@ export function DealDrawer({ open, onClose, deal, onSaved }: DealDrawerProps) {
 
             <TabsContent value="details">
               <DealForm form={form} set={set} deal={deal} saving={saving} onSave={handleSave} onMarkLost={handleMarkLost} onDelete={handleDelete} />
+            </TabsContent>
+            <TabsContent value="financial">
+              <TenderBudgetSection dealId={deal.id} projectId={deal.project_id} />
             </TabsContent>
             <TabsContent value="quotations">
               <QuotationVersionsPanel dealId={deal.id} />
@@ -337,6 +343,134 @@ function DealForm({ form, set, deal, saving, onSave, onMarkLost, onDelete }: any
           Delete Deal
         </button>
       )}
+    </div>
+  );
+}
+
+function TenderBudgetSection({ dealId, projectId }: { dealId: string; projectId?: string }) {
+  const [uploading, setUploading] = useState(false);
+  const [quotationValue, setQuotationValue] = useState("");
+  const [itemCount, setItemCount] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    (supabase as any).from("project_tender_budget")
+      .select("quotation_value, id")
+      .eq("deal_id", dealId)
+      .order("uploaded_at", { ascending: false })
+      .limit(1)
+      .then(({ data }: any) => {
+        if (data && data.length > 0) {
+          setQuotationValue(String(data[0].quotation_value || ""));
+          (supabase as any).from("project_tender_budget_items")
+            .select("id", { count: "exact", head: true })
+            .eq("budget_id", data[0].id)
+            .then(({ count }: any) => setItemCount(count || 0));
+        }
+      });
+  }, [dealId]);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+
+      const items: any[] = [];
+      let totalAmt = 0;
+      for (const row of rows) {
+        const amt = Number(row["Total Amount (₹)"] || row["Total Amount"] || 0);
+        if (!row["Category"] && !amt) continue;
+        totalAmt += amt;
+        items.push({
+          category: row["Category"] || "",
+          description: row["Description"] || "",
+          tender_qty: Number(row["Tender Qty"] || 0),
+          unit: row["Unit"] || "",
+          material_rate: Number(row["Material Rate (₹)"] || 0),
+          labour_rate: Number(row["Labour Rate (₹)"] || 0),
+          oh_rate: Number(row["OH Rate (₹)"] || 0),
+          total_rate: Number(row["Total Rate (₹)"] || 0),
+          total_amount: amt,
+          margin_pct: Number(row["Margin %"] || 0),
+          notes: row["Notes"] || "",
+        });
+      }
+
+      if (items.length === 0) { toast.error("No items found"); setUploading(false); return; }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: budget, error } = await (supabase as any).from("project_tender_budget").insert({
+        deal_id: dealId,
+        project_id: projectId || null,
+        uploaded_by: user?.id,
+        total_tender_value: totalAmt,
+        quotation_value: Number(quotationValue) || 0,
+      }).select("id").single();
+
+      if (error) throw error;
+      const budgetItems = items.map((i) => ({ budget_id: budget.id, ...i }));
+      await (supabase as any).from("project_tender_budget_items").insert(budgetItems);
+
+      setItemCount(items.length);
+      toast.success(`${items.length} tender budget items uploaded`);
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const saveQuotation = async () => {
+    setSaving(true);
+    const { data: existing } = await (supabase as any).from("project_tender_budget")
+      .select("id").eq("deal_id", dealId).order("uploaded_at", { ascending: false }).limit(1);
+    if (existing && existing.length > 0) {
+      await (supabase as any).from("project_tender_budget")
+        .update({ quotation_value: Number(quotationValue) || 0 })
+        .eq("id", existing[0].id);
+      toast.success("Quotation value saved");
+    } else {
+      toast.error("Upload tender budget first");
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div className="space-y-4 mt-3">
+      <h3 className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>Tender / Project Budget</h3>
+      <input ref={fileRef} type="file" accept=".xlsx" className="hidden" onChange={handleUpload} />
+
+      <div className="flex gap-2">
+        <Button size="sm" variant="outline" onClick={() => downloadXlsxTemplate(TEMPLATES.tenderBudget.filename, TEMPLATES.tenderBudget.sheet, TEMPLATES.tenderBudget.headers, TEMPLATES.tenderBudget.sample)}
+          style={{ borderColor: "#006039", color: "#006039" }} className="text-xs gap-1">
+          <Download className="h-3 w-3" /> Template
+        </Button>
+        <Button size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}
+          style={{ backgroundColor: "#006039" }} className="text-white text-xs gap-1">
+          {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+          Upload Tender Budget
+        </Button>
+      </div>
+      {itemCount > 0 && (
+        <p className="text-xs" style={{ color: "#006039" }}>✓ {itemCount} budget items uploaded</p>
+      )}
+
+      <div className="space-y-2">
+        <Label className="text-xs">Quotation Value (₹)</Label>
+        <div className="flex gap-2">
+          <Input type="number" value={quotationValue} onChange={(e) => setQuotationValue(e.target.value)} placeholder="Total contract value" className="text-sm" />
+          <Button size="sm" onClick={saveQuotation} disabled={saving} style={{ backgroundColor: "#006039" }} className="text-white text-xs">
+            {saving ? "…" : "Save"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -18,6 +18,7 @@ import { RedFlagAlerts } from "./RedFlagAlerts";
 import { fetchBenchmarkStats, getModuleCountBand, BenchmarkStats } from "@/lib/task-benchmarks";
 import * as XLSX from "xlsx";
 import { getPhasesForSystem, TASK_TYPE_META, type TaskTemplateType } from "@/lib/production-phases";
+import { downloadScheduleTemplate } from "@/lib/xlsx-templates";
 import { ChevronRight, ChevronDown, ShieldAlert } from "lucide-react";
 
 interface ProjectTask {
@@ -141,67 +142,105 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: "dd/mm/yyyy" });
 
-        // Find header row
+        // Find header row — look for "Name" or "Task Name" or "ID"
         let headerIdx = -1;
         for (let i = 0; i < Math.min(rows.length, 15); i++) {
           const row = rows[i];
-          if (row && row.some((c: any) => String(c).toLowerCase().includes("task name"))) {
+          if (row && row.some((c: any) => {
+            const v = String(c).toLowerCase().trim();
+            return v === "name" || v.includes("task name") || v === "id";
+          })) {
             headerIdx = i;
             break;
           }
         }
-        if (headerIdx === -1) { toast.error("Could not find header row with 'Task Name'"); return; }
+        if (headerIdx === -1) { toast.error("Could not find header row with 'Name' or 'ID'"); return; }
 
         const headers = rows[headerIdx].map((h: any) => String(h ?? "").toLowerCase().trim());
         const colIdx = {
+          section: headers.findIndex((h: string) => h === "" || h === "section"),
           id: headers.findIndex((h: string) => h === "id"),
-          taskName: headers.findIndex((h: string) => h.includes("task name")),
+          name: headers.findIndex((h: string) => h === "name" || h.includes("task name") || h.includes("task / sub-task")),
           duration: headers.findIndex((h: string) => h.includes("duration")),
           predecessors: headers.findIndex((h: string) => h.includes("predecessor")),
           plannedStart: headers.findIndex((h: string) => h.includes("planned start")),
           plannedFinish: headers.findIndex((h: string) => h.includes("planned finish")),
-          role: headers.findIndex((h: string) => h.includes("responsible")),
+          role: headers.findIndex((h: string) => h.includes("responsible") || h.includes("who does")),
           phase: headers.findIndex((h: string) => h === "phase"),
+          taskType: headers.findIndex((h: string) => h.includes("task type")),
         };
 
-        if (colIdx.taskName === -1) { toast.error("Missing 'Task Name' column"); return; }
+        if (colIdx.name === -1 && colIdx.id === -1) { toast.error("Missing 'Name' or 'ID' column"); return; }
+        const nameCol = colIdx.name >= 0 ? colIdx.name : colIdx.id;
 
         const parsedTasks: any[] = [];
         const allIds = new Set<string>();
+        let currentPhase = "Pre-Production";
+
+        const parseDate = (val: any): string | null => {
+          if (!val) return null;
+          if (val instanceof Date) return format(val, "yyyy-MM-dd");
+          const s = String(val).trim();
+          const parts = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+          if (parts) {
+            const yr = parts[3].length === 2 ? "20" + parts[3] : parts[3];
+            return `${yr}-${parts[2].padStart(2, "0")}-${parts[1].padStart(2, "0")}`;
+          }
+          const d = new Date(s);
+          return isNaN(d.getTime()) ? null : format(d, "yyyy-MM-dd");
+        };
 
         for (let i = headerIdx + 1; i < rows.length; i++) {
           const row = rows[i];
-          if (!row || !row[colIdx.taskName]) continue;
+          if (!row || row.every((c: any) => !c || !String(c).trim())) continue;
 
-          const taskId = String(row[colIdx.id] ?? (i - headerIdx));
+          // Section header detection: text in col A (section col), and col B (ID) is either empty or non-numeric
+          const colAVal = colIdx.section >= 0 ? String(row[colIdx.section] ?? "").trim() : String(row[0] ?? "").trim();
+          const colBVal = colIdx.id >= 0 ? String(row[colIdx.id] ?? "").trim() : "";
+          const nameVal = String(row[nameCol] ?? "").trim();
+
+          // Section header: col A has text and ID col is empty or non-numeric
+          if (colAVal && (!colBVal || isNaN(Number(colBVal.replace(/[.]/g, ""))))) {
+            if (!nameVal || nameVal === colAVal) {
+              currentPhase = colAVal;
+              continue;
+            }
+          }
+
+          if (!nameVal && !colBVal) continue;
+
+          const taskId = colBVal || String(i - headerIdx);
           allIds.add(taskId);
 
+          // Parse predecessors — handle "7FS+22d" format
           const predStr = colIdx.predecessors >= 0 ? String(row[colIdx.predecessors] ?? "") : "";
-          const predecessors = predStr.split(",").map((s: string) => s.trim()).filter(Boolean);
+          const predecessors = predStr.split(",").map((s: string) => {
+            const match = s.trim().match(/^(\d+(?:\.\d+)?)/);
+            return match ? match[1] : s.trim();
+          }).filter(Boolean);
 
-          const parseDate = (val: any): string | null => {
-            if (!val) return null;
-            if (val instanceof Date) return format(val, "yyyy-MM-dd");
-            const s = String(val).trim();
-            // Try DD/MM/YYYY
-            const parts = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-            if (parts) {
-              const yr = parts[3].length === 2 ? "20" + parts[3] : parts[3];
-              return `${yr}-${parts[2].padStart(2, "0")}-${parts[1].padStart(2, "0")}`;
-            }
-            // Try ISO
-            const d = new Date(s);
-            return isNaN(d.getTime()) ? null : format(d, "yyyy-MM-dd");
-          };
+          const duration = colIdx.duration >= 0 ? parseInt(String(row[colIdx.duration] ?? "0")) || 0 : 0;
+          const startDate = parseDate(colIdx.plannedStart >= 0 ? row[colIdx.plannedStart] : null);
+          const finishDate = parseDate(colIdx.plannedFinish >= 0 ? row[colIdx.plannedFinish] : null);
+
+          // Determine phase from col or current section
+          let phase = currentPhase;
+          if (colIdx.phase >= 0 && row[colIdx.phase]) phase = String(row[colIdx.phase]);
+
+          // Clean name — remove [QC], [SIGN-OFF], [PAYMENT] prefixes
+          let cleanName = nameVal;
+          cleanName = cleanName.replace(/^\[QC\]\s*/i, "");
+          cleanName = cleanName.replace(/^\[SIGN-OFF\]\s*/i, "");
+          cleanName = cleanName.replace(/^\[PAYMENT\]\s*/i, "");
 
           parsedTasks.push({
             project_id: projectId,
             task_id_in_schedule: taskId,
-            task_name: String(row[colIdx.taskName]),
-            phase: colIdx.phase >= 0 ? String(row[colIdx.phase] ?? "Pre-Production") : "Pre-Production",
-            planned_start_date: parseDate(colIdx.plannedStart >= 0 ? row[colIdx.plannedStart] : null),
-            planned_finish_date: parseDate(colIdx.plannedFinish >= 0 ? row[colIdx.plannedFinish] : null),
-            duration_days: colIdx.duration >= 0 ? parseInt(String(row[colIdx.duration] ?? "0")) || 0 : 0,
+            task_name: cleanName,
+            phase,
+            planned_start_date: startDate,
+            planned_finish_date: finishDate,
+            duration_days: duration,
             predecessor_ids: predecessors,
             responsible_role: colIdx.role >= 0 ? String(row[colIdx.role] ?? "").toLowerCase().replace(/\s+/g, "_") : null,
             status: "Upcoming",
@@ -286,75 +325,37 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   };
 
   const downloadTemplate = async () => {
-    // Pull master template for the project's production system. Falls back to a generic
-    // template if no system is configured yet.
     const sys = (productionSystem ?? "").trim();
     const fileSafeProject = (projectName || "Project").replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "");
     const sysLabel = sys ? sys.charAt(0).toUpperCase() + sys.slice(1) : "Generic";
 
-    const headers = [
-      "Phase", "Stage #", "Task Type", "Task / Sub-task", "Who Does It",
-      "Input Required", "Output / Deliverable", "HStack Action", "QC Gate?",
-      "Duration (days)", "Notes",
-    ];
-    // Columns by index — only "Duration (days)" (9) and "Notes" (10) are editable.
-    const editableCols = new Set([9, 10]);
-
-    let rows: any[][] = [];
     if (sys === "modular" || sys === "panelised" || sys === "hybrid") {
       const { data } = await supabase
         .from("production_task_templates")
-        .select("phase_name, stage_number, task_type, task_name, responsible_role, input_required, output_deliverable, hstack_action, is_qc_gate, typical_duration_days, notes")
+        .select("phase_name, stage_number, task_type, task_name, predecessor_stage_numbers, typical_duration_days")
         .eq("production_system", sys as any)
         .order("display_order", { ascending: true });
-      rows = (data ?? []).map((t: any) => [
-        t.phase_name ?? "",
-        t.stage_number ?? "",
-        t.task_type ?? "task",
-        t.task_name ?? "",
-        t.responsible_role ?? "",
-        t.input_required ?? "",
-        t.output_deliverable ?? "",
-        t.hstack_action ?? "",
-        t.is_qc_gate ? "Yes" : "No",
-        t.typical_duration_days ?? "",
-        t.notes ?? "",
+
+      const tasks = (data ?? []).map((t: any) => ({
+        phase_name: t.phase_name ?? "",
+        stage_number: t.stage_number ?? "",
+        task_type: t.task_type ?? "task",
+        task_name: t.task_name ?? "",
+        predecessor_stage_numbers: t.predecessor_stage_numbers ?? [],
+        typical_duration_days: t.typical_duration_days ?? null,
+      }));
+
+      const filename = `Schedule_${fileSafeProject}_${sysLabel}.xlsx`;
+      downloadScheduleTemplate(filename, tasks);
+      toast.success(`Template downloaded: ${filename}`);
+    } else {
+      // Fallback generic
+      const filename = `Schedule_${fileSafeProject}_Generic.xlsx`;
+      downloadScheduleTemplate(filename, [
+        { phase_name: "Pre-Production", stage_number: "1.1", task_type: "task", task_name: "Site survey", predecessor_stage_numbers: [], typical_duration_days: 2 },
       ]);
+      toast.success(`Template downloaded: ${filename}`);
     }
-    if (rows.length === 0) {
-      // Generic example so the file always opens
-      rows = [["Pre-Production", "1.1", "task", "Site survey", "planning_engineer", "Site GPS + access", "Survey report filed", "Upload survey to Drawings", "No", 2, ""]];
-    }
-
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    // Auto-width
-    ws["!cols"] = headers.map((h, i) => ({ wch: i === 3 ? 50 : i === 5 || i === 6 || i === 7 || i === 10 ? 30 : Math.max(h.length + 4, 14) }));
-    // Tag locked cells with grey fill (XLSX writer respects fills when style support enabled).
-    // Note: vanilla `xlsx` does not write cell fills. We mark headers + non-editable cells as locked
-    // via per-cell metadata so Excel users see them as protected once they enable Sheet Protection.
-    const range = XLSX.utils.decode_range(ws["!ref"]!);
-    for (let R = range.s.r; R <= range.e.r; R++) {
-      for (let C = range.s.c; C <= range.e.c; C++) {
-        const addr = XLSX.utils.encode_cell({ r: R, c: C });
-        const cell = ws[addr];
-        if (!cell) continue;
-        const isHeader = R === 0;
-        const isEditable = !isHeader && editableCols.has(C);
-        // Always set protection metadata; downstream sheet protection is opt-in by user.
-        cell.s = {
-          ...(cell.s ?? {}),
-          protection: { locked: !isEditable },
-        };
-      }
-    }
-    // Sheet protection (so Excel actually enforces the lock when the user enables protection)
-    (ws as any)["!protect"] = { password: "", sheet: false };
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Schedule");
-    const filename = `Schedule_${fileSafeProject}_${sysLabel}.xlsx`;
-    XLSX.writeFile(wb, filename);
-    toast.success(`Template downloaded: ${filename}`);
   };
 
   const updateTask = async (taskId: string, updates: Partial<ProjectTask>) => {

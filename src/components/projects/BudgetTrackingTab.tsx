@@ -1,17 +1,21 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet, Info } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet, Info, Upload, Download, Lock, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { InvoiceScanner } from "@/components/inventory/InvoiceScanner";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
+import * as XLSX from "xlsx";
 
 const BOQ_CATEGORIES = [
   "Structure", "Insulation", "Wall Boarding", "Ceiling", "Flooring",
@@ -39,16 +43,28 @@ type Row =
   | (Grn & { _source: "grn" })
   | (ManualEntry & { _source: "manual" });
 
+interface TenderBudgetItem {
+  category: string;
+  total_amount: number;
+}
+
 const fmtINR = (n: number) =>
   `₹${(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
 export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props) {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [boqItems, setBoqItems] = useState<BoqItem[]>([]);
   const [grns, setGrns] = useState<Grn[]>([]);
   const [manuals, setManuals] = useState<ManualEntry[]>([]);
   const [grnOpen, setGrnOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [hasH1Signoff, setHasH1Signoff] = useState(false);
+  const [tenderBudgetItems, setTenderBudgetItems] = useState<TenderBudgetItem[]>([]);
+  const [tenderTotal, setTenderTotal] = useState(0);
+  const [quotationValue, setQuotationValue] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const gfcFileRef = useRef<HTMLInputElement>(null);
 
   const canEdit = ["super_admin", "managing_director", "finance_director", "finance_manager", "planning_engineer", "procurement"].includes(userRole ?? "");
 
@@ -70,6 +86,35 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
       (supabase.from("project_budget_manual_entries" as any) as any).select("*").eq("project_id", projectId).order("entry_date", { ascending: false }),
     ]);
 
+    // Check H1 sign-off from design_stages
+    const { data: signoffs } = await (supabase as any).from("design_stages")
+      .select("id")
+      .eq("project_id", projectId)
+      .eq("stage_name", "H1")
+      .eq("status", "completed")
+      .limit(1);
+    setHasH1Signoff((signoffs ?? []).length > 0);
+
+    // Fetch tender budget
+    const { data: tenderBudgets } = await (supabase as any).from("project_tender_budget")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("uploaded_at", { ascending: false })
+      .limit(1);
+
+    if (tenderBudgets && tenderBudgets.length > 0) {
+      const tb = tenderBudgets[0];
+      setTenderTotal(Number(tb.total_tender_value) || 0);
+      setQuotationValue(Number(tb.quotation_value) || 0);
+      const { data: tbItems } = await (supabase as any).from("project_tender_budget_items")
+        .select("category, total_amount")
+        .eq("budget_id", tb.id);
+      setTenderBudgetItems((tbItems ?? []).map((i: any) => ({
+        category: i.category ?? "Miscellaneous",
+        total_amount: Number(i.total_amount) || 0,
+      })));
+    }
+
     setBoqItems(items);
     setGrns((grnRes.data ?? []) as Grn[]);
     setManuals((manRes.data ?? []) as ManualEntry[]);
@@ -78,7 +123,6 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // Aggregate budget per category from BOQ
   const budgetByCategory = useMemo(() => {
     const map: Record<string, number> = {};
     BOQ_CATEGORIES.forEach((c) => (map[c] = 0));
@@ -89,6 +133,16 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
     });
     return map;
   }, [boqItems]);
+
+  const tenderByCategory = useMemo(() => {
+    const map: Record<string, number> = {};
+    BOQ_CATEGORIES.forEach((c) => (map[c] = 0));
+    tenderBudgetItems.forEach((i) => {
+      const matched = BOQ_CATEGORIES.find((c) => c.toLowerCase() === i.category.toLowerCase()) ?? "Miscellaneous";
+      map[matched] = (map[matched] ?? 0) + i.total_amount;
+    });
+    return map;
+  }, [tenderBudgetItems]);
 
   const rowsByCategory = useMemo(() => {
     const map: Record<string, Row[]> = {};
@@ -111,10 +165,170 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
   const balance = totalBudget - totalSpent;
   const marginPct = contractValue > 0 ? ((contractValue - totalSpent) / contractValue) * 100 : 0;
 
+  const handleGfcUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    try {
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+
+      const items: any[] = [];
+      for (const row of rows) {
+        const cat = row["Category"] || row["category"] || "Miscellaneous";
+        const desc = row["Item Description"] || row["Description"] || "";
+        const totalAmt = Number(row["Total Amount (₹)"] || row["Total Amount"] || 0);
+        if (!desc && !totalAmt) continue;
+        items.push({
+          category: cat,
+          item_description: desc,
+          unit: row["Unit"] || "",
+          actual_qty: Number(row["Actual Qty"] || 0),
+          wastage_pct: Number(row["Wastage %"] || 0),
+          boq_qty: Number(row["BOQ Qty"] || 0),
+          material_rate: Number(row["Material Rate (₹)"] || row["Material Rate"] || 0),
+          labour_rate: Number(row["Labour Rate (₹)"] || row["Labour Rate"] || 0),
+          oh_rate: Number(row["OH Rate (₹)"] || row["OH Rate"] || 0),
+          boq_rate: Number(row["BOQ Rate (₹)"] || row["BOQ Rate"] || 0),
+          total_amount: totalAmt,
+          margin_pct: Number(row["Margin %"] || 0),
+          scope: row["Scope (Factory / On-Site Civil / Both)"] || row["Scope"] || "",
+        });
+      }
+
+      if (items.length === 0) { toast.error("No items found in file"); setUploading(false); return; }
+
+      // Create BOQ version
+      const { data: prevBoqs } = await supabase.from("project_boq")
+        .select("version_number").eq("project_id", projectId)
+        .order("version_number", { ascending: false }).limit(1);
+      const nextVersion = ((prevBoqs as any)?.[0]?.version_number ?? 0) + 1;
+
+      const { data: newBoq, error: boqErr } = await supabase.from("project_boq")
+        .insert({ project_id: projectId, version_number: nextVersion, uploaded_by: user.id } as any)
+        .select("id").single();
+      if (boqErr) throw boqErr;
+
+      const boqId = (newBoq as any).id;
+      const boqItems = items.map((i) => ({ boq_id: boqId, ...i }));
+      for (let i = 0; i < boqItems.length; i += 50) {
+        await supabase.from("project_boq_items").insert(boqItems.slice(i, i + 50) as any);
+      }
+
+      toast.success(`${items.length} GFC budget items uploaded`);
+      fetchAll();
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+      if (gfcFileRef.current) gfcFileRef.current.value = "";
+    }
+  };
+
+  const hasBothBudgets = tenderTotal > 0 && totalBudget > 0;
+
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
 
   return (
     <div className="space-y-4">
+      {/* GFC Budget Upload Section */}
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h3 className="font-display text-sm font-semibold" style={{ color: "#1A1A1A" }}>GFC Budget</h3>
+            <div className="flex gap-2">
+              <input ref={gfcFileRef} type="file" accept=".xlsx" className="hidden" onChange={handleGfcUpload} />
+              <Button size="sm" variant="outline" onClick={() => downloadXlsxTemplate(TEMPLATES.boq.filename, TEMPLATES.boq.sheet, TEMPLATES.boq.headers, TEMPLATES.boq.sample)}
+                style={{ borderColor: "#006039", color: "#006039" }} className="text-xs gap-1">
+                <Download className="h-3 w-3" /> Template
+              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button size="sm" onClick={() => gfcFileRef.current?.click()}
+                        disabled={!hasH1Signoff || uploading}
+                        className="text-xs gap-1" style={hasH1Signoff ? { backgroundColor: "#006039" } : {}}>
+                        {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : hasH1Signoff ? <Upload className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
+                        Upload GFC Budget
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {!hasH1Signoff && (
+                    <TooltipContent>
+                      <p>GFC sign-off required before uploading GFC budget</p>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          </div>
+          {!hasH1Signoff && (
+            <p className="text-xs flex items-center gap-1" style={{ color: "#D4860A" }}>
+              <Lock className="h-3 w-3" /> GFC budget upload is locked until H1 sign-off is recorded in the Design Portal
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Budget Comparison View */}
+      {hasBothBudgets && (
+        <Card>
+          <CardContent className="p-0 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr style={{ backgroundColor: "#006039", color: "white" }}>
+                  <th colSpan={7} className="text-left px-3 py-2 font-display font-semibold text-sm">Budget Comparison</th>
+                </tr>
+                <tr className="border-b text-muted-foreground" style={{ backgroundColor: "#F7F7F7" }}>
+                  <th className="text-left px-3 py-1.5 font-medium">Category</th>
+                  <th className="text-right px-3 py-1.5 font-medium">Tender Budget ₹</th>
+                  <th className="text-right px-3 py-1.5 font-medium">GFC Budget ₹</th>
+                  <th className="text-right px-3 py-1.5 font-medium">Variance ₹</th>
+                  <th className="text-right px-3 py-1.5 font-medium">Variance %</th>
+                  <th className="text-right px-3 py-1.5 font-medium">Spent ₹</th>
+                  <th className="text-right px-3 py-1.5 font-medium">Balance vs GFC ₹</th>
+                </tr>
+              </thead>
+              <tbody>
+                {BOQ_CATEGORIES.map((cat) => {
+                  const tender = tenderByCategory[cat] ?? 0;
+                  const gfc = budgetByCategory[cat] ?? 0;
+                  if (tender === 0 && gfc === 0) return null;
+                  const variance = gfc - tender;
+                  const variancePct = tender > 0 ? (variance / tender) * 100 : 0;
+                  const spent = (rowsByCategory[cat] ?? []).reduce(
+                    (s, r) => s + (r._source === "grn" ? Number(r.basic_amount_excl_gst || 0) : Number((r as ManualEntry).amount_excl_gst || 0)), 0
+                  );
+                  const balanceGfc = gfc - spent;
+
+                  const amberFlag = tender > 0 && variancePct > 10;
+                  const redFlag = spent > gfc && gfc > 0;
+
+                  return (
+                    <tr key={cat} className="border-b" style={redFlag ? { backgroundColor: "#FEE2E2" } : amberFlag ? { backgroundColor: "#FFF8E8" } : {}}>
+                      <td className="px-3 py-1.5 font-medium">
+                        {cat}
+                        {redFlag && <AlertTriangle className="h-3 w-3 inline ml-1" style={{ color: "#F40009" }} />}
+                        {amberFlag && !redFlag && <AlertTriangle className="h-3 w-3 inline ml-1" style={{ color: "#D4860A" }} />}
+                      </td>
+                      <td className="px-3 py-1.5 text-right font-mono">{fmtINR(tender)}</td>
+                      <td className="px-3 py-1.5 text-right font-mono">{fmtINR(gfc)}</td>
+                      <td className="px-3 py-1.5 text-right font-mono" style={{ color: variance > 0 ? "#F40009" : "#006039" }}>{fmtINR(variance)}</td>
+                      <td className="px-3 py-1.5 text-right font-mono" style={{ color: variancePct > 10 ? "#D4860A" : "#1A1A1A" }}>{variancePct.toFixed(1)}%</td>
+                      <td className="px-3 py-1.5 text-right font-mono">{fmtINR(spent)}</td>
+                      <td className="px-3 py-1.5 text-right font-mono" style={{ color: balanceGfc >= 0 ? "#006039" : "#F40009" }}>{fmtINR(balanceGfc)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Top summary strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <SummaryCard icon={<IndianRupee className="h-4 w-4" />} label="Contract Value" value={fmtINR(contractValue)} />
@@ -373,7 +587,7 @@ function ManualEntryDialog({ open, onOpenChange, projectId, onSaved }: { open: b
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-y-auto">
-        <SheetHeader><SheetTitle className="font-display">Add Manual Entry</SheetTitle></SheetHeader>
+        <SheetHeader><SheetTitle className="font-display">Manual Budget Entry</SheetTitle></SheetHeader>
         <div className="space-y-3 py-4">
           <Field label="BOQ Category">
             <Select value={form.boq_category} onValueChange={(v) => setForm({ ...form, boq_category: v })}>
@@ -381,16 +595,16 @@ function ManualEntryDialog({ open, onOpenChange, projectId, onSaved }: { open: b
               <SelectContent>{BOQ_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
             </Select>
           </Field>
-          <Field label="Vendor / Payee"><Input value={form.vendor_name} onChange={(e) => setForm({ ...form, vendor_name: e.target.value })} /></Field>
+          <Field label="Vendor"><Input value={form.vendor_name} onChange={(e) => setForm({ ...form, vendor_name: e.target.value })} /></Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Reference No"><Input value={form.invoice_no} onChange={(e) => setForm({ ...form, invoice_no: e.target.value })} /></Field>
+            <Field label="Invoice No"><Input value={form.invoice_no} onChange={(e) => setForm({ ...form, invoice_no: e.target.value })} /></Field>
             <Field label="Date"><Input type="date" value={form.entry_date} onChange={(e) => setForm({ ...form, entry_date: e.target.value })} /></Field>
           </div>
           <Field label="Description"><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field>
           <Field label="Amount excl GST *"><Input type="number" inputMode="decimal" value={form.amount_excl_gst} onChange={(e) => setForm({ ...form, amount_excl_gst: e.target.value })} /></Field>
           <Field label="Remark"><Input value={form.remark} onChange={(e) => setForm({ ...form, remark: e.target.value })} /></Field>
         </div>
-        <SheetFooter><Button onClick={submit} disabled={saving}>{saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save Entry</Button></SheetFooter>
+        <SheetFooter><Button onClick={submit} disabled={saving}>{saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save</Button></SheetFooter>
       </SheetContent>
     </Sheet>
   );
