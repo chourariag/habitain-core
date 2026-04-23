@@ -50,6 +50,7 @@ export function TransfersTab() {
   const [filterTo, setFilterTo] = useState("");
   const [selectedTransfer, setSelectedTransfer] = useState<Transfer | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [newTransferOpen, setNewTransferOpen] = useState(false);
 
   const fetchTransfers = useCallback(async () => {
     setLoading(true);
