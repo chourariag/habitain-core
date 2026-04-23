@@ -287,75 +287,37 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   };
 
   const downloadTemplate = async () => {
-    // Pull master template for the project's production system. Falls back to a generic
-    // template if no system is configured yet.
     const sys = (productionSystem ?? "").trim();
     const fileSafeProject = (projectName || "Project").replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "");
     const sysLabel = sys ? sys.charAt(0).toUpperCase() + sys.slice(1) : "Generic";
 
-    const headers = [
-      "Phase", "Stage #", "Task Type", "Task / Sub-task", "Who Does It",
-      "Input Required", "Output / Deliverable", "HStack Action", "QC Gate?",
-      "Duration (days)", "Notes",
-    ];
-    // Columns by index — only "Duration (days)" (9) and "Notes" (10) are editable.
-    const editableCols = new Set([9, 10]);
-
-    let rows: any[][] = [];
     if (sys === "modular" || sys === "panelised" || sys === "hybrid") {
       const { data } = await supabase
         .from("production_task_templates")
-        .select("phase_name, stage_number, task_type, task_name, responsible_role, input_required, output_deliverable, hstack_action, is_qc_gate, typical_duration_days, notes")
+        .select("phase_name, stage_number, task_type, task_name, predecessor_stage_numbers, typical_duration_days")
         .eq("production_system", sys as any)
         .order("display_order", { ascending: true });
-      rows = (data ?? []).map((t: any) => [
-        t.phase_name ?? "",
-        t.stage_number ?? "",
-        t.task_type ?? "task",
-        t.task_name ?? "",
-        t.responsible_role ?? "",
-        t.input_required ?? "",
-        t.output_deliverable ?? "",
-        t.hstack_action ?? "",
-        t.is_qc_gate ? "Yes" : "No",
-        t.typical_duration_days ?? "",
-        t.notes ?? "",
+
+      const tasks = (data ?? []).map((t: any) => ({
+        phase_name: t.phase_name ?? "",
+        stage_number: t.stage_number ?? "",
+        task_type: t.task_type ?? "task",
+        task_name: t.task_name ?? "",
+        predecessor_stage_numbers: t.predecessor_stage_numbers ?? [],
+        typical_duration_days: t.typical_duration_days ?? null,
+      }));
+
+      const filename = `Schedule_${fileSafeProject}_${sysLabel}.xlsx`;
+      downloadScheduleTemplate(filename, tasks);
+      toast.success(`Template downloaded: ${filename}`);
+    } else {
+      // Fallback generic
+      const filename = `Schedule_${fileSafeProject}_Generic.xlsx`;
+      downloadScheduleTemplate(filename, [
+        { phase_name: "Pre-Production", stage_number: "1.1", task_type: "task", task_name: "Site survey", predecessor_stage_numbers: [], typical_duration_days: 2 },
       ]);
+      toast.success(`Template downloaded: ${filename}`);
     }
-    if (rows.length === 0) {
-      // Generic example so the file always opens
-      rows = [["Pre-Production", "1.1", "task", "Site survey", "planning_engineer", "Site GPS + access", "Survey report filed", "Upload survey to Drawings", "No", 2, ""]];
-    }
-
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-    // Auto-width
-    ws["!cols"] = headers.map((h, i) => ({ wch: i === 3 ? 50 : i === 5 || i === 6 || i === 7 || i === 10 ? 30 : Math.max(h.length + 4, 14) }));
-    // Tag locked cells with grey fill (XLSX writer respects fills when style support enabled).
-    // Note: vanilla `xlsx` does not write cell fills. We mark headers + non-editable cells as locked
-    // via per-cell metadata so Excel users see them as protected once they enable Sheet Protection.
-    const range = XLSX.utils.decode_range(ws["!ref"]!);
-    for (let R = range.s.r; R <= range.e.r; R++) {
-      for (let C = range.s.c; C <= range.e.c; C++) {
-        const addr = XLSX.utils.encode_cell({ r: R, c: C });
-        const cell = ws[addr];
-        if (!cell) continue;
-        const isHeader = R === 0;
-        const isEditable = !isHeader && editableCols.has(C);
-        // Always set protection metadata; downstream sheet protection is opt-in by user.
-        cell.s = {
-          ...(cell.s ?? {}),
-          protection: { locked: !isEditable },
-        };
-      }
-    }
-    // Sheet protection (so Excel actually enforces the lock when the user enables protection)
-    (ws as any)["!protect"] = { password: "", sheet: false };
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Schedule");
-    const filename = `Schedule_${fileSafeProject}_${sysLabel}.xlsx`;
-    XLSX.writeFile(wb, filename);
-    toast.success(`Template downloaded: ${filename}`);
   };
 
   const updateTask = async (taskId: string, updates: Partial<ProjectTask>) => {
