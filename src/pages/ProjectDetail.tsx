@@ -169,9 +169,7 @@ export default function ProjectDetail() {
             <TabsTrigger value="variations" className="gap-1.5"><GitCompareArrows className="h-4 w-4" /> Variations</TabsTrigger>
             <TabsTrigger value="budget" className="gap-1.5"><Wallet className="h-4 w-4" /> Budget</TabsTrigger>
             <TabsTrigger value="scope" className="gap-1.5"><ScrollText className="h-4 w-4" /> Scope</TabsTrigger>
-            <TabsTrigger value="site-diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
             <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover</TabsTrigger>
-            <TabsTrigger value="team" className="gap-1.5"><Users className="h-4 w-4" /> Team</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -236,20 +234,9 @@ export default function ProjectDetail() {
           <ScopeOfWorkTab projectId={id!} userRole={userRole} />
         </TabsContent>
 
-        <TabsContent value="site-diary" className="space-y-4">
-          <SiteDiary projectId={id!} userRole={userRole} />
-        </TabsContent>
-
         <TabsContent value="handover" className="space-y-4">
           <h2 className="font-display text-lg font-semibold text-foreground">Handover</h2>
           <HandoverPack projectId={id!} clientName={project.client_name} userRole={userRole} installationComplete={modules.some((m: any) => m.production_status === "dispatched")} onHandedOver={fetchData} />
-        </TabsContent>
-
-        <TabsContent value="team" className="space-y-4">
-          <h2 className="font-display text-lg font-semibold text-foreground">Team</h2>
-          <div className="bg-card rounded-lg p-8 text-center shadow-sm">
-            <p className="text-muted-foreground text-sm">Team assignment coming soon.</p>
-          </div>
         </TabsContent>
       </Tabs>
 
