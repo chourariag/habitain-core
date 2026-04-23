@@ -36,11 +36,30 @@ export function PipelineKanban({ deals, onRefresh }: { deals: Deal[]; onRefresh:
     const deal = deals.find(d => d.id === dragDealId);
     if (!deal || deal.stage === targetStage) return;
 
+    // Block Won if large discount not approved
+    if (targetStage === "Won" && deal.final_agreed_price) {
+      const boq = deal.contract_value || 0;
+      const final = Number(deal.final_agreed_price) || 0;
+      const pct = boq > 0 ? ((final - boq) / boq) * 100 : 0;
+      if (pct < -15 && !deal.discount_approved_by) {
+        toast.error("Discount >15% requires director approval before marking Won");
+        setDragDealId(null);
+        return;
+      }
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("sales_stage_history").insert({
       deal_id: deal.id, from_stage: deal.stage, to_stage: targetStage, changed_by: user?.id,
     });
-    const { error } = await supabase.from("sales_deals").update({ stage: targetStage }).eq("id", deal.id);
+
+    // When marking Won, use final_agreed_price as contract_value if set
+    const update: any = { stage: targetStage };
+    if (targetStage === "Won" && deal.final_agreed_price) {
+      update.contract_value = Number(deal.final_agreed_price);
+    }
+
+    const { error } = await supabase.from("sales_deals").update(update).eq("id", deal.id);
     if (error) toast.error(error.message);
     else { toast.success(`Moved to ${targetStage}`); onRefresh(); }
     setDragDealId(null);

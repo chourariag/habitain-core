@@ -6556,6 +6556,8 @@ export type Database = {
       sales_deals: {
         Row: {
           accepted_quotation_version: number | null
+          adjustment_notes: string | null
+          adjustment_type: string | null
           amc_interest: string | null
           assigned_to: string | null
           client_name: string
@@ -6566,9 +6568,12 @@ export type Database = {
           created_at: string
           created_by: string | null
           delivery_city: string | null
+          discount_approved_at: string | null
+          discount_approved_by: string | null
           division: string
           email: string | null
           estimated_sqft: number | null
+          final_agreed_price: number | null
           id: string
           is_archived: boolean
           lead_source: string | null
@@ -6588,6 +6593,8 @@ export type Database = {
         }
         Insert: {
           accepted_quotation_version?: number | null
+          adjustment_notes?: string | null
+          adjustment_type?: string | null
           amc_interest?: string | null
           assigned_to?: string | null
           client_name: string
@@ -6598,9 +6605,12 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           delivery_city?: string | null
+          discount_approved_at?: string | null
+          discount_approved_by?: string | null
           division?: string
           email?: string | null
           estimated_sqft?: number | null
+          final_agreed_price?: number | null
           id?: string
           is_archived?: boolean
           lead_source?: string | null
@@ -6620,6 +6630,8 @@ export type Database = {
         }
         Update: {
           accepted_quotation_version?: number | null
+          adjustment_notes?: string | null
+          adjustment_type?: string | null
           amc_interest?: string | null
           assigned_to?: string | null
           client_name?: string
@@ -6630,9 +6642,12 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           delivery_city?: string | null
+          discount_approved_at?: string | null
+          discount_approved_by?: string | null
           division?: string
           email?: string | null
           estimated_sqft?: number | null
+          final_agreed_price?: number | null
           id?: string
           is_archived?: boolean
           lead_source?: string | null
