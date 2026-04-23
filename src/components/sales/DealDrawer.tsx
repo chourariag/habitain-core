@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Upload, Download, Loader2 } from "lucide-react";
+import { CalendarIcon, Upload, Download, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -200,7 +200,7 @@ export function DealDrawer({ open, onClose, deal, onSaved }: DealDrawerProps) {
               <DealForm form={form} set={set} deal={deal} saving={saving} onSave={handleSave} onMarkLost={handleMarkLost} onDelete={handleDelete} />
             </TabsContent>
             <TabsContent value="financial">
-              <TenderBudgetSection dealId={deal.id} projectId={deal.project_id} />
+              <TenderBudgetSection dealId={deal.id} projectId={deal.project_id} deal={deal} onSaved={onSaved} />
             </TabsContent>
             <TabsContent value="quotations">
               <QuotationVersionsPanel dealId={deal.id} />
