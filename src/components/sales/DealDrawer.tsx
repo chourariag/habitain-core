@@ -190,6 +190,7 @@ export function DealDrawer({ open, onClose, deal, onSaved }: DealDrawerProps) {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-3">
             <TabsList className="w-full">
               <TabsTrigger value="details" className="flex-1 text-xs">Details</TabsTrigger>
+              <TabsTrigger value="financial" className="flex-1 text-xs">Financial</TabsTrigger>
               <TabsTrigger value="quotations" className="flex-1 text-xs">Quotes</TabsTrigger>
               <TabsTrigger value="ec" className="flex-1 text-xs">EC Visit</TabsTrigger>
               {deal.stage === "Won" && <TabsTrigger value="handover" className="flex-1 text-xs">Handover</TabsTrigger>}
@@ -197,6 +198,9 @@ export function DealDrawer({ open, onClose, deal, onSaved }: DealDrawerProps) {
 
             <TabsContent value="details">
               <DealForm form={form} set={set} deal={deal} saving={saving} onSave={handleSave} onMarkLost={handleMarkLost} onDelete={handleDelete} />
+            </TabsContent>
+            <TabsContent value="financial">
+              <TenderBudgetSection dealId={deal.id} projectId={deal.project_id} />
             </TabsContent>
             <TabsContent value="quotations">
               <QuotationVersionsPanel dealId={deal.id} />
