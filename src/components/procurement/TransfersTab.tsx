@@ -2,12 +2,14 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Loader2, Truck, Check, Clock, Package, Wrench, Plus, ChevronDown } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from "date-fns";
+import { NewTransferDialog } from "./NewTransferDialog";
 
 type Transfer = {
   id: string;
@@ -48,6 +50,7 @@ export function TransfersTab() {
   const [filterTo, setFilterTo] = useState("");
   const [selectedTransfer, setSelectedTransfer] = useState<Transfer | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [newTransferOpen, setNewTransferOpen] = useState(false);
 
   const fetchTransfers = useCallback(async () => {
     setLoading(true);
@@ -141,7 +144,12 @@ export function TransfersTab() {
 
   return (
     <div className="space-y-4">
-      {/* Filter bar */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Material Transfers</h2>
+        <Button size="sm" onClick={() => setNewTransferOpen(true)} style={{ backgroundColor: "#006039" }} className="text-white gap-1 text-xs">
+          <Plus className="h-3 w-3" /> New Transfer
+        </Button>
+      </div>
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         <Select value={filterProject} onValueChange={setFilterProject}>
           <SelectTrigger className="w-[180px] shrink-0 text-sm">
@@ -403,6 +411,8 @@ export function TransfersTab() {
           )}
         </SheetContent>
       </Sheet>
+
+      <NewTransferDialog open={newTransferOpen} onOpenChange={setNewTransferOpen} onCreated={fetchTransfers} />
     </div>
   );
 }

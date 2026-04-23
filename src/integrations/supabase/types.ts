@@ -3496,6 +3496,80 @@ export type Database = {
           },
         ]
       }
+      material_transfers: {
+        Row: {
+          condition: string | null
+          created_at: string
+          created_by: string
+          driver_details: string | null
+          from_location: string
+          id: string
+          material_name: string
+          notes: string | null
+          qty_received: number | null
+          quantity: number
+          receipt_notes: string | null
+          received_at: string | null
+          received_by: string | null
+          status: string
+          to_location: string
+          to_project_id: string | null
+          transfer_date: string
+          unit: string
+          updated_at: string
+        }
+        Insert: {
+          condition?: string | null
+          created_at?: string
+          created_by: string
+          driver_details?: string | null
+          from_location: string
+          id?: string
+          material_name: string
+          notes?: string | null
+          qty_received?: number | null
+          quantity?: number
+          receipt_notes?: string | null
+          received_at?: string | null
+          received_by?: string | null
+          status?: string
+          to_location: string
+          to_project_id?: string | null
+          transfer_date?: string
+          unit?: string
+          updated_at?: string
+        }
+        Update: {
+          condition?: string | null
+          created_at?: string
+          created_by?: string
+          driver_details?: string | null
+          from_location?: string
+          id?: string
+          material_name?: string
+          notes?: string | null
+          qty_received?: number | null
+          quantity?: number
+          receipt_notes?: string | null
+          received_at?: string | null
+          received_by?: string | null
+          status?: string
+          to_location?: string
+          to_project_id?: string | null
+          transfer_date?: string
+          unit?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_transfers_to_project_id_fkey"
+            columns: ["to_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       module_schedule: {
         Row: {
           actual_duration_days: number | null
