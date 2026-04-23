@@ -13,8 +13,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet, Info, Upload, Download, Lock, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { InvoiceScanner } from "@/components/inventory/InvoiceScanner";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
+import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 
 const BOQ_CATEGORIES = [
@@ -57,8 +57,8 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
   const [boqItems, setBoqItems] = useState<BoqItem[]>([]);
   const [grns, setGrns] = useState<Grn[]>([]);
   const [manuals, setManuals] = useState<ManualEntry[]>([]);
-  const [grnOpen, setGrnOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const navigate = useNavigate();
   const [hasH1Signoff, setHasH1Signoff] = useState(false);
   const [tenderBudgetItems, setTenderBudgetItems] = useState<TenderBudgetItem[]>([]);
   const [tenderTotal, setTenderTotal] = useState(0);
@@ -350,18 +350,17 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
 
       <div className="flex flex-wrap items-center gap-2">
         {canEdit && (
-          <>
-            <Button size="sm" onClick={() => setGrnOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" /> Add GRN
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setManualOpen(true)}>
-              <Plus className="h-4 w-4 mr-1" /> Add Manual Entry
-            </Button>
-          </>
+          <Button size="sm" variant="outline" onClick={() => setManualOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" /> Add Manual Entry
+          </Button>
         )}
-        <span className="text-xs text-muted-foreground flex items-center gap-1">
-          <Info className="h-3 w-3" /> GRNs recorded here automatically update this project's budget tracking
-        </span>
+        <button
+          onClick={() => navigate(`/procurement?tab=grn&project=${projectId}`)}
+          className="text-xs font-medium flex items-center gap-1 hover:underline"
+          style={{ color: "#006039" }}
+        >
+          View all GRNs for this project →
+        </button>
       </div>
 
       {/* Per-category tables */}
@@ -438,7 +437,6 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
         })}
       </div>
 
-      <GrnDialog open={grnOpen} onOpenChange={setGrnOpen} projectId={projectId} onSaved={fetchAll} />
       <ManualEntryDialog open={manualOpen} onOpenChange={setManualOpen} projectId={projectId} onSaved={fetchAll} />
     </div>
   );
@@ -456,97 +454,7 @@ function SummaryCard({ icon, label, value, tone }: { icon: React.ReactNode; labe
   );
 }
 
-function GrnDialog({ open, onOpenChange, projectId, onSaved }: { open: boolean; onOpenChange: (v: boolean) => void; projectId: string; onSaved: () => void }) {
-  const [scanSkipped, setScanSkipped] = useState(false);
-  const [form, setForm] = useState({
-    boq_category: "Structure", vendor_name: "", invoice_no: "", invoice_date: format(new Date(), "yyyy-MM-dd"),
-    description: "", basic_amount_excl_gst: "", gst_amount: "", remark: "",
-  });
-  const [saving, setSaving] = useState(false);
 
-  const submit = async () => {
-    if (!form.vendor_name.trim() || !form.basic_amount_excl_gst) {
-      toast.error("Vendor and amount are required");
-      return;
-    }
-    setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    let name: string | null = null;
-    if (user) {
-      const { data: prof } = await supabase.from("profiles").select("full_name").eq("auth_user_id", user.id).maybeSingle();
-      name = (prof as any)?.full_name ?? user.email ?? null;
-    }
-    const { error } = await (supabase.from("project_grns" as any) as any).insert({
-      project_id: projectId,
-      boq_category: form.boq_category,
-      vendor_name: form.vendor_name.trim(),
-      invoice_no: form.invoice_no.trim() || null,
-      invoice_date: form.invoice_date || null,
-      description: form.description.trim() || null,
-      basic_amount_excl_gst: Number(form.basic_amount_excl_gst) || 0,
-      gst_amount: Number(form.gst_amount) || 0,
-      remark: form.remark.trim() || null,
-      created_by: user?.id ?? null,
-      created_by_name: name,
-    });
-    setSaving(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success("GRN added");
-    onOpenChange(false);
-    setForm({ ...form, vendor_name: "", invoice_no: "", description: "", basic_amount_excl_gst: "", gst_amount: "", remark: "" });
-    onSaved();
-  };
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="overflow-y-auto">
-        <SheetHeader><SheetTitle className="font-display">Add GRN (Goods Receipt Note)</SheetTitle></SheetHeader>
-        <div className="space-y-3 py-4">
-          {!scanSkipped && (
-            <InvoiceScanner
-              onExtracted={(data) => {
-                setForm(prev => ({
-                  ...prev,
-                  vendor_name: data.vendor_name || prev.vendor_name,
-                  invoice_no: data.invoice_number || prev.invoice_no,
-                  invoice_date: data.invoice_date
-                    ? (() => {
-                        const parts = data.invoice_date.split("/");
-                        return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : prev.invoice_date;
-                      })()
-                    : prev.invoice_date,
-                  basic_amount_excl_gst: data.subtotal != null ? String(data.subtotal) : prev.basic_amount_excl_gst,
-                  gst_amount: data.gst_amount != null ? String(data.gst_amount) : prev.gst_amount,
-                  description: data.line_items?.map(i => `${i.description} x${i.quantity}`).join(", ") || prev.description,
-                }));
-                setScanSkipped(true);
-              }}
-              onSkip={() => setScanSkipped(true)}
-            />
-          )}
-          <Field label="BOQ Category">
-            <Select value={form.boq_category} onValueChange={(v) => setForm({ ...form, boq_category: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{BOQ_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-            </Select>
-          </Field>
-          <Field label="Vendor *"><Input value={form.vendor_name} onChange={(e) => setForm({ ...form, vendor_name: e.target.value })} /></Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Invoice No"><Input value={form.invoice_no} onChange={(e) => setForm({ ...form, invoice_no: e.target.value })} /></Field>
-            <Field label="Invoice Date"><Input type="date" value={form.invoice_date} onChange={(e) => setForm({ ...form, invoice_date: e.target.value })} /></Field>
-          </div>
-          <Field label="Description"><Textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Amount excl GST *"><Input type="number" inputMode="decimal" value={form.basic_amount_excl_gst} onChange={(e) => setForm({ ...form, basic_amount_excl_gst: e.target.value })} /></Field>
-            <Field label="GST Amount"><Input type="number" inputMode="decimal" value={form.gst_amount} onChange={(e) => setForm({ ...form, gst_amount: e.target.value })} /></Field>
-          </div>
-          <Field label="Remark"><Input value={form.remark} onChange={(e) => setForm({ ...form, remark: e.target.value })} /></Field>
-        </div>
-        <SheetFooter><Button onClick={submit} disabled={saving}>{saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Save GRN</Button></SheetFooter>
-      </SheetContent>
-    </Sheet>
-  );
-}
 
 function ManualEntryDialog({ open, onOpenChange, projectId, onSaved }: { open: boolean; onOpenChange: (v: boolean) => void; projectId: string; onSaved: () => void }) {
   const [form, setForm] = useState({
