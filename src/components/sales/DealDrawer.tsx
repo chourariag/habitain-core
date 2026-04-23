@@ -121,6 +121,16 @@ export function DealDrawer({ open, onClose, deal, onSaved }: DealDrawerProps) {
       toast.error("Lost reason is required");
       return;
     }
+    // Block Won if large discount not approved
+    if (form.stage === "Won" && deal?.final_agreed_price) {
+      const boq = Number(form.contract_value) || 0;
+      const final = Number(deal.final_agreed_price) || 0;
+      const pct = boq > 0 ? ((final - boq) / boq) * 100 : 0;
+      if (pct < -15 && !deal.discount_approved_by) {
+        toast.error("Discount >15% requires director approval before marking Won");
+        return;
+      }
+    }
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     const payload: any = {
@@ -143,6 +153,11 @@ export function DealDrawer({ open, onClose, deal, onSaved }: DealDrawerProps) {
       delivery_city: form.delivery_city || null,
       within_350km: form.within_350km,
     };
+
+    // When marking Won, use final_agreed_price as contract_value if set
+    if (form.stage === "Won" && deal?.final_agreed_price) {
+      payload.contract_value = Number(deal.final_agreed_price);
+    }
 
     if (deal) {
       if (deal.stage !== form.stage) {
