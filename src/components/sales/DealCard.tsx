@@ -35,8 +35,11 @@ interface DealCardProps {
     division?: string;
     client_type?: string;
     re_engaged_at?: string | null;
+    final_agreed_price?: number | null;
+    [key: string]: any;
   };
   onClick: () => void;
+  boqTotal?: number;
 }
 
 export function DealCard({ deal, onClick }: DealCardProps) {
@@ -54,6 +57,14 @@ export function DealCard({ deal, onClick }: DealCardProps) {
   const daysAgo = Math.floor((Date.now() - new Date(deal.updated_at).getTime()) / 86400000);
   const threshold = STAGNATION_THRESHOLDS[deal.client_type || "other"] || 90;
   const isStagnant = !isWon && !isLost && daysAgo > threshold;
+
+  // Negotiation badge
+  const finalPrice = deal.final_agreed_price ? Number(deal.final_agreed_price) : null;
+  const boqTotal = deal.contract_value; // fallback display value
+  const hasPriceAdjustment = finalPrice != null && finalPrice > 0;
+  const adjPct = hasPriceAdjustment && boqTotal > 0 ? ((finalPrice! - boqTotal) / boqTotal) * 100 : 0;
+  const isPremium = hasPriceAdjustment && adjPct > 0;
+  const isDiscount = hasPriceAdjustment && adjPct < 0;
 
   return (
     <div
@@ -89,9 +100,23 @@ export function DealCard({ deal, onClick }: DealCardProps) {
             Re-engaged
           </span>
         )}
+        {isPremium && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-semibold" style={{ background: "#006039", color: "#fff" }}>
+            Premium deal
+          </span>
+        )}
       </div>
 
-      <div className="mt-1 font-bold text-base" style={{ color: "#006039" }}>{fmt(deal.contract_value)}</div>
+      <div className="mt-1 flex items-baseline gap-2">
+        <span className="font-bold text-base" style={{ color: "#006039" }}>
+          {hasPriceAdjustment ? fmt(finalPrice!) : fmt(deal.contract_value)}
+        </span>
+        {hasPriceAdjustment && adjPct !== 0 && (
+          <span className="text-[10px] font-semibold" style={{ color: isDiscount ? "#F40009" : "#006039" }}>
+            ({adjPct > 0 ? "+" : ""}{adjPct.toFixed(0)}%)
+          </span>
+        )}
+      </div>
 
       <div className="mt-1 flex items-center gap-2">
         <span className="text-[10px]" style={{ color: isStagnant ? "#F40009" : "#999" }}>
