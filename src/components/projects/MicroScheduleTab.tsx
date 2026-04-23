@@ -18,6 +18,7 @@ import { RedFlagAlerts } from "./RedFlagAlerts";
 import { fetchBenchmarkStats, getModuleCountBand, BenchmarkStats } from "@/lib/task-benchmarks";
 import * as XLSX from "xlsx";
 import { getPhasesForSystem, TASK_TYPE_META, type TaskTemplateType } from "@/lib/production-phases";
+import { downloadScheduleTemplate } from "@/lib/xlsx-templates";
 import { ChevronRight, ChevronDown, ShieldAlert } from "lucide-react";
 
 interface ProjectTask {
