@@ -20,8 +20,8 @@ export const TEMPLATES = {
   expense: {
     filename: "Expense_Report_Template.xlsx",
     sheet: "Expenses",
-    headers: ["Date", "Employee Name", "Category", "Description", "Amount (excl GST)", "GST Amount", "Total Amount", "Receipt Number", "Approved By"] as const,
-    sample: [["15/04/2026", "Karthik M", "Travel", "Site visit — Malur to Bangalore", 2200, 396, 2596, "REC-0042", "Azad"]] as const,
+    headers: ["Date (DD/MM/YYYY)", "Employee Name", "Category", "Description", "Basic Amount (excl GST)", "GST Amount", "Total Amount", "Receipt Number", "Payment Mode", "Approved By", "Remarks"] as const,
+    sample: [["15/04/2026", "Karthik M", "Travel", "Site visit — Malur to Bangalore", 2200, 396, 2596, "REC-0042", "UPI", "Azad", "Monthly reimbursement"]] as const,
   },
   tallyPO: {
     filename: "PO_Register_Template.xlsx",
