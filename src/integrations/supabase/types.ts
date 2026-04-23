@@ -5452,6 +5452,112 @@ export type Database = {
           },
         ]
       }
+      project_tender_budget: {
+        Row: {
+          created_at: string
+          deal_id: string | null
+          id: string
+          project_id: string | null
+          quotation_value: number | null
+          tender_margin_pct: number | null
+          total_tender_value: number | null
+          updated_at: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          deal_id?: string | null
+          id?: string
+          project_id?: string | null
+          quotation_value?: number | null
+          tender_margin_pct?: number | null
+          total_tender_value?: number | null
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          deal_id?: string | null
+          id?: string
+          project_id?: string | null
+          quotation_value?: number | null
+          tender_margin_pct?: number | null
+          total_tender_value?: number | null
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tender_budget_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_tender_budget_items: {
+        Row: {
+          budget_id: string
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          labour_rate: number | null
+          margin_pct: number | null
+          material_rate: number | null
+          notes: string | null
+          oh_rate: number | null
+          tender_qty: number | null
+          total_amount: number | null
+          total_rate: number | null
+          unit: string | null
+        }
+        Insert: {
+          budget_id: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          labour_rate?: number | null
+          margin_pct?: number | null
+          material_rate?: number | null
+          notes?: string | null
+          oh_rate?: number | null
+          tender_qty?: number | null
+          total_amount?: number | null
+          total_rate?: number | null
+          unit?: string | null
+        }
+        Update: {
+          budget_id?: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          labour_rate?: number | null
+          margin_pct?: number | null
+          material_rate?: number | null
+          notes?: string | null
+          oh_rate?: number | null
+          tender_qty?: number | null
+          total_amount?: number | null
+          total_rate?: number | null
+          unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tender_budget_items_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "project_tender_budget"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_variations: {
         Row: {
           basic_rate: number | null
