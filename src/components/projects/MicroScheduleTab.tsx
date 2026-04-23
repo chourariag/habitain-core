@@ -142,67 +142,105 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: "dd/mm/yyyy" });
 
-        // Find header row
+        // Find header row — look for "Name" or "Task Name" or "ID"
         let headerIdx = -1;
         for (let i = 0; i < Math.min(rows.length, 15); i++) {
           const row = rows[i];
-          if (row && row.some((c: any) => String(c).toLowerCase().includes("task name"))) {
+          if (row && row.some((c: any) => {
+            const v = String(c).toLowerCase().trim();
+            return v === "name" || v.includes("task name") || v === "id";
+          })) {
             headerIdx = i;
             break;
           }
         }
-        if (headerIdx === -1) { toast.error("Could not find header row with 'Task Name'"); return; }
+        if (headerIdx === -1) { toast.error("Could not find header row with 'Name' or 'ID'"); return; }
 
         const headers = rows[headerIdx].map((h: any) => String(h ?? "").toLowerCase().trim());
         const colIdx = {
+          section: headers.findIndex((h: string) => h === "" || h === "section"),
           id: headers.findIndex((h: string) => h === "id"),
-          taskName: headers.findIndex((h: string) => h.includes("task name")),
+          name: headers.findIndex((h: string) => h === "name" || h.includes("task name") || h.includes("task / sub-task")),
           duration: headers.findIndex((h: string) => h.includes("duration")),
           predecessors: headers.findIndex((h: string) => h.includes("predecessor")),
           plannedStart: headers.findIndex((h: string) => h.includes("planned start")),
           plannedFinish: headers.findIndex((h: string) => h.includes("planned finish")),
-          role: headers.findIndex((h: string) => h.includes("responsible")),
+          role: headers.findIndex((h: string) => h.includes("responsible") || h.includes("who does")),
           phase: headers.findIndex((h: string) => h === "phase"),
+          taskType: headers.findIndex((h: string) => h.includes("task type")),
         };
 
-        if (colIdx.taskName === -1) { toast.error("Missing 'Task Name' column"); return; }
+        if (colIdx.name === -1 && colIdx.id === -1) { toast.error("Missing 'Name' or 'ID' column"); return; }
+        const nameCol = colIdx.name >= 0 ? colIdx.name : colIdx.id;
 
         const parsedTasks: any[] = [];
         const allIds = new Set<string>();
+        let currentPhase = "Pre-Production";
+
+        const parseDate = (val: any): string | null => {
+          if (!val) return null;
+          if (val instanceof Date) return format(val, "yyyy-MM-dd");
+          const s = String(val).trim();
+          const parts = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+          if (parts) {
+            const yr = parts[3].length === 2 ? "20" + parts[3] : parts[3];
+            return `${yr}-${parts[2].padStart(2, "0")}-${parts[1].padStart(2, "0")}`;
+          }
+          const d = new Date(s);
+          return isNaN(d.getTime()) ? null : format(d, "yyyy-MM-dd");
+        };
 
         for (let i = headerIdx + 1; i < rows.length; i++) {
           const row = rows[i];
-          if (!row || !row[colIdx.taskName]) continue;
+          if (!row || row.every((c: any) => !c || !String(c).trim())) continue;
 
-          const taskId = String(row[colIdx.id] ?? (i - headerIdx));
+          // Section header detection: text in col A (section col), and col B (ID) is either empty or non-numeric
+          const colAVal = colIdx.section >= 0 ? String(row[colIdx.section] ?? "").trim() : String(row[0] ?? "").trim();
+          const colBVal = colIdx.id >= 0 ? String(row[colIdx.id] ?? "").trim() : "";
+          const nameVal = String(row[nameCol] ?? "").trim();
+
+          // Section header: col A has text and ID col is empty or non-numeric
+          if (colAVal && (!colBVal || isNaN(Number(colBVal.replace(/[.]/g, ""))))) {
+            if (!nameVal || nameVal === colAVal) {
+              currentPhase = colAVal;
+              continue;
+            }
+          }
+
+          if (!nameVal && !colBVal) continue;
+
+          const taskId = colBVal || String(i - headerIdx);
           allIds.add(taskId);
 
+          // Parse predecessors — handle "7FS+22d" format
           const predStr = colIdx.predecessors >= 0 ? String(row[colIdx.predecessors] ?? "") : "";
-          const predecessors = predStr.split(",").map((s: string) => s.trim()).filter(Boolean);
+          const predecessors = predStr.split(",").map((s: string) => {
+            const match = s.trim().match(/^(\d+(?:\.\d+)?)/);
+            return match ? match[1] : s.trim();
+          }).filter(Boolean);
 
-          const parseDate = (val: any): string | null => {
-            if (!val) return null;
-            if (val instanceof Date) return format(val, "yyyy-MM-dd");
-            const s = String(val).trim();
-            // Try DD/MM/YYYY
-            const parts = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
-            if (parts) {
-              const yr = parts[3].length === 2 ? "20" + parts[3] : parts[3];
-              return `${yr}-${parts[2].padStart(2, "0")}-${parts[1].padStart(2, "0")}`;
-            }
-            // Try ISO
-            const d = new Date(s);
-            return isNaN(d.getTime()) ? null : format(d, "yyyy-MM-dd");
-          };
+          const duration = colIdx.duration >= 0 ? parseInt(String(row[colIdx.duration] ?? "0")) || 0 : 0;
+          const startDate = parseDate(colIdx.plannedStart >= 0 ? row[colIdx.plannedStart] : null);
+          const finishDate = parseDate(colIdx.plannedFinish >= 0 ? row[colIdx.plannedFinish] : null);
+
+          // Determine phase from col or current section
+          let phase = currentPhase;
+          if (colIdx.phase >= 0 && row[colIdx.phase]) phase = String(row[colIdx.phase]);
+
+          // Clean name — remove [QC], [SIGN-OFF], [PAYMENT] prefixes
+          let cleanName = nameVal;
+          cleanName = cleanName.replace(/^\[QC\]\s*/i, "");
+          cleanName = cleanName.replace(/^\[SIGN-OFF\]\s*/i, "");
+          cleanName = cleanName.replace(/^\[PAYMENT\]\s*/i, "");
 
           parsedTasks.push({
             project_id: projectId,
             task_id_in_schedule: taskId,
-            task_name: String(row[colIdx.taskName]),
-            phase: colIdx.phase >= 0 ? String(row[colIdx.phase] ?? "Pre-Production") : "Pre-Production",
-            planned_start_date: parseDate(colIdx.plannedStart >= 0 ? row[colIdx.plannedStart] : null),
-            planned_finish_date: parseDate(colIdx.plannedFinish >= 0 ? row[colIdx.plannedFinish] : null),
-            duration_days: colIdx.duration >= 0 ? parseInt(String(row[colIdx.duration] ?? "0")) || 0 : 0,
+            task_name: cleanName,
+            phase,
+            planned_start_date: startDate,
+            planned_finish_date: finishDate,
+            duration_days: duration,
             predecessor_ids: predecessors,
             responsible_role: colIdx.role >= 0 ? String(row[colIdx.role] ?? "").toLowerCase().replace(/\s+/g, "_") : null,
             status: "Upcoming",
