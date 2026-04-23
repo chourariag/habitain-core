@@ -180,6 +180,64 @@ export function ExpensesTab() {
     XLSX.writeFile(wb, `HStack_Expenses_${format(new Date(), "MMMM_yyyy")}.xlsx`);
   };
 
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    try {
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data, { type: "array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+
+      const skipped: number[] = [];
+      const toInsert: any[] = [];
+      const period = format(new Date(), "MMMM yyyy");
+
+      rows.forEach((row, idx) => {
+        const dateVal = row["Date (DD/MM/YYYY)"] || row["Date"] || "";
+        const totalAmt = Number(row["Total Amount"]) || Number(row["Basic Amount (excl GST)"]) || 0;
+        if (!dateVal || !totalAmt) { skipped.push(idx + 2); return; }
+
+        // parse DD/MM/YYYY
+        let entryDate: string;
+        if (typeof dateVal === "number") {
+          const d = XLSX.SSF.parse_date_code(dateVal);
+          entryDate = `${d.y}-${String(d.m).padStart(2,"0")}-${String(d.d).padStart(2,"0")}`;
+        } else {
+          const parts = String(dateVal).split(/[\/\-]/);
+          entryDate = parts.length === 3 ? `${parts[2]}-${parts[1].padStart(2,"0")}-${parts[0].padStart(2,"0")}` : String(dateVal);
+        }
+
+        toInsert.push({
+          submitted_by: user.id,
+          entry_date: entryDate,
+          expense_type: "general",
+          category: row["Category"] || "General",
+          description: row["Description"] || "",
+          amount: totalAmt,
+          status: "pending_hr",
+          report_period: period,
+          submission_method: "excel_upload",
+        });
+      });
+
+      if (toInsert.length > 0) {
+        const { error: insErr } = await supabase.from("expense_entries").insert(toInsert as any);
+        if (insErr) throw insErr;
+      }
+
+      const msg = `${toInsert.length} expenses imported for review.` + (skipped.length > 0 ? ` ${skipped.length} rows skipped (missing Date or Amount): rows ${skipped.join(", ")}` : "");
+      toast.success(msg);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
   const approvedTotal = entries.filter((e) => e.status === "approved" && format(new Date(e.entry_date), "yyyy-MM") === format(new Date(), "yyyy-MM")).reduce((s, e) => s + Number(e.amount), 0);
   const pendingTotal = entries.filter((e) => e.status.startsWith("pending")).reduce((s, e) => s + Number(e.amount), 0);
 
@@ -187,15 +245,30 @@ export function ExpensesTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <Button size="sm" variant={subTab === "pending" ? "default" : "outline"} onClick={() => setSubTab("pending")}
-          style={subTab === "pending" ? { backgroundColor: "#006039" } : {}} className="text-xs">
-          Pending {Object.keys(grouped).length > 0 && `(${Object.keys(grouped).length})`}
-        </Button>
-        <Button size="sm" variant={subTab === "all" ? "default" : "outline"} onClick={() => setSubTab("all")}
-          style={subTab === "all" ? { backgroundColor: "#006039" } : {}} className="text-xs">
-          All Expenses
-        </Button>
+      <input ref={fileRef} type="file" accept=".xlsx" className="hidden" onChange={handleBulkUpload} />
+
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex gap-2">
+          <Button size="sm" variant={subTab === "pending" ? "default" : "outline"} onClick={() => setSubTab("pending")}
+            style={subTab === "pending" ? { backgroundColor: "#006039" } : {}} className="text-xs">
+            Pending {Object.keys(grouped).length > 0 && `(${Object.keys(grouped).length})`}
+          </Button>
+          <Button size="sm" variant={subTab === "all" ? "default" : "outline"} onClick={() => setSubTab("all")}
+            style={subTab === "all" ? { backgroundColor: "#006039" } : {}} className="text-xs">
+            All Expenses
+          </Button>
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" className="text-xs gap-1" style={{ color: "#006039", borderColor: "#006039" }}
+            onClick={() => downloadXlsxTemplate(TEMPLATES.expense)}>
+            <FileDown className="h-3 w-3" /> Download Template
+          </Button>
+          <Button size="sm" variant="outline" className="text-xs gap-1" style={{ color: "#006039", borderColor: "#006039" }}
+            onClick={() => fileRef.current?.click()} disabled={uploading}>
+            {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+            Upload Expense Report
+          </Button>
+        </div>
       </div>
 
       {subTab === "pending" ? (
