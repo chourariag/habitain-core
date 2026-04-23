@@ -151,7 +151,6 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
           }
         }
       }
-      }
 
       toast.success("Project created");
       resetForm();
