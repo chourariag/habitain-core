@@ -35,7 +35,7 @@ export function NewTransferDialog({ open, onOpenChange, onCreated }: Props) {
   useEffect(() => {
     if (!open) return;
     supabase.from("projects").select("id, name").eq("is_archived", false).then(({ data }) => setProjects(data ?? []));
-    (supabase.from("inventory") as any).select("material_name").then(({ data }: any) => {
+    (supabase.from("grn_entries") as any).select("material_name").then(({ data }: any) => {
       const unique = [...new Set((data ?? []).map((d: any) => d.material_name).filter(Boolean))] as string[];
       setInventoryItems(unique.sort());
     });
