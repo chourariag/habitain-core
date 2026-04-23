@@ -12,7 +12,7 @@ import { Upload, Download, Loader2, Package, CheckCircle2, Clock, AlertTriangle,
 import { format, differenceInDays, addDays, isBefore, isAfter } from "date-fns";
 import { cn } from "@/lib/utils";
 import * as XLSX from "xlsx";
-import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
+import { downloadXlsxTemplate, downloadMaterialPlanTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 
 const SECTIONS = ["All", "Shell and Core", "Builder Finish", "Add-ons"];
 
@@ -284,9 +284,12 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  const downloadTemplate = () => {
-    const t = TEMPLATES.materialPlan;
-    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
+  const downloadTemplate = async () => {
+    // Fetch project client name for header
+    const { data: proj } = await supabase.from("projects").select("client_name, name").eq("id", projectId).maybeSingle();
+    const clientName = (proj as any)?.client_name || (proj as any)?.name || "Project";
+    const safeName = clientName.replace(/[^a-z0-9]+/gi, "_");
+    downloadMaterialPlanTemplate(`Material_Plan_${safeName}.xlsx`, clientName);
   };
 
   const openEdit = (item: MaterialItem) => {
