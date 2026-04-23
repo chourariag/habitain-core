@@ -347,22 +347,40 @@ function DealForm({ form, set, deal, saving, onSave, onMarkLost, onDelete }: any
   );
 }
 
-function TenderBudgetSection({ dealId, projectId }: { dealId: string; projectId?: string }) {
+function TenderBudgetSection({ dealId, projectId, deal, onSaved }: { dealId: string; projectId?: string; deal: any; onSaved: () => void }) {
   const [uploading, setUploading] = useState(false);
   const [quotationValue, setQuotationValue] = useState("");
   const [itemCount, setItemCount] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [tenderTotal, setTenderTotal] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Negotiation state
+  const [finalAgreedPrice, setFinalAgreedPrice] = useState(deal?.final_agreed_price ? String(deal.final_agreed_price) : "");
+  const [adjustmentType, setAdjustmentType] = useState(deal?.adjustment_type || "");
+  const [adjustmentNotes, setAdjustmentNotes] = useState(deal?.adjustment_notes || "");
+  const [savingNeg, setSavingNeg] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (user) {
+        const { data } = await supabase.rpc("get_user_role", { _user_id: user.id });
+        setUserRole(data as string | null);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     (supabase as any).from("project_tender_budget")
-      .select("quotation_value, id")
+      .select("quotation_value, id, total_tender_value")
       .eq("deal_id", dealId)
       .order("uploaded_at", { ascending: false })
       .limit(1)
       .then(({ data }: any) => {
         if (data && data.length > 0) {
           setQuotationValue(String(data[0].quotation_value || ""));
+          setTenderTotal(Number(data[0].total_tender_value) || 0);
           (supabase as any).from("project_tender_budget_items")
             .select("id", { count: "exact", head: true })
             .eq("budget_id", data[0].id)
@@ -370,6 +388,14 @@ function TenderBudgetSection({ dealId, projectId }: { dealId: string; projectId?
         }
       });
   }, [dealId]);
+
+  useEffect(() => {
+    if (deal) {
+      setFinalAgreedPrice(deal.final_agreed_price ? String(deal.final_agreed_price) : "");
+      setAdjustmentType(deal.adjustment_type || "");
+      setAdjustmentNotes(deal.adjustment_notes || "");
+    }
+  }, [deal]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -418,6 +444,7 @@ function TenderBudgetSection({ dealId, projectId }: { dealId: string; projectId?
       await (supabase as any).from("project_tender_budget_items").insert(budgetItems);
 
       setItemCount(items.length);
+      setTenderTotal(totalAmt);
       toast.success(`${items.length} tender budget items uploaded`);
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
@@ -441,6 +468,56 @@ function TenderBudgetSection({ dealId, projectId }: { dealId: string; projectId?
     }
     setSaving(false);
   };
+
+  const saveNegotiation = async () => {
+    const finalNum = Number(finalAgreedPrice) || 0;
+    const adj = finalNum - tenderTotal;
+    if (finalNum > 0 && adj !== 0 && !adjustmentType) {
+      toast.error("Adjustment type is required when price differs from BOQ total");
+      return;
+    }
+    if (adjustmentType === "Other" && !adjustmentNotes.trim()) {
+      toast.error("Notes required for 'Other' adjustment type");
+      return;
+    }
+    setSavingNeg(true);
+    const { error } = await supabase.from("sales_deals").update({
+      final_agreed_price: finalNum || null,
+      adjustment_type: adjustmentType || null,
+      adjustment_notes: adjustmentNotes || null,
+    } as any).eq("id", dealId);
+    if (error) toast.error(error.message);
+    else { toast.success("Negotiation saved"); onSaved(); }
+    setSavingNeg(false);
+  };
+
+  const approveDiscount = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase.from("sales_deals").update({
+      discount_approved_by: user?.id,
+      discount_approved_at: new Date().toISOString(),
+    } as any).eq("id", dealId);
+    if (error) toast.error(error.message);
+    else { toast.success("Discount approved"); onSaved(); }
+  };
+
+  const finalNum = Number(finalAgreedPrice) || 0;
+  const adjustment = finalNum > 0 && tenderTotal > 0 ? finalNum - tenderTotal : 0;
+  const adjustmentPct = tenderTotal > 0 && finalNum > 0 ? ((finalNum - tenderTotal) / tenderTotal) * 100 : 0;
+  const revisedMargin = finalNum > 0 && tenderTotal > 0 ? ((finalNum - tenderTotal) / finalNum) * 100 : 0;
+  const needsApproval = tenderTotal > 0 && finalNum > 0 && adjustmentPct < -15 && !deal?.discount_approved_by;
+  const canApproveDiscount = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"].includes(userRole ?? "");
+
+  const ADJUSTMENT_TYPES = [
+    "Discount given — client negotiated lower price",
+    "Scope reduction — client removed items from scope",
+    "Scope addition — client added items, price increased",
+    "Promotional pricing — special rate for this client",
+    "Competitor price match — matched competitor quote",
+    "Other",
+  ];
+
+  const fmtINR = (n: number) => `₹${(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
   return (
     <div className="space-y-4 mt-3">
@@ -471,6 +548,106 @@ function TenderBudgetSection({ dealId, projectId }: { dealId: string; projectId?
           </Button>
         </div>
       </div>
+
+      {/* Price Negotiation Section */}
+      {tenderTotal > 0 && (
+        <div className="space-y-3 border-t pt-3">
+          <h4 className="text-xs font-semibold" style={{ color: "#1A1A1A" }}>Price Negotiation</h4>
+
+          <div className="rounded-lg p-3 space-y-2 text-xs" style={{ background: "#F7F7F7" }}>
+            <div className="flex justify-between">
+              <span style={{ color: "#666" }}>BOQ Calculated Total</span>
+              <span className="font-mono font-semibold">{fmtINR(tenderTotal)}</span>
+            </div>
+            {Number(quotationValue) > 0 && (
+              <div className="flex justify-between">
+                <span style={{ color: "#666" }}>Quotation Sent</span>
+                <span className="font-mono">{fmtINR(Number(quotationValue))}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Final Agreed Price (₹) *</Label>
+            <Input type="number" value={finalAgreedPrice} onChange={(e) => setFinalAgreedPrice(e.target.value)} placeholder="What client agreed to pay" className="text-sm" />
+          </div>
+
+          {/* Adjustment display */}
+          {finalNum > 0 && tenderTotal > 0 && (
+            <div className="space-y-2">
+              {adjustment === 0 ? (
+                <div className="flex items-center gap-1.5 text-xs font-medium" style={{ color: "#006039" }}>
+                  <CheckCircle2 className="h-3.5 w-3.5" /> No adjustment
+                </div>
+              ) : (
+                <div className="rounded-lg p-3 space-y-2 text-xs" style={{ background: adjustment > 0 ? "#E8F2ED" : "#FFF0F0" }}>
+                  <div className="flex justify-between">
+                    <span style={{ color: "#666" }}>Adjustment</span>
+                    <span className="font-mono font-semibold" style={{ color: adjustment > 0 ? "#006039" : "#F40009" }}>
+                      {adjustment > 0 ? "+" : ""}{fmtINR(adjustment)} ({adjustmentPct > 0 ? "+" : ""}{adjustmentPct.toFixed(1)}%)
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span style={{ color: "#666" }}>Revised Margin %</span>
+                    <span className="font-mono font-bold" style={{
+                      color: revisedMargin >= 20 ? "#006039" : revisedMargin >= 10 ? "#D4860A" : "#F40009"
+                    }}>
+                      {revisedMargin.toFixed(1)}%
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Discount warning */}
+              {adjustmentPct < -15 && (
+                <div className="rounded-lg p-2.5 text-xs flex items-start gap-2" style={{ background: "#FFF0F0", border: "1px solid #F40009" }}>
+                  <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" style={{ color: "#F40009" }} />
+                  <div>
+                    <p className="font-semibold" style={{ color: "#F40009" }}>
+                      ⚠️ This discount reduces margin below 15%. Director approval required before marking Won.
+                    </p>
+                    {deal?.discount_approved_by ? (
+                      <p className="mt-1" style={{ color: "#006039" }}>✓ Discount approved</p>
+                    ) : canApproveDiscount ? (
+                      <Button size="sm" onClick={approveDiscount} className="mt-2 text-xs" style={{ backgroundColor: "#D4860A" }}>
+                        Approve Discount
+                      </Button>
+                    ) : (
+                      <p className="mt-1" style={{ color: "#666" }}>Awaiting director approval</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Adjustment type (required when ≠ 0) */}
+              {adjustment !== 0 && (
+                <>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Adjustment Type *</Label>
+                    <Select value={adjustmentType} onValueChange={setAdjustmentType}>
+                      <SelectTrigger className="text-xs"><SelectValue placeholder="Select reason" /></SelectTrigger>
+                      <SelectContent>
+                        {ADJUSTMENT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {adjustmentType === "Other" && (
+                    <div className="space-y-1">
+                      <Label className="text-xs">Adjustment Notes *</Label>
+                      <Textarea rows={2} value={adjustmentNotes} onChange={(e) => setAdjustmentNotes(e.target.value)} placeholder="Explain the reason" className="text-xs" />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          <Button size="sm" onClick={saveNegotiation} disabled={savingNeg} className="w-full text-xs" style={{ backgroundColor: "#006039" }}>
+            {savingNeg ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+            Save Negotiation
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
