@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Loader2, Check, X, FileDown, AlertTriangle, Eye, MessageCircle } from "lucide-react";
+import { Loader2, Check, X, FileDown, AlertTriangle, Eye, MessageCircle, Upload, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
+import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import * as XLSX from "xlsx";
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
