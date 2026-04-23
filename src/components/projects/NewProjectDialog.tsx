@@ -97,10 +97,12 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
       const projectId = (project as any).id;
 
       // Auto-create modules or panels (only for non-design-only projects)
-      const count = parseInt(unitCount) || 0;
-      if (!isDesignOnly && count > 0 && projectId) {
-        if (constructionType === "Modular") {
-          const moduleInserts = Array.from({ length: count }, (_, i) => ({
+      const mCount = parseInt(moduleCount) || 0;
+      const pCount = parseInt(panelCount) || 0;
+      if (!isDesignOnly && projectId) {
+        // Create modules
+        if (mCount > 0) {
+          const moduleInserts = Array.from({ length: mCount }, (_, i) => ({
             project_id: projectId,
             name: `Module ${i + 1}`,
             module_type: "standard",
@@ -124,7 +126,9 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
             );
             await client.from("production_stages").insert(stageInserts as any);
           }
-        } else if (constructionType === "Panel-based") {
+        }
+        // Create panels
+        if (pCount > 0) {
           const { data: parentModule } = await client.from("modules").insert({
             project_id: projectId,
             name: "Panel Production",
@@ -135,7 +139,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
           } as any).select("id").single();
 
           if (parentModule) {
-            const panelInserts = Array.from({ length: count }, (_, i) => ({
+            const panelInserts = Array.from({ length: pCount }, (_, i) => ({
               module_id: (parentModule as any).id,
               panel_code: `Panel ${i + 1}`,
               panel_type: "wall",
@@ -146,6 +150,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
             await (client.from("panels") as any).insert(panelInserts);
           }
         }
+      }
       }
 
       toast.success("Project created");
@@ -275,18 +280,29 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
               </div>
             ) : (
               <>
-                {constructionType && (
+                {(productionSystem === "modular" || productionSystem === "hybrid") && (
                   <div className="space-y-2">
-                    <Label htmlFor="unitCount">
-                      {constructionType === "Modular" ? "Number of Modules" : "Number of Panels"}
-                    </Label>
+                    <Label htmlFor="moduleCount">Number of Modules</Label>
                     <Input
-                      id="unitCount"
+                      id="moduleCount"
                       type="number"
                       min="1"
-                      value={unitCount}
-                      onChange={(e) => setUnitCount(e.target.value)}
-                      placeholder={constructionType === "Modular" ? "e.g. 8" : "e.g. 24"}
+                      value={moduleCount}
+                      onChange={(e) => setModuleCount(e.target.value)}
+                      placeholder="e.g. 12"
+                    />
+                  </div>
+                )}
+                {(productionSystem === "panelised" || productionSystem === "hybrid") && (
+                  <div className="space-y-2">
+                    <Label htmlFor="panelCount">Number of Panels</Label>
+                    <Input
+                      id="panelCount"
+                      type="number"
+                      min="1"
+                      value={panelCount}
+                      onChange={(e) => setPanelCount(e.target.value)}
+                      placeholder="e.g. 36"
                     />
                   </div>
                 )}
