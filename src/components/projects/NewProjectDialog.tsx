@@ -43,7 +43,8 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
   const [state, setState] = useState("");
   const [projectType, setProjectType] = useState("");
   const [constructionType, setConstructionType] = useState("");
-  const [unitCount, setUnitCount] = useState("");
+  const [moduleCount, setModuleCount] = useState("");
+  const [panelCount, setPanelCount] = useState("");
   const [startDate, setStartDate] = useState<Date>();
   const [estCompletion, setEstCompletion] = useState<Date>();
   const [siteLat, setSiteLat] = useState("");
@@ -57,7 +58,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
   const resetForm = () => {
     setName(""); setClientName(""); setClientPhone(""); setClientEmail("");
     setCity(""); setState(""); setProjectType(""); setConstructionType("");
-    setUnitCount(""); setStartDate(undefined); setEstCompletion(undefined);
+    setModuleCount(""); setPanelCount(""); setStartDate(undefined); setEstCompletion(undefined);
     setSiteLat(""); setSiteLng(""); setSiteRadius("300");
     setDivision("Habitainer"); setIsDesignOnly(false);
     setProductionSystem("modular");
