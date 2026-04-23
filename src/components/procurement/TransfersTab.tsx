@@ -411,6 +411,8 @@ export function TransfersTab() {
           )}
         </SheetContent>
       </Sheet>
+
+      <NewTransferDialog open={newTransferOpen} onOpenChange={setNewTransferOpen} onCreated={fetchTransfers} />
     </div>
   );
 }
