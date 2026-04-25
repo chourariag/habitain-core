@@ -176,7 +176,7 @@ Respond in JSON format:
   } catch (err) {
     console.error("QC analysis error:", err);
     return new Response(
-      JSON.stringify({ error: err.message || "Internal error" }),
+      JSON.stringify({ error: (err as Error).message || "Internal error" }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
