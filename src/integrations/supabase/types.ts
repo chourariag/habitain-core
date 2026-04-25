@@ -3096,6 +3096,136 @@ export type Database = {
           },
         ]
       }
+      labour_contractors: {
+        Row: {
+          company_name: string
+          contact_person: string | null
+          created_at: string
+          department: string
+          id: string
+          phone: string | null
+          status: string
+        }
+        Insert: {
+          company_name: string
+          contact_person?: string | null
+          created_at?: string
+          department?: string
+          id?: string
+          phone?: string | null
+          status?: string
+        }
+        Update: {
+          company_name?: string
+          contact_person?: string | null
+          created_at?: string
+          department?: string
+          id?: string
+          phone?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      labour_worker_rate_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          id: string
+          monthly_salary: number
+          worker_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          effective_from: string
+          effective_to?: string | null
+          id?: string
+          monthly_salary: number
+          worker_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          monthly_salary?: number
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_worker_rate_history_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labour_workers: {
+        Row: {
+          contractor_id: string | null
+          created_at: string
+          date_joined: string
+          deactivated_at: string | null
+          deactivated_reason: string | null
+          department: string
+          id: string
+          monthly_salary: number
+          name: string
+          notes: string | null
+          on_leave_return_date: string | null
+          salary_review_due: string
+          skill_type: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          contractor_id?: string | null
+          created_at?: string
+          date_joined?: string
+          deactivated_at?: string | null
+          deactivated_reason?: string | null
+          department: string
+          id?: string
+          monthly_salary?: number
+          name: string
+          notes?: string | null
+          on_leave_return_date?: string | null
+          salary_review_due?: string
+          skill_type: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          contractor_id?: string | null
+          created_at?: string
+          date_joined?: string
+          deactivated_at?: string | null
+          deactivated_reason?: string | null
+          department?: string
+          id?: string
+          monthly_salary?: number
+          name?: string
+          notes?: string | null
+          on_leave_return_date?: string | null
+          salary_review_due?: string
+          skill_type?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_workers_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "labour_contractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leave_requests: {
         Row: {
           approved_by: string | null
@@ -7701,6 +7831,60 @@ export type Database = {
           },
         ]
       }
+      subcontractors: {
+        Row: {
+          company_name: string | null
+          contact_person: string
+          created_at: string
+          email: string | null
+          factory_or_site: string
+          id: string
+          notes: string | null
+          phone: string
+          pricing_type: string
+          rate_unit: string | null
+          status: string
+          sub_id: string
+          typical_rate: number | null
+          updated_at: string
+          work_type: string
+        }
+        Insert: {
+          company_name?: string | null
+          contact_person: string
+          created_at?: string
+          email?: string | null
+          factory_or_site?: string
+          id?: string
+          notes?: string | null
+          phone: string
+          pricing_type: string
+          rate_unit?: string | null
+          status?: string
+          sub_id: string
+          typical_rate?: number | null
+          updated_at?: string
+          work_type: string
+        }
+        Update: {
+          company_name?: string | null
+          contact_person?: string
+          created_at?: string
+          email?: string | null
+          factory_or_site?: string
+          id?: string
+          notes?: string | null
+          phone?: string
+          pricing_type?: string
+          rate_unit?: string | null
+          status?: string
+          sub_id?: string
+          typical_rate?: number | null
+          updated_at?: string
+          work_type?: string
+        }
+        Relationships: []
+      }
       task_benchmarks: {
         Row: {
           actual_duration_days: number
@@ -8111,11 +8295,27 @@ export type Database = {
       }
     }
     Functions: {
+      can_access_labour_register: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_access_subcontractors: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       can_edit_sop_dept: {
         Args: { _department: string; _user_id: string }
         Returns: boolean
       }
       can_manage_finance_pl: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_labour_register: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_manage_subcontractors: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       clone_task_templates_to_project: {
         Args: { _project_id: string; _system: string }
         Returns: number
