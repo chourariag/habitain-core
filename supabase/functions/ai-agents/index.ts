@@ -184,7 +184,7 @@ async function runLabourCostVariance(supabase: any) {
   const { data: tasks } = await supabase.from("project_tasks").select("id, task_name, project_id, actual_hours").eq("status", "Complete").gte("actual_end", weekAgo).lte("actual_end", today);
   if (!tasks || tasks.length === 0) return "No tasks completed this week";
 
-  const projectIds = [...new Set(tasks.map((t: any) => t.project_id))];
+  const projectIds = [...new Set(tasks.map((t: any) => t.project_id))] as string[];
   const { data: projects } = await supabase.from("projects").select("id, name").in("id", projectIds);
   const projectMap: Record<string, string> = {};
   for (const p of projects ?? []) projectMap[p.id] = p.name;
