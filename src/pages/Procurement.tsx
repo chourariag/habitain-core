@@ -715,6 +715,10 @@ export default function Procurement() {
         <TabsContent value="grn">
           <GRNTab filterProjectId={projectFromUrl} />
         </TabsContent>
+
+        <TabsContent value="subcontractors">
+          <SubcontractorsTab />
+        </TabsContent>
       </Tabs>
 
       <NewMaterialRequestDialog open={addOpen} onOpenChange={setAddOpen} onCreated={fetchData} />
