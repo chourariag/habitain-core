@@ -44,7 +44,7 @@ export default function Attendance() {
 
       <ScrollableTabsWrapper>
         <div className="flex gap-0 border-b border-border">
-        {["overview", "daily", "leave", "export", "expenses", "hr_settings"].map((t) => (
+        {["overview", "daily", "leave", "export", "expenses", "labour", "subs", "hr_settings"].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -55,7 +55,7 @@ export default function Attendance() {
                 fontWeight: tab === t ? 700 : 500,
               }}
             >
-              {t === "overview" ? "Overview" : t === "daily" ? "Daily Log" : t === "leave" ? "Leave Requests" : t === "export" ? "Export" : t === "expenses" ? "Expenses" : "HR Settings"}
+              {t === "overview" ? "Overview" : t === "daily" ? "Daily Log" : t === "leave" ? "Leave Requests" : t === "export" ? "Export" : t === "expenses" ? "Expenses" : t === "labour" ? "Labour Register" : t === "subs" ? "Subcontractors" : "HR Settings"}
             </button>
           ))}
         </div>
@@ -66,6 +66,8 @@ export default function Attendance() {
       {tab === "leave" && <LeaveRequestsTab />}
       {tab === "export" && <ExportTab />}
       {tab === "expenses" && <ExpensesTab />}
+      {tab === "labour" && <LabourRegisterTab />}
+      {tab === "subs" && <SubcontractorsTab readOnly />}
       {tab === "hr_settings" && <HRSettingsTab />}
     </div>
   );
