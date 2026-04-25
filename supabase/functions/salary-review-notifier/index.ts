@@ -58,22 +58,26 @@ Deno.serve(async (req) => {
       });
 
       for (const t of targets) {
-        // Dedupe: skip if a notification for this worker+day already exists
-        const dedupeKey = `salary_review:${w.id}:${todayStr}`;
         const { data: existing } = await supabase
           .from("notifications")
           .select("id")
-          .eq("user_id", t.auth_user_id)
-          .eq("link", dedupeKey)
+          .eq("recipient_id", t.auth_user_id)
+          .eq("related_table", "labour_workers")
+          .eq("related_id", w.id)
+          .gte("created_at", todayStr)
           .maybeSingle();
         if (existing) continue;
 
         const { error: insErr } = await supabase.from("notifications").insert({
-          user_id: t.auth_user_id,
+          recipient_id: t.auth_user_id,
           title,
           body,
-          link: dedupeKey,
+          content: body,
           type: overdue ? "warning" : "info",
+          category: "hr",
+          related_table: "labour_workers",
+          related_id: w.id,
+          navigate_to: "/attendance?tab=labour-register",
         });
         if (!insErr) queued++;
       }
