@@ -18,6 +18,8 @@ import { cn } from "@/lib/utils";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { ExpensesTab } from "@/components/expenses/ExpensesTab";
 import { HRSettingsTab } from "@/components/expenses/HRSettingsTab";
+import { LabourRegisterTab } from "@/components/hr/LabourRegisterTab";
+import { SubcontractorsTab } from "@/components/procurement/SubcontractorsTab";
 import * as XLSX from "xlsx";
 
 const ARCHITECT_ROLES = ["principal_architect", "project_architect", "structural_architect"];
