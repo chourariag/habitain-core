@@ -29,8 +29,9 @@ import { AssetRegisterTab } from "@/components/procurement/AssetRegisterTab";
 import { SupplierIntelligenceTab } from "@/components/procurement/SupplierIntelligenceTab";
 import { MaterialAlertsTab } from "@/components/procurement/MaterialAlertsTab";
 import { GRNTab } from "@/components/procurement/GRNTab";
+import { SubcontractorsTab } from "@/components/procurement/SubcontractorsTab";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
-import { Calendar, Hammer, Bell, ClipboardCheck } from "lucide-react";
+import { Calendar, Hammer, Bell, ClipboardCheck, HardHat } from "lucide-react";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
@@ -304,6 +305,7 @@ export default function Procurement() {
             <TabsTrigger value="tally-po" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
             <TabsTrigger value="supplier-intel" className="gap-1.5"><TrendingUp className="h-4 w-4" /> Supplier Intelligence</TabsTrigger>
             <TabsTrigger value="material-alerts" className="gap-1.5"><Bell className="h-4 w-4" /> Material Alerts</TabsTrigger>
+            <TabsTrigger value="subcontractors" className="gap-1.5"><HardHat className="h-4 w-4" /> Subcontractors</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -712,6 +714,10 @@ export default function Procurement() {
 
         <TabsContent value="grn">
           <GRNTab filterProjectId={projectFromUrl} />
+        </TabsContent>
+
+        <TabsContent value="subcontractors">
+          <SubcontractorsTab />
         </TabsContent>
       </Tabs>
 
