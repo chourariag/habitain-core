@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus, Package, Users, ClipboardList, MessageSquareWarning, FileCheck } from "lucide-react";
+import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus, Package, Users, ClipboardList, MessageSquareWarning, FileCheck, Hammer } from "lucide-react";
+import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { HandoverPack } from "@/components/site/HandoverPack";
@@ -218,6 +219,7 @@ function SiteHubContent() {
             <TabsTrigger value="punch-list" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Punch List</TabsTrigger>
             <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Install Sequence</TabsTrigger>
             <TabsTrigger value="factory-feedback" className="gap-1.5"><MessageSquareWarning className="h-4 w-4" /> Factory Feedback</TabsTrigger>
+            <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -343,6 +345,9 @@ function SiteHubContent() {
         </TabsContent>
         <TabsContent value="factory-feedback">
           <SiteFactoryFeedback projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} modules={modules.map(m => ({ id: m.id, name: m.name, module_code: m.module_code || m.name }))} />
+        </TabsContent>
+        <TabsContent value="work-orders">
+          <WorkOrdersTab mode="site" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
         </TabsContent>
       </Tabs>
     </div>
