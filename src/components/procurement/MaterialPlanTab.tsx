@@ -152,24 +152,32 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
         const ws = wb.Sheets[wb.SheetNames[0]];
         const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: "dd/mm/yyyy" });
 
-        // Find header row
+        // Find header row — accept "Material", "Material Description", or "Material Name"
+        const isMaterialHeader = (c: any) => {
+          const v = String(c ?? "").toLowerCase().trim();
+          return v === "material" || v === "material description" || v === "material name";
+        };
         let headerIdx = -1;
         for (let i = 0; i < Math.min(rows.length, 20); i++) {
           const row = rows[i];
-          if (row && row.some((c: any) => String(c).toLowerCase().includes("material description"))) {
+          if (row && row.some(isMaterialHeader)) {
             headerIdx = i;
             break;
           }
         }
-        if (headerIdx === -1) { toast.error("Could not find header row with 'Material Description'"); return; }
+        if (headerIdx === -1) { toast.error("Could not find header row with 'Material', 'Material Description', or 'Material Name'"); return; }
 
         const headers = rows[headerIdx].map((h: any) => String(h ?? "").toLowerCase().trim());
         const col = (keywords: string[]) => headers.findIndex((h) => keywords.some((k) => h.includes(k)));
+        const colExact = (values: string[]) => headers.findIndex((h) => values.includes(h));
 
         const colMap = {
           id: col(["id"]),
           section: col(["section"]),
-          desc: col(["material description"]),
+          desc: (() => {
+            const exact = colExact(["material", "material description", "material name"]);
+            return exact !== -1 ? exact : col(["material description", "material name"]);
+          })(),
           qtyVar: col(["qty variation"]),
           tenderQty: col(["tender qty", "tender quantity"]),
           unit: col(["unit"]),
@@ -191,7 +199,7 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
           status: col(["status"]),
         };
 
-        if (colMap.desc === -1) { toast.error("Missing 'Material Description' column"); return; }
+        if (colMap.desc === -1) { toast.error("Missing 'Material' / 'Material Description' / 'Material Name' column"); return; }
 
         let currentSection = "Shell and Core";
         const parsed: any[] = [];
