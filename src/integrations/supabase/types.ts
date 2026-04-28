@@ -8260,6 +8260,247 @@ export type Database = {
           },
         ]
       }
+      work_order_closure: {
+        Row: {
+          actual_qty: number
+          created_at: string | null
+          deductions: number
+          final_amount: number
+          id: string
+          measurement_photos: string[] | null
+          payment_record_id: string | null
+          signed_off_at: string | null
+          signed_off_by: string | null
+          wo_id: string
+        }
+        Insert: {
+          actual_qty?: number
+          created_at?: string | null
+          deductions?: number
+          final_amount?: number
+          id?: string
+          measurement_photos?: string[] | null
+          payment_record_id?: string | null
+          signed_off_at?: string | null
+          signed_off_by?: string | null
+          wo_id: string
+        }
+        Update: {
+          actual_qty?: number
+          created_at?: string | null
+          deductions?: number
+          final_amount?: number
+          id?: string
+          measurement_photos?: string[] | null
+          payment_record_id?: string | null
+          signed_off_at?: string | null
+          signed_off_by?: string | null
+          wo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_order_closure_wo_id_fkey"
+            columns: ["wo_id"]
+            isOneToOne: true
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_order_sequences: {
+        Row: {
+          last_seq: number
+          project_id: string
+          yearmonth: string
+        }
+        Insert: {
+          last_seq?: number
+          project_id: string
+          yearmonth: string
+        }
+        Update: {
+          last_seq?: number
+          project_id?: string
+          yearmonth?: string
+        }
+        Relationships: []
+      }
+      work_order_variations: {
+        Row: {
+          additional_qty: number | null
+          additional_value: number | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string | null
+          description: string
+          id: string
+          raised_by: string | null
+          rate: number | null
+          status: string | null
+          wo_id: string
+        }
+        Insert: {
+          additional_qty?: number | null
+          additional_value?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          raised_by?: string | null
+          rate?: number | null
+          status?: string | null
+          wo_id: string
+        }
+        Update: {
+          additional_qty?: number | null
+          additional_value?: number | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          raised_by?: string | null
+          rate?: number | null
+          status?: string | null
+          wo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_order_variations_wo_id_fkey"
+            columns: ["wo_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_orders: {
+        Row: {
+          boq_category: string
+          clarification_thread: Json | null
+          costing_approved_at: string | null
+          costing_approved_by: string | null
+          costing_notes: string | null
+          created_at: string | null
+          director_approved_at: string | null
+          director_approved_by: string | null
+          id: string
+          is_archived: boolean | null
+          issued_at: string | null
+          issued_by: string | null
+          location_area: string
+          measurement_basis: string
+          notes_to_costing: string | null
+          pdf_url: string | null
+          planned_completion_date: string
+          planned_start_date: string
+          project_id: string
+          quantity: number
+          raised_at: string
+          raised_by: string | null
+          raised_by_name: string | null
+          rate: number
+          rejection_reason: string | null
+          scope_of_work: string
+          status: string
+          subcontractor_id: string
+          supporting_docs: Json | null
+          total_value: number
+          unit: string | null
+          updated_at: string | null
+          wo_number: string | null
+          work_type: string
+        }
+        Insert: {
+          boq_category: string
+          clarification_thread?: Json | null
+          costing_approved_at?: string | null
+          costing_approved_by?: string | null
+          costing_notes?: string | null
+          created_at?: string | null
+          director_approved_at?: string | null
+          director_approved_by?: string | null
+          id?: string
+          is_archived?: boolean | null
+          issued_at?: string | null
+          issued_by?: string | null
+          location_area: string
+          measurement_basis: string
+          notes_to_costing?: string | null
+          pdf_url?: string | null
+          planned_completion_date: string
+          planned_start_date: string
+          project_id: string
+          quantity?: number
+          raised_at?: string
+          raised_by?: string | null
+          raised_by_name?: string | null
+          rate?: number
+          rejection_reason?: string | null
+          scope_of_work: string
+          status?: string
+          subcontractor_id: string
+          supporting_docs?: Json | null
+          total_value?: number
+          unit?: string | null
+          updated_at?: string | null
+          wo_number?: string | null
+          work_type: string
+        }
+        Update: {
+          boq_category?: string
+          clarification_thread?: Json | null
+          costing_approved_at?: string | null
+          costing_approved_by?: string | null
+          costing_notes?: string | null
+          created_at?: string | null
+          director_approved_at?: string | null
+          director_approved_by?: string | null
+          id?: string
+          is_archived?: boolean | null
+          issued_at?: string | null
+          issued_by?: string | null
+          location_area?: string
+          measurement_basis?: string
+          notes_to_costing?: string | null
+          pdf_url?: string | null
+          planned_completion_date?: string
+          planned_start_date?: string
+          project_id?: string
+          quantity?: number
+          raised_at?: string
+          raised_by?: string | null
+          raised_by_name?: string | null
+          rate?: number
+          rejection_reason?: string | null
+          scope_of_work?: string
+          status?: string
+          subcontractor_id?: string
+          supporting_docs?: Json | null
+          total_value?: number
+          unit?: string | null
+          updated_at?: string | null
+          wo_number?: string | null
+          work_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_orders_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       v_latest_panel_handover: {
@@ -8303,10 +8544,12 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      can_costing_approve_wo: { Args: { _user_id: string }; Returns: boolean }
       can_edit_sop_dept: {
         Args: { _department: string; _user_id: string }
         Returns: boolean
       }
+      can_issue_work_order: { Args: { _user_id: string }; Returns: boolean }
       can_manage_finance_pl: { Args: { _user_id: string }; Returns: boolean }
       can_manage_labour_register: {
         Args: { _user_id: string }
@@ -8316,6 +8559,8 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      can_raise_work_order: { Args: { _user_id: string }; Returns: boolean }
+      can_view_work_orders: { Args: { _user_id: string }; Returns: boolean }
       clone_task_templates_to_project: {
         Args: { _project_id: string; _system: string }
         Returns: number
