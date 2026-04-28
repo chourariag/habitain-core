@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
+import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 
 const BOQ_CATEGORIES = [
   "Structure", "Insulation", "Wall Boarding", "Ceiling", "Flooring",
