@@ -8260,6 +8260,134 @@ export type Database = {
           },
         ]
       }
+      weekly_report_configs: {
+        Row: {
+          active: boolean
+          assigned_role: Database["public"]["Enums"]["app_role"] | null
+          assigned_user_id: string | null
+          created_at: string
+          created_by: string | null
+          deadline_day: number
+          deadline_time: string
+          frequency: string
+          id: string
+          report_name: string
+          reviewer_role: Database["public"]["Enums"]["app_role"] | null
+          reviewer_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          assigned_role?: Database["public"]["Enums"]["app_role"] | null
+          assigned_user_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline_day: number
+          deadline_time: string
+          frequency?: string
+          id?: string
+          report_name: string
+          reviewer_role?: Database["public"]["Enums"]["app_role"] | null
+          reviewer_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          assigned_role?: Database["public"]["Enums"]["app_role"] | null
+          assigned_user_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline_day?: number
+          deadline_time?: string
+          frequency?: string
+          id?: string
+          report_name?: string
+          reviewer_role?: Database["public"]["Enums"]["app_role"] | null
+          reviewer_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_report_configs_assigned_user_id_fkey"
+            columns: ["assigned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_report_configs_reviewer_user_id_fkey"
+            columns: ["reviewer_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_report_submissions: {
+        Row: {
+          accomplishments: string
+          action_needed: string | null
+          config_id: string
+          created_at: string
+          deadline_at: string
+          id: string
+          next_week_plan: string
+          report_period_end: string
+          report_period_start: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          reviewer_comment: string | null
+          risks_blockers: string | null
+          status: string
+          submitted_at: string
+          submitted_by: string
+        }
+        Insert: {
+          accomplishments: string
+          action_needed?: string | null
+          config_id: string
+          created_at?: string
+          deadline_at: string
+          id?: string
+          next_week_plan: string
+          report_period_end: string
+          report_period_start: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_comment?: string | null
+          risks_blockers?: string | null
+          status: string
+          submitted_at?: string
+          submitted_by: string
+        }
+        Update: {
+          accomplishments?: string
+          action_needed?: string | null
+          config_id?: string
+          created_at?: string
+          deadline_at?: string
+          id?: string
+          next_week_plan?: string
+          report_period_end?: string
+          report_period_start?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          reviewer_comment?: string | null
+          risks_blockers?: string | null
+          status?: string
+          submitted_at?: string
+          submitted_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_report_submissions_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_report_configs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_order_closure: {
         Row: {
           actual_qty: number
@@ -8556,6 +8684,10 @@ export type Database = {
         Returns: boolean
       }
       can_manage_subcontractors: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_manage_weekly_reports: {
         Args: { _user_id: string }
         Returns: boolean
       }
