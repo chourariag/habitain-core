@@ -25,6 +25,7 @@ import { QCInspectionWizard } from "@/components/qc/QCInspectionWizard";
 import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
 import { ReworkSummaryTab } from "@/components/qc/ReworkSummaryTab";
 import { ReworkLogSection } from "@/components/production/ReworkLogSection";
+import { QualityFlagsTab } from "@/components/quality/QualityFlagsTab";
 
 const FIX_TIMELINE_OPTIONS = [
   { value: "same_day", label: "Same day" },
@@ -471,6 +472,10 @@ export default function QualityControl() {
 
           <TabsContent value="rework" className="mt-4">
             <ReworkSummaryTab />
+          </TabsContent>
+
+          <TabsContent value="flags" className="mt-4">
+            <QualityFlagsTab />
           </TabsContent>
         </Tabs>
       )}
