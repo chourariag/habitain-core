@@ -65,6 +65,7 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
   const [tenderTotal, setTenderTotal] = useState(0);
   const [quotationValue, setQuotationValue] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [woCommitted, setWoCommitted] = useState<Record<string, number>>({});
   const gfcFileRef = useRef<HTMLInputElement>(null);
 
   const canEdit = ["super_admin", "managing_director", "finance_director", "finance_manager", "planning_engineer", "procurement"].includes(userRole ?? "");
@@ -115,6 +116,20 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
         total_amount: Number(i.total_amount) || 0,
       })));
     }
+
+    // Fetch committed WOs (approved+) per BOQ category
+    const { data: woRows } = await supabase
+      .from("work_orders")
+      .select("boq_category,total_value,status")
+      .eq("project_id", projectId)
+      .eq("is_archived", false)
+      .in("status", ["approved_pending_issue","pending_director_approval","issued","work_in_progress","completed_pending_measurement","measured_signed_off","closed"]);
+    const woMap: Record<string, number> = {};
+    (woRows ?? []).forEach((w: any) => {
+      const cat = BOQ_CATEGORIES.find(c => c.toLowerCase() === (w.boq_category ?? "").toLowerCase()) ?? "Miscellaneous";
+      woMap[cat] = (woMap[cat] ?? 0) + Number(w.total_value || 0);
+    });
+    setWoCommitted(woMap);
 
     setBoqItems(items);
     setGrns((grnRes.data ?? []) as Grn[]);
