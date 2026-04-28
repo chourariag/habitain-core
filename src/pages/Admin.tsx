@@ -147,6 +147,10 @@ export default function Admin() {
         <TabsContent value="weekly" className="mt-4">
           <WeeklyReportConfigsTab />
         </TabsContent>
+
+        <TabsContent value="safety" className="mt-4">
+          <SafetyIncidentsTab />
+        </TabsContent>
       </Tabs>
     </div>
   );
