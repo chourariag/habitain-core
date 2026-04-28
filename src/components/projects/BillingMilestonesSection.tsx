@@ -66,6 +66,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [showPctError, setShowPctError] = useState(false);
 
   const canEdit = ["super_admin", "managing_director", "finance_director", "finance_manager"].includes(userRole || "");
   const canUnlock = ["super_admin", "managing_director"].includes(userRole || "");
@@ -133,6 +134,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
       return updated;
     });
     setDirty(true);
+    if (field === "percentage") setShowPctError(false);
   }
 
   function addMilestone() {
@@ -163,6 +165,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
 
   async function saveMilestones() {
     if (totalPct !== 100) {
+      setShowPctError(true);
       toast.error(`Percentages must total 100%. Currently ${totalPct}%`);
       return;
     }
@@ -275,7 +278,13 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
         )}
       </CardHeader>
       <CardContent className="space-y-3">
-        {totalPct !== 100 && (
+        {contractValue <= 0 && (
+          <div className="flex items-center gap-2 text-xs p-2 rounded bg-warning/10 text-warning-foreground border border-warning/30">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            Enter Contract Value in Project Overview to see amounts
+          </div>
+        )}
+        {showPctError && totalPct !== 100 && (
           <div className="flex items-center gap-2 text-xs p-2 rounded bg-destructive/10 text-destructive">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
             Percentages total {totalPct}% — must equal 100%
@@ -322,6 +331,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
                           type="number"
                           value={m.percentage}
                           onChange={(e) => updateMilestone(idx, "percentage", Number(e.target.value))}
+                          onBlur={() => setShowPctError(true)}
                           className="h-8 text-xs w-16"
                           min={0}
                           max={100}
