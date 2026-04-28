@@ -3,12 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Users, ShieldOff, TrendingUp, FileText } from "lucide-react";
+import { Search, Users, ShieldOff, TrendingUp, FileText, CalendarClock } from "lucide-react";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
 import { UserRow } from "@/components/admin/UserRow";
 import { ROLE_LABELS, AppRole } from "@/lib/roles";
 import { BenchmarksView } from "@/components/kpi/BenchmarksView";
 import { BoardPaperGenerator } from "@/components/admin/BoardPaperGenerator";
+import { WeeklyReportConfigsTab } from "@/components/reports/WeeklyReportConfigsTab";
 
 export default function Admin() {
   const [search, setSearch] = useState("");
@@ -88,6 +89,10 @@ export default function Admin() {
             <FileText className="h-3.5 w-3.5" />
             Reports
           </TabsTrigger>
+          <TabsTrigger value="weekly" className="gap-1.5">
+            <CalendarClock className="h-3.5 w-3.5" />
+            Weekly Reports
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="mt-4">
@@ -132,6 +137,10 @@ export default function Admin() {
 
         <TabsContent value="reports" className="mt-4">
           <BoardPaperGenerator />
+        </TabsContent>
+
+        <TabsContent value="weekly" className="mt-4">
+          <WeeklyReportConfigsTab />
         </TabsContent>
       </Tabs>
     </div>

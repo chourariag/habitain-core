@@ -20,6 +20,9 @@ import { ExpensesTab } from "@/components/expenses/ExpensesTab";
 import { HRSettingsTab } from "@/components/expenses/HRSettingsTab";
 import { LabourRegisterTab } from "@/components/hr/LabourRegisterTab";
 import { SubcontractorsTab } from "@/components/procurement/SubcontractorsTab";
+import { MyReportsSection } from "@/components/reports/MyReportsSection";
+import { ReportsToReviewSection } from "@/components/reports/ReportsToReviewSection";
+import { ReportComplianceTab } from "@/components/reports/ReportComplianceTab";
 import * as XLSX from "xlsx";
 
 const ARCHITECT_ROLES = ["principal_architect", "project_architect", "structural_architect"];
@@ -44,7 +47,7 @@ export default function Attendance() {
 
       <ScrollableTabsWrapper>
         <div className="flex gap-0 border-b border-border">
-        {["overview", "daily", "leave", "export", "expenses", "labour", "subs", "hr_settings"].map((t) => (
+        {["overview", "daily", "leave", "export", "expenses", "labour", "subs", "reports", "compliance", "hr_settings"].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -55,7 +58,7 @@ export default function Attendance() {
                 fontWeight: tab === t ? 700 : 500,
               }}
             >
-              {t === "overview" ? "Overview" : t === "daily" ? "Daily Log" : t === "leave" ? "Leave Requests" : t === "export" ? "Export" : t === "expenses" ? "Expenses" : t === "labour" ? "Labour Register" : t === "subs" ? "Subcontractors" : "HR Settings"}
+              {t === "overview" ? "Overview" : t === "daily" ? "Daily Log" : t === "leave" ? "Leave Requests" : t === "export" ? "Export" : t === "expenses" ? "Expenses" : t === "labour" ? "Labour Register" : t === "subs" ? "Subcontractors" : t === "reports" ? "Reports" : t === "compliance" ? "Report Compliance" : "HR Settings"}
             </button>
           ))}
         </div>
@@ -68,6 +71,8 @@ export default function Attendance() {
       {tab === "expenses" && <ExpensesTab />}
       {tab === "labour" && <LabourRegisterTab />}
       {tab === "subs" && <SubcontractorsTab readOnly />}
+      {tab === "reports" && <div className="space-y-4"><MyReportsSection /><ReportsToReviewSection /></div>}
+      {tab === "compliance" && <ReportComplianceTab />}
       {tab === "hr_settings" && <HRSettingsTab />}
     </div>
   );

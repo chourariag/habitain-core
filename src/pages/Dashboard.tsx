@@ -10,6 +10,8 @@ import { LogExpenseButton } from "@/components/expenses/LogExpenseButton";
 import { WeeklyDigestCard } from "@/components/kpi/WeeklyDigestCard";
 import { MyTasksSection } from "@/components/tasks/MyTasksSection";
 import { DailyReadinessBrief } from "@/components/dashboard/DailyReadinessBrief";
+import { MyReportsSection } from "@/components/reports/MyReportsSection";
+import { ReportsToReviewSection } from "@/components/reports/ReportsToReviewSection";
 
 export default function Dashboard() {
   const { role, userId, loading } = useUserRole();
@@ -36,6 +38,10 @@ export default function Dashboard() {
 
       {/* Weekly KPI Digest */}
       <WeeklyDigestCard />
+
+      {/* Weekly status reports */}
+      <MyReportsSection />
+      <ReportsToReviewSection />
 
       {/* My Tasks */}
       <MyTasksSection userRole={userRole} />
