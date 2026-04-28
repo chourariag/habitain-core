@@ -8,6 +8,7 @@ import { PaymentsTab } from "@/components/finance/PaymentsTab";
 import { StatutoryTab } from "@/components/finance/StatutoryTab";
 import { InvoicesTab } from "@/components/finance/InvoicesTab";
 import { RevenueMarginTab } from "@/components/finance/RevenueMarginTab";
+import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 
 export default function Finance() {
   return (
@@ -31,6 +32,7 @@ export default function Finance() {
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="statutory">Statutory</TabsTrigger>
             <TabsTrigger value="invoices">Invoices</TabsTrigger>
+            <TabsTrigger value="work-orders">Work Orders</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -41,6 +43,7 @@ export default function Finance() {
         <TabsContent value="payments"><PaymentsTab /></TabsContent>
         <TabsContent value="statutory"><StatutoryTab /></TabsContent>
         <TabsContent value="invoices"><InvoicesTab /></TabsContent>
+        <TabsContent value="work-orders"><WorkOrdersTab mode="finance" /></TabsContent>
       </Tabs>
     </div>
   );

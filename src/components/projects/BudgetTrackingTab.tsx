@@ -16,6 +16,7 @@ import { format } from "date-fns";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
+import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 
 const BOQ_CATEGORIES = [
   "Structure", "Insulation", "Wall Boarding", "Ceiling", "Flooring",
@@ -64,6 +65,7 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
   const [tenderTotal, setTenderTotal] = useState(0);
   const [quotationValue, setQuotationValue] = useState(0);
   const [uploading, setUploading] = useState(false);
+  const [woCommitted, setWoCommitted] = useState<Record<string, number>>({});
   const gfcFileRef = useRef<HTMLInputElement>(null);
 
   const canEdit = ["super_admin", "managing_director", "finance_director", "finance_manager", "planning_engineer", "procurement"].includes(userRole ?? "");
@@ -114,6 +116,20 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
         total_amount: Number(i.total_amount) || 0,
       })));
     }
+
+    // Fetch committed WOs (approved+) per BOQ category
+    const { data: woRows } = await supabase
+      .from("work_orders")
+      .select("boq_category,total_value,status")
+      .eq("project_id", projectId)
+      .eq("is_archived", false)
+      .in("status", ["approved_pending_issue","pending_director_approval","issued","work_in_progress","completed_pending_measurement","measured_signed_off","closed"]);
+    const woMap: Record<string, number> = {};
+    (woRows ?? []).forEach((w: any) => {
+      const cat = BOQ_CATEGORIES.find(c => c.toLowerCase() === (w.boq_category ?? "").toLowerCase()) ?? "Miscellaneous";
+      woMap[cat] = (woMap[cat] ?? 0) + Number(w.total_value || 0);
+    });
+    setWoCommitted(woMap);
 
     setBoqItems(items);
     setGrns((grnRes.data ?? []) as Grn[]);
@@ -372,8 +388,9 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
             (s, r) => s + (r._source === "grn" ? Number(r.basic_amount_excl_gst || 0) : Number((r as ManualEntry).amount_excl_gst || 0)),
             0,
           );
-          const bal = budget - spent;
-          if (rows.length === 0 && budget === 0) return null;
+          const committed = woCommitted[cat] ?? 0;
+          const bal = budget - spent - committed;
+          if (rows.length === 0 && budget === 0 && committed === 0) return null;
 
           return (
             <Card key={cat}>
@@ -413,8 +430,13 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
                       );
                     })}
                     <tr className="bg-muted/60 font-medium">
-                      <td colSpan={4} className="px-3 py-1.5 text-right">Total Spent</td>
+                      <td colSpan={4} className="px-3 py-1.5 text-right">Total Spent (GRNs + Manual)</td>
                       <td className="px-3 py-1.5 text-right font-mono">{fmtINR(spent)}</td>
+                      <td />
+                    </tr>
+                    <tr className="font-medium" style={{ color: "#D4860A" }}>
+                      <td colSpan={4} className="px-3 py-1.5 text-right">Committed (Approved Work Orders)</td>
+                      <td className="px-3 py-1.5 text-right font-mono">{fmtINR(committed)}</td>
                       <td />
                     </tr>
                     <tr className="font-medium">
@@ -423,7 +445,7 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
                       <td />
                     </tr>
                     <tr className="font-semibold border-t-2">
-                      <td colSpan={4} className="px-3 py-1.5 text-right">Balance</td>
+                      <td colSpan={4} className="px-3 py-1.5 text-right">Balance (Budget − Spent − Committed)</td>
                       <td className="px-3 py-1.5 text-right font-mono" style={{ color: bal >= 0 ? "#006039" : "#F40009" }}>
                         {fmtINR(bal)}
                       </td>
@@ -435,6 +457,11 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
             </Card>
           );
         })}
+      </div>
+
+      {/* Project-level Work Orders */}
+      <div className="pt-2 border-t">
+        <WorkOrdersTab mode="project" projectId={projectId} />
       </div>
 
       <ManualEntryDialog open={manualOpen} onOpenChange={setManualOpen} projectId={projectId} onSaved={fetchAll} />
