@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon, BarChart3, CalendarDays } from "lucide-react";
+import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon, BarChart3, CalendarDays, Hammer } from "lucide-react";
+import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 import { GanttChart } from "@/components/production/GanttChart";
 import { SupervisorDailyLog } from "@/components/production/SupervisorDailyLog";
 import { ModuleSchedule } from "@/components/production/ModuleSchedule";
@@ -152,6 +153,7 @@ function ProductionContent() {
                 <TabsTrigger value="manpower" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Manpower</TabsTrigger>
                 <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
                 <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
+                <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>
               </TabsList>
             </ScrollableTabsWrapper>
 
@@ -195,6 +197,10 @@ function ProductionContent() {
 
             <TabsContent value="materials">
               <MaterialRequestsPanel projectId={selectedProjectId!} />
+            </TabsContent>
+
+            <TabsContent value="work-orders">
+              <WorkOrdersTab mode="factory" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
             </TabsContent>
           </Tabs>
         )}
