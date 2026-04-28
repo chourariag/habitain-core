@@ -16,6 +16,7 @@ import {
   Check, Truck, Users, Package, ShieldAlert, Clock,
   ArrowRight, GripVertical, Lock,
 } from "lucide-react";
+import { QualityFlagButton } from "@/components/quality/QualityFlagButton";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 import { getPhaseForStage } from "@/lib/production-phases";
 
@@ -961,6 +962,15 @@ function BayCard({
               </Badge>
             </div>
           )}
+
+          <div className="mt-1.5" onClick={(e) => e.stopPropagation()}>
+            <QualityFlagButton
+              bayNumber={bayNumber}
+              bayLabel={bayLabel ?? `Bay ${bayNumber}`}
+              moduleId={module?.id}
+              projectId={assignment?.project_id ?? undefined}
+            />
+          </div>
 
           {workers && workers.length > 0 && (
             <div className="flex flex-wrap gap-0.5 mt-1">

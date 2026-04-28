@@ -3045,53 +3045,106 @@ export type Database = {
       }
       labour_claims: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           created_at: string | null
           created_by: string | null
+          escalated_at: string | null
+          hours: number
           id: string
           is_archived: boolean | null
-          module_id: string
-          quantity: number
+          labour_worker_id: string | null
+          module_id: string | null
+          notes: string | null
+          ot_hours: number
+          process_stage: string | null
+          project_id: string | null
+          quantity: number | null
+          rejection_reason: string | null
+          sla_breached: boolean
           status: string | null
           submitted_at: string | null
-          trade: string
+          trade: string | null
           updated_at: string | null
+          work_date: string
           work_description: string | null
-          worker_id: string
+          worker_id: string | null
+          worker_name_snapshot: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string | null
           created_by?: string | null
+          escalated_at?: string | null
+          hours?: number
           id?: string
           is_archived?: boolean | null
-          module_id: string
-          quantity: number
+          labour_worker_id?: string | null
+          module_id?: string | null
+          notes?: string | null
+          ot_hours?: number
+          process_stage?: string | null
+          project_id?: string | null
+          quantity?: number | null
+          rejection_reason?: string | null
+          sla_breached?: boolean
           status?: string | null
           submitted_at?: string | null
-          trade: string
+          trade?: string | null
           updated_at?: string | null
+          work_date?: string
           work_description?: string | null
-          worker_id: string
+          worker_id?: string | null
+          worker_name_snapshot?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string | null
           created_by?: string | null
+          escalated_at?: string | null
+          hours?: number
           id?: string
           is_archived?: boolean | null
-          module_id?: string
-          quantity?: number
+          labour_worker_id?: string | null
+          module_id?: string | null
+          notes?: string | null
+          ot_hours?: number
+          process_stage?: string | null
+          project_id?: string | null
+          quantity?: number | null
+          rejection_reason?: string | null
+          sla_breached?: boolean
           status?: string | null
           submitted_at?: string | null
-          trade?: string
+          trade?: string | null
           updated_at?: string | null
+          work_date?: string
           work_description?: string | null
-          worker_id?: string
+          worker_id?: string | null
+          worker_name_snapshot?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "labour_claims_labour_worker_id_fkey"
+            columns: ["labour_worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_workers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "labour_claims_module_id_fkey"
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labour_claims_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -6248,6 +6301,78 @@ export type Database = {
           },
         ]
       }
+      quality_flags: {
+        Row: {
+          actioned_at: string | null
+          actioned_by: string | null
+          bay_label: string | null
+          bay_number: number | null
+          created_at: string
+          flagged_by: string
+          id: string
+          module_id: string | null
+          ncr_id: string | null
+          observation: string
+          project_id: string | null
+          severity: string
+          status: string
+          tagore_action: string | null
+          tagore_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          actioned_at?: string | null
+          actioned_by?: string | null
+          bay_label?: string | null
+          bay_number?: number | null
+          created_at?: string
+          flagged_by: string
+          id?: string
+          module_id?: string | null
+          ncr_id?: string | null
+          observation: string
+          project_id?: string | null
+          severity: string
+          status?: string
+          tagore_action?: string | null
+          tagore_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actioned_at?: string | null
+          actioned_by?: string | null
+          bay_label?: string | null
+          bay_number?: number | null
+          created_at?: string
+          flagged_by?: string
+          id?: string
+          module_id?: string | null
+          ncr_id?: string | null
+          observation?: string
+          project_id?: string | null
+          severity?: string
+          status?: string
+          tagore_action?: string | null
+          tagore_note?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_flags_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quality_flags_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quotation_versions: {
         Row: {
           created_at: string
@@ -6647,6 +6772,84 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      safety_incidents: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          corrective_action: string | null
+          corrective_action_at: string | null
+          created_at: string
+          description: string
+          id: string
+          immediate_action: string
+          incident_at: string
+          incident_type: string
+          location: string
+          location_detail: string | null
+          persons_involved: string[]
+          photo_urls: string[]
+          preventive_measure: string | null
+          preventive_measure_at: string | null
+          reported_by: string
+          root_cause: string | null
+          root_cause_at: string | null
+          severity: string
+          status: string
+          updated_at: string
+          work_stopped: boolean
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          corrective_action?: string | null
+          corrective_action_at?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          immediate_action: string
+          incident_at?: string
+          incident_type: string
+          location: string
+          location_detail?: string | null
+          persons_involved?: string[]
+          photo_urls?: string[]
+          preventive_measure?: string | null
+          preventive_measure_at?: string | null
+          reported_by: string
+          root_cause?: string | null
+          root_cause_at?: string | null
+          severity: string
+          status?: string
+          updated_at?: string
+          work_stopped?: boolean
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          corrective_action?: string | null
+          corrective_action_at?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          immediate_action?: string
+          incident_at?: string
+          incident_type?: string
+          location?: string
+          location_detail?: string | null
+          persons_involved?: string[]
+          photo_urls?: string[]
+          preventive_measure?: string | null
+          preventive_measure_at?: string | null
+          reported_by?: string
+          root_cause?: string | null
+          root_cause_at?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+          work_stopped?: boolean
+        }
+        Relationships: []
       }
       sales_amc_contacts: {
         Row: {
@@ -8672,6 +8875,11 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      can_action_quality_flag: { Args: { _user_id: string }; Returns: boolean }
+      can_approve_labour_claims: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       can_costing_approve_wo: { Args: { _user_id: string }; Returns: boolean }
       can_edit_sop_dept: {
         Args: { _department: string; _user_id: string }
@@ -8683,6 +8891,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      can_manage_safety: { Args: { _user_id: string }; Returns: boolean }
       can_manage_subcontractors: {
         Args: { _user_id: string }
         Returns: boolean
