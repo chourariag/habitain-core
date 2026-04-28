@@ -413,7 +413,7 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
   const budgetTone = !budgetInfo || budgetInfo.gfc === 0 ? "muted" : remaining < 0 ? "red" : remainingPct < 10 ? "amber" : "green";
 
   const notify = async (roles: string[], title: string, body: string) => {
-    const { data } = await supabase.from("profiles").select("auth_user_id").in("role", roles).eq("is_active", true);
+    const { data } = await supabase.from("profiles").select("auth_user_id").in("role", roles as any).eq("is_active", true);
     if (data?.length) await insertNotifications(data.map((u:any) => ({ recipient_id: u.auth_user_id, title, body, category: "work_order" })));
   };
 
