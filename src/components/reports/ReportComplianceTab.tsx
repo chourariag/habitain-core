@@ -49,14 +49,11 @@ export function ReportComplianceTab() {
         let submittedAt: Date | null = null;
         if (sub) {
           submittedAt = new Date(sub.submitted_at);
-          status = sub.status;
-        } else if (now > addDays(deadline, 0).setHours(23,59,59,999) ? false : false) {
-          status = "pending";
+          status = sub.status as Row["status"];
         } else {
-          // No submission yet
-          const endOfDay = new Date(deadline); endOfDay.setHours(23,59,59,999);
-          if (now > endOfDay) status = "missed";
-          else status = "pending";
+          const endOfDay = new Date(deadline);
+          endOfDay.setHours(23, 59, 59, 999);
+          status = now > endOfDay ? "missed" : "pending";
         }
         const reviewer = sub?.reviewed_by ? (profMap.get(sub.reviewed_by) as any)?.display_name : null;
         thisWeekRows.push({
