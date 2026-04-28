@@ -3,13 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Users, ShieldOff, TrendingUp, FileText, CalendarClock } from "lucide-react";
+import { Search, Users, ShieldOff, TrendingUp, FileText, CalendarClock, ShieldAlert } from "lucide-react";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
 import { UserRow } from "@/components/admin/UserRow";
 import { ROLE_LABELS, AppRole } from "@/lib/roles";
 import { BenchmarksView } from "@/components/kpi/BenchmarksView";
 import { BoardPaperGenerator } from "@/components/admin/BoardPaperGenerator";
 import { WeeklyReportConfigsTab } from "@/components/reports/WeeklyReportConfigsTab";
+import { SafetyIncidentsTab } from "@/components/safety/SafetyIncidentsTab";
 
 export default function Admin() {
   const [search, setSearch] = useState("");
@@ -92,6 +93,10 @@ export default function Admin() {
           <TabsTrigger value="weekly" className="gap-1.5">
             <CalendarClock className="h-3.5 w-3.5" />
             Weekly Reports
+          </TabsTrigger>
+          <TabsTrigger value="safety" className="gap-1.5">
+            <ShieldAlert className="h-3.5 w-3.5" />
+            Safety Log
           </TabsTrigger>
         </TabsList>
 
