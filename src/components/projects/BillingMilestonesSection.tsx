@@ -134,6 +134,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
       return updated;
     });
     setDirty(true);
+    if (field === "percentage") setShowPctError(false);
   }
 
   function addMilestone() {
