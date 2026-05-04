@@ -3,8 +3,9 @@ import {
   LayoutDashboard, FolderKanban, Factory, ClipboardCheck,
   Truck, Package, ShoppingCart, ClipboardList, Compass,
   BarChart3, DollarSign, Wrench, Users, Settings,
-  ChevronLeft, ChevronRight, LogOut, Globe, Clock, Target, Bell, BookOpen, ShieldAlert,
+  ChevronLeft, ChevronRight, LogOut, Globe, Clock, Target, Bell, BookOpen, ShieldAlert, ShieldCheck,
 } from "lucide-react";
+import { usePendingApprovalsCount } from "@/hooks/usePendingApprovalsCount";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
