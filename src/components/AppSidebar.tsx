@@ -105,8 +105,9 @@ const sectionConfig = [
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { signOut } = useAuth();
-  const { role } = useUserRole();
+  const { role, actualRole } = useUserRole();
   const userRole = role as AppRole | null;
+  const realRole = actualRole as AppRole | null;
   const { projects, selectedProjectId, setSelectedProjectId } = useProjectContext();
   const { i18n } = useTranslation();
   const location = useLocation();
@@ -222,11 +223,11 @@ export function AppSidebar() {
           );
         })}
 
-        {/* Super Admin — MD only, separated by divider, at the very bottom */}
-        {userRole && (userRole === "managing_director" || userRole === "super_admin") && (
+        {/* Super Admin — MD only (based on ACTUAL role, not impersonated), at very bottom */}
+        {realRole && (realRole === "managing_director" || realRole === "super_admin") && (
           <>
             <div className="mx-1 my-2" style={{ borderTop: "1px solid #E0E0E0" }} />
-            <NavLink to="/super-admin" className={navLinkClass} style={({ isActive }) => isActive
+            <NavLink to="/admin/super-admin" className={navLinkClass} style={({ isActive }) => isActive
               ? { backgroundColor: "#FDE7E9", color: "#F40009", borderLeft: "3px solid #F40009" }
               : { color: "#F40009" }}>
               <ShieldAlert className="h-4 w-4 shrink-0" />
