@@ -344,14 +344,20 @@ export default function UserManagement() {
                       <TableCell className="text-xs max-w-[320px]">{summary}</TableCell>
                       <TableCell className="text-xs">{r.requested_by_name}</TableCell>
                       <TableCell>
-                        {r.status === "pending" && <Badge style={{ background: "#FEF3C7", color: "#92400E" }}>Pending MD</Badge>}
+                        {r.status === "pending" && (
+                          <Badge style={{ background: "#FEF3C7", color: "#92400E" }}>
+                            {r.request_type === "create_project"
+                              ? `Pending ${((r.payload as any)?.division || "Habitainer") === "ADS" ? "Karan" : "John"}`
+                              : "Pending MD"}
+                          </Badge>
+                        )}
                         {r.status === "approved" && <Badge style={{ background: "#DCFCE7", color: "#166534" }}>Approved</Badge>}
                         {r.status === "rejected" && <Badge variant="destructive">Rejected</Badge>}
                       </TableCell>
                       <TableCell className="text-xs">{new Date(r.requested_at).toLocaleDateString("en-GB")}</TableCell>
                       <TableCell className="text-right">
                         <Button size="sm" variant="ghost" onClick={()=>setReviewing(r)} className="gap-1.5">
-                          <Eye className="h-3.5 w-3.5" /> {isApprover && r.status === "pending" ? "Review" : "View"}
+                          <Eye className="h-3.5 w-3.5" /> {(isApprover || isProjectApprover) && r.status === "pending" ? "Review" : "View"}
                         </Button>
                       </TableCell>
                     </TableRow>
