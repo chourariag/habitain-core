@@ -5,8 +5,13 @@ import { Plus, Loader2 } from "lucide-react";
 import { NewProjectDialog } from "@/components/projects/NewProjectDialog";
 import { ProjectCommandCard } from "@/components/projects/ProjectCommandCard";
 import type { Tables } from "@/integrations/supabase/types";
+import { useUserRole } from "@/hooks/useUserRole";
+
+const NEW_PROJECT_ROLES = ["planning_head", "managing_director", "super_admin"];
 
 export default function Projects() {
+  const { role } = useUserRole();
+  const canCreate = !!role && NEW_PROJECT_ROLES.includes(role);
   const [projects, setProjects] = useState<Tables<"projects">[]>([]);
   const [modulesByProject, setModulesByProject] = useState<Record<string, any[]>>({});
   const [handoversByProject, setHandoversByProject] = useState<Record<string, boolean>>({});
