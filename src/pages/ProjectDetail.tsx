@@ -250,6 +250,7 @@ export default function ProjectDetail() {
       </Tabs>
 
       <AddModuleDialog open={addModuleOpen} onOpenChange={setAddModuleOpen} projectId={id!} onCreated={fetchData} />
+      <ArchiveProjectDialog open={archiveOpen} onOpenChange={setArchiveOpen} projectId={id!} projectName={project.name} />
     </div>
   );
 }
