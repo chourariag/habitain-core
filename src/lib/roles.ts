@@ -2,7 +2,7 @@ import { Database } from "@/integrations/supabase/types";
 
 export type AppRole = Database["public"]["Enums"]["app_role"];
 
-export const ROLE_LABELS: Record<AppRole, string> = {
+export const ROLE_LABELS: Record<AppRole, string> & { planning_head: string } = {
   super_admin: "Super Admin",
   managing_director: "Managing Director",
   finance_director: "Finance Director",
