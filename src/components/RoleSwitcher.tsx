@@ -24,12 +24,13 @@ interface Props {
 }
 
 export function RoleSwitcher({ collapsed }: Props) {
-  const { actualRole, role, canImpersonate, setOverrideRole } = useUserRole();
+  const { actualRole, role, canImpersonate, personaName, setOverrideRole } = useUserRole();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
   const currentRole = role ?? actualRole ?? "managing_director";
   const currentUser =
+    (personaName ? { name: personaName, role: currentRole, group: "" } : null) ??
     HSTACK_USERS.find((u) => u.role === currentRole) ??
     { name: "Managing Director", role: currentRole, group: "" };
 
@@ -47,9 +48,9 @@ export function RoleSwitcher({ collapsed }: Props) {
     }).filter((g) => g.users.length > 0);
   }, [query]);
 
-  function selectUser(role: string) {
+  function selectUser(role: string, name: string) {
     if (role === actualRole) setOverrideRole(null);
-    else setOverrideRole(role);
+    else setOverrideRole(role, name);
     setOpen(false);
     setQuery("");
   }
@@ -117,7 +118,7 @@ export function RoleSwitcher({ collapsed }: Props) {
                     <button
                       key={`${u.role}|${u.name}`}
                       type="button"
-                      onClick={() => selectUser(u.role)}
+                      onClick={() => selectUser(u.role, u.name)}
                       className="w-full px-3 py-1.5 text-left text-xs hover:bg-muted flex items-center justify-between gap-2"
                     >
                       <div className="min-w-0">
