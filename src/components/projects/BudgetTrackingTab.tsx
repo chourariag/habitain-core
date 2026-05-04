@@ -69,8 +69,13 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
   const [uploading, setUploading] = useState(false);
   const [woCommitted, setWoCommitted] = useState<Record<string, number>>({});
   const gfcFileRef = useRef<HTMLInputElement>(null);
+  const [overrideOpen, setOverrideOpen] = useState(false);
+  const [overrideReason, setOverrideReason] = useState("");
+  const [overrideActive, setOverrideActive] = useState(false);
+  const overrideReasonRef = useRef<string>("");
 
   const canEdit = ["super_admin", "managing_director", "finance_director", "finance_manager", "planning_engineer", "procurement"].includes(userRole ?? "");
+  const isMd = ["super_admin", "managing_director"].includes(userRole ?? "");
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
