@@ -93,9 +93,10 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set());
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const canUpload = UPLOAD_ROLES.includes(userRole ?? "");
-  const canEdit = EDIT_ROLES.includes(userRole ?? "");
-  const canOverride = ["planning_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
+  const isProductionView = PRODUCTION_VIEW_ROLES.includes(userRole ?? "");
+  const canUpload = UPLOAD_ROLES.includes(userRole ?? "") && !isProductionView;
+  const canEdit = EDIT_ROLES.includes(userRole ?? "") && !isProductionView;
+  const canOverride = ["planning_engineer", "super_admin", "managing_director"].includes(userRole ?? "") && !isProductionView;
   const PHASES = useMemo(() => getPhasesForSystem(productionSystem), [productionSystem]);
 
   const fetchTasks = useCallback(async () => {
