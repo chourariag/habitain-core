@@ -130,7 +130,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
               category: "approval_request",
               related_table: "approval_requests",
               related_id: reqRow?.id,
-              navigate_to: "/users",
+              navigate_to: `/approvals?id=${reqRow?.id}`,
             })));
           }
         } catch (notifyErr) { console.warn("notify approver failed", notifyErr); }
