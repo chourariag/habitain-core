@@ -48,3 +48,14 @@ export async function reactivateUser(userId: string) {
 export async function updateUserRole(userId: string, role: AppRole) {
   return callAdminFunction({ action: "update_role", user_id: userId, role });
 }
+
+export async function createUserWithPassword(opts: {
+  email: string; role: AppRole; password: string;
+  display_name?: string; phone?: string; reporting_manager_id?: string;
+}) {
+  return callAdminFunction({ action: "create_user_with_password", ...opts });
+}
+
+export async function reassignAndDeactivate(userId: string, reassignTo?: string) {
+  return callAdminFunction({ action: "reassign_and_deactivate", user_id: userId, reassign_to: reassignTo });
+}

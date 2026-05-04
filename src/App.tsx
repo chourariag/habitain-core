@@ -42,6 +42,7 @@ import ClientPortal from "@/pages/ClientPortal";
 import Onboarding from "@/pages/Onboarding";
 import SOPs from "@/pages/SOPs";
 import SuperAdmin from "@/pages/SuperAdmin";
+import UserManagement from "@/pages/UserManagement";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const App = () => (
                 <Route path="/kpi" element={<KPI />} />
                 <Route path="/kpi/settings" element={<KPISettings />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/users" element={<UserManagement />} />
                 <Route path="/settings" element={<AppSettings />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/attendance" element={<Attendance />} />
