@@ -76,14 +76,23 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
       });
       if (error) throw error;
 
-      // Notify production
+      // Fix 1: Record design stage transition in audit history
+      const stageKey = issueDialog.stage === "advance_h1" ? "h1_issued" : "h2_issued";
+      await (client.from("design_stage_history") as any).insert({
+        project_id: projectId,
+        stage: stageKey,
+        reached_by: userId,
+        reached_by_name: userName,
+      });
+
+      // Notify production + Karthik (planning_engineer)
       const { data: prodProfiles } = await supabase.from("profiles")
         .select("auth_user_id").in("role", ["production_head", "head_operations", "managing_director", "planning_engineer"] as any[]).eq("is_active", true);
 
-      const stageLabel = issueDialog.stage === "advance_h1" ? "Advance GFC (H1)" : "Final GFC (H2)";
+      const stageLabel = issueDialog.stage === "advance_h1" ? "H1 Sign-off (Advance GFC)" : "H2 Sign-off (Final GFC)";
       const bodyMsg = issueDialog.stage === "advance_h1"
-        ? `${stageLabel} issued for ${projectName} by ${userName}. Sub-Frame stage unlocked — factory can begin fabrication.`
-        : `${stageLabel} issued for ${projectName} by ${userName}. Full production unlocked.`;
+        ? `${stageLabel} issued for ${projectName} by ${userName}. Factory Stage 1 unlocked — production schedule can begin. GFC Budget upload unlocked.`
+        : `${stageLabel} issued for ${projectName} by ${userName}. MEP works unlocked — full production cleared.`;
 
       if (prodProfiles?.length) {
         await insertNotifications(
