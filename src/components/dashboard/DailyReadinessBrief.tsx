@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Loader2, CheckCircle2, AlertTriangle, Info, X, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useUserRole } from "@/hooks/useUserRole";
 import type { AppRole } from "@/lib/roles";
 
 type LineKind = "done" | "action" | "info";
