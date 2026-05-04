@@ -188,6 +188,21 @@ export default function UserManagement() {
         entity: (req.payload as Record<string,string>).email || (req.payload as Record<string,string>).user_email || req.id,
         summary: `Rejected: ${reason}`,
       });
+      // Notify the raiser with the rejection reason
+      try {
+        const { insertNotifications } = await import("@/lib/notifications");
+        const p = req.payload as Record<string, unknown>;
+        const subject = req.request_type === "create_project" ? `Project request rejected — ${p.name}` : "Request rejected";
+        await insertNotifications({
+          recipient_id: req.requested_by,
+          title: subject,
+          body: `Reason: ${reason}. You can edit and resubmit.`,
+          category: "info",
+          related_table: "approval_requests",
+          related_id: req.id,
+          navigate_to: "/users",
+        });
+      } catch (e) { console.warn("notify on reject failed", e); }
       toast.success("Request rejected");
       setReviewing(null);
       refetchReqs();
