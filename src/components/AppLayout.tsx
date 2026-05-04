@@ -7,6 +7,7 @@ import { ProjectBreadcrumb } from "./ProjectBreadcrumb";
 import { ProjectProvider } from "@/contexts/ProjectContext";
 import { ConnectionIndicator } from "./ConnectionIndicator";
 import { NotificationBell } from "./notifications/NotificationBell";
+import { TestingModeBanner } from "./TestingModeBanner";
 
 export function AppLayout() {
   return (
