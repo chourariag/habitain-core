@@ -216,6 +216,19 @@ export function AppSidebar() {
             </div>
           );
         })}
+
+        {/* Super Admin — MD only, separated by divider, at the very bottom */}
+        {userRole && (userRole === "managing_director" || userRole === "super_admin") && (
+          <>
+            <div className="mx-1 my-2" style={{ borderTop: "1px solid #E0E0E0" }} />
+            <NavLink to="/super-admin" className={navLinkClass} style={({ isActive }) => isActive
+              ? { backgroundColor: "#FDE7E9", color: "#F40009", borderLeft: "3px solid #F40009" }
+              : { color: "#F40009" }}>
+              <ShieldAlert className="h-4 w-4 shrink-0" />
+              {!collapsed && <span className="font-bold">Super Admin</span>}
+            </NavLink>
+          </>
+        )}
       </nav>
 
       {/* Footer */}
