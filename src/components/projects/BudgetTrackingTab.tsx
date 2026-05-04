@@ -250,13 +250,38 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
       }
 
       toast.success(`${items.length} GFC budget items uploaded`);
+      if (overrideActive) {
+        await logAudit({
+          section: "GFC Budget",
+          action: "MD Override Upload",
+          entity: `project:${projectId}`,
+          summary: `MD override — uploaded GFC budget without H1 sign-off. Reason: ${overrideReasonRef.current}`,
+          new_value: { project_id: projectId, reason: overrideReasonRef.current, items_count: items.length },
+        });
+        toast.info("MD override logged in audit trail");
+      }
       fetchAll();
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
     } finally {
       setUploading(false);
+      setOverrideActive(false);
+      overrideReasonRef.current = "";
       if (gfcFileRef.current) gfcFileRef.current.value = "";
     }
+  };
+
+  const confirmOverride = () => {
+    if (!overrideReason.trim() || overrideReason.trim().length < 10) {
+      toast.error("Please enter a detailed reason (min 10 characters)");
+      return;
+    }
+    overrideReasonRef.current = overrideReason.trim();
+    setOverrideActive(true);
+    setOverrideOpen(false);
+    setOverrideReason("");
+    // Open file picker
+    setTimeout(() => gfcFileRef.current?.click(), 100);
   };
 
   const hasBothBudgets = tenderTotal > 0 && totalBudget > 0;
