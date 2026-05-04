@@ -18,6 +18,8 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
+import { useUserRole } from "@/hooks/useUserRole";
+import { raiseApprovalRequest } from "@/lib/approval-requests";
 
 interface NewProjectDialogProps {
   open: boolean;
@@ -34,6 +36,8 @@ const PRODUCTION_SYSTEMS: { value: "modular" | "panelised" | "hybrid"; label: st
 ];
 
 export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDialogProps) {
+  const { role } = useUserRole();
+  const requiresApproval = !!role && !["managing_director", "super_admin"].includes(role);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [clientName, setClientName] = useState("");
@@ -72,6 +76,35 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
     try {
       const { client, session } = await getAuthedClient();
       const location = [city, state].filter(Boolean).join(", ") || null;
+
+      // Non-MD users must raise an approval request instead of creating directly
+      if (requiresApproval) {
+        await raiseApprovalRequest("create_project", {
+          name: name.trim(),
+          client_name: clientName.trim() || null,
+          client_phone: clientPhone.trim() || null,
+          client_email: clientEmail.trim() || null,
+          location,
+          type: projectType || null,
+          construction_type: isDesignOnly ? null : (constructionType || null),
+          start_date: startDate ? format(startDate, "yyyy-MM-dd") : null,
+          est_completion: estCompletion ? format(estCompletion, "yyyy-MM-dd") : null,
+          site_lat: isDesignOnly ? null : (siteLat ? parseFloat(siteLat) : null),
+          site_lng: isDesignOnly ? null : (siteLng ? parseFloat(siteLng) : null),
+          site_radius: isDesignOnly ? null : (siteRadius ? parseInt(siteRadius) : 300),
+          division,
+          is_design_only: isDesignOnly,
+          production_system: isDesignOnly ? "modular" : productionSystem,
+          module_count: parseInt(moduleCount) || 0,
+          panel_count: parseInt(panelCount) || 0,
+        });
+        toast.success("Project request sent to MD for approval");
+        resetForm();
+        onOpenChange(false);
+        onCreated();
+        setLoading(false);
+        return;
+      }
 
       const { data: project, error } = await client.from("projects").insert({
         name: name.trim(),
@@ -377,7 +410,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-              {loading ? "Creating…" : "Create Project"}
+              {loading ? (requiresApproval ? "Sending…" : "Creating…") : (requiresApproval ? "Send for MD Approval" : "Create Project")}
             </Button>
           </div>
         </form>
