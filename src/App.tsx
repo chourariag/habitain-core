@@ -41,6 +41,7 @@ import CapacityPlanning from "@/pages/CapacityPlanning";
 import ClientPortal from "@/pages/ClientPortal";
 import Onboarding from "@/pages/Onboarding";
 import SOPs from "@/pages/SOPs";
+import SuperAdmin from "@/pages/SuperAdmin";
 
 const queryClient = new QueryClient();
 
