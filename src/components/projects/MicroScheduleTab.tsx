@@ -437,6 +437,10 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
     return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
+  if (isProductionView) {
+    return <ProductionStageRollup tasks={tasks} userRole={userRole} liveStatus={liveStatus} getDelay={getDelay} />;
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}
