@@ -339,6 +339,57 @@ export type Database = {
         }
         Relationships: []
       }
+      approval_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          approved_by_name: string | null
+          audit_notes: string | null
+          created_at: string
+          id: string
+          payload: Json
+          rejected_reason: string | null
+          request_type: string
+          requested_at: string
+          requested_by: string
+          requested_by_name: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_name?: string | null
+          audit_notes?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json
+          rejected_reason?: string | null
+          request_type: string
+          requested_at?: string
+          requested_by: string
+          requested_by_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_by_name?: string | null
+          audit_notes?: string | null
+          created_at?: string
+          id?: string
+          payload?: Json
+          rejected_reason?: string | null
+          request_type?: string
+          requested_at?: string
+          requested_by?: string
+          requested_by_name?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       approval_thresholds: {
         Row: {
           approval_type: string
@@ -6056,6 +6107,8 @@ export type Database = {
       }
       projects: {
         Row: {
+          archive_reason: string | null
+          archived_at: string | null
           client_email: string | null
           client_name: string | null
           client_phone: string | null
@@ -6091,6 +6144,8 @@ export type Database = {
           wip_status: string
         }
         Insert: {
+          archive_reason?: string | null
+          archived_at?: string | null
           client_email?: string | null
           client_name?: string | null
           client_phone?: string | null
@@ -6126,6 +6181,8 @@ export type Database = {
           wip_status?: string
         }
         Update: {
+          archive_reason?: string | null
+          archived_at?: string | null
           client_email?: string | null
           client_name?: string | null
           client_phone?: string | null
@@ -9232,6 +9289,10 @@ export type Database = {
         Returns: boolean
       }
       can_manage_weekly_reports: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_raise_approval_request: {
         Args: { _user_id: string }
         Returns: boolean
       }
