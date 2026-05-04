@@ -930,11 +930,13 @@ export default function DesignPortal() {
             <div>
               <h2 className="font-semibold text-foreground mb-3">Projects</h2>
               <div className="space-y-2">
-                {projects.map((p) => {
+                {projects.map((p: any) => {
                   const stage = getDesignStage(p.id);
                   const pDqs = dqs.filter((d: any) => d.project_id === p.id && d.status === "open").length;
-                  const df = designFiles.find((d: any) => d.project_id === p.id);
-                  const isDesignOnly = df?.is_design_only !== false;
+                  // Fix 2: Source of truth is the projects table (is_design_only + division), not the design file row
+                  const isDesignOnly = p.is_design_only === true;
+                  const division = (p.division as string) || "Habitainer";
+                  const isAds = division === "ADS";
                   return (
                     <button key={p.id} type="button" onClick={() => initProjectDesignFile(p.id)}
                       className="w-full text-left bg-card border border-border rounded-lg p-4 hover:border-primary/40 transition-colors">
@@ -944,12 +946,17 @@ export default function DesignPortal() {
                           <p className="text-xs" style={{ color: "#666666" }}>{p.client_name || "No client"}</p>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" style={isDesignOnly
-                            ? { backgroundColor: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", border: "none" }
+                          <Badge variant="outline" style={isAds
+                            ? { backgroundColor: "hsl(270 60% 50% / 0.12)", color: "hsl(270 60% 35%)", border: "none" }
                             : { backgroundColor: "hsl(var(--accent))", color: "hsl(var(--primary))", border: "none" }
                           } className="text-[10px]">
-                            {isDesignOnly ? "Design Only" : "Linked"}
+                            {isAds ? "ADS" : "Habitainer"}
                           </Badge>
+                          {isDesignOnly && (
+                            <Badge variant="outline" style={{ backgroundColor: "hsl(var(--muted))", color: "hsl(var(--muted-foreground))", border: "none" }} className="text-[10px]">
+                              Design Only
+                            </Badge>
+                          )}
                           {pDqs > 0 && <Badge variant="outline" style={{ backgroundColor: "#FFF0F0", color: "#F40009", border: "none" }}>{pDqs} DQ</Badge>}
                           <Badge variant="outline" style={stageStatusStyle(stage === "gfc_issued" ? "client_approved" : "in_progress")}>
                             {stage.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
