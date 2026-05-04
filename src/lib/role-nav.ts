@@ -15,6 +15,7 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
   projects: [
     ...DIRECTORS, "head_operations", "production_head", "site_installation_mgr",
     "finance_manager", "planning_engineer", "costing_engineer", "quantity_surveyor",
+    "planning_head" as AppRole,
   ],
   production: [
     ...DIRECTORS, "head_operations", "production_head", "factory_floor_supervisor",
@@ -34,7 +35,7 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
   ],
   performance: [], // everyone sees own KPIs
   admin: [
-    ...DIRECTORS, "hr_executive", "head_operations",
+    ...DIRECTORS, "hr_executive", "head_operations", "planning_head" as AppRole,
   ],
   system: [], // everyone
   knowledge: [], // everyone — SOP library

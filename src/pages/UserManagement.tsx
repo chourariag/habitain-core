@@ -23,9 +23,10 @@ import { logAudit } from "@/lib/super-admin";
 
 const RAISER_ROLES = [
   "managing_director","super_admin","finance_director","sales_director",
-  "architecture_director","head_operations","hr_executive","planning_engineer",
+  "architecture_director","head_operations","hr_executive","planning_head",
 ];
 const MD_ROLES = ["managing_director","super_admin"];
+const PROJECT_APPROVER_ROLES = ["managing_director","super_admin","sales_director","principal_architect"];
 const TEMP_PASSWORD = "HStack@2026";
 
 type Profile = {
@@ -40,6 +41,7 @@ export default function UserManagement() {
   const { user } = useAuth();
   const isRaiser = !!role && RAISER_ROLES.includes(role);
   const isApprover = !!role && MD_ROLES.includes(role);
+  const isProjectApprover = !!role && PROJECT_APPROVER_ROLES.includes(role);
 
   const [tab, setTab] = useState("users");
   const [search, setSearch] = useState("");
@@ -80,7 +82,7 @@ export default function UserManagement() {
     return list;
   }, [profiles, statusFilter, search]);
 
-  if (!isRaiser && !isApprover) {
+  if (!isRaiser && !isApprover && !isProjectApprover) {
     return <div className="p-8 text-sm text-muted-foreground">You don&apos;t have access to User Management.</div>;
   }
 
@@ -113,15 +115,50 @@ export default function UserManagement() {
         toast.success("User deactivated");
       } else if (req.request_type === "create_project") {
         const p = req.payload as Record<string, unknown>;
-        const { error } = await supabase.from("projects").insert({
-          ...p,
+        // Strip non-column fields used only for downstream creation
+        const { module_count: _mc, panel_count: _pc, ...projectFields } = p as any;
+        const { data: created, error } = await supabase.from("projects").insert({
+          ...projectFields,
           status: "Active",
           created_by: req.requested_by,
           updated_by: req.requested_by,
-        } as never);
+        } as never).select("id,name").single();
         if (error) throw error;
         await setApprovalDecision(req.id, "approved");
         await logAudit({ section: "Projects", action: "approve_create_project", entity: String(p.name), summary: `Approved project creation by ${req.requested_by_name}` });
+
+        // Notify MD with awareness + raiser confirmation
+        try {
+          const { insertNotifications } = await import("@/lib/notifications");
+          const { data: mds } = await supabase
+            .from("profiles").select("auth_user_id").eq("role", "managing_director" as any).eq("is_active", true);
+          const approverName = (await supabase.from("profiles").select("display_name").eq("auth_user_id", user?.id || "").maybeSingle()).data?.display_name || "approver";
+          const notifyList: { recipient_id: string; title: string; body: string; category: string; related_table?: string; related_id?: string; navigate_to?: string }[] = [];
+          (mds || []).forEach((m: any) => {
+            if (m.auth_user_id !== user?.id) {
+              notifyList.push({
+                recipient_id: m.auth_user_id,
+                title: `Project approved — ${p.name}`,
+                body: `Approved by ${approverName}.`,
+                category: "info",
+                related_table: "projects",
+                related_id: (created as any)?.id,
+                navigate_to: `/projects/${(created as any)?.id}`,
+              });
+            }
+          });
+          notifyList.push({
+            recipient_id: req.requested_by,
+            title: `Project approved — ${p.name}`,
+            body: `Your project request has been approved by ${approverName}.`,
+            category: "info",
+            related_table: "projects",
+            related_id: (created as any)?.id,
+            navigate_to: `/projects/${(created as any)?.id}`,
+          });
+          if (notifyList.length) await insertNotifications(notifyList);
+        } catch (e) { console.warn("notify on approve failed", e); }
+
         toast.success("Project created");
       } else if (req.request_type === "archive_project") {
         const p = req.payload as Record<string, string>;
@@ -151,6 +188,21 @@ export default function UserManagement() {
         entity: (req.payload as Record<string,string>).email || (req.payload as Record<string,string>).user_email || req.id,
         summary: `Rejected: ${reason}`,
       });
+      // Notify the raiser with the rejection reason
+      try {
+        const { insertNotifications } = await import("@/lib/notifications");
+        const p = req.payload as Record<string, unknown>;
+        const subject = req.request_type === "create_project" ? `Project request rejected — ${p.name}` : "Request rejected";
+        await insertNotifications({
+          recipient_id: req.requested_by,
+          title: subject,
+          body: `Reason: ${reason}. You can edit and resubmit.`,
+          category: "info",
+          related_table: "approval_requests",
+          related_id: req.id,
+          navigate_to: "/users",
+        });
+      } catch (e) { console.warn("notify on reject failed", e); }
       toast.success("Request rejected");
       setReviewing(null);
       refetchReqs();
@@ -292,14 +344,20 @@ export default function UserManagement() {
                       <TableCell className="text-xs max-w-[320px]">{summary}</TableCell>
                       <TableCell className="text-xs">{r.requested_by_name}</TableCell>
                       <TableCell>
-                        {r.status === "pending" && <Badge style={{ background: "#FEF3C7", color: "#92400E" }}>Pending MD</Badge>}
+                        {r.status === "pending" && (
+                          <Badge style={{ background: "#FEF3C7", color: "#92400E" }}>
+                            {r.request_type === "create_project"
+                              ? `Pending ${((r.payload as any)?.division || "Habitainer") === "ADS" ? "Karan" : "John"}`
+                              : "Pending MD"}
+                          </Badge>
+                        )}
                         {r.status === "approved" && <Badge style={{ background: "#DCFCE7", color: "#166534" }}>Approved</Badge>}
                         {r.status === "rejected" && <Badge variant="destructive">Rejected</Badge>}
                       </TableCell>
                       <TableCell className="text-xs">{new Date(r.requested_at).toLocaleDateString("en-GB")}</TableCell>
                       <TableCell className="text-right">
                         <Button size="sm" variant="ghost" onClick={()=>setReviewing(r)} className="gap-1.5">
-                          <Eye className="h-3.5 w-3.5" /> {isApprover && r.status === "pending" ? "Review" : "View"}
+                          <Eye className="h-3.5 w-3.5" /> {(isApprover || isProjectApprover) && r.status === "pending" ? "Review" : "View"}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -328,7 +386,14 @@ export default function UserManagement() {
 
       <ReviewDialog
         request={reviewing}
-        canDecide={isApprover && reviewing?.status === "pending"}
+        canDecide={
+          reviewing?.status === "pending" && (
+            isApprover ||
+            (reviewing?.request_type === "create_project" && isProjectApprover &&
+              ((((reviewing.payload as any)?.division || "Habitainer") === "Habitainer" && role === "sales_director") ||
+               ((reviewing.payload as any)?.division === "ADS" && role === "principal_architect")))
+          )
+        }
         onClose={() => setReviewing(null)}
         onApprove={handleApprove}
         onReject={handleReject}
@@ -554,7 +619,11 @@ function ReviewDialog({ request, canDecide, onClose, onApprove, onReject }:{
     <Dialog open onOpenChange={(o)=>!o && (onClose(), setShowReject(false), setRejectReason(""))}>
       <DialogContent>
         <DialogHeader><DialogTitle>
-          {request.request_type === "add_user" ? "Add User Request" : "Deactivation Request"}
+          {request.request_type === "add_user" ? "Add User Request"
+            : request.request_type === "deactivate_user" ? "Deactivation Request"
+            : request.request_type === "create_project" ? "Create Project Request"
+            : request.request_type === "archive_project" ? "Archive Project Request"
+            : "Approval Request"}
         </DialogTitle></DialogHeader>
         <div className="space-y-2 text-sm">
           {Object.entries(p).map(([k, v]) => (

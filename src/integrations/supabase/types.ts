@@ -9272,6 +9272,13 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      can_approve_request: {
+        Args: {
+          _row: Database["public"]["Tables"]["approval_requests"]["Row"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       can_costing_approve_wo: { Args: { _user_id: string }; Returns: boolean }
       can_edit_sop_dept: {
         Args: { _department: string; _user_id: string }

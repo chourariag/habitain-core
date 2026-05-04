@@ -10,7 +10,7 @@ export const SUPER_ADMIN_FEATURES = [
 
 export const SUPER_ADMIN_ROLES = [
   "managing_director","finance_director","sales_director","architecture_director",
-  "head_operations","planning_engineer","production_head","site_installation_mgr",
+  "head_operations","planning_engineer","planning_head","production_head","site_installation_mgr",
   "factory_floor_supervisor","procurement","finance_manager","qc_inspector",
   "principal_architect","project_architect","structural_architect",
   "stores_executive","costing_engineer","site_engineer","electrical_installer",

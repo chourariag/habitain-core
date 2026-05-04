@@ -5,8 +5,13 @@ import { Plus, Loader2 } from "lucide-react";
 import { NewProjectDialog } from "@/components/projects/NewProjectDialog";
 import { ProjectCommandCard } from "@/components/projects/ProjectCommandCard";
 import type { Tables } from "@/integrations/supabase/types";
+import { useUserRole } from "@/hooks/useUserRole";
+
+const NEW_PROJECT_ROLES = ["planning_head", "managing_director", "super_admin"];
 
 export default function Projects() {
+  const { role } = useUserRole();
+  const canCreate = !!role && NEW_PROJECT_ROLES.includes(role);
   const [projects, setProjects] = useState<Tables<"projects">[]>([]);
   const [modulesByProject, setModulesByProject] = useState<Record<string, any[]>>({});
   const [handoversByProject, setHandoversByProject] = useState<Record<string, boolean>>({});
@@ -109,10 +114,12 @@ export default function Projects() {
           <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "#1A1A1A" }}>Projects</h1>
           <p className="text-sm mt-1" style={{ color: "#666666" }}>Command centre — all construction projects</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Project
-        </Button>
+        {canCreate && (
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Project
+          </Button>
+        )}
       </div>
 
       {loading ? (

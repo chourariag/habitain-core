@@ -35,8 +35,11 @@ const PRODUCTION_SYSTEMS: { value: "modular" | "panelised" | "hybrid"; label: st
   { value: "hybrid", label: "Hybrid", hint: "LGSF panels from Panel Bay installed into Module Bay" },
 ];
 
+const ALLOWED_RAISERS = ["planning_head", "managing_director", "super_admin"];
+
 export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDialogProps) {
   const { role } = useUserRole();
+  const canRaise = !!role && ALLOWED_RAISERS.includes(role);
   const requiresApproval = !!role && !["managing_director", "super_admin"].includes(role);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
@@ -71,6 +74,10 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) { toast.error("Project name is required"); return; }
+    if (!canRaise) {
+      toast.error("Only the Planning Head can raise a project creation request.");
+      return;
+    }
 
     setLoading(true);
     try {
@@ -79,7 +86,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
 
       // Non-MD users must raise an approval request instead of creating directly
       if (requiresApproval) {
-        await raiseApprovalRequest("create_project", {
+        const reqRow: any = await raiseApprovalRequest("create_project", {
           name: name.trim(),
           client_name: clientName.trim() || null,
           client_phone: clientPhone.trim() || null,
@@ -98,7 +105,41 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
           module_count: parseInt(moduleCount) || 0,
           panel_count: parseInt(panelCount) || 0,
         });
-        toast.success("Project request sent to MD for approval");
+
+        // Notify the appropriate approver based on division
+        try {
+          const approverRole = division === "ADS" ? "principal_architect" : "sales_director";
+          const { data: approvers } = await supabase
+            .from("profiles")
+            .select("auth_user_id")
+            .eq("role", approverRole as any)
+            .eq("is_active", true);
+          const recipients = (approvers || []).map((a: any) => a.auth_user_id);
+          if (recipients.length > 0) {
+            const title = division === "ADS"
+              ? `New ADS project request — ${name.trim()}`
+              : `New project request — ${name.trim()}`;
+            const body = division === "ADS"
+              ? `${clientName || "Client TBD"} | Design-Only\nRaised by ${session.user.email || "Planning Head"}. Tap to review and approve.`
+              : `${clientName || "Client TBD"} | ${(productionSystem || "").toUpperCase()} | ${parseInt(moduleCount) || 0} modules / ${parseInt(panelCount) || 0} panels\nRaised by ${session.user.email || "Planning Head"}. Tap to review and approve.`;
+            const { insertNotifications } = await import("@/lib/notifications");
+            await insertNotifications(recipients.map((rid) => ({
+              recipient_id: rid,
+              title,
+              body,
+              category: "approval_request",
+              related_table: "approval_requests",
+              related_id: reqRow?.id,
+              navigate_to: "/users",
+            })));
+          }
+        } catch (notifyErr) { console.warn("notify approver failed", notifyErr); }
+
+        toast.success(
+          division === "ADS"
+            ? "Project request sent to Principal Architect (Karan) for approval"
+            : "Project request sent to Sales Director (John) for approval"
+        );
         resetForm();
         onOpenChange(false);
         onCreated();
