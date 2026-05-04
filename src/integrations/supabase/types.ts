@@ -1557,6 +1557,47 @@ export type Database = {
           },
         ]
       }
+      design_stage_history: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          project_id: string
+          reached_at: string
+          reached_by: string | null
+          reached_by_name: string | null
+          stage: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          project_id: string
+          reached_at?: string
+          reached_by?: string | null
+          reached_by_name?: string | null
+          stage: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          project_id?: string
+          reached_at?: string
+          reached_by?: string | null
+          reached_by_name?: string | null
+          stage?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_stage_history_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       design_stages: {
         Row: {
           approval_date: string | null
@@ -2618,6 +2659,56 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      gfc_qc_checklist: {
+        Row: {
+          checked: boolean
+          checked_at: string | null
+          checked_by: string | null
+          checked_by_name: string | null
+          created_at: string
+          id: string
+          item_label: string
+          item_number: number
+          note: string | null
+          project_id: string
+          updated_at: string
+        }
+        Insert: {
+          checked?: boolean
+          checked_at?: string | null
+          checked_by?: string | null
+          checked_by_name?: string | null
+          created_at?: string
+          id?: string
+          item_label: string
+          item_number: number
+          note?: string | null
+          project_id: string
+          updated_at?: string
+        }
+        Update: {
+          checked?: boolean
+          checked_at?: string | null
+          checked_by?: string | null
+          checked_by_name?: string | null
+          created_at?: string
+          id?: string
+          item_label?: string
+          item_number?: number
+          note?: string | null
+          project_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gfc_qc_checklist_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gfc_records: {
         Row: {
