@@ -12,6 +12,7 @@ import { getAuthedClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { STANDARD_DETAILS } from "@/lib/design-checklist-data";
+import { GFCQCChecklistSection } from "./GFCQCChecklistSection";
 
 const STATUSES = ["Not Started", "In Progress", "Complete", "Not Applicable"] as const;
 
@@ -30,9 +31,10 @@ interface Props {
   userId: string | null;
   userName: string;
   onStatsChange: (stats: { complete: number; inProgress: number; notStarted: number; na: number; total: number }) => void;
+  onGfcQCChange?: (stats: { checked: number; total: number; allChecked: boolean }) => void;
 }
 
-export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onStatsChange }: Props) {
+export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onStatsChange, onGfcQCChange }: Props) {
   const [details, setDetails] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState<string | null>(null);
@@ -146,6 +148,15 @@ export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onS
 
   return (
     <div className="space-y-4">
+      {/* Fix 5: GFC QC Checklist (Karan's 18-point sign-off gate) — sits above the standard register */}
+      <GFCQCChecklistSection
+        projectId={projectId}
+        isArchitect={isArchitect}
+        userId={userId}
+        userName={userName}
+        onChange={onGfcQCChange}
+      />
+
       {/* Summary tiles */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[

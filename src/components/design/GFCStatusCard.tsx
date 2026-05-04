@@ -19,6 +19,7 @@ interface Props {
   userName: string;
   modules: { id: string; name: string; module_code: string | null }[];
   designFile: any;
+  qcStats?: { checked: number; total: number; allChecked: boolean };
   onRefresh: () => void;
 }
 
@@ -33,7 +34,7 @@ type GfcRecord = {
   notes: string | null;
 };
 
-export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, userName, modules, designFile, onRefresh }: Props) {
+export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, userName, modules, designFile, qcStats, onRefresh }: Props) {
   const [records, setRecords] = useState<GfcRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [issueDialog, setIssueDialog] = useState<{ open: boolean; stage: "advance_h1" | "final_h2" } | null>(null);
@@ -75,14 +76,23 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
       });
       if (error) throw error;
 
-      // Notify production
+      // Fix 1: Record design stage transition in audit history
+      const stageKey = issueDialog.stage === "advance_h1" ? "h1_issued" : "h2_issued";
+      await (client.from("design_stage_history") as any).insert({
+        project_id: projectId,
+        stage: stageKey,
+        reached_by: userId,
+        reached_by_name: userName,
+      });
+
+      // Notify production + Karthik (planning_engineer)
       const { data: prodProfiles } = await supabase.from("profiles")
         .select("auth_user_id").in("role", ["production_head", "head_operations", "managing_director", "planning_engineer"] as any[]).eq("is_active", true);
 
-      const stageLabel = issueDialog.stage === "advance_h1" ? "Advance GFC (H1)" : "Final GFC (H2)";
+      const stageLabel = issueDialog.stage === "advance_h1" ? "H1 Sign-off (Advance GFC)" : "H2 Sign-off (Final GFC)";
       const bodyMsg = issueDialog.stage === "advance_h1"
-        ? `${stageLabel} issued for ${projectName} by ${userName}. Sub-Frame stage unlocked — factory can begin fabrication.`
-        : `${stageLabel} issued for ${projectName} by ${userName}. Full production unlocked.`;
+        ? `${stageLabel} issued for ${projectName} by ${userName}. Factory Stage 1 unlocked — production schedule can begin. GFC Budget upload unlocked.`
+        : `${stageLabel} issued for ${projectName} by ${userName}. MEP works unlocked — full production cleared.`;
 
       if (prodProfiles?.length) {
         await insertNotifications(
@@ -176,11 +186,33 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
                   {h1.module_group?.length > 0 && ` · ${h1.module_group.length} modules`}
                 </p>
               ) : (
-                isPrincipal && (
-                  <Button size="sm" variant="outline" className="text-xs mt-1" onClick={() => openIssueDialog("advance_h1")}>
-                    Issue Advance GFC
-                  </Button>
-                )
+                isPrincipal && (() => {
+                  const qcReady = qcStats?.allChecked ?? false;
+                  const qcMsg = qcStats
+                    ? `${qcStats.checked} / ${qcStats.total} GFC QC items checked`
+                    : "Complete the GFC QC checklist in Detail Library";
+                  return (
+                    <div className="space-y-1 mt-1">
+                      <Button
+                        size="sm"
+                        className="text-xs w-full font-semibold"
+                        style={{
+                          backgroundColor: qcReady ? "#006039" : undefined,
+                          color: qcReady ? "white" : undefined,
+                        }}
+                        variant={qcReady ? "default" : "outline"}
+                        disabled={!qcReady}
+                        onClick={() => openIssueDialog("advance_h1")}
+                        title={qcReady ? "All 18 GFC QC items checked — ready to sign off" : qcMsg}
+                      >
+                        {qcReady ? "✓ Issue H1 Sign-off" : "Issue H1 Sign-off"}
+                      </Button>
+                      <p className="text-[10px]" style={{ color: qcReady ? "#006039" : "#D4860A" }}>
+                        {qcMsg}
+                      </p>
+                    </div>
+                  );
+                })()
               )}
             </div>
 
@@ -200,8 +232,13 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
                 </p>
               ) : h1 ? (
                 isPrincipal && (
-                  <Button size="sm" variant="outline" className="text-xs mt-1" onClick={() => openIssueDialog("final_h2")}>
-                    Issue Final GFC
+                  <Button
+                    size="sm"
+                    className="text-xs mt-1 w-full font-semibold"
+                    style={{ backgroundColor: "#006039", color: "white" }}
+                    onClick={() => openIssueDialog("final_h2")}
+                  >
+                    Issue H2 Sign-off
                   </Button>
                 )
               ) : (
@@ -217,25 +254,27 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
         <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Issue {issueDialog?.stage === "advance_h1" ? "Advance GFC (H1)" : "Final GFC (H2)"}
+              {issueDialog?.stage === "advance_h1" ? "Issue H1 Sign-off (Advance GFC)" : "Issue H2 Sign-off (Final GFC)"}
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm" style={{ fontFamily: "var(--font-input)", color: "#666" }}>
-            Select which modules this GFC applies to:
-          </p>
-          <div className="space-y-2 max-h-60 overflow-y-auto border border-border rounded-md p-2">
+          <div className="space-y-2 text-sm">
+            <p><span className="text-muted-foreground">Project:</span> <span className="font-semibold">{projectName}</span></p>
+            <p><span className="text-muted-foreground">GFC Package:</span> {issueDialog?.stage === "advance_h1" ? "H1 — Architectural & Structural" : "H2 — MEP & Final"}</p>
+            <div className="bg-[#FFF8E8] border border-[#F4D58A] rounded p-2 text-xs">
+              I confirm the {issueDialog?.stage === "advance_h1"
+                ? "architectural and structural drawings are approved for production."
+                : "MEP, HVAC, material specs and client sign-off are approved for full production."}
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">Modules this sign-off applies to:</p>
+          <div className="space-y-2 max-h-52 overflow-y-auto border border-border rounded-md p-2">
             {modules.length === 0 ? (
               <p className="text-xs text-center py-4" style={{ color: "#999" }}>No modules found for this project</p>
             ) : (
               modules.map((m) => (
                 <label key={m.id} className="flex items-center gap-2 p-1.5 rounded hover:bg-accent/30 cursor-pointer">
-                  <Checkbox
-                    checked={selectedModules.includes(m.id)}
-                    onCheckedChange={() => toggleModule(m.id)}
-                  />
-                  <span className="text-sm" style={{ fontFamily: "var(--font-input)" }}>
-                    {m.module_code || m.name}
-                  </span>
+                  <Checkbox checked={selectedModules.includes(m.id)} onCheckedChange={() => toggleModule(m.id)} />
+                  <span className="text-sm" style={{ fontFamily: "var(--font-input)" }}>{m.module_code || m.name}</span>
                 </label>
               ))
             )}
@@ -245,9 +284,13 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIssueDialog(null)}>Cancel</Button>
-            <Button onClick={handleIssue} disabled={issuing || selectedModules.length === 0}>
+            <Button
+              onClick={handleIssue}
+              disabled={issuing || selectedModules.length === 0}
+              style={{ backgroundColor: "#006039", color: "white" }}
+            >
               {issuing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Confirm & Issue
+              Confirm {issueDialog?.stage === "advance_h1" ? "H1" : "H2"} Sign-off
             </Button>
           </DialogFooter>
         </DialogContent>
