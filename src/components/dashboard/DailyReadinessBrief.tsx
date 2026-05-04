@@ -328,9 +328,10 @@ async function buildBriefForRole(role: AppRole, uid: string): Promise<BriefLine[
 
 export function DailyReadinessBrief({ userRole, userId }: Props) {
   const navigate = useNavigate();
+  const { isImpersonating, personaName } = useUserRole();
   const [lines, setLines] = useState<BriefLine[] | null>(null);
   const [visible, setVisible] = useState(false);
-  const [firstName, setFirstName] = useState<string>("");
+  const [profileFirstName, setProfileFirstName] = useState<string>("");
 
   useEffect(() => {
     if (!userRole || !userId) return;
@@ -338,6 +339,7 @@ export function DailyReadinessBrief({ userRole, userId }: Props) {
     if (!isBeforeCutoff()) return;
     if (localStorage.getItem(dismissKey(userId))) return;
     setVisible(true);
+    // Brief content already comes from `userRole` (which reflects impersonation), so persona's tasks/alerts will show
     buildBriefForRole(userRole, userId).then(setLines);
     supabase
       .from("profiles")
@@ -347,9 +349,14 @@ export function DailyReadinessBrief({ userRole, userId }: Props) {
       .then(({ data }) => {
         const raw = data?.display_name || "";
         const first = raw.trim().split(/\s+/)[0] || "";
-        setFirstName(first);
+        setProfileFirstName(first);
       });
   }, [userRole, userId]);
+
+  // When Testing Mode is on, greet the persona — not the logged-in MD
+  const firstName = isImpersonating && personaName
+    ? personaName.trim().split(/\s+/)[0]
+    : profileFirstName;
 
   if (!visible) return null;
 
