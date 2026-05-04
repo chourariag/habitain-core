@@ -1203,6 +1203,7 @@ export default function DesignPortal() {
               userName={userName}
               modules={projectModules}
               designFile={selectedDF}
+              qcStats={gfcQcStats}
               onRefresh={fetchData}
             />
           )}
