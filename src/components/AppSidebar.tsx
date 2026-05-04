@@ -220,11 +220,9 @@ export function AppSidebar() {
                 <NavLink key={item.to} to={item.to} className={navLinkClass} style={navLinkStyle}>
                   <item.icon className="h-4 w-4 shrink-0" />
                   {!collapsed && <span className="flex-1">{item.label}</span>}
-                  {item.to === "/approvals" && pendingApprovals > 0 && (
-                    <span className={cn(
-                      "rounded-full text-white text-[10px] font-bold flex items-center justify-center",
-                      collapsed ? "absolute -mt-4 ml-3 h-4 w-4" : "px-1.5 h-5 min-w-[20px]"
-                    )} style={{ background: "#F40009" }}>
+                  {item.to === "/approvals" && pendingApprovals > 0 && !collapsed && (
+                    <span className="rounded-full text-white text-[10px] font-bold flex items-center justify-center px-1.5 h-5 min-w-[20px]"
+                      style={{ background: "#F40009" }}>
                       {pendingApprovals > 99 ? "99+" : pendingApprovals}
                     </span>
                   )}
