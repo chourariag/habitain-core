@@ -35,7 +35,7 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
   ],
   performance: [], // everyone sees own KPIs
   admin: [
-    ...DIRECTORS, "hr_executive", "head_operations", "planning_head" as AppRole,
+    ...DIRECTORS, "hr_executive", "head_operations", "planning_head" as AppRole, "principal_architect",
   ],
   system: [], // everyone
   knowledge: [], // everyone — SOP library
