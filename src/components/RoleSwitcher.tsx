@@ -47,9 +47,9 @@ export function RoleSwitcher({ collapsed }: Props) {
     }).filter((g) => g.users.length > 0);
   }, [query]);
 
-  function selectUser(role: string) {
+  function selectUser(role: string, name: string) {
     if (role === actualRole) setOverrideRole(null);
-    else setOverrideRole(role);
+    else setOverrideRole(role, name);
     setOpen(false);
     setQuery("");
   }
