@@ -261,9 +261,9 @@ async function buildSalesExecBrief(uid: string): Promise<BriefLine[]> {
   const today = new Date().toISOString().slice(0, 10);
   const stagnantCutoff = new Date(Date.now() - 14 * 86400000).toISOString();
   const [todayRes, followupRes, stagnantRes] = await Promise.all([
-    supabase.from("sales_deals").select("id").eq("owner_id", uid).eq("next_followup_date", today).eq("is_archived", false),
-    supabase.from("sales_deals").select("client_name").eq("owner_id", uid).eq("next_followup_date", today).eq("is_archived", false),
-    supabase.from("sales_deals").select("id").eq("owner_id", uid).not("stage", "in", "(Won,Lost)").lt("updated_at", stagnantCutoff).eq("is_archived", false),
+    (supabase.from("sales_deals") as any).select("id").eq("owner_id", uid).eq("next_followup_date", today).eq("is_archived", false),
+    (supabase.from("sales_deals") as any).select("client_name").eq("owner_id", uid).eq("next_followup_date", today).eq("is_archived", false),
+    (supabase.from("sales_deals") as any).select("id").eq("owner_id", uid).not("stage", "in", "(Won,Lost)").lt("updated_at", stagnantCutoff).eq("is_archived", false),
   ]);
   const followupNames = (followupRes.data || []).slice(0, 3).map((d: any) => d.client_name).join(", ") || "none";
   return [
