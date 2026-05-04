@@ -176,6 +176,84 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ── CREATE USER WITH PASSWORD (approval flow) ────────────────
+    if (action === "create_user_with_password") {
+      const { email, role, password, display_name, phone, reporting_manager_id } = payload;
+      const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+      if (!normalizedEmail || !role || !password) {
+        return new Response(JSON.stringify({ error: "email, role, password required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: newUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+        email: normalizedEmail,
+        password,
+        email_confirm: true,
+        user_metadata: { display_name: display_name || null },
+      });
+      if (createErr) {
+        return new Response(JSON.stringify({ error: createErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const userId = newUser.user.id;
+      await supabaseAdmin.from("profiles").upsert({
+        auth_user_id: userId,
+        email: normalizedEmail,
+        display_name: display_name || null,
+        phone: phone || null,
+        role,
+        login_type: "email",
+        reporting_manager_id: reporting_manager_id || null,
+        is_active: true,
+        is_archived: false,
+      }, { onConflict: "auth_user_id" });
+      await supabaseAdmin.from("user_roles").insert({ user_id: userId, role });
+      await supabaseAdmin.from("admin_audit_log").insert({
+        action: "create_user_with_password",
+        performed_by: callerId,
+        entity_type: "profile",
+        entity_id: userId,
+        new_value: { email: normalizedEmail, role, display_name },
+      });
+      return new Response(JSON.stringify({ success: true, user_id: userId }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── REASSIGN AND DEACTIVATE (approval flow) ──────────────────
+    if (action === "reassign_and_deactivate") {
+      const { user_id, reassign_to } = payload;
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Best-effort task reassignment (table may or may not exist)
+      if (reassign_to) {
+        try {
+          await supabaseAdmin.from("project_tasks")
+            .update({ assigned_to: reassign_to })
+            .eq("assigned_to", user_id)
+            .in("status", ["Upcoming", "In Progress", "Blocked"]);
+        } catch (_) { /* ignore */ }
+      }
+      const { data: oldProfile } = await supabaseAdmin.from("profiles").select("*").eq("auth_user_id", user_id).single();
+      await supabaseAdmin.from("profiles").update({ is_active: false, is_archived: true }).eq("auth_user_id", user_id);
+      await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "876600h" });
+      await supabaseAdmin.from("admin_audit_log").insert({
+        action: "reassign_and_deactivate",
+        performed_by: callerId,
+        entity_type: "profile",
+        entity_id: user_id,
+        old_value: oldProfile,
+        new_value: { is_active: false, reassign_to: reassign_to || null },
+      });
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // ── DEACTIVATE USER ──────────────────────────────────────────
     if (action === "deactivate_user") {
       const { user_id } = payload;
