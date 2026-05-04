@@ -62,7 +62,7 @@ export default function UserManagement() {
     queryFn: () => listApprovalRequests(),
   });
 
-  const userRequests = (requests || []).filter(r => r.request_type === "add_user" || r.request_type === "deactivate_user");
+  const userRequests = (requests || []);
   const pendingCount = userRequests.filter(r => r.status === "pending").length;
 
   const filteredUsers = useMemo(() => {
@@ -111,6 +111,30 @@ export default function UserManagement() {
           entity: p.user_email, summary: `Approved deactivation — ${p.user_name} (${p.reason})`,
         });
         toast.success("User deactivated");
+      } else if (req.request_type === "create_project") {
+        const p = req.payload as Record<string, unknown>;
+        const { error } = await supabase.from("projects").insert({
+          ...p,
+          status: "Active",
+          created_by: req.requested_by,
+          updated_by: req.requested_by,
+        } as never);
+        if (error) throw error;
+        await setApprovalDecision(req.id, "approved");
+        await logAudit({ section: "Projects", action: "approve_create_project", entity: String(p.name), summary: `Approved project creation by ${req.requested_by_name}` });
+        toast.success("Project created");
+      } else if (req.request_type === "archive_project") {
+        const p = req.payload as Record<string, string>;
+        const { error } = await supabase.from("projects").update({
+          status: "Archived",
+          is_archived: true,
+          archived_at: new Date().toISOString(),
+          archive_reason: p.reason,
+        } as never).eq("id", p.project_id);
+        if (error) throw error;
+        await setApprovalDecision(req.id, "approved");
+        await logAudit({ section: "Projects", action: "approve_archive_project", entity: p.project_name, summary: `Archived — ${p.reason}` });
+        toast.success("Project archived");
       }
       setReviewing(null);
       refetchProfiles(); refetchReqs();
@@ -240,15 +264,30 @@ export default function UserManagement() {
                 )}
                 {userRequests.map(r => {
                   const p = r.payload as Record<string, string>;
-                  const summary = r.request_type === "add_user"
-                    ? `${p.full_name} as ${ROLE_LABELS[p.role as AppRole] || p.role}`
-                    : `Deactivate ${p.user_name || p.user_email} — ${p.reason}`;
+                  let summary = "";
+                  let typeLabel = "";
+                  switch (r.request_type) {
+                    case "add_user":
+                      typeLabel = "Add User";
+                      summary = `${p.full_name} as ${ROLE_LABELS[p.role as AppRole] || p.role}`;
+                      break;
+                    case "deactivate_user":
+                      typeLabel = "Deactivate";
+                      summary = `${p.user_name || p.user_email} — ${p.reason}`;
+                      break;
+                    case "create_project":
+                      typeLabel = "Create Project";
+                      summary = `${p.name}${p.client_name ? ` — ${p.client_name}` : ""}`;
+                      break;
+                    case "archive_project":
+                      typeLabel = "Archive Project";
+                      summary = `${p.project_name} — ${p.reason}`;
+                      break;
+                  }
                   return (
                     <TableRow key={r.id}>
                       <TableCell>
-                        <Badge variant="outline" className="text-[10px]">
-                          {r.request_type === "add_user" ? "Add User" : "Deactivate"}
-                        </Badge>
+                        <Badge variant="outline" className="text-[10px]">{typeLabel}</Badge>
                       </TableCell>
                       <TableCell className="text-xs max-w-[320px]">{summary}</TableCell>
                       <TableCell className="text-xs">{r.requested_by_name}</TableCell>
