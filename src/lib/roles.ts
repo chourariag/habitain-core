@@ -26,6 +26,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   stores_executive: "Stores Executive",
   accounts_executive: "Accounts Executive",
   hr_executive: "HR Executive",
+  planning_head: "Planning Head",
   principal_architect: "Principal Architect",
   project_architect: "Project Architect",
   structural_architect: "Structural Architect",
