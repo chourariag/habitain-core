@@ -35,8 +35,11 @@ const PRODUCTION_SYSTEMS: { value: "modular" | "panelised" | "hybrid"; label: st
   { value: "hybrid", label: "Hybrid", hint: "LGSF panels from Panel Bay installed into Module Bay" },
 ];
 
+const ALLOWED_RAISERS = ["planning_head", "managing_director", "super_admin"];
+
 export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDialogProps) {
   const { role } = useUserRole();
+  const canRaise = !!role && ALLOWED_RAISERS.includes(role);
   const requiresApproval = !!role && !["managing_director", "super_admin"].includes(role);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
