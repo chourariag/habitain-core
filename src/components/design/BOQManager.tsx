@@ -255,6 +255,7 @@ export function BOQManager({ projectId }: Props) {
       category: i.category,
       item_description: i.item_description,
       unit: i.unit,
+      tender_qty: i.tender_qty,
       actual_qty: i.actual_qty,
       wastage_pct: i.wastage_pct,
       boq_qty: i.boq_qty,
