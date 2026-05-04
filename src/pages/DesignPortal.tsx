@@ -1286,6 +1286,7 @@ export default function DesignPortal() {
                   userId={userId}
                   userName={userName}
                   onStatsChange={setDetailStats}
+                  onGfcQCChange={setGfcQcStats}
                 />
               )}
             </TabsContent>
