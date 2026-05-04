@@ -32,6 +32,7 @@ interface BoqItem {
   category: string;
   item_description: string;
   unit: string;
+  tender_qty: number;
   actual_qty: number;
   wastage_pct: number;
   boq_qty: number;
@@ -116,6 +117,7 @@ export function BOQManager({ projectId }: Props) {
       category: d.category,
       item_description: d.item_description,
       unit: d.unit || "",
+      tender_qty: d.tender_qty != null ? Number(d.tender_qty) : 0,
       actual_qty: Number(d.actual_qty),
       wastage_pct: Number(d.wastage_pct),
       boq_qty: Number(d.boq_qty),
@@ -173,16 +175,20 @@ export function BOQManager({ projectId }: Props) {
         if (!desc) return; // skip blank
 
         sno++;
-        const actualQty = Number(r[4]) || 0;
-        const wastagePct = Number(r[5]) || 0;
-        const boqQty = Number(r[6]) || (actualQty * (1 + wastagePct / 100));
-        const matRate = Number(r[7]) || 0;
-        const labRate = Number(r[8]) || 0;
-        const ohRate = Number(r[9]) || 0;
-        const boqRate = Number(r[10]) || (matRate + labRate + ohRate);
-        const totalAmt = Number(r[11]) || (boqQty * boqRate);
-        const marginPct = r[12] != null && r[12] !== "" ? Number(r[12]) : null;
-        const scope = String(r[13] || "Factory").trim();
+        // Columns: 0=S.No, 1=Category, 2=Item Description, 3=Unit, 4=Tender Qty,
+        // 5=Actual Qty, 6=Wastage %, 7=BOQ Qty, 8=Material Rate, 9=Labour Rate,
+        // 10=OH Rate, 11=BOQ Rate, 12=Total Amount, 13=Margin %, 14=Scope
+        const tenderQty = Number(r[4]) || 0;
+        const actualQty = Number(r[5]) || 0;
+        const wastagePct = Number(r[6]) || 0;
+        const boqQty = Number(r[7]) || (actualQty * (1 + wastagePct / 100));
+        const matRate = Number(r[8]) || 0;
+        const labRate = Number(r[9]) || 0;
+        const ohRate = Number(r[10]) || 0;
+        const boqRate = Number(r[11]) || (matRate + labRate + ohRate);
+        const totalAmt = Number(r[12]) || (boqQty * boqRate);
+        const marginPct = r[13] != null && r[13] !== "" ? Number(r[13]) : null;
+        const scope = String(r[14] || "Factory").trim();
         const category = String(r[1] || "Miscellaneous").trim();
 
         if (boqRate === 0) errors.push(`Row ${ri + headerIdx + 2}: "${desc}" has BOQ Rate = 0`);
@@ -193,6 +199,7 @@ export function BOQManager({ projectId }: Props) {
 
         parsed.push({
           sno, category, item_description: desc, unit: String(r[3] || ""),
+          tender_qty: tenderQty,
           actual_qty: actualQty, wastage_pct: wastagePct, boq_qty: boqQty,
           material_rate: matRate, labour_rate: labRate, oh_rate: ohRate,
           boq_rate: boqRate, total_amount: totalAmt, margin_pct: marginPct,
@@ -248,6 +255,7 @@ export function BOQManager({ projectId }: Props) {
       category: i.category,
       item_description: i.item_description,
       unit: i.unit,
+      tender_qty: i.tender_qty,
       actual_qty: i.actual_qty,
       wastage_pct: i.wastage_pct,
       boq_qty: i.boq_qty,

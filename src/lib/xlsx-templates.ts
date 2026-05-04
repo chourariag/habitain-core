@@ -69,8 +69,8 @@ export const TEMPLATES = {
   boq: {
     filename: "BOQ_Template.xlsx",
     sheet: "BOQ",
-    headers: ["S.No", "Category", "Item Description", "Unit", "Actual Qty", "Wastage %", "BOQ Qty", "Material Rate (₹)", "Labour Rate (₹)", "OH Rate (₹)", "BOQ Rate (₹)", "Total Amount (₹)", "Margin %", "Scope (Factory / On-Site Civil / Both)"] as const,
-    sample: [[1, "Structural Steel", "LGSF C-Channel 89mm", "RFT", 100, 10, 110, 85, 45, 15, 145, 15950, 8.5, "Factory"]] as const,
+    headers: ["S.No", "Category", "Item Description", "Unit", "Tender Qty", "Actual Qty", "Wastage %", "BOQ Qty", "Material Rate (₹)", "Labour Rate (₹)", "OH Rate (₹)", "BOQ Rate (₹)", "Total Amount (₹)", "Margin %", "Scope (Factory / On-Site Civil / Both)"] as const,
+    sample: [[1, "Structural Steel", "LGSF C-Channel 89mm", "RFT", 95, 100, 10, 110, 85, 45, 15, 145, 15950, 8.5, "Factory"]] as const,
   },
   budget: {
     filename: "Budget_Template.xlsx",
@@ -120,8 +120,8 @@ export const TEMPLATES = {
   tenderBudget: {
     filename: "Tender_Budget_Template.xlsx",
     sheet: "Tender Budget",
-    headers: ["Category", "Description", "Tender Qty", "Unit", "Material Rate (₹)", "Labour Rate (₹)", "OH Rate (₹)", "Total Rate (₹)", "Total Amount (₹)", "Margin %", "Notes"] as const,
-    sample: [["Structural Steel", "LGSF C-Channel 89mm x 3000mm", 500, "RFT", 85, 45, 15, 145, 72500, 8.5, ""]] as const,
+    headers: ["Category", "Description", "Tender Qty", "GFC Qty", "Unit", "Material Rate (₹)", "Labour Rate (₹)", "OH Rate (₹)", "Total Rate (₹)", "Total Amount (₹)", "Margin %", "Notes"] as const,
+    sample: [["Structural Steel", "LGSF C-Channel 89mm x 3000mm", 500, 510, "RFT", 85, 45, 15, 145, 73950, 8.5, "Total Amount = GFC Qty × Total Rate"]] as const,
   },
 } as const;
 

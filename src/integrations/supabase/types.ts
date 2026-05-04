@@ -4935,6 +4935,7 @@ export type Database = {
           procured_qty: number
           scope: string
           sno: number
+          tender_qty: number | null
           total_amount: number
           unit: string | null
           wastage_pct: number
@@ -4955,6 +4956,7 @@ export type Database = {
           procured_qty?: number
           scope?: string
           sno?: number
+          tender_qty?: number | null
           total_amount?: number
           unit?: string | null
           wastage_pct?: number
@@ -4975,6 +4977,7 @@ export type Database = {
           procured_qty?: number
           scope?: string
           sno?: number
+          tender_qty?: number | null
           total_amount?: number
           unit?: string | null
           wastage_pct?: number
@@ -5882,6 +5885,7 @@ export type Database = {
           category: string | null
           created_at: string
           description: string | null
+          gfc_qty: number | null
           id: string
           labour_rate: number | null
           margin_pct: number | null
@@ -5898,6 +5902,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          gfc_qty?: number | null
           id?: string
           labour_rate?: number | null
           margin_pct?: number | null
@@ -5914,6 +5919,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          gfc_qty?: number | null
           id?: string
           labour_rate?: number | null
           margin_pct?: number | null
