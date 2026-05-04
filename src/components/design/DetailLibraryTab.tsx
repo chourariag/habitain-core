@@ -31,9 +31,10 @@ interface Props {
   userId: string | null;
   userName: string;
   onStatsChange: (stats: { complete: number; inProgress: number; notStarted: number; na: number; total: number }) => void;
+  onGfcQCChange?: (stats: { checked: number; total: number; allChecked: boolean }) => void;
 }
 
-export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onStatsChange }: Props) {
+export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onStatsChange, onGfcQCChange }: Props) {
   const [details, setDetails] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState<string | null>(null);
