@@ -619,7 +619,11 @@ function ReviewDialog({ request, canDecide, onClose, onApprove, onReject }:{
     <Dialog open onOpenChange={(o)=>!o && (onClose(), setShowReject(false), setRejectReason(""))}>
       <DialogContent>
         <DialogHeader><DialogTitle>
-          {request.request_type === "add_user" ? "Add User Request" : "Deactivation Request"}
+          {request.request_type === "add_user" ? "Add User Request"
+            : request.request_type === "deactivate_user" ? "Deactivation Request"
+            : request.request_type === "create_project" ? "Create Project Request"
+            : request.request_type === "archive_project" ? "Archive Project Request"
+            : "Approval Request"}
         </DialogTitle></DialogHeader>
         <div className="space-y-2 text-sm">
           {Object.entries(p).map(([k, v]) => (
