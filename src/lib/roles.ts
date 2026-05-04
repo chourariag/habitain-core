@@ -1,6 +1,7 @@
 import { Database } from "@/integrations/supabase/types";
 
-export type AppRole = Database["public"]["Enums"]["app_role"];
+// `planning_head` is a newly-added enum value that may not yet be reflected in the auto-generated types.
+export type AppRole = Database["public"]["Enums"]["app_role"] | "planning_head";
 
 export const ROLE_LABELS: Record<AppRole, string> = {
   super_admin: "Super Admin",
