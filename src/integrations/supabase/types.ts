@@ -339,6 +339,45 @@ export type Database = {
         }
         Relationships: []
       }
+      approval_thresholds: {
+        Row: {
+          approval_type: string
+          id: string
+          notes: string | null
+          tier1_approver_role: string | null
+          tier1_max_amount: number | null
+          tier2_approver_role: string | null
+          tier2_max_amount: number | null
+          tier3_approver_role: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          approval_type: string
+          id?: string
+          notes?: string | null
+          tier1_approver_role?: string | null
+          tier1_max_amount?: number | null
+          tier2_approver_role?: string | null
+          tier2_max_amount?: number | null
+          tier3_approver_role?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          approval_type?: string
+          id?: string
+          notes?: string | null
+          tier1_approver_role?: string | null
+          tier1_max_amount?: number | null
+          tier2_approver_role?: string | null
+          tier2_max_amount?: number | null
+          tier3_approver_role?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       asset_register: {
         Row: {
           actual_return_date: string | null
@@ -791,6 +830,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      clients_master: {
+        Row: {
+          address: string | null
+          company_name: string
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          gstin: string | null
+          id: string
+          notes: string | null
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          company_name: string
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          company_name?: string
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          gstin?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       construction_journal: {
         Row: {
@@ -1872,6 +1950,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      escalation_rules: {
+        Row: {
+          active: boolean
+          alert_type: string
+          id: string
+          level1_owner_role: string | null
+          level1_sla_hours: number | null
+          level2_owner_role: string | null
+          level2_sla_hours: number | null
+          level3_owner_role: string | null
+          level3_sla_hours: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          alert_type: string
+          id?: string
+          level1_owner_role?: string | null
+          level1_sla_hours?: number | null
+          level2_owner_role?: string | null
+          level2_sla_hours?: number | null
+          level3_owner_role?: string | null
+          level3_sla_hours?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          alert_type?: string
+          id?: string
+          level1_owner_role?: string | null
+          level1_sla_hours?: number | null
+          level2_owner_role?: string | null
+          level2_sla_hours?: number | null
+          level3_owner_role?: string | null
+          level3_sla_hours?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
       }
       expense_entries: {
         Row: {
@@ -3345,6 +3465,39 @@ export type Database = {
         }
         Relationships: []
       }
+      master_data_uploads: {
+        Row: {
+          data_set: string
+          file_name: string | null
+          file_url: string | null
+          id: string
+          notes: string | null
+          record_count: number | null
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          data_set: string
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          record_count?: number | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          data_set?: string
+          file_name?: string | null
+          file_url?: string | null
+          id?: string
+          notes?: string | null
+          record_count?: number | null
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       material_alerts: {
         Row: {
           alert_type: string
@@ -3538,6 +3691,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      material_rate_benchmarks: {
+        Row: {
+          benchmark_rate: number
+          category: string
+          id: string
+          material_name: string
+          source: string | null
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          benchmark_rate: number
+          category: string
+          id?: string
+          material_name: string
+          source?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          benchmark_rate?: number
+          category?: string
+          id?: string
+          material_name?: string
+          source?: string | null
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       material_requests: {
         Row: {
@@ -4352,6 +4535,7 @@ export type Database = {
           predecessor_stage_numbers: string[] | null
           production_system: Database["public"]["Enums"]["production_system_type"]
           responsible_role: string | null
+          responsible_user_id: string | null
           stage_number: string
           task_name: string
           task_type: Database["public"]["Enums"]["task_template_type"]
@@ -4371,6 +4555,7 @@ export type Database = {
           predecessor_stage_numbers?: string[] | null
           production_system: Database["public"]["Enums"]["production_system_type"]
           responsible_role?: string | null
+          responsible_user_id?: string | null
           stage_number: string
           task_name: string
           task_type: Database["public"]["Enums"]["task_template_type"]
@@ -4390,13 +4575,22 @@ export type Database = {
           predecessor_stage_numbers?: string[] | null
           production_system?: Database["public"]["Enums"]["production_system_type"]
           responsible_role?: string | null
+          responsible_user_id?: string | null
           stage_number?: string
           task_name?: string
           task_type?: Database["public"]["Enums"]["task_template_type"]
           typical_duration_days?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "production_task_templates_responsible_user_id_fkey"
+            columns: ["responsible_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -6773,6 +6967,33 @@ export type Database = {
           },
         ]
       }
+      role_feature_access: {
+        Row: {
+          enabled: boolean
+          feature: string
+          id: string
+          role: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          enabled?: boolean
+          feature: string
+          id?: string
+          role: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          enabled?: boolean
+          feature?: string
+          id?: string
+          role?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       safety_incidents: {
         Row: {
           closed_at: string | null
@@ -7862,6 +8083,42 @@ export type Database = {
           },
         ]
       }
+      statutory_calendar: {
+        Row: {
+          active: boolean | null
+          applies_to: string | null
+          due_day: number | null
+          due_month: number | null
+          filing_name: string
+          id: string
+          notes: string | null
+          recurrence: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean | null
+          applies_to?: string | null
+          due_day?: number | null
+          due_month?: number | null
+          filing_name: string
+          id?: string
+          notes?: string | null
+          recurrence?: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean | null
+          applies_to?: string | null
+          due_day?: number | null
+          due_month?: number | null
+          filing_name?: string
+          id?: string
+          notes?: string | null
+          recurrence?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stores_inventory: {
         Row: {
           available_qty: number
@@ -8085,6 +8342,42 @@ export type Database = {
           typical_rate?: number | null
           updated_at?: string
           work_type?: string
+        }
+        Relationships: []
+      }
+      super_admin_audit_log: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          entity: string | null
+          id: string
+          new_value: Json | null
+          previous_value: Json | null
+          section: string
+          summary: string | null
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          entity?: string | null
+          id?: string
+          new_value?: Json | null
+          previous_value?: Json | null
+          section: string
+          summary?: string | null
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          entity?: string | null
+          id?: string
+          new_value?: Json | null
+          previous_value?: Json | null
+          section?: string
+          summary?: string | null
         }
         Relationships: []
       }
@@ -8955,6 +9248,7 @@ export type Database = {
       }
       is_director: { Args: { _user_id: string }; Returns: boolean }
       is_full_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_md: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
