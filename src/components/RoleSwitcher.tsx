@@ -28,8 +28,6 @@ export function RoleSwitcher({ collapsed }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
-  if (!canImpersonate) return null;
-
   const currentRole = role ?? actualRole ?? "managing_director";
   const currentUser =
     HSTACK_USERS.find((u) => u.role === currentRole) ??
