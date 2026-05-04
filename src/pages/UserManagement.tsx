@@ -82,7 +82,7 @@ export default function UserManagement() {
     return list;
   }, [profiles, statusFilter, search]);
 
-  if (!isRaiser && !isApprover) {
+  if (!isRaiser && !isApprover && !isProjectApprover) {
     return <div className="p-8 text-sm text-muted-foreground">You don&apos;t have access to User Management.</div>;
   }
 
