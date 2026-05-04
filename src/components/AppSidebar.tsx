@@ -140,6 +140,9 @@ export function AppSidebar() {
         <Logo size="sm" showText={!collapsed} />
       </div>
 
+      {/* Testing Mode role switcher (MD only) */}
+      <RoleSwitcher collapsed={collapsed} />
+
       {/* Project Selector */}
       {!collapsed && showProjectSelector && (
         <div className="px-3 pt-3 pb-1">
