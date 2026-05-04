@@ -15,6 +15,7 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
   projects: [
     ...DIRECTORS, "head_operations", "production_head", "site_installation_mgr",
     "finance_manager", "planning_engineer", "costing_engineer", "quantity_surveyor",
+    "planning_head" as AppRole,
   ],
   production: [
     ...DIRECTORS, "head_operations", "production_head", "factory_floor_supervisor",
