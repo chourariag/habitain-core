@@ -86,7 +86,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
 
       // Non-MD users must raise an approval request instead of creating directly
       if (requiresApproval) {
-        const { data: reqRow } = await raiseApprovalRequest("create_project", {
+        const reqRow = await raiseApprovalRequest("create_project", {
           name: name.trim(),
           client_name: clientName.trim() || null,
           client_phone: clientPhone.trim() || null,
