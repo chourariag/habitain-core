@@ -254,25 +254,27 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
         <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Issue {issueDialog?.stage === "advance_h1" ? "Advance GFC (H1)" : "Final GFC (H2)"}
+              {issueDialog?.stage === "advance_h1" ? "Issue H1 Sign-off (Advance GFC)" : "Issue H2 Sign-off (Final GFC)"}
             </DialogTitle>
           </DialogHeader>
-          <p className="text-sm" style={{ fontFamily: "var(--font-input)", color: "#666" }}>
-            Select which modules this GFC applies to:
-          </p>
-          <div className="space-y-2 max-h-60 overflow-y-auto border border-border rounded-md p-2">
+          <div className="space-y-2 text-sm">
+            <p><span className="text-muted-foreground">Project:</span> <span className="font-semibold">{projectName}</span></p>
+            <p><span className="text-muted-foreground">GFC Package:</span> {issueDialog?.stage === "advance_h1" ? "H1 — Architectural & Structural" : "H2 — MEP & Final"}</p>
+            <div className="bg-[#FFF8E8] border border-[#F4D58A] rounded p-2 text-xs">
+              I confirm the {issueDialog?.stage === "advance_h1"
+                ? "architectural and structural drawings are approved for production."
+                : "MEP, HVAC, material specs and client sign-off are approved for full production."}
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">Modules this sign-off applies to:</p>
+          <div className="space-y-2 max-h-52 overflow-y-auto border border-border rounded-md p-2">
             {modules.length === 0 ? (
               <p className="text-xs text-center py-4" style={{ color: "#999" }}>No modules found for this project</p>
             ) : (
               modules.map((m) => (
                 <label key={m.id} className="flex items-center gap-2 p-1.5 rounded hover:bg-accent/30 cursor-pointer">
-                  <Checkbox
-                    checked={selectedModules.includes(m.id)}
-                    onCheckedChange={() => toggleModule(m.id)}
-                  />
-                  <span className="text-sm" style={{ fontFamily: "var(--font-input)" }}>
-                    {m.module_code || m.name}
-                  </span>
+                  <Checkbox checked={selectedModules.includes(m.id)} onCheckedChange={() => toggleModule(m.id)} />
+                  <span className="text-sm" style={{ fontFamily: "var(--font-input)" }}>{m.module_code || m.name}</span>
                 </label>
               ))
             )}
@@ -282,9 +284,13 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
           </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIssueDialog(null)}>Cancel</Button>
-            <Button onClick={handleIssue} disabled={issuing || selectedModules.length === 0}>
+            <Button
+              onClick={handleIssue}
+              disabled={issuing || selectedModules.length === 0}
+              style={{ backgroundColor: "#006039", color: "white" }}
+            >
               {issuing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Confirm & Issue
+              Confirm {issueDialog?.stage === "advance_h1" ? "H1" : "H2"} Sign-off
             </Button>
           </DialogFooter>
         </DialogContent>
