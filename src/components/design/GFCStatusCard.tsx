@@ -34,7 +34,7 @@ type GfcRecord = {
   notes: string | null;
 };
 
-export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, userName, modules, designFile, onRefresh }: Props) {
+export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, userName, modules, designFile, qcStats, onRefresh }: Props) {
   const [records, setRecords] = useState<GfcRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [issueDialog, setIssueDialog] = useState<{ open: boolean; stage: "advance_h1" | "final_h2" } | null>(null);
