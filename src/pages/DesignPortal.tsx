@@ -181,7 +181,7 @@ export default function DesignPortal() {
     }
 
     const [projectsRes, drawingsRes, dqsRes, dfRes, dsRes, dcRes] = await Promise.all([
-      supabase.from("projects").select("id,name,client_name,status,updated_at").eq("is_archived", false).order("name"),
+      supabase.from("projects").select("id,name,client_name,status,updated_at,division,design_only").eq("is_archived", false).order("name"),
       (supabase.from("drawings") as any).select("*").eq("is_archived", false).order("created_at", { ascending: false }),
       (supabase.from("design_queries") as any).select("*").eq("is_archived", false).order("created_at", { ascending: false }),
       (supabase.from("project_design_files") as any).select("*"),
