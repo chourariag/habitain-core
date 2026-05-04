@@ -323,12 +323,56 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
             </div>
           </div>
           {!hasH1Signoff && (
-            <p className="text-xs flex items-center gap-1" style={{ color: "#D4860A" }}>
-              <Lock className="h-3 w-3" /> GFC budget upload is locked until H1 sign-off is recorded in the Design Portal
-            </p>
+            <div className="space-y-1">
+              <p className="text-xs flex items-center gap-1" style={{ color: "#D4860A" }}>
+                <Lock className="h-3 w-3" /> GFC budget upload is locked until H1 sign-off is recorded in the Design Portal
+              </p>
+              {isMd && (
+                <button
+                  type="button"
+                  onClick={() => setOverrideOpen(true)}
+                  className="text-xs underline hover:no-underline"
+                  style={{ color: "#F40009" }}
+                >
+                  MD override — upload without H1 sign-off →
+                </button>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
+
+      {/* MD Override Dialog */}
+      <Dialog open={overrideOpen} onOpenChange={setOverrideOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle style={{ color: "#F40009" }}>MD Override — GFC Budget Upload</DialogTitle>
+            <DialogDescription>
+              You are bypassing the H1 sign-off requirement. This action will be permanently logged in the audit trail with your name and timestamp.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="override-reason" className="text-xs font-semibold">
+              Reason for override <span style={{ color: "#F40009" }}>*</span>
+            </Label>
+            <Textarea
+              id="override-reason"
+              value={overrideReason}
+              onChange={(e) => setOverrideReason(e.target.value)}
+              placeholder="e.g. Karan has approved verbally on call, HStack sign-off pending — uploading to unblock procurement"
+              rows={4}
+              className="text-xs"
+            />
+            <p className="text-[11px] text-muted-foreground">Minimum 10 characters. Reason will be visible in the Super Admin audit trail.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => { setOverrideOpen(false); setOverrideReason(""); }}>Cancel</Button>
+            <Button size="sm" onClick={confirmOverride} style={{ backgroundColor: "#F40009", color: "white" }}>
+              Confirm Override & Upload
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Budget Comparison View */}
       {hasBothBudgets && (
