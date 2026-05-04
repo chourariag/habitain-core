@@ -30,7 +30,7 @@ export function ArchiveProjectDialog({ open, onOpenChange, projectId, projectNam
     setSubmitting(true);
     try {
       const finalReason = reason === "Other" ? reasonOther : reason;
-      await raiseApprovalRequest("archive_project", {
+      const reqRow: any = await raiseApprovalRequest("archive_project", {
         project_id: projectId,
         project_name: projectName,
         reason: finalReason,
@@ -38,6 +38,25 @@ export function ArchiveProjectDialog({ open, onOpenChange, projectId, projectNam
         materials_accounted: materialsAccounted,
       });
       await logAudit({ section: "Projects", action: "raise_archive_project", entity: projectName, summary: finalReason });
+      // Notify all MDs/super_admins
+      try {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { insertNotifications } = await import("@/lib/notifications");
+        const { data: mds } = await supabase.from("profiles")
+          .select("auth_user_id").in("role", ["managing_director", "super_admin"] as any).eq("is_active", true);
+        const recipients = (mds || []).map((m: any) => m.auth_user_id);
+        if (recipients.length) {
+          await insertNotifications(recipients.map((rid) => ({
+            recipient_id: rid,
+            title: `Archive request — ${projectName}`,
+            body: `Reason: ${finalReason}. Tap to review.`,
+            category: "approval_request",
+            related_table: "approval_requests",
+            related_id: reqRow?.id,
+            navigate_to: `/approvals?id=${reqRow?.id}`,
+          })));
+        }
+      } catch { /* ignore notify failure */ }
       toast.success("Archive request sent to MD for approval");
       onOpenChange(false);
       setReason(""); setReasonOther(""); setInvoicesSettled(false); setMaterialsAccounted(false);

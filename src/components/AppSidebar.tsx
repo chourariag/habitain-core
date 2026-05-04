@@ -3,8 +3,9 @@ import {
   LayoutDashboard, FolderKanban, Factory, ClipboardCheck,
   Truck, Package, ShoppingCart, ClipboardList, Compass,
   BarChart3, DollarSign, Wrench, Users, Settings,
-  ChevronLeft, ChevronRight, LogOut, Globe, Clock, Target, Bell, BookOpen, ShieldAlert,
+  ChevronLeft, ChevronRight, LogOut, Globe, Clock, Target, Bell, BookOpen, ShieldAlert, ShieldCheck,
 } from "lucide-react";
+import { usePendingApprovalsCount } from "@/hooks/usePendingApprovalsCount";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
@@ -80,6 +81,7 @@ const sectionConfig = [
     key: "admin",
     label: "Admin",
     items: [
+      { to: "/approvals", label: "Approvals", icon: ShieldCheck },
       { to: "/attendance", label: "HR & Attendance", icon: Clock },
       { to: "/admin", label: "Admin", icon: Users },
       { to: "/admin/users", label: "User Management", icon: Users },
@@ -103,6 +105,7 @@ const sectionConfig = [
 ];
 
 export function AppSidebar() {
+  const pendingApprovals = usePendingApprovalsCount();
   const [collapsed, setCollapsed] = useState(false);
   const { signOut } = useAuth();
   const { role, actualRole } = useUserRole();
@@ -216,7 +219,13 @@ export function AppSidebar() {
               {section.items.map((item) => (
                 <NavLink key={item.to} to={item.to} className={navLinkClass} style={navLinkStyle}>
                   <item.icon className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span>{item.label}</span>}
+                  {!collapsed && <span className="flex-1">{item.label}</span>}
+                  {item.to === "/approvals" && pendingApprovals > 0 && !collapsed && (
+                    <span className="rounded-full text-white text-[10px] font-bold flex items-center justify-center px-1.5 h-5 min-w-[20px]"
+                      style={{ background: "#F40009" }}>
+                      {pendingApprovals > 99 ? "99+" : pendingApprovals}
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </div>
