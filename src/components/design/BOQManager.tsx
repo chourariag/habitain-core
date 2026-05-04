@@ -32,6 +32,7 @@ interface BoqItem {
   category: string;
   item_description: string;
   unit: string;
+  tender_qty: number;
   actual_qty: number;
   wastage_pct: number;
   boq_qty: number;
