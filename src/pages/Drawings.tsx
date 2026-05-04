@@ -152,15 +152,50 @@ export default function Drawings() {
     if (!uploadFile) { toast.error("Please select a file"); return; }
     if (!uploadForm.project_id) { toast.error("Please select a project"); return; }
     if (!uploadForm.drawing_id_code) { toast.error("Please enter a Drawing ID"); return; }
+
+    // Sanitise inputs to be storage-key-safe (Supabase storage rejects many special chars)
+    const sanitiseSegment = (s: string) =>
+      s.normalize("NFKD")
+        .replace(/[^\w.-]+/g, "_")  // anything that isn't a-z, 0-9, _, . or -  ->  _
+        .replace(/_+/g, "_")
+        .replace(/^_|_$/g, "");
+
+    const drawingCode = uploadForm.drawing_id_code.trim();
+    const safeCode = sanitiseSegment(drawingCode);
+    const rawExt = uploadFile.name.includes(".") ? uploadFile.name.split(".").pop()! : "pdf";
+    const safeExt = sanitiseSegment(rawExt).toLowerCase() || "pdf";
+
+    // Duplicate check: if this drawing_id_code + revision already exists for the project
+    // (and it's not flagged as an explicit revision upload), block and prompt the user.
+    if (!uploadForm.existing_drawing_code) {
+      const conflict = drawings.find(
+        (d: any) =>
+          d.project_id === uploadForm.project_id &&
+          (d.drawing_id_code ?? "").trim().toLowerCase() === drawingCode.toLowerCase() &&
+          Number(d.revision) === Number(uploadForm.revision) &&
+          !d.is_archived
+      );
+      if (conflict) {
+        toast.error(
+          `Drawing ID ${drawingCode} (R${uploadForm.revision}) already exists for this project. Use a different ID or increment the revision number.`
+        );
+        return;
+      }
+    }
+
     setUploading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Upload file to storage
-      const ext = uploadFile.name.split(".").pop();
-      const path = `${uploadForm.project_id}/${uploadForm.drawing_id_code.replace(/\s/g, "_")}_R${uploadForm.revision}.${ext}`;
-      const { error: uploadErr } = await supabase.storage.from("drawings").upload(path, uploadFile, { upsert: true });
+      // Upload file to storage with sanitised path
+      const path = `${uploadForm.project_id}/${safeCode}_R${uploadForm.revision}_${Date.now()}.${safeExt}`;
+      const { error: uploadErr } = await supabase.storage
+        .from("drawings")
+        .upload(path, uploadFile, {
+          upsert: true,
+          contentType: uploadFile.type || "application/pdf",
+        });
       if (uploadErr) throw uploadErr;
       const { data: urlData } = supabase.storage.from("drawings").getPublicUrl(path);
 
@@ -180,7 +215,7 @@ export default function Drawings() {
             qsProfiles.map((p: any) => ({
               recipient_id: p.auth_user_id,
               title: "Drawing Revised",
-              body: `Drawing ${uploadForm.drawing_id_code} has been revised to R${uploadForm.revision}. Please review for quantity changes.`,
+              body: `Drawing ${drawingCode} has been revised to R${uploadForm.revision}. Please review for quantity changes.`,
               category: "design",
               related_table: "drawing",
             }))
@@ -192,11 +227,11 @@ export default function Drawings() {
       const { error } = await (client.from("drawings") as any).insert({
         project_id: uploadForm.project_id,
         module_id: uploadForm.module_id || null,
-        drawing_id_code: uploadForm.drawing_id_code,
+        drawing_id_code: drawingCode,
         drawing_type: uploadForm.drawing_type,
         revision: uploadForm.revision,
         file_url: urlData.publicUrl,
-        file_name: uploadFile.name,
+        file_name: uploadFile.name, // keep original name for display
         uploaded_by: user.id,
         uploaded_by_name: userName,
         notes: uploadForm.notes || null,
@@ -210,7 +245,8 @@ export default function Drawings() {
       setUploadForm({ project_id: "", module_id: "", drawing_type: "Architectural", drawing_id_code: "", notes: "", revision: 1, existing_drawing_code: "" });
       fetchData();
     } catch (err: any) {
-      toast.error(err.message || "Upload failed");
+      console.error("Drawing upload failed:", err);
+      toast.error(err?.message || "Upload failed");
     } finally {
       setUploading(false);
     }
