@@ -69,7 +69,9 @@ const STATUS_CONFIG: Record<string, { label: string; className: string; icon: an
 type ViewMode = "list" | "phase" | "gantt" | "delays" | "measurement" | "flags";
 
 const UPLOAD_ROLES = ["planning_engineer", "super_admin", "managing_director"];
-const EDIT_ROLES = ["planning_engineer", "production_head", "site_installation_manager", "site_manager", "super_admin", "managing_director"];
+const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
+// Production roles see a read-only, simplified stage rollup view (Fix 3 + Fix 4)
+const PRODUCTION_VIEW_ROLES = ["production_head", "factory_floor_supervisor", "fabrication_foreman", "site_installation_mgr", "site_engineer"];
 
 interface Props {
   projectId: string;
