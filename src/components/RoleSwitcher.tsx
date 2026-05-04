@@ -117,7 +117,7 @@ export function RoleSwitcher({ collapsed }: Props) {
                     <button
                       key={`${u.role}|${u.name}`}
                       type="button"
-                      onClick={() => selectUser(u.role)}
+                      onClick={() => selectUser(u.role, u.name)}
                       className="w-full px-3 py-1.5 text-left text-xs hover:bg-muted flex items-center justify-between gap-2"
                     >
                       <div className="min-w-0">
