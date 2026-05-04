@@ -129,7 +129,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
               body,
               category: "approval_request",
               related_table: "approval_requests",
-              related_id: (reqRow as any)?.id,
+              related_id: reqRow?.id,
               navigate_to: "/users",
             })));
           }
