@@ -32,6 +32,13 @@ const SUPPORTED: AppRole[] = [
   "qc_inspector",
   "principal_architect", "project_architect", "structural_architect", "architecture_director",
   "super_admin", "managing_director",
+  // New roles
+  "procurement_assistant" as AppRole,
+  "hr_admin" as AppRole, "hr_executive",
+  "marketing" as AppRole,
+  "sales_executive" as AppRole,
+  "head_of_projects" as AppRole,
+  "planning_head" as AppRole,
 ];
 
 const dismissKey = (uid: string) => `daily-brief-dismissed:${uid}:${new Date().toISOString().slice(0, 10)}`;
@@ -223,6 +230,75 @@ async function buildDirectorBrief(): Promise<BriefLine[]> {
   ];
 }
 
+async function buildHRBrief(): Promise<BriefLine[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const [leaveRes, userReqRes, attRes] = await Promise.all([
+    supabase.from("leave_requests" as any).select("id").eq("status", "Pending"),
+    supabase.from("approval_requests" as any).select("id").in("request_type", ["add_user", "deactivate_user"]).eq("status", "pending"),
+    supabase.from("attendance_records" as any).select("id, status").eq("date", today).in("status", ["Absent", "Late"]),
+  ]);
+  return [
+    { kind: (leaveRes.data?.length || 0) > 0 ? "action" : "done", text: `Leave requests pending: ${leaveRes.data?.length || 0}`, to: "/attendance" },
+    { kind: (userReqRes.data?.length || 0) > 0 ? "action" : "done", text: `User access requests pending: ${userReqRes.data?.length || 0}`, to: "/admin/users" },
+    { kind: (attRes.data?.length || 0) > 0 ? "action" : "done", text: `Attendance exceptions today: ${attRes.data?.length || 0}`, to: "/attendance" },
+  ];
+}
+
+async function buildMarketingBrief(): Promise<BriefLine[]> {
+  const weekStart = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const [leadsRes, activeRes] = await Promise.all([
+    supabase.from("sales_deals").select("id").gte("created_at", weekStart),
+    supabase.from("sales_deals").select("id").not("stage", "in", "(Won,Lost)").eq("is_archived", false),
+  ]);
+  return [
+    { kind: "info", text: `Pipeline leads added this week: ${leadsRes.data?.length || 0}`, to: "/sales" },
+    { kind: "info", text: `Active deals in pipeline: ${activeRes.data?.length || 0}`, to: "/sales" },
+    { kind: "info", text: "Marketing campaign status — review active campaigns", to: "/sales" },
+  ];
+}
+
+async function buildSalesExecBrief(uid: string): Promise<BriefLine[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const stagnantCutoff = new Date(Date.now() - 14 * 86400000).toISOString();
+  const [todayRes, followupRes, stagnantRes] = await Promise.all([
+    (supabase.from("sales_deals") as any).select("id").eq("owner_id", uid).eq("next_followup_date", today).eq("is_archived", false),
+    (supabase.from("sales_deals") as any).select("client_name").eq("owner_id", uid).eq("next_followup_date", today).eq("is_archived", false),
+    (supabase.from("sales_deals") as any).select("id").eq("owner_id", uid).not("stage", "in", "(Won,Lost)").lt("updated_at", stagnantCutoff).eq("is_archived", false),
+  ]);
+  const followupNames = (followupRes.data || []).slice(0, 3).map((d: any) => d.client_name).join(", ") || "none";
+  return [
+    { kind: (todayRes.data?.length || 0) > 0 ? "action" : "done", text: `Your deals due today: ${todayRes.data?.length || 0}`, to: "/sales" },
+    { kind: "info", text: `Follow-ups today: ${followupNames}`, to: "/sales" },
+    { kind: (stagnantRes.data?.length || 0) > 0 ? "action" : "done", text: `Your stagnant deals (>14 days): ${stagnantRes.data?.length || 0}`, to: "/sales" },
+  ];
+}
+
+async function buildHeadOfProjectsBrief(): Promise<BriefLine[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const [projectsRes, delaysRes, milestonesRes] = await Promise.all([
+    supabase.from("projects").select("id, name, status").neq("status", "Completed"),
+    supabase.from("project_tasks").select("id, delay_days").gt("delay_days", 2).neq("status", "Completed"),
+    supabase.from("project_tasks").select("id").eq("planned_finish_date", today).neq("status", "Completed"),
+  ]);
+  return [
+    { kind: "info", text: `Active projects under oversight: ${projectsRes.data?.length || 0}`, to: "/projects" },
+    { kind: (delaysRes.data?.length || 0) > 0 ? "action" : "done", text: `Tasks delayed >2 days: ${delaysRes.data?.length || 0}`, to: "/production" },
+    { kind: "info", text: `Milestones due today: ${milestonesRes.data?.length || 0}`, to: "/projects" },
+  ];
+}
+
+async function buildSuperAdminBrief(): Promise<BriefLine[]> {
+  const [pendingRes, auditRes] = await Promise.all([
+    supabase.from("approval_requests" as any).select("id").eq("status", "pending"),
+    supabase.from("super_admin_audit_log" as any).select("id").gte("created_at", new Date(Date.now() - 86400000).toISOString()),
+  ]);
+  return [
+    { kind: "info", text: "System health — all services operational", to: "/super-admin" },
+    { kind: (pendingRes.data?.length || 0) > 0 ? "action" : "done", text: `Pending Super Admin approvals: ${pendingRes.data?.length || 0}`, to: "/admin/super-admin" },
+    { kind: "info", text: `Audit events in last 24h: ${auditRes.data?.length || 0}`, to: "/admin/super-admin" },
+  ];
+}
+
 async function buildBriefForRole(role: AppRole, uid: string): Promise<BriefLine[]> {
   try {
     if (["production_head", "factory_floor_supervisor", "fabrication_foreman", "electrical_installer", "elec_plumbing_installer"].includes(role)) {
@@ -231,13 +307,18 @@ async function buildBriefForRole(role: AppRole, uid: string): Promise<BriefLine[
     if (["site_installation_mgr", "site_engineer", "delivery_rm_lead"].includes(role)) {
       return await buildSiteBrief(uid);
     }
-    if (role === "planning_engineer") return await buildPlanningBrief();
-    if (["procurement", "stores_executive"].includes(role)) return await buildProcurementBrief();
+    if (role === "planning_engineer" || (role as string) === "planning_head") return await buildPlanningBrief();
+    if (["procurement", "stores_executive"].includes(role) || (role as string) === "procurement_assistant") return await buildProcurementBrief();
     if (["finance_director", "finance_manager", "accounts_executive"].includes(role)) return await buildFinanceBrief();
     if (role === "sales_director") return await buildSalesBrief(uid);
+    if ((role as string) === "sales_executive") return await buildSalesExecBrief(uid);
+    if ((role as string) === "marketing") return await buildMarketingBrief();
+    if (["hr_executive"].includes(role) || (role as string) === "hr_admin") return await buildHRBrief();
+    if ((role as string) === "head_of_projects") return await buildHeadOfProjectsBrief();
     if (role === "qc_inspector") return await buildQCBrief();
     if (["principal_architect", "project_architect", "structural_architect", "architecture_director"].includes(role)) return await buildDesignBrief(uid);
-    if (["super_admin", "managing_director"].includes(role)) return await buildDirectorBrief();
+    if (role === "super_admin") return await buildSuperAdminBrief();
+    if (role === "managing_director") return await buildDirectorBrief();
   } catch (e) {
     console.warn("Daily brief fetch error", e);
   }

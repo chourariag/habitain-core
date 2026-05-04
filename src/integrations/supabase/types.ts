@@ -9352,6 +9352,13 @@ export type Database = {
         | "managing_director"
         | "super_admin"
         | "principal_architect"
+        | "planning_head"
+        | "head_of_projects"
+        | "procurement_assistant"
+        | "hr_admin"
+        | "marketing"
+        | "sales_executive"
+        | "logistics_manager"
       login_type: "email" | "otp"
       production_system_type: "modular" | "panelised" | "hybrid"
       task_template_type:
@@ -9514,6 +9521,13 @@ export const Constants = {
         "managing_director",
         "super_admin",
         "principal_architect",
+        "planning_head",
+        "head_of_projects",
+        "procurement_assistant",
+        "hr_admin",
+        "marketing",
+        "sales_executive",
+        "logistics_manager",
       ],
       login_type: ["email", "otp"],
       production_system_type: ["modular", "panelised", "hybrid"],
