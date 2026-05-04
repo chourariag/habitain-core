@@ -120,8 +120,8 @@ export const TEMPLATES = {
   tenderBudget: {
     filename: "Tender_Budget_Template.xlsx",
     sheet: "Tender Budget",
-    headers: ["Category", "Description", "Tender Qty", "Unit", "Material Rate (₹)", "Labour Rate (₹)", "OH Rate (₹)", "Total Rate (₹)", "Total Amount (₹)", "Margin %", "Notes"] as const,
-    sample: [["Structural Steel", "LGSF C-Channel 89mm x 3000mm", 500, "RFT", 85, 45, 15, 145, 72500, 8.5, ""]] as const,
+    headers: ["Category", "Description", "Tender Qty", "GFC Qty", "Unit", "Material Rate (₹)", "Labour Rate (₹)", "OH Rate (₹)", "Total Rate (₹)", "Total Amount (₹)", "Margin %", "Notes"] as const,
+    sample: [["Structural Steel", "LGSF C-Channel 89mm x 3000mm", 500, 510, "RFT", 85, 45, 15, 145, 73950, 8.5, "Total Amount = GFC Qty × Total Rate"]] as const,
   },
 } as const;
 
