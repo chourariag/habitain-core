@@ -162,32 +162,45 @@ export function ProductionStageTracker({
     setOverrideSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!handover?.handover_id) {
-        // Create a synthetic overridden handover so subsequent loads see it
-        const { error } = await (supabase as any).from("panel_handovers").insert({
-          project_id: projectId,
-          source_panel_bay: 0,
-          target_module_bay: 0,
-          status: "received",
-          override_reason: overrideReason.trim(),
-          overridden_by: user?.id ?? null,
-          overridden_at: new Date().toISOString(),
-          received_at: new Date().toISOString(),
-          received_by: user?.id ?? null,
-          created_by: user?.id ?? null,
-        });
-        if (error) throw error;
-      } else {
-        const { error } = await (supabase as any).from("panel_handovers").update({
-          override_reason: overrideReason.trim(),
-          overridden_by: user?.id ?? null,
-          overridden_at: new Date().toISOString(),
-          status: "received",
-          received_at: handover.received_at ?? new Date().toISOString(),
-        }).eq("id", handover.handover_id);
-        if (error) throw error;
+
+      // 1. Log override in audit table (do NOT touch panel_handovers — that's only for real handovers)
+      let userName: string | null = null;
+      if (user?.id) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("display_name")
+          .eq("auth_user_id", user.id)
+          .maybeSingle();
+        userName = (profile as any)?.display_name ?? null;
       }
-      toast.success("Override recorded — module can now proceed.");
+      const { error: logError } = await (supabase as any).from("task_lock_overrides").insert({
+        project_id: projectId,
+        module_id: moduleId,
+        task_id: null,
+        override_type: "panel_bay_handover",
+        reason: overrideReason.trim(),
+        user_id: user?.id ?? null,
+        user_name: userName,
+      });
+      if (logError) throw logError;
+
+      // 2. Bypass the lock by advancing the module bay stage directly
+      const nextIdx = currentIdx + 1;
+      if (nextIdx < stages.length) {
+        const { client } = await getAuthedClient();
+        const { error: advErr } = await client.from("modules").update({
+          current_stage: stages[nextIdx],
+          production_status: "in_progress",
+        } as any).eq("id", moduleId);
+        if (advErr) throw advErr;
+      }
+
+      // 3. Reflect override locally so the lock UI clears immediately
+      setHandover((prev) => prev
+        ? { ...prev, override_reason: overrideReason.trim(), status: "received" }
+        : { handover_id: "", status: "received", source_panel_bay: null, ready_at: null, received_at: new Date().toISOString(), override_reason: overrideReason.trim() });
+
+      toast.success("Override recorded — module advanced.");
       setOverrideOpen(false);
       setOverrideReason("");
       onAdvanced();
