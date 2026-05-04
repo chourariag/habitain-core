@@ -19,6 +19,7 @@ interface Props {
   userName: string;
   modules: { id: string; name: string; module_code: string | null }[];
   designFile: any;
+  qcStats?: { checked: number; total: number; allChecked: boolean };
   onRefresh: () => void;
 }
 
