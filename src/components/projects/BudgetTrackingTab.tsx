@@ -17,6 +17,8 @@ import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { logAudit } from "@/lib/super-admin";
 
 const BOQ_CATEGORIES = [
   "Structure", "Insulation", "Wall Boarding", "Ceiling", "Flooring",
@@ -67,8 +69,13 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
   const [uploading, setUploading] = useState(false);
   const [woCommitted, setWoCommitted] = useState<Record<string, number>>({});
   const gfcFileRef = useRef<HTMLInputElement>(null);
+  const [overrideOpen, setOverrideOpen] = useState(false);
+  const [overrideReason, setOverrideReason] = useState("");
+  const [overrideActive, setOverrideActive] = useState(false);
+  const overrideReasonRef = useRef<string>("");
 
   const canEdit = ["super_admin", "managing_director", "finance_director", "finance_manager", "planning_engineer", "procurement"].includes(userRole ?? "");
+  const isMd = ["super_admin", "managing_director"].includes(userRole ?? "");
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -243,13 +250,38 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
       }
 
       toast.success(`${items.length} GFC budget items uploaded`);
+      if (overrideActive) {
+        await logAudit({
+          section: "GFC Budget",
+          action: "MD Override Upload",
+          entity: `project:${projectId}`,
+          summary: `MD override — uploaded GFC budget without H1 sign-off. Reason: ${overrideReasonRef.current}`,
+          new_value: { project_id: projectId, reason: overrideReasonRef.current, items_count: items.length },
+        });
+        toast.info("MD override logged in audit trail");
+      }
       fetchAll();
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
     } finally {
       setUploading(false);
+      setOverrideActive(false);
+      overrideReasonRef.current = "";
       if (gfcFileRef.current) gfcFileRef.current.value = "";
     }
+  };
+
+  const confirmOverride = () => {
+    if (!overrideReason.trim() || overrideReason.trim().length < 10) {
+      toast.error("Please enter a detailed reason (min 10 characters)");
+      return;
+    }
+    overrideReasonRef.current = overrideReason.trim();
+    setOverrideActive(true);
+    setOverrideOpen(false);
+    setOverrideReason("");
+    // Open file picker
+    setTimeout(() => gfcFileRef.current?.click(), 100);
   };
 
   const hasBothBudgets = tenderTotal > 0 && totalBudget > 0;
@@ -291,12 +323,56 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
             </div>
           </div>
           {!hasH1Signoff && (
-            <p className="text-xs flex items-center gap-1" style={{ color: "#D4860A" }}>
-              <Lock className="h-3 w-3" /> GFC budget upload is locked until H1 sign-off is recorded in the Design Portal
-            </p>
+            <div className="space-y-1">
+              <p className="text-xs flex items-center gap-1" style={{ color: "#D4860A" }}>
+                <Lock className="h-3 w-3" /> GFC budget upload is locked until H1 sign-off is recorded in the Design Portal
+              </p>
+              {isMd && (
+                <button
+                  type="button"
+                  onClick={() => setOverrideOpen(true)}
+                  className="text-xs underline hover:no-underline"
+                  style={{ color: "#F40009" }}
+                >
+                  MD override — upload without H1 sign-off →
+                </button>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
+
+      {/* MD Override Dialog */}
+      <Dialog open={overrideOpen} onOpenChange={setOverrideOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle style={{ color: "#F40009" }}>MD Override — GFC Budget Upload</DialogTitle>
+            <DialogDescription>
+              You are bypassing the H1 sign-off requirement. This action will be permanently logged in the audit trail with your name and timestamp.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="override-reason" className="text-xs font-semibold">
+              Reason for override <span style={{ color: "#F40009" }}>*</span>
+            </Label>
+            <Textarea
+              id="override-reason"
+              value={overrideReason}
+              onChange={(e) => setOverrideReason(e.target.value)}
+              placeholder="e.g. Karan has approved verbally on call, HStack sign-off pending — uploading to unblock procurement"
+              rows={4}
+              className="text-xs"
+            />
+            <p className="text-[11px] text-muted-foreground">Minimum 10 characters. Reason will be visible in the Super Admin audit trail.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => { setOverrideOpen(false); setOverrideReason(""); }}>Cancel</Button>
+            <Button size="sm" onClick={confirmOverride} style={{ backgroundColor: "#F40009", color: "white" }}>
+              Confirm Override & Upload
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Budget Comparison View */}
       {hasBothBudgets && (
