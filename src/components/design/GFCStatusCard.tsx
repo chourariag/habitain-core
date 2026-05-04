@@ -186,11 +186,33 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
                   {h1.module_group?.length > 0 && ` · ${h1.module_group.length} modules`}
                 </p>
               ) : (
-                isPrincipal && (
-                  <Button size="sm" variant="outline" className="text-xs mt-1" onClick={() => openIssueDialog("advance_h1")}>
-                    Issue Advance GFC
-                  </Button>
-                )
+                isPrincipal && (() => {
+                  const qcReady = qcStats?.allChecked ?? false;
+                  const qcMsg = qcStats
+                    ? `${qcStats.checked} / ${qcStats.total} GFC QC items checked`
+                    : "Complete the GFC QC checklist in Detail Library";
+                  return (
+                    <div className="space-y-1 mt-1">
+                      <Button
+                        size="sm"
+                        className="text-xs w-full font-semibold"
+                        style={{
+                          backgroundColor: qcReady ? "#006039" : undefined,
+                          color: qcReady ? "white" : undefined,
+                        }}
+                        variant={qcReady ? "default" : "outline"}
+                        disabled={!qcReady}
+                        onClick={() => openIssueDialog("advance_h1")}
+                        title={qcReady ? "All 18 GFC QC items checked — ready to sign off" : qcMsg}
+                      >
+                        {qcReady ? "✓ Issue H1 Sign-off" : "Issue H1 Sign-off"}
+                      </Button>
+                      <p className="text-[10px]" style={{ color: qcReady ? "#006039" : "#D4860A" }}>
+                        {qcMsg}
+                      </p>
+                    </div>
+                  );
+                })()
               )}
             </div>
 
@@ -210,8 +232,13 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
                 </p>
               ) : h1 ? (
                 isPrincipal && (
-                  <Button size="sm" variant="outline" className="text-xs mt-1" onClick={() => openIssueDialog("final_h2")}>
-                    Issue Final GFC
+                  <Button
+                    size="sm"
+                    className="text-xs mt-1 w-full font-semibold"
+                    style={{ backgroundColor: "#006039", color: "white" }}
+                    onClick={() => openIssueDialog("final_h2")}
+                  >
+                    Issue H2 Sign-off
                   </Button>
                 )
               ) : (
