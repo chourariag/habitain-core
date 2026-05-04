@@ -425,18 +425,27 @@ function TenderBudgetSection({ dealId, projectId, deal, onSaved }: { dealId: str
       const items: any[] = [];
       let totalAmt = 0;
       for (const row of rows) {
-        const amt = Number(row["Total Amount (₹)"] || row["Total Amount"] || 0);
+        const tenderQty = Number(row["Tender Qty"] || 0);
+        const gfcQtyRaw = row["GFC Qty"];
+        const gfcQty = gfcQtyRaw === "" || gfcQtyRaw === undefined || gfcQtyRaw === null
+          ? tenderQty
+          : Number(gfcQtyRaw) || 0;
+        const totalRate = Number(row["Total Rate (₹)"] || 0);
+        // Total Amount = GFC Qty × Total Rate (recalculated to override any stale value in the file)
+        const computedAmt = gfcQty * totalRate;
+        const amt = computedAmt || Number(row["Total Amount (₹)"] || row["Total Amount"] || 0);
         if (!row["Category"] && !amt) continue;
         totalAmt += amt;
         items.push({
           category: row["Category"] || "",
           description: row["Description"] || "",
-          tender_qty: Number(row["Tender Qty"] || 0),
+          tender_qty: tenderQty,
+          gfc_qty: gfcQty,
           unit: row["Unit"] || "",
           material_rate: Number(row["Material Rate (₹)"] || 0),
           labour_rate: Number(row["Labour Rate (₹)"] || 0),
           oh_rate: Number(row["OH Rate (₹)"] || 0),
-          total_rate: Number(row["Total Rate (₹)"] || 0),
+          total_rate: totalRate,
           total_amount: amt,
           margin_pct: Number(row["Margin %"] || 0),
           notes: row["Notes"] || "",
