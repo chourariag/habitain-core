@@ -88,6 +88,7 @@ const App = () => (
                 <Route path="/factory/floor-map" element={<FactoryFloorMap />} />
                 <Route path="/capacity" element={<CapacityPlanning />} />
                 <Route path="/sops" element={<SOPs />} />
+                <Route path="/super-admin" element={<SuperAdmin />} />
               </Route>
               <Route path="/client/:projectToken" element={<ClientPortal />} />
               <Route path="*" element={<NotFound />} />
