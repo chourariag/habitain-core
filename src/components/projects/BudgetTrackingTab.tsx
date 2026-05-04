@@ -17,6 +17,8 @@ import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { logAudit } from "@/lib/super-admin";
 
 const BOQ_CATEGORIES = [
   "Structure", "Insulation", "Wall Boarding", "Ceiling", "Flooring",
