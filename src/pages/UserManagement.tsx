@@ -23,9 +23,10 @@ import { logAudit } from "@/lib/super-admin";
 
 const RAISER_ROLES = [
   "managing_director","super_admin","finance_director","sales_director",
-  "architecture_director","head_operations","hr_executive","planning_engineer",
+  "architecture_director","head_operations","hr_executive","planning_head",
 ];
 const MD_ROLES = ["managing_director","super_admin"];
+const PROJECT_APPROVER_ROLES = ["managing_director","super_admin","sales_director","principal_architect"];
 const TEMP_PASSWORD = "HStack@2026";
 
 type Profile = {
@@ -40,6 +41,7 @@ export default function UserManagement() {
   const { user } = useAuth();
   const isRaiser = !!role && RAISER_ROLES.includes(role);
   const isApprover = !!role && MD_ROLES.includes(role);
+  const isProjectApprover = !!role && PROJECT_APPROVER_ROLES.includes(role);
 
   const [tab, setTab] = useState("users");
   const [search, setSearch] = useState("");
