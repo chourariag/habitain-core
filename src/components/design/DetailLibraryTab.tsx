@@ -12,6 +12,7 @@ import { getAuthedClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { STANDARD_DETAILS } from "@/lib/design-checklist-data";
+import { GFCQCChecklistSection } from "./GFCQCChecklistSection";
 
 const STATUSES = ["Not Started", "In Progress", "Complete", "Not Applicable"] as const;
 
