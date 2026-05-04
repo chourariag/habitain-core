@@ -380,7 +380,14 @@ export default function UserManagement() {
 
       <ReviewDialog
         request={reviewing}
-        canDecide={isApprover && reviewing?.status === "pending"}
+        canDecide={
+          reviewing?.status === "pending" && (
+            isApprover ||
+            (reviewing?.request_type === "create_project" && isProjectApprover &&
+              ((((reviewing.payload as any)?.division || "Habitainer") === "Habitainer" && role === "sales_director") ||
+               ((reviewing.payload as any)?.division === "ADS" && role === "principal_architect")))
+          )
+        }
         onClose={() => setReviewing(null)}
         onApprove={handleApprove}
         onReject={handleReject}
