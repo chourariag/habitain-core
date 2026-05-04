@@ -117,6 +117,7 @@ export function BOQManager({ projectId }: Props) {
       category: d.category,
       item_description: d.item_description,
       unit: d.unit || "",
+      tender_qty: d.tender_qty != null ? Number(d.tender_qty) : 0,
       actual_qty: Number(d.actual_qty),
       wastage_pct: Number(d.wastage_pct),
       boq_qty: Number(d.boq_qty),
