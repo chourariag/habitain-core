@@ -197,13 +197,22 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
         const desc = row["Item Description"] || row["Description"] || "";
         const totalAmt = Number(row["Total Amount (₹)"] || row["Total Amount"] || 0);
         if (!desc && !totalAmt) continue;
+        const tenderQty = Number(row["Tender Qty"] || 0);
+        const actualQty = Number(row["Actual Qty"] || 0);
+        const wastagePct = Number(row["Wastage %"] || 0);
+        // BOQ Qty = Actual Qty + Wastage% (compute if not supplied)
+        const boqQtyRaw = row["BOQ Qty"];
+        const boqQty = boqQtyRaw === "" || boqQtyRaw === undefined || boqQtyRaw === null
+          ? actualQty * (1 + wastagePct / 100)
+          : Number(boqQtyRaw) || 0;
         items.push({
           category: cat,
           item_description: desc,
           unit: row["Unit"] || "",
-          actual_qty: Number(row["Actual Qty"] || 0),
-          wastage_pct: Number(row["Wastage %"] || 0),
-          boq_qty: Number(row["BOQ Qty"] || 0),
+          tender_qty: tenderQty,
+          actual_qty: actualQty,
+          wastage_pct: wastagePct,
+          boq_qty: boqQty,
           material_rate: Number(row["Material Rate (₹)"] || row["Material Rate"] || 0),
           labour_rate: Number(row["Labour Rate (₹)"] || row["Labour Rate"] || 0),
           oh_rate: Number(row["OH Rate (₹)"] || row["OH Rate"] || 0),
