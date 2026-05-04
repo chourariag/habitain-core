@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Box, FileText, Phone, Mail, IndianRupee, ClipboardList, Package, GitCompareArrows, ScrollText, Wallet } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Box, FileText, Phone, Mail, IndianRupee, ClipboardList, Package, GitCompareArrows, ScrollText, Wallet, Archive } from "lucide-react";
 import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 import { AddModuleDialog } from "@/components/projects/AddModuleDialog";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
+import { ArchiveProjectDialog } from "@/components/projects/ArchiveProjectDialog";
 
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { ClientPortalManager } from "@/components/projects/ClientPortalManager";
@@ -25,6 +26,7 @@ import { useProjectContext } from "@/contexts/ProjectContext";
 
 const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admin", "managing_director"];
+const ARCHIVE_REQUEST_ROLES = ["managing_director", "super_admin", "finance_director", "sales_director", "architecture_director"];
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -35,11 +37,13 @@ export default function ProjectDetail() {
   const [panels, setPanels] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const [addModuleOpen, setAddModuleOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [hasHandover, setHasHandover] = useState(false);
 
   const canEdit = EDIT_ROLES.includes(userRole ?? "");
   const canAdvanceStage = STAGE_ADVANCE_ROLES.includes(userRole ?? "");
+  const canRequestArchive = ARCHIVE_REQUEST_ROLES.includes(userRole ?? "");
 
   // Sync sidebar project selector with URL param
   useEffect(() => {
@@ -124,6 +128,11 @@ export default function ProjectDetail() {
           </div>
           {project.client_name && <p className="text-muted-foreground mt-1">{project.client_name}</p>}
         </div>
+        {canRequestArchive && proj.status !== "Archived" && (
+          <Button variant="outline" size="sm" onClick={() => setArchiveOpen(true)} className="gap-1.5 shrink-0">
+            <Archive className="h-4 w-4" /> Request Archive
+          </Button>
+        )}
       </div>
 
       <div className="bg-card rounded-lg p-4 shadow-sm flex flex-wrap gap-x-6 gap-y-2 text-sm">
