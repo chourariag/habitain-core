@@ -8142,6 +8142,42 @@ export type Database = {
           },
         ]
       }
+      task_lock_overrides: {
+        Row: {
+          created_at: string
+          id: string
+          module_id: string | null
+          override_type: string
+          project_id: string | null
+          reason: string
+          task_id: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          module_id?: string | null
+          override_type: string
+          project_id?: string | null
+          reason: string
+          task_id?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          module_id?: string | null
+          override_type?: string
+          project_id?: string | null
+          reason?: string
+          task_id?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
