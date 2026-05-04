@@ -81,6 +81,8 @@ export default function DesignPortal() {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [projectFileTab, setProjectFileTab] = useState("design-file");
   const [detailStats, setDetailStats] = useState({ complete: 0, inProgress: 0, notStarted: 40, na: 0, total: 40 });
+  // Fix 5: GFC 18-point QC checklist gating for H1 issuance
+  const [gfcQcStats, setGfcQcStats] = useState<{ checked: number; total: number; allChecked: boolean }>({ checked: 0, total: 18, allChecked: false });
 
   // Filters
   const [dqFilterProject, setDqFilterProject] = useState("all");
