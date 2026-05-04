@@ -24,12 +24,13 @@ interface Props {
 }
 
 export function RoleSwitcher({ collapsed }: Props) {
-  const { actualRole, role, canImpersonate, setOverrideRole } = useUserRole();
+  const { actualRole, role, canImpersonate, personaName, setOverrideRole } = useUserRole();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
   const currentRole = role ?? actualRole ?? "managing_director";
   const currentUser =
+    (personaName ? { name: personaName, role: currentRole, group: "" } : null) ??
     HSTACK_USERS.find((u) => u.role === currentRole) ??
     { name: "Managing Director", role: currentRole, group: "" };
 
