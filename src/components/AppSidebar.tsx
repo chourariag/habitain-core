@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTranslation } from "react-i18next";
 import type { AppRole } from "@/lib/roles";
+import { RoleSwitcher } from "./RoleSwitcher";
 
 const DESIGN_ROLES = ["principal_architect", "project_architect", "structural_architect", "managing_director", "super_admin", "finance_director", "sales_director", "architecture_director"];
 
@@ -138,6 +139,9 @@ export function AppSidebar() {
       <div className="flex items-center px-4 h-16 shrink-0" style={{ borderBottom: "1px solid #E0E0E0" }}>
         <Logo size="sm" showText={!collapsed} />
       </div>
+
+      {/* Testing Mode role switcher (MD only) */}
+      <RoleSwitcher collapsed={collapsed} />
 
       {/* Project Selector */}
       {!collapsed && showProjectSelector && (

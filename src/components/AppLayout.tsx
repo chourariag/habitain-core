@@ -7,12 +7,14 @@ import { ProjectBreadcrumb } from "./ProjectBreadcrumb";
 import { ProjectProvider } from "@/contexts/ProjectContext";
 import { ConnectionIndicator } from "./ConnectionIndicator";
 import { NotificationBell } from "./notifications/NotificationBell";
+import { TestingModeBanner } from "./TestingModeBanner";
 
 export function AppLayout() {
   return (
     <ProjectProvider>
       <div className="flex flex-col h-screen bg-background overflow-x-hidden max-w-[100vw]">
         <OfflineBanner />
+        <TestingModeBanner />
         <div className="flex flex-1 overflow-hidden">
           <AppSidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
