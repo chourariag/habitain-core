@@ -54,6 +54,8 @@ export function RoleSwitcher({ collapsed }: Props) {
     setQuery("");
   }
 
+  if (!canImpersonate) return null;
+
   if (collapsed) {
     return (
       <div className="flex items-center justify-center py-2" title="Testing Mode">
