@@ -69,7 +69,9 @@ const STATUS_CONFIG: Record<string, { label: string; className: string; icon: an
 type ViewMode = "list" | "phase" | "gantt" | "delays" | "measurement" | "flags";
 
 const UPLOAD_ROLES = ["planning_engineer", "super_admin", "managing_director"];
-const EDIT_ROLES = ["planning_engineer", "production_head", "site_installation_manager", "site_manager", "super_admin", "managing_director"];
+const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
+// Production roles see a read-only, simplified stage rollup view (Fix 3 + Fix 4)
+const PRODUCTION_VIEW_ROLES = ["production_head", "factory_floor_supervisor", "fabrication_foreman", "site_installation_mgr", "site_engineer"];
 
 interface Props {
   projectId: string;
@@ -91,9 +93,10 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set());
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const canUpload = UPLOAD_ROLES.includes(userRole ?? "");
-  const canEdit = EDIT_ROLES.includes(userRole ?? "");
-  const canOverride = ["planning_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
+  const isProductionView = PRODUCTION_VIEW_ROLES.includes(userRole ?? "");
+  const canUpload = UPLOAD_ROLES.includes(userRole ?? "") && !isProductionView;
+  const canEdit = EDIT_ROLES.includes(userRole ?? "") && !isProductionView;
+  const canOverride = ["planning_engineer", "super_admin", "managing_director"].includes(userRole ?? "") && !isProductionView;
   const PHASES = useMemo(() => getPhasesForSystem(productionSystem), [productionSystem]);
 
   const fetchTasks = useCallback(async () => {
@@ -432,6 +435,10 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  if (isProductionView) {
+    return <ProductionStageRollup tasks={tasks} userRole={userRole} liveStatus={liveStatus} getDelay={getDelay} />;
   }
 
   return (
@@ -867,6 +874,169 @@ function GanttView({ tasks, taskMap, getDelay }: { tasks: ProjectTask[]; taskMap
                 })}
               </div>
             </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ===================== PRODUCTION STAGE ROLLUP (read-only, simplified) ===================== */
+function ProductionStageRollup({ tasks, userRole, liveStatus, getDelay }: {
+  tasks: ProjectTask[];
+  userRole: string | null;
+  liveStatus: (t: ProjectTask) => string;
+  getDelay: (t: ProjectTask) => number;
+}) {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const stages = useMemo(() => {
+    const groups: Record<string, ProjectTask[]> = {};
+    for (const t of tasks) {
+      const key = (t.stage_number ?? "").split(".")[0] || t.phase || "Other";
+      (groups[key] = groups[key] ?? []).push(t);
+    }
+    return Object.entries(groups)
+      .map(([key, items]) => {
+        const total = items.length;
+        const done = items.filter((i) => i.completion_percentage === 100).length;
+        const inProg = items.filter((i) => i.completion_percentage > 0 && i.completion_percentage < 100).length;
+        const overdue = items.filter((i) => liveStatus(i) === "Overdue").length;
+        const avg = total ? Math.round(items.reduce((s, i) => s + (i.completion_percentage || 0), 0) / total) : 0;
+        const dates = items.map((i) => i.planned_start_date).filter(Boolean) as string[];
+        const ends = items.map((i) => i.planned_finish_date).filter(Boolean) as string[];
+        const start = dates.length ? dates.sort()[0] : null;
+        const end = ends.length ? ends.sort().reverse()[0] : null;
+        const phaseLabel = items[0]?.phase ?? key;
+        return { key, label: `Stage ${key} — ${phaseLabel}`, items, total, done, inProg, overdue, avg, start, end };
+      })
+      .sort((a, b) => {
+        const an = parseFloat(a.key); const bn = parseFloat(b.key);
+        if (!isNaN(an) && !isNaN(bn)) return an - bn;
+        return a.key.localeCompare(b.key);
+      });
+  }, [tasks, liveStatus]);
+
+  const myTasks = useMemo(
+    () => tasks.filter((t) => t.responsible_role === userRole && t.completion_percentage < 100),
+    [tasks, userRole]
+  );
+
+  const toggle = (k: string) => setExpanded((p) => {
+    const n = new Set(p); n.has(k) ? n.delete(k) : n.add(k); return n;
+  });
+
+  if (tasks.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <p className="text-muted-foreground text-sm">No schedule available yet. Karthik will publish the schedule shortly.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h2 className="font-display text-lg font-semibold text-foreground">Production Schedule</h2>
+        <Badge variant="outline" className="bg-muted text-muted-foreground border-border gap-1">
+          <Lock className="h-3 w-3" /> Read-only — contact Karthik to amend
+        </Badge>
+      </div>
+
+      {/* My Tasks */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Circle className="h-4 w-4 text-[#006039]" /> My Open Tasks ({myTasks.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {myTasks.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No open tasks assigned to you in this project.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {myTasks.map((t) => {
+                const status = liveStatus(t);
+                const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG["Upcoming"];
+                const delay = getDelay(t);
+                return (
+                  <div key={t.id} className="flex items-center justify-between gap-2 py-1.5 px-2 rounded border bg-background text-xs">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-mono text-muted-foreground shrink-0">{t.task_id_in_schedule}</span>
+                      <span className="truncate">{t.task_name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-muted-foreground">{t.planned_finish_date ? format(new Date(t.planned_finish_date), "dd MMM") : "-"}</span>
+                      {delay > 0 && <span className="text-red-600 font-medium">+{delay}d</span>}
+                      <Badge variant="outline" className={cfg.className}>{cfg.label}</Badge>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Stage rollups */}
+      <div className="space-y-2">
+        {stages.map((s) => {
+          const isOpen = expanded.has(s.key);
+          return (
+            <Card key={s.key}>
+              <button
+                onClick={() => toggle(s.key)}
+                className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-muted/30 transition-colors"
+              >
+                {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-sm">{s.label}</span>
+                    {s.overdue > 0 && <Badge className="bg-red-100 text-red-800 border-red-200 text-[10px]">{s.overdue} overdue</Badge>}
+                    {s.done === s.total && <Badge className="bg-green-100 text-green-800 border-green-200 text-[10px]">Complete</Badge>}
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                    <span>{s.done}/{s.total} tasks</span>
+                    {s.inProg > 0 && <span>· {s.inProg} in progress</span>}
+                    {s.start && <span>· {format(new Date(s.start), "dd MMM")} → {s.end ? format(new Date(s.end), "dd MMM") : "-"}</span>}
+                  </div>
+                </div>
+                <div className="w-32 shrink-0">
+                  <div className="w-full bg-muted rounded-full h-1.5">
+                    <div className="bg-[#006039] h-1.5 rounded-full transition-all" style={{ width: `${s.avg}%` }} />
+                  </div>
+                  <div className="text-[10px] text-muted-foreground text-right mt-0.5">{s.avg}%</div>
+                </div>
+              </button>
+              {isOpen && (
+                <div className="border-t bg-muted/10 px-4 py-2 space-y-1">
+                  {s.items.map((t) => {
+                    const status = liveStatus(t);
+                    const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG["Upcoming"];
+                    const delay = getDelay(t);
+                    const isMine = t.responsible_role === userRole;
+                    return (
+                      <div key={t.id} className={`flex items-center justify-between gap-2 py-1.5 text-xs ${isMine ? "font-medium" : ""}`}>
+                        <div className="flex items-center gap-2 min-w-0">
+                          {t.is_locked && <Lock className="h-3 w-3 text-muted-foreground shrink-0" />}
+                          <span className="font-mono text-muted-foreground shrink-0">{t.task_id_in_schedule}</span>
+                          <span className="truncate">{t.task_name}</span>
+                          {isMine && <Badge variant="outline" className="text-[10px] bg-[#006039]/10 text-[#006039] border-[#006039]/20">Mine</Badge>}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-muted-foreground">{t.planned_finish_date ? format(new Date(t.planned_finish_date), "dd MMM") : "-"}</span>
+                          {delay > 0 && <span className="text-red-600">+{delay}d</span>}
+                          <span className="text-muted-foreground w-10 text-right">{t.completion_percentage}%</span>
+                          <Badge variant="outline" className={`${cfg.className} text-[10px]`}>{cfg.label}</Badge>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </Card>
           );
         })}
       </div>
