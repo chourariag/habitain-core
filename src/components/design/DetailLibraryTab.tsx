@@ -148,6 +148,15 @@ export function DetailLibraryTab({ projectId, isArchitect, userId, userName, onS
 
   return (
     <div className="space-y-4">
+      {/* Fix 5: GFC QC Checklist (Karan's 18-point sign-off gate) — sits above the standard register */}
+      <GFCQCChecklistSection
+        projectId={projectId}
+        isArchitect={isArchitect}
+        userId={userId}
+        userName={userName}
+        onChange={onGfcQCChange}
+      />
+
       {/* Summary tiles */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
