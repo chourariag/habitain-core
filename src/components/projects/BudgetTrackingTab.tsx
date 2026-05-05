@@ -20,11 +20,7 @@ import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { logAudit } from "@/lib/super-admin";
 
-const BOQ_CATEGORIES = [
-  "Structure", "Insulation", "Wall Boarding", "Ceiling", "Flooring",
-  "Openings", "Cladding", "Painting", "Waterproofing",
-  "MEP Electrical", "MEP Plumbing", "Civil", "Miscellaneous",
-];
+// Categories are derived dynamically from each project's uploaded BOQ. Manual entries default to "Miscellaneous".
 
 interface Props {
   projectId: string;
