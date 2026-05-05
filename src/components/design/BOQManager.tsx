@@ -308,13 +308,29 @@ export function BOQManager({ projectId }: Props) {
 
   // Pending upload confirmation
   if (pendingItems && pendingSummary) {
+    const pendingByCat = pendingItems.reduce<Record<string, number>>((acc, it) => {
+      acc[it.category] = (acc[it.category] || 0) + 1;
+      return acc;
+    }, {});
+    const pendingCatEntries = Object.entries(pendingByCat).sort((a, b) => b[1] - a[1]);
     return (
       <div className="space-y-4">
         <Card>
           <CardHeader>
-            <CardTitle className="font-heading text-base">BOQ Upload Preview — {pendingItems.length} items parsed</CardTitle>
+            <CardTitle className="font-heading text-base">
+              BOQ Upload Preview — {pendingItems.length} line items across {pendingCatEntries.length} categories
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="rounded border bg-muted/40 p-3">
+              <p className="text-xs font-semibold mb-1.5" style={{ color: "#006039" }}>
+                ✓ {pendingItems.length} line items captured across {pendingCatEntries.length} categories
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {pendingCatEntries.map(([cat, n]) => `${cat} (${n} item${n > 1 ? "s" : ""})`).join(" | ")}
+              </p>
+              <p className="text-xs mt-2 font-semibold">Total BOQ value: {fmt(pendingSummary.total)}</p>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="p-3 rounded bg-muted/50">
                 <p className="text-xs text-muted-foreground">Total BOQ Value</p>
