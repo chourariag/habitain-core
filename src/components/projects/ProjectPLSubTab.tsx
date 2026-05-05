@@ -59,22 +59,31 @@ export function ProjectPLSubTab({ projectId, contractValue }: Props) {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   const rows = useMemo(() => {
-    return BOQ_CATEGORIES.map((cat) => {
+    // Build dynamic category set from BOQ items + GRNs + manual entries
+    const catSet = new Set<string>();
+    boqItems.forEach((i: any) => { const c = (i.category || "").trim(); if (c) catSet.add(c); });
+    grns.forEach((g: any) => { const c = (g.boq_category || "").trim(); if (c) catSet.add(c); });
+    manuals.forEach((m: any) => { const c = (m.boq_category || "").trim(); if (c) catSet.add(c); });
+    const cats = Array.from(catSet);
+
+    const totalBudget = boqItems.reduce((s: number, i: any) => s + (Number(i.total_amount) || 0), 0);
+
+    return cats.map((cat) => {
       const budget = boqItems
         .filter((i: any) => (i.category || "").toLowerCase() === cat.toLowerCase())
         .reduce((s: number, i: any) => s + (Number(i.total_amount) || 0), 0);
 
       const grnSpent = grns
-        .filter((g: any) => g.boq_category === cat)
+        .filter((g: any) => (g.boq_category || "").toLowerCase() === cat.toLowerCase())
         .reduce((s: number, g: any) => s + (Number(g.basic_amount_excl_gst) || 0), 0);
       const manSpent = manuals
-        .filter((m: any) => m.boq_category === cat)
+        .filter((m: any) => (m.boq_category || "").toLowerCase() === cat.toLowerCase())
         .reduce((s: number, m: any) => s + (Number(m.amount_excl_gst) || 0), 0);
       const ctdActual = grnSpent + manSpent;
       const ctc = ctcEdits[cat] ?? ctdActual;
       const cac = ctc - ctdActual;
       const margin = budget - ctc;
-      const clientPrice = contractValue > 0 ? (budget / boqItems.reduce((s: number, i: any) => s + (Number(i.total_amount) || 0), 0) || 0) * contractValue : 0;
+      const clientPrice = contractValue > 0 && totalBudget > 0 ? (budget / totalBudget) * contractValue : 0;
       const grossMargin = clientPrice > 0 ? ((clientPrice - ctc) / clientPrice) * 100 : 0;
 
       return { cat, ctdActual, budget, ctc, cac, margin, clientPrice, grossMargin };
