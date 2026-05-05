@@ -397,7 +397,7 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
                 </tr>
               </thead>
               <tbody>
-                {BOQ_CATEGORIES.map((cat) => {
+                {categoryList.map((cat) => {
                   const tender = tenderByCategory[cat] ?? 0;
                   const gfc = budgetByCategory[cat] ?? 0;
                   if (tender === 0 && gfc === 0) return null;
