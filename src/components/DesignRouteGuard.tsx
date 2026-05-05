@@ -5,7 +5,8 @@ import { Loader2 } from "lucide-react";
 
 const ALLOWED_ROLES = [
   "principal_architect", "project_architect", "structural_architect",
-  "managing_director", "super_admin",
+  "operations_architect", "planning_engineer", "costing_engineer",
+  "architecture_director", "managing_director", "super_admin",
 ];
 
 export function DesignRouteGuard({ children }: { children: ReactNode }) {
