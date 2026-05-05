@@ -613,10 +613,11 @@ function ManualEntryDialog({ open, onOpenChange, projectId, onSaved }: { open: b
         <SheetHeader><SheetTitle className="font-display">Manual Budget Entry</SheetTitle></SheetHeader>
         <div className="space-y-3 py-4">
           <Field label="BOQ Category">
-            <Select value={form.boq_category} onValueChange={(v) => setForm({ ...form, boq_category: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{BOQ_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-            </Select>
+            <Input
+              value={form.boq_category}
+              onChange={(e) => setForm({ ...form, boq_category: e.target.value })}
+              placeholder="Type the category name as in the BOQ"
+            />
           </Field>
           <Field label="Vendor"><Input value={form.vendor_name} onChange={(e) => setForm({ ...form, vendor_name: e.target.value })} /></Field>
           <div className="grid grid-cols-2 gap-3">
