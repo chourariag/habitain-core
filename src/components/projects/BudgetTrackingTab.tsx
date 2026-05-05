@@ -129,7 +129,7 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
       .in("status", ["approved_pending_issue","pending_director_approval","issued","work_in_progress","completed_pending_measurement","measured_signed_off","closed"]);
     const woMap: Record<string, number> = {};
     (woRows ?? []).forEach((w: any) => {
-      const cat = BOQ_CATEGORIES.find(c => c.toLowerCase() === (w.boq_category ?? "").toLowerCase()) ?? "Miscellaneous";
+      const cat = (w.boq_category ?? "").trim() || "Miscellaneous";
       woMap[cat] = (woMap[cat] ?? 0) + Number(w.total_value || 0);
     });
     setWoCommitted(woMap);
@@ -142,37 +142,44 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+  // Dynamic categories: union of all categories present in BOQ items, tender items, GRNs, manual entries, and WO commitments.
+  const categoryList = useMemo(() => {
+    const s = new Set<string>();
+    boqItems.forEach((i) => { const c = (i.category ?? "").trim(); if (c) s.add(c); });
+    tenderBudgetItems.forEach((i) => { const c = (i.category ?? "").trim(); if (c) s.add(c); });
+    grns.forEach((g) => { const c = (g.boq_category ?? "").trim(); if (c) s.add(c); });
+    manuals.forEach((m) => { const c = (m.boq_category ?? "").trim(); if (c) s.add(c); });
+    Object.keys(woCommitted).forEach((c) => { if (c) s.add(c); });
+    return Array.from(s).sort();
+  }, [boqItems, tenderBudgetItems, grns, manuals, woCommitted]);
+
   const budgetByCategory = useMemo(() => {
     const map: Record<string, number> = {};
-    BOQ_CATEGORIES.forEach((c) => (map[c] = 0));
     boqItems.forEach((i) => {
-      const cat = (i.category ?? "").trim();
-      const matched = BOQ_CATEGORIES.find((c) => c.toLowerCase() === cat.toLowerCase()) ?? "Miscellaneous";
-      map[matched] = (map[matched] ?? 0) + (Number(i.total_amount) || 0);
+      const cat = (i.category ?? "").trim() || "Miscellaneous";
+      map[cat] = (map[cat] ?? 0) + (Number(i.total_amount) || 0);
     });
     return map;
   }, [boqItems]);
 
   const tenderByCategory = useMemo(() => {
     const map: Record<string, number> = {};
-    BOQ_CATEGORIES.forEach((c) => (map[c] = 0));
     tenderBudgetItems.forEach((i) => {
-      const matched = BOQ_CATEGORIES.find((c) => c.toLowerCase() === i.category.toLowerCase()) ?? "Miscellaneous";
-      map[matched] = (map[matched] ?? 0) + i.total_amount;
+      const cat = (i.category ?? "").trim() || "Miscellaneous";
+      map[cat] = (map[cat] ?? 0) + i.total_amount;
     });
     return map;
   }, [tenderBudgetItems]);
 
   const rowsByCategory = useMemo(() => {
     const map: Record<string, Row[]> = {};
-    BOQ_CATEGORIES.forEach((c) => (map[c] = []));
     grns.forEach((g) => {
-      const c = BOQ_CATEGORIES.includes(g.boq_category) ? g.boq_category : "Miscellaneous";
-      map[c].push({ ...g, _source: "grn" });
+      const c = (g.boq_category ?? "").trim() || "Miscellaneous";
+      (map[c] = map[c] ?? []).push({ ...g, _source: "grn" });
     });
     manuals.forEach((m) => {
-      const c = BOQ_CATEGORIES.includes(m.boq_category) ? m.boq_category : "Miscellaneous";
-      map[c].push({ ...m, _source: "manual" });
+      const c = (m.boq_category ?? "").trim() || "Miscellaneous";
+      (map[c] = map[c] ?? []).push({ ...m, _source: "manual" });
     });
     return map;
   }, [grns, manuals]);
