@@ -19,9 +19,9 @@ const CATEGORIES = [
 ];
 
 const UPLOAD_ROLES = [
-  "super_admin", "managing_director", "finance_director", "finance_manager",
-  "planning_engineer", "architecture_director", "project_architect", "principal_architect",
-  "costing_engineer", "quantity_surveyor",
+  "super_admin", "managing_director", "architecture_director",
+  "principal_architect", "operations_architect",
+  "planning_engineer", "costing_engineer", "quantity_surveyor",
 ];
 
 const fmt = (n: number) => "₹" + (n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });

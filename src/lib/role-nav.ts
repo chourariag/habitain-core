@@ -28,6 +28,7 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
   ],
   design: [
     ...DIRECTORS, "principal_architect", "project_architect", "structural_architect",
+    "operations_architect" as AppRole, "planning_engineer", "costing_engineer",
   ],
   business: [
     ...DIRECTORS, "sales_director", "finance_director", "finance_manager",
