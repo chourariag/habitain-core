@@ -11,11 +11,7 @@ import { Loader2, IndianRupee, TrendingDown, TrendingUp, Pencil } from "lucide-r
 import { useUserRole } from "@/hooks/useUserRole";
 import { format } from "date-fns";
 
-const BOQ_CATEGORIES = [
-  "Structure", "Insulation", "Wall Boarding", "Ceiling", "Flooring",
-  "Openings", "Cladding", "Painting", "Waterproofing",
-  "MEP Electrical", "MEP Plumbing", "Civil", "Miscellaneous",
-];
+// Categories are derived dynamically from each project's uploaded BOQ — no hardcoded list.
 
 const EDIT_ROLES = ["super_admin", "managing_director", "finance_director", "finance_manager", "planning_engineer", "costing_engineer"];
 
