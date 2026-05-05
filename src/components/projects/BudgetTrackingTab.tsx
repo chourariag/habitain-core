@@ -469,7 +469,7 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
 
       {/* Per-category tables */}
       <div className="space-y-3">
-        {BOQ_CATEGORIES.map((cat) => {
+        {categoryList.map((cat) => {
           const rows = rowsByCategory[cat] ?? [];
           const budget = budgetByCategory[cat] ?? 0;
           const spent = rows.reduce(
