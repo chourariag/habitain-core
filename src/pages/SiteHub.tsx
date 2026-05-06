@@ -348,6 +348,9 @@ function SiteHubContent() {
         <TabsContent value="factory-feedback">
           <SiteFactoryFeedback projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} modules={modules.map(m => ({ id: m.id, name: m.name, module_code: m.module_code || m.name }))} />
         </TabsContent>
+        <TabsContent value="labour">
+          <DailyLabourLog mode="site" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
+        </TabsContent>
         <TabsContent value="work-orders">
           <WorkOrdersTab mode="site" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
         </TabsContent>
