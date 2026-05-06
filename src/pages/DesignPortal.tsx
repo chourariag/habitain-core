@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { projectCode } from "@/lib/code-generators";
 import { BriefScopeSection } from "@/components/design/BriefScopeSection";
+import { MyTasksSection } from "@/components/tasks/MyTasksSection";
 import { ConsultantRow } from "@/components/design/ConsultantRow";
 import { ProjectHealthCard } from "@/components/design/ProjectHealthCard";
 import { MasterQCChecklist } from "@/components/design/MasterQCChecklist";
