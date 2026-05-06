@@ -117,7 +117,7 @@ export function MyTasksSummaryStrip({ userRole }: Props) {
             })}
             <div className="flex justify-end pt-1">
               <Button variant="link" size="sm" asChild className="h-auto p-0 text-xs" style={{ color: "#006039" }}>
-                <Link to="/tasks">View all →</Link>
+                <a href="/projects">View all →</a>
               </Button>
             </div>
           </div>
