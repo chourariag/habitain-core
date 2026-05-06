@@ -1076,6 +1076,62 @@ export type Database = {
           },
         ]
       }
+      daily_labour_logs: {
+        Row: {
+          bay_number: number | null
+          created_at: string
+          id: string
+          is_archived: boolean
+          location_type: string
+          log_date: string
+          notes: string | null
+          project_id: string | null
+          stage: string
+          submitted_by: string | null
+          total_cost: number
+          trade_entries: Json
+          updated_at: string
+        }
+        Insert: {
+          bay_number?: number | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          location_type: string
+          log_date?: string
+          notes?: string | null
+          project_id?: string | null
+          stage: string
+          submitted_by?: string | null
+          total_cost?: number
+          trade_entries?: Json
+          updated_at?: string
+        }
+        Update: {
+          bay_number?: number | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          location_type?: string
+          log_date?: string
+          notes?: string | null
+          project_id?: string | null
+          stage?: string
+          submitted_by?: string | null
+          total_cost?: number
+          trade_entries?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_labour_logs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_production_logs: {
         Row: {
           ai_quality_checked: boolean | null
