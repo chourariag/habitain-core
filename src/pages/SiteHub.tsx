@@ -220,6 +220,7 @@ function SiteHubContent() {
             <TabsTrigger value="punch-list" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Punch List</TabsTrigger>
             <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Install Sequence</TabsTrigger>
             <TabsTrigger value="factory-feedback" className="gap-1.5"><MessageSquareWarning className="h-4 w-4" /> Factory Feedback</TabsTrigger>
+            <TabsTrigger value="labour" className="gap-1.5"><HardHat className="h-4 w-4" /> Labour Log</TabsTrigger>
             <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
