@@ -25,7 +25,7 @@ interface NewProjectDialogProps {
 }
 
 const PROJECT_TYPES = ["Residential", "Commercial", "Hospitality"];
-const CONSTRUCTION_TYPES = ["Modular", "Panel-based"];
+const CONSTRUCTION_TYPES = ["Modular", "Panel-based", "Hybrid"];
 
 export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDialogProps) {
   const [loading, setLoading] = useState(false);
@@ -38,6 +38,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
   const [projectType, setProjectType] = useState("");
   const [constructionType, setConstructionType] = useState("");
   const [unitCount, setUnitCount] = useState("");
+  const [panelCount, setPanelCount] = useState("");
   const [startDate, setStartDate] = useState<Date>();
   const [estCompletion, setEstCompletion] = useState<Date>();
   const [siteLat, setSiteLat] = useState("");
@@ -48,7 +49,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
   const resetForm = () => {
     setName(""); setClientName(""); setClientPhone(""); setClientEmail("");
     setCity(""); setState(""); setProjectType(""); setConstructionType("");
-    setUnitCount(""); setStartDate(undefined); setEstCompletion(undefined);
+    setUnitCount(""); setPanelCount(""); setStartDate(undefined); setEstCompletion(undefined);
     setSiteLat(""); setSiteLng(""); setSiteRadius("300");
   };
 
@@ -81,10 +82,11 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
       if (error) throw error;
       const projectId = (project as any).id;
 
-      // Auto-create modules or panels
+      // Auto-create modules and/or panels based on construction type
       const count = parseInt(unitCount) || 0;
-      if (count > 0 && projectId) {
-        if (constructionType === "Modular") {
+      const pCount = parseInt(panelCount) || 0;
+      if ((count > 0 || pCount > 0) && projectId) {
+        if (constructionType === "Modular" || (constructionType === "Hybrid" && count > 0)) {
           const moduleInserts = Array.from({ length: count }, (_, i) => ({
             project_id: projectId,
             name: `Module ${i + 1}`,
@@ -110,7 +112,8 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
             );
             await client.from("production_stages").insert(stageInserts as any);
           }
-        } else if (constructionType === "Panel-based") {
+        }
+        if (constructionType === "Panel-based" || (constructionType === "Hybrid" && pCount > 0)) {
           // Create a single parent module, then panels under it
           const { data: parentModule } = await client.from("modules").insert({
             project_id: projectId,
@@ -122,7 +125,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
           } as any).select("id").single();
 
           if (parentModule) {
-            const panelInserts = Array.from({ length: count }, (_, i) => ({
+            const panelInserts = Array.from({ length: pCount || count }, (_, i) => ({
               module_id: (parentModule as any).id,
               panel_code: `Panel ${i + 1}`,
               panel_type: "wall",
@@ -206,19 +209,18 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
             </div>
           </div>
 
-          {constructionType && (
+          {(constructionType === "Modular" || constructionType === "Hybrid") && (
             <div className="space-y-2">
-              <Label htmlFor="unitCount">
-                {constructionType === "Modular" ? "Number of Modules" : "Number of Panels"}
-              </Label>
-              <Input
-                id="unitCount"
-                type="number"
-                min="1"
-                value={unitCount}
-                onChange={(e) => setUnitCount(e.target.value)}
-                placeholder={constructionType === "Modular" ? "e.g. 8" : "e.g. 24"}
-              />
+              <Label htmlFor="unitCount">Number of Modules</Label>
+              <Input id="unitCount" type="number" min="1" value={unitCount}
+                onChange={(e) => setUnitCount(e.target.value)} placeholder="e.g. 8" />
+            </div>
+          )}
+          {(constructionType === "Panel-based" || constructionType === "Hybrid") && (
+            <div className="space-y-2">
+              <Label htmlFor="panelCount">Number of Panels</Label>
+              <Input id="panelCount" type="number" min="1" value={panelCount}
+                onChange={(e) => setPanelCount(e.target.value)} placeholder="e.g. 24" />
             </div>
           )}
 

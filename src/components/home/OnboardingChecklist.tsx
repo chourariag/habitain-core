@@ -43,8 +43,8 @@ const ROLE_STEPS: Partial<Record<AppRole, OnboardingStep[]>> = {
   ],
   production_head: [
     { label: "Factory Floor Map", description: "View bay allocations and panel locations", path: "/production" },
-    { label: "Capacity Planning", description: "Check bay utilisation and bottlenecks", path: "/production" },
-    { label: "Production Schedule", description: "Review the Gantt and stage targets", path: "/production" },
+    { label: "My Tasks", description: "Review panels and stages assigned to you", path: "/production" },
+    { label: "Daily Production Log", description: "Submit today's production progress", path: "/production" },
   ],
   head_operations: [
     { label: "Active Projects", description: "Monitor all projects and delivery status", path: "/projects" },
@@ -52,9 +52,9 @@ const ROLE_STEPS: Partial<Record<AppRole, OnboardingStep[]>> = {
     { label: "SOP Library", description: "Access standard operating procedures", path: "/sop-library" },
   ],
   site_installation_mgr: [
-    { label: "Active Projects", description: "View project sites and installation stages", path: "/projects" },
-    { label: "Site Diary", description: "Log and review on-site activity", path: "/projects" },
-    { label: "Handover Packs", description: "Prepare and submit handover documentation", path: "/projects" },
+    { label: "Site Diary", description: "Log and review on-site daily activity", path: "/site-hub" },
+    { label: "My Tasks", description: "Review installation milestones assigned to you", path: "/projects" },
+    { label: "GRN / Receipt", description: "Record goods received on site", path: "/procurement" },
   ],
   finance_manager: [
     { label: "Invoice Tracker", description: "Manage and track client invoices", path: "/finance" },
