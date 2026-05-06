@@ -50,12 +50,13 @@ interface TaskRow {
 interface Props {
   userRole: string | null;
   phaseFilter?: string[];
+  projectId?: string | null;
   title?: string;
   showProjectName?: boolean;
   compact?: boolean;
 }
 
-export function MyTasksSection({ userRole, phaseFilter, title = "My Tasks", showProjectName = true, compact = false }: Props) {
+export function MyTasksSection({ userRole, phaseFilter, projectId, title = "My Tasks", showProjectName = true, compact = false }: Props) {
   const [tasks, setTasks] = useState<(TaskRow & { project_name?: string })[]>([]);
   const [allProjectTasks, setAllProjectTasks] = useState<TaskRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +78,9 @@ export function MyTasksSection({ userRole, phaseFilter, title = "My Tasks", show
     if (phaseFilter && phaseFilter.length > 0) {
       query = query.in("phase", phaseFilter);
     }
+    if (projectId) {
+      query = query.eq("project_id", projectId);
+    }
 
     const { data } = await query.order("planned_finish_date", { ascending: true }).limit(50);
 
@@ -97,7 +101,7 @@ export function MyTasksSection({ userRole, phaseFilter, title = "My Tasks", show
       setAllProjectTasks((allData as any as TaskRow[]) ?? []);
     }
     setLoading(false);
-  }, [userRole, phaseFilter]);
+  }, [userRole, phaseFilter, projectId]);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
