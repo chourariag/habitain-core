@@ -187,6 +187,10 @@ function ProductionContent() {
               ))}
             </TabsContent>
 
+            <TabsContent value="labour">
+              <DailyLabourLog mode="factory" projectId={selectedProjectId!} userRole={userRole} />
+            </TabsContent>
+
             <TabsContent value="manpower">
               <WeeklyManpowerPlanner projectId={selectedProjectId!} userRole={userRole} />
             </TabsContent>
