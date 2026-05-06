@@ -8,7 +8,7 @@ import { SharedDashboardBottom } from "@/components/dashboard/SharedDashboardBot
 import { CheckInButton } from "@/components/attendance/CheckInButton";
 import { LogExpenseButton } from "@/components/expenses/LogExpenseButton";
 import { WeeklyDigestCard } from "@/components/kpi/WeeklyDigestCard";
-import { MyTasksSection } from "@/components/tasks/MyTasksSection";
+import { MyTasksSummaryStrip } from "@/components/tasks/MyTasksSummaryStrip";
 import { DailyReadinessBrief } from "@/components/dashboard/DailyReadinessBrief";
 import { MyReportsSection } from "@/components/reports/MyReportsSection";
 import { ReportsToReviewSection } from "@/components/reports/ReportsToReviewSection";
@@ -27,6 +27,9 @@ export default function Dashboard() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
+      {/* My Tasks summary strip — pinned at top, always visible */}
+      <MyTasksSummaryStrip userRole={userRole} />
+
       {/* Daily Readiness Brief — pinned above check-in, hidden after 10am */}
       <DailyReadinessBrief userRole={userRole} userId={userId} />
 
@@ -42,9 +45,6 @@ export default function Dashboard() {
       {/* Weekly status reports */}
       <MyReportsSection />
       <ReportsToReviewSection />
-
-      {/* My Tasks */}
-      <MyTasksSection userRole={userRole} />
 
       {tier === 1 ? (
         <Tier1Dashboard today={today} />

@@ -128,7 +128,7 @@ function ProductionContent() {
         </div>
 
         {/* My Factory Tasks */}
-        <MyTasksSection userRole={userRole} phaseFilter={["Factory Production"]} title="My Factory Tasks" showProjectName={false} />
+        <MyTasksSection userRole={userRole} projectId={selectedProjectId} phaseFilter={["Factory Production"]} title="My Factory Tasks" showProjectName={false} />
 
         {/* Factory Intelligence Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

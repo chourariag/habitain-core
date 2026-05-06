@@ -204,7 +204,7 @@ function SiteHubContent() {
       )}
 
       {/* My Site Tasks */}
-      <MyTasksSection userRole={userRole} phaseFilter={["Site Installation", "Finishing"]} title="My Site Tasks" showProjectName={false} />
+      <MyTasksSection userRole={userRole} projectId={selectedProjectId} phaseFilter={["Site Installation", "Finishing"]} title="My Site Tasks" showProjectName={false} />
 
       <Tabs defaultValue="pipeline" className="space-y-4">
         <ScrollableTabsWrapper>
