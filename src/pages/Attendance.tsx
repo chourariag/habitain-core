@@ -42,7 +42,7 @@ export default function Attendance() {
 
       <ScrollableTabsWrapper>
         <div className="flex gap-0 border-b border-border">
-        {["overview", "daily", "leave", "export", "expenses", "hr_settings"].map((t) => (
+        {["overview", "daily", "labour", "leave", "export", "expenses", "hr_settings"].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -53,7 +53,7 @@ export default function Attendance() {
                 fontWeight: tab === t ? 700 : 500,
               }}
             >
-              {t === "overview" ? "Overview" : t === "daily" ? "Daily Log" : t === "leave" ? "Leave Requests" : t === "export" ? "Export" : t === "expenses" ? "Expenses" : "HR Settings"}
+              {t === "overview" ? "Overview" : t === "daily" ? "Daily Log" : t === "labour" ? "Labour Register" : t === "leave" ? "Leave Requests" : t === "export" ? "Export" : t === "expenses" ? "Expenses" : "HR Settings"}
             </button>
           ))}
         </div>
@@ -61,6 +61,7 @@ export default function Attendance() {
 
       {tab === "overview" && <OverviewTab />}
       {tab === "daily" && <DailyLogTab />}
+      {tab === "labour" && <LabourRegisterTab />}
       {tab === "leave" && <LeaveRequestsTab />}
       {tab === "export" && <ExportTab />}
       {tab === "expenses" && <ExpensesTab />}
@@ -444,3 +445,169 @@ function ExportTab() {
     </div>
   );
 }
+
+/* ─── Labour Register ─── */
+
+const CONTRACTOR_COMPANIES = [
+  {
+    name: "Dushyamyh Enterprises",
+    workers: [
+      { name: "Md Tabrej Khan", type: "Arc Welder", monthly: 22000, joined: "2023-04-01" },
+      { name: "Neeraj", type: "Tiles Mason", monthly: 18000, joined: "2023-06-15" },
+      { name: "Abu Hasan", type: "Wall Panelling", monthly: 19000, joined: "2023-07-01" },
+      { name: "Uttam Malakur", type: "Helper", monthly: 14000, joined: "2024-01-10" },
+    ],
+  },
+  {
+    name: "Shiv Engineering",
+    workers: [
+      { name: "Suresh B", type: "Fabricator", monthly: 24000, joined: "2023-03-01" },
+      { name: "Ramesh P", type: "Welder", monthly: 21000, joined: "2023-05-01" },
+      { name: "Dinesh K", type: "Helper", monthly: 14000, joined: "2024-02-01" },
+    ],
+  },
+  {
+    name: "ALTREE Internal Laborers",
+    workers: [
+      { name: "Gangadhar", type: "Store Helper", monthly: 16000, joined: "2022-11-01" },
+      { name: "Venugopal", type: "Plumbing/Elec Installer", monthly: 20000, joined: "2023-01-15" },
+      { name: "Mohan", type: "Electrical Installer", monthly: 20000, joined: "2023-02-01" },
+    ],
+  },
+];
+
+function daysSince(dateStr: string) {
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+}
+
+function LabourRegisterTab() {
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [newWorkerOpen, setNewWorkerOpen] = useState(false);
+  const [form, setForm] = useState({ company: "", name: "", type: "", monthly: "", joined: "" });
+
+  const dailyRate = (monthly: number) => (monthly / 26).toFixed(0);
+  const otRate = (monthly: number) => ((monthly / 26) / 8).toFixed(0);
+  const reviewDue = (joined: string) => {
+    const d = new Date(joined);
+    d.setFullYear(d.getFullYear() + 1);
+    return d;
+  };
+  const daysToReview = (joined: string) => {
+    const diff = reviewDue(joined).getTime() - Date.now();
+    return Math.ceil(diff / 86400000);
+  };
+
+  const downloadTemplate = () => {
+    import("xlsx").then((XLSX) => {
+      const headers = [["Company Name", "Worker Name", "Worker Type", "Monthly Salary (₹)", "Date Joined", "Contact", "Notes"]];
+      const ws = XLSX.utils.aoa_to_sheet(headers);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Labour Register");
+      XLSX.writeFile(wb, "Labour_Register_Template.xlsx");
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Labour Register</h2>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="h-3.5 w-3.5 mr-1" />Template</Button>
+          <Button size="sm" onClick={() => setNewWorkerOpen(true)} style={{ backgroundColor: "#006039", color: "#fff" }}>
+            <span className="mr-1 font-bold">+</span> New Worker
+          </Button>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {CONTRACTOR_COMPANIES.map((company) => {
+          const hasReviewDue = company.workers.some((w) => daysToReview(w.joined) <= 30);
+          const isOpen = expanded === company.name;
+          return (
+            <div key={company.name} className="rounded-xl border overflow-hidden">
+              <button
+                className="w-full flex items-center justify-between px-4 py-3 text-left"
+                style={{ backgroundColor: "#F7F7F7" }}
+                onClick={() => setExpanded(isOpen ? null : company.name)}
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-sm" style={{ color: "#1A1A1A" }}>{company.name}</span>
+                  <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: "#E8F2ED", color: "#006039" }}>
+                    {company.workers.length} workers
+                  </span>
+                  {hasReviewDue && (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ backgroundColor: "#FFF8E8", color: "#D4860A" }}>
+                      ⚠ Review Due
+                    </span>
+                  )}
+                </div>
+                <span className="text-xs" style={{ color: "#999" }}>{isOpen ? "▲" : "▼"}</span>
+              </button>
+              {isOpen && (
+                <div className="divide-y">
+                  {company.workers.map((w) => {
+                    const days = daysToReview(w.joined);
+                    const reviewAmber = days <= 30;
+                    return (
+                      <div key={w.name} className="px-4 py-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                        <div>
+                          <p className="font-semibold" style={{ color: "#1A1A1A" }}>{w.name}</p>
+                          <p className="text-xs" style={{ color: "#666" }}>{w.type}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs" style={{ color: "#999" }}>Monthly Salary</p>
+                          <p className="font-mono font-semibold" style={{ color: "#006039" }}>₹{w.monthly.toLocaleString("en-IN")}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs" style={{ color: "#999" }}>Daily Rate / OT Rate</p>
+                          <p className="font-mono text-xs" style={{ color: "#666" }}>₹{dailyRate(w.monthly)}/day · ₹{otRate(w.monthly)}/hr</p>
+                          <p className="text-[10px]" style={{ color: "#aaa" }}>Calculated from salary</p>
+                        </div>
+                        <div>
+                          <p className="text-xs" style={{ color: "#999" }}>Salary Review Due</p>
+                          <p className="text-xs font-semibold" style={{ color: reviewAmber ? "#D4860A" : "#666" }}>
+                            {format(reviewDue(w.joined), "dd/MM/yyyy")}
+                            {reviewAmber && ` (${days}d)`}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {newWorkerOpen && (
+        <div className="rounded-xl border p-4 space-y-3" style={{ backgroundColor: "#F7F7F7" }}>
+          <h3 className="font-semibold text-sm" style={{ color: "#1A1A1A" }}>Add New Worker</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1 col-span-2">
+              <label className="text-xs font-medium" style={{ color: "#666" }}>Company</label>
+              <select className="w-full h-9 rounded border px-2 text-sm" style={{ borderColor: "#E0E0E0" }}
+                value={form.company} onChange={(e) => setForm((p) => ({ ...p, company: e.target.value }))}>
+                <option value="">— Select company —</option>
+                {CONTRACTOR_COMPANIES.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1"><label className="text-xs font-medium" style={{ color: "#666" }}>Name</label>
+              <Input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} /></div>
+            <div className="space-y-1"><label className="text-xs font-medium" style={{ color: "#666" }}>Worker Type</label>
+              <Input value={form.type} onChange={(e) => setForm((p) => ({ ...p, type: e.target.value }))} placeholder="e.g. Welder" /></div>
+            <div className="space-y-1"><label className="text-xs font-medium" style={{ color: "#666" }}>Monthly Salary (₹)</label>
+              <Input type="number" value={form.monthly} onChange={(e) => setForm((p) => ({ ...p, monthly: e.target.value }))} /></div>
+            <div className="space-y-1"><label className="text-xs font-medium" style={{ color: "#666" }}>Date Joined</label>
+              <Input type="date" value={form.joined} onChange={(e) => setForm((p) => ({ ...p, joined: e.target.value }))} /></div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button size="sm" variant="outline" onClick={() => setNewWorkerOpen(false)}>Cancel</Button>
+            <Button size="sm" onClick={() => { toast.success("Worker added (session only)"); setNewWorkerOpen(false); }} style={{ backgroundColor: "#006039", color: "#fff" }}>Add Worker</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+

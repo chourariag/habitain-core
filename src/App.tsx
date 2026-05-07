@@ -21,6 +21,7 @@ import { DesignRouteGuard } from "@/components/DesignRouteGuard";
 import QualityControl from "@/pages/QualityControl";
 // Inventory page consolidated into Procurement
 import Admin from "@/pages/Admin";
+import SuperAdmin from "@/pages/SuperAdmin";
 import AppSettings from "@/pages/AppSettings";
 import RMPage from "@/pages/RM";
 import AMCPage from "@/pages/AMC";
@@ -74,6 +75,7 @@ const App = () => (
                 <Route path="/kpi" element={<KPI />} />
                 <Route path="/kpi/settings" element={<KPISettings />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/admin/super-admin" element={<SuperAdmin />} />
                 <Route path="/settings" element={<AppSettings />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/attendance" element={<Attendance />} />

@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Box, FileText, Phone, Mail, DollarSign, CreditCard, BarChart2, GitMerge, ClipboardList, Download, ExternalLink, Package } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Box, FileText, Phone, Mail, DollarSign, CreditCard, BarChart2, GitMerge, ClipboardList, Download, ExternalLink, Package, Lock, Upload } from "lucide-react";
 import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { AddModuleDialog } from "@/components/projects/AddModuleDialog";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { HandoverPack } from "@/components/site/HandoverPack";
@@ -387,6 +388,120 @@ function ProjectMaterialsTab({ projectId, projectName, navigate }: { projectId: 
   );
 }
 
+function GFCBudgetUploadSection({ project, userRole }: { project: any; userRole: string | null }) {
+  const proj = project as any;
+  const isMD = userRole === "managing_director" || userRole === "super_admin";
+  const [h1SignedOff, setH1SignedOff] = useState(false);
+  const [overrideActive, setOverrideActive] = useState(false);
+  const [overrideModalOpen, setOverrideModalOpen] = useState(false);
+  const [overrideReason, setOverrideReason] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await (supabase.from("design_sign_offs" as any) as any)
+        .select("id")
+        .eq("project_id", proj.id)
+        .eq("sign_off_type", "H1")
+        .eq("status", "approved")
+        .limit(1);
+      setH1SignedOff((data ?? []).length > 0);
+    })();
+  }, [proj.id]);
+
+  function downloadGFCTemplate() {
+    import("xlsx").then((XLSX) => {
+      const headers = [["Category", "Description", "Tender Qty", "GFC Qty", "Unit", "Material Rate (₹)", "Labour Rate (₹)", "OH Rate (₹)", "Total Rate (₹)", "Total Amount (₹)", "Margin %", "Notes"]];
+      const ws = XLSX.utils.aoa_to_sheet(headers);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "GFC Budget");
+      XLSX.writeFile(wb, `${(proj.name ?? "Project").replace(/\s+/g, "_")}_GFC_Budget_Template.xlsx`);
+    });
+  }
+
+  const uploadUnlocked = h1SignedOff || overrideActive;
+
+  return (
+    <div className="flex flex-col items-end gap-2">
+      <div className="flex items-center gap-2 flex-wrap justify-end">
+        <Button size="sm" variant="outline" onClick={downloadGFCTemplate}>
+          <Download className="h-3.5 w-3.5 mr-1" />GFC Budget Template
+        </Button>
+        <div className="relative">
+          <Button
+            size="sm"
+            disabled={!uploadUnlocked}
+            onClick={() => {
+              if (uploadUnlocked) {
+                const input = document.createElement("input");
+                input.type = "file";
+                input.accept = ".xlsx,.csv";
+                input.click();
+              }
+            }}
+            style={uploadUnlocked ? { backgroundColor: "#006039", color: "#fff" } : {}}
+          >
+            {uploadUnlocked ? (
+              <Upload className="h-3.5 w-3.5 mr-1" />
+            ) : (
+              <Lock className="h-3.5 w-3.5 mr-1" />
+            )}
+            Upload GFC Budget
+          </Button>
+        </div>
+      </div>
+      {!uploadUnlocked && (
+        <div className="text-right">
+          <p className="text-xs" style={{ color: "#D4860A" }}>
+            GFC budget upload is locked until H1 sign-off is recorded in the Design Portal.
+          </p>
+          {isMD && (
+            <button
+              type="button"
+              className="text-xs underline mt-0.5"
+              style={{ color: "#006039" }}
+              onClick={() => setOverrideModalOpen(true)}
+            >
+              MD override
+            </button>
+          )}
+        </div>
+      )}
+
+      <Dialog open={overrideModalOpen} onOpenChange={setOverrideModalOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Override GFC Budget Lock</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            H1 sign-off has not been recorded. Provide a reason to override the lock and enable upload.
+          </p>
+          <textarea
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm mt-2"
+            rows={3}
+            placeholder="Reason for override…"
+            value={overrideReason}
+            onChange={(e) => setOverrideReason(e.target.value)}
+          />
+          <DialogFooter className="gap-2 mt-2">
+            <Button variant="outline" size="sm" onClick={() => setOverrideModalOpen(false)}>Cancel</Button>
+            <Button
+              size="sm"
+              disabled={overrideReason.trim().length < 5}
+              style={{ backgroundColor: "#006039", color: "#fff" }}
+              onClick={() => {
+                setOverrideActive(true);
+                setOverrideModalOpen(false);
+              }}
+            >
+              Override & Unlock
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -578,7 +693,10 @@ export default function ProjectDetail() {
         </TabsContent>
 
         <TabsContent value="budget" className="space-y-4">
-          <h2 className="font-display text-lg font-semibold text-foreground">Project Budget</h2>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h2 className="font-display text-lg font-semibold text-foreground">Project Budget</h2>
+            <GFCBudgetUploadSection project={project} userRole={userRole} />
+          </div>
           <BudgetSummary
             project={project}
             projectId={id!}

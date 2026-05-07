@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, LayoutDashboard, Truck, Upload, Factory } from "lucide-react";
+import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, LayoutDashboard, Truck, Upload, Factory, Download, Users } from "lucide-react";
 import { toast } from "sonner";
 import { NewMaterialRequestDialog } from "@/components/materials/NewMaterialRequestDialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -52,6 +52,124 @@ const PLAN_STATUS_CONFIG: Record<string, { label: string; style: React.CSSProper
   delivered: { label: "Delivered", style: { backgroundColor: "#E0E0E0", color: "#666666" } },
   delayed: { label: "Delayed", style: { backgroundColor: "#FFF0F0", color: "#F40009" } },
 };
+
+/* ─── Subcontractors ─── */
+
+const SEEDED_SUBS = [
+  { id: "SUB001", name: "Rajesh Gupta", work_type: "Painting", contact: "+91 98765 00001", gstin: "29ABCDE1234F1Z5", status: "active" },
+  { id: "SUB002", name: "Kumar Painters", work_type: "Painting", contact: "+91 98765 00002", gstin: "29ABCDE1234F2Z5", status: "active" },
+  { id: "SUB003", name: "Shiv Tiles Works", work_type: "Tiling", contact: "+91 98765 00003", gstin: "29ABCDE1234F3Z5", status: "active" },
+  { id: "SUB004", name: "Allied Electricals", work_type: "Electrical", contact: "+91 98765 00004", gstin: "29ABCDE1234F4Z5", status: "active" },
+  { id: "SUB005", name: "Greenline Plumbing", work_type: "Plumbing", contact: "+91 98765 00005", gstin: "29ABCDE1234F5Z5", status: "active" },
+  { id: "SUB006", name: "K2 Interiors", work_type: "Interior Fit-out", contact: "+91 98765 00006", gstin: "29ABCDE1234F6Z5", status: "active" },
+  { id: "SUB007", name: "San Enterprises", work_type: "Fabrication", contact: "+91 98765 00007", gstin: "29ABCDE1234F7Z5", status: "active" },
+  { id: "SUB008", name: "Radha Flooring", work_type: "Flooring", contact: "+91 98765 00008", gstin: "29ABCDE1234F8Z5", status: "active" },
+  { id: "SUB009", name: "Metro Glass Works", work_type: "Glazing", contact: "+91 98765 00009", gstin: "29ABCDE1234F9Z5", status: "active" },
+  { id: "SUB010", name: "Ace Civil Works", work_type: "Civil", contact: "+91 98765 00010", gstin: "29ABCDE1234F0Z5", status: "active" },
+  { id: "SUB011", name: "BlueStar HVAC", work_type: "HVAC", contact: "+91 98765 00011", gstin: "29ABCDE1234F1Z6", status: "active" },
+  { id: "SUB012", name: "Southdale Naturals", work_type: "Waterproofing", contact: "+91 98765 00012", gstin: "29ABCDE1234F2Z6", status: "active" },
+];
+
+function SubcontractorsTab() {
+  const [subs, setSubs] = useState(SEEDED_SUBS);
+  const [search, setSearch] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
+  const [form, setForm] = useState({ name: "", work_type: "", contact: "", gstin: "" });
+
+  const filtered = subs.filter((s) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return s.name.toLowerCase().includes(q) || s.work_type.toLowerCase().includes(q) || s.id.toLowerCase().includes(q);
+  });
+
+  const handleAdd = () => {
+    if (!form.name.trim()) { toast.error("Name is required"); return; }
+    const nextId = `SUB${String(subs.length + 1).padStart(3, "0")}`;
+    setSubs((prev) => [...prev, { id: nextId, name: form.name, work_type: form.work_type, contact: form.contact, gstin: form.gstin, status: "active" }]);
+    toast.success(`Subcontractor ${nextId} added`);
+    setForm({ name: "", work_type: "", contact: "", gstin: "" });
+    setAddOpen(false);
+  };
+
+  const downloadTemplate = () => {
+    import("xlsx").then((XLSX) => {
+      const headers = [["Sub ID", "Name", "Work Type", "Contact", "GSTIN", "PAN", "Rate/Unit", "Unit", "Notes"]];
+      const ws = XLSX.utils.aoa_to_sheet(headers);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Subcontractors");
+      XLSX.writeFile(wb, "Subcontractor_Register_Template.xlsx");
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Subcontractor Register</h2>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="h-3.5 w-3.5 mr-1" />Template</Button>
+          <Button size="sm" onClick={() => setAddOpen(true)} style={{ backgroundColor: "#006039", color: "#fff" }}>
+            <Plus className="h-3.5 w-3.5 mr-1" />New Subcontractor
+          </Button>
+        </div>
+      </div>
+      <div className="relative">
+        <input
+          className="w-full h-9 rounded border pl-3 pr-3 text-sm outline-none"
+          style={{ borderColor: "#E0E0E0", color: "#1A1A1A" }}
+          placeholder="Search by name, work type or ID…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+      <div className="rounded-xl border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow style={{ backgroundColor: "#F7F7F7" }}>
+              <TableHead className="text-xs">Sub ID</TableHead>
+              <TableHead className="text-xs">Name</TableHead>
+              <TableHead className="text-xs">Work Type</TableHead>
+              <TableHead className="text-xs">Contact</TableHead>
+              <TableHead className="text-xs">GSTIN</TableHead>
+              <TableHead className="text-xs">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-sm text-muted-foreground">No subcontractors match your search.</TableCell></TableRow>
+            ) : filtered.map((s) => (
+              <TableRow key={s.id}>
+                <TableCell className="font-mono text-xs font-semibold" style={{ color: "#006039" }}>{s.id}</TableCell>
+                <TableCell className="font-medium text-sm">{s.name}</TableCell>
+                <TableCell className="text-sm" style={{ color: "#666" }}>{s.work_type}</TableCell>
+                <TableCell className="text-xs" style={{ color: "#666" }}>{s.contact}</TableCell>
+                <TableCell className="font-mono text-xs" style={{ color: "#666" }}>{s.gstin}</TableCell>
+                <TableCell>
+                  <Badge style={{ backgroundColor: "#E8F2ED", color: "#006039", border: "1px solid #006039" }}>Active</Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>New Subcontractor</DialogTitle></DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1"><Label className="text-xs">Company / Name *</Label><Input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} /></div>
+            <div className="space-y-1"><Label className="text-xs">Work Type</Label><Input value={form.work_type} onChange={(e) => setForm((p) => ({ ...p, work_type: e.target.value }))} placeholder="e.g. Painting" /></div>
+            <div className="space-y-1"><Label className="text-xs">Contact</Label><Input value={form.contact} onChange={(e) => setForm((p) => ({ ...p, contact: e.target.value }))} placeholder="+91 XXXXX XXXXX" /></div>
+            <div className="space-y-1"><Label className="text-xs">GSTIN</Label><Input value={form.gstin} onChange={(e) => setForm((p) => ({ ...p, gstin: e.target.value }))} /></div>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
+              <Button onClick={handleAdd} style={{ backgroundColor: "#006039", color: "#fff" }}>Add</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
 
 function isBlockedBySoD(request: any, userId: string | null, action: string): string | null {
   if (!userId) return null;
@@ -307,6 +425,7 @@ export default function Procurement() {
             <TabsTrigger value="availability" className="gap-1.5"><AlertTriangle className="h-4 w-4" /> Availability</TabsTrigger>
             <TabsTrigger value="assets" className="gap-1.5"><Factory className="h-4 w-4" /> Assets</TabsTrigger>
             <TabsTrigger value="site-inventory" className="gap-1.5"><Truck className="h-4 w-4" /> Site Stock</TabsTrigger>
+            <TabsTrigger value="subcontractors" className="gap-1.5"><Users className="h-4 w-4" /> Subcontractors</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -364,8 +483,20 @@ export default function Procurement() {
 
         {/* Material Plan Tab */}
         <TabsContent value="material-plan" className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Material Plan</h2>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => {
+                import("xlsx").then((XLSX) => {
+                  const headers = [["S.No", "Category", "Item Description", "Unit", "Tender Qty", "Actual Qty", "Wastage %", "BOQ Qty", "Material Rate (₹)", "Labour Rate (₹)", "OH Rate (₹)", "BOQ Rate (₹)", "Total Amount (₹)", "Margin %", "Scope (Factory / On-Site Civil / Both)"]];
+                  const ws = XLSX.utils.aoa_to_sheet(headers);
+                  const wb = XLSX.utils.book_new();
+                  XLSX.utils.book_append_sheet(wb, ws, "Material BOQ");
+                  XLSX.writeFile(wb, "Material_BOQ_Template.xlsx");
+                });
+              }}>
+                <Download className="h-3.5 w-3.5 mr-1" />BOQ Template
+              </Button>
             {canPlan && (
               <Dialog open={planDialogOpen} onOpenChange={setPlanDialogOpen}>
                 <DialogTrigger asChild><Button style={{ backgroundColor: "#006039" }}><Plus className="h-4 w-4 mr-1" /> Add Item</Button></DialogTrigger>
@@ -399,6 +530,7 @@ export default function Procurement() {
                 </DialogContent>
               </Dialog>
             )}
+            </div>
           </div>
           {planItems.length === 0 ? (
             <Card><CardContent className="py-10 text-center"><p className="text-sm" style={{ color: "#666666" }}>No material plan items yet.</p></CardContent></Card>
@@ -670,6 +802,10 @@ export default function Procurement() {
             <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Site Stock</h2>
           </div>
           <SiteInventory />
+        </TabsContent>
+
+        <TabsContent value="subcontractors" className="space-y-4">
+          <SubcontractorsTab />
         </TabsContent>
       </Tabs>
 

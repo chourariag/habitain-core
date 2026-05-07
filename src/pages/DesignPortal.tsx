@@ -47,6 +47,113 @@ const stageStatusStyle = (s: string): React.CSSProperties => ({
   client_approved: { backgroundColor: "#E8F2ED", color: "#006039" },
 }[s] ?? { backgroundColor: "#F5F5F5", color: "#666666" });
 
+/* ─── Design Schedule Tab ─── */
+
+const DESIGN_SCHEDULE_TASKS = [
+  ["", "ID", "Task Name", "Type", "Responsible", "Duration (days)", "Predecessors", "Planned Start", "Planned Finish"],
+  ["", "D1.1", "Receive project brief from client", "Task", "Project Architect", "1", "", "", ""],
+  ["", "D1.2", "Site survey and context analysis", "Task", "Project Architect", "2", "D1.1", "", ""],
+  ["", "D1.3", "Brief sign-off by client", "Client Approval", "Principal Architect", "1", "D1.2", "", ""],
+  ["", "D2.1", "Concept design preparation", "Task", "Project Architect", "5", "D1.3", "", ""],
+  ["", "D2.2", "Concept presentation to client", "Task", "Principal Architect", "1", "D2.1", "", ""],
+  ["", "D2.3", "Concept design approval", "Client Approval", "Principal Architect", "1", "D2.2", "", ""],
+  ["", "D3.1", "Schematic design development", "Task", "Project Architect", "7", "D2.3", "", ""],
+  ["", "D3.2", "Structural coordination", "Task", "Structural Architect", "3", "D3.1", "", ""],
+  ["", "D3.3", "MEP coordination", "Task", "Project Architect", "3", "D3.1", "", ""],
+  ["", "D3.4", "Internal QC review", "QC Gate", "Principal Architect", "1", "D3.3", "", ""],
+  ["", "D3.5", "Schematic design submission to client", "Task", "Principal Architect", "1", "D3.4", "", ""],
+  ["", "D3.6", "Client review and comments", "Client Approval", "Principal Architect", "5", "D3.5", "", ""],
+  ["", "D3.7", "Design development", "Task", "Project Architect", "10", "D3.6", "", ""],
+  ["", "D3.8", "Structural engineering drawings", "Task", "Structural Architect", "5", "D3.7", "", ""],
+  ["", "D3.9", "MEP engineering drawings", "Task", "Project Architect", "5", "D3.7", "", ""],
+  ["", "D3.10", "BOQ preparation (Tender)", "Task", "Project Architect", "3", "D3.9", "", ""],
+  ["", "D3.11", "GFC drawing preparation — Architecture", "Task", "Project Architect", "7", "D3.10", "", ""],
+  ["", "D3.12", "GFC drawing preparation — Structure", "Task", "Structural Architect", "5", "D3.11", "", ""],
+  ["", "D3.13", "GFC drawing preparation — MEP", "Task", "Project Architect", "5", "D3.11", "", ""],
+  ["", "D3.14", "Internal GFC QC review", "QC Gate", "Principal Architect", "2", "D3.13", "", ""],
+  ["", "D3.15", "Issue GFC set for client approval", "Task", "Principal Architect", "1", "D3.14", "", ""],
+  ["", "D3.16", "Client GFC review and approval", "Client Approval", "Principal Architect", "5", "D3.15", "", ""],
+  ["", "D3.17", "Address GFC comments", "Task", "Project Architect", "3", "D3.16", "", ""],
+  ["", "D3.18", "[SIGN-OFF] H1 Sign-off — GFC Issue", "Sign-off", "Principal Architect", "1", "D3.17", "", ""],
+  ["", "D3.19", "Construction drawings issue (H1)", "Task", "Project Architect", "2", "D3.18", "", ""],
+  ["", "D3.20", "[SIGN-OFF] H2 Sign-off — Construction Issue", "Sign-off", "Principal Architect", "1", "D3.19", "", ""],
+  ["", "D4.1", "Site inspection — foundation", "Task", "Project Architect", "1", "D3.20", "", ""],
+  ["", "D4.2", "Site inspection — structure", "Task", "Project Architect", "1", "D4.1", "", ""],
+  ["", "D4.3", "Snag list preparation", "Task", "Project Architect", "2", "D4.2", "", ""],
+  ["", "D4.4", "As-built drawing preparation", "Task", "Project Architect", "5", "D4.3", "", ""],
+  ["", "D4.5", "Project completion report", "Task", "Principal Architect", "2", "D4.4", "", ""],
+];
+
+function downloadDesignScheduleTemplate(projectName: string) {
+  import("xlsx").then((XLSX) => {
+    const ws = XLSX.utils.aoa_to_sheet(DESIGN_SCHEDULE_TASKS);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Design Schedule");
+    XLSX.writeFile(wb, `${(projectName || "Project").replace(/\s+/g, "_")}_Design_Schedule.xlsx`);
+  });
+}
+
+function DesignScheduleTab({ projects }: { projects: any[] }) {
+  const [selectedProject, setSelectedProject] = useState("");
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <h2 className="font-display text-lg font-semibold">Design Schedule</h2>
+        <div className="flex items-center gap-2">
+          <select
+            className="text-sm h-9 rounded border px-2"
+            style={{ borderColor: "#E0E0E0", color: "#1A1A1A" }}
+            value={selectedProject}
+            onChange={(e) => setSelectedProject(e.target.value)}
+          >
+            <option value="">— Select project —</option>
+            {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+          <Button size="sm" variant="outline"
+            onClick={() => downloadDesignScheduleTemplate(projects.find((p) => p.id === selectedProject)?.name ?? "Project")}>
+            <Download className="h-3.5 w-3.5 mr-1" />Download Template
+          </Button>
+        </div>
+      </div>
+      <div className="rounded-xl border overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr style={{ backgroundColor: "#F7F7F7", borderBottom: "1px solid #E0E0E0" }}>
+                {["ID", "Task Name", "Type", "Responsible", "Duration"].map((h) => (
+                  <th key={h} className="text-left px-3 py-2 font-semibold">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {DESIGN_SCHEDULE_TASKS.slice(1).map((row, i) => {
+                const [, id, name, type, responsible, duration] = row;
+                const typeColor = type === "Sign-off" ? "#006039" : type === "QC Gate" ? "#F40009" : type === "Client Approval" ? "#1A73E8" : "#666";
+                const typeBg = type === "Sign-off" ? "#E8F2ED" : type === "QC Gate" ? "#FFF0F0" : type === "Client Approval" ? "#E8F0FE" : "#F5F5F5";
+                return (
+                  <tr key={i} style={{ borderBottom: "1px solid #F0F0F0" }}>
+                    <td className="px-3 py-2 font-mono font-semibold" style={{ color: "#006039" }}>{id}</td>
+                    <td className="px-3 py-2 font-medium" style={{ color: "#1A1A1A" }}>{name}</td>
+                    <td className="px-3 py-2">
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: typeBg, color: typeColor }}>{type}</span>
+                    </td>
+                    <td className="px-3 py-2" style={{ color: "#666" }}>{responsible}</td>
+                    <td className="px-3 py-2 font-mono" style={{ color: "#666" }}>{duration}d</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <p className="px-4 py-2 text-[10px]" style={{ color: "#999" }}>
+          D3.18 H1 Sign-off triggers factory production unlock. D3.20 H2 Sign-off triggers GFC Budget upload unlock.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function DesignPortal() {
   const [loading, setLoading] = useState(true);
   const [countsLoading, setCountsLoading] = useState(true);
@@ -435,8 +542,32 @@ export default function DesignPortal() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const ext = uploadFile.name.split(".").pop();
-      const path = `${uploadForm.project_id}/${uploadForm.drawing_id_code.replace(/\s/g, "_")}_R${uploadForm.revision}.${ext}`;
+      // Sanitize filename: remove spaces, parentheses, and special chars
+      const rawName = uploadFile.name;
+      const ext = rawName.split(".").pop() ?? "pdf";
+      const sanitizedBase = rawName
+        .replace(/\.[^.]+$/, "")
+        .replace(/[\s()[\]{}&%$#@!*]/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_|_$/g, "");
+      const sanitizedFileName = `${sanitizedBase}.${ext}`;
+
+      // Check for duplicate Drawing ID within same project (revision 1 only)
+      if (uploadForm.revision === 1 && !uploadForm.existing_drawing_code) {
+        const { data: existing } = await (supabase.from("drawings") as any)
+          .select("id")
+          .eq("project_id", uploadForm.project_id)
+          .eq("drawing_id_code", uploadForm.drawing_id_code)
+          .eq("status", "active")
+          .limit(1);
+        if ((existing ?? []).length > 0) {
+          toast.error(`Drawing ID ${uploadForm.drawing_id_code} already exists. Use a different ID or increment the revision number.`);
+          setUploading(false);
+          return;
+        }
+      }
+
+      const path = `${uploadForm.project_id}/${uploadForm.drawing_id_code.replace(/[\s()[\]]/g, "_")}_R${uploadForm.revision}.${ext}`;
       const { error: uploadErr } = await supabase.storage.from("drawings").upload(path, uploadFile, { upsert: true });
       if (uploadErr) throw uploadErr;
       const { data: urlData } = supabase.storage.from("drawings").getPublicUrl(path);
@@ -471,7 +602,7 @@ export default function DesignPortal() {
         drawing_type: uploadForm.drawing_type,
         revision: uploadForm.revision,
         file_url: urlData.publicUrl,
-        file_name: uploadFile.name,
+        file_name: sanitizedFileName,
         uploaded_by: user.id,
         uploaded_by_name: userName,
         notes: uploadForm.notes || null,
@@ -745,6 +876,7 @@ export default function DesignPortal() {
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="drawings-register">Drawings</TabsTrigger>
               <TabsTrigger value="dq-register">Design Queries</TabsTrigger>
+              <TabsTrigger value="design-schedule">Design Schedule</TabsTrigger>
             </TabsList>
           </ScrollableTabsWrapper>
 
@@ -1042,6 +1174,11 @@ export default function DesignPortal() {
                 </div>
               ))}
             </div>
+          </TabsContent>
+
+          {/* ═══════ TAB 4: Design Schedule ═══════ */}
+          <TabsContent value="design-schedule" className="space-y-4">
+            <DesignScheduleTab projects={projects} />
           </TabsContent>
         </Tabs>
       ) : (
