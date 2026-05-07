@@ -169,7 +169,7 @@ export default function ProjectDetail() {
 
       <ClientPortalManager projectId={id!} userRole={userRole} />
 
-      <ProjectSetupUpload projectId={id!} userRole={userRole} onImported={fetchData} />
+      <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} onImported={fetchData} />
 
       <Tabs defaultValue="modules">
         <ScrollableTabsWrapper>
