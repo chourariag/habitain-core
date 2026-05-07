@@ -193,7 +193,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
     const { error } = await supabase.from("project_billing_milestones").insert(rows as any);
     if (error) { toast.error(error.message); setSaving(false); return; }
 
-    toast.success("Billing milestones saved");
+    toast.success("Billing milestones saved ✓");
     setDirty(false);
     setSaving(false);
     loadMilestones();
