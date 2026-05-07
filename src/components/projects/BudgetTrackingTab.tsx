@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet, Info, Upload, Download, Lock, AlertTriangle } from "lucide-react";
+import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet, Info, Upload, Download, Lock, AlertTriangle, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
@@ -50,9 +50,13 @@ interface TenderBudgetItem {
 const fmtINR = (n: number) =>
   `₹${(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
-export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props) {
+export function BudgetTrackingTab({ projectId, contractValue: contractValueProp, userRole }: Props) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [contractValue, setContractValue] = useState<number>(contractValueProp || 0);
+  const [editingContract, setEditingContract] = useState(false);
+  const [contractInput, setContractInput] = useState<string>("");
+  const [savingContract, setSavingContract] = useState(false);
   const [boqItems, setBoqItems] = useState<BoqItem[]>([]);
   const [grns, setGrns] = useState<Grn[]>([]);
   const [manuals, setManuals] = useState<ManualEntry[]>([]);
@@ -70,8 +74,22 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
   const [overrideActive, setOverrideActive] = useState(false);
   const overrideReasonRef = useRef<string>("");
 
+  useEffect(() => { setContractValue(contractValueProp || 0); }, [contractValueProp]);
+
   const canEdit = ["super_admin", "managing_director", "finance_director", "finance_manager", "planning_engineer", "procurement"].includes(userRole ?? "");
   const isMd = ["super_admin", "managing_director"].includes(userRole ?? "");
+
+  const saveContractValue = async () => {
+    const v = Number(contractInput);
+    if (!Number.isFinite(v) || v < 0) { toast.error("Enter a valid amount"); return; }
+    setSavingContract(true);
+    const { error } = await supabase.from("projects").update({ contract_value: v } as any).eq("id", projectId);
+    setSavingContract(false);
+    if (error) { toast.error(error.message); return; }
+    setContractValue(v);
+    setEditingContract(false);
+    toast.success("Contract value updated");
+  };
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -435,7 +453,51 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
 
       {/* Top summary strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <SummaryCard icon={<IndianRupee className="h-4 w-4" />} label="Contract Value" value={fmtINR(contractValue)} />
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between gap-1.5 text-xs text-muted-foreground mb-1">
+              <div className="flex items-center gap-1.5"><IndianRupee className="h-4 w-4" /><span>Contract Value</span></div>
+              {canEdit && !editingContract && (
+                <button
+                  type="button"
+                  onClick={() => { setContractInput(String(contractValue || "")); setEditingContract(true); }}
+                  className="p-0.5 rounded hover:bg-muted"
+                  aria-label="Edit contract value"
+                >
+                  <Pencil className="h-3 w-3" style={{ color: "#006039" }} />
+                </button>
+              )}
+            </div>
+            {editingContract ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  autoFocus
+                  value={contractInput}
+                  onChange={(e) => setContractInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveContractValue(); if (e.key === "Escape") setEditingContract(false); }}
+                  className="h-7 text-sm font-mono"
+                  placeholder="0"
+                />
+                <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={saveContractValue} disabled={savingContract}>
+                  {savingContract ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" style={{ color: "#006039" }} />}
+                </Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => setEditingContract(false)} disabled={savingContract}>
+                  <X className="h-3 w-3" style={{ color: "#F40009" }} />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="text-base font-display font-bold font-mono" style={{ color: "#1A1A1A" }}>{fmtINR(contractValue)}</div>
+                {canEdit && !contractValue && (
+                  <p className="text-[10px] mt-1 leading-tight" style={{ color: "#D4860A" }}>
+                    Tap ✏ to enter the contract value for this project
+                  </p>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
         <SummaryCard icon={<Wallet className="h-4 w-4" />} label="GFC Budget" value={fmtINR(totalBudget)} />
         <SummaryCard icon={<TrendingDown className="h-4 w-4" />} label="Actually Spent" value={fmtINR(totalSpent)} />
         <SummaryCard
