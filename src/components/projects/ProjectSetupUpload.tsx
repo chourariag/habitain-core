@@ -10,6 +10,7 @@ import { format } from "date-fns";
 interface Props {
   projectId: string;
   userRole: string | null;
+  productionSystem?: string | null;
   onImported?: () => void;
 }
 
