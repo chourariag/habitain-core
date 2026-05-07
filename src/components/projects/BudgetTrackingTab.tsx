@@ -220,32 +220,41 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
       const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
       const items: any[] = [];
+      let hasAnyGfc = false;
       for (const row of rows) {
         const cat = row["Category"] || row["category"] || "Miscellaneous";
         const desc = row["Item Description"] || row["Description"] || "";
-        const totalAmt = Number(row["Total Amount (₹)"] || row["Total Amount"] || 0);
-        if (!desc && !totalAmt) continue;
+        if (!desc) continue;
         const tenderQty = Number(row["Tender Qty"] || 0);
-        const actualQty = Number(row["Actual Qty"] || 0);
+        const gfcQtyRaw = row["GFC Qty"];
+        const gfcQty = gfcQtyRaw === "" || gfcQtyRaw == null ? 0 : Number(gfcQtyRaw) || 0;
         const wastagePct = Number(row["Wastage %"] || 0);
-        // BOQ Qty = Actual Qty + Wastage% (compute if not supplied)
         const boqQtyRaw = row["BOQ Qty"];
         const boqQty = boqQtyRaw === "" || boqQtyRaw === undefined || boqQtyRaw === null
-          ? actualQty * (1 + wastagePct / 100)
+          ? gfcQty * (1 + wastagePct / 100)
           : Number(boqQtyRaw) || 0;
+        const matRate = Number(row["Material Rate (₹)"] || row["Material Rate"] || 0);
+        const labRate = Number(row["Labour Rate (₹)"] || row["Labour Rate"] || 0);
+        const ohRate = Number(row["OH Rate (₹)"] || row["OH Rate"] || 0);
+        const boqRate = Number(row["BOQ Rate (₹)"] || row["BOQ Rate"] || 0) || (matRate + labRate + ohRate);
+        const tenderAmt = Number(row["Tender Amount (₹)"] || row["Tender Amount"] || 0) || (tenderQty * boqRate);
+        const gfcAmt = Number(row["GFC Amount (₹)"] || row["GFC Amount"] || row["Total Amount (₹)"] || row["Total Amount"] || 0) || (boqQty * boqRate);
+        if (gfcQty > 0) hasAnyGfc = true;
         items.push({
           category: cat,
           item_description: desc,
           unit: row["Unit"] || "",
           tender_qty: tenderQty,
-          actual_qty: actualQty,
+          actual_qty: gfcQty,
           wastage_pct: wastagePct,
           boq_qty: boqQty,
-          material_rate: Number(row["Material Rate (₹)"] || row["Material Rate"] || 0),
-          labour_rate: Number(row["Labour Rate (₹)"] || row["Labour Rate"] || 0),
-          oh_rate: Number(row["OH Rate (₹)"] || row["OH Rate"] || 0),
-          boq_rate: Number(row["BOQ Rate (₹)"] || row["BOQ Rate"] || 0),
-          total_amount: totalAmt,
+          material_rate: matRate,
+          labour_rate: labRate,
+          oh_rate: ohRate,
+          boq_rate: boqRate,
+          tender_amount: tenderAmt,
+          gfc_amount: gfcAmt,
+          total_amount: gfcAmt || tenderAmt,
           margin_pct: Number(row["Margin %"] || 0),
           scope: row["Scope (Factory / On-Site Civil / Both)"] || row["Scope"] || "",
         });
