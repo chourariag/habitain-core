@@ -14,6 +14,35 @@ export function downloadXlsxTemplate(
   XLSX.writeFile(wb, filename);
 }
 
+/**
+ * Build a BOQ worksheet with colour-coded headers (Tender Qty = light blue,
+ * GFC Qty = light green) and live formulas for BOQ Qty, BOQ Rate, Tender Amount,
+ * and GFC Amount. Rows are blank except S.No so Nakeem can fill them in.
+ */
+export function buildBoqWorksheet(rowCount: number = 30): XLSX.WorkSheet {
+  const headers = TEMPLATES.boq.headers as readonly string[];
+  const ws = XLSX.utils.aoa_to_sheet([[...headers]]);
+  // Pre-create blank rows with formulas
+  for (let i = 0; i < rowCount; i++) {
+    const r = i + 2; // 1-indexed + header
+    XLSX.utils.sheet_add_aoa(ws, [[i + 1]], { origin: `A${r}` });
+    // BOQ Qty (H) = GFC Qty (F) * (1 + Wastage% (G)/100)
+    ws[`H${r}`] = { t: "n", f: `IF(F${r}="","",F${r}*(1+G${r}/100))` };
+    // BOQ Rate (L) = Material(I) + Labour(J) + OH(K)
+    ws[`L${r}`] = { t: "n", f: `IF(AND(I${r}="",J${r}="",K${r}=""),"",N(I${r})+N(J${r})+N(K${r}))` };
+    // Tender Amount (M) = Tender Qty (E) * BOQ Rate (L)
+    ws[`M${r}`] = { t: "n", f: `IF(OR(E${r}="",L${r}=""),"",E${r}*L${r})` };
+    // GFC Amount (N) = BOQ Qty (H) * BOQ Rate (L)
+    ws[`N${r}`] = { t: "n", f: `IF(OR(H${r}="",L${r}=""),"",H${r}*L${r})` };
+  }
+  ws["!cols"] = headers.map((h) => ({ wch: Math.max(h.length + 2, 12) }));
+  // Header colour coding: Tender Qty = E1 (light blue), GFC Qty = F1 (light green)
+  if (ws["E1"]) (ws["E1"] as any).s = { fill: { fgColor: { rgb: "BFDFFF" } }, font: { bold: true } };
+  if (ws["F1"]) (ws["F1"] as any).s = { fill: { fgColor: { rgb: "C8E6C9" } }, font: { bold: true } };
+  ws["!ref"] = `A1:P${rowCount + 1}`;
+  return ws;
+}
+
 // ──────────────── Template definitions ────────────────
 
 export const TEMPLATES = {
