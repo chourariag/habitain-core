@@ -337,7 +337,11 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
             <h3 className="font-display text-sm font-semibold" style={{ color: "#1A1A1A" }}>GFC Budget</h3>
             <div className="flex gap-2">
               <input ref={gfcFileRef} type="file" accept=".xlsx" className="hidden" onChange={handleGfcUpload} />
-              <Button size="sm" variant="outline" onClick={() => downloadXlsxTemplate(TEMPLATES.boq.filename, TEMPLATES.boq.sheet, TEMPLATES.boq.headers, TEMPLATES.boq.sample)}
+              <Button size="sm" variant="outline" onClick={() => {
+                  const wb = XLSX.utils.book_new();
+                  XLSX.utils.book_append_sheet(wb, buildBoqWorksheet(40), TEMPLATES.boq.sheet);
+                  XLSX.writeFile(wb, TEMPLATES.boq.filename);
+                }}
                 style={{ borderColor: "#006039", color: "#006039" }} className="text-xs gap-1">
                 <Download className="h-3 w-3" /> Template
               </Button>
