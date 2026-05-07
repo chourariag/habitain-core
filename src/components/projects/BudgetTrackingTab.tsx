@@ -453,7 +453,51 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
 
       {/* Top summary strip */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <SummaryCard icon={<IndianRupee className="h-4 w-4" />} label="Contract Value" value={fmtINR(contractValue)} />
+        <Card>
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between gap-1.5 text-xs text-muted-foreground mb-1">
+              <div className="flex items-center gap-1.5"><IndianRupee className="h-4 w-4" /><span>Contract Value</span></div>
+              {canEdit && !editingContract && (
+                <button
+                  type="button"
+                  onClick={() => { setContractInput(String(contractValue || "")); setEditingContract(true); }}
+                  className="p-0.5 rounded hover:bg-muted"
+                  aria-label="Edit contract value"
+                >
+                  <Pencil className="h-3 w-3" style={{ color: "#006039" }} />
+                </button>
+              )}
+            </div>
+            {editingContract ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  type="number"
+                  autoFocus
+                  value={contractInput}
+                  onChange={(e) => setContractInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveContractValue(); if (e.key === "Escape") setEditingContract(false); }}
+                  className="h-7 text-sm font-mono"
+                  placeholder="0"
+                />
+                <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={saveContractValue} disabled={savingContract}>
+                  {savingContract ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" style={{ color: "#006039" }} />}
+                </Button>
+                <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => setEditingContract(false)} disabled={savingContract}>
+                  <X className="h-3 w-3" style={{ color: "#F40009" }} />
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="text-base font-display font-bold font-mono" style={{ color: "#1A1A1A" }}>{fmtINR(contractValue)}</div>
+                {canEdit && !contractValue && (
+                  <p className="text-[10px] mt-1 leading-tight" style={{ color: "#D4860A" }}>
+                    Tap ✏ to enter the contract value for this project
+                  </p>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
         <SummaryCard icon={<Wallet className="h-4 w-4" />} label="GFC Budget" value={fmtINR(totalBudget)} />
         <SummaryCard icon={<TrendingDown className="h-4 w-4" />} label="Actually Spent" value={fmtINR(totalSpent)} />
         <SummaryCard
