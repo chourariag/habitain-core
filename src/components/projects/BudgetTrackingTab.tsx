@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet, Info, Upload, Download, Lock, AlertTriangle, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
+import { downloadXlsxTemplate, TEMPLATES, buildBoqWorksheet } from "@/lib/xlsx-templates";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 
@@ -220,32 +220,41 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
       const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
       const items: any[] = [];
+      let hasAnyGfc = false;
       for (const row of rows) {
         const cat = row["Category"] || row["category"] || "Miscellaneous";
         const desc = row["Item Description"] || row["Description"] || "";
-        const totalAmt = Number(row["Total Amount (₹)"] || row["Total Amount"] || 0);
-        if (!desc && !totalAmt) continue;
+        if (!desc) continue;
         const tenderQty = Number(row["Tender Qty"] || 0);
-        const actualQty = Number(row["Actual Qty"] || 0);
+        const gfcQtyRaw = row["GFC Qty"];
+        const gfcQty = gfcQtyRaw === "" || gfcQtyRaw == null ? 0 : Number(gfcQtyRaw) || 0;
         const wastagePct = Number(row["Wastage %"] || 0);
-        // BOQ Qty = Actual Qty + Wastage% (compute if not supplied)
         const boqQtyRaw = row["BOQ Qty"];
         const boqQty = boqQtyRaw === "" || boqQtyRaw === undefined || boqQtyRaw === null
-          ? actualQty * (1 + wastagePct / 100)
+          ? gfcQty * (1 + wastagePct / 100)
           : Number(boqQtyRaw) || 0;
+        const matRate = Number(row["Material Rate (₹)"] || row["Material Rate"] || 0);
+        const labRate = Number(row["Labour Rate (₹)"] || row["Labour Rate"] || 0);
+        const ohRate = Number(row["OH Rate (₹)"] || row["OH Rate"] || 0);
+        const boqRate = Number(row["BOQ Rate (₹)"] || row["BOQ Rate"] || 0) || (matRate + labRate + ohRate);
+        const tenderAmt = Number(row["Tender Amount (₹)"] || row["Tender Amount"] || 0) || (tenderQty * boqRate);
+        const gfcAmt = Number(row["GFC Amount (₹)"] || row["GFC Amount"] || row["Total Amount (₹)"] || row["Total Amount"] || 0) || (boqQty * boqRate);
+        if (gfcQty > 0) hasAnyGfc = true;
         items.push({
           category: cat,
           item_description: desc,
           unit: row["Unit"] || "",
           tender_qty: tenderQty,
-          actual_qty: actualQty,
+          actual_qty: gfcQty,
           wastage_pct: wastagePct,
           boq_qty: boqQty,
-          material_rate: Number(row["Material Rate (₹)"] || row["Material Rate"] || 0),
-          labour_rate: Number(row["Labour Rate (₹)"] || row["Labour Rate"] || 0),
-          oh_rate: Number(row["OH Rate (₹)"] || row["OH Rate"] || 0),
-          boq_rate: Number(row["BOQ Rate (₹)"] || row["BOQ Rate"] || 0),
-          total_amount: totalAmt,
+          material_rate: matRate,
+          labour_rate: labRate,
+          oh_rate: ohRate,
+          boq_rate: boqRate,
+          tender_amount: tenderAmt,
+          gfc_amount: gfcAmt,
+          total_amount: gfcAmt || tenderAmt,
           margin_pct: Number(row["Margin %"] || 0),
           scope: row["Scope (Factory / On-Site Civil / Both)"] || row["Scope"] || "",
         });
@@ -259,8 +268,16 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
         .order("version_number", { ascending: false }).limit(1);
       const nextVersion = ((prevBoqs as any)?.[0]?.version_number ?? 0) + 1;
 
+      const tenderTotal = items.reduce((s, i) => s + (i.tender_amount || 0), 0);
+      const gfcTotal = items.reduce((s, i) => s + (i.gfc_amount || 0), 0);
+      const total = gfcTotal || tenderTotal;
+      const gfcPending = hasAnyGfc && !hasH1Signoff && !overrideActive;
       const { data: newBoq, error: boqErr } = await supabase.from("project_boq")
-        .insert({ project_id: projectId, version_number: nextVersion, uploaded_by: user.id } as any)
+        .insert({
+          project_id: projectId, version_number: nextVersion, uploaded_by: user.id,
+          total_boq_value: total, tender_total_value: tenderTotal, gfc_total_value: gfcTotal,
+          gfc_pending_h1: gfcPending,
+        } as any)
         .select("id").single();
       if (boqErr) throw boqErr;
 
@@ -270,7 +287,9 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
         await supabase.from("project_boq_items").insert(boqItems.slice(i, i + 50) as any);
       }
 
-      toast.success(`${items.length} GFC budget items uploaded`);
+      if (gfcPending) toast.success(`${items.length} BOQ items saved — GFC data is pending H1 sign-off`);
+      else if (!hasAnyGfc) toast.success(`${items.length} Tender BOQ items uploaded — GFC pending`);
+      else toast.success(`${items.length} BOQ items uploaded (Tender + GFC)`);
       if (overrideActive) {
         await logAudit({
           section: "GFC Budget",
@@ -318,47 +337,26 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
             <h3 className="font-display text-sm font-semibold" style={{ color: "#1A1A1A" }}>GFC Budget</h3>
             <div className="flex gap-2">
               <input ref={gfcFileRef} type="file" accept=".xlsx" className="hidden" onChange={handleGfcUpload} />
-              <Button size="sm" variant="outline" onClick={() => downloadXlsxTemplate(TEMPLATES.boq.filename, TEMPLATES.boq.sheet, TEMPLATES.boq.headers, TEMPLATES.boq.sample)}
+              <Button size="sm" variant="outline" onClick={() => {
+                  const wb = XLSX.utils.book_new();
+                  XLSX.utils.book_append_sheet(wb, buildBoqWorksheet(40), TEMPLATES.boq.sheet);
+                  XLSX.writeFile(wb, TEMPLATES.boq.filename);
+                }}
                 style={{ borderColor: "#006039", color: "#006039" }} className="text-xs gap-1">
                 <Download className="h-3 w-3" /> Template
               </Button>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button size="sm" onClick={() => gfcFileRef.current?.click()}
-                        disabled={!hasH1Signoff || uploading}
-                        className="text-xs gap-1" style={hasH1Signoff ? { backgroundColor: "#006039" } : {}}>
-                        {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : hasH1Signoff ? <Upload className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
-                        Upload GFC Budget
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  {!hasH1Signoff && (
-                    <TooltipContent>
-                      <p>GFC sign-off required before uploading GFC budget</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+              <Button size="sm" onClick={() => gfcFileRef.current?.click()}
+                disabled={uploading}
+                className="text-xs gap-1" style={{ backgroundColor: "#006039" }}>
+                {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                Upload BOQ
+              </Button>
             </div>
           </div>
           {!hasH1Signoff && (
-            <div className="space-y-1">
-              <p className="text-xs flex items-center gap-1" style={{ color: "#D4860A" }}>
-                <Lock className="h-3 w-3" /> GFC budget upload is locked until H1 sign-off is recorded in the Design Portal
-              </p>
-              {isMd && (
-                <button
-                  type="button"
-                  onClick={() => setOverrideOpen(true)}
-                  className="text-xs underline hover:no-underline"
-                  style={{ color: "#F40009" }}
-                >
-                  MD override — upload without H1 sign-off →
-                </button>
-              )}
-            </div>
+            <p className="text-xs flex items-center gap-1" style={{ color: "#D4860A" }}>
+              <Lock className="h-3 w-3" /> H1 sign-off not yet recorded — any GFC quantities you upload will be stored as "Pending H1 sign-off" and activate automatically once H1 is issued.
+            </p>
           )}
         </CardContent>
       </Card>

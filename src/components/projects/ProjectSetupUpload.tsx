@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Upload, Download, Loader2, Check, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { buildBoqWorksheet } from "@/lib/xlsx-templates";
 
 interface Props {
   projectId: string;
@@ -56,10 +57,7 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(billing), "Billing Milestones");
 
-    const boq = [
-      ["S.No", "Category", "Item Description", "Unit", "Tender Qty", "Actual Qty", "Wastage %", "BOQ Qty", "Material Rate", "Labour Rate", "OH Rate", "BOQ Rate", "Total Amount", "Margin %", "Scope"],
-    ];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(boq), "Tender BOQ");
+    XLSX.utils.book_append_sheet(wb, buildBoqWorksheet(30), "BOQ");
 
     const sys = (productionSystem || "modular").toLowerCase();
     const { data: tmpl } = await (supabase.from("production_task_templates") as any)
@@ -176,29 +174,57 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
     const headerIdx = rows.findIndex(r => r && r.some((c: any) => String(c).toLowerCase().includes("item description")));
     if (headerIdx === -1) return { name: "BOQ", ok: true, count: 0, message: "No header — skipped" };
     const dataRows = rows.slice(headerIdx + 1);
+    // New column order: 0 S.No | 1 Category | 2 Item Description | 3 Unit |
+    // 4 Tender Qty | 5 GFC Qty | 6 Wastage % | 7 BOQ Qty |
+    // 8 Material Rate | 9 Labour Rate | 10 OH Rate | 11 BOQ Rate |
+    // 12 Tender Amount | 13 GFC Amount | 14 Margin % | 15 Scope
     const parsed: any[] = []; let sno = 0;
+    let hasAnyGfc = false;
     dataRows.forEach(r => {
       const desc = String(r[2] || "").trim();
       if (!desc) return;
       sno++;
-      const tenderQty = Number(r[4]) || 0, actualQty = Number(r[5]) || 0, wastagePct = Number(r[6]) || 0;
-      const boqQty = Number(r[7]) || (actualQty * (1 + wastagePct / 100));
+      const tenderQty = r[4] === "" || r[4] == null ? 0 : Number(r[4]) || 0;
+      const gfcQty = r[5] === "" || r[5] == null ? 0 : Number(r[5]) || 0;
+      const wastagePct = Number(r[6]) || 0;
+      const boqQty = Number(r[7]) || (gfcQty * (1 + wastagePct / 100));
       const matRate = Number(r[8]) || 0, labRate = Number(r[9]) || 0, ohRate = Number(r[10]) || 0;
       const boqRate = Number(r[11]) || (matRate + labRate + ohRate);
-      const totalAmt = Number(r[12]) || (boqQty * boqRate);
-      const marginPct = r[13] != null && r[13] !== "" ? Number(r[13]) : 0;
-      const scope = String(r[14] || "Factory").trim();
-      parsed.push({ sno, category: String(r[1] || "Miscellaneous").trim(), item_description: desc, unit: String(r[3] || ""), tender_qty: tenderQty, actual_qty: actualQty, wastage_pct: wastagePct, boq_qty: boqQty, material_rate: matRate, labour_rate: labRate, oh_rate: ohRate, boq_rate: boqRate, total_amount: totalAmt, margin_pct: marginPct, scope });
+      const tenderAmt = Number(r[12]) || (tenderQty * boqRate);
+      const gfcAmt = Number(r[13]) || (boqQty * boqRate);
+      const marginPct = r[14] != null && r[14] !== "" ? Number(r[14]) : 0;
+      const scope = String(r[15] || "Factory").trim();
+      if (gfcQty > 0) hasAnyGfc = true;
+      parsed.push({
+        sno, category: String(r[1] || "Miscellaneous").trim(), item_description: desc, unit: String(r[3] || ""),
+        tender_qty: tenderQty, actual_qty: gfcQty, wastage_pct: wastagePct, boq_qty: boqQty,
+        material_rate: matRate, labour_rate: labRate, oh_rate: ohRate, boq_rate: boqRate,
+        tender_amount: tenderAmt, gfc_amount: gfcAmt, total_amount: gfcAmt || tenderAmt,
+        margin_pct: marginPct, scope,
+      });
     });
     if (parsed.length === 0) return { name: "BOQ", ok: true, count: 0, message: "No items" };
+
+    // Detect H1 sign-off (from design_stages)
+    const { data: signoffs } = await (supabase as any).from("design_stages")
+      .select("id").eq("project_id", projectId).eq("stage_name", "H1").eq("status", "completed").limit(1);
+    const hasH1 = (signoffs as any[] | null)?.length ? true : false;
+
     const { data: prev } = await supabase.from("project_boq").select("version_number").eq("project_id", projectId).order("version_number", { ascending: false }).limit(1);
     const nextV = ((prev as any)?.[0]?.version_number ?? 0) + 1;
-    const total = parsed.reduce((s, i) => s + i.total_amount, 0);
-    const marginAmt = parsed.reduce((s, i) => s + (i.total_amount * (i.margin_pct || 0) / 100), 0);
+    const tenderTotal = parsed.reduce((s, i) => s + (i.tender_amount || 0), 0);
+    const gfcTotal = parsed.reduce((s, i) => s + (i.gfc_amount || 0), 0);
+    const total = gfcTotal || tenderTotal;
+    const marginAmt = parsed.reduce((s, i) => s + ((i.gfc_amount || i.tender_amount) * (i.margin_pct || 0) / 100), 0);
     const blended = total > 0 ? (marginAmt / total) * 100 : 0;
-    const factory = parsed.filter(i => i.scope === "Factory" || i.scope === "Both").reduce((s, i) => s + i.total_amount, 0);
-    const civil = parsed.filter(i => i.scope === "On-Site Civil" || i.scope === "Both").reduce((s, i) => s + i.total_amount, 0);
-    const { data: boq, error } = await supabase.from("project_boq").insert({ project_id: projectId, version_number: nextV, uploaded_by: userId, uploaded_by_name: userName, total_boq_value: total, blended_margin_pct: blended, factory_scope_value: factory, civil_scope_value: civil } as any).select().single();
+    const factory = parsed.filter(i => i.scope === "Factory" || i.scope === "Both").reduce((s, i) => s + (i.gfc_amount || i.tender_amount), 0);
+    const civil = parsed.filter(i => i.scope === "On-Site Civil" || i.scope === "Both").reduce((s, i) => s + (i.gfc_amount || i.tender_amount), 0);
+    const gfcPending = hasAnyGfc && !hasH1;
+    const { data: boq, error } = await supabase.from("project_boq").insert({
+      project_id: projectId, version_number: nextV, uploaded_by: userId, uploaded_by_name: userName,
+      total_boq_value: total, blended_margin_pct: blended, factory_scope_value: factory, civil_scope_value: civil,
+      tender_total_value: tenderTotal, gfc_total_value: gfcTotal, gfc_pending_h1: gfcPending,
+    } as any).select().single();
     if (error || !boq) return { name: "BOQ", ok: false, count: 0, message: error?.message || "BOQ create failed" };
     const items = parsed.map(p => ({ boq_id: (boq as any).id, ...p }));
     for (let i = 0; i < items.length; i += 100) {
@@ -206,7 +232,10 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       if (e2) return { name: "BOQ", ok: false, count: 0, message: e2.message };
     }
     const cats = new Set(parsed.map(p => p.category)).size;
-    return { name: "BOQ", ok: true, count: parsed.length, message: `${parsed.length} items across ${cats} categories` };
+    let msg = `${parsed.length} items across ${cats} categories`;
+    if (!hasAnyGfc) msg += " — Tender only (GFC pending)";
+    else if (gfcPending) msg += " — GFC stored, pending H1 sign-off";
+    return { name: "BOQ", ok: true, count: parsed.length, message: msg };
   }
 
   async function processSchedule(ws: XLSX.WorkSheet | undefined): Promise<SheetResult> {
