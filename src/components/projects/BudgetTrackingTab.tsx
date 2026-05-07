@@ -50,9 +50,13 @@ interface TenderBudgetItem {
 const fmtINR = (n: number) =>
   `₹${(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
-export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props) {
+export function BudgetTrackingTab({ projectId, contractValue: contractValueProp, userRole }: Props) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [contractValue, setContractValue] = useState<number>(contractValueProp || 0);
+  const [editingContract, setEditingContract] = useState(false);
+  const [contractInput, setContractInput] = useState<string>("");
+  const [savingContract, setSavingContract] = useState(false);
   const [boqItems, setBoqItems] = useState<BoqItem[]>([]);
   const [grns, setGrns] = useState<Grn[]>([]);
   const [manuals, setManuals] = useState<ManualEntry[]>([]);
@@ -70,8 +74,22 @@ export function BudgetTrackingTab({ projectId, contractValue, userRole }: Props)
   const [overrideActive, setOverrideActive] = useState(false);
   const overrideReasonRef = useRef<string>("");
 
+  useEffect(() => { setContractValue(contractValueProp || 0); }, [contractValueProp]);
+
   const canEdit = ["super_admin", "managing_director", "finance_director", "finance_manager", "planning_engineer", "procurement"].includes(userRole ?? "");
   const isMd = ["super_admin", "managing_director"].includes(userRole ?? "");
+
+  const saveContractValue = async () => {
+    const v = Number(contractInput);
+    if (!Number.isFinite(v) || v < 0) { toast.error("Enter a valid amount"); return; }
+    setSavingContract(true);
+    const { error } = await supabase.from("projects").update({ contract_value: v }).eq("id", projectId);
+    setSavingContract(false);
+    if (error) { toast.error(error.message); return; }
+    setContractValue(v);
+    setEditingContract(false);
+    toast.success("Contract value updated");
+  };
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
