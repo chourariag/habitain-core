@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Upload, Download, Loader2, Check, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { buildBoqWorksheet } from "@/lib/xlsx-templates";
 
 interface Props {
   projectId: string;
