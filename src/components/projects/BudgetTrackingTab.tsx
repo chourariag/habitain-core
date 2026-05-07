@@ -13,7 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet, Info, Upload, Download, Lock, AlertTriangle, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
+import { downloadXlsxTemplate, TEMPLATES, buildBoqWorksheet } from "@/lib/xlsx-templates";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 
