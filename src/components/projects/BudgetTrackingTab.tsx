@@ -83,7 +83,7 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
     const v = Number(contractInput);
     if (!Number.isFinite(v) || v < 0) { toast.error("Enter a valid amount"); return; }
     setSavingContract(true);
-    const { error } = await supabase.from("projects").update({ contract_value: v }).eq("id", projectId);
+    const { error } = await supabase.from("projects").update({ contract_value: v } as any).eq("id", projectId);
     setSavingContract(false);
     if (error) { toast.error(error.message); return; }
     setContractValue(v);
