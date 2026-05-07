@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet, Info, Upload, Download, Lock, AlertTriangle } from "lucide-react";
+import { Plus, Loader2, IndianRupee, TrendingDown, TrendingUp, Wallet, Info, Upload, Download, Lock, AlertTriangle, Pencil, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
