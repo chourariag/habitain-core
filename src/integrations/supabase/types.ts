@@ -5069,8 +5069,11 @@ export type Database = {
           civil_scope_value: number
           created_at: string
           factory_scope_value: number
+          gfc_pending_h1: boolean | null
+          gfc_total_value: number | null
           id: string
           project_id: string
+          tender_total_value: number | null
           total_boq_value: number
           updated_at: string
           uploaded_at: string
@@ -5083,8 +5086,11 @@ export type Database = {
           civil_scope_value?: number
           created_at?: string
           factory_scope_value?: number
+          gfc_pending_h1?: boolean | null
+          gfc_total_value?: number | null
           id?: string
           project_id: string
+          tender_total_value?: number | null
           total_boq_value?: number
           updated_at?: string
           uploaded_at?: string
@@ -5097,8 +5103,11 @@ export type Database = {
           civil_scope_value?: number
           created_at?: string
           factory_scope_value?: number
+          gfc_pending_h1?: boolean | null
+          gfc_total_value?: number | null
           id?: string
           project_id?: string
+          tender_total_value?: number | null
           total_boq_value?: number
           updated_at?: string
           uploaded_at?: string
@@ -5124,6 +5133,7 @@ export type Database = {
           boq_rate: number
           category: string
           created_at: string
+          gfc_amount: number | null
           id: string
           item_description: string
           labour_rate: number
@@ -5133,6 +5143,7 @@ export type Database = {
           procured_qty: number
           scope: string
           sno: number
+          tender_amount: number | null
           tender_qty: number | null
           total_amount: number
           unit: string | null
@@ -5145,6 +5156,7 @@ export type Database = {
           boq_rate?: number
           category?: string
           created_at?: string
+          gfc_amount?: number | null
           id?: string
           item_description?: string
           labour_rate?: number
@@ -5154,6 +5166,7 @@ export type Database = {
           procured_qty?: number
           scope?: string
           sno?: number
+          tender_amount?: number | null
           tender_qty?: number | null
           total_amount?: number
           unit?: string | null
@@ -5166,6 +5179,7 @@ export type Database = {
           boq_rate?: number
           category?: string
           created_at?: string
+          gfc_amount?: number | null
           id?: string
           item_description?: string
           labour_rate?: number
@@ -5175,6 +5189,7 @@ export type Database = {
           procured_qty?: number
           scope?: string
           sno?: number
+          tender_amount?: number | null
           tender_qty?: number | null
           total_amount?: number
           unit?: string | null
