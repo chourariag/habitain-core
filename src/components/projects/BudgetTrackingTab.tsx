@@ -268,8 +268,16 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
         .order("version_number", { ascending: false }).limit(1);
       const nextVersion = ((prevBoqs as any)?.[0]?.version_number ?? 0) + 1;
 
+      const tenderTotal = items.reduce((s, i) => s + (i.tender_amount || 0), 0);
+      const gfcTotal = items.reduce((s, i) => s + (i.gfc_amount || 0), 0);
+      const total = gfcTotal || tenderTotal;
+      const gfcPending = hasAnyGfc && !hasH1Signoff && !overrideActive;
       const { data: newBoq, error: boqErr } = await supabase.from("project_boq")
-        .insert({ project_id: projectId, version_number: nextVersion, uploaded_by: user.id } as any)
+        .insert({
+          project_id: projectId, version_number: nextVersion, uploaded_by: user.id,
+          total_boq_value: total, tender_total_value: tenderTotal, gfc_total_value: gfcTotal,
+          gfc_pending_h1: gfcPending,
+        } as any)
         .select("id").single();
       if (boqErr) throw boqErr;
 
@@ -279,7 +287,9 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
         await supabase.from("project_boq_items").insert(boqItems.slice(i, i + 50) as any);
       }
 
-      toast.success(`${items.length} GFC budget items uploaded`);
+      if (gfcPending) toast.success(`${items.length} BOQ items saved — GFC data is pending H1 sign-off`);
+      else if (!hasAnyGfc) toast.success(`${items.length} Tender BOQ items uploaded — GFC pending`);
+      else toast.success(`${items.length} BOQ items uploaded (Tender + GFC)`);
       if (overrideActive) {
         await logAudit({
           section: "GFC Budget",
