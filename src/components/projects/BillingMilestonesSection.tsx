@@ -411,11 +411,9 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
             <Button size="sm" variant="outline" onClick={addMilestone}>
               <Plus className="h-3.5 w-3.5 mr-1" /> Add Milestone
             </Button>
-            {dirty && (
-              <Button size="sm" onClick={saveMilestones} disabled={saving}>
-                <Save className="h-3.5 w-3.5 mr-1" /> {saving ? "Saving…" : "Save Milestones"}
-              </Button>
-            )}
+            <Button size="sm" onClick={saveMilestones} disabled={saving || !dirty} className="bg-primary">
+              <Save className="h-3.5 w-3.5 mr-1" /> {saving ? "Saving…" : dirty ? "Save Milestones" : "Saved"}
+            </Button>
           </div>
         )}
       </CardContent>
