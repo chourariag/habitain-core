@@ -56,10 +56,7 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(billing), "Billing Milestones");
 
-    const boq = [
-      ["S.No", "Category", "Item Description", "Unit", "Tender Qty", "Actual Qty", "Wastage %", "BOQ Qty", "Material Rate", "Labour Rate", "OH Rate", "BOQ Rate", "Total Amount", "Margin %", "Scope"],
-    ];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(boq), "Tender BOQ");
+    XLSX.utils.book_append_sheet(wb, buildBoqWorksheet(30), "BOQ");
 
     const sys = (productionSystem || "modular").toLowerCase();
     const { data: tmpl } = await (supabase.from("production_task_templates") as any)
