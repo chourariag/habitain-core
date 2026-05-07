@@ -21,6 +21,7 @@ import { VariationsTab } from "@/components/projects/VariationsTab";
 import { ScopeOfWorkTab } from "@/components/projects/ScopeOfWorkTab";
 import { BudgetTrackingTab } from "@/components/projects/BudgetTrackingTab";
 import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
+import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { useProjectContext } from "@/contexts/ProjectContext";
 
@@ -167,6 +168,8 @@ export default function ProjectDetail() {
       </div>
 
       <ClientPortalManager projectId={id!} userRole={userRole} />
+
+      <ProjectSetupUpload projectId={id!} userRole={userRole} onImported={fetchData} />
 
       <Tabs defaultValue="modules">
         <ScrollableTabsWrapper>

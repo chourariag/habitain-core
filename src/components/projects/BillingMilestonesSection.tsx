@@ -193,7 +193,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
     const { error } = await supabase.from("project_billing_milestones").insert(rows as any);
     if (error) { toast.error(error.message); setSaving(false); return; }
 
-    toast.success("Billing milestones saved");
+    toast.success("Billing milestones saved ✓");
     setDirty(false);
     setSaving(false);
     loadMilestones();
@@ -411,11 +411,9 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
             <Button size="sm" variant="outline" onClick={addMilestone}>
               <Plus className="h-3.5 w-3.5 mr-1" /> Add Milestone
             </Button>
-            {dirty && (
-              <Button size="sm" onClick={saveMilestones} disabled={saving}>
-                <Save className="h-3.5 w-3.5 mr-1" /> {saving ? "Saving…" : "Save Milestones"}
-              </Button>
-            )}
+            <Button size="sm" onClick={saveMilestones} disabled={saving || !dirty} className="bg-primary">
+              <Save className="h-3.5 w-3.5 mr-1" /> {saving ? "Saving…" : dirty ? "Save Milestones" : "Saved"}
+            </Button>
           </div>
         )}
       </CardContent>
