@@ -363,8 +363,8 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="outline" onClick={downloadTemplate} className="gap-1.5">
-          <Download className="h-4 w-4" /> Download Project Setup Template
+        <Button size="sm" variant="outline" onClick={downloadTemplate} disabled={downloading} className="gap-1.5">
+          {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Download Project Setup Template
         </Button>
         <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleUpload} />
         <Button size="sm" onClick={() => fileRef.current?.click()} disabled={busy} className="gap-1.5" style={{ backgroundColor: "#006039", color: "white" }}>
