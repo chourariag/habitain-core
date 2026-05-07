@@ -345,43 +345,18 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
                 style={{ borderColor: "#006039", color: "#006039" }} className="text-xs gap-1">
                 <Download className="h-3 w-3" /> Template
               </Button>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button size="sm" onClick={() => gfcFileRef.current?.click()}
-                        disabled={!hasH1Signoff || uploading}
-                        className="text-xs gap-1" style={hasH1Signoff ? { backgroundColor: "#006039" } : {}}>
-                        {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : hasH1Signoff ? <Upload className="h-3 w-3" /> : <Lock className="h-3 w-3" />}
-                        Upload GFC Budget
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  {!hasH1Signoff && (
-                    <TooltipContent>
-                      <p>GFC sign-off required before uploading GFC budget</p>
-                    </TooltipContent>
-                  )}
-                </Tooltip>
-              </TooltipProvider>
+              <Button size="sm" onClick={() => gfcFileRef.current?.click()}
+                disabled={uploading}
+                className="text-xs gap-1" style={{ backgroundColor: "#006039" }}>
+                {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                Upload BOQ
+              </Button>
             </div>
           </div>
           {!hasH1Signoff && (
-            <div className="space-y-1">
-              <p className="text-xs flex items-center gap-1" style={{ color: "#D4860A" }}>
-                <Lock className="h-3 w-3" /> GFC budget upload is locked until H1 sign-off is recorded in the Design Portal
-              </p>
-              {isMd && (
-                <button
-                  type="button"
-                  onClick={() => setOverrideOpen(true)}
-                  className="text-xs underline hover:no-underline"
-                  style={{ color: "#F40009" }}
-                >
-                  MD override — upload without H1 sign-off →
-                </button>
-              )}
-            </div>
+            <p className="text-xs flex items-center gap-1" style={{ color: "#D4860A" }}>
+              <Lock className="h-3 w-3" /> H1 sign-off not yet recorded — any GFC quantities you upload will be stored as "Pending H1 sign-off" and activate automatically once H1 is issued.
+            </p>
           )}
         </CardContent>
       </Card>
