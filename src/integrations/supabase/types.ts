@@ -6254,6 +6254,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          actually_spent: number | null
           archive_reason: string | null
           archived_at: string | null
           client_email: string | null
@@ -6264,11 +6265,13 @@ export type Database = {
           client_portal_status_message: string | null
           client_portal_token: string | null
           construction_type: string | null
+          contract_value: number | null
           created_at: string | null
           created_by: string | null
           division: string
           est_completion: string | null
           gfc_budget: number | null
+          gfc_budget_total: number | null
           id: string
           is_archived: boolean | null
           is_design_only: boolean
@@ -6291,6 +6294,7 @@ export type Database = {
           wip_status: string
         }
         Insert: {
+          actually_spent?: number | null
           archive_reason?: string | null
           archived_at?: string | null
           client_email?: string | null
@@ -6301,11 +6305,13 @@ export type Database = {
           client_portal_status_message?: string | null
           client_portal_token?: string | null
           construction_type?: string | null
+          contract_value?: number | null
           created_at?: string | null
           created_by?: string | null
           division?: string
           est_completion?: string | null
           gfc_budget?: number | null
+          gfc_budget_total?: number | null
           id?: string
           is_archived?: boolean | null
           is_design_only?: boolean
@@ -6328,6 +6334,7 @@ export type Database = {
           wip_status?: string
         }
         Update: {
+          actually_spent?: number | null
           archive_reason?: string | null
           archived_at?: string | null
           client_email?: string | null
@@ -6338,11 +6345,13 @@ export type Database = {
           client_portal_status_message?: string | null
           client_portal_token?: string | null
           construction_type?: string | null
+          contract_value?: number | null
           created_at?: string | null
           created_by?: string | null
           division?: string
           est_completion?: string | null
           gfc_budget?: number | null
+          gfc_budget_total?: number | null
           id?: string
           is_archived?: boolean | null
           is_design_only?: boolean
