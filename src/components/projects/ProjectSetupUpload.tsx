@@ -205,9 +205,9 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
     });
     if (parsed.length === 0) return { name: "BOQ", ok: true, count: 0, message: "No items" };
 
-    // Detect H1 sign-off
-    const { data: signoffs } = await supabase
-      .from("design_drawing_signoffs" as any).select("id").eq("project_id", projectId).eq("milestone", "H1").limit(1);
+    // Detect H1 sign-off (from design_stages)
+    const { data: signoffs } = await (supabase as any).from("design_stages")
+      .select("id").eq("project_id", projectId).eq("stage_name", "H1").eq("status", "completed").limit(1);
     const hasH1 = (signoffs as any[] | null)?.length ? true : false;
 
     const { data: prev } = await supabase.from("project_boq").select("version_number").eq("project_id", projectId).order("version_number", { ascending: false }).limit(1);
