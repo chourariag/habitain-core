@@ -31,59 +31,118 @@ const parseDate = (val: any): string | null => {
   return isNaN(d.getTime()) ? null : format(d, "yyyy-MM-dd");
 };
 
-export function ProjectSetupUpload({ projectId, userRole, onImported }: Props) {
+export function ProjectSetupUpload({ projectId, userRole, productionSystem, onImported }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [results, setResults] = useState<SheetResult[]>([]);
 
   if (!ALLOWED.includes(userRole ?? "")) return null;
 
-  const downloadTemplate = () => {
+  const downloadTemplate = async () => {
+    setDownloading(true);
+    try {
     const wb = XLSX.utils.book_new();
 
     const billing = [
       ["#", "Milestone Description", "%", "GST Applicable (Y/N)", "Trigger Event"],
-      [1, "Booking", 10, "N", "Booking"],
-      [2, "Shell & Core Phase 1", 30, "Y", "Shell & Core Delivery"],
-      [3, "Shell & Core Phase 2", 25, "Y", "Shell & Core Delivery"],
-      [4, "Phase 3", 15, "Y", "Builder Finish"],
-      [5, "Finishing Works", 15, "Y", "Finishing Works"],
-      [6, "Handover", 5, "Y", "Handover"],
+      [1, "Booking Advance", 10, "No", "Booking"],
+      [2, "Shell & Core Phase 1", 30, "Yes", "Shell & Core Start"],
+      [3, "Shell & Core Phase 2", 25, "Yes", "Shell & Core Complete"],
+      [4, "Builder Finish", 15, "Yes", "Builder Finish"],
+      [5, "Finishing Works", 15, "Yes", "Finishing Complete"],
+      [6, "Handover", 5, "Yes", "Handover"],
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(billing), "Billing Milestones");
 
     const boq = [
       ["S.No", "Category", "Item Description", "Unit", "Tender Qty", "Actual Qty", "Wastage %", "BOQ Qty", "Material Rate", "Labour Rate", "OH Rate", "BOQ Rate", "Total Amount", "Margin %", "Scope"],
-      [1, "Structural Steel", "LGSF C-Channel 89mm", "RFT", 95, 100, 10, 110, 85, 45, 15, 145, 15950, 8.5, "Factory"],
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(boq), "Tender BOQ");
 
-    const schedule = [
-      [],
-      ["", "ID", "Name", "Duration", "Predecessors", "Planned Start", "Planned Finish"],
-      ["Pre-Production", "", "", "", "", "", ""],
-      ["", "1", "Site survey", 3, "", "01/05/2026", "03/05/2026"],
-      ["", "2", "Foundation design", 5, "1", "04/05/2026", "08/05/2026"],
-    ];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(schedule), "Project Schedule");
+    const sys = (productionSystem || "modular").toLowerCase();
+    const { data: tmpl } = await (supabase.from("production_task_templates") as any)
+      .select("stage_number, task_name, phase_name, typical_duration_days, predecessor_stage_numbers, display_order")
+      .eq("production_system", sys)
+      .order("display_order", { ascending: true });
+    const scheduleRows: any[][] = [["Phase", "ID", "Name", "Duration", "Predecessors", "Planned Start", "Planned Finish"]];
+    let lastPhase = "";
+    (tmpl || []).forEach((t: any) => {
+      if (t.phase_name && t.phase_name !== lastPhase) {
+        scheduleRows.push([t.phase_name, "", "", "", "", "", ""]);
+        lastPhase = t.phase_name;
+      }
+      const preds = Array.isArray(t.predecessor_stage_numbers) ? t.predecessor_stage_numbers.join(", ") : "";
+      scheduleRows.push(["", t.stage_number || "", t.task_name || "", t.typical_duration_days ?? "", preds, "", ""]);
+    });
+    if (scheduleRows.length === 1) scheduleRows.push(["", "", `(No template tasks for system: ${sys})`, "", "", "", ""]);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(scheduleRows), "Project Schedule");
 
-    const material = [
+    const material: any[][] = [
       ["Section", "Material", "Tender Qty", "Unit", "PO Release Date", "Procurement Date", "Delivery Date"],
-      ["Shell and Core", "MS Tubes 40x40x2mm", 500, "Rft", "01/05/2026", "05/05/2026", "15/05/2026"],
+      ["Shell and Core", "Structural Steel — Beams, Columns, Framed Structure", "", "KG", "", "", ""],
+      ["Shell and Core", "LGSF — Wall framing", "", "KG", "", "", ""],
+      ["Shell and Core", "Deck Sheet 1.0mm — Floor & Roof", "", "KG", "", "", ""],
+      ["Shell and Core", "Welded Wire Mesh 2.5mm 50mm C/C", "", "KG", "", "", ""],
+      ["Shell and Core", "Chicken Wire Mesh 1mm 25mm", "", "KG", "", "", ""],
+      ["Shell and Core", "EPS Thermocol Sheet", "", "Nos", "", "", ""],
+      ["Shell and Core", "Self Drilling Screws", "", "Nos", "", "", ""],
+      ["Shell and Core", "Roofing Concrete Plain Cement Mortar", "", "CFT", "", "", ""],
+      ["Builder Finish", "Rockwool Slab 48kg 50mm — Inner Wall", "", "SFT", "", "", ""],
+      ["Builder Finish", "Habit Board 13mm — Inner Wall", "", "SFT", "", "", ""],
+      ["Builder Finish", "Toilet Cement Board", "", "SFT", "", "", ""],
+      ["Builder Finish", "Shera Neu Wall Board 10mm — External", "", "SFT", "", "", ""],
+      ["Builder Finish", "Gypsum Board 12.5mm — Ceiling", "", "SFT", "", "", ""],
+      ["Builder Finish", "Internal Painting (Compound, Putty, Primer, Paint)", "", "SFT", "", "", ""],
+      ["Builder Finish", "Shera Plank — Exterior Finish", "", "SFT", "", "", ""],
+      ["Builder Finish", "Aluminium Foil", "", "SQM", "", "", ""],
+      ["Builder Finish", "Aluminium Glass Windows", "", "SFT", "", "", ""],
+      ["Builder Finish", "Aluminium Vents", "", "SFT", "", "", ""],
+      ["Builder Finish", "Wooden Flooring", "", "SFT", "", "", ""],
+      ["Builder Finish", "Vitrified Flooring and Tile Dadoing", "", "SFT", "", "", ""],
+      ["Builder Finish", "Rain Water Gutter PVC", "", "KG", "", "", ""],
+      ["Builder Finish", "Concealed Items — Electrical", "", "Lot", "", "", ""],
+      ["Builder Finish", "Concealed Items — Plumbing", "", "Lot", "", "", ""],
+      ["Builder Finish", "Plumbing Fixtures", "", "Lot", "", "", ""],
+      ["Builder Finish", "Electrical Fixtures", "", "Lot", "", "", ""],
+      ["Builder Finish", "Roof Screeding 50mm", "", "CFT", "", "", ""],
+      ["Builder Finish", "AC Copper Piping 1.5MT", "", "MTR", "", "", ""],
+      ["Builder Finish", "MS Flashing", "", "Lot", "", "", ""],
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(material), "Material Plan");
 
-    const scope = [
+    const scope: any[][] = [
       ["Area", "Item", "Scope"],
       ["Builder Finish", "Structure", "Habitainer"],
-      ["Builder Finish", "Flooring", "External"],
-      ["Site-Related Work", "Compound Wall", "Not in Scope"],
+      ["Builder Finish", "Internal Wall Panelling", "Habitainer"],
+      ["Builder Finish", "External Cladding", "Habitainer"],
+      ["Builder Finish", "Flooring", "Habitainer"],
+      ["Builder Finish", "Ceiling", "Habitainer"],
+      ["Builder Finish", "Painting", "Habitainer"],
+      ["Builder Finish", "MEP — Electrical", "Habitainer"],
+      ["Builder Finish", "MEP — Plumbing", "Habitainer"],
+      ["Builder Finish", "HVAC", "TBD"],
+      ["Builder Finish", "Windows and Doors", "Habitainer"],
+      ["Builder Finish", "Kitchen Fittings", "TBD"],
+      ["Builder Finish", "Bathroom Fittings", "Habitainer"],
+      ["Site-Related", "Foundation", "External"],
+      ["Site-Related", "Compound Wall", "External"],
+      ["Site-Related", "Site Levelling", "External"],
+      ["Site-Related", "Landscaping", "TBD"],
+      ["External Structures", "Pergola", "TBD"],
       ["External Structures", "Outdoor Deck", "TBD"],
+      ["External Structures", "Boundary Wall", "External"],
+      ["External Structures", "Swimming Pool", "Not in Scope"],
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(scope), "Scope of Work");
 
     XLSX.writeFile(wb, "Project_Setup_Template.xlsx");
+    } catch (err: any) {
+      toast.error(err?.message || "Template download failed");
+    } finally {
+      setDownloading(false);
+    }
   };
 
   async function processBilling(ws: XLSX.WorkSheet | undefined): Promise<SheetResult> {
