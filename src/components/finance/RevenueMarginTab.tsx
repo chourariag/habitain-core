@@ -71,7 +71,7 @@ function deliveryDot(planned: string | null, actual: string | null) {
 }
 
 export function RevenueMarginTab() {
-  const { role, userId } = useUserRole();
+  const { role, userId, loading: roleLoading } = useUserRole();
   const [rows, setRows] = useState<ProjectRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [editRow, setEditRow] = useState<ProjectRow | null>(null);
@@ -99,7 +99,7 @@ export function RevenueMarginTab() {
     const [projRes, rmRes, msRes, mrsRes, actualsRes] = await Promise.all([
       supabase.from("projects").select("id, name, status, contract_value, start_date, est_completion, client_name")
         .eq("is_archived", false)
-        .in("status", ["active", "in_progress", "completed", "on_hold"]),
+        .or("status.is.null,status.in.(active,in_progress,in_production,not_started,on_hold,completed)"),
       supabase.from("project_revenue_margin").select("*"),
       supabase.from("project_billing_milestones").select("project_id, status, amount_excl_gst, amount_incl_gst"),
       supabase.from("material_requests").select("project_id, quantity, unit_cost"),
@@ -289,6 +289,9 @@ export function RevenueMarginTab() {
     toast.success("Exported");
   }
 
+  if (roleLoading) {
+    return <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+  }
   if (!hasAccess) {
     return <p className="text-sm text-muted-foreground py-8 text-center">Access restricted to MD, Directors, and Finance Manager.</p>;
   }
