@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ShieldCheck, AlertTriangle, Lock } from "lucide-react";
 import { toast } from "sonner";
-import { FACTORY_STAGES } from "@/lib/hstack-stages";
+import { FACTORY_STAGES, type HStackStage } from "@/lib/hstack-stages";
 
 type Task = {
   id: string;
@@ -35,6 +35,9 @@ interface Props {
   initialStageName?: string;
   userRole: string | null;
   userId: string | null;
+  stages?: HStackStage[];
+  editorRoles?: string[];
+  scopeLabel?: string;
 }
 
 const RAKESH_ROLES = new Set([
@@ -44,9 +47,11 @@ const RAKESH_ROLES = new Set([
 
 export function StageChecklistDrawer({
   open, onOpenChange, projectId, projectName, moduleLabel, initialStageName,
-  userRole, userId,
+  userRole, userId, stages, editorRoles, scopeLabel,
 }: Props) {
-  const [stageName, setStageName] = useState<string>(initialStageName || FACTORY_STAGES[0].name);
+  const stageList = stages && stages.length ? stages : FACTORY_STAGES;
+  const editorSet = editorRoles ? new Set(editorRoles) : RAKESH_ROLES;
+  const [stageName, setStageName] = useState<string>(initialStageName || stageList[0].name);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
@@ -56,8 +61,8 @@ export function StageChecklistDrawer({
     if (initialStageName) setStageName(initialStageName);
   }, [initialStageName, open]);
 
-  const stageMeta = useMemo(() => FACTORY_STAGES.find(s => s.name === stageName), [stageName]);
-  const canEdit = !!userRole && RAKESH_ROLES.has(userRole);
+  const stageMeta = useMemo(() => stageList.find(s => s.name === stageName), [stageName, stageList]);
+  const canEdit = !!userRole && editorSet.has(userRole);
 
   async function load() {
     if (!open || !projectId || !stageName) return;
@@ -159,7 +164,7 @@ export function StageChecklistDrawer({
             <Select value={stageName} onValueChange={setStageName}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-80">
-                {FACTORY_STAGES.map(s => (
+                {stageList.map(s => (
                   <SelectItem key={s.number} value={s.name}>
                     {s.number}. {s.name}{s.parallel ? ` (∥ ${s.parallel})` : ""}{s.na_eligible ? " · N/A eligible" : ""}
                   </SelectItem>
