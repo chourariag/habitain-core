@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, ShieldCheck, AlertTriangle, Lock } from "lucide-react";
 import { toast } from "sonner";
-import { FACTORY_STAGES } from "@/lib/hstack-stages";
+import { FACTORY_STAGES, type HStackStage } from "@/lib/hstack-stages";
 
 type Task = {
   id: string;
