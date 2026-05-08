@@ -99,7 +99,7 @@ export function RevenueMarginTab() {
     const [projRes, rmRes, msRes, mrsRes, actualsRes] = await Promise.all([
       supabase.from("projects").select("id, name, status, contract_value, start_date, est_completion, client_name")
         .eq("is_archived", false)
-        .or("status.is.null,status.in.(active,in_progress,in_production,not_started,on_hold,completed)"),
+        .or("status.is.null,status.not.in.(archived,completed)"),
       supabase.from("project_revenue_margin").select("*"),
       supabase.from("project_billing_milestones").select("project_id, status, amount_excl_gst, amount_incl_gst"),
       supabase.from("material_requests").select("project_id, quantity, unit_cost"),
