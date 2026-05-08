@@ -249,18 +249,98 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
       <CardContent className="px-4 pb-3 space-y-3">
         {/* Document upload */}
         {!doc?.document_url ? (
-          <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-2" style={{ borderColor: "#D4860A" }}>
-            <p className="text-xs" style={{ color: "#666666" }}>No document uploaded yet.</p>
-            {canUpload && (
-              <label className="cursor-pointer">
-                <Button size="sm" variant="outline" className="text-xs gap-1" disabled={uploading} asChild>
-                  <span>
-                    {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                    Upload Document (PDF, DWG, Image)
-                  </span>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Option A — Upload */}
+              <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-2" style={{ borderColor: "#D4860A" }}>
+                <p className="text-xs font-semibold" style={{ color: "#1A1A1A" }}>Option A — Upload Document</p>
+                <p className="text-[10px]" style={{ color: "#666666" }}>Use the template or your own file.</p>
+                <div className="flex flex-col gap-2 items-center">
+                  <Button size="sm" variant="outline" className="text-xs gap-1 w-full" onClick={downloadTemplate}>
+                    <Download className="h-3 w-3" /> Download Template
+                  </Button>
+                  {canUpload && (
+                    <label className="cursor-pointer w-full">
+                      <Button size="sm" variant="outline" className="text-xs gap-1 w-full" disabled={uploading} asChild>
+                        <span>
+                          {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                          Upload Document
+                        </span>
+                      </Button>
+                      <input type="file" accept=".pdf,.dwg,.jpg,.jpeg,.png,.xlsx" className="hidden" onChange={handleDocUpload} />
+                    </label>
+                  )}
+                </div>
+              </div>
+              {/* Option B — Fill in App */}
+              <div className="border-2 border-dashed rounded-lg p-4 text-center space-y-2" style={{ borderColor: "#006039" }}>
+                <p className="text-xs font-semibold" style={{ color: "#1A1A1A" }}>Option B — Fill In App</p>
+                <p className="text-[10px]" style={{ color: "#666666" }}>Quick structured form for the sequence.</p>
+                {canUpload && (
+                  <Button size="sm" variant="outline" className="text-xs gap-1" onClick={() => setShowForm((s) => !s)}>
+                    <Edit3 className="h-3 w-3" /> {showForm ? "Hide form" : "Open form"}
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {showForm && canUpload && (
+              <div className="border rounded-lg p-3 space-y-3" style={{ borderColor: "#E0E0E0" }}>
+                <p className="text-xs font-semibold" style={{ color: "#1A1A1A" }}>Module Erection Sequence</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b" style={{ color: "#666666" }}>
+                        <th className="text-left p-1 font-medium">Module #</th>
+                        <th className="text-left p-1 font-medium">Grid pos.</th>
+                        <th className="text-left p-1 font-medium">Order</th>
+                        <th className="text-left p-1 font-medium">Crane dir.</th>
+                        <th className="text-left p-1 font-medium">Notes</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {seqRows.map((row, i) => (
+                        <tr key={i} className="border-b" style={{ borderColor: "#F0F0F0" }}>
+                          <td className="p-1"><Input value={row.moduleNo} onChange={(e) => updateRow(i, "moduleNo", e.target.value)} className="h-7 text-xs" /></td>
+                          <td className="p-1"><Input value={row.gridPos} onChange={(e) => updateRow(i, "gridPos", e.target.value)} className="h-7 text-xs" /></td>
+                          <td className="p-1"><Input value={row.order} onChange={(e) => updateRow(i, "order", e.target.value)} className="h-7 text-xs w-14" /></td>
+                          <td className="p-1"><Input value={row.craneDir} onChange={(e) => updateRow(i, "craneDir", e.target.value)} className="h-7 text-xs" /></td>
+                          <td className="p-1"><Input value={row.notes} onChange={(e) => updateRow(i, "notes", e.target.value)} className="h-7 text-xs" /></td>
+                          <td className="p-1">
+                            {seqRows.length > 1 && (
+                              <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => removeRow(i)}>
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <Button size="sm" variant="ghost" className="text-xs gap-1" onClick={addRow}>
+                  <Plus className="h-3 w-3" /> Add row
                 </Button>
-                <input type="file" accept=".pdf,.dwg,.jpg,.jpeg,.png" className="hidden" onChange={handleDocUpload} />
-              </label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                  <div>
+                    <Label className="text-[10px]">Crane lifts required</Label>
+                    <Input value={craneLifts} onChange={(e) => setCraneLifts(e.target.value)} className="h-7 text-xs" />
+                  </div>
+                  <div>
+                    <Label className="text-[10px]">Site access restrictions</Label>
+                    <Input value={accessNotes} onChange={(e) => setAccessNotes(e.target.value)} className="h-7 text-xs" />
+                  </div>
+                  <div>
+                    <Label className="text-[10px]">Crane operator notes</Label>
+                    <Input value={craneOpNotes} onChange={(e) => setCraneOpNotes(e.target.value)} className="h-7 text-xs" />
+                  </div>
+                </div>
+                <Button size="sm" onClick={saveForm} disabled={savingForm} style={{ backgroundColor: "#006039" }}>
+                  {savingForm ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Check className="h-3 w-3 mr-1" />}
+                  Save Sequence
+                </Button>
+              </div>
             )}
           </div>
         ) : (
