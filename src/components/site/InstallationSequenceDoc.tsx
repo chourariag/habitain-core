@@ -26,8 +26,84 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
   const [uploading, setUploading] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [signing, setSigning] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [savingForm, setSavingForm] = useState(false);
+  const [seqRows, setSeqRows] = useState<{ moduleNo: string; gridPos: string; order: string; craneDir: string; notes: string }[]>(
+    [{ moduleNo: "", gridPos: "", order: "", craneDir: "", notes: "" }]
+  );
+  const [craneLifts, setCraneLifts] = useState("");
+  const [accessNotes, setAccessNotes] = useState("");
+  const [craneOpNotes, setCraneOpNotes] = useState("");
 
   const canUpload = ["site_installation_mgr", "head_operations", "production_head", "super_admin", "managing_director", "site_engineer"].includes(userRole ?? "");
+
+  const downloadTemplate = () => {
+    const wb = XLSX.utils.book_new();
+    const rows = [
+      ["Module Erection Sequence"],
+      [],
+      ["Module #", "Grid Position", "Bay Direction", "Crane Approach", "Erection Order", "Notes"],
+      ["M1", "A1", "North-South", "From east", 1, ""],
+      ["M2", "A2", "North-South", "From east", 2, ""],
+      [],
+      ["Number of crane lifts required:", ""],
+      ["Special site access restrictions:", ""],
+      ["Notes for crane operator:", ""],
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws["!cols"] = [{ wch: 14 }, { wch: 14 }, { wch: 16 }, { wch: 18 }, { wch: 14 }, { wch: 30 }];
+    XLSX.utils.book_append_sheet(wb, ws, "Erection Sequence");
+    const sketch = XLSX.utils.aoa_to_sheet([["Site Plan Sketch — print and mark by hand, then upload photo"]]);
+    XLSX.utils.book_append_sheet(wb, sketch, "Site Plan");
+    XLSX.writeFile(wb, `Installation_Sequence_${projectName.replace(/\s+/g, "_")}.xlsx`);
+  };
+
+  const addRow = () => setSeqRows((r) => [...r, { moduleNo: "", gridPos: "", order: "", craneDir: "", notes: "" }]);
+  const removeRow = (i: number) => setSeqRows((r) => r.filter((_, idx) => idx !== i));
+  const updateRow = (i: number, key: string, val: string) =>
+    setSeqRows((r) => r.map((row, idx) => idx === i ? { ...row, [key]: val } : row));
+
+  const saveForm = async () => {
+    const validRows = seqRows.filter((r) => r.moduleNo.trim());
+    if (validRows.length === 0) { toast.error("Add at least one module"); return; }
+    setSavingForm(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const payload = {
+        project: projectName,
+        savedAt: new Date().toISOString(),
+        savedBy: user.id,
+        sequence: validRows,
+        craneLifts,
+        accessNotes,
+        craneOpNotes,
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const path = `installation-sequence/${projectId}/form_${Date.now()}.json`;
+      const { error: upErr } = await supabase.storage.from("drawings").upload(path, blob, { upsert: true });
+      if (upErr) throw upErr;
+      const url = supabase.storage.from("drawings").getPublicUrl(path).data.publicUrl;
+
+      const { client } = await getAuthedClient();
+      if (doc) {
+        await (client.from("installation_sequence_docs") as any).update({
+          document_url: url, uploaded_by: user.id, uploaded_at: new Date().toISOString(),
+        }).eq("id", doc.id);
+      } else {
+        await (client.from("installation_sequence_docs") as any).insert({
+          project_id: projectId, document_url: url, uploaded_by: user.id, uploaded_at: new Date().toISOString(),
+        });
+      }
+      toast.success("Sequence saved ✓");
+      setShowForm(false);
+      await load();
+    } catch (err: any) {
+      toast.error(err.message || "Save failed");
+    } finally {
+      setSavingForm(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
