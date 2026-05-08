@@ -310,6 +310,22 @@ const MATERIAL_PLAN_DATA: MaterialPlanRow[] = [
   { section: "BUILDER FINISH", id: 33, material: "Roof Screeding 50mm", unit: "CFT" },
   { section: "BUILDER FINISH", id: 35, material: "AC Copper Piping 1.5MT", unit: "MTR" },
   { section: "BUILDER FINISH", id: null, material: "MS Flashing", unit: "—", isSubItem: true },
+  { section: "BUILDER FINISH", id: 36, material: "Wooden Doors (internal)", unit: "Nos" },
+  { section: "BUILDER FINISH", id: 37, material: "External Doors (main entry)", unit: "Nos" },
+  { section: "BUILDER FINISH", id: 38, material: "Door Hardware (hinges, locks, handles)", unit: "Lots" },
+  { section: "BUILDER FINISH", id: 39, material: "Skirting — Wooden or Tile", unit: "RFT" },
+  { section: "BUILDER FINISH", id: 40, material: "Silicon Sealant — external joints", unit: "Tubes" },
+  { section: "BUILDER FINISH", id: 41, material: "Waterproofing Membrane", unit: "SQM" },
+  { section: "BUILDER FINISH", id: 42, material: "Tile Grout", unit: "KG" },
+  { section: "BUILDER FINISH", id: 43, material: "Caulking Compound", unit: "Tubes" },
+  { section: "BUILDER FINISH", id: 44, material: "SS Railings (if in scope)", unit: "RFT" },
+  { section: "BUILDER FINISH", id: 45, material: "Staircase (if in scope)", unit: "Nos" },
+  // SITE
+  { section: "SITE", id: 46, material: "Foundation Bolts and Anchor Plates", unit: "Nos" },
+  { section: "SITE", id: 47, material: "Anti-termite Treatment", unit: "SQM" },
+  { section: "SITE", id: 48, material: "Crane Hire (site erection)", unit: "Days" },
+  { section: "SITE", id: 49, material: "Site Electricity Connection", unit: "Lot" },
+  { section: "SITE", id: 50, material: "Temporary Site Toilet", unit: "Nos" },
 ];
 
 export function downloadMaterialPlanTemplate(filename: string, clientName: string) {

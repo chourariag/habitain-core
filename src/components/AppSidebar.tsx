@@ -232,8 +232,8 @@ export function AppSidebar() {
           );
         })}
 
-        {/* Super Admin — MD only (based on ACTUAL role, not impersonated), at very bottom */}
-        {realRole && (realRole === "managing_director" || realRole === "super_admin") && (
+        {/* Super Admin — only when CURRENT (effective) role is MD/super_admin; impersonation hides it */}
+        {role && (role === "managing_director" || role === "super_admin") && (
           <>
             <div className="mx-1 my-2" style={{ borderTop: "1px solid #E0E0E0" }} />
             <NavLink to="/admin/super-admin" className={navLinkClass} style={({ isActive }) => isActive

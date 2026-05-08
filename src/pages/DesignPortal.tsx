@@ -123,12 +123,14 @@ export default function DesignPortal() {
   // DQ detail
   const [selectedDq, setSelectedDq] = useState<any>(null);
   const [dqResponse, setDqResponse] = useState("");
+  const [dqResolutionType, setDqResolutionType] = useState<"resolved" | "needs_revision" | "needs_info">("resolved");
+  const [dqAttachment, setDqAttachment] = useState<File | null>(null);
   const [respondingDq, setRespondingDq] = useState(false);
 
   // Fix 6: Venkat (head_operations / project architect) can also issue H1/H2/GFC, alongside Karan (principal_architect)
   const isPrincipal = ["principal_architect", "head_operations", "project_architect", "super_admin", "managing_director"].includes(userRole ?? "");
   const canUpload = ["principal_architect", "project_architect", "structural_architect", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
-  const isArchitect = ["principal_architect", "project_architect", "structural_architect", "head_operations"].includes(userRole ?? "");
+  const isArchitect = ["principal_architect", "project_architect", "structural_architect", "operations_architect", "head_operations", "super_admin", "managing_director", "architecture_director", "finance_director", "sales_director"].includes(userRole ?? "");
 
   const dedupe = <T extends { id?: string }>(arr: T[]): T[] =>
     Array.from(new Map(arr.map((item) => [(item as any).id ?? JSON.stringify(item), item])).values());
@@ -427,23 +429,49 @@ export default function DesignPortal() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+
+      let attachmentUrl: string | null = null;
+      if (dqAttachment) {
+        const path = `dq-responses/${dq.project_id}/${Date.now()}_${dqAttachment.name}`;
+        const { error: upErr } = await supabase.storage.from("drawings").upload(path, dqAttachment, { upsert: true });
+        if (upErr) throw upErr;
+        attachmentUrl = supabase.storage.from("drawings").getPublicUrl(path).data.publicUrl;
+      }
+
+      const resolutionLabel = dqResolutionType === "resolved"
+        ? "Resolved — drawing update not needed"
+        : dqResolutionType === "needs_revision"
+        ? "Drawing revision required"
+        : "Needs further information";
+      const newStatus = dqResolutionType === "resolved" ? "resolved" : dqResolutionType === "needs_revision" ? "under_review" : "open";
+      const fullResponse = `[${resolutionLabel}]\n${dqResponse}${attachmentUrl ? `\n\nAttachment: ${attachmentUrl}` : ""}`;
+
       const { client } = await getAuthedClient();
       await (client.from("design_queries") as any).update({
-        status: "under_review", response_text: dqResponse,
-        responded_by: user.id, responded_by_name: userName,
+        status: newStatus,
+        response_text: fullResponse,
+        responded_by: user.id,
+        responded_by_name: userName,
         responded_at: new Date().toISOString(),
+        ...(newStatus === "resolved" ? { resolved_at: new Date().toISOString() } : {}),
       }).eq("id", dq.id);
 
-      await insertNotifications({
-        recipient_id: dq.raised_by,
-        title: "DQ Response",
-        body: `DQ ${dq.dq_code} has been responded to by ${userName}`,
-        category: "design",
-        related_table: "design_query",
-      });
+      if (dq.raised_by) {
+        await insertNotifications({
+          recipient_id: dq.raised_by,
+          title: `DQ ${dq.dq_code} responded`,
+          body: `${dq.dq_code} has been responded to by ${userName} — ${resolutionLabel}`,
+          category: "design",
+          related_table: "design_queries",
+          related_id: dq.id,
+          navigate_to: "/design",
+        });
+      }
 
       toast.success("Response submitted");
       setDqResponse("");
+      setDqAttachment(null);
+      setDqResolutionType("resolved");
       setSelectedDq(null);
       fetchData();
     } catch (err: any) {
@@ -1043,11 +1071,30 @@ export default function DesignPortal() {
                       <p className="text-sm mt-1">{selectedDq.response_text}</p>
                     </div>
                   )}
-                  {isArchitect && selectedDq.status === "open" && (
-                    <div className="border-t pt-3 space-y-2">
-                      <Textarea value={dqResponse} onChange={(e) => setDqResponse(e.target.value)} placeholder="Type your response…" rows={3} />
-                      <Button onClick={() => handleRespondDQ(selectedDq)} disabled={respondingDq}>
-                        {respondingDq ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} Respond
+                  {isArchitect && (selectedDq.status === "open" || selectedDq.status === "under_review") && (
+                    <div className="border-t pt-3 space-y-3">
+                      <p className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>Respond to DQ</p>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Response *</Label>
+                        <Textarea value={dqResponse} onChange={(e) => setDqResponse(e.target.value)} placeholder="Type your response…" rows={3} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Resolution Type</Label>
+                        <Select value={dqResolutionType} onValueChange={(v) => setDqResolutionType(v as any)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="resolved">Resolved — drawing update not needed</SelectItem>
+                            <SelectItem value="needs_revision">Drawing revision required</SelectItem>
+                            <SelectItem value="needs_info">Needs further information</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Attach drawing or file (optional)</Label>
+                        <Input type="file" onChange={(e) => setDqAttachment(e.target.files?.[0] ?? null)} className="text-xs" />
+                      </div>
+                      <Button onClick={() => handleRespondDQ(selectedDq)} disabled={respondingDq} style={{ backgroundColor: "#006039" }}>
+                        {respondingDq ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} Submit Response
                       </Button>
                     </div>
                   )}
