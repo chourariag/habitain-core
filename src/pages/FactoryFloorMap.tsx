@@ -17,8 +17,10 @@ import {
   ArrowRight, GripVertical, Lock,
 } from "lucide-react";
 import { QualityFlagButton } from "@/components/quality/QualityFlagButton";
+import { StageChecklistDrawer } from "@/components/production/StageChecklistDrawer";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 import { getPhaseForStage } from "@/lib/production-phases";
+import { ClipboardCheck } from "lucide-react";
 
 /* ──── CONSTANTS ──── */
 // Module bay numbering: 1-5 indoor, 11-17 outdoor (legacy used 1-10 indoor; bays 6-10 still rendered as legacy if occupied).
@@ -136,6 +138,7 @@ export default function FactoryFloorMap() {
   const [projectSystems, setProjectSystems] = useState<Record<string, "modular" | "panelised" | "hybrid">>({});
   const [loading, setLoading] = useState(true);
   const [selectedBay, setSelectedBay] = useState<number | null>(null);
+  const [checklistDrawer, setChecklistDrawer] = useState<{ projectId: string; projectName?: string; moduleLabel: string; stageName?: string } | null>(null);
 
   // Drag / assign state
   const [dragWorkerId, setDragWorkerId] = useState<string | null>(null);
@@ -701,6 +704,19 @@ export default function FactoryFloorMap() {
                     <Button variant="outline" size="sm" onClick={() => window.location.href = "/production"}>
                       <ArrowRight className="h-4 w-4 mr-1" /> View in Production
                     </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setChecklistDrawer({
+                        projectId: selectedBayData.project_id!,
+                        projectName: selectedModule.projects?.name ?? undefined,
+                        moduleLabel: selectedModule.module_code || selectedModule.name,
+                        stageName: selectedModule.current_stage ?? undefined,
+                      })}
+                      disabled={!selectedBayData.project_id}
+                      style={{ backgroundColor: "#006039", color: "#fff" }}
+                    >
+                      <ClipboardCheck className="h-4 w-4 mr-1" /> Stage Checklist
+                    </Button>
                     {canAssign && (
                       <Button
                         variant="outline"
@@ -852,6 +868,19 @@ export default function FactoryFloorMap() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {checklistDrawer && (
+        <StageChecklistDrawer
+          open={!!checklistDrawer}
+          onOpenChange={(v) => !v && setChecklistDrawer(null)}
+          projectId={checklistDrawer.projectId}
+          projectName={checklistDrawer.projectName}
+          moduleLabel={checklistDrawer.moduleLabel}
+          initialStageName={checklistDrawer.stageName}
+          userRole={role}
+          userId={userId}
+        />
+      )}
     </div>
   );
 }
