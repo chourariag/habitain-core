@@ -6413,6 +6413,9 @@ export type Database = {
           site_lng: number | null
           site_radius: number | null
           site_ready_confirmed: boolean | null
+          site_schedule_escalated_at: string | null
+          site_schedule_notified_at: string | null
+          site_schedule_unlocked_at: string | null
           start_date: string | null
           status: string | null
           type: string | null
@@ -6453,6 +6456,9 @@ export type Database = {
           site_lng?: number | null
           site_radius?: number | null
           site_ready_confirmed?: boolean | null
+          site_schedule_escalated_at?: string | null
+          site_schedule_notified_at?: string | null
+          site_schedule_unlocked_at?: string | null
           start_date?: string | null
           status?: string | null
           type?: string | null
@@ -6493,6 +6499,9 @@ export type Database = {
           site_lng?: number | null
           site_radius?: number | null
           site_ready_confirmed?: boolean | null
+          site_schedule_escalated_at?: string | null
+          site_schedule_notified_at?: string | null
+          site_schedule_unlocked_at?: string | null
           start_date?: string | null
           status?: string | null
           type?: string | null
