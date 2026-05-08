@@ -60,23 +60,40 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
 
     XLSX.utils.book_append_sheet(wb, buildBoqWorksheet(30), "BOQ");
 
+    // ── Project Schedule sheet (STAGES ONLY — Karthik fills factory stage 1–15 dates only)
+    // Site stages (16–23) are entered separately by Awaiz in Site Hub → Schedule.
     const sys = (productionSystem || "modular").toLowerCase();
-    const { data: tmpl } = await (supabase.from("production_task_templates") as any)
-      .select("stage_number, task_name, phase_name, typical_duration_days, predecessor_stage_numbers, display_order")
-      .eq("production_system", sys)
-      .order("display_order", { ascending: true });
-    const scheduleRows: any[][] = [["Phase", "ID", "Name", "Duration", "Predecessors", "Planned Start", "Planned Finish"]];
-    let lastPhase = "";
-    (tmpl || []).forEach((t: any) => {
-      if (t.phase_name && t.phase_name !== lastPhase) {
-        scheduleRows.push([t.phase_name, "", "", "", "", "", ""]);
-        lastPhase = t.phase_name;
+    const { data: mods } = await (supabase.from("modules") as any)
+      .select("id, name, module_code")
+      .eq("project_id", projectId)
+      .eq("is_archived", false)
+      .order("name", { ascending: true });
+    const moduleNames: string[] = (mods || []).map((m: any) => m.name || m.module_code || "").filter(Boolean);
+    if (moduleNames.length === 0) moduleNames.push("M1");
+
+    const schRows: any[][] = [
+      [`HStack — Project Schedule  |  Stages only  |  System: ${sys}  |  Fill Planned Start + End for each module`],
+      [`Site stages (Erection → Handover) are entered by Site Installation Manager in Site Hub → Schedule, 14 days before dispatch. Do NOT add them here.`],
+      [`Notes column: enter "N/A" to exclude an optional stage (e.g. Internal Wall Finishing) for that module. Blank = in scope.`],
+      [],
+      ["Stage #", "Stage Name", "Module #", "Planned Start (DD/MM/YYYY)", "Planned End (DD/MM/YYYY)", "Notes / N/A"],
+    ];
+    for (const stage of FACTORY_STAGES) {
+      const label = stage.parallel
+        ? `${stage.name}  (∥ ${stage.parallel})`
+        : stage.name + (stage.na_eligible ? "  (mark N/A if not in scope)" : "");
+      for (const mn of moduleNames) {
+        schRows.push([stage.number, label, mn, "", "", ""]);
       }
-      const preds = Array.isArray(t.predecessor_stage_numbers) ? t.predecessor_stage_numbers.join(", ") : "";
-      scheduleRows.push(["", t.stage_number || "", t.task_name || "", t.typical_duration_days ?? "", preds, "", ""]);
-    });
-    if (scheduleRows.length === 1) scheduleRows.push(["", "", `(No template tasks for system: ${sys})`, "", "", "", ""]);
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(scheduleRows), "Project Schedule");
+    }
+    const schWs = XLSX.utils.aoa_to_sheet(schRows);
+    schWs["!cols"] = [{ wch: 8 }, { wch: 38 }, { wch: 12 }, { wch: 22 }, { wch: 22 }, { wch: 24 }];
+    schWs["!merges"] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
+      { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },
+    ];
+    XLSX.utils.book_append_sheet(wb, schWs, "Project Schedule");
 
     const material: any[][] = [
       ["Section", "Material", "Tender Qty", "Unit", "PO Release Date", "Procurement Date", "Delivery Date"],
