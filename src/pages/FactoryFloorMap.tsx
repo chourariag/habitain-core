@@ -704,6 +704,19 @@ export default function FactoryFloorMap() {
                     <Button variant="outline" size="sm" onClick={() => window.location.href = "/production"}>
                       <ArrowRight className="h-4 w-4 mr-1" /> View in Production
                     </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setChecklistDrawer({
+                        projectId: selectedBayData.project_id!,
+                        projectName: selectedModule.projects?.name ?? undefined,
+                        moduleLabel: selectedModule.module_code || selectedModule.name,
+                        stageName: selectedModule.current_stage ?? undefined,
+                      })}
+                      disabled={!selectedBayData.project_id}
+                      style={{ backgroundColor: "#006039", color: "#fff" }}
+                    >
+                      <ClipboardCheck className="h-4 w-4 mr-1" /> Stage Checklist
+                    </Button>
                     {canAssign && (
                       <Button
                         variant="outline"
