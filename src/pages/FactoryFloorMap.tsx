@@ -868,6 +868,19 @@ export default function FactoryFloorMap() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {checklistDrawer && (
+        <StageChecklistDrawer
+          open={!!checklistDrawer}
+          onOpenChange={(v) => !v && setChecklistDrawer(null)}
+          projectId={checklistDrawer.projectId}
+          projectName={checklistDrawer.projectName}
+          moduleLabel={checklistDrawer.moduleLabel}
+          initialStageName={checklistDrawer.stageName}
+          userRole={role}
+          userId={userId}
+        />
+      )}
     </div>
   );
 }
