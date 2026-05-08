@@ -317,6 +317,15 @@ function SiteHubContent() {
           )}
         </TabsContent>
 
+        <TabsContent value="schedule" className="space-y-4">
+          <SiteScheduleTab
+            projectId={selectedProjectId!}
+            projectName={selectedProject?.name ?? undefined}
+            userRole={userRole}
+            userId={userId}
+          />
+        </TabsContent>
+
         <TabsContent value="drawings">
           <Card>
             <CardContent className="pt-6">
