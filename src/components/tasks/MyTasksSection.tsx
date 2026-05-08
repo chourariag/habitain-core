@@ -131,6 +131,17 @@ export function MyTasksSection({ userRole, phaseFilter, projectId, title = "My T
     });
   }, [tasks, allProjectTasks]);
 
+  // Badge count = overdue + due today only
+  const urgentCount = useMemo(() => sortedTasks.filter((t) => {
+    if (!t.planned_finish_date || (t.completion_percentage ?? 0) >= 100) return false;
+    const d = new Date(t.planned_finish_date);
+    return isPast(d) || isToday(d);
+  }).length, [sortedTasks]);
+
+  const [expanded, setExpanded] = useState(false);
+  const visibleTasks = expanded ? sortedTasks : sortedTasks.slice(0, 3);
+  const remaining = Math.max(0, sortedTasks.length - 3);
+
   const canEdit = ["planning_engineer", "production_head", "factory_supervisor", "site_installation_manager", "site_manager", "super_admin", "managing_director"].includes(userRole ?? "");
   const canAddSubtasks = ["planning_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
 
@@ -153,11 +164,15 @@ export function MyTasksSection({ userRole, phaseFilter, projectId, title = "My T
           <CardTitle className="text-base flex items-center gap-2">
             <ClipboardList className="h-5 w-5 text-[#006039]" />
             {title}
-            <Badge variant="secondary" className="ml-auto text-xs">{sortedTasks.length}</Badge>
+            {urgentCount > 0 && (
+              <Badge variant="secondary" className="ml-auto text-xs" style={{ backgroundColor: "#FFE5E7", color: "#F40009" }}>
+                {urgentCount} urgent
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 pt-0">
-          {sortedTasks.map((task) => {
+          {visibleTasks.map((task) => {
             const status = computeStatus(task);
             const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.Upcoming;
             const dueToday = task.planned_finish_date && isToday(new Date(task.planned_finish_date));
@@ -186,7 +201,6 @@ export function MyTasksSection({ userRole, phaseFilter, projectId, title = "My T
                         </span>
                       )}
                     </div>
-                    {/* Progress bar */}
                     <div className="mt-2 flex items-center gap-2">
                       <div className="flex-1 bg-muted rounded-full h-1.5">
                         <div
@@ -201,6 +215,16 @@ export function MyTasksSection({ userRole, phaseFilter, projectId, title = "My T
               </button>
             );
           })}
+          {remaining > 0 && (
+            <button
+              type="button"
+              onClick={() => setExpanded((e) => !e)}
+              className="w-full text-center text-xs font-medium py-2 rounded-md hover:bg-muted/50 transition-colors"
+              style={{ color: "#006039" }}
+            >
+              {expanded ? "Show less" : `+ ${remaining} more task${remaining === 1 ? "" : "s"} → View all`}
+            </button>
+          )}
         </CardContent>
       </Card>
 
