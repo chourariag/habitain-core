@@ -35,6 +35,9 @@ interface Props {
   initialStageName?: string;
   userRole: string | null;
   userId: string | null;
+  stages?: HStackStage[];
+  editorRoles?: string[];
+  scopeLabel?: string;
 }
 
 const RAKESH_ROLES = new Set([
@@ -44,9 +47,11 @@ const RAKESH_ROLES = new Set([
 
 export function StageChecklistDrawer({
   open, onOpenChange, projectId, projectName, moduleLabel, initialStageName,
-  userRole, userId,
+  userRole, userId, stages, editorRoles, scopeLabel,
 }: Props) {
-  const [stageName, setStageName] = useState<string>(initialStageName || FACTORY_STAGES[0].name);
+  const stageList = stages && stages.length ? stages : FACTORY_STAGES;
+  const editorSet = editorRoles ? new Set(editorRoles) : RAKESH_ROLES;
+  const [stageName, setStageName] = useState<string>(initialStageName || stageList[0].name);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState<string | null>(null);
