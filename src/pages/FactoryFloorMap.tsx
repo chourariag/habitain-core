@@ -138,6 +138,7 @@ export default function FactoryFloorMap() {
   const [projectSystems, setProjectSystems] = useState<Record<string, "modular" | "panelised" | "hybrid">>({});
   const [loading, setLoading] = useState(true);
   const [selectedBay, setSelectedBay] = useState<number | null>(null);
+  const [checklistDrawer, setChecklistDrawer] = useState<{ projectId: string; projectName?: string; moduleLabel: string; stageName?: string } | null>(null);
 
   // Drag / assign state
   const [dragWorkerId, setDragWorkerId] = useState<string | null>(null);
