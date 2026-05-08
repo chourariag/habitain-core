@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
+import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { FileText, Upload, Check, Loader2, Video, AlertTriangle } from "lucide-react";
+import { FileText, Upload, Check, Loader2, Video, AlertTriangle, Download, Plus, Trash2, Edit3 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { insertNotifications } from "@/lib/notifications";
