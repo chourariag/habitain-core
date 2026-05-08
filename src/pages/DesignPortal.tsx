@@ -1071,11 +1071,30 @@ export default function DesignPortal() {
                       <p className="text-sm mt-1">{selectedDq.response_text}</p>
                     </div>
                   )}
-                  {isArchitect && selectedDq.status === "open" && (
-                    <div className="border-t pt-3 space-y-2">
-                      <Textarea value={dqResponse} onChange={(e) => setDqResponse(e.target.value)} placeholder="Type your response…" rows={3} />
-                      <Button onClick={() => handleRespondDQ(selectedDq)} disabled={respondingDq}>
-                        {respondingDq ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} Respond
+                  {isArchitect && (selectedDq.status === "open" || selectedDq.status === "under_review") && (
+                    <div className="border-t pt-3 space-y-3">
+                      <p className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>Respond to DQ</p>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Response *</Label>
+                        <Textarea value={dqResponse} onChange={(e) => setDqResponse(e.target.value)} placeholder="Type your response…" rows={3} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Resolution Type</Label>
+                        <Select value={dqResolutionType} onValueChange={(v) => setDqResolutionType(v as any)}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="resolved">Resolved — drawing update not needed</SelectItem>
+                            <SelectItem value="needs_revision">Drawing revision required</SelectItem>
+                            <SelectItem value="needs_info">Needs further information</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Attach drawing or file (optional)</Label>
+                        <Input type="file" onChange={(e) => setDqAttachment(e.target.files?.[0] ?? null)} className="text-xs" />
+                      </div>
+                      <Button onClick={() => handleRespondDQ(selectedDq)} disabled={respondingDq} style={{ backgroundColor: "#006039" }}>
+                        {respondingDq ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null} Submit Response
                       </Button>
                     </div>
                   )}
