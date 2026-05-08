@@ -61,8 +61,8 @@ export function StageChecklistDrawer({
     if (initialStageName) setStageName(initialStageName);
   }, [initialStageName, open]);
 
-  const stageMeta = useMemo(() => FACTORY_STAGES.find(s => s.name === stageName), [stageName]);
-  const canEdit = !!userRole && RAKESH_ROLES.has(userRole);
+  const stageMeta = useMemo(() => stageList.find(s => s.name === stageName), [stageName, stageList]);
+  const canEdit = !!userRole && editorSet.has(userRole);
 
   async function load() {
     if (!open || !projectId || !stageName) return;
