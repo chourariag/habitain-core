@@ -4721,19 +4721,25 @@ export type Database = {
       }
       production_task_templates: {
         Row: {
+          applies_to_systems: string[] | null
           created_at: string
           display_order: number
+          escalation_role: string | null
           hstack_action: string | null
           id: string
           input_required: string | null
+          is_payment_milestone: boolean
           is_qc_gate: boolean
           notes: string | null
           output_deliverable: string | null
+          parallel_stage: string | null
           phase_name: string
           predecessor_stage_numbers: string[] | null
           production_system: Database["public"]["Enums"]["production_system_type"]
           responsible_role: string | null
           responsible_user_id: string | null
+          special_note: string | null
+          stage_name: string | null
           stage_number: string
           task_name: string
           task_type: Database["public"]["Enums"]["task_template_type"]
@@ -4741,19 +4747,25 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          applies_to_systems?: string[] | null
           created_at?: string
           display_order: number
+          escalation_role?: string | null
           hstack_action?: string | null
           id?: string
           input_required?: string | null
+          is_payment_milestone?: boolean
           is_qc_gate?: boolean
           notes?: string | null
           output_deliverable?: string | null
+          parallel_stage?: string | null
           phase_name: string
           predecessor_stage_numbers?: string[] | null
           production_system: Database["public"]["Enums"]["production_system_type"]
           responsible_role?: string | null
           responsible_user_id?: string | null
+          special_note?: string | null
+          stage_name?: string | null
           stage_number: string
           task_name: string
           task_type: Database["public"]["Enums"]["task_template_type"]
@@ -4761,19 +4773,25 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          applies_to_systems?: string[] | null
           created_at?: string
           display_order?: number
+          escalation_role?: string | null
           hstack_action?: string | null
           id?: string
           input_required?: string | null
+          is_payment_milestone?: boolean
           is_qc_gate?: boolean
           notes?: string | null
           output_deliverable?: string | null
+          parallel_stage?: string | null
           phase_name?: string
           predecessor_stage_numbers?: string[] | null
           production_system?: Database["public"]["Enums"]["production_system_type"]
           responsible_role?: string | null
           responsible_user_id?: string | null
+          special_note?: string | null
+          stage_name?: string | null
           stage_number?: string
           task_name?: string
           task_type?: Database["public"]["Enums"]["task_template_type"]
@@ -5843,6 +5861,81 @@ export type Database = {
           },
         ]
       }
+      project_stages: {
+        Row: {
+          actual_end: string | null
+          actual_start: string | null
+          created_at: string
+          created_by: string | null
+          escalated_at: string | null
+          id: string
+          is_na: boolean
+          module_id: string | null
+          planned_end: string | null
+          planned_start: string | null
+          project_id: string
+          qc_requested_at: string | null
+          stage_name: string
+          stage_number: number
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          actual_end?: string | null
+          actual_start?: string | null
+          created_at?: string
+          created_by?: string | null
+          escalated_at?: string | null
+          id?: string
+          is_na?: boolean
+          module_id?: string | null
+          planned_end?: string | null
+          planned_start?: string | null
+          project_id: string
+          qc_requested_at?: string | null
+          stage_name: string
+          stage_number: number
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          actual_end?: string | null
+          actual_start?: string | null
+          created_at?: string
+          created_by?: string | null
+          escalated_at?: string | null
+          id?: string
+          is_na?: boolean
+          module_id?: string | null
+          planned_end?: string | null
+          planned_start?: string | null
+          project_id?: string
+          qc_requested_at?: string | null
+          stage_name?: string
+          stage_number?: number
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_stages_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_stages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_subtasks: {
         Row: {
           completed_at: string | null
@@ -5933,10 +6026,13 @@ export type Database = {
           delay_resolution: string | null
           display_order: number | null
           duration_days: number | null
+          escalated_at: string | null
+          escalation_role: string | null
           hstack_action: string | null
           id: string
           input_required: string | null
           is_locked: boolean
+          is_payment_milestone: boolean
           is_qc_gate: boolean
           lock_override_at: string | null
           lock_override_by: string | null
@@ -5949,8 +6045,12 @@ export type Database = {
           planned_start_date: string | null
           predecessor_ids: string[] | null
           project_id: string
+          qc_request_notified_user: string | null
+          qc_requested_at: string | null
           remarks: string | null
           responsible_role: string | null
+          special_note: string | null
+          stage_name: string | null
           stage_number: string | null
           status: string
           task_id_in_schedule: string
@@ -5968,10 +6068,13 @@ export type Database = {
           delay_resolution?: string | null
           display_order?: number | null
           duration_days?: number | null
+          escalated_at?: string | null
+          escalation_role?: string | null
           hstack_action?: string | null
           id?: string
           input_required?: string | null
           is_locked?: boolean
+          is_payment_milestone?: boolean
           is_qc_gate?: boolean
           lock_override_at?: string | null
           lock_override_by?: string | null
@@ -5984,8 +6087,12 @@ export type Database = {
           planned_start_date?: string | null
           predecessor_ids?: string[] | null
           project_id: string
+          qc_request_notified_user?: string | null
+          qc_requested_at?: string | null
           remarks?: string | null
           responsible_role?: string | null
+          special_note?: string | null
+          stage_name?: string | null
           stage_number?: string | null
           status?: string
           task_id_in_schedule: string
@@ -6003,10 +6110,13 @@ export type Database = {
           delay_resolution?: string | null
           display_order?: number | null
           duration_days?: number | null
+          escalated_at?: string | null
+          escalation_role?: string | null
           hstack_action?: string | null
           id?: string
           input_required?: string | null
           is_locked?: boolean
+          is_payment_milestone?: boolean
           is_qc_gate?: boolean
           lock_override_at?: string | null
           lock_override_by?: string | null
@@ -6019,8 +6129,12 @@ export type Database = {
           planned_start_date?: string | null
           predecessor_ids?: string[] | null
           project_id?: string
+          qc_request_notified_user?: string | null
+          qc_requested_at?: string | null
           remarks?: string | null
           responsible_role?: string | null
+          special_note?: string | null
+          stage_name?: string | null
           stage_number?: string | null
           status?: string
           task_id_in_schedule?: string
