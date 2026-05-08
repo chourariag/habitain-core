@@ -37,6 +37,7 @@ import { MyTasksSection } from "@/components/tasks/MyTasksSection";
 function SiteHubContent() {
   const navigate = useNavigate();
   const { selectedProjectId, selectedProject } = useProjectContext();
+  const { userId } = useUserRole();
   const [modules, setModules] = useState<Tables<"modules">[]>([]);
   const [panelsByModule, setPanelsByModule] = useState<Record<string, any[]>>({});
   const [userRole, setUserRole] = useState<string | null>(null);
