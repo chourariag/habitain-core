@@ -274,47 +274,115 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
   async function processSchedule(ws: XLSX.WorkSheet | undefined): Promise<SheetResult> {
     if (!ws) return { name: "Schedule", ok: false, count: 0, message: "Sheet missing" };
     const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: "dd/mm/yyyy" });
+
+    // Find header row containing "Stage #" + "Module #"
     let headerIdx = -1;
-    for (let i = 0; i < Math.min(rows.length, 15); i++) {
-      if (rows[i]?.some((c: any) => { const v = String(c).toLowerCase().trim(); return v === "name" || v === "id"; })) { headerIdx = i; break; }
+    for (let i = 0; i < Math.min(rows.length, 20); i++) {
+      const r = rows[i] || [];
+      const lower = r.map((c: any) => String(c ?? "").toLowerCase());
+      if (lower.some(c => c.includes("stage #")) && lower.some(c => c.includes("module"))) {
+        headerIdx = i;
+        break;
+      }
     }
-    if (headerIdx === -1) return { name: "Schedule", ok: true, count: 0, message: "No header — skipped" };
-    const headers = rows[headerIdx].map((h: any) => String(h ?? "").toLowerCase().trim());
-    const c = {
-      id: headers.findIndex(h => h === "id"),
-      name: headers.findIndex(h => h === "name" || h.includes("task")),
-      duration: headers.findIndex(h => h.includes("duration")),
-      pred: headers.findIndex(h => h.includes("predecessor")),
-      ps: headers.findIndex(h => h.includes("planned start")),
-      pf: headers.findIndex(h => h.includes("planned finish")),
-    };
-    let currentPhase = "Pre-Production";
-    const tasks: any[] = []; const skipped: string[] = [];
+    if (headerIdx === -1) return { name: "Schedule", ok: true, count: 0, message: "Stages-only header not found — sheet skipped" };
+
+    const stageRows: any[] = [];
+    const skipped: string[] = [];
+    const sys = (productionSystem || "modular").toLowerCase();
+
+    // Pre-load module name → id map
+    const { data: mods } = await (supabase.from("modules") as any)
+      .select("id, name, module_code")
+      .eq("project_id", projectId)
+      .eq("is_archived", false);
+    const moduleMap = new Map<string, string>();
+    (mods || []).forEach((m: any) => {
+      if (m.name) moduleMap.set(String(m.name).trim().toLowerCase(), m.id);
+      if (m.module_code) moduleMap.set(String(m.module_code).trim().toLowerCase(), m.id);
+    });
+
     for (let i = headerIdx + 1; i < rows.length; i++) {
       const row = rows[i]; if (!row || row.every((x: any) => !x || !String(x).trim())) continue;
-      const colA = String(row[0] ?? "").trim(); const colB = c.id >= 0 ? String(row[c.id] ?? "").trim() : "";
-      const nameVal = c.name >= 0 ? String(row[c.name] ?? "").trim() : "";
-      if (colA && (!colB || isNaN(Number(colB.replace(/[.]/g, ""))))) {
-        if (!nameVal || nameVal === colA) { currentPhase = colA; continue; }
+      const stageNum = parseInt(String(row[0] ?? "").trim(), 10);
+      if (!stageNum || stageNum < 1 || stageNum > 15) continue;
+      const stageName = String(row[1] ?? "").trim().split("(")[0].trim();
+      const moduleName = String(row[2] ?? "").trim();
+      const ps = parseDate(row[3]);
+      const pe = parseDate(row[4]);
+      const notes = String(row[5] ?? "").trim();
+      const isNa = /^n\/?a$/i.test(notes) || /\bN\/A\b/i.test(notes);
+
+      if (!isNa && (!ps || !pe)) {
+        skipped.push(`Stage ${stageNum} ${stageName} / ${moduleName}`);
+        continue;
       }
-      if (!nameVal && !colB) continue;
-      const ps = c.ps >= 0 ? parseDate(row[c.ps]) : null;
-      const pf = c.pf >= 0 ? parseDate(row[c.pf]) : null;
-      if (!ps || !pf) { skipped.push(`Row ${i + 1}: ${nameVal || colB}`); continue; }
-      const predStr = c.pred >= 0 ? String(row[c.pred] ?? "") : "";
-      const preds = predStr.split(",").map(s => s.trim().match(/^(\d+(?:\.\d+)?)/)?.[1] || s.trim()).filter(Boolean);
-      tasks.push({
-        project_id: projectId, task_id_in_schedule: colB || String(i - headerIdx), task_name: nameVal,
-        phase: currentPhase, planned_start_date: ps, planned_finish_date: pf,
-        duration_days: c.duration >= 0 ? parseInt(String(row[c.duration] ?? "0")) || 0 : 0,
-        predecessor_ids: preds, status: "Upcoming", completion_percentage: 0, delay_days: 0, is_locked: preds.length > 0,
+      stageRows.push({
+        project_id: projectId,
+        module_id: moduleMap.get(moduleName.toLowerCase()) ?? null,
+        stage_number: stageNum,
+        stage_name: stageName,
+        planned_start: isNa ? null : ps,
+        planned_end: isNa ? null : pe,
+        status: isNa ? "N/A" : "Upcoming",
+        is_na: isNa,
       });
     }
-    if (tasks.length === 0) return { name: "Schedule", ok: true, count: 0, message: "No tasks" };
+
+    if (stageRows.length === 0) return { name: "Schedule", ok: true, count: 0, message: "No stage rows" };
+
+    // Replace project_stages for this project (factory rows only — site rows are entered in Site Hub)
+    await (supabase as any).from("project_stages").delete().eq("project_id", projectId).lte("stage_number", 15);
+    for (let i = 0; i < stageRows.length; i += 50) {
+      await (supabase as any).from("project_stages").insert(stageRows.slice(i, i + 50));
+    }
+
+    // Auto-clone all factory templates (stage_number 1–15) as project_tasks for each non-N/A stage row.
+    const { data: tmpl } = await (supabase.from("production_task_templates") as any)
+      .select("stage_number, task_name, phase_name, stage_name, responsible_role, escalation_role, is_qc_gate, is_payment_milestone, special_note, display_order, task_type")
+      .eq("production_system", sys)
+      .order("display_order", { ascending: true });
+
+    const tasksToInsert: any[] = [];
+    for (const sr of stageRows) {
+      if (sr.is_na) continue;
+      const stageTpl = (tmpl || []).filter((t: any) => t.stage_name === sr.stage_name);
+      for (const t of stageTpl) {
+        tasksToInsert.push({
+          project_id: projectId,
+          task_id_in_schedule: t.stage_number,
+          task_name: t.task_name,
+          phase: t.phase_name,
+          stage_name: t.stage_name,
+          planned_start_date: sr.planned_start,
+          planned_finish_date: sr.planned_end,
+          duration_days: 0,
+          predecessor_ids: [],
+          responsible_role: t.responsible_role,
+          escalation_role: t.escalation_role,
+          status: "Upcoming",
+          completion_percentage: 0,
+          delay_days: 0,
+          is_locked: false,
+          task_type: t.task_type,
+          is_qc_gate: !!t.is_qc_gate,
+          is_payment_milestone: !!t.is_payment_milestone,
+          special_note: t.special_note,
+          display_order: t.display_order,
+          stage_number: t.stage_number,
+        });
+      }
+    }
     await supabase.from("project_tasks").delete().eq("project_id", projectId);
-    for (let i = 0; i < tasks.length; i += 50) await supabase.from("project_tasks").insert(tasks.slice(i, i + 50) as any);
-    return { name: "Schedule", ok: true, count: tasks.length, message: `${tasks.length} tasks imported`, warnings: skipped.length ? [`${skipped.length} rows skipped (missing dates)`] : [] };
+    for (let i = 0; i < tasksToInsert.length; i += 100) {
+      await supabase.from("project_tasks").insert(tasksToInsert.slice(i, i + 100) as any);
+    }
+
+    const naCount = stageRows.filter(s => s.is_na).length;
+    const msg = `${stageRows.length} stages imported (${naCount} marked N/A), ${tasksToInsert.length} tasks cloned`;
+    return { name: "Schedule", ok: true, count: stageRows.length, message: msg, warnings: skipped.length ? [`${skipped.length} rows skipped (missing dates)`] : [] };
   }
+
 
   async function processMaterial(ws: XLSX.WorkSheet | undefined, userId: string | null): Promise<SheetResult> {
     if (!ws) return { name: "Materials", ok: false, count: 0, message: "Sheet missing" };
