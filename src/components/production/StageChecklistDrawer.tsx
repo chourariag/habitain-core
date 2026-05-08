@@ -164,7 +164,7 @@ export function StageChecklistDrawer({
             <Select value={stageName} onValueChange={setStageName}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent className="max-h-80">
-                {FACTORY_STAGES.map(s => (
+                {stageList.map(s => (
                   <SelectItem key={s.number} value={s.name}>
                     {s.number}. {s.name}{s.parallel ? ` (∥ ${s.parallel})` : ""}{s.na_eligible ? " · N/A eligible" : ""}
                   </SelectItem>
