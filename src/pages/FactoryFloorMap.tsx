@@ -17,8 +17,10 @@ import {
   ArrowRight, GripVertical, Lock,
 } from "lucide-react";
 import { QualityFlagButton } from "@/components/quality/QualityFlagButton";
+import { StageChecklistDrawer } from "@/components/production/StageChecklistDrawer";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 import { getPhaseForStage } from "@/lib/production-phases";
+import { ClipboardCheck } from "lucide-react";
 
 /* ──── CONSTANTS ──── */
 // Module bay numbering: 1-5 indoor, 11-17 outdoor (legacy used 1-10 indoor; bays 6-10 still rendered as legacy if occupied).
