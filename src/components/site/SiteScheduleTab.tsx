@@ -44,13 +44,13 @@ export function SiteScheduleTab({ projectId, projectName, userRole, userId }: Pr
 
   async function load() {
     setLoading(true);
-    const [{ data: proj }, { data: stages }, { data: dispatchAgg }] = await Promise.all([
+    const [{ data: proj }, { data: stages }, { data: dispatchStage }] = await Promise.all([
       (supabase.from("projects") as any).select("site_schedule_unlocked_at").eq("id", projectId).maybeSingle(),
       (supabase.from("project_stages") as any).select("id, stage_number, stage_name, planned_start, planned_end, status, is_na").eq("project_id", projectId).gte("stage_number", 16).order("stage_number"),
-      (supabase.from("modules") as any).select("dispatch_target_date").eq("project_id", projectId).eq("is_archived", false).order("dispatch_target_date", { ascending: true }).limit(1),
+      (supabase.from("project_stages") as any).select("planned_end").eq("project_id", projectId).eq("stage_number", 15).order("planned_end", { ascending: true }).limit(1).maybeSingle(),
     ]);
     setUnlockedAt(proj?.site_schedule_unlocked_at ?? null);
-    setPlannedDispatch(dispatchAgg?.[0]?.dispatch_target_date ?? null);
+    setPlannedDispatch(dispatchStage?.planned_end ?? null);
 
     const existing = new Map<number, any>();
     (stages || []).forEach((s: any) => existing.set(s.stage_number, s));
