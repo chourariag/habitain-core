@@ -107,6 +107,21 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       ["Builder Finish", "Roof Screeding 50mm", "", "CFT", "", "", ""],
       ["Builder Finish", "AC Copper Piping 1.5MT", "", "MTR", "", "", ""],
       ["Builder Finish", "MS Flashing", "", "Lot", "", "", ""],
+      ["Builder Finish", "Wooden Doors (internal)", "", "Nos", "", "", ""],
+      ["Builder Finish", "External Doors (main entry)", "", "Nos", "", "", ""],
+      ["Builder Finish", "Door Hardware (hinges, locks, handles)", "", "Lots", "", "", ""],
+      ["Builder Finish", "Skirting — Wooden or Tile", "", "RFT", "", "", ""],
+      ["Builder Finish", "Silicon Sealant — external joints", "", "Tubes", "", "", ""],
+      ["Builder Finish", "Waterproofing Membrane", "", "SQM", "", "", ""],
+      ["Builder Finish", "Tile Grout", "", "KG", "", "", ""],
+      ["Builder Finish", "Caulking Compound", "", "Tubes", "", "", ""],
+      ["Builder Finish", "SS Railings (if in scope)", "", "RFT", "", "", ""],
+      ["Builder Finish", "Staircase (if in scope)", "", "Nos", "", "", ""],
+      ["Site", "Foundation Bolts and Anchor Plates", "", "Nos", "", "", ""],
+      ["Site", "Anti-termite Treatment", "", "SQM", "", "", ""],
+      ["Site", "Crane Hire (site erection)", "", "Days", "", "", ""],
+      ["Site", "Site Electricity Connection", "", "Lot", "", "", ""],
+      ["Site", "Temporary Site Toilet", "", "Nos", "", "", ""],
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(material), "Material Plan");
 
