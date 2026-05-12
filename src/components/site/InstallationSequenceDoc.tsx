@@ -280,6 +280,15 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
         </div>
       </CardHeader>
       <CardContent className="px-4 pb-3 space-y-3">
+        {isLocked && (
+          <div className="rounded-md p-3 text-xs flex items-start gap-2" style={{ backgroundColor: "#FFF8E8", color: "#D4860A", border: "1px solid #F0D78C" }}>
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Locked — opens 14 days before dispatch</p>
+              <p>Dispatch in {daysUntilDispatch} days. Awaiz can fill this in once the 14-day window opens.</p>
+            </div>
+          </div>
+        )}
         {/* Document upload */}
         {!doc?.document_url ? (
           <div className="space-y-3">
