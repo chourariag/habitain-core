@@ -3029,6 +3029,42 @@ export type Database = {
           },
         ]
       }
+      hr_documents: {
+        Row: {
+          created_at: string
+          doc_type: string
+          id: string
+          issued_on: string | null
+          notes: string | null
+          pdf_url: string
+          title: string
+          uploaded_by: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          doc_type: string
+          id?: string
+          issued_on?: string | null
+          notes?: string | null
+          pdf_url: string
+          title: string
+          uploaded_by?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          doc_type?: string
+          id?: string
+          issued_on?: string | null
+          notes?: string | null
+          pdf_url?: string
+          title?: string
+          uploaded_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       hr_settings: {
         Row: {
           approval1_at: string | null
@@ -3744,6 +3780,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      leave_balances: {
+        Row: {
+          cl_total: number
+          cl_used: number
+          created_at: string
+          el_total: number
+          el_used: number
+          id: string
+          sl_total: number
+          sl_used: number
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          cl_total?: number
+          cl_used?: number
+          created_at?: string
+          el_total?: number
+          el_used?: number
+          id?: string
+          sl_total?: number
+          sl_used?: number
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          cl_total?: number
+          cl_used?: number
+          created_at?: string
+          el_total?: number
+          el_used?: number
+          id?: string
+          sl_total?: number
+          sl_used?: number
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
       }
       leave_requests: {
         Row: {
@@ -4817,6 +4895,51 @@ export type Database = {
           submitted_at?: string | null
           submitted_by?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      payslips: {
+        Row: {
+          created_at: string
+          deductions: number
+          gross_amount: number
+          id: string
+          month: number
+          net_pay: number
+          notes: string | null
+          pdf_url: string | null
+          updated_at: string
+          uploaded_by: string | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          deductions?: number
+          gross_amount?: number
+          id?: string
+          month: number
+          net_pay?: number
+          notes?: string | null
+          pdf_url?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          deductions?: number
+          gross_amount?: number
+          id?: string
+          month?: number
+          net_pay?: number
+          notes?: string | null
+          pdf_url?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+          user_id?: string
+          year?: number
         }
         Relationships: []
       }
@@ -9806,6 +9929,7 @@ export type Database = {
         Returns: boolean
       }
       can_manage_finance_pl: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_hr_documents: { Args: { _user_id: string }; Returns: boolean }
       can_manage_labour_register: {
         Args: { _user_id: string }
         Returns: boolean
