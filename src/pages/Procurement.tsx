@@ -29,7 +29,7 @@ import { AssetRegisterTab } from "@/components/procurement/AssetRegisterTab";
 import { SupplierIntelligenceTab } from "@/components/procurement/SupplierIntelligenceTab";
 import { MaterialAlertsTab } from "@/components/procurement/MaterialAlertsTab";
 import { GRNTab } from "@/components/procurement/GRNTab";
-import { SubcontractorsTab } from "@/components/procurement/SubcontractorsTab";
+// SubcontractorsTab moved to Production → People
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
 import { Calendar, Hammer, Bell, ClipboardCheck, HardHat, Wrench } from "lucide-react";
 import { FixedAssetsTab } from "@/components/procurement/FixedAssetsTab";
