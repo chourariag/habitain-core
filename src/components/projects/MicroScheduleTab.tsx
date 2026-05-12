@@ -20,6 +20,7 @@ import * as XLSX from "xlsx";
 import { getPhasesForSystem, TASK_TYPE_META, type TaskTemplateType } from "@/lib/production-phases";
 import { downloadScheduleTemplate } from "@/lib/xlsx-templates";
 import { ChevronRight, ChevronDown, ShieldAlert } from "lucide-react";
+import { useProjectImportListener } from "@/lib/use-project-import";
 
 interface ProjectTask {
   id: string;
@@ -91,6 +92,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   const [productionSystem, setProductionSystem] = useState<string | null>(null);
   const [projectName, setProjectName] = useState<string>("Project");
   const [collapsedParents, setCollapsedParents] = useState<Set<string>>(new Set());
+  const [setupStageCount, setSetupStageCount] = useState<number>(0);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const isProductionView = PRODUCTION_VIEW_ROLES.includes(userRole ?? "");
@@ -98,17 +100,22 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   const canEdit = EDIT_ROLES.includes(userRole ?? "") && !isProductionView;
   const canOverride = ["planning_engineer", "super_admin", "managing_director"].includes(userRole ?? "") && !isProductionView;
   const PHASES = useMemo(() => getPhasesForSystem(productionSystem), [productionSystem]);
+  // Hide the manual "Upload Schedule" button once stages have been loaded via the
+  // Project Setup Template (Project Schedule sheet) — Karthik should not be asked twice.
+  const hasSetupSchedule = setupStageCount > 0;
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
-    const [taskRes, alertRes, projectRes] = await Promise.all([
+    const [taskRes, alertRes, projectRes, stagesRes] = await Promise.all([
       supabase.from("project_tasks").select("*").eq("project_id", projectId).order("display_order", { ascending: true, nullsFirst: false }).order("task_id_in_schedule", { ascending: true }),
       supabase.from("material_alerts").select("related_task_id, material_name").eq("project_id", projectId).eq("status", "active").not("related_task_id", "is", null),
       supabase.from("projects").select("name, production_system").eq("id", projectId).maybeSingle(),
+      (supabase.from("project_stages") as any).select("id", { count: "exact", head: true }).eq("project_id", projectId).lte("stage_number", 15),
     ]);
     setTasks((taskRes.data as any as ProjectTask[]) ?? []);
     setProductionSystem(((projectRes.data as any)?.production_system as string | null) ?? null);
     setProjectName(((projectRes.data as any)?.name as string | null) ?? "Project");
+    setSetupStageCount((stagesRes as any)?.count ?? 0);
     const riskMap: Record<string, string> = {};
     (alertRes.data ?? []).forEach((a: any) => {
       if (a.related_task_id) riskMap[a.related_task_id] = a.material_name ?? "Material";
@@ -118,6 +125,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   }, [projectId]);
 
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
+  useProjectImportListener(projectId, fetchTasks);
 
   const computeStatus = (task: any, allTasks: any[]): string => {
     if (task.completion_percentage === 100) return "Completed";
