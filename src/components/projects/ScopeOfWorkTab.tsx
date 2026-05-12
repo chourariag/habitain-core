@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useProjectImportListener } from "@/lib/use-project-import";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -145,6 +146,7 @@ export function ScopeOfWorkTab({ projectId, userRole }: Props) {
   }, [projectId]);
 
   useEffect(() => { loadScope(); }, [loadScope]);
+  useProjectImportListener(projectId, loadScope);
 
   const handleSave = async () => {
     setSaving(true);

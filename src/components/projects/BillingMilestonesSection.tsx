@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useProjectImportListener } from "@/lib/use-project-import";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -105,6 +106,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
   }, [projectId]);
 
   useEffect(() => { loadMilestones(); }, [loadMilestones]);
+  useProjectImportListener(projectId, loadMilestones);
 
   function recalc(m: Milestone): Milestone {
     const excl = (m.percentage / 100) * contractValue;

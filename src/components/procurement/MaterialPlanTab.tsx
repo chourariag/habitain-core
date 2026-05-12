@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useProjectImportListener } from "@/lib/use-project-import";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -127,6 +128,7 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
   }, [projectId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  useProjectImportListener(projectId, fetchData);
 
   const parseDate = (val: any): string | null => {
     if (!val) return null;
