@@ -24,7 +24,7 @@ export function SubcontractorSchedule({ projectId, projectName, userRole }: Prop
   const [newDate, setNewDate] = useState("");
   const [adding, setAdding] = useState(false);
 
-  const canManage = ["site_installation_mgr", "site_engineer", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canManage = ["site_installation_mgr", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
 
   const load = useCallback(async () => {
     setLoading(true);
