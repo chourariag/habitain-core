@@ -51,7 +51,7 @@ export function SiteFactoryFeedback({ projectId, projectName, userRole, modules 
   const [response, setResponse] = useState<"ncr_required" | "no_ncr" | "">("");
   const [explanation, setExplanation] = useState("");
 
-  const canRaise = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canRaise = ["site_installation_mgr", "super_admin", "managing_director"].includes(userRole ?? "");
   const canRespond = ["production_head", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
 
   const load = useCallback(async () => {

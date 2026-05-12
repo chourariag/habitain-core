@@ -35,7 +35,7 @@ export function SubcontractorManagement({ projectId, projectName, userRole }: Pr
   const [startDate, setStartDate] = useState("");
   const [completionDate, setCompletionDate] = useState("");
 
-  const canManage = ["site_installation_mgr", "site_engineer", "head_operations", "super_admin", "managing_director", "production_head"].includes(userRole ?? "");
+  const canManage = ["site_installation_mgr", "head_operations", "super_admin", "managing_director", "production_head"].includes(userRole ?? "");
 
   const load = useCallback(async () => {
     setLoading(true);

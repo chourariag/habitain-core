@@ -38,7 +38,7 @@ interface Props {
   userRole: string | null;
 }
 
-const USAGE_ROLES = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"];
+const USAGE_ROLES = ["site_installation_mgr", "super_admin", "managing_director"];
 
 export function SiteInventoryTab({ projectId, userRole }: Props) {
   const [items, setItems] = useState<SiteItem[]>([]);

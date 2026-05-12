@@ -64,13 +64,19 @@ const sectionConfig = [
     key: "procurement",
     label: "Procurement",
     items: [
-      { to: "/procurement?tab=dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { to: "/procurement?tab=material-plan", label: "Material Plan", icon: ClipboardList },
+      { to: "/procurement?tab=dashboard", label: "Dashboard", icon: LayoutDashboard,
+        roles: ["super_admin","managing_director","finance_director","sales_director","architecture_director","head_operations","procurement","stores_executive","production_head","site_installation_mgr"] },
+      { to: "/procurement?tab=material-plan", label: "Material Plan", icon: ClipboardList,
+        roles: ["super_admin","managing_director","finance_director","sales_director","architecture_director","head_operations","procurement","planning_engineer","production_head"] },
       { to: "/procurement?tab=requests", label: "Material Requests", icon: ShoppingCart },
-      { to: "/procurement?tab=inventory", label: "Inventory & GRN", icon: Package },
-      { to: "/procurement?tab=purchase-orders", label: "Purchase Orders", icon: ClipboardCheck },
-      { to: "/procurement?tab=transfers", label: "Transfers", icon: Truck },
-      { to: "/procurement?tab=fixed-assets", label: "Equipment & Fixed Assets", icon: Wrench },
+      { to: "/procurement?tab=inventory", label: "Inventory & GRN", icon: Package,
+        roles: ["super_admin","managing_director","finance_director","head_operations","procurement","stores_executive"] },
+      { to: "/procurement?tab=purchase-orders", label: "Purchase Orders", icon: ClipboardCheck,
+        roles: ["super_admin","managing_director","finance_director","head_operations","procurement","stores_executive"] },
+      { to: "/procurement?tab=transfers", label: "Transfers", icon: Truck,
+        roles: ["super_admin","managing_director","head_operations","procurement","stores_executive","site_installation_mgr"] },
+      { to: "/procurement?tab=fixed-assets", label: "Equipment & Fixed Assets", icon: Wrench,
+        roles: ["super_admin","managing_director","finance_director","head_operations","procurement","stores_executive","site_installation_mgr","factory_floor_supervisor","production_head"] },
     ],
   },
   {
@@ -238,7 +244,7 @@ export function AppSidebar() {
                   </span>
                 </div>
               )}
-              {section.items.map((item) => {
+              {section.items.filter((item: any) => !item.roles || (userRole && item.roles.includes(userRole))).map((item) => {
                 const [itemPath, itemQuery] = item.to.split("?");
                 const itemTab = itemQuery ? new URLSearchParams(itemQuery).get("tab") : null;
                 const currentTab = new URLSearchParams(location.search).get("tab");
