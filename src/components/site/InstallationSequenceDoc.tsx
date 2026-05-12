@@ -115,6 +115,19 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
           project_id: projectId, document_url: url, uploaded_by: user.id, uploaded_at: new Date().toISOString(),
         });
       }
+      // Notify Karthik (production_head) and Suraj (head_operations) — site schedule set
+      const { data: recipients } = await supabase.from("profiles").select("auth_user_id")
+        .in("role", ["production_head", "head_operations"] as any).eq("is_active", true);
+      if (recipients?.length) {
+        await insertNotifications(recipients.map((r: any) => ({
+          recipient_id: r.auth_user_id,
+          title: "Site schedule set",
+          body: `Awaiz saved the installation sequence for ${projectName}.`,
+          category: "Production",
+          related_table: "installation_sequence_docs",
+          navigate_to: "/dispatch-delivery",
+        })));
+      }
       toast.success("Sequence saved ✓");
       setShowForm(false);
       await load();
