@@ -34,8 +34,27 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
   const [craneLifts, setCraneLifts] = useState("");
   const [accessNotes, setAccessNotes] = useState("");
   const [craneOpNotes, setCraneOpNotes] = useState("");
+  const [dispatchDate, setDispatchDate] = useState<Date | null>(null);
 
   const canUpload = ["site_installation_mgr", "head_operations", "production_head", "super_admin", "managing_director", "site_engineer"].includes(userRole ?? "");
+
+  // 14-day lock: pull planned dispatch date from project_tasks (Stage with "Dispatch")
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("project_tasks")
+        .select("planned_finish_date,task_name")
+        .eq("project_id", projectId)
+        .ilike("task_name", "%dispatch%")
+        .order("planned_finish_date", { ascending: true })
+        .limit(1);
+      const d = data?.[0]?.planned_finish_date;
+      setDispatchDate(d ? new Date(d) : null);
+    })();
+  }, [projectId]);
+
+  const daysUntilDispatch = dispatchDate ? Math.ceil((dispatchDate.getTime() - Date.now()) / 86400000) : null;
+  const isLocked = daysUntilDispatch !== null && daysUntilDispatch > 14;
 
   const downloadTemplate = () => {
     const wb = XLSX.utils.book_new();
