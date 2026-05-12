@@ -341,15 +341,24 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
     }
 
     // Auto-clone all factory templates (stage_number 1–15) as project_tasks for each non-N/A stage row.
+    // Templates use sub-stage numbers like "1.1", "1.2"; match by integer prefix to the schedule stage #.
     const { data: tmpl } = await (supabase.from("production_task_templates") as any)
       .select("stage_number, task_name, phase_name, stage_name, responsible_role, escalation_role, is_qc_gate, is_payment_milestone, special_note, display_order, task_type")
       .eq("production_system", sys)
       .order("display_order", { ascending: true });
 
+    const stagePrefix = (s: any) => {
+      const n = parseInt(String(s ?? "").split(".")[0], 10);
+      return Number.isFinite(n) ? n : null;
+    };
+
     const tasksToInsert: any[] = [];
     for (const sr of stageRows) {
       if (sr.is_na) continue;
-      const stageTpl = (tmpl || []).filter((t: any) => t.stage_name === sr.stage_name);
+      const stageTpl = (tmpl || []).filter((t: any) => {
+        if (sr.stage_name && t.stage_name && t.stage_name === sr.stage_name) return true;
+        return stagePrefix(t.stage_number) === sr.stage_number;
+      });
       for (const t of stageTpl) {
         tasksToInsert.push({
           project_id: projectId,
