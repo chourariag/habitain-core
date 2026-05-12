@@ -455,12 +455,15 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-lg font-semibold text-foreground">Micro-Schedule</h2>
         <div className="flex items-center gap-2 flex-wrap">
-          {canUpload && (
+          {canUpload && !hasSetupSchedule && (
             <>
               <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
               <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4 mr-1" /> Template</Button>
               <Button size="sm" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4 mr-1" /> Upload Schedule</Button>
             </>
+          )}
+          {hasSetupSchedule && canUpload && (
+            <span className="text-xs text-muted-foreground italic">Schedule loaded from Project Setup Template</span>
           )}
         </div>
       </div>
@@ -489,7 +492,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
       {tasks.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground text-sm">No schedule uploaded yet. {canUpload ? 'Click "Upload Schedule" to import your execution plan.' : "Ask Karthik to upload the schedule."}</p>
+            <p className="text-muted-foreground text-sm">{hasSetupSchedule ? "Schedule loaded — tasks are being generated." : `No schedule uploaded yet. ${canUpload ? 'Click "Upload Schedule" to import your execution plan.' : "Ask Karthik to upload the schedule."}`}</p>
           </CardContent>
         </Card>
       ) : (
