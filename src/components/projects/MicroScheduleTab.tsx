@@ -491,8 +491,21 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
 
       {tasks.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground text-sm">{hasSetupSchedule ? "Schedule loaded — tasks are being generated." : `No schedule uploaded yet. ${canUpload ? 'Click "Upload Schedule" to import your execution plan.' : "Ask Karthik to upload the schedule."}`}</p>
+          <CardContent className="py-12 text-center space-y-3">
+            {hasSetupSchedule ? (
+              <>
+                <p className="text-sm" style={{ color: "#F40009" }}>
+                  Schedule rows were uploaded but no tasks were generated. Click refresh — if this persists, re-upload the Project Setup Template.
+                </p>
+                <Button size="sm" variant="outline" onClick={fetchTasks} className="gap-1.5">
+                  <Loader2 className="h-4 w-4" /> Refresh Schedule
+                </Button>
+              </>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                {`No schedule uploaded yet. ${canUpload ? 'Click "Upload Schedule" to import your execution plan.' : "Ask Karthik to upload the schedule."}`}
+              </p>
+            )}
           </CardContent>
         </Card>
       ) : (
