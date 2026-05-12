@@ -173,10 +173,29 @@ export function QCInspectionWizard({
         .eq("auth_user_id", userRes.data.user.id)
         .single();
       if (profile) {
-        setInspectorName(profile.display_name || profile.email || "Inspector");
+        // Testing-mode persona name overrides the auth profile name
+        setInspectorName(personaName || profile.display_name || profile.email || "Inspector");
         setInspectorId(userRes.data.user.id);
       }
     }
+
+    // Load QC gate stages from production_task_templates (is_qc_gate = true)
+    const { data: gates } = await (supabase.from("production_task_templates") as any)
+      .select("stage_number, task_name, phase_name")
+      .eq("is_qc_gate", true)
+      .order("display_order", { ascending: true });
+    const seen = new Set<string>();
+    const opts: { value: string; label: string }[] = [];
+    (gates ?? []).forEach((g: any) => {
+      const key = `${g.phase_name}|${g.task_name}|${g.stage_number}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      opts.push({
+        value: String(g.stage_number),
+        label: `${g.phase_name} — ${g.task_name} (${g.stage_number})`,
+      });
+    });
+    setQcStages(opts);
 
     if (preselectedProjectId) {
       loadModules(preselectedProjectId);
