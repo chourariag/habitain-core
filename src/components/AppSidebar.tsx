@@ -43,11 +43,20 @@ const sectionConfig = [
     key: "production",
     label: "Production",
     items: [
+      { to: "/production/dashboard", label: "Production Dashboard", icon: LayoutDashboard },
       { to: "/production", label: "Factory Floor", icon: Factory },
       { to: "/factory/floor-map", label: "Floor Map", icon: LayoutDashboard },
       { to: "/capacity", label: "Capacity Planning", icon: BarChart3 },
       { to: "/qc", label: "QC & NCR", icon: ClipboardCheck },
+      { to: "/dispatch-delivery", label: "Dispatch & Delivery", icon: Truck },
       { to: "/safety", label: "Safety", icon: ShieldAlert },
+    ],
+  },
+  {
+    key: "production",
+    label: "On Site Works",
+    items: [
+      { to: "/site-dashboard", label: "Site Dashboard", icon: LayoutDashboard },
       { to: "/site-hub", label: "Site Hub", icon: Truck },
     ],
   },
