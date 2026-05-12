@@ -30,7 +30,7 @@ function ProductionDashboardContent() {
     if (!selectedProjectId) return;
     const [tasksRes, ncrRes, gatesRes] = await Promise.all([
       supabase.from("project_tasks").select("id,task_name,status,delay_days").eq("project_id", selectedProjectId),
-      (supabase.from("ncrs") as any).select("id,status").eq("project_id", selectedProjectId).neq("status", "Closed"),
+      (supabase.from("ncr_register") as any).select("id,status").eq("project_id", selectedProjectId).neq("status", "Closed"),
       (supabase.from("project_material_plan_items") as any).select("id,status").eq("project_id", selectedProjectId).neq("status", "Received"),
     ]);
     const tasks = tasksRes.data ?? [];

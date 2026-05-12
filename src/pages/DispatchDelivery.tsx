@@ -52,13 +52,13 @@ function DispatchDeliveryContent() {
         </ScrollableTabsWrapper>
 
         <TabsContent value="packs">
-          <DispatchPacksTab projectId={selectedProjectId} userRole={userRole} />
+          <DispatchPacksTab projectId={selectedProjectId} />
         </TabsContent>
         <TabsContent value="delivery">
           <Card>
             <CardHeader><CardTitle className="text-sm">Delivery Checklist</CardTitle></CardHeader>
             <CardContent>
-              <DeliveryChecklistButton projectId={selectedProjectId} userRole={userRole} />
+              <DeliveryChecklistButton projectId={selectedProjectId} />
             </CardContent>
           </Card>
         </TabsContent>
