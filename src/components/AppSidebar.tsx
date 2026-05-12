@@ -64,8 +64,13 @@ const sectionConfig = [
     key: "procurement",
     label: "Procurement",
     items: [
-      { to: "/procurement", label: "Procurement", icon: ShoppingCart },
-      { to: "/procurement?tab=fixed-assets", label: "Equipment", icon: Wrench },
+      { to: "/procurement?tab=dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/procurement?tab=material-plan", label: "Material Plan", icon: ClipboardList },
+      { to: "/procurement?tab=requests", label: "Material Requests", icon: ShoppingCart },
+      { to: "/procurement?tab=inventory", label: "Inventory & GRN", icon: Package },
+      { to: "/procurement?tab=purchase-orders", label: "Purchase Orders", icon: ClipboardCheck },
+      { to: "/procurement?tab=transfers", label: "Transfers", icon: Truck },
+      { to: "/procurement?tab=fixed-assets", label: "Equipment & Fixed Assets", icon: Wrench },
     ],
   },
   {
