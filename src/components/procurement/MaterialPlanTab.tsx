@@ -103,7 +103,8 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const canUpload = ["procurement", "stores_executive", "super_admin", "managing_director"].includes(userRole ?? "");
+  const setupUploaded = useSetupUploaded(projectId);
+  const canUpload = ["procurement", "stores_executive", "super_admin", "managing_director"].includes(userRole ?? "") && !setupUploaded;
   const canEdit = ["procurement", "stores_executive", "super_admin", "managing_director"].includes(userRole ?? "");
 
   const fetchData = useCallback(async () => {
