@@ -37,7 +37,6 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
   const [dispatchDate, setDispatchDate] = useState<Date | null>(null);
 
   const canUploadRole = ["site_installation_mgr", "head_operations", "production_head", "super_admin", "managing_director", "site_engineer"].includes(userRole ?? "");
-  const canUpload = canUploadRole && !isLocked;
 
   // 14-day lock: pull planned dispatch date from project_tasks (Stage with "Dispatch")
   useEffect(() => {
@@ -56,6 +55,7 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
 
   const daysUntilDispatch = dispatchDate ? Math.ceil((dispatchDate.getTime() - Date.now()) / 86400000) : null;
   const isLocked = daysUntilDispatch !== null && daysUntilDispatch > 14;
+  const canUpload = canUploadRole && !isLocked;
 
   const downloadTemplate = () => {
     const wb = XLSX.utils.book_new();
