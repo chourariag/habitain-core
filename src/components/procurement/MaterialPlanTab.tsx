@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useProjectImportListener } from "@/lib/use-project-import";
+import { SetupTemplateBanner, useSetupUploaded } from "@/components/projects/SetupTemplateBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
