@@ -146,6 +146,7 @@ export function ScopeOfWorkTab({ projectId, userRole }: Props) {
   }, [projectId]);
 
   useEffect(() => { loadScope(); }, [loadScope]);
+  useProjectImportListener(projectId, loadScope);
 
   const handleSave = async () => {
     setSaving(true);
