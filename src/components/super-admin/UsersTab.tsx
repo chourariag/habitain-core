@@ -10,6 +10,7 @@ import { downloadXlsx, logAudit, readXlsx } from "@/lib/super-admin";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { createUser, deactivateUser, reactivateUser, updateUserRole } from "@/lib/admin-api";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
+import { BulkCreateAccountsDialog } from "@/components/super-admin/BulkCreateAccountsDialog";
 import { toast } from "sonner";
 
 type Profile = {
