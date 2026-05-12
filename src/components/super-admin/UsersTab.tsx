@@ -96,6 +96,7 @@ export function UsersTab() {
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" onClick={handleDownload}><Download className="h-4 w-4" /> Download Users</Button>
         <label><input type="file" accept=".xlsx" className="hidden" onChange={handleUpload} /><Button asChild variant="outline"><span><Upload className="h-4 w-4" /> Upload Users</span></Button></label>
+        <BulkCreateAccountsDialog onDone={refetch} />
         <AddUserDialog onUserCreated={refetch} />
       </div>
       <div className="bg-card rounded-lg border overflow-x-auto">
