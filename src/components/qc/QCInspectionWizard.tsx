@@ -155,6 +155,11 @@ export function QCInspectionWizard({
     setInspectionId("");
   };
 
+  // Keep inspector name in sync with the active testing-mode persona
+  useEffect(() => {
+    if (personaName) setInspectorName(personaName);
+  }, [personaName]);
+
   const loadInitialData = async () => {
     const [projectsRes, userRes] = await Promise.all([
       supabase
