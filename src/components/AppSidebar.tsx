@@ -83,7 +83,12 @@ const sectionConfig = [
     label: "Business",
     items: [
       { to: "/sales", label: "Sales", icon: BarChart3 },
-      { to: "/finance", label: "Finance", icon: DollarSign },
+      { to: "/finance?tab=mis-invoices", label: "MIS & Invoices", icon: DollarSign },
+      { to: "/finance?tab=revenue-margin", label: "Revenue & Margin", icon: BarChart3 },
+      { to: "/finance?tab=costing", label: "Costing & Estimation", icon: ClipboardCheck },
+      { to: "/finance?tab=pl-cashflow", label: "Project P&L & Cash Flow", icon: BarChart3 },
+      { to: "/finance?tab=bank-overdue", label: "Bank Ledger & Overdue", icon: DollarSign },
+      { to: "/finance?tab=statutory", label: "Statutory", icon: ShieldCheck },
       { to: "/rm", label: "R&M", icon: Wrench },
       { to: "/amc", label: "AMC", icon: ShoppingCart },
     ],
