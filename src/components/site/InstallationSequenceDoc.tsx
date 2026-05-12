@@ -83,6 +83,7 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
     setSeqRows((r) => r.map((row, idx) => idx === i ? { ...row, [key]: val } : row));
 
   const saveForm = async () => {
+    if (isLocked) { toast.error(`Locked — opens 14 days before dispatch (${daysUntilDispatch} days remaining)`); return; }
     const validRows = seqRows.filter((r) => r.moduleNo.trim());
     if (validRows.length === 0) { toast.error("Add at least one module"); return; }
     setSavingForm(true);
