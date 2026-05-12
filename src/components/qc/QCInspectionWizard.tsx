@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { STAGE_TYPE_SECTIONS } from "@/lib/design-checklist-data";
 import { toast } from "sonner";
+import { useUserRole } from "@/hooks/useUserRole";
 import { format } from "date-fns";
 
 interface QCInspectionWizardProps {
