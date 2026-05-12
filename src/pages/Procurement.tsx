@@ -721,6 +721,10 @@ export default function Procurement() {
         <TabsContent value="subcontractors">
           <SubcontractorsTab />
         </TabsContent>
+
+        <TabsContent value="fixed-assets">
+          <FixedAssetsTab />
+        </TabsContent>
       </Tabs>
 
       <NewMaterialRequestDialog open={addOpen} onOpenChange={setAddOpen} onCreated={fetchData} />
