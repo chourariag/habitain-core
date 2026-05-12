@@ -47,6 +47,7 @@ const sectionConfig = [
       { to: "/factory/floor-map", label: "Floor Map", icon: LayoutDashboard },
       { to: "/capacity", label: "Capacity Planning", icon: BarChart3 },
       { to: "/qc", label: "QC & NCR", icon: ClipboardCheck },
+      { to: "/safety", label: "Safety", icon: ShieldAlert },
       { to: "/site-hub", label: "Site Hub", icon: Truck },
     ],
   },
@@ -83,7 +84,8 @@ const sectionConfig = [
     label: "Admin",
     items: [
       { to: "/approvals", label: "Approvals", icon: ShieldCheck },
-      { to: "/attendance", label: "HR & Attendance", icon: Clock },
+      { to: "/attendance", label: "My HR", icon: Clock },
+      { to: "/admin/hr", label: "HR Management", icon: Users },
       { to: "/admin", label: "Admin", icon: Users },
       { to: "/admin/users", label: "User Management", icon: Users },
       { to: "/settings", label: "Settings", icon: Settings },

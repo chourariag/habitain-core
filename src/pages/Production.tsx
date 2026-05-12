@@ -4,8 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon, BarChart3, CalendarDays, Hammer, HardHat } from "lucide-react";
+import { Loader2, Factory, PenTool, PackagePlus, LayoutGrid, Table as TableIcon, BarChart3, CalendarDays, Hammer, HardHat, Users, ClipboardCheck } from "lucide-react";
 import { DailyLabourLog } from "@/components/labour/DailyLabourLog";
+import { LabourClaimsTab } from "@/components/hr/LabourClaimsTab";
+import { LabourRegisterTab } from "@/components/hr/LabourRegisterTab";
+import { SubcontractorsTab } from "@/components/procurement/SubcontractorsTab";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 import { GanttChart } from "@/components/production/GanttChart";
 import { SupervisorDailyLog } from "@/components/production/SupervisorDailyLog";
@@ -151,7 +154,7 @@ function ProductionContent() {
             <ScrollableTabsWrapper>
               <TabsList>
                 <TabsTrigger value="modules" className="gap-1.5"><Factory className="h-4 w-4" /> Modules</TabsTrigger>
-                <TabsTrigger value="labour" className="gap-1.5"><HardHat className="h-4 w-4" /> Labour Log</TabsTrigger>
+                <TabsTrigger value="people" className="gap-1.5"><Users className="h-4 w-4" /> People</TabsTrigger>
                 <TabsTrigger value="manpower" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Manpower</TabsTrigger>
                 <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
                 <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
@@ -187,8 +190,19 @@ function ProductionContent() {
               ))}
             </TabsContent>
 
-            <TabsContent value="labour">
-              <DailyLabourLog mode="factory" projectId={selectedProjectId!} userRole={userRole} />
+            <TabsContent value="people">
+              <Tabs defaultValue="daily" className="space-y-3">
+                <TabsList>
+                  <TabsTrigger value="daily" className="gap-1.5"><HardHat className="h-4 w-4" /> Daily Work Log</TabsTrigger>
+                  <TabsTrigger value="approvals" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> Labour Log Approvals</TabsTrigger>
+                  <TabsTrigger value="register" className="gap-1.5"><Users className="h-4 w-4" /> Labour Register</TabsTrigger>
+                  <TabsTrigger value="subs" className="gap-1.5"><Users className="h-4 w-4" /> Subcontractors</TabsTrigger>
+                </TabsList>
+                <TabsContent value="daily"><DailyLabourLog mode="factory" projectId={selectedProjectId!} userRole={userRole} /></TabsContent>
+                <TabsContent value="approvals"><LabourClaimsTab /></TabsContent>
+                <TabsContent value="register"><LabourRegisterTab /></TabsContent>
+                <TabsContent value="subs"><SubcontractorsTab /></TabsContent>
+              </Tabs>
             </TabsContent>
 
             <TabsContent value="manpower">

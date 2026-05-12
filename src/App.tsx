@@ -44,6 +44,8 @@ import SOPs from "@/pages/SOPs";
 import SuperAdmin from "@/pages/SuperAdmin";
 import UserManagement from "@/pages/UserManagement";
 import Approvals from "@/pages/Approvals";
+import AdminHR from "@/pages/AdminHR";
+import Safety from "@/pages/Safety";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +95,8 @@ const App = () => (
                 <Route path="/sops" element={<SOPs />} />
                 <Route path="/super-admin" element={<Navigate to="/admin/super-admin" replace />} />
                 <Route path="/admin/super-admin" element={<SuperAdmin />} />
+                <Route path="/admin/hr" element={<AdminHR />} />
+                <Route path="/safety" element={<Safety />} />
                 <Route path="/approvals" element={<Approvals />} />
               </Route>
               <Route path="/client/:projectToken" element={<ClientPortal />} />

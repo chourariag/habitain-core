@@ -1,7 +1,9 @@
 import { useUserRole } from "@/hooks/useUserRole";
 import { getDashboardTier } from "@/lib/role-nav";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
-import { Loader2 } from "lucide-react";
+import { Loader2, HardHat } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Tier1Dashboard } from "@/components/dashboard/Tier1Dashboard";
 import { PlaceholderDashboard } from "@/components/dashboard/PlaceholderDashboard";
 import { SharedDashboardBottom } from "@/components/dashboard/SharedDashboardBottom";
@@ -12,6 +14,8 @@ import { MyTasksSummaryStrip } from "@/components/tasks/MyTasksSummaryStrip";
 import { DailyReadinessBrief } from "@/components/dashboard/DailyReadinessBrief";
 import { MyReportsSection } from "@/components/reports/MyReportsSection";
 import { ReportsToReviewSection } from "@/components/reports/ReportsToReviewSection";
+
+const FLOOR_ROLES = ["factory_floor_supervisor", "fabrication_foreman", "electrical_installer", "elec_plumbing_installer", "site_engineer", "delivery_rm_lead"];
 
 export default function Dashboard() {
   const { role, userId, loading } = useUserRole();
@@ -35,6 +39,15 @@ export default function Dashboard() {
 
       {/* Check-in card */}
       <CheckInButton userRole={userRole} />
+
+      {/* Quick action: Log Today's Work — for floor/site workers */}
+      {userRole && FLOOR_ROLES.includes(userRole) && (
+        <Link to="/production?tab=people">
+          <Button className="w-full gap-2 text-white font-display font-bold h-14 text-base" style={{ backgroundColor: "#D4860A" }}>
+            <HardHat className="h-5 w-5" /> Log Today's Work
+          </Button>
+        </Link>
+      )}
 
       {/* Submit Expense button */}
       <LogExpenseButton userRole={userRole} />
