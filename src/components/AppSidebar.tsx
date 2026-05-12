@@ -244,7 +244,7 @@ export function AppSidebar() {
                   </span>
                 </div>
               )}
-              {section.items.map((item) => {
+              {section.items.filter((item: any) => !item.roles || (userRole && item.roles.includes(userRole))).map((item) => {
                 const [itemPath, itemQuery] = item.to.split("?");
                 const itemTab = itemQuery ? new URLSearchParams(itemQuery).get("tab") : null;
                 const currentTab = new URLSearchParams(location.search).get("tab");
