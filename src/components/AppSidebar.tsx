@@ -47,6 +47,7 @@ const sectionConfig = [
       { to: "/factory/floor-map", label: "Floor Map", icon: LayoutDashboard },
       { to: "/capacity", label: "Capacity Planning", icon: BarChart3 },
       { to: "/qc", label: "QC & NCR", icon: ClipboardCheck },
+      { to: "/safety", label: "Safety", icon: ShieldAlert },
       { to: "/site-hub", label: "Site Hub", icon: Truck },
     ],
   },
