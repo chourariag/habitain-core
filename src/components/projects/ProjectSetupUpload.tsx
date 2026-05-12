@@ -518,7 +518,13 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
 
       setResults(out);
       const totalImported = out.reduce((s, r) => s + (r.ok ? r.count : 0), 0);
-      if (totalImported > 0) toast.success(`Project setup imported — ${totalImported} rows total`);
+      if (totalImported > 0) {
+        toast.success(`Project setup imported — ${totalImported} rows total`);
+        // Stamp the project so individual upload buttons hide on every tab
+        await (supabase.from("projects") as any)
+          .update({ setup_uploaded_at: new Date().toISOString(), setup_uploaded_by_name: userName })
+          .eq("id", projectId);
+      }
       // Notify every tab on this page so they refetch immediately
       dispatchProjectImported(projectId);
       onImported?.();
