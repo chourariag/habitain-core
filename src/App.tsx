@@ -46,6 +46,9 @@ import UserManagement from "@/pages/UserManagement";
 import Approvals from "@/pages/Approvals";
 import AdminHR from "@/pages/AdminHR";
 import Safety from "@/pages/Safety";
+import ProductionDashboard from "@/pages/ProductionDashboard";
+import DispatchDelivery from "@/pages/DispatchDelivery";
+import SiteDashboard from "@/pages/SiteDashboard";
 
 const queryClient = new QueryClient();
 
@@ -68,7 +71,10 @@ const App = () => (
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/projects/:id" element={<ProjectDetail />} />
                 <Route path="/production" element={<Production />} />
+                <Route path="/production/dashboard" element={<ProductionDashboard />} />
                 <Route path="/production/delivery-checklist/:projectId" element={<DeliveryChecklist />} />
+                <Route path="/dispatch-delivery" element={<DispatchDelivery />} />
+                <Route path="/site-dashboard" element={<SiteDashboard />} />
                 <Route path="/site-hub" element={<SiteHub />} />
                 <Route path="/site-hub/dispatch-pack" element={<DispatchPackForm />} />
                 <Route path="/site-hub/advance-request" element={<AdvanceRequest />} />
