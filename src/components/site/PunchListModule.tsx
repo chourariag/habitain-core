@@ -53,7 +53,7 @@ export function PunchListModule({ projectId, userRole }: Props) {
   const [waivingId, setWaivingId] = useState<string | null>(null);
   const [waiveReason, setWaiveReason] = useState("");
 
-  const canManage = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canManage = ["site_installation_mgr", "super_admin", "managing_director"].includes(userRole ?? "");
   const canView = canManage || ["director", "finance_director", "sales_director", "architecture_director", "head_operations", "production_head"].includes(userRole ?? "");
 
   const load = useCallback(async () => {
