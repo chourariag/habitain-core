@@ -34,8 +34,28 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
   const [craneLifts, setCraneLifts] = useState("");
   const [accessNotes, setAccessNotes] = useState("");
   const [craneOpNotes, setCraneOpNotes] = useState("");
+  const [dispatchDate, setDispatchDate] = useState<Date | null>(null);
 
-  const canUpload = ["site_installation_mgr", "head_operations", "production_head", "super_admin", "managing_director", "site_engineer"].includes(userRole ?? "");
+  const canUploadRole = ["site_installation_mgr", "head_operations", "production_head", "super_admin", "managing_director", "site_engineer"].includes(userRole ?? "");
+
+  // 14-day lock: pull planned dispatch date from project_tasks (Stage with "Dispatch")
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("project_tasks")
+        .select("planned_finish_date,task_name")
+        .eq("project_id", projectId)
+        .ilike("task_name", "%dispatch%")
+        .order("planned_finish_date", { ascending: true })
+        .limit(1);
+      const d = data?.[0]?.planned_finish_date;
+      setDispatchDate(d ? new Date(d) : null);
+    })();
+  }, [projectId]);
+
+  const daysUntilDispatch = dispatchDate ? Math.ceil((dispatchDate.getTime() - Date.now()) / 86400000) : null;
+  const isLocked = daysUntilDispatch !== null && daysUntilDispatch > 14;
+  const canUpload = canUploadRole && !isLocked;
 
   const downloadTemplate = () => {
     const wb = XLSX.utils.book_new();
@@ -64,6 +84,7 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
     setSeqRows((r) => r.map((row, idx) => idx === i ? { ...row, [key]: val } : row));
 
   const saveForm = async () => {
+    if (isLocked) { toast.error(`Locked — opens 14 days before dispatch (${daysUntilDispatch} days remaining)`); return; }
     const validRows = seqRows.filter((r) => r.moduleNo.trim());
     if (validRows.length === 0) { toast.error("Add at least one module"); return; }
     setSavingForm(true);
@@ -94,6 +115,19 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
         await (client.from("installation_sequence_docs") as any).insert({
           project_id: projectId, document_url: url, uploaded_by: user.id, uploaded_at: new Date().toISOString(),
         });
+      }
+      // Notify Karthik (production_head) and Suraj (head_operations) — site schedule set
+      const { data: recipients } = await supabase.from("profiles").select("auth_user_id")
+        .in("role", ["production_head", "head_operations"] as any).eq("is_active", true);
+      if (recipients?.length) {
+        await insertNotifications(recipients.map((r: any) => ({
+          recipient_id: r.auth_user_id,
+          title: "Site schedule set",
+          body: `Awaiz saved the installation sequence for ${projectName}.`,
+          category: "Production",
+          related_table: "installation_sequence_docs",
+          navigate_to: "/dispatch-delivery",
+        })));
       }
       toast.success("Sequence saved ✓");
       setShowForm(false);
@@ -247,6 +281,15 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
         </div>
       </CardHeader>
       <CardContent className="px-4 pb-3 space-y-3">
+        {isLocked && (
+          <div className="rounded-md p-3 text-xs flex items-start gap-2" style={{ backgroundColor: "#FFF8E8", color: "#D4860A", border: "1px solid #F0D78C" }}>
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Locked — opens 14 days before dispatch</p>
+              <p>Dispatch in {daysUntilDispatch} days. Awaiz can fill this in once the 14-day window opens.</p>
+            </div>
+          </div>
+        )}
         {/* Document upload */}
         {!doc?.document_url ? (
           <div className="space-y-3">
