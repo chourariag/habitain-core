@@ -31,7 +31,8 @@ import { MaterialAlertsTab } from "@/components/procurement/MaterialAlertsTab";
 import { GRNTab } from "@/components/procurement/GRNTab";
 import { SubcontractorsTab } from "@/components/procurement/SubcontractorsTab";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
-import { Calendar, Hammer, Bell, ClipboardCheck, HardHat } from "lucide-react";
+import { Calendar, Hammer, Bell, ClipboardCheck, HardHat, Wrench } from "lucide-react";
+import { FixedAssetsTab } from "@/components/procurement/FixedAssetsTab";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
@@ -306,6 +307,7 @@ export default function Procurement() {
             <TabsTrigger value="supplier-intel" className="gap-1.5"><TrendingUp className="h-4 w-4" /> Supplier Intelligence</TabsTrigger>
             <TabsTrigger value="material-alerts" className="gap-1.5"><Bell className="h-4 w-4" /> Material Alerts</TabsTrigger>
             <TabsTrigger value="subcontractors" className="gap-1.5"><HardHat className="h-4 w-4" /> Subcontractors</TabsTrigger>
+            <TabsTrigger value="fixed-assets" className="gap-1.5"><Wrench className="h-4 w-4" /> Fixed Assets</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -718,6 +720,10 @@ export default function Procurement() {
 
         <TabsContent value="subcontractors">
           <SubcontractorsTab />
+        </TabsContent>
+
+        <TabsContent value="fixed-assets">
+          <FixedAssetsTab />
         </TabsContent>
       </Tabs>
 
