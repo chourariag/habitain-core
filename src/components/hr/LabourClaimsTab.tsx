@@ -224,7 +224,20 @@ function PendingTable({ rows, canApprove, onApprove, onReject, projects }: any) 
         <thead>
           <tr style={{ backgroundColor: "#F7F7F7" }}>
             {["Worker", "Date", "Stage", "Hours", "OT", "Project", "Submitted", "SLA", "Action"].map((h) => (
-              <th key={h} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">{h}</th>
+              <th key={h} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {h === "SLA" ? (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex items-center gap-1 cursor-help">SLA <Info className="h-3 w-3" /></span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        <p className="text-xs">SLA Breached means this claim was not approved or rejected within 4 working hours of submission. It requires immediate action.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ) : h}
+              </th>
             ))}
           </tr>
         </thead>
@@ -381,9 +394,13 @@ function NewClaimDialog({ open, onOpenChange, workers, projects, onSubmit }: any
   const reset = () => { setWorkerId(""); setStage(""); setHours("8"); setOt("0"); setProjectId(""); setNotes(""); };
 
   const submit = async () => {
-    if (!workerId) { toast.error("Pick a worker"); return; }
+    if (!workerId) { toast.error("Worker is required"); return; }
+    if (!projectId) { toast.error("Project is required"); return; }
+    if (!stage.trim()) { toast.error("Stage is required"); return; }
+    const h = parseFloat(hours);
+    if (!h || h <= 0) { toast.error("Hours must be greater than 0"); return; }
     setBusy(true);
-    await onSubmit({ worker_id: workerId, work_date: workDate, process_stage: stage, hours, ot_hours: ot, project_id: projectId || null, notes });
+    await onSubmit({ worker_id: workerId, work_date: workDate, process_stage: stage, hours, ot_hours: ot, project_id: projectId, notes });
     setBusy(false);
     reset();
   };
