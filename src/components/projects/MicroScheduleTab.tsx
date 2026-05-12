@@ -21,6 +21,7 @@ import { getPhasesForSystem, TASK_TYPE_META, type TaskTemplateType } from "@/lib
 import { downloadScheduleTemplate } from "@/lib/xlsx-templates";
 import { ChevronRight, ChevronDown, ShieldAlert } from "lucide-react";
 import { useProjectImportListener } from "@/lib/use-project-import";
+import { SetupTemplateBanner } from "./SetupTemplateBanner";
 
 interface ProjectTask {
   id: string;
