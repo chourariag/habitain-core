@@ -373,6 +373,7 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
 
   return (
     <div className="space-y-4">
+      <SetupTemplateBanner projectId={projectId} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-lg font-semibold text-foreground">Material Plan</h2>
         {canUpload && (
