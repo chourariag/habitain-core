@@ -256,6 +256,7 @@ export function ScopeOfWorkTab({ projectId, userRole }: Props) {
 
   return (
     <div className="space-y-6">
+      <SetupTemplateBanner projectId={projectId} />
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">
