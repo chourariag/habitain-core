@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Upload, Download, Loader2, Check, AlertTriangle } from "lucide-react";
+import { Upload, Download, Loader2, Check, AlertTriangle, ArrowRight } from "lucide-react";
+import { dispatchProjectImported } from "@/lib/use-project-import";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { buildBoqWorksheet } from "@/lib/xlsx-templates";
@@ -35,6 +37,7 @@ const parseDate = (val: any): string | null => {
 
 export function ProjectSetupUpload({ projectId, userRole, productionSystem, onImported }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -481,6 +484,8 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       setResults(out);
       const totalImported = out.reduce((s, r) => s + (r.ok ? r.count : 0), 0);
       if (totalImported > 0) toast.success(`Project setup imported — ${totalImported} rows total`);
+      // Notify every tab on this page so they refetch immediately
+      dispatchProjectImported(projectId);
       onImported?.();
     } catch (err: any) {
       toast.error(err?.message || "Upload failed");
@@ -505,25 +510,54 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Project Setup Import</DialogTitle>
-            <DialogDescription>Each sheet is processed independently.</DialogDescription>
+            <DialogTitle className="font-display">
+              {busy ? "Processing Project Setup…" : results.length > 0 && results.every(r => r.ok)
+                ? "Project Setup uploaded successfully"
+                : "Project Setup Import"}
+            </DialogTitle>
+            <DialogDescription>
+              {busy ? "Reading every sheet and writing to the project tabs." : "Each sheet was processed independently."}
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
             {busy && <div className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Processing…</div>}
             {results.map(r => (
               <div key={r.name} className="text-sm flex items-start gap-2">
-                {r.ok ? <Check className="h-4 w-4 mt-0.5 text-green-700" /> : <AlertTriangle className="h-4 w-4 mt-0.5 text-red-600" />}
+                {r.ok ? <Check className="h-4 w-4 mt-0.5" style={{ color: "#006039" }} /> : <AlertTriangle className="h-4 w-4 mt-0.5" style={{ color: "#F40009" }} />}
                 <div className="flex-1">
-                  <div><span className="font-semibold">{r.name}:</span> {r.message}</div>
+                  <div>
+                    <span className="font-semibold">
+                      {r.name === "Billing" ? "Billing" :
+                        r.name === "BOQ" ? "BOQ" :
+                        r.name === "Schedule" ? "Schedule" :
+                        r.name === "Materials" ? "Materials" :
+                        r.name === "Scope" ? "Scope" : r.name}:
+                    </span>{" "}
+                    {r.ok && r.count > 0 ? (
+                      <>
+                        <span className="font-mono">{r.count}</span>{" "}
+                        {r.name === "Billing" ? "milestone" + (r.count > 1 ? "s" : "") + " loaded" :
+                          r.name === "BOQ" ? "items loaded" :
+                          r.name === "Schedule" ? "stages loaded" :
+                          r.name === "Materials" ? "items loaded" :
+                          r.name === "Scope" ? "items loaded" : r.message}
+                      </>
+                    ) : r.message}
+                  </div>
                   {r.warnings?.map((w, i) => (
-                    <div key={i} className="text-xs text-amber-700 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> {w}</div>
+                    <div key={i} className="text-xs flex items-center gap-1" style={{ color: "#D4860A" }}><AlertTriangle className="h-3 w-3" /> {w}</div>
                   ))}
                 </div>
               </div>
             ))}
           </div>
-          <DialogFooter>
-            <Button size="sm" onClick={() => setOpen(false)}>Close</Button>
+          <DialogFooter className="gap-2">
+            <Button size="sm" variant="outline" onClick={() => setOpen(false)}>Close</Button>
+            {!busy && results.some(r => r.ok && r.count > 0) && (
+              <Button size="sm" style={{ backgroundColor: "#006039", color: "white" }} onClick={() => { setOpen(false); navigate(`/projects/${projectId}`); }}>
+                Go to Project <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

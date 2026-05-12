@@ -1,12 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getAuthedClient } from "@/lib/auth-client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
+import { format } from "date-fns";
+import { FACTORY_STAGES } from "@/lib/hstack-stages";
+import { useProjectImportListener } from "@/lib/use-project-import";
 
 interface Props {
   moduleId: string;
@@ -15,114 +13,88 @@ interface Props {
 }
 
 interface ScheduleRow {
-  id?: string;
+  stage_number: number;
   stage_name: string;
-  target_start: string | null;
-  target_end: string | null;
+  planned_start: string | null;
+  planned_end: string | null;
   actual_start: string | null;
   actual_end: string | null;
+  status: string;
+  is_na: boolean;
 }
 
-export function ModuleSchedule({ moduleId, currentStage, userRole }: Props) {
+const fmt = (d: string | null) => d ? format(new Date(d), "dd/MM/yyyy") : "—";
+
+export function ModuleSchedule({ moduleId, currentStage }: Props) {
   const [rows, setRows] = useState<ScheduleRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [editing, setEditing] = useState(false);
 
-  const canEdit = ["planning_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
-
-  const loadSchedule = useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("module_schedule")
-      .select("*")
-      .eq("module_id", moduleId)
-      .order("created_at", { ascending: true });
+    // Resolve module → project_id
+    const { data: mod } = await supabase.from("modules").select("project_id").eq("id", moduleId).maybeSingle();
+    const projectId = (mod as any)?.project_id ?? null;
 
-    if (data && data.length > 0) {
-      setRows(data.map((d) => ({
-        id: d.id,
-        stage_name: d.stage_name,
-        target_start: d.target_start,
-        target_end: d.target_end,
-        actual_start: d.actual_start,
-        actual_end: d.actual_end,
-      })));
-    } else {
-      setRows(PRODUCTION_STAGES.map((s) => ({
-        stage_name: s,
-        target_start: null,
-        target_end: null,
-        actual_start: null,
-        actual_end: null,
-      })));
+    let stageRows: any[] = [];
+    if (projectId) {
+      // Prefer module-specific rows; fall back to project-level rows where module_id is null
+      const { data } = await (supabase.from("project_stages") as any)
+        .select("stage_number, stage_name, planned_start, planned_end, actual_start, actual_end, status, is_na, module_id")
+        .eq("project_id", projectId)
+        .lte("stage_number", 15);
+      stageRows = (data || []).filter((s: any) => s.module_id === moduleId || s.module_id == null);
     }
+
+    // Pull task-level rollup to derive Actual Start/End if project_stages doesn't have them yet
+    let taskRollup: Record<string, { firstActual?: string; lastActual?: string }> = {};
+    if (projectId) {
+      const { data: tdata } = await supabase
+        .from("project_tasks")
+        .select("stage_name, status, actual_start_date, actual_finish_date")
+        .eq("project_id", projectId);
+      (tdata || []).forEach((t: any) => {
+        if (!t.stage_name) return;
+        const r = (taskRollup[t.stage_name] ||= {});
+        if (t.actual_start_date && (!r.firstActual || t.actual_start_date < r.firstActual)) r.firstActual = t.actual_start_date;
+        if (t.actual_finish_date && (!r.lastActual || t.actual_finish_date > r.lastActual)) r.lastActual = t.actual_finish_date;
+      });
+    }
+
+    // Build authoritative rows from FACTORY_STAGES, hydrate from data
+    const out: ScheduleRow[] = FACTORY_STAGES.map((s) => {
+      const match = stageRows.find((r: any) => r.stage_number === s.number);
+      const tr = taskRollup[s.name] || {};
+      const actualStart = match?.actual_start ?? tr.firstActual ?? null;
+      const actualEnd = match?.actual_end ?? tr.lastActual ?? null;
+      let status = (match?.status as string) || "Pending";
+      if (match?.is_na) status = "N/A";
+      else if (actualEnd) status = "Completed";
+      else if (actualStart) status = "In Progress";
+      else status = "Pending";
+      return {
+        stage_number: s.number,
+        stage_name: s.name,
+        planned_start: match?.planned_start ?? null,
+        planned_end: match?.planned_end ?? null,
+        actual_start: actualStart,
+        actual_end: actualEnd,
+        status,
+        is_na: !!match?.is_na,
+      };
+    });
+    setRows(out);
     setLoading(false);
   }, [moduleId]);
 
-  useEffect(() => { loadSchedule(); }, [loadSchedule]);
+  useEffect(() => { load(); }, [load]);
+  // Refresh after Karthik uploads the Project Setup Template
+  useProjectImportListener(moduleId, load);
 
-  const getStatus = (row: ScheduleRow): { label: string; className: string } => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Completed — has actual end date
-    if (row.actual_end) {
-      return { label: "Completed", className: "bg-[#E8F2ED] text-[#006039]" };
-    }
-
-    // Delayed — target end is past and stage not completed
-    if (row.target_end) {
-      const targetEnd = new Date(row.target_end + "T23:59:59");
-      if (today > targetEnd) {
-        return { label: "Delayed", className: "bg-[#FFF0F0] text-[#F40009]" };
-      }
-    }
-
-    // On Track — stage has started (actual_start exists) or is current/past stage
-    const currentIdx = currentStage ? PRODUCTION_STAGES.indexOf(currentStage as any) : -1;
-    const stageIdx = PRODUCTION_STAGES.indexOf(row.stage_name as any);
-    if (stageIdx <= currentIdx && row.actual_start) {
-      return { label: "On Track", className: "bg-[#E8F2ED] text-[#006039]" };
-    }
-
-    return { label: "Pending", className: "bg-muted text-muted-foreground" };
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const { client, session } = await getAuthedClient();
-
-      for (const row of rows) {
-        if (row.id) {
-          await client.from("module_schedule").update({
-            target_start: row.target_start,
-            target_end: row.target_end,
-          }).eq("id", row.id);
-        } else {
-          await client.from("module_schedule").insert({
-            module_id: moduleId,
-            stage_name: row.stage_name,
-            target_start: row.target_start,
-            target_end: row.target_end,
-            created_by: session.user.id,
-          });
-        }
-      }
-
-      toast.success("Schedule saved");
-      setEditing(false);
-      await loadSchedule();
-    } catch (err: any) {
-      toast.error(err.message || "Failed to save");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const updateRow = (idx: number, field: keyof ScheduleRow, value: string) => {
-    setRows((prev) => prev.map((r, i) => i === idx ? { ...r, [field]: value || null } : r));
+  const statusStyle = (s: string): string => {
+    if (s === "Completed") return "bg-[#E8F2ED] text-[#006039]";
+    if (s === "In Progress") return "bg-[#FFF8E8] text-[#D4860A]";
+    if (s === "N/A") return "bg-muted text-muted-foreground";
+    return "bg-muted text-muted-foreground";
   };
 
   if (loading) return <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>;
@@ -130,24 +102,13 @@ export function ModuleSchedule({ moduleId, currentStage, userRole }: Props) {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-muted-foreground">Production Schedule</p>
-        {canEdit && !editing && (
-          <Button size="sm" variant="outline" onClick={() => setEditing(true)} className="text-xs">Edit Schedule</Button>
-        )}
-        {editing && (
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => { setEditing(false); loadSchedule(); }} className="text-xs">Cancel</Button>
-            <Button size="sm" onClick={handleSave} disabled={saving} className="text-xs">
-              {saving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />} Save
-            </Button>
-          </div>
-        )}
+        <p className="text-xs font-medium text-muted-foreground">Production Schedule (live from Project Setup → Schedule sheet)</p>
       </div>
-
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b">
+              <th className="text-left p-2 font-medium text-muted-foreground w-10">#</th>
               <th className="text-left p-2 font-medium text-muted-foreground">Stage</th>
               <th className="text-left p-2 font-medium text-muted-foreground">Target Start</th>
               <th className="text-left p-2 font-medium text-muted-foreground">Target End</th>
@@ -157,33 +118,19 @@ export function ModuleSchedule({ moduleId, currentStage, userRole }: Props) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, idx) => {
-              const status = getStatus(row);
-              return (
-                <tr key={row.stage_name} className="border-b last:border-0">
-                  <td className="p-2 font-medium text-foreground whitespace-nowrap">{row.stage_name}</td>
-                  <td className="p-2">
-                    {editing ? (
-                      <Input type="date" value={row.target_start || ""} onChange={(e) => updateRow(idx, "target_start", e.target.value)} className="h-7 text-xs w-32" />
-                    ) : (
-                      <span className="text-muted-foreground">{row.target_start || "—"}</span>
-                    )}
-                  </td>
-                  <td className="p-2">
-                    {editing ? (
-                      <Input type="date" value={row.target_end || ""} onChange={(e) => updateRow(idx, "target_end", e.target.value)} className="h-7 text-xs w-32" />
-                    ) : (
-                      <span className="text-muted-foreground">{row.target_end || "—"}</span>
-                    )}
-                  </td>
-                  <td className="p-2 text-muted-foreground">{row.actual_start || "—"}</td>
-                  <td className="p-2 text-muted-foreground">{row.actual_end || "—"}</td>
-                  <td className="p-2">
-                    <Badge variant="outline" className={`${status.className} text-[10px] border-0`}>{status.label}</Badge>
-                  </td>
-                </tr>
-              );
-            })}
+            {rows.map((row) => (
+              <tr key={row.stage_number} className={`border-b last:border-0 ${row.is_na ? "opacity-60" : ""}`}>
+                <td className="p-2 font-mono text-muted-foreground">{row.stage_number}</td>
+                <td className="p-2 font-medium text-foreground whitespace-nowrap">{row.stage_name}</td>
+                <td className="p-2 text-muted-foreground font-inter">{fmt(row.planned_start)}</td>
+                <td className="p-2 text-muted-foreground font-inter">{fmt(row.planned_end)}</td>
+                <td className="p-2 text-muted-foreground font-inter">{fmt(row.actual_start)}</td>
+                <td className="p-2 text-muted-foreground font-inter">{fmt(row.actual_end)}</td>
+                <td className="p-2">
+                  <Badge variant="outline" className={`${statusStyle(row.status)} text-[10px] border-0`}>{row.status}</Badge>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
