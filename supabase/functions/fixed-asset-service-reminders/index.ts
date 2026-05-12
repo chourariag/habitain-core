@@ -40,8 +40,13 @@ Deno.serve(async (req) => {
         notifications.push({
           recipient_id: u.auth_user_id,
           title: `Service due in 7 days: ${a.asset_name}`,
-          message: `Asset ${a.asset_tag} requires service on ${a.next_service_due}`,
-          type: "info",
+          body: `Asset ${a.asset_tag} requires service on ${a.next_service_due}`,
+          content: `Asset ${a.asset_tag} requires service on ${a.next_service_due}`,
+          category: "fixed_asset_service",
+          type: "fixed_asset_service_due",
+          related_table: "fixed_assets",
+          related_id: a.id,
+          navigate_to: "/procurement?tab=fixed-assets",
         });
       }
     }
@@ -50,8 +55,13 @@ Deno.serve(async (req) => {
         notifications.push({
           recipient_id: u.auth_user_id,
           title: `OVERDUE service: ${a.asset_name}`,
-          message: `Asset ${a.asset_tag} was due on ${a.next_service_due} — escalation`,
-          type: "alert",
+          body: `Asset ${a.asset_tag} was due on ${a.next_service_due} — escalation`,
+          content: `Asset ${a.asset_tag} was due on ${a.next_service_due} — escalation`,
+          category: "fixed_asset_service",
+          type: "fixed_asset_service_overdue",
+          related_table: "fixed_assets",
+          related_id: a.id,
+          navigate_to: "/procurement?tab=fixed-assets",
         });
       }
     }
