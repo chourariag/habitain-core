@@ -100,6 +100,8 @@ export function QCInspectionWizard({
   preselectedProjectId,
   preselectedModuleId,
 }: QCInspectionWizardProps) {
+  const { personaName } = useUserRole();
+  const [qcStages, setQcStages] = useState<{ value: string; label: string }[]>([]);
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
 
