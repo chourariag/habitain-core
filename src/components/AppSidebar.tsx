@@ -64,8 +64,13 @@ const sectionConfig = [
     key: "procurement",
     label: "Procurement",
     items: [
-      { to: "/procurement", label: "Procurement", icon: ShoppingCart },
-      { to: "/procurement?tab=fixed-assets", label: "Equipment", icon: Wrench },
+      { to: "/procurement?tab=dashboard", label: "Dashboard", icon: LayoutDashboard },
+      { to: "/procurement?tab=material-plan", label: "Material Plan", icon: ClipboardList },
+      { to: "/procurement?tab=requests", label: "Material Requests", icon: ShoppingCart },
+      { to: "/procurement?tab=inventory", label: "Inventory & GRN", icon: Package },
+      { to: "/procurement?tab=purchase-orders", label: "Purchase Orders", icon: ClipboardCheck },
+      { to: "/procurement?tab=transfers", label: "Transfers", icon: Truck },
+      { to: "/procurement?tab=fixed-assets", label: "Equipment & Fixed Assets", icon: Wrench },
     ],
   },
   {
@@ -228,8 +233,13 @@ export function AppSidebar() {
                   </span>
                 </div>
               )}
-              {section.items.map((item) => (
-                <NavLink key={item.to} to={item.to} className={navLinkClass} style={navLinkStyle}>
+              {section.items.map((item) => {
+                const [itemPath, itemQuery] = item.to.split("?");
+                const itemTab = itemQuery ? new URLSearchParams(itemQuery).get("tab") : null;
+                const currentTab = new URLSearchParams(location.search).get("tab");
+                const itemActive = location.pathname === itemPath && (itemTab ? currentTab === itemTab : !currentTab || section.items.filter(s => s.to.startsWith(itemPath + "?")).length === 0);
+                return (
+                <NavLink key={item.to} to={item.to} className={() => navLinkClass({ isActive: itemActive })} style={() => navLinkStyle({ isActive: itemActive })}>
                   <item.icon className="h-4 w-4 shrink-0" />
                   {!collapsed && <span className="flex-1">{item.label}</span>}
                   {item.to === "/approvals" && pendingApprovals > 0 && !collapsed && (
@@ -239,7 +249,8 @@ export function AppSidebar() {
                     </span>
                   )}
                 </NavLink>
-              ))}
+                );
+              })}
             </div>
           );
         })}

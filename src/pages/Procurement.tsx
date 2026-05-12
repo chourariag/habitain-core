@@ -29,7 +29,7 @@ import { AssetRegisterTab } from "@/components/procurement/AssetRegisterTab";
 import { SupplierIntelligenceTab } from "@/components/procurement/SupplierIntelligenceTab";
 import { MaterialAlertsTab } from "@/components/procurement/MaterialAlertsTab";
 import { GRNTab } from "@/components/procurement/GRNTab";
-import { SubcontractorsTab } from "@/components/procurement/SubcontractorsTab";
+// SubcontractorsTab moved to Production → People
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
 import { Calendar, Hammer, Bell, ClipboardCheck, HardHat, Wrench } from "lucide-react";
 import { FixedAssetsTab } from "@/components/procurement/FixedAssetsTab";
@@ -306,7 +306,7 @@ export default function Procurement() {
             <TabsTrigger value="tally-po" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
             <TabsTrigger value="supplier-intel" className="gap-1.5"><TrendingUp className="h-4 w-4" /> Supplier Intelligence</TabsTrigger>
             <TabsTrigger value="material-alerts" className="gap-1.5"><Bell className="h-4 w-4" /> Material Alerts</TabsTrigger>
-            <TabsTrigger value="subcontractors" className="gap-1.5"><HardHat className="h-4 w-4" /> Subcontractors</TabsTrigger>
+            {/* Subcontractors moved to Production → People */}
             <TabsTrigger value="fixed-assets" className="gap-1.5"><Wrench className="h-4 w-4" /> Fixed Assets</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
@@ -718,9 +718,7 @@ export default function Procurement() {
           <GRNTab filterProjectId={projectFromUrl} />
         </TabsContent>
 
-        <TabsContent value="subcontractors">
-          <SubcontractorsTab />
-        </TabsContent>
+        {/* Subcontractors tab moved to Production → People */}
 
         <TabsContent value="fixed-assets">
           <FixedAssetsTab />
