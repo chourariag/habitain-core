@@ -423,5 +423,6 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
         )}
       </CardContent>
     </Card>
+    </div>
   );
 }
