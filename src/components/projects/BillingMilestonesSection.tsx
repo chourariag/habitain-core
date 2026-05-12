@@ -105,6 +105,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
   }, [projectId]);
 
   useEffect(() => { loadMilestones(); }, [loadMilestones]);
+  useProjectImportListener(projectId, loadMilestones);
 
   function recalc(m: Milestone): Milestone {
     const excl = (m.percentage / 100) * contractValue;
