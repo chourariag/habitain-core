@@ -306,6 +306,7 @@ export default function Procurement() {
             <TabsTrigger value="supplier-intel" className="gap-1.5"><TrendingUp className="h-4 w-4" /> Supplier Intelligence</TabsTrigger>
             <TabsTrigger value="material-alerts" className="gap-1.5"><Bell className="h-4 w-4" /> Material Alerts</TabsTrigger>
             <TabsTrigger value="subcontractors" className="gap-1.5"><HardHat className="h-4 w-4" /> Subcontractors</TabsTrigger>
+            <TabsTrigger value="fixed-assets" className="gap-1.5"><Wrench className="h-4 w-4" /> Fixed Assets</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
