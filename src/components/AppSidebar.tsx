@@ -55,6 +55,7 @@ const sectionConfig = [
     label: "Procurement",
     items: [
       { to: "/procurement", label: "Procurement", icon: ShoppingCart },
+      { to: "/procurement?tab=fixed-assets", label: "Equipment", icon: Wrench },
     ],
   },
   {
