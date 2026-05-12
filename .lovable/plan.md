@@ -1,141 +1,71 @@
-# Hybrid Schedule Overhaul — Implementation Plan
 
-This is a large change touching the database, the project setup template, the Factory Floor UI, the Site Hub UI, escalation logic, and payment notifications. Splitting it cleanly so it can be built and verified in stages.
+## Scope
 
-## Before I start — I need 2 things from you
-
-1. **The 220-row task master file.** I have the *stage list* (1–24) and the QC/payment trigger map from your message, but I do not have the actual 220 task rows (e.g. P2.22, 3A.1–3A.3, 3R.1–3R.8, HY.2.1–HY.2.6, 6.1–6.12 etc. with their exact wording, order, and which stage each belongs to). Without that file the seed will be guesswork. **Please upload the schedule file (Excel or CSV).** I'll parse it and seed exactly what's there.
-
-2. **Confirm one ambiguity:** stage 9 "Internal Wall Finishing" and stage 20 "Steel Extensions" are both marked *case-by-case / N/A if not in scope*. Should Karthik mark N/A **per module** at template fill time, or should the system show them and let Rakesh/Nazim mark N/A when the stage opens? (I'll default to per-module at template time unless you say otherwise.)
-
-While you upload the file, here is the full plan so you can review structure.
+Six independent fixes. I will ship them in this order so each builds cleanly on the previous one.
 
 ---
 
-## Part A — Database (single migration)
+### Fix 1 — Project Setup Template distribution to tabs
 
-### A1. Extend `production_task_templates`
-Add columns:
-- `stage_name text` — the stage label (one of the 24 stages)
-- `responsible_role text` — who ticks the checklist item
-- `escalation_role text` — who is paged after 1 day overdue
-- `is_qc_gate boolean default false`
-- `is_payment_milestone boolean default false`
-- `parallel_stage text` — null unless this stage runs parallel to another (e.g. Sub Frame ∥ Main Frame, Tiling ∥ Internal Painting)
-- `special_note text` — free-text note shown in checklist (e.g. the "keep panel vertical" note after P2.22)
-- `applies_to_systems text[]` — so Hybrid-only rows (HY.*, P2.33-HY) don't appear on Modular projects
+The parser already writes to `project_billing_milestones`, `project_boq_items`, `project_stages`, `project_tasks`, `project_material_plan_items`, and `project_scope_items`. The real gap is (a) the post-upload confirmation screen, and (b) the consuming tabs not always re-fetching after upload.
 
-### A2. Extend `project_tasks` (per-project instances)
-- `stage_name text`
-- `is_qc_gate boolean`
-- `is_payment_milestone boolean`
-- `escalation_role text`
-- `escalated_at timestamptz` — set by the 1-day rule
-- `qc_requested_at timestamptz` — set when Rakesh taps "Request QC Inspection"
-- `qc_request_notified_user uuid` — Tagore's id at time of request
+- Replace the small Dialog with a richer **Confirmation Screen** showing: Billing N milestones, BOQ N items / N categories, Schedule N stages, Materials N items, Scope N items, plus a "Go to Project →" button.
+- Verify each tab (Billing, Budget→BOQ, Schedule, Materials, Scope) calls its fetcher on mount and on a `project-setup-imported` event; wire `onImported` to dispatch that event.
 
-### A3. New table `project_stages`
-One row per (project, module, stage) — this is what Karthik fills.
-- `project_id`, `module_id` (nullable for site stages), `stage_number int`, `stage_name text`
-- `planned_start date`, `planned_end date`
-- `actual_start`, `actual_end`
-- `status` (Upcoming | In Progress | QC Pending | Complete | N/A)
-- `is_na boolean` — for stages 9 & 20 case-by-case
+### Fix 2 — Factory Floor + Site Hub schedule reads from `project_tasks` / `project_stages`
 
-### A4. Rename "Ceiling" → "Drywall Completion"
-Run `UPDATE` across:
-- `production_task_templates` (phase_name, task_name, stage_name)
-- `project_tasks` (phase, task_name)
-- any seeded checklist labels
+- Locate the hardcoded "Production Schedule" list inside `FactoryFloorMap.tsx` (or whichever tab renders it). Replace with a live query of `project_stages` (factory: `stage_number 1–15`) for the active project, joined with task-level rollup for actual_start / actual_end.
+- Columns: Stage | Target Start | Target End | Actual Start | Actual End | Status (auto from `status` + first/last task transitions).
+- Force the canonical 15 factory stage names from `FACTORY_STAGES` in `src/lib/hstack-stages.ts`. Confirm the list matches: Main Frame, Sub Frame — Panel Production, Drywall Works Completion, MEP Rough In, Internal Painting, Tiling, Exterior Wall Finishing, Internal Wall Finishing, Carpentry, MEP Final, Windows & Doors, Finishing, Snagging, QC Inspection, Dispatch. Remove any standalone "Insulation" / "Drywall" stage rows.
+- Apply the same query pattern in Site Hub for `stage_number 16–23`.
 
-### A5. Seed the 220 tasks
-**Driven by the file you upload.** Each row → one `production_task_templates` row tagged with its stage_name, responsible_role, escalation_role, QC/payment flags, and any special_note from the schedule.
+### Fix 3 — Pending Claims ghost rows + validation + tooltip
 
----
+- **Migration / data clean-up** (insert tool, since it's a DELETE on data): delete labour-claim rows where `worker_id IS NULL AND hours = 0 AND project_id IS NULL`.
+- In `DailyLabourLog.tsx`: add Zod-style required-field validation (worker, project, stage, hours > 0). Block submit + show inline errors.
+- Add an info tooltip next to the "SLA Breached" badge explaining "not approved/rejected within 4 working hours of submission".
+- Add a TODO comment noting the future scoping rule (Rakesh sees only his supervised workers' claims) — actual RLS scoping deferred until the user account hierarchy is live.
 
-## Part B — Project Setup Template (Excel)
+### Fix 4 — Expense draft → submit UX
 
-Replace the current "Project Schedule" sheet in `src/lib/xlsx-templates.ts` with a stages-only sheet:
+In `MyExpenses.tsx`:
+- Add a per-row **"Submit for Approval"** button next to the Draft badge (uses existing handleSubmitAll logic but per-id).
+- Add a top banner when there are unsubmitted drafts: count + deadline.
+- Replace the existing static window text with a clear countdown: "opens in N days" / "closes in N days" / "closed — drafts carry to next month".
+- In `ExpenseExcelUpload.tsx` (download report): prepend a header note row "This report shows approved expenses only. Drafts and pending claims are excluded."
 
-| Stage # | Stage Name | Module # | Planned Start | Planned End | N/A? |
-|---|---|---|---|---|---|
-| 1 | Main Frame | M1 | | | |
-| 2 | Sub Frame – Panel Production *(∥ Main Frame)* | M1 | | | |
-| … | (24 stages × N modules) | | | | |
-| 17 | Erection | – | | | |
-| … | (site stages, no module) | | | | |
+### Fix 5 — Schedule tab: don't ask Karthik to re-upload
 
-- Pre-populated for the project's module count (read from `project_modules`)
-- Header note explaining ∥ = parallel
-- Stages 9 and 20 pre-marked with N/A dropdown
-- **Removes** Design (1.1–1.9), Procurement (2.1–2.11), and 3P.1 from this sheet
-- Upload parser (`ProjectSetupUpload.tsx`) writes to `project_stages`, then auto-clones the 220 template tasks under each stage row
+In the Schedule tab component (likely `MicroScheduleTab.tsx` or the project Schedule view): on mount, query `project_stages` for this project. If any stage rows exist, render the imported stages and **hide** the Upload Schedule button. Only show upload UI when zero stage rows exist for the project.
 
-## Part C — Factory Floor bay card (Rakesh / Azad)
+### Fix 6 — Fixed Assets + Service Reminders + Tools Inventory
 
-In `src/components/production/ProductionKanban.tsx` and the bay detail sheet:
+**Migration** — new tables:
+- `fixed_assets` (asset_name, asset_tag, category enum, make_model, serial_number, purchase_date, purchase_value, current_location, assigned_to_profile_id, service_interval_days, last_service_date, next_service_due (generated), warranty_expiry, notes, audit fields, is_archived).
+- `fixed_asset_service_log` (asset_id, service_date, service_type, done_by, cost, next_service_date_override, notes, attachment_url).
+- `tools_inventory` (item_name, qty_total, qty_in_use, qty_available (generated), location, assigned_to_profile_id, condition, notes).
+- RLS: view = Azad / Vijay / Suraj / MD / Directors; insert/update fixed_assets = Azad / Vijay; insert service_log = Azad / Rakesh. Helper SECURITY DEFINER functions `can_view_fixed_assets(uid)`, `can_edit_fixed_assets(uid)`, `can_log_fixed_asset_service(uid)`.
 
-- Bay card shows the **active stage name** prominently
-- Tap → opens a stage checklist drawer
-- Drawer lists every task for that stage in display order, each as a checkbox
-- Special-note items render as inline yellow callouts (no checkbox)
-- Hybrid/Panelised conditional row after P2.27 reads `project.production_system`
-- When all non-QC items for a stage are ticked AND the next item is a QC gate → show **"Request QC Inspection"** button
-- Button writes `qc_requested_at` and inserts a notification to the `qc_inspector` role user
-- Stage can't auto-complete until the QC gate row is signed off by a QC role
+**Edge function** — `fixed-asset-service-reminders` (cron daily 06:00 IST):
+- For each asset where `next_service_due = today + 7d` → notify Azad ("Service due in 7 days").
+- For each asset where `next_service_due < today` and no service logged since → notify Suraj (escalation).
+- Cron registered via `supabase--insert` (project-specific URL + anon key per the schedule-jobs guide).
 
-## Part D — QC inspector flow (Tagore)
-
-- Notification deep-links to a "QC Inspection" sheet on the bay
-- Sheet shows only the QC gate's checklist items
-- Pass → marks QC task complete, stage → Complete, next stage unlocks
-- Fail → opens existing NCR flow, stage → In Progress, button reappears for Rakesh after rework
-
-## Part E — Site Hub stage cards (Nazim / Awaiz)
-
-Mirror Part C in `src/pages/SiteHub.tsx` for stages 17–24:
-- Active project shows site stage cards
-- Same checklist + QC + escalation pattern
-- Snagging (stage 23 / 6.1–6.3) escalation = Planning Head
-- Handover (stage 24 / 6.4–6.12) escalation = SIM, then Planning Head
-
-## Part F — Escalation engine (1-day rule)
-
-New edge function `task-escalation` running daily:
-- Find `project_tasks` where `planned_finish_date < now() - 1 day` AND `status != Completed` AND `escalated_at IS NULL`
-- Insert notification to the user holding `escalation_role` for that task's project
-- Stamp `escalated_at`
-- Same pass for `project_stages`
-
-Schedule via existing cron pattern. Escalation map encoded in seed data per A5.
-
-## Part G — Payment milestone notifications
-
-When a `project_tasks` row with `is_payment_milestone = true` is marked complete:
-- Frontend completion handler calls `insertNotifications` with the 4 recipients (Finance Manager, Planning Head, Sales Director, MD), resolved by role
-- Message format exactly as you specified, with milestone %, amount (read from billing milestones), project name, marker name
-
-Targets: 3F.5, Shell & Core completion, 3R.5.
+**UI** — `src/components/procurement/FixedAssetsTab.tsx`:
+- Tabs: Fixed Assets · Tools Inventory.
+- Fixed Assets table + "+ Add Asset" dialog with all listed fields, including category dropdown.
+- Per-row "Service History" drawer with "+ Log Service" form (auto-updates next_service_due).
+- Tools Inventory table with inline qty edits.
+- Mounted at `Procurement → Fixed Assets` tab and added to AppSidebar under Production as "Equipment".
 
 ---
 
-## Verification I'll run before handing back
+## Order of work (I will start as soon as you approve)
 
-1. Upload a sample template → confirm 24 stages × N modules render
-2. Fill 1 module's stages, upload back → `project_stages` populated, 220 tasks cloned
-3. Open bay card on a Hybrid project → checklist appears with correct special notes
-4. Tick all items before P2.27 → QC button appears → notification lands on Tagore
-5. Tagore signs off → stage completes, next unlocks
-6. Backdate a task's planned_finish → run escalation function manually → confirm Azad gets notified
-7. Mark 3F.5 complete → confirm 4 payment notifications fire
+1. Fix 5 (smallest — guard the Schedule tab) and Fix 1 (confirmation screen + onImported event).
+2. Fix 2 (Factory Floor + Site Hub live schedule).
+3. Fix 3 (ghost-row delete + validation + tooltip).
+4. Fix 4 (expense UX).
+5. Fix 6 (Fixed Assets — biggest; one migration, one edge function, two UI components, sidebar entry).
 
----
-
-## What I'd like to do next
-
-**Please upload the 220-row schedule file** (and answer the N/A timing question). Once I have it, I'll:
-1. Run the migration (A1–A4 + seed from your file)
-2. Ship the template + upload parser (Part B) so you can fill stages immediately
-3. Then layer on Parts C–G
-
-If the file is large, a Google Sheet link or CSV export works fine.
+I'll create migrations one at a time and ask for approval before each, per the workflow rules. Code changes will follow each approved migration.
