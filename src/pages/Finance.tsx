@@ -1,3 +1,4 @@
+import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 import { FinanceOverviewStrip } from "@/components/finance/FinanceOverviewStrip";
@@ -9,8 +10,26 @@ import { StatutoryTab } from "@/components/finance/StatutoryTab";
 import { InvoicesTab } from "@/components/finance/InvoicesTab";
 import { RevenueMarginTab } from "@/components/finance/RevenueMarginTab";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
+import { Card, CardContent } from "@/components/ui/card";
+import { Info } from "lucide-react";
+
+const VALID_TABS = new Set([
+  "mis-invoices", "revenue-margin", "costing", "pl-cashflow", "bank-overdue", "statutory",
+]);
 
 export default function Finance() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get("tab");
+  const activeTab = tabFromUrl && VALID_TABS.has(tabFromUrl) ? tabFromUrl : "mis-invoices";
+
+  const handleTabChange = (value: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", value);
+      return next;
+    });
+  };
+
   return (
     <div className="p-4 md:p-6 max-w-full overflow-x-hidden">
       <h1 className="font-display text-2xl font-bold mb-1" style={{ color: "#1A1A1A" }}>
@@ -22,28 +41,86 @@ export default function Finance() {
 
       <FinanceOverviewStrip />
 
-      <Tabs defaultValue="mis" className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <ScrollableTabsWrapper>
           <TabsList>
-            <TabsTrigger value="mis">MIS</TabsTrigger>
-            <TabsTrigger value="revenue-margin">Revenue & Margin</TabsTrigger>
-            <TabsTrigger value="pl">P&L</TabsTrigger>
-            <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
-            <TabsTrigger value="payments">Payments</TabsTrigger>
+            <TabsTrigger value="mis-invoices">MIS &amp; Invoices</TabsTrigger>
+            <TabsTrigger value="revenue-margin">Revenue &amp; Margin</TabsTrigger>
+            <TabsTrigger value="costing">Costing &amp; Estimation</TabsTrigger>
+            <TabsTrigger value="pl-cashflow">Project P&amp;L &amp; Cash Flow</TabsTrigger>
+            <TabsTrigger value="bank-overdue">Bank Ledger &amp; Overdue</TabsTrigger>
             <TabsTrigger value="statutory">Statutory</TabsTrigger>
-            <TabsTrigger value="invoices">Invoices</TabsTrigger>
-            <TabsTrigger value="work-orders">Work Orders</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
-        <TabsContent value="mis"><MISTab /></TabsContent>
+        {/* MIS & Invoices: MIS, Invoices, Tally Ledger Classification */}
+        <TabsContent value="mis-invoices">
+          <Tabs defaultValue="mis" className="w-full">
+            <TabsList>
+              <TabsTrigger value="mis">MIS</TabsTrigger>
+              <TabsTrigger value="invoices">Invoices</TabsTrigger>
+              <TabsTrigger value="tally-ledger">Tally Ledger Classification</TabsTrigger>
+            </TabsList>
+            <TabsContent value="mis"><MISTab /></TabsContent>
+            <TabsContent value="invoices"><InvoicesTab /></TabsContent>
+            <TabsContent value="tally-ledger">
+              <Card><CardContent className="p-6 flex items-start gap-3">
+                <Info className="h-5 w-5 mt-0.5" style={{ color: "#006039" }} />
+                <div className="text-sm" style={{ color: "#666666" }}>
+                  Tally ledger auto-classification with first-time prompt is scheduled for the next iteration.
+                  When a new ledger is detected, you will be asked to map it to a Finance category once;
+                  subsequent transactions auto-classify.
+                </div>
+              </CardContent></Card>
+            </TabsContent>
+          </Tabs>
+        </TabsContent>
+
         <TabsContent value="revenue-margin"><RevenueMarginTab /></TabsContent>
-        <TabsContent value="pl"><ProfitLossTab /></TabsContent>
-        <TabsContent value="cashflow"><CashFlowTab /></TabsContent>
-        <TabsContent value="payments"><PaymentsTab /></TabsContent>
+
+        {/* Costing & Estimation: WO, PO, Expense approvals all live here now */}
+        <TabsContent value="costing">
+          <Tabs defaultValue="work-orders" className="w-full">
+            <TabsList>
+              <TabsTrigger value="work-orders">Work Order Approvals</TabsTrigger>
+              <TabsTrigger value="po-approvals">PO Approvals</TabsTrigger>
+              <TabsTrigger value="expense-approvals">Expense Approvals</TabsTrigger>
+            </TabsList>
+            <TabsContent value="work-orders"><WorkOrdersTab mode="finance" /></TabsContent>
+            <TabsContent value="po-approvals">
+              <Card><CardContent className="p-6 flex items-start gap-3">
+                <Info className="h-5 w-5 mt-0.5" style={{ color: "#006039" }} />
+                <div className="text-sm" style={{ color: "#666666" }}>
+                  Purchase Order approvals are being migrated here from Procurement. Until the migration completes,
+                  use Procurement → Purchase Orders to action pending items.
+                </div>
+              </CardContent></Card>
+            </TabsContent>
+            <TabsContent value="expense-approvals">
+              <Card><CardContent className="p-6 flex items-start gap-3">
+                <Info className="h-5 w-5 mt-0.5" style={{ color: "#006039" }} />
+                <div className="text-sm" style={{ color: "#666666" }}>
+                  Expense approvals are being migrated here. Until then, action pending expenses from the
+                  Approvals queue in the sidebar.
+                </div>
+              </CardContent></Card>
+            </TabsContent>
+          </Tabs>
+        </TabsContent>
+
+        <TabsContent value="pl-cashflow">
+          <Tabs defaultValue="pl" className="w-full">
+            <TabsList>
+              <TabsTrigger value="pl">P&amp;L</TabsTrigger>
+              <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
+            </TabsList>
+            <TabsContent value="pl"><ProfitLossTab /></TabsContent>
+            <TabsContent value="cashflow"><CashFlowTab /></TabsContent>
+          </Tabs>
+        </TabsContent>
+
+        <TabsContent value="bank-overdue"><PaymentsTab /></TabsContent>
         <TabsContent value="statutory"><StatutoryTab /></TabsContent>
-        <TabsContent value="invoices"><InvoicesTab /></TabsContent>
-        <TabsContent value="work-orders"><WorkOrdersTab mode="finance" /></TabsContent>
       </Tabs>
     </div>
   );
