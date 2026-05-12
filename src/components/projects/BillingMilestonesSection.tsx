@@ -255,6 +255,8 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
   if (loading) return <div className="py-4 text-sm text-muted-foreground text-center">Loading milestones…</div>;
 
   return (
+    <div className="space-y-3">
+      <SetupTemplateBanner projectId={projectId} />
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
