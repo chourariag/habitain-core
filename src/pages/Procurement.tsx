@@ -31,7 +31,8 @@ import { MaterialAlertsTab } from "@/components/procurement/MaterialAlertsTab";
 import { GRNTab } from "@/components/procurement/GRNTab";
 import { SubcontractorsTab } from "@/components/procurement/SubcontractorsTab";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
-import { Calendar, Hammer, Bell, ClipboardCheck, HardHat } from "lucide-react";
+import { Calendar, Hammer, Bell, ClipboardCheck, HardHat, Wrench } from "lucide-react";
+import { FixedAssetsTab } from "@/components/procurement/FixedAssetsTab";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
