@@ -16,8 +16,9 @@ interface Props {
   userId: string | null;
 }
 
-const SIM_ROLES = new Set([
-  "site_installation_mgr", "site_engineer", "delivery_rm_lead",
+// Karthik (planning_engineer) owns Site Schedule.
+const PLANNING_ROLES = new Set([
+  "planning_engineer",
   "super_admin", "managing_director", "head_operations",
 ]);
 
@@ -40,7 +41,7 @@ export function SiteScheduleTab({ projectId, projectName, userRole, userId }: Pr
   const [saving, setSaving] = useState(false);
   const [drawerStage, setDrawerStage] = useState<string | null>(null);
 
-  const canEdit = !!userRole && SIM_ROLES.has(userRole);
+  const canEdit = !!userRole && PLANNING_ROLES.has(userRole);
 
   async function load() {
     setLoading(true);
@@ -81,7 +82,7 @@ export function SiteScheduleTab({ projectId, projectName, userRole, userId }: Pr
 
   async function saveAll() {
     if (locked) { toast.error("Site schedule is locked until 14 days before dispatch"); return; }
-    if (!canEdit) { toast.error("Only Awaiz / Site Installation Manager can edit"); return; }
+    if (!canEdit) { toast.error("Only Karthik / Planning Engineer can edit"); return; }
     setSaving(true);
     const payload = rows.map(r => {
       const isNa = /^n\/?a$/i.test((r.notes ?? "").trim()) || r.is_na;
@@ -96,11 +97,28 @@ export function SiteScheduleTab({ projectId, projectName, userRole, userId }: Pr
         updated_by: userId,
       };
     });
-    // Delete existing site rows for this project, then re-insert
     await (supabase.from("project_stages") as any).delete().eq("project_id", projectId).gte("stage_number", 16);
     const { error } = await (supabase.from("project_stages") as any).insert(payload);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
+
+    // Notify Awaiz (site_installation_mgr) + Suraj (head_operations)
+    try {
+      const { insertNotifications } = await import("@/lib/notifications");
+      const { data: recipients } = await supabase.from("profiles").select("auth_user_id")
+        .in("role", ["site_installation_mgr", "head_operations"] as any).eq("is_active", true);
+      if (recipients?.length) {
+        await insertNotifications(recipients.map((r: any) => ({
+          recipient_id: r.auth_user_id,
+          title: "Site schedule set",
+          body: `Karthik saved the site schedule${projectName ? ` for ${projectName}` : ""}.`,
+          category: "Production",
+          related_table: "project_stages",
+          navigate_to: "/site-hub",
+        })));
+      }
+    } catch {}
+
     toast.success("Site schedule saved");
     load();
   }
@@ -115,7 +133,7 @@ export function SiteScheduleTab({ projectId, projectName, userRole, userId }: Pr
         <div>
           <h3 className="font-display font-bold text-lg" style={{ color: "#1A1A1A" }}>Site Schedule</h3>
           <p className="text-xs" style={{ color: "#666" }}>
-            Stages 16–23 (Erection → Handover) — entered directly by Awaiz, no template upload.
+            Stages 16–23 (Erection → Handover) — owned by Karthik (Planning Engineer). Awaiz and Suraj are notified on save.
           </p>
         </div>
         {!locked && canEdit && (
