@@ -2716,6 +2716,154 @@ export type Database = {
         }
         Relationships: []
       }
+      fixed_asset_service_log: {
+        Row: {
+          asset_id: string
+          attachment_url: string | null
+          cost: number | null
+          created_at: string
+          created_by: string | null
+          done_by: string | null
+          id: string
+          next_service_date_override: string | null
+          notes: string | null
+          service_date: string
+          service_type: string
+        }
+        Insert: {
+          asset_id: string
+          attachment_url?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by?: string | null
+          done_by?: string | null
+          id?: string
+          next_service_date_override?: string | null
+          notes?: string | null
+          service_date: string
+          service_type: string
+        }
+        Update: {
+          asset_id?: string
+          attachment_url?: string | null
+          cost?: number | null
+          created_at?: string
+          created_by?: string | null
+          done_by?: string | null
+          id?: string
+          next_service_date_override?: string | null
+          notes?: string | null
+          service_date?: string
+          service_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fixed_asset_service_log_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "fixed_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fixed_asset_service_log_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fixed_assets: {
+        Row: {
+          asset_name: string
+          asset_tag: string
+          assigned_to_profile_id: string | null
+          category: Database["public"]["Enums"]["fixed_asset_category"]
+          created_at: string
+          created_by: string | null
+          current_location: string | null
+          id: string
+          is_archived: boolean
+          last_service_date: string | null
+          make_model: string | null
+          next_service_due: string | null
+          notes: string | null
+          purchase_date: string | null
+          purchase_value: number | null
+          serial_number: string | null
+          service_interval_days: number | null
+          updated_at: string
+          updated_by: string | null
+          warranty_expiry: string | null
+        }
+        Insert: {
+          asset_name: string
+          asset_tag: string
+          assigned_to_profile_id?: string | null
+          category?: Database["public"]["Enums"]["fixed_asset_category"]
+          created_at?: string
+          created_by?: string | null
+          current_location?: string | null
+          id?: string
+          is_archived?: boolean
+          last_service_date?: string | null
+          make_model?: string | null
+          next_service_due?: string | null
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_value?: number | null
+          serial_number?: string | null
+          service_interval_days?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          warranty_expiry?: string | null
+        }
+        Update: {
+          asset_name?: string
+          asset_tag?: string
+          assigned_to_profile_id?: string | null
+          category?: Database["public"]["Enums"]["fixed_asset_category"]
+          created_at?: string
+          created_by?: string | null
+          current_location?: string | null
+          id?: string
+          is_archived?: boolean
+          last_service_date?: string | null
+          make_model?: string | null
+          next_service_due?: string | null
+          notes?: string | null
+          purchase_date?: string | null
+          purchase_value?: number | null
+          serial_number?: string | null
+          service_interval_days?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          warranty_expiry?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fixed_assets_assigned_to_profile_id_fkey"
+            columns: ["assigned_to_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fixed_assets_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fixed_assets_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gfc_qc_checklist: {
         Row: {
           checked: boolean
@@ -8828,6 +8976,79 @@ export type Database = {
         }
         Relationships: []
       }
+      tools_inventory: {
+        Row: {
+          assigned_to_profile_id: string | null
+          condition: Database["public"]["Enums"]["tool_condition"]
+          created_at: string
+          created_by: string | null
+          id: string
+          is_archived: boolean
+          item_name: string
+          location: string | null
+          notes: string | null
+          qty_available: number | null
+          qty_in_use: number
+          qty_total: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          assigned_to_profile_id?: string | null
+          condition?: Database["public"]["Enums"]["tool_condition"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          item_name: string
+          location?: string | null
+          notes?: string | null
+          qty_available?: number | null
+          qty_in_use?: number
+          qty_total?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          assigned_to_profile_id?: string | null
+          condition?: Database["public"]["Enums"]["tool_condition"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          item_name?: string
+          location?: string | null
+          notes?: string | null
+          qty_available?: number | null
+          qty_in_use?: number
+          qty_total?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tools_inventory_assigned_to_profile_id_fkey"
+            columns: ["assigned_to_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tools_inventory_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tools_inventory_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -9574,11 +9795,16 @@ export type Database = {
         Returns: boolean
       }
       can_costing_approve_wo: { Args: { _user_id: string }; Returns: boolean }
+      can_edit_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_edit_sop_dept: {
         Args: { _department: string; _user_id: string }
         Returns: boolean
       }
       can_issue_work_order: { Args: { _user_id: string }; Returns: boolean }
+      can_log_fixed_asset_service: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       can_manage_finance_pl: { Args: { _user_id: string }; Returns: boolean }
       can_manage_labour_register: {
         Args: { _user_id: string }
@@ -9598,6 +9824,7 @@ export type Database = {
         Returns: boolean
       }
       can_raise_work_order: { Args: { _user_id: string }; Returns: boolean }
+      can_view_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_view_work_orders: { Args: { _user_id: string }; Returns: boolean }
       clone_task_templates_to_project: {
         Args: { _project_id: string; _system: string }
@@ -9653,6 +9880,14 @@ export type Database = {
         | "marketing"
         | "sales_executive"
         | "logistics_manager"
+      fixed_asset_category:
+        | "machinery"
+        | "vehicle"
+        | "it_equipment"
+        | "furniture"
+        | "safety_equipment"
+        | "tools"
+        | "other"
       login_type: "email" | "otp"
       production_system_type: "modular" | "panelised" | "hybrid"
       task_template_type:
@@ -9661,6 +9896,7 @@ export type Database = {
         | "qc_gate"
         | "sign-off"
         | "payment"
+      tool_condition: "new" | "good" | "fair" | "damaged" | "retired"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -9823,6 +10059,15 @@ export const Constants = {
         "sales_executive",
         "logistics_manager",
       ],
+      fixed_asset_category: [
+        "machinery",
+        "vehicle",
+        "it_equipment",
+        "furniture",
+        "safety_equipment",
+        "tools",
+        "other",
+      ],
       login_type: ["email", "otp"],
       production_system_type: ["modular", "panelised", "hybrid"],
       task_template_type: [
@@ -9832,6 +10077,7 @@ export const Constants = {
         "sign-off",
         "payment",
       ],
+      tool_condition: ["new", "good", "fair", "damaged", "retired"],
     },
   },
 } as const
