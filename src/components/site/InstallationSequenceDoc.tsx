@@ -36,7 +36,8 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
   const [craneOpNotes, setCraneOpNotes] = useState("");
   const [dispatchDate, setDispatchDate] = useState<Date | null>(null);
 
-  const canUpload = ["site_installation_mgr", "head_operations", "production_head", "super_admin", "managing_director", "site_engineer"].includes(userRole ?? "");
+  const canUploadRole = ["site_installation_mgr", "head_operations", "production_head", "super_admin", "managing_director", "site_engineer"].includes(userRole ?? "");
+  const canUpload = canUploadRole && !isLocked;
 
   // 14-day lock: pull planned dispatch date from project_tasks (Stage with "Dispatch")
   useEffect(() => {
