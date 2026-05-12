@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useProjectImportListener } from "@/lib/use-project-import";
+import { SetupTemplateBanner, useSetupUploaded } from "@/components/projects/SetupTemplateBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -102,7 +103,8 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
   const [saving, setSaving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const canUpload = ["procurement", "stores_executive", "super_admin", "managing_director"].includes(userRole ?? "");
+  const setupUploaded = useSetupUploaded(projectId);
+  const canUpload = ["procurement", "stores_executive", "super_admin", "managing_director"].includes(userRole ?? "") && !setupUploaded;
   const canEdit = ["procurement", "stores_executive", "super_admin", "managing_director"].includes(userRole ?? "");
 
   const fetchData = useCallback(async () => {
@@ -371,6 +373,7 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
 
   return (
     <div className="space-y-4">
+      <SetupTemplateBanner projectId={projectId} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-lg font-semibold text-foreground">Material Plan</h2>
         {canUpload && (

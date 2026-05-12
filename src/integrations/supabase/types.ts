@@ -6680,6 +6680,8 @@ export type Database = {
           name: string
           planned_labour_cost: number | null
           production_system: string
+          setup_uploaded_at: string | null
+          setup_uploaded_by_name: string | null
           site_lat: number | null
           site_lng: number | null
           site_radius: number | null
@@ -6723,6 +6725,8 @@ export type Database = {
           name: string
           planned_labour_cost?: number | null
           production_system?: string
+          setup_uploaded_at?: string | null
+          setup_uploaded_by_name?: string | null
           site_lat?: number | null
           site_lng?: number | null
           site_radius?: number | null
@@ -6766,6 +6770,8 @@ export type Database = {
           name?: string
           planned_labour_cost?: number | null
           production_system?: string
+          setup_uploaded_at?: string | null
+          setup_uploaded_by_name?: string | null
           site_lat?: number | null
           site_lng?: number | null
           site_radius?: number | null

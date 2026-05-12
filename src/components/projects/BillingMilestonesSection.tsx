@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useProjectImportListener } from "@/lib/use-project-import";
+import { SetupTemplateBanner } from "./SetupTemplateBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -254,6 +255,8 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
   if (loading) return <div className="py-4 text-sm text-muted-foreground text-center">Loading milestones…</div>;
 
   return (
+    <div className="space-y-3">
+      <SetupTemplateBanner projectId={projectId} />
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
@@ -420,5 +423,6 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
         )}
       </CardContent>
     </Card>
+    </div>
   );
 }

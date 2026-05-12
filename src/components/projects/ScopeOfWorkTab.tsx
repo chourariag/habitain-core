@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useProjectImportListener } from "@/lib/use-project-import";
+import { SetupTemplateBanner, useSetupUploaded } from "./SetupTemplateBanner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -255,6 +256,7 @@ export function ScopeOfWorkTab({ projectId, userRole }: Props) {
 
   return (
     <div className="space-y-6">
+      <SetupTemplateBanner projectId={projectId} />
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3">

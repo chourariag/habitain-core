@@ -1,71 +1,76 @@
+This is a large 6-part restructure. I'll deliver it in the order below so each piece can be verified before the next builds on it. Nothing destructive — old pages stay reachable until their replacements ship.
 
-## Scope
+## 1 — Project Setup as the single source of truth
 
-Six independent fixes. I will ship them in this order so each builds cleanly on the previous one.
+- Add `setup_uploaded_at` and `setup_uploaded_by_name` on `projects`. Stamp these in the upload flow.
+- Hide Schedule / Materials / BOQ / Scope upload buttons whenever `setup_uploaded_at` is set. The only re-upload offered is "Re-upload Project Setup Template" (replaces all 5 sheets atomically).
+- Billing tab stays manually editable (% and contract value), but its milestones list becomes read-only after upload.
+- Add a small banner on each affected tab: *"Loaded from Project Setup Template — uploaded by {name} on {DD/MM/YYYY}"*.
+- GFC Budget upload (BOQ v2) is left untouched — still gated on H1.
 
----
+## 2 — Remove Modules tab from Projects
 
-### Fix 1 — Project Setup Template distribution to tabs
+- Drop the Modules/Panels tab from `ProjectDetail`.
+- Move module/panel counts into the project header as read-only chips (`{n} modules · {p} panels`), populated from the Project Setup upload.
+- Module/panel CRUD remains only on Production → Factory Floor bay cards.
 
-The parser already writes to `project_billing_milestones`, `project_boq_items`, `project_stages`, `project_tasks`, `project_material_plan_items`, and `project_scope_items`. The real gap is (a) the post-upload confirmation screen, and (b) the consuming tabs not always re-fetching after upload.
+## 3 — Production restructure
 
-- Replace the small Dialog with a richer **Confirmation Screen** showing: Billing N milestones, BOQ N items / N categories, Schedule N stages, Materials N items, Scope N items, plus a "Go to Project →" button.
-- Verify each tab (Billing, Budget→BOQ, Schedule, Materials, Scope) calls its fetcher on mount and on a `project-setup-imported` event; wire `onImported` to dispatch that event.
+New sidebar group **PRODUCTION**:
+```text
+├── Production Dashboard   (new)
+├── Factory Floor          (slim down)
+├── Capacity Planning      (Azad / Rakesh / MD only)
+├── QC & NCR
+├── Dispatch & Delivery    (new — moved out of Factory Floor)
+└── Safety                 (moved from HR)
+```
 
-### Fix 2 — Factory Floor + Site Hub schedule reads from `project_tasks` / `project_stages`
+- **Production Dashboard** (`/production/dashboard`): project-scoped cards — Active Stage, Schedule (current + next 3 stages green/amber/red), Open NCRs, Material Gates. Azad-only extra cards: Floor Capacity (`6/9 bays`), Team logged today, Labour Cost This Week vs budget.
+- Rename "Stage Velocity" → **"Production Pace"** (On pace / Slightly slow / Behind) everywhere it appears.
+- Strip from Factory Floor: My Tasks strip, Floor Capacity tile, Production Pace tile. Keep bay cards, QC trigger buttons, Quality flag buttons.
+- **Dispatch & Delivery** (`/production/dispatch`): tabs — Dispatch Pipeline · Delivery Checklist (3-party sign-off) · Dispatch Packs · Vehicle Arrangement. Restricted to Azad, Rakesh, Awaiz, Bala, Suraj, MD.
 
-- Locate the hardcoded "Production Schedule" list inside `FactoryFloorMap.tsx` (or whichever tab renders it). Replace with a live query of `project_stages` (factory: `stage_number 1–15`) for the active project, joined with task-level rollup for actual_start / actual_end.
-- Columns: Stage | Target Start | Target End | Actual Start | Actual End | Status (auto from `status` + first/last task transitions).
-- Force the canonical 15 factory stage names from `FACTORY_STAGES` in `src/lib/hstack-stages.ts`. Confirm the list matches: Main Frame, Sub Frame — Panel Production, Drywall Works Completion, MEP Rough In, Internal Painting, Tiling, Exterior Wall Finishing, Internal Wall Finishing, Carpentry, MEP Final, Windows & Doors, Finishing, Snagging, QC Inspection, Dispatch. Remove any standalone "Insulation" / "Drywall" stage rows.
-- Apply the same query pattern in Site Hub for `stage_number 16–23`.
+## 4 — QC inspector + stage list fix
 
-### Fix 3 — Pending Claims ghost rows + validation + tooltip
+- QC Inspection Step 1 reads inspector name from the active testing-mode persona (`useTestingMode()`) and falls back to the auth profile only when no persona is selected.
+- Stage Type dropdown is rebuilt by querying `production_task_templates` where `is_qc_gate = true`, formatted as `{phase} — {task_name} ({stage_number})`. Removes the hard-coded Shell/Builder/Interiors options.
 
-- **Migration / data clean-up** (insert tool, since it's a DELETE on data): delete labour-claim rows where `worker_id IS NULL AND hours = 0 AND project_id IS NULL`.
-- In `DailyLabourLog.tsx`: add Zod-style required-field validation (worker, project, stage, hours > 0). Block submit + show inline errors.
-- Add an info tooltip next to the "SLA Breached" badge explaining "not approved/rejected within 4 working hours of submission".
-- Add a TODO comment noting the future scoping rule (Rakesh sees only his supervised workers' claims) — actual RLS scoping deferred until the user account hierarchy is live.
+## 5 — On Site Works (renamed from Site Hub)
 
-### Fix 4 — Expense draft → submit UX
+New sidebar group:
+```text
+ON SITE WORKS
+├── Site Dashboard         (new — /onsite/dashboard)
+├── Site Hub               (existing, simplified)
+├── Daily Logs             (new — /onsite/logs)
+├── Site Inventory         (new — /onsite/inventory)
+├── Dispatch & Delivery    (link → /production/dispatch)
+└── Site Readiness         (new — /onsite/readiness)
+```
 
-In `MyExpenses.tsx`:
-- Add a per-row **"Submit for Approval"** button next to the Draft badge (uses existing handleSubmitAll logic but per-id).
-- Add a top banner when there are unsubmitted drafts: count + deadline.
-- Replace the existing static window text with a clear countdown: "opens in N days" / "closes in N days" / "closed — drafts carry to next month".
-- In `ExpenseExcelUpload.tsx` (download report): prepend a header note row "This report shows approved expenses only. Drafts and pending claims are excluded."
+- **Site Dashboard**: project-scoped — current site stage + checklist %, planned vs actual site stages, subs active today, open punch list, days since last client update, next dispatch incoming.
+- **Site Hub** keeps only: My Site Tasks (collapsed, max 3), Request Advance, Dispatch Pipeline (incoming), Schedule, Drawings, Handover Document, Material Requests, Factory Feedback, Work Orders, Installation Sequence. Everything else moves out.
+- **Daily Logs**: 3 tabs — Site Diary (Nazim) · Labour Log · Subcontractor Log (idle reason required).
+- **Site Inventory**: confirm incoming factory transfers, current site stock, raise material requests.
+- **Site Readiness**: photo checklist (foundation, access road, crane, site office, utilities, safety barriers) + dry-run video + risk register + client briefing confirmation + submit-to-Suraj button (≥5 days before dispatch).
 
-### Fix 5 — Schedule tab: don't ask Karthik to re-upload
+New tables: `site_readiness_checklists`, `site_inventory_items`, `subcontractor_daily_logs`, `installation_sequences` (or extend if existing).
 
-In the Schedule tab component (likely `MicroScheduleTab.tsx` or the project Schedule view): on mount, query `project_stages` for this project. If any stage rows exist, render the imported stages and **hide** the Upload Schedule button. Only show upload UI when zero stage rows exist for the project.
+## 6 — Awaiz fills Schedule + Installation Sequence
 
-### Fix 6 — Fixed Assets + Service Reminders + Tools Inventory
+- Both inputs are locked until 14 days before planned dispatch (already done for Schedule; same gate applied to Installation Sequence).
+- Installation Sequence form: order table (Module # · Position · Crane approach · Notes), crane-lift count, access restrictions, crane-operator notes, OR PDF/DWG upload.
+- On save: insert notifications for Karthik and Suraj ("Site schedule + installation sequence set for {project}").
 
-**Migration** — new tables:
-- `fixed_assets` (asset_name, asset_tag, category enum, make_model, serial_number, purchase_date, purchase_value, current_location, assigned_to_profile_id, service_interval_days, last_service_date, next_service_due (generated), warranty_expiry, notes, audit fields, is_archived).
-- `fixed_asset_service_log` (asset_id, service_date, service_type, done_by, cost, next_service_date_override, notes, attachment_url).
-- `tools_inventory` (item_name, qty_total, qty_in_use, qty_available (generated), location, assigned_to_profile_id, condition, notes).
-- RLS: view = Azad / Vijay / Suraj / MD / Directors; insert/update fixed_assets = Azad / Vijay; insert service_log = Azad / Rakesh. Helper SECURITY DEFINER functions `can_view_fixed_assets(uid)`, `can_edit_fixed_assets(uid)`, `can_log_fixed_asset_service(uid)`.
+## Roll-out order
 
-**Edge function** — `fixed-asset-service-reminders` (cron daily 06:00 IST):
-- For each asset where `next_service_due = today + 7d` → notify Azad ("Service due in 7 days").
-- For each asset where `next_service_due < today` and no service logged since → notify Suraj (escalation).
-- Cron registered via `supabase--insert` (project-specific URL + anon key per the schedule-jobs guide).
+1. Project Setup lock-down (Change 1) + Modules tab removal (Change 2) + Modules counts in header.
+2. QC inspector + stage list fix (Change 4) — fast, isolated.
+3. Production restructure (Change 3): new Dashboard, Dispatch & Delivery page, Factory Floor cleanup, Stage Velocity rename, sidebar reorg.
+4. On Site Works restructure (Change 5): new sidebar group, Site Dashboard, Daily Logs, Site Inventory, Site Readiness, Site Hub slim-down.
+5. Awaiz Installation Sequence + 14-day gate + notifications (Change 6).
 
-**UI** — `src/components/procurement/FixedAssetsTab.tsx`:
-- Tabs: Fixed Assets · Tools Inventory.
-- Fixed Assets table + "+ Add Asset" dialog with all listed fields, including category dropdown.
-- Per-row "Service History" drawer with "+ Log Service" form (auto-updates next_service_due).
-- Tools Inventory table with inline qty edits.
-- Mounted at `Procurement → Fixed Assets` tab and added to AppSidebar under Production as "Equipment".
+## Open question
 
----
-
-## Order of work (I will start as soon as you approve)
-
-1. Fix 5 (smallest — guard the Schedule tab) and Fix 1 (confirmation screen + onImported event).
-2. Fix 2 (Factory Floor + Site Hub live schedule).
-3. Fix 3 (ghost-row delete + validation + tooltip).
-4. Fix 4 (expense UX).
-5. Fix 6 (Fixed Assets — biggest; one migration, one edge function, two UI components, sidebar entry).
-
-I'll create migrations one at a time and ask for approval before each, per the workflow rules. Code changes will follow each approved migration.
+This is multiple person-days of work and dozens of files. Do you want me to ship all 6 changes in a single pass (longer turnaround, one big diff), or land them in the order above in successive passes so you can verify after each block?

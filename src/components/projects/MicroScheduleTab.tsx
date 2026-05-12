@@ -21,6 +21,7 @@ import { getPhasesForSystem, TASK_TYPE_META, type TaskTemplateType } from "@/lib
 import { downloadScheduleTemplate } from "@/lib/xlsx-templates";
 import { ChevronRight, ChevronDown, ShieldAlert } from "lucide-react";
 import { useProjectImportListener } from "@/lib/use-project-import";
+import { SetupTemplateBanner } from "./SetupTemplateBanner";
 
 interface ProjectTask {
   id: string;
@@ -451,6 +452,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
 
   return (
     <div className="space-y-4">
+      <SetupTemplateBanner projectId={projectId} />
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-lg font-semibold text-foreground">Micro-Schedule</h2>
@@ -461,9 +463,6 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
               <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4 mr-1" /> Template</Button>
               <Button size="sm" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4 mr-1" /> Upload Schedule</Button>
             </>
-          )}
-          {hasSetupSchedule && canUpload && (
-            <span className="text-xs text-muted-foreground italic">Schedule loaded from Project Setup Template</span>
           )}
         </div>
       </div>

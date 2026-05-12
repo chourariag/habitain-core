@@ -171,12 +171,11 @@ export default function ProjectDetail() {
 
       <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} onImported={fetchData} />
 
-      <Tabs defaultValue="modules">
+      <Tabs defaultValue="schedule">
         <ScrollableTabsWrapper>
           <TabsList>
-            <TabsTrigger value="modules" className="gap-1.5"><Box className="h-4 w-4" /> Modules</TabsTrigger>
-            <TabsTrigger value="billing" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Billing</TabsTrigger>
             <TabsTrigger value="schedule" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Schedule</TabsTrigger>
+            <TabsTrigger value="billing" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Billing</TabsTrigger>
             <TabsTrigger value="materials" className="gap-1.5"><Package className="h-4 w-4" /> Materials</TabsTrigger>
             <TabsTrigger value="variations" className="gap-1.5"><GitCompareArrows className="h-4 w-4" /> Variations</TabsTrigger>
             <TabsTrigger value="budget" className="gap-1.5"><Wallet className="h-4 w-4" /> Budget</TabsTrigger>
@@ -184,26 +183,6 @@ export default function ProjectDetail() {
             <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
-
-        <TabsContent value="modules" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-display text-lg font-semibold text-foreground">Modules & Panels</h2>
-            {canEdit && (
-              <Button size="sm" onClick={() => setAddModuleOpen(true)}><Plus className="h-4 w-4 mr-1" /> Add Module</Button>
-            )}
-          </div>
-          {modules.length === 0 ? (
-            <div className="bg-card rounded-lg p-8 text-center shadow-sm">
-              <p className="text-muted-foreground text-sm">{canEdit ? 'No modules yet. Click "Add Module" to create one.' : "No modules have been created."}</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {modules.map((m) => (
-                <ModulePanelCard key={m.id} module={m} panels={panels[m.id] ?? []} projectId={id!} canEdit={canEdit} canAdvanceStage={canAdvanceStage} userRole={userRole} onPanelCreated={fetchData} onStageAdvanced={fetchData} productionSystem={(proj.production_system ?? "modular") as any} />
-              ))}
-            </div>
-          )}
-        </TabsContent>
 
         <TabsContent value="billing" className="space-y-4">
           <BillingMilestonesSection

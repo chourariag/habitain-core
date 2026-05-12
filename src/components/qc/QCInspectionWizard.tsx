@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { STAGE_TYPE_SECTIONS } from "@/lib/design-checklist-data";
 import { toast } from "sonner";
+import { useUserRole } from "@/hooks/useUserRole";
 import { format } from "date-fns";
 
 interface QCInspectionWizardProps {
@@ -99,6 +100,8 @@ export function QCInspectionWizard({
   preselectedProjectId,
   preselectedModuleId,
 }: QCInspectionWizardProps) {
+  const { personaName } = useUserRole();
+  const [qcStages, setQcStages] = useState<{ value: string; label: string }[]>([]);
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -152,6 +155,11 @@ export function QCInspectionWizard({
     setInspectionId("");
   };
 
+  // Keep inspector name in sync with the active testing-mode persona
+  useEffect(() => {
+    if (personaName) setInspectorName(personaName);
+  }, [personaName]);
+
   const loadInitialData = async () => {
     const [projectsRes, userRes] = await Promise.all([
       supabase
@@ -170,10 +178,29 @@ export function QCInspectionWizard({
         .eq("auth_user_id", userRes.data.user.id)
         .single();
       if (profile) {
-        setInspectorName(profile.display_name || profile.email || "Inspector");
+        // Testing-mode persona name overrides the auth profile name
+        setInspectorName(personaName || profile.display_name || profile.email || "Inspector");
         setInspectorId(userRes.data.user.id);
       }
     }
+
+    // Load QC gate stages from production_task_templates (is_qc_gate = true)
+    const { data: gates } = await (supabase.from("production_task_templates") as any)
+      .select("stage_number, task_name, phase_name")
+      .eq("is_qc_gate", true)
+      .order("display_order", { ascending: true });
+    const seen = new Set<string>();
+    const opts: { value: string; label: string }[] = [];
+    (gates ?? []).forEach((g: any) => {
+      const key = `${g.phase_name}|${g.task_name}|${g.stage_number}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      opts.push({
+        value: String(g.stage_number),
+        label: `${g.phase_name} — ${g.task_name} (${g.stage_number})`,
+      });
+    });
+    setQcStages(opts);
 
     if (preselectedProjectId) {
       loadModules(preselectedProjectId);
@@ -670,25 +697,16 @@ export function QCInspectionWizard({
               <label className="text-sm font-medium text-foreground">
                 Stage Type *
               </label>
-              <RadioGroup
-                value={stageType}
-                onValueChange={setStageType}
-                disabled={stageTypeLocked}
-                className="mt-2 flex flex-col gap-2"
-              >
-                {[
-                  { value: "shell_and_core", label: "Shell and Core" },
-                  { value: "builder_finish", label: "Builder Finish" },
-                  { value: "interiors", label: "Interiors" },
-                ].map((opt) => (
-                  <div key={opt.value} className="flex items-center gap-2">
-                    <RadioGroupItem value={opt.value} id={`stage-type-${opt.value}`} />
-                    <Label htmlFor={`stage-type-${opt.value}`} className="text-sm font-normal cursor-pointer">
-                      {opt.label}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
+              <Select value={stageType} onValueChange={setStageType} disabled={stageTypeLocked}>
+                <SelectTrigger className="mt-2">
+                  <SelectValue placeholder={qcStages.length === 0 ? "Loading QC gates…" : "Select QC gate"} />
+                </SelectTrigger>
+                <SelectContent className="max-h-[320px]">
+                  {qcStages.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex justify-end">
