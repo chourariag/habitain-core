@@ -233,8 +233,13 @@ export function AppSidebar() {
                   </span>
                 </div>
               )}
-              {section.items.map((item) => (
-                <NavLink key={item.to} to={item.to} className={navLinkClass} style={navLinkStyle}>
+              {section.items.map((item) => {
+                const [itemPath, itemQuery] = item.to.split("?");
+                const itemTab = itemQuery ? new URLSearchParams(itemQuery).get("tab") : null;
+                const currentTab = new URLSearchParams(location.search).get("tab");
+                const itemActive = location.pathname === itemPath && (itemTab ? currentTab === itemTab : !currentTab || section.items.filter(s => s.to.startsWith(itemPath + "?")).length === 0);
+                return (
+                <NavLink key={item.to} to={item.to} className={() => navLinkClass({ isActive: itemActive })} style={() => navLinkStyle({ isActive: itemActive })}>
                   <item.icon className="h-4 w-4 shrink-0" />
                   {!collapsed && <span className="flex-1">{item.label}</span>}
                   {item.to === "/approvals" && pendingApprovals > 0 && !collapsed && (
@@ -244,7 +249,8 @@ export function AppSidebar() {
                     </span>
                   )}
                 </NavLink>
-              ))}
+                );
+              })}
             </div>
           );
         })}
