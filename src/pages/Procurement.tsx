@@ -718,9 +718,7 @@ export default function Procurement() {
           <GRNTab filterProjectId={projectFromUrl} />
         </TabsContent>
 
-        <TabsContent value="subcontractors">
-          <SubcontractorsTab />
-        </TabsContent>
+        {/* Subcontractors tab moved to Production → People */}
 
         <TabsContent value="fixed-assets">
           <FixedAssetsTab />
