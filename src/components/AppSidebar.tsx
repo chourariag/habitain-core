@@ -83,7 +83,8 @@ const sectionConfig = [
     label: "Admin",
     items: [
       { to: "/approvals", label: "Approvals", icon: ShieldCheck },
-      { to: "/attendance", label: "HR & Attendance", icon: Clock },
+      { to: "/attendance", label: "My HR", icon: Clock },
+      { to: "/admin/hr", label: "HR Management", icon: Users },
       { to: "/admin", label: "Admin", icon: Users },
       { to: "/admin/users", label: "User Management", icon: Users },
       { to: "/settings", label: "Settings", icon: Settings },
