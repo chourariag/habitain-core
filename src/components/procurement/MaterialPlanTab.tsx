@@ -128,6 +128,7 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
   }, [projectId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  useProjectImportListener(projectId, fetchData);
 
   const parseDate = (val: any): string | null => {
     if (!val) return null;
