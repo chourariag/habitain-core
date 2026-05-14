@@ -697,8 +697,8 @@ export default function Procurement() {
           <ThirtyDayPlanTab />
         </TabsContent>
 
-        <TabsContent value="asset-register">
-          <AssetRegisterTab userRole={userRole} />
+        <TabsContent value="equipments">
+          <FixedAssetsTab />
         </TabsContent>
 
         <TabsContent value="tally-po">
@@ -718,10 +718,6 @@ export default function Procurement() {
         </TabsContent>
 
         {/* Subcontractors tab moved to Production → People */}
-
-        <TabsContent value="fixed-assets">
-          <FixedAssetsTab />
-        </TabsContent>
       </Tabs>
 
       <NewMaterialRequestDialog open={addOpen} onOpenChange={setAddOpen} onCreated={fetchData} />
