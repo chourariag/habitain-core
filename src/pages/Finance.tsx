@@ -107,6 +107,7 @@ export default function Finance() {
                 </div>
               </CardContent></Card>
             </TabsContent>
+            <TabsContent value="advance-approvals"><AdvanceApprovalsTab /></TabsContent>
           </Tabs>
         </TabsContent>
 
