@@ -26,6 +26,7 @@ import { DryAssemblyCheck } from "@/components/production/DryAssemblyCheck";
 import { ScheduleConflictBanner } from "@/components/production/ScheduleConflictBanner";
 import { useUserRole } from "@/hooks/useUserRole";
 import type { Tables } from "@/integrations/supabase/types";
+import { MeasurementSheet } from "@/components/measurements/MeasurementSheet";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
 
@@ -149,6 +150,7 @@ function ProductionContent() {
                 <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
                 <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
                 <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>
+                <TabsTrigger value="measurements" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> Measurements</TabsTrigger>
               </TabsList>
             </ScrollableTabsWrapper>
 
@@ -211,6 +213,10 @@ function ProductionContent() {
 
             <TabsContent value="work-orders">
               <WorkOrdersTab mode="factory" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
+            </TabsContent>
+
+            <TabsContent value="measurements">
+              <MeasurementSheet location="factory" />
             </TabsContent>
           </Tabs>
         )}

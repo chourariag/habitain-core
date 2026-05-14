@@ -227,6 +227,7 @@ function SiteHubContent() {
             <TabsTrigger value="factory-feedback" className="gap-1.5"><MessageSquareWarning className="h-4 w-4" /> Factory Feedback</TabsTrigger>
             <TabsTrigger value="labour" className="gap-1.5"><HardHat className="h-4 w-4" /> Labour Log</TabsTrigger>
             <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>
+            <TabsTrigger value="site-measurements" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> Measurements</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
