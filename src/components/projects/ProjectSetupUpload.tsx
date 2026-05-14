@@ -370,19 +370,35 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
 
   async function processMaterial(ws: XLSX.WorkSheet | undefined, userId: string | null): Promise<SheetResult> {
     if (!ws) return { name: "Materials", ok: false, count: 0, message: "Sheet missing" };
-    const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
-    if (rows.length === 0) return { name: "Materials", ok: true, count: 0, message: "Sheet empty" };
-    const items = rows.filter(r => r["Material"] || r["Material Description"]).map((r, i) => ({
-      item_id: String(i + 1),
-      section: String(r["Section"] || "Shell and Core"),
-      material_description: String(r["Material"] || r["Material Description"]),
-      tender_qty: Number(r["Tender Qty"]) || null,
-      unit: String(r["Unit"] || "") || null,
-      planned_po_release_date: parseDate(r["PO Release Date"]),
-      planned_procurement_date: parseDate(r["Procurement Date"]),
-      planned_delivery_date: parseDate(r["Delivery Date"]),
-      status: "Planned",
-    }));
+    // Fixed columns: A=#, B=Section, C=Material, D=Unit, E=Tender Qty,
+    // F=Ordered Qty, G=PO Release Date, H=Delivery Date, I=Destination, J=Notes
+    const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: "dd/mm/yyyy", defval: "" });
+    let headerIdx = -1;
+    for (let i = 0; i < Math.min(rows.length, 20); i++) {
+      const r = (rows[i] || []).map((c: any) => String(c ?? "").toLowerCase());
+      if (r.some(c => c.includes("material")) && r.some(c => c.includes("section"))) { headerIdx = i; break; }
+    }
+    if (headerIdx === -1) return { name: "Materials", ok: true, count: 0, message: "Header not found" };
+
+    const items: any[] = [];
+    for (let i = headerIdx + 1; i < rows.length; i++) {
+      const r = rows[i]; if (!r) continue;
+      const material = String(r[2] ?? "").trim();
+      if (!material) continue;
+      items.push({
+        item_id: String(items.length + 1),
+        section: String(r[1] ?? "Shell and Core").trim(),
+        material_description: material,
+        unit: String(r[3] ?? "").trim() || null,
+        tender_qty: r[4] === "" || r[4] == null ? null : Number(r[4]) || null,
+        ordered_qty: r[5] === "" || r[5] == null ? null : Number(r[5]) || null,
+        planned_po_release_date: parseDate(r[6]),
+        planned_delivery_date: parseDate(r[7]),
+        destination: String(r[8] ?? "").trim() || null,
+        notes: String(r[9] ?? "").trim() || null,
+        status: "Planned",
+      });
+    }
     if (items.length === 0) return { name: "Materials", ok: true, count: 0, message: "No items" };
     const { data: prev } = await (supabase.from("project_material_plans") as any).select("version").eq("project_id", projectId).order("version", { ascending: false }).limit(1);
     const nextV = ((prev as any)?.[0]?.version ?? 0) + 1;
