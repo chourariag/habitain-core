@@ -257,7 +257,7 @@ export default function AdvanceRequest() {
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Site Installation Manager</Label>
-              <p className="text-sm font-medium text-foreground">{userProfile?.display_name || userProfile?.email}</p>
+              <p className="text-sm font-medium text-foreground">{effectiveDisplayName(userProfile?.display_name, userProfile?.email)}</p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -410,7 +410,7 @@ export default function AdvanceRequest() {
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Account Holder</span>
-            <span className="text-foreground">{userProfile?.display_name || "—"}</span>
+            <span className="text-foreground">{effectiveDisplayName(userProfile?.display_name, "—")}</span>
           </div>
         </CardContent>
       </Card>
