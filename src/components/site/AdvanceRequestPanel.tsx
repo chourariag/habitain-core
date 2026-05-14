@@ -90,10 +90,20 @@ export function AdvanceRequestPanel({ projectId }: AdvanceRequestPanelProps) {
   };
 
   const handleApprove = async (id: string) => {
+    const advance = requests.find((r) => r.id === id);
     await (supabase.from("advance_requests" as any) as any)
       .update({ status: "approved", approved_by: userId, approved_at: new Date().toISOString() })
       .eq("id", id);
     toast.success("Advance approved");
+    if (advance) {
+      await insertNotifications({
+        recipient_id: advance.requested_by,
+        title: "Advance Request Approved",
+        body: `Your advance request of ₹${Number(advance.amount).toLocaleString("en-IN")} has been approved.`,
+        category: "hr",
+        navigate_to: "/attendance",
+      });
+    }
     fetchData();
   };
 

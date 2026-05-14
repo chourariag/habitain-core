@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
-import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Download, Paperclip, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
 import { format, parse, isValid, isFuture, startOfMonth, subMonths } from "date-fns";
@@ -43,32 +41,25 @@ interface ParsedRow {
 
 export function ExpenseExcelUpload() {
   const { user } = useAuth();
-  const { role } = useUserRole();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [carRate, setCarRate] = useState(9.5);
   const [bikeRate, setBikeRate] = useState(3.5);
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [onBehalfOf, setOnBehalfOf] = useState("self");
   const [parsedRows, setParsedRows] = useState<ParsedRow[] | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [fileName, setFileName] = useState("");
 
-  const isHR = role === "hr_executive" || role === "super_admin" || role === "managing_director";
   const win = getSubmissionWindow();
 
   useEffect(() => {
-    Promise.all([
-      supabase.from("hr_settings").select("key, value").in("key", ["car_rate_per_km", "bike_rate_per_km"]),
-      isHR ? supabase.from("profiles").select("auth_user_id, display_name, role").eq("is_active", true) : Promise.resolve({ data: [] }),
-    ]).then(([ratesRes, profsRes]) => {
-      (ratesRes.data ?? []).forEach((r: any) => {
-        if (r.key === "car_rate_per_km") setCarRate(Number(r.value) || 9.5);
-        if (r.key === "bike_rate_per_km") setBikeRate(Number(r.value) || 3.5);
+    supabase.from("hr_settings").select("key, value").in("key", ["car_rate_per_km", "bike_rate_per_km"])
+      .then(({ data }) => {
+        (data ?? []).forEach((r: any) => {
+          if (r.key === "car_rate_per_km") setCarRate(Number(r.value) || 9.5);
+          if (r.key === "bike_rate_per_km") setBikeRate(Number(r.value) || 3.5);
+        });
       });
-      setProfiles(profsRes.data ?? []);
-    });
-  }, [isHR]);
+  }, []);
 
   const downloadTemplate = () => {
     const wb = XLSX.utils.book_new();
@@ -234,7 +225,7 @@ export function ExpenseExcelUpload() {
     if (!user || !validRows.length) return;
     setSubmitting(true);
 
-    const targetUserId = onBehalfOf === "self" ? user.id : onBehalfOf;
+    const targetUserId = user.id;
     const now = new Date();
 
     const entries = validRows.map((r) => {
@@ -292,22 +283,6 @@ export function ExpenseExcelUpload() {
         <Button variant="outline" size="sm" onClick={downloadTemplate} className="gap-1.5 text-xs font-display" style={{ color: "#006039", borderColor: "#006039" }}>
           <Download className="h-3.5 w-3.5" /> Download Expense Template
         </Button>
-
-        {/* HR: on behalf of */}
-        {isHR && (
-          <div>
-            <label className="text-[11px] font-inter" style={{ color: "#666" }}>Uploading for Employee</label>
-            <Select value={onBehalfOf} onValueChange={setOnBehalfOf}>
-              <SelectTrigger className="mt-1 font-inter text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="self" className="font-inter text-xs">Self</SelectItem>
-                {profiles.map((p) => (
-                  <SelectItem key={p.auth_user_id} value={p.auth_user_id} className="font-inter text-xs">{p.display_name || p.auth_user_id}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
 
         {/* Submission window status */}
         {win.isOpen ? (

@@ -34,6 +34,11 @@ const sectionConfig = [
     items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
   },
   {
+    key: "approvals",
+    label: "Approvals",
+    items: [{ to: "/alerts", label: "Approvals & Alerts", icon: Bell }],
+  },
+  {
     key: "projects",
     label: "Projects",
     items: [{ to: "/projects", label: "Projects", icon: FolderKanban }],
@@ -44,7 +49,15 @@ const sectionConfig = [
     items: [
       { to: "/production", label: "Factory Floor", icon: Factory },
       { to: "/qc", label: "QC & NCR", icon: ClipboardCheck },
+    ],
+  },
+  {
+    key: "site",
+    label: "On Site Works",
+    items: [
       { to: "/site-hub", label: "Site Hub", icon: Truck },
+      { to: "/rm", label: "R&M", icon: Wrench },
+      { to: "/amc", label: "AMC", icon: ShoppingCart },
     ],
   },
   {
@@ -55,21 +68,24 @@ const sectionConfig = [
     ],
   },
   {
+    key: "finance",
+    label: "Finance",
+    items: [
+      { to: "/finance", label: "Finance", icon: DollarSign },
+      { to: "/variations", label: "Variations", icon: GitMerge },
+      { to: "/client-portal", label: "Client Portal", icon: Globe2 },
+    ],
+  },
+  {
     key: "design",
     label: "Design",
     items: [{ to: "/design", label: "Design Portal", icon: Compass }],
   },
   {
-    key: "business",
-    label: "Business",
+    key: "sales",
+    label: "Sales",
     items: [
-      { to: "/sales", label: "Sales", icon: BarChart3 },
-      { to: "/finance", label: "Finance", icon: DollarSign },
-      { to: "/variations", label: "Variations", icon: GitMerge },
-      { to: "/client-portal", label: "Client Portal", icon: Globe2 },
-      { to: "/rm", label: "R&M", icon: Wrench },
-      { to: "/amc", label: "AMC", icon: ShoppingCart },
-      { to: "/sop-library", label: "SOP Library", icon: BookOpen },
+      { to: "/sales", label: "Sales Pipeline", icon: BarChart3 },
     ],
   },
   {
@@ -79,9 +95,10 @@ const sectionConfig = [
   },
   {
     key: "admin",
-    label: "Admin",
+    label: "ALTREE",
     items: [
       { to: "/attendance", label: "HR & Attendance", icon: Clock },
+      { to: "/sop-library", label: "SOP Library", icon: BookOpen },
       { to: "/admin", label: "User Management", icon: Users },
       { to: "/admin/super-admin", label: "Super Admin", icon: FlaskConical },
       { to: "/settings", label: "Settings", icon: Settings },

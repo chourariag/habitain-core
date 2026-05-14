@@ -14,7 +14,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 
 interface Payment {
   id: string; project_name: string; client_name: string; milestone_description: string;
-  due_date: string; amount: number; status: string;
+  due_date: string; amount: number; status: string; source?: "billing" | "manual";
 }
 
 export function PaymentsTab() {
@@ -26,19 +26,41 @@ export function PaymentsTab() {
   const [expensesOpen, setExpensesOpen] = useState(false);
 
   const fetchData = async () => {
-    const [{ data }, { data: expData }, { data: profData }] = await Promise.all([
+    const today = new Date().toISOString().slice(0, 10);
+    const [fpRes, bmRes, expRes, profRes, projRes] = await Promise.all([
       supabase.from("finance_payments").select("*").order("due_date"),
+      (supabase.from("billing_milestones" as any) as any).select("id, project_id, milestone_name, amount, status, due_date").order("due_date"),
       supabase.from("expense_entries").select("*").eq("status", "approved").order("created_at", { ascending: false }),
       supabase.from("profiles").select("auth_user_id, display_name"),
+      supabase.from("projects").select("id, name, client_name").eq("is_archived", false),
     ]);
-    const rows = (data as Payment[]) || [];
-    const today = new Date().toISOString().slice(0, 10);
-    setPayments(rows.map(r => ({
+    const projMap: Record<string, { name: string; client: string }> = {};
+    (projRes.data ?? []).forEach((p: any) => { projMap[p.id] = { name: p.name, client: p.client_name ?? "" }; });
+
+    const manualRows: Payment[] = ((fpRes.data as Payment[]) ?? []).map((r) => ({
       ...r,
+      source: "manual" as const,
       status: (r.status === "pending" || r.status === "invoiced") && r.due_date < today ? "overdue" : r.status,
-    })));
-    setApprovedExpenses((expData ?? []) as any[]);
-    setExpenseProfiles(profData ?? []);
+    }));
+
+    const billingRows: Payment[] = ((bmRes.data ?? []) as any[]).map((m: any) => ({
+      id: m.id,
+      project_name: projMap[m.project_id]?.name ?? "Unknown",
+      client_name: projMap[m.project_id]?.client ?? "",
+      milestone_description: m.milestone_name ?? "Milestone",
+      due_date: m.due_date ?? today,
+      amount: Number(m.amount) || 0,
+      status: (m.status === "pending" || m.status === "invoiced") && (m.due_date ?? today) < today ? "overdue" : (m.status ?? "pending"),
+      source: "billing" as const,
+    }));
+
+    // Deduplicate: billing rows take priority; only add manual rows not already in billing
+    const billingIds = new Set(billingRows.map((r) => r.id));
+    const combined = [...billingRows, ...manualRows.filter((r) => !billingIds.has(r.id))];
+    combined.sort((a, b) => (a.due_date ?? "").localeCompare(b.due_date ?? ""));
+    setPayments(combined);
+    setApprovedExpenses((expRes.data ?? []) as any[]);
+    setExpenseProfiles(profRes.data ?? []);
   };
 
   useEffect(() => { fetchData(); }, []);

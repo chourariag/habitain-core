@@ -12,6 +12,10 @@ export type NavSection = {
 // Which roles can see each sidebar section
 const SECTION_ROLES: Record<string, AppRole[]> = {
   dashboard: [], // everyone
+  approvals: [
+    ...DIRECTORS, "head_operations", "production_head", "hr_executive",
+    "finance_manager", "planning_engineer", "costing_engineer",
+  ],
   projects: [
     ...DIRECTORS, "head_operations", "production_head", "site_installation_mgr",
     "finance_manager", "planning_engineer", "costing_engineer", "quantity_surveyor",
@@ -21,12 +25,22 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
     "fabrication_foreman", "qc_inspector", "planning_engineer", "electrical_installer",
     "elec_plumbing_installer",
   ],
+  site: [
+    ...DIRECTORS, "head_operations", "site_installation_mgr", "site_engineer",
+    "delivery_rm_lead", "production_head",
+  ],
   procurement: [
     ...DIRECTORS, "head_operations", "procurement", "stores_executive",
     "costing_engineer", "finance_manager",
   ],
+  finance: [
+    ...DIRECTORS, "finance_manager", "accounts_executive",
+  ],
   design: [
     ...DIRECTORS, "principal_architect", "project_architect", "structural_architect",
+  ],
+  sales: [
+    ...DIRECTORS, "sales_director", "delivery_rm_lead",
   ],
   business: [
     ...DIRECTORS, "sales_director", "finance_director", "finance_manager",

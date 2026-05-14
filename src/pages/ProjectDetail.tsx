@@ -15,6 +15,7 @@ import { HandoverPack } from "@/components/site/HandoverPack";
 import { BillingMilestones } from "@/components/finance/BillingMilestones";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { useProjectContext } from "@/contexts/ProjectContext";
+import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
 
 const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admin", "managing_director"];
@@ -682,6 +683,7 @@ export default function ProjectDetail() {
               {proj.construction_type ?? "project"} build type.
             </p>
           </div>
+          <ProjectSetupUpload project={project} projectId={id!} />
         </TabsContent>
 
         <TabsContent value="materials" className="space-y-4">

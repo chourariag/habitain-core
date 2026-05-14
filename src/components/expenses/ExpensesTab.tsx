@@ -13,6 +13,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import * as XLSX from "xlsx";
+import { insertNotifications } from "@/lib/notifications";
 
 const EXPENSE_FLAG_THRESHOLD = 5000;
 
@@ -129,18 +130,49 @@ export function ExpensesTab() {
       if (error) toast.error(`Failed to approve entry: ${error.message}`);
     }
     toast.success("Sent to HOD for approval");
+
+    // Notify finance managers
+    const count = entryIds.length;
+    const amount = entryIds.reduce((s, id) => {
+      const e = entries.find((e) => e.id === id);
+      return s + (e ? Number(e.amount) : 0);
+    }, 0).toLocaleString("en-IN");
+    const { data: financeUsers } = await (supabase.from("profiles") as any).select("auth_user_id")
+      .in("role", ["finance_manager", "finance_director"]).eq("is_active", true);
+    if (financeUsers?.length) {
+      await insertNotifications(financeUsers.map((f: any) => ({
+        recipient_id: f.auth_user_id,
+        title: "Expense Approved by HR",
+        body: `${count} expense(s) totalling ₹${amount} approved by HR — pending Finance sign-off.`,
+        category: "hr",
+        navigate_to: "/finance",
+      })));
+    }
+
     fetchData();
   };
 
   const handleHODApprove = async (entryIds: string[]) => {
     if (!user) return;
     for (const id of entryIds) {
+      const expense = entries.find((e) => e.id === id);
       const { error } = await supabase.from("expense_entries").update({
         status: "approved",
         hod_approved_by: user.id,
         hod_approved_at: new Date().toISOString(),
       } as any).eq("id", id);
-      if (error) toast.error(`Failed to approve entry: ${error.message}`);
+      if (error) {
+        toast.error(`Failed to approve entry: ${error.message}`);
+      } else if (expense) {
+        const amount = Number(expense.amount).toLocaleString("en-IN");
+        await insertNotifications({
+          recipient_id: expense.submitted_by,
+          title: "Expense Approved",
+          body: `Your expense of ₹${amount} has been approved for payment.`,
+          category: "hr",
+          navigate_to: "/attendance",
+        });
+      }
     }
     toast.success("Expenses approved for payment ✓");
     fetchData();

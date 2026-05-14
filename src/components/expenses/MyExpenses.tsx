@@ -9,6 +9,7 @@ import { Loader2, Receipt, Send, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { getSubmissionWindow } from "@/lib/expense-utils";
+import { insertNotifications } from "@/lib/notifications";
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
   draft: { color: "#666", bg: "#F7F7F7" },
@@ -54,6 +55,24 @@ export function MyExpenses() {
     setSubmitting(true);
     for (const d of drafts) {
       await supabase.from("expense_entries").update({ status: "pending_hr" } as any).eq("id", d.id);
+    }
+    // Notify all HR executives
+    const { data: hrUsers } = await supabase
+      .from("profiles")
+      .select("auth_user_id")
+      .eq("role", "hr_executive" as any)
+      .eq("is_active", true);
+    const submitterName = (await supabase.from("profiles").select("display_name").eq("auth_user_id", user?.id ?? "").maybeSingle()).data?.display_name ?? "An employee";
+    if (hrUsers?.length) {
+      await insertNotifications(
+        hrUsers.map((hr) => ({
+          recipient_id: hr.auth_user_id,
+          title: "Expense Report Submitted",
+          body: `${submitterName} submitted ${drafts.length} expense${drafts.length > 1 ? "s" : ""} (₹${drafts.reduce((s, d) => s + Number(d.amount), 0).toLocaleString("en-IN")}) for review.`,
+          category: "hr",
+          navigate_to: "/attendance",
+        }))
+      );
     }
     toast.success(`${drafts.length} expenses submitted for HR review ✓`);
     setSubmitting(false);

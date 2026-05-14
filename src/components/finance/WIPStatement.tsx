@@ -34,11 +34,12 @@ export function WIPStatement() {
     const wipRows: WIPRow[] = [];
 
     for (const p of projects) {
-      // Material cost: sum of GRN items for this project
-      const { data: grnItems } = await (supabase.from("grn_items" as any) as any)
-        .select("total_cost")
-        .eq("project_id", p.id);
-      const materialCost = (grnItems ?? []).reduce((s: number, r: any) => s + (Number(r.total_cost) || 0), 0);
+      // Material cost: sum of material plan items with ordered/received status
+      const { data: matItems } = await (supabase.from("material_plan_items") as any)
+        .select("total_amount")
+        .eq("project_id", p.id)
+        .in("status", ["ordered", "received", "delivered"]);
+      const materialCost = (matItems ?? []).reduce((s: number, r: any) => s + (Number(r.total_amount) || 0), 0);
 
       // Labour cost: sum of payroll / expense entries tagged as labour
       const { data: labourExpenses } = await supabase
