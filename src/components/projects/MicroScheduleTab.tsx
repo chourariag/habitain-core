@@ -457,15 +457,35 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-display text-lg font-semibold text-foreground">Micro-Schedule</h2>
         <div className="flex items-center gap-2 flex-wrap">
-          {canUpload && !hasSetupSchedule && (
-            <>
-              <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
-              <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4 mr-1" /> Template</Button>
-              <Button size="sm" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4 mr-1" /> Upload Schedule</Button>
-            </>
+          <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileUpload} />
+          {canUpload && (
+            <Button size="sm" variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4 mr-1" /> Template</Button>
+          )}
+          {canUpload && tasks.length === 0 && (
+            <Button size="sm" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4 mr-1" /> Upload Schedule</Button>
+          )}
+          {canUpload && tasks.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm("Re-uploading will overwrite existing schedule data. Are you sure?")) fileRef.current?.click();
+              }}
+              className="text-xs underline hover:no-underline"
+              style={{ color: "#666666" }}
+            >
+              Re-upload
+            </button>
           )}
         </div>
       </div>
+
+      {tasks.length === 0 && !canUpload && (
+        <Card>
+          <CardContent className="py-6 text-center">
+            <p className="text-muted-foreground text-sm">No data uploaded yet. Ask Karthik to upload Project Setup Template.</p>
+          </CardContent>
+        </Card>
+      )}
 
       {uploadSummary && (
         <Card className="border-[#006039]/20 bg-[#006039]/5">
@@ -488,26 +508,15 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
         </Card>
       )}
 
-      {tasks.length === 0 ? (
+      {tasks.length === 0 && canUpload ? (
         <Card>
           <CardContent className="py-12 text-center space-y-3">
-            {hasSetupSchedule ? (
-              <>
-                <p className="text-sm" style={{ color: "#F40009" }}>
-                  Schedule rows were uploaded but no tasks were generated. Click refresh — if this persists, re-upload the Project Setup Template.
-                </p>
-                <Button size="sm" variant="outline" onClick={fetchTasks} className="gap-1.5">
-                  <Loader2 className="h-4 w-4" /> Refresh Schedule
-                </Button>
-              </>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                {`No schedule uploaded yet. ${canUpload ? 'Click "Upload Schedule" to import your execution plan.' : "Ask Karthik to upload the schedule."}`}
-              </p>
-            )}
+            <p className="text-muted-foreground text-sm">
+              No schedule uploaded yet. Click "Upload Schedule" to import your execution plan.
+            </p>
           </CardContent>
         </Card>
-      ) : (
+      ) : tasks.length === 0 ? null : (
         <>
           {/* Controls */}
           <div className="flex flex-wrap items-center gap-3">

@@ -19,6 +19,7 @@ import * as XLSX from "xlsx";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { logAudit } from "@/lib/super-admin";
+import { useProjectImportListener } from "@/lib/use-project-import";
 
 // Categories are derived dynamically from each project's uploaded BOQ. Manual entries default to "Miscellaneous".
 
@@ -159,6 +160,7 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
   }, [projectId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+  useProjectImportListener(projectId, fetchAll);
 
   // Dynamic categories: union of all categories present in BOQ items, tender items, GRNs, manual entries, and WO commitments.
   const categoryList = useMemo(() => {
@@ -335,25 +337,44 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
         <CardContent className="p-4 space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <h3 className="font-display text-sm font-semibold" style={{ color: "#1A1A1A" }}>GFC Budget</h3>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <input ref={gfcFileRef} type="file" accept=".xlsx" className="hidden" onChange={handleGfcUpload} />
-              <Button size="sm" variant="outline" onClick={() => {
-                  const wb = XLSX.utils.book_new();
-                  XLSX.utils.book_append_sheet(wb, buildBoqWorksheet(40), TEMPLATES.boq.sheet);
-                  XLSX.writeFile(wb, TEMPLATES.boq.filename);
-                }}
-                style={{ borderColor: "#006039", color: "#006039" }} className="text-xs gap-1">
-                <Download className="h-3 w-3" /> Template
-              </Button>
-              <Button size="sm" onClick={() => gfcFileRef.current?.click()}
-                disabled={uploading}
-                className="text-xs gap-1" style={{ backgroundColor: "#006039" }}>
-                {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
-                Upload BOQ
-              </Button>
+              {canEdit && (
+                <Button size="sm" variant="outline" onClick={() => {
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, buildBoqWorksheet(40), TEMPLATES.boq.sheet);
+                    XLSX.writeFile(wb, TEMPLATES.boq.filename);
+                  }}
+                  style={{ borderColor: "#006039", color: "#006039" }} className="text-xs gap-1">
+                  <Download className="h-3 w-3" /> Template
+                </Button>
+              )}
+              {canEdit && boqItems.length === 0 && (
+                <Button size="sm" onClick={() => gfcFileRef.current?.click()}
+                  disabled={uploading}
+                  className="text-xs gap-1" style={{ backgroundColor: "#006039" }}>
+                  {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+                  Upload BOQ
+                </Button>
+              )}
+              {canEdit && boqItems.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (window.confirm("Re-uploading will overwrite existing BOQ data. Are you sure?")) gfcFileRef.current?.click();
+                  }}
+                  className="text-xs underline hover:no-underline"
+                  style={{ color: "#666666" }}
+                >
+                  Re-upload
+                </button>
+              )}
             </div>
           </div>
-          {!hasH1Signoff && (
+          {boqItems.length === 0 && !canEdit && (
+            <p className="text-xs text-muted-foreground">No data uploaded yet. Ask Karthik to upload Project Setup Template.</p>
+          )}
+          {boqItems.length === 0 && !hasH1Signoff && canEdit && (
             <p className="text-xs flex items-center gap-1" style={{ color: "#D4860A" }}>
               <Lock className="h-3 w-3" /> H1 sign-off not yet recorded — any GFC quantities you upload will be stored as "Pending H1 sign-off" and activate automatically once H1 is issued.
             </p>
