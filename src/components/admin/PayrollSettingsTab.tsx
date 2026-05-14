@@ -18,6 +18,7 @@ interface Cfg {
   monthly_ctc: number;
   basic_pct: number;
   hra_pct: number;
+  conveyance_allowance: number;
   pt_amount: number;
   tds_monthly: number;
   pan: string | null;
@@ -31,7 +32,7 @@ interface Cfg {
 }
 
 const empty = (uid: string): Cfg => ({
-  user_id: uid, monthly_ctc: 0, basic_pct: 40, hra_pct: 50, pt_amount: 200, tds_monthly: 0,
+  user_id: uid, monthly_ctc: 0, basic_pct: 40, hra_pct: 50, conveyance_allowance: 1600, pt_amount: 200, tds_monthly: 0,
   pan: "", pf_number: "", bank_account: "", bank_name: "", ifsc: "", designation: "", department: "", doj: null,
 });
 
