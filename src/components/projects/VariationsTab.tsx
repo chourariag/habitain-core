@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Upload, Download, Loader2, CheckCircle2, XCircle, Clock, FileText, AlertTriangle } from "lucide-react";
+import { Plus, Upload, Download, Loader2, CheckCircle2, XCircle, Clock, FileText, AlertTriangle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { insertNotifications } from "@/lib/notifications";
@@ -38,6 +38,7 @@ const CREATE_ROLES = ["planning_engineer", "costing_engineer", "super_admin", "m
 const SCOPE_APPROVE_ROLES = ["sales_director", "super_admin", "managing_director"];
 const FINANCE_APPROVE_ROLES = ["finance_director", "finance_manager", "super_admin", "managing_director"];
 const MD_APPROVE_ROLES = ["managing_director", "super_admin"];
+const DELETE_ROLES = ["managing_director", "super_admin", "finance_director", "sales_director", "architecture_director"];
 const VIEW_ROLES = [...CREATE_ROLES, ...SCOPE_APPROVE_ROLES, ...FINANCE_APPROVE_ROLES, "sales_executive"];
 
 interface Variation {
@@ -87,6 +88,7 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
   const [formOpen, setFormOpen] = useState(false);
   const [actionDialog, setActionDialog] = useState<{ variation: Variation; action: string } | null>(null);
   const [actionReason, setActionReason] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Variation | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Form state
@@ -100,15 +102,31 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
   const canScopeApprove = SCOPE_APPROVE_ROLES.includes(userRole ?? "");
   const canFinanceApprove = FINANCE_APPROVE_ROLES.includes(userRole ?? "");
   const canMDApprove = MD_APPROVE_ROLES.includes(userRole ?? "");
+  const canDelete = DELETE_ROLES.includes(userRole ?? "");
 
   const fetchVariations = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("project_variations")
+    const { data } = await (supabase
+      .from("project_variations") as any)
       .select("*")
       .eq("project_id", projectId)
-      .order("variation_number", { ascending: true });
-    setVariations((data ?? []) as Variation[]);
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false });
+
+    // Dedupe by variation_number — keep only the latest revision per V.No.
+    // Then sort ascending by numeric V.No (V001, V002, V010 ...).
+    const rows = (data ?? []) as Variation[];
+    const seen = new Set<string>();
+    const latest: Variation[] = [];
+    for (const r of rows) {
+      const key = (r.variation_number || "").trim().toUpperCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      latest.push(r);
+    }
+    const num = (s: string) => parseInt((s || "").replace(/\D+/g, ""), 10) || 0;
+    latest.sort((a, b) => num(a.variation_number) - num(b.variation_number));
+    setVariations(latest);
     setLoading(false);
   }, [projectId]);
 
@@ -144,31 +162,37 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
   const handleSubmit = async () => {
     if (!form.description.trim()) { toast.error("Description is required"); return; }
     if (!form.gfc_qty) { toast.error("GFC Quantity is required"); return; }
+    if (gfcQty <= 0) { toast.error("GFC Qty must be greater than 0"); return; }
+    if (basicRate <= 0) { toast.error("Enter Material Rate and/or Labour Rate"); return; }
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       const { client } = await getAuthedClient();
 
-      const nextNum = `V${String(variations.length + 1).padStart(3, "0")}`;
+      // Compute next V.No based on existing max (avoids collisions when older rows are deleted).
+      const num = (s: string) => parseInt((s || "").replace(/\D+/g, ""), 10) || 0;
+      const maxNum = variations.reduce((m, v) => Math.max(m, num(v.variation_number)), 0);
+      const nextNum = `V${String(maxNum + 1).padStart(3, "0")}`;
 
+      const safe = (n: number) => (Number.isFinite(n) ? Number(n) : 0);
       const row = {
         project_id: projectId,
         variation_number: nextNum,
         description: form.description.trim(),
         scope_change_type: form.scope_change_type,
-        tender_qty: tenderQty,
-        gfc_qty: gfcQty,
-        variance_qty: varianceQty,
+        tender_qty: safe(tenderQty),
+        gfc_qty: safe(gfcQty),
+        variance_qty: safe(varianceQty),
         unit: form.unit.trim() || "nos",
-        material_rate: materialRate,
-        labour_rate: labourRate,
-        basic_rate: basicRate,
-        margin_pct: marginPct,
-        margin_rate: marginRate,
-        final_rate: finalRate,
-        final_cost: finalCost,
-        margin_amount: marginAmount,
+        material_rate: safe(materialRate),
+        labour_rate: safe(labourRate),
+        basic_rate: safe(basicRate),
+        margin_pct: safe(marginPct),
+        margin_rate: safe(marginRate),
+        final_rate: safe(finalRate),
+        final_cost: safe(finalCost),
+        margin_amount: safe(marginAmount),
         initiated_by: user.id,
         status: "Pending Scope Review",
         notes: form.notes.trim() || null,
@@ -272,6 +296,25 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
       toast.success(action === "reject" ? "Variation sent back" : "Variation approved");
       setActionDialog(null);
       setActionReason("");
+      fetchVariations();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    if (!canDelete) { toast.error("Only MD or Directors can delete variations"); return; }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { client } = await getAuthedClient();
+      const { error } = await (client.from("project_variations") as any)
+        .update({ is_deleted: true, deleted_at: new Date().toISOString(), deleted_by: user.id })
+        .eq("id", deleteTarget.id);
+      if (error) throw error;
+      toast.success(`Variation ${deleteTarget.variation_number} deleted`);
+      setDeleteTarget(null);
       fetchVariations();
     } catch (err: any) {
       toast.error(err.message);
@@ -452,6 +495,17 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
                         {v.rejection_reason && v.status === "Draft" && (
                           <span className="text-xs text-red-500 truncate max-w-[120px]" title={v.rejection_reason}>{v.rejection_reason}</span>
                         )}
+                        {canDelete && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-red-600 hover:bg-red-50"
+                            title="Delete variation"
+                            onClick={() => setDeleteTarget(v)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -559,6 +613,27 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
               style={actionDialog?.action !== "reject" ? { backgroundColor: "#006039" } : {}}
             >
               {actionDialog?.action === "reject" ? "Send Back" : "Confirm Approval"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Delete Variation</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm">Delete this variation? This cannot be undone.</p>
+            {deleteTarget && (
+              <p className="text-sm text-muted-foreground">
+                <span className="font-mono">{deleteTarget.variation_number}</span> — {deleteTarget.description}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button className="bg-red-600 hover:bg-red-700" onClick={handleDelete}>
+              <Trash2 className="h-4 w-4 mr-1" /> Delete
             </Button>
           </DialogFooter>
         </DialogContent>
