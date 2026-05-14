@@ -320,7 +320,7 @@ export default function DeliveryChecklist() {
                 style={modulesChecked.every(Boolean) ? { backgroundColor: "#006039", color: "#FFFFFF" } : {}}
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
-                Sign Off — Modules and Panels
+                Sign as Factory Supervisor
               </Button>
             ) : null}
           </TabsContent>
