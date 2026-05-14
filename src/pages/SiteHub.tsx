@@ -17,6 +17,8 @@ import { FloorPlanPositionsTab } from "@/components/site/FloorPlanPositionsTab";
 import { PhotoTimelineTab } from "@/components/site/PhotoTimelineTab";
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
+import { MeasurementSheet } from "@/components/measurements/MeasurementSheet";
+import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPanel";
 import { DispatchPacksTab } from "@/components/site/DispatchPacksTab";
@@ -397,6 +399,20 @@ function SiteHubContent() {
         </TabsContent>
         <TabsContent value="work-orders">
           <WorkOrdersTab mode="site" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
+        </TabsContent>
+        <TabsContent value="site-measurements" className="space-y-4">
+          <Tabs defaultValue="entry" className="space-y-3">
+            <TabsList>
+              <TabsTrigger value="entry">Daily Entry</TabsTrigger>
+              <TabsTrigger value="bill">Running Bill</TabsTrigger>
+            </TabsList>
+            <TabsContent value="entry">
+              <MeasurementSheet location="site" />
+            </TabsContent>
+            <TabsContent value="bill">
+              <RunningBillTable projectId={selectedProjectId} />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
       </Tabs>
     </div>

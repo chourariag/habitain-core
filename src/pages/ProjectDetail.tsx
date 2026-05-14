@@ -20,6 +20,7 @@ import { MaterialPlanTab } from "@/components/procurement/MaterialPlanTab";
 import { VariationsTab } from "@/components/projects/VariationsTab";
 import { ScopeOfWorkTab } from "@/components/projects/ScopeOfWorkTab";
 import { BudgetTrackingTab } from "@/components/projects/BudgetTrackingTab";
+import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
 import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
@@ -210,10 +211,14 @@ export default function ProjectDetail() {
           <Tabs defaultValue="budget-tracking">
             <TabsList className="mb-3">
               <TabsTrigger value="budget-tracking">Budget Tracking</TabsTrigger>
+              <TabsTrigger value="running-bill">Running Bill</TabsTrigger>
               <TabsTrigger value="project-pl">Project P&L</TabsTrigger>
             </TabsList>
             <TabsContent value="budget-tracking">
               <BudgetTrackingTab projectId={id!} contractValue={Number(proj.contract_value) || 0} userRole={userRole} />
+            </TabsContent>
+            <TabsContent value="running-bill">
+              <RunningBillTable projectId={id!} />
             </TabsContent>
             <TabsContent value="project-pl">
               <ProjectPLSubTab projectId={id!} contractValue={Number(proj.contract_value) || 0} />
