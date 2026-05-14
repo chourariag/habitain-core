@@ -127,6 +127,30 @@ export default function Approvals() {
         </TabsList>
 
         <TabsContent value="pending" className="mt-4 space-y-3">
+          {pendingAdvances && pendingAdvances.length > 0 && (
+            <div className="rounded-lg border p-3 flex items-center justify-between gap-3"
+              style={{ background: "#FFF8E8", borderColor: "#F5E0B0" }}>
+              <div className="flex items-center gap-3">
+                <Wallet className="h-5 w-5" style={{ color: "#D4860A" }} />
+                <div>
+                  <div className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>
+                    {pendingAdvances.length} advance request{pendingAdvances.length === 1 ? "" : "s"} pending
+                    {pendingAdvances.some(a => a.is_emergency) && (
+                      <Badge className="ml-2 text-[10px]" style={{ background: "#FDE8E8", color: "#F40009" }}>EMERGENCY</Badge>
+                    )}
+                  </div>
+                  <div className="text-xs" style={{ color: "#666" }}>
+                    Total ₹{pendingAdvances.reduce((s, a) => s + Number(a.amount || 0), 0).toLocaleString("en-IN")} ·
+                    Action in Finance → Costing & Estimation → Advance Requests
+                  </div>
+                </div>
+              </div>
+              <Button asChild size="sm" style={{ background: "#006039", color: "#fff" }}>
+                <Link to="/finance?tab=costing">Review <ArrowRight className="h-3 w-3 ml-1" /></Link>
+              </Button>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-2">
             {(["all","project","user","financial","overdue"] as const).map(f => (
               <button key={f} onClick={() => setFilter(f)}
