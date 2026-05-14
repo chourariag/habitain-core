@@ -210,10 +210,14 @@ export default function ProjectDetail() {
           <Tabs defaultValue="budget-tracking">
             <TabsList className="mb-3">
               <TabsTrigger value="budget-tracking">Budget Tracking</TabsTrigger>
+              <TabsTrigger value="running-bill">Running Bill</TabsTrigger>
               <TabsTrigger value="project-pl">Project P&L</TabsTrigger>
             </TabsList>
             <TabsContent value="budget-tracking">
               <BudgetTrackingTab projectId={id!} contractValue={Number(proj.contract_value) || 0} userRole={userRole} />
+            </TabsContent>
+            <TabsContent value="running-bill">
+              <RunningBillTable projectId={id!} />
             </TabsContent>
             <TabsContent value="project-pl">
               <ProjectPLSubTab projectId={id!} contractValue={Number(proj.contract_value) || 0} />
