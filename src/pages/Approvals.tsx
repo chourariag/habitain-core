@@ -42,6 +42,18 @@ export default function Approvals() {
     queryFn: () => listApprovalRequests(),
   });
 
+  // Surface pending advance requests as a separate category (handled in Finance → Costing & Estimation)
+  const { data: pendingAdvances } = useQuery({
+    queryKey: ["pending-advance-requests-count"],
+    queryFn: async () => {
+      const { data } = await (supabase.from("advance_requests") as any)
+        .select("id, employee_name, amount, project_name, created_at, is_emergency")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      return (data ?? []) as Array<{ id: string; employee_name: string | null; amount: number; project_name: string | null; created_at: string; is_emergency: boolean | null }>;
+    },
+  });
+
   // Auto-open from deep-link ?id=
   useEffect(() => {
     const id = searchParams.get("id");
