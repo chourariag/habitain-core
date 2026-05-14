@@ -25,7 +25,7 @@ import { TallyPOUploadTab } from "@/components/procurement/TallyPOUploadTab";
 import { MaterialAvailabilityGate } from "@/components/procurement/MaterialAvailabilityGate";
 import { ThirtyDayPlanTab } from "@/components/procurement/ThirtyDayPlanTab";
 import { ProcurementDashboardStrip } from "@/components/procurement/ProcurementDashboardStrip";
-import { AssetRegisterTab } from "@/components/procurement/AssetRegisterTab";
+
 import { SupplierIntelligenceTab } from "@/components/procurement/SupplierIntelligenceTab";
 import { MaterialAlertsTab } from "@/components/procurement/MaterialAlertsTab";
 import { GRNTab } from "@/components/procurement/GRNTab";
