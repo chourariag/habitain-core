@@ -62,7 +62,7 @@ export function ExpenseExcelUpload() {
   const [submitting, setSubmitting] = useState(false);
   const [fileName, setFileName] = useState("");
 
-  const isHR = role === "hr_executive" || role === "super_admin" || role === "managing_director";
+  
   const window = getSubmissionWindow();
 
   useEffect(() => {
