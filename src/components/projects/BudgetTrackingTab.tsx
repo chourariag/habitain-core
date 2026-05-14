@@ -19,6 +19,7 @@ import * as XLSX from "xlsx";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { logAudit } from "@/lib/super-admin";
+import { useProjectImportListener } from "@/lib/use-project-import";
 
 // Categories are derived dynamically from each project's uploaded BOQ. Manual entries default to "Miscellaneous".
 
@@ -159,6 +160,7 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
   }, [projectId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+  useProjectImportListener(projectId, fetchAll);
 
   // Dynamic categories: union of all categories present in BOQ items, tender items, GRNs, manual entries, and WO commitments.
   const categoryList = useMemo(() => {
