@@ -6661,6 +6661,8 @@ export type Database = {
           basic_rate: number | null
           created_at: string
           date_raised: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           description: string
           final_cost: number | null
           final_rate: number | null
@@ -6669,6 +6671,7 @@ export type Database = {
           gfc_qty: number | null
           id: string
           initiated_by: string | null
+          is_deleted: boolean
           labour_rate: number | null
           linked_boq_item_id: string | null
           margin_amount: number | null
@@ -6695,6 +6698,8 @@ export type Database = {
           basic_rate?: number | null
           created_at?: string
           date_raised?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description: string
           final_cost?: number | null
           final_rate?: number | null
@@ -6703,6 +6708,7 @@ export type Database = {
           gfc_qty?: number | null
           id?: string
           initiated_by?: string | null
+          is_deleted?: boolean
           labour_rate?: number | null
           linked_boq_item_id?: string | null
           margin_amount?: number | null
@@ -6729,6 +6735,8 @@ export type Database = {
           basic_rate?: number | null
           created_at?: string
           date_raised?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           description?: string
           final_cost?: number | null
           final_rate?: number | null
@@ -6737,6 +6745,7 @@ export type Database = {
           gfc_qty?: number | null
           id?: string
           initiated_by?: string | null
+          is_deleted?: boolean
           labour_rate?: number | null
           linked_boq_item_id?: string | null
           margin_amount?: number | null
