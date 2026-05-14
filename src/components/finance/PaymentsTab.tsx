@@ -255,7 +255,7 @@ export function PaymentsTab() {
       { name: "60+ days", min: 61, max: Infinity, color: "#F40009", count: 0, total: 0 },
     ];
     payments.forEach(p => {
-      if (p.status === "received") return;
+      if (p.status === "received" || !p.due_date) return;
       const days = differenceInDays(today, new Date(p.due_date));
       if (days <= 0) { buckets[0].count++; buckets[0].total += p.amount; }
       else if (days <= 30) { buckets[1].count++; buckets[1].total += p.amount; }
