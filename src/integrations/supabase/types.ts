@@ -5375,6 +5375,7 @@ export type Database = {
           bank_account: string | null
           bank_name: string | null
           basic_pct: number
+          conveyance_allowance: number
           created_at: string
           created_by: string | null
           department: string | null
@@ -5398,6 +5399,7 @@ export type Database = {
           bank_account?: string | null
           bank_name?: string | null
           basic_pct?: number
+          conveyance_allowance?: number
           created_at?: string
           created_by?: string | null
           department?: string | null
@@ -5421,6 +5423,7 @@ export type Database = {
           bank_account?: string | null
           bank_name?: string | null
           basic_pct?: number
+          conveyance_allowance?: number
           created_at?: string
           created_by?: string | null
           department?: string | null
@@ -5445,8 +5448,11 @@ export type Database = {
       payslips: {
         Row: {
           basic: number
+          conveyance_allowance: number
           created_at: string
+          days_absent: number | null
           days_in_month: number | null
+          days_present: number | null
           days_worked: number | null
           deductions: number
           generated_at: string | null
@@ -5454,13 +5460,18 @@ export type Database = {
           gross_amount: number
           hra: number
           id: string
+          leave_taken: number | null
+          lop_days: number | null
           month: number
           net_pay: number
           notes: string | null
           pdf_url: string | null
           pf_deduction: number
           pt_deduction: number
+          revision: number
           special_allowance: number
+          superseded_at: string | null
+          superseded_by: string | null
           tds_deduction: number
           updated_at: string
           uploaded_by: string | null
@@ -5469,8 +5480,11 @@ export type Database = {
         }
         Insert: {
           basic?: number
+          conveyance_allowance?: number
           created_at?: string
+          days_absent?: number | null
           days_in_month?: number | null
+          days_present?: number | null
           days_worked?: number | null
           deductions?: number
           generated_at?: string | null
@@ -5478,13 +5492,18 @@ export type Database = {
           gross_amount?: number
           hra?: number
           id?: string
+          leave_taken?: number | null
+          lop_days?: number | null
           month: number
           net_pay?: number
           notes?: string | null
           pdf_url?: string | null
           pf_deduction?: number
           pt_deduction?: number
+          revision?: number
           special_allowance?: number
+          superseded_at?: string | null
+          superseded_by?: string | null
           tds_deduction?: number
           updated_at?: string
           uploaded_by?: string | null
@@ -5493,8 +5512,11 @@ export type Database = {
         }
         Update: {
           basic?: number
+          conveyance_allowance?: number
           created_at?: string
+          days_absent?: number | null
           days_in_month?: number | null
+          days_present?: number | null
           days_worked?: number | null
           deductions?: number
           generated_at?: string | null
@@ -5502,13 +5524,18 @@ export type Database = {
           gross_amount?: number
           hra?: number
           id?: string
+          leave_taken?: number | null
+          lop_days?: number | null
           month?: number
           net_pay?: number
           notes?: string | null
           pdf_url?: string | null
           pf_deduction?: number
           pt_deduction?: number
+          revision?: number
           special_allowance?: number
+          superseded_at?: string | null
+          superseded_by?: string | null
           tds_deduction?: number
           updated_at?: string
           uploaded_by?: string | null
