@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Navigate as _NavUnused } from "react-router-dom";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
