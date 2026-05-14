@@ -285,7 +285,7 @@ export default function Drawings() {
       const { client } = await getAuthedClient();
       const { error } = await (client.from("design_queries") as any).insert({
         project_id: dqForm.project_id,
-        module_id: dqForm.module_id || null,
+        module_id: dqScope === "general" ? null : (dqForm.module_id || null),
         dq_code: dqCode,
         drawing_id: dqForm.drawing_id || null,
         description: dqForm.description,
