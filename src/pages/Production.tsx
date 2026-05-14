@@ -213,6 +213,10 @@ function ProductionContent() {
             <TabsContent value="work-orders">
               <WorkOrdersTab mode="factory" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
             </TabsContent>
+
+            <TabsContent value="measurements">
+              <MeasurementSheet location="factory" />
+            </TabsContent>
           </Tabs>
         )}
       </div>
