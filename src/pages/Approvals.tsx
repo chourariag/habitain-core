@@ -1,17 +1,18 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, Check, X, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Check, X, ShieldCheck, Wallet, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
 import { listApprovalRequests, type ApprovalRequest } from "@/lib/approval-requests";
 import { approveRequest, rejectRequest, APPROVAL_TYPE_META, summarizeRequest } from "@/lib/approval-actions";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 const APPROVER_ROLES = ["managing_director", "super_admin", "sales_director", "principal_architect"];
