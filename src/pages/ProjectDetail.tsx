@@ -20,6 +20,7 @@ import { MaterialPlanTab } from "@/components/procurement/MaterialPlanTab";
 import { VariationsTab } from "@/components/projects/VariationsTab";
 import { ScopeOfWorkTab } from "@/components/projects/ScopeOfWorkTab";
 import { BudgetTrackingTab } from "@/components/projects/BudgetTrackingTab";
+import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
 import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
