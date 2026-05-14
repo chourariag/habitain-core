@@ -400,6 +400,20 @@ function SiteHubContent() {
         <TabsContent value="work-orders">
           <WorkOrdersTab mode="site" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
         </TabsContent>
+        <TabsContent value="site-measurements" className="space-y-4">
+          <Tabs defaultValue="entry" className="space-y-3">
+            <TabsList>
+              <TabsTrigger value="entry">Daily Entry</TabsTrigger>
+              <TabsTrigger value="bill">Running Bill</TabsTrigger>
+            </TabsList>
+            <TabsContent value="entry">
+              <MeasurementSheet location="site" />
+            </TabsContent>
+            <TabsContent value="bill">
+              <RunningBillTable projectId={selectedProjectId} />
+            </TabsContent>
+          </Tabs>
+        </TabsContent>
       </Tabs>
     </div>
     </div>
