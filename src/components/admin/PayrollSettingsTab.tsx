@@ -35,6 +35,12 @@ const empty = (uid: string): Cfg => ({
   pan: "", pf_number: "", bank_account: "", bank_name: "", ifsc: "", designation: "", department: "", doj: null,
 });
 
+function nameFromEmail(email: string | null): string {
+  if (!email) return "Unnamed";
+  const local = email.split("@")[0] || email;
+  return local.split(/[._-]+/).filter(Boolean).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" ") || email;
+}
+
 export function PayrollSettingsTab() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [configs, setConfigs] = useState<Record<string, Cfg>>({});
@@ -61,7 +67,7 @@ export function PayrollSettingsTab() {
     const q = filter.trim().toLowerCase();
     if (!q) return employees;
     return employees.filter(e =>
-      (e.display_name || "").toLowerCase().includes(q) ||
+      (e.display_name || nameFromEmail(e.email)).toLowerCase().includes(q) ||
       (e.email || "").toLowerCase().includes(q) ||
       (ROLE_LABELS[e.role as AppRole] || "").toLowerCase().includes(q),
     );
@@ -97,8 +103,8 @@ export function PayrollSettingsTab() {
   return (
     <div className="space-y-3">
       <Input placeholder="Search employee…" value={filter} onChange={e => setFilter(e.target.value)} className="max-w-sm" />
-      <div className="rounded-lg border border-border overflow-x-auto bg-card">
-        <table className="w-full text-xs">
+      <div className="rounded-lg border border-border overflow-x-auto bg-card -mx-2 sm:mx-0" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x pan-y" }}>
+        <table className="w-full text-xs min-w-[1400px]">
           <thead>
             <tr style={{ backgroundColor: "#F7F7F7" }}>
               {["Employee", "Designation", "Dept", "DOJ", "PAN", "PF No.", "Bank A/c", "Bank", "IFSC", "Monthly CTC ₹", "Basic %", "HRA %", "PT ₹", "TDS ₹", ""].map(h => (
@@ -120,7 +126,7 @@ export function PayrollSettingsTab() {
               return (
                 <tr key={e.auth_user_id} className="border-t border-border align-middle">
                   <td className="px-2 py-1.5">
-                    <div className="font-medium whitespace-nowrap">{e.display_name || "—"}</div>
+                    <div className="font-medium whitespace-nowrap">{e.display_name?.trim() || nameFromEmail(e.email)}</div>
                     <div className="text-[10px]" style={{ color: "#999" }}>{ROLE_LABELS[e.role as AppRole] || e.role}</div>
                   </td>
                   <td className="px-2 py-1.5">{i("designation", "text", "w-28")}</td>
