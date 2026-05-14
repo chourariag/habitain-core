@@ -46,6 +46,10 @@ interface Props {
 }
 
 export function DispatchPacksTab({ projectId }: Props) {
+  const navigate = useNavigate();
+  const { role } = useUserRole();
+  const { selectedProject } = useProjectContext();
+  const canCreate = CREATE_ROLES.includes(role ?? "");
   const [packs, setPacks] = useState<DispatchPack[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPack, setSelectedPack] = useState<DispatchPack | null>(null);
@@ -53,6 +57,14 @@ export function DispatchPacksTab({ projectId }: Props) {
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [managerName, setManagerName] = useState<string | null>(null);
   const [teamNames, setTeamNames] = useState<string[]>([]);
+
+  const handleCreate = () => {
+    const params = new URLSearchParams({
+      projectId,
+      projectName: selectedProject?.name ?? "",
+    });
+    navigate(`/dispatch-pack-form?${params.toString()}`);
+  };
 
   const fetchPacks = useCallback(async () => {
     setLoading(true);
