@@ -698,12 +698,10 @@ export default function Drawings() {
                 <p className="text-xs font-medium" style={{ color: "#999" }}>Project</p>
                 <p className="text-sm">{projectMap[selectedDq.project_id] ?? "—"}</p>
               </div>
-              {selectedDq.module_id && (
-                <div>
-                  <p className="text-xs font-medium" style={{ color: "#999" }}>Module</p>
-                  <p className="text-sm">{moduleMap[selectedDq.module_id]?.name ?? "—"}</p>
-                </div>
-              )}
+              <div>
+                <p className="text-xs font-medium" style={{ color: "#999" }}>Module</p>
+                <p className="text-sm">{selectedDq.module_id ? (moduleMap[selectedDq.module_id]?.name ?? "—") : "General"}</p>
+              </div>
               <div>
                 <p className="text-xs font-medium" style={{ color: "#999" }}>Description</p>
                 <p className="text-sm">{selectedDq.description}</p>
