@@ -457,6 +457,13 @@ export function RevenueMarginTab() {
                   ))}
                 </div>
 
+                <div>
+                  <Label className="text-xs mb-1 block">Running Bill (BOQ vs Earned)</Label>
+                  <div className="border rounded-lg p-2 bg-muted/20 max-h-72 overflow-y-auto">
+                    <RunningBillTable projectId={editRow.project_id} />
+                  </div>
+                </div>
+
                 <div className="space-y-3">
                   <div>
                     <Label className="text-xs">Expected Final Cost (₹)</Label>
