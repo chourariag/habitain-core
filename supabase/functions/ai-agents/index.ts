@@ -5,11 +5,48 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+async function requireMD(req: Request, supabaseUrl: string): Promise<{ ok: boolean; userId?: string }> {
+  // Allow internal cron callers via shared secret
+  const cronSecret = req.headers.get("x-cron-secret");
+  if (cronSecret && cronSecret === Deno.env.get("AI_AGENTS_CRON_SECRET")) {
+    return { ok: true };
+  }
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader) return { ok: false };
+  const userClient = createClient(
+    supabaseUrl,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+  const { data: { user } } = await userClient.auth.getUser();
+  if (!user) return { ok: false };
+  const adminClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const { data: prof } = await adminClient
+    .from("profiles")
+    .select("role,is_active")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+  const role = (prof as any)?.role;
+  const isActive = (prof as any)?.is_active;
+  if (!isActive) return { ok: false };
+  if (role === "super_admin" || role === "managing_director") return { ok: true, userId: user.id };
+  return { ok: false };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+  const auth = await requireMD(req, supabaseUrl);
+  if (!auth.ok) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const supabase = createClient(supabaseUrl, serviceKey);
 
   const { agent, payload } = await req.json();
