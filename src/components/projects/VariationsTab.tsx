@@ -88,6 +88,7 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
   const [formOpen, setFormOpen] = useState(false);
   const [actionDialog, setActionDialog] = useState<{ variation: Variation; action: string } | null>(null);
   const [actionReason, setActionReason] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Variation | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Form state
