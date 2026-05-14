@@ -66,7 +66,7 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       const yr = String(new Date().getFullYear()).slice(-2);
       const prefix = String(proj?.name || "").replace(/[^A-Za-z]/g, "").slice(0, 4).toUpperCase().padEnd(4, "X");
       const seq = String(projectId).replace(/-/g, "").slice(0, 3).toUpperCase();
-      const projectCode = proj?.code || `${prefix}/${yr}/${seq}`;
+      const projectCode = `${prefix}/${yr}/${seq}`;
       const fmtDate = (d: any) => d ? format(new Date(d), "dd/MM/yyyy") : "";
 
       // Load the official template from /public/templates/ — preserves layout, styles, formulas.
