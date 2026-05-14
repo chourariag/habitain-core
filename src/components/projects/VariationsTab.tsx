@@ -495,6 +495,17 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
                         {v.rejection_reason && v.status === "Draft" && (
                           <span className="text-xs text-red-500 truncate max-w-[120px]" title={v.rejection_reason}>{v.rejection_reason}</span>
                         )}
+                        {canDelete && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 text-red-600 hover:bg-red-50"
+                            title="Delete variation"
+                            onClick={() => setDeleteTarget(v)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
