@@ -13,6 +13,8 @@ import { ManpowerWeeklyExcel } from "@/components/labour/ManpowerWeeklyExcel";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
+import { FloorPlanPositionsTab } from "@/components/site/FloorPlanPositionsTab";
+import { PhotoTimelineTab } from "@/components/site/PhotoTimelineTab";
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
