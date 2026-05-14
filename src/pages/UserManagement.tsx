@@ -27,7 +27,19 @@ const RAISER_ROLES = [
 ];
 const MD_ROLES = ["managing_director","super_admin"];
 const PROJECT_APPROVER_ROLES = ["managing_director","super_admin","sales_director","principal_architect"];
-const TEMP_PASSWORD = "HStack@2026";
+function generateTempPassword(): string {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghijkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const symbols = "!@#$%^&*";
+  const all = upper + lower + digits + symbols;
+  const buf = new Uint32Array(16);
+  crypto.getRandomValues(buf);
+  const pick = (set: string, n: number) => set[n % set.length];
+  let pwd = pick(upper, buf[0]) + pick(lower, buf[1]) + pick(digits, buf[2]) + pick(symbols, buf[3]);
+  for (let i = 4; i < 16; i++) pwd += pick(all, buf[i]);
+  return pwd;
+}
 
 type Profile = {
   id: string; auth_user_id: string;
