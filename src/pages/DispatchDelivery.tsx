@@ -20,10 +20,6 @@ const ALLOWED_ROLES = [
 function DispatchDeliveryContent() {
   const { role } = useUserRole();
   const { selectedProjectId, selectedProject } = useProjectContext();
-  const [userRole, setUserRole] = useState<string | null>(role ?? null);
-  const navigate = useNavigate();
-
-  useEffect(() => { setUserRole(role ?? null); }, [role]);
 
   if (role && !ALLOWED_ROLES.includes(role)) return <Navigate to="/dashboard" replace />;
   if (!selectedProjectId) {
@@ -44,45 +40,20 @@ function DispatchDeliveryContent() {
       <Tabs defaultValue="packs" className="w-full">
         <ScrollableTabsWrapper>
           <TabsList>
-            <TabsTrigger value="packs">Dispatch Packs</TabsTrigger>
-            <TabsTrigger value="delivery">Delivery Checklist</TabsTrigger>
-            <TabsTrigger value="installation">Installation Sequence</TabsTrigger>
+            <TabsTrigger value="packs">Stage 1 — Dispatch Pack</TabsTrigger>
+            <TabsTrigger value="delivery">Stage 2 — Delivery Checklist</TabsTrigger>
+            <TabsTrigger value="installation">Stage 3 — Installation Sequence</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
         <TabsContent value="packs">
-          <DispatchPacksTab projectId={selectedProjectId} />
+          <DispatchPackFormV2 projectId={selectedProjectId} projectName={selectedProject?.name ?? ""} />
         </TabsContent>
         <TabsContent value="delivery">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm flex items-center gap-2">
-                <ClipboardCheck className="h-4 w-4" style={{ color: "#006039" }} /> Delivery Checklist — 3-Part Sign-Off
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-xs" style={{ color: "#666" }}>
-                Three sign-offs required before dispatch:
-                <br/>1. <strong>Rakesh</strong> — Pre-Dispatch (Factory Supervisor)
-                <br/>2. <strong>Sandeep</strong> — Stores Confirmation
-                <br/>3. <strong>Awaiz</strong> — Site Installation Manager
-              </p>
-              <Button
-                onClick={() => navigate(`/production/delivery-checklist/${selectedProjectId}`)}
-                className="gap-1.5"
-                style={{ backgroundColor: "#006039", color: "#FFFFFF" }}
-              >
-                <ClipboardCheck className="h-4 w-4" /> Open Delivery Checklist
-              </Button>
-            </CardContent>
-          </Card>
+          <DeliveryChecklistV2 projectId={selectedProjectId} projectName={selectedProject?.name ?? ""} />
         </TabsContent>
         <TabsContent value="installation">
-          <InstallationSequenceDoc
-            projectId={selectedProjectId}
-            projectName={selectedProject?.name ?? ""}
-            userRole={userRole}
-          />
+          <InstallationSequenceV2 projectId={selectedProjectId} projectName={selectedProject?.name ?? ""} />
         </TabsContent>
       </Tabs>
     </div>
