@@ -318,7 +318,7 @@ export function PaymentsTab() {
               <th className="text-right py-2 text-xs font-display">Days Overdue</th>
             </tr></thead>
             <tbody>{payments.map(p => {
-              const days = p.status === "overdue" ? differenceInDays(new Date(), new Date(p.due_date)) : 0;
+              const days = p.status === "overdue" && p.due_date ? differenceInDays(new Date(), new Date(p.due_date)) : 0;
               return (
                 <tr key={p.id} className="border-b" style={{ backgroundColor: p.status === "overdue" ? "#FFF8E8" : undefined }}>
                   <td className="py-1.5 text-xs">{p.project_name}</td>
