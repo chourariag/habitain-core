@@ -162,31 +162,37 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
   const handleSubmit = async () => {
     if (!form.description.trim()) { toast.error("Description is required"); return; }
     if (!form.gfc_qty) { toast.error("GFC Quantity is required"); return; }
+    if (gfcQty <= 0) { toast.error("GFC Qty must be greater than 0"); return; }
+    if (basicRate <= 0) { toast.error("Enter Material Rate and/or Labour Rate"); return; }
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
       const { client } = await getAuthedClient();
 
-      const nextNum = `V${String(variations.length + 1).padStart(3, "0")}`;
+      // Compute next V.No based on existing max (avoids collisions when older rows are deleted).
+      const num = (s: string) => parseInt((s || "").replace(/\D+/g, ""), 10) || 0;
+      const maxNum = variations.reduce((m, v) => Math.max(m, num(v.variation_number)), 0);
+      const nextNum = `V${String(maxNum + 1).padStart(3, "0")}`;
 
+      const safe = (n: number) => (Number.isFinite(n) ? Number(n) : 0);
       const row = {
         project_id: projectId,
         variation_number: nextNum,
         description: form.description.trim(),
         scope_change_type: form.scope_change_type,
-        tender_qty: tenderQty,
-        gfc_qty: gfcQty,
-        variance_qty: varianceQty,
+        tender_qty: safe(tenderQty),
+        gfc_qty: safe(gfcQty),
+        variance_qty: safe(varianceQty),
         unit: form.unit.trim() || "nos",
-        material_rate: materialRate,
-        labour_rate: labourRate,
-        basic_rate: basicRate,
-        margin_pct: marginPct,
-        margin_rate: marginRate,
-        final_rate: finalRate,
-        final_cost: finalCost,
-        margin_amount: marginAmount,
+        material_rate: safe(materialRate),
+        labour_rate: safe(labourRate),
+        basic_rate: safe(basicRate),
+        margin_pct: safe(marginPct),
+        margin_rate: safe(marginRate),
+        final_rate: safe(finalRate),
+        final_cost: safe(finalCost),
+        margin_amount: safe(marginAmount),
         initiated_by: user.id,
         status: "Pending Scope Review",
         notes: form.notes.trim() || null,
