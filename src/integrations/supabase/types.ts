@@ -3717,12 +3717,45 @@ export type Database = {
         }
         Relationships: []
       }
+      kpi_md_notes: {
+        Row: {
+          created_at: string
+          id: string
+          month: string
+          note: string
+          updated_at: string
+          user_id: string
+          written_by: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          month: string
+          note: string
+          updated_at?: string
+          user_id: string
+          written_by: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          month?: string
+          note?: string
+          updated_at?: string
+          user_id?: string
+          written_by?: string
+        }
+        Relationships: []
+      }
       kpi_snapshots: {
         Row: {
           actual_value: number | null
           created_at: string
           id: string
           kpi_key: string
+          metric_payload: Json | null
+          period_date: string | null
+          period_type: string
           score: number | null
           status: string
           target_value: number | null
@@ -3734,6 +3767,9 @@ export type Database = {
           created_at?: string
           id?: string
           kpi_key: string
+          metric_payload?: Json | null
+          period_date?: string | null
+          period_type?: string
           score?: number | null
           status?: string
           target_value?: number | null
@@ -3745,6 +3781,9 @@ export type Database = {
           created_at?: string
           id?: string
           kpi_key?: string
+          metric_payload?: Json | null
+          period_date?: string | null
+          period_type?: string
           score?: number | null
           status?: string
           target_value?: number | null
@@ -3783,6 +3822,39 @@ export type Database = {
           old_target?: number | null
           reason?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      kpi_tracked_employees: {
+        Row: {
+          created_at: string
+          display_name_hint: string | null
+          id: string
+          is_active: boolean
+          role_hint: string | null
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name_hint?: string | null
+          id?: string
+          is_active?: boolean
+          role_hint?: string | null
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name_hint?: string | null
+          id?: string
+          is_active?: boolean
+          role_hint?: string | null
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

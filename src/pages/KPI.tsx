@@ -11,6 +11,9 @@ import {
   getScoreColor, getStatusBadge, getWeekRange,
 } from "@/lib/kpi-helpers";
 import { KPIScorecard } from "@/components/kpi/KPIScorecard";
+import { KpiOverviewGrid } from "@/components/kpi/KpiOverviewGrid";
+import { MdNotePanel } from "@/components/kpi/MdNotePanel";
+import { supabase as sbForRecompute } from "@/integrations/supabase/client";
 
 export default function KPI() {
   const { role, userId, loading: roleLoading } = useUserRole();
@@ -62,9 +65,10 @@ function DirectorView({ week }: { week: ReturnType<typeof getWeekRange> }) {
 
   if (selectedUser) {
     return (
-      <div>
-        <Button variant="ghost" className="mb-4 text-sm" onClick={() => setSelectedUser(null)}>← Back to Team</Button>
+      <div className="space-y-4">
+        <Button variant="ghost" className="text-sm" onClick={() => setSelectedUser(null)}>← Back to Team</Button>
         <KPIScorecard userId={selectedUser.id} userRole={selectedUser.role} week={week} />
+        <MdNotePanel userId={selectedUser.id} />
       </div>
     );
   }
@@ -86,10 +90,16 @@ function DirectorView({ week }: { week: ReturnType<typeof getWeekRange> }) {
         </Select>
       </div>
 
+      <KpiOverviewGrid onSelect={(id, r) => {
+        setSelectedUser({ id, role: r });
+        // fire-and-forget recompute for fresh data
+        void sbForRecompute.functions.invoke("kpi-recompute", { body: null }).catch(() => {});
+      }} />
+
       <div className="rounded-lg border border-border p-4" style={{ backgroundColor: "#F7F7F7" }}>
         <div className="flex items-center gap-2 text-sm" style={{ color: "#D4860A" }}>
           <Info className="h-4 w-4 shrink-0" />
-          <span>KPI targets will be configured during Phase 5 setup. Live data is already being tracked.</span>
+          <span>KPI targets are configurable in Super Admin → KPI Settings. Metrics with no source data show "Insufficient Data".</span>
         </div>
       </div>
 
@@ -208,9 +218,10 @@ function HODView({ role, week }: { role: AppRole; week: ReturnType<typeof getWee
 
   if (selectedUser) {
     return (
-      <div>
-        <Button variant="ghost" className="mb-4 text-sm" onClick={() => setSelectedUser(null)}>← Back to Team</Button>
+      <div className="space-y-4">
+        <Button variant="ghost" className="text-sm" onClick={() => setSelectedUser(null)}>← Back to Team</Button>
         <KPIScorecard userId={selectedUser.id} userRole={selectedUser.role} week={week} />
+        <MdNotePanel userId={selectedUser.id} />
       </div>
     );
   }
