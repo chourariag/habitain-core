@@ -617,6 +617,27 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete confirmation */}
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Delete Variation</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm">Delete this variation? This cannot be undone.</p>
+            {deleteTarget && (
+              <p className="text-sm text-muted-foreground">
+                <span className="font-mono">{deleteTarget.variation_number}</span> — {deleteTarget.description}
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button className="bg-red-600 hover:bg-red-700" onClick={handleDelete}>
+              <Trash2 className="h-4 w-4 mr-1" /> Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
