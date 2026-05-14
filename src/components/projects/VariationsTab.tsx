@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Upload, Download, Loader2, CheckCircle2, XCircle, Clock, FileText, AlertTriangle } from "lucide-react";
+import { Plus, Upload, Download, Loader2, CheckCircle2, XCircle, Clock, FileText, AlertTriangle, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { insertNotifications } from "@/lib/notifications";
