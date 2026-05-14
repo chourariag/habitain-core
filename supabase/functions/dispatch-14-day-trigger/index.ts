@@ -62,12 +62,12 @@ Deno.serve(async (req) => {
       if (existing?.length) continue;
       await sb.from("notifications").insert({
         recipient_id: r.auth_user_id,
-        title: "Fill Site Schedule — dispatch in 14 days",
-        body: `Open Site Hub → Schedule for ${p.name} and enter the 8 site stage dates.`,
+        title: "Site stage dates needed",
+        body: `Site stage dates needed for ${p.name}. Dispatch is in 14 days on ${targetISO}. Please fill site stage planned dates in Projects → ${p.name} → Schedule → Site Stages section.`,
         category: "Production",
         related_table: "project_stages",
         related_id: p.id,
-        navigate_to: "/site-hub",
+        navigate_to: `/projects/${p.id}?tab=schedule`,
       });
       inserted++;
     }
@@ -81,12 +81,12 @@ Deno.serve(async (req) => {
       if (existing?.length) continue;
       await sb.from("notifications").insert({
         recipient_id: r.auth_user_id,
-        title: "Fill Installation Sequence — dispatch in 14 days",
-        body: `Open Site Hub → Installation Sequence for ${p.name} and enter the module erection order.`,
+        title: "Installation Sequence needed",
+        body: `Installation Sequence needed for ${p.name}. Please fill the erection order and crane plan in On Site Works → Site Hub → Installation Sequence.`,
         category: "Production",
         related_table: "installation_sequence_docs",
         related_id: p.id,
-        navigate_to: "/dispatch-delivery",
+        navigate_to: "/site-hub?tab=installation-sequence",
       });
       inserted++;
     }
