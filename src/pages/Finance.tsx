@@ -86,6 +86,7 @@ export default function Finance() {
               <TabsTrigger value="work-orders">Work Order Approvals</TabsTrigger>
               <TabsTrigger value="po-approvals">PO Approvals</TabsTrigger>
               <TabsTrigger value="expense-approvals">Expense Approvals</TabsTrigger>
+              <TabsTrigger value="advance-approvals">Advance Requests</TabsTrigger>
             </TabsList>
             <TabsContent value="work-orders"><WorkOrdersTab mode="finance" /></TabsContent>
             <TabsContent value="po-approvals">
