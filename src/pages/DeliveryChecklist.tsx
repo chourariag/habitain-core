@@ -16,53 +16,32 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { useUserRole } from "@/hooks/useUserRole";
 
+// Section 2 — Pre-Dispatch (Rakesh, Factory Supervisor)
 const MODULES_ITEMS = [
-  "All modules and panels physically present at loading bay",
-  "Quantity matches the approved dispatch order",
-  "Each module/panel ID verified against project register",
-  "All panels wrapped and edge-protected",
-  "Electrical connections capped and taped at all penetrations",
-  "MEP penetrations sealed with fire-rated sealant",
-  "Structural bolts, connectors, and brackets packed separately and labelled",
-  "Glass and window units padded and secured",
-  "Finish surfaces protected with foam or bubble wrap",
-  "All panels labelled with project name, module ID, and installation sequence",
-  "Loading sequence planned and marked on panels",
-  "Driver briefed on handling instructions and site address",
-  "Dispatch order document printed and signed by supervisor",
+  "Module cleaned — no dust or debris",
+  "All surfaces protected — bubble wrap and edge guards on all corners",
+  "Habitainer logo visible on packaging",
+  "Module ID label attached and legible",
+  "QC certificate filed in HStack",
+  "All windows and doors removed and packed separately (if applicable)",
+  "All MEP tails capped and protected",
+  "Lifting points marked and accessible",
+  "Loading photos taken (attached in Dispatch Pack)",
 ];
 
+// Section 3 — Stores Confirmation (Sandeep, Stores Manager)
 const TOOLS_ITEMS = [
-  "Power drill with full battery and spare battery",
-  "Impact wrench and socket set",
-  "Angle grinder with cutting and grinding discs",
-  "Spirit level — 1 metre and 2 metre",
-  "Measuring tape — 5 metre and 30 metre",
-  "Plumb bob",
-  "Hammer drill with masonry bits set",
-  "Screwdriver set — flathead and Phillips",
-  "Spanner set — open-ended and ring",
-  "Allen key set — metric",
-  "Pipe wrench",
-  "Wire stripper and crimping tool",
-  "Multimeter and voltage tester",
-  "Scaffolding frames and cross braces — quantity as per site plan",
-  "Safety harnesses — one per team member",
-  "Ladders — 6ft and 12ft",
-  "Extension cords — 25 metre minimum",
-  "Work lights — battery powered",
-  "Trolley and sack barrow",
-  "Manual chain pulley block",
-  "Self-tapping screws — assorted sizes, minimum 500 pieces",
-  "Anchor bolts and rawl plugs — assorted",
-  "Silicone sealant — white and grey — minimum 10 tubes each",
-  "Duct tape and masking tape",
-  "Cable ties — assorted sizes",
-  "Wire connectors and terminal blocks",
-  "Safety gloves — one pair per team member",
-  "Safety helmets — one per team member",
-  "First aid kit — stocked and verified",
-  "Fire extinguisher — charged and in date",
+  "GRN matched — materials reconciled against BOQ for this module",
+  "No outstanding material claims for this module",
+  "Packing materials issued and confirmed",
+];
+
+// Section 4 — SIM Confirmation (Awaiz, Site Installation Manager)
+const SIM_ITEMS = [
+  "Site readiness confirmed — foundation ready, crane access clear",
+  "Installation sequence received and confirmed with crane operator",
+  "Client notified of delivery date and time",
+  "Vehicle and driver details confirmed",
 ];
 
 type AdditionalMaterial = {
