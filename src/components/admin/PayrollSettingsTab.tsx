@@ -86,6 +86,7 @@ export function PayrollSettingsTab() {
       monthly_ctc: Number(cfg.monthly_ctc) || 0,
       basic_pct: Number(cfg.basic_pct) || 0,
       hra_pct: Number(cfg.hra_pct) || 0,
+      conveyance_allowance: Number(cfg.conveyance_allowance) || 0,
       pt_amount: Number(cfg.pt_amount) || 0,
       tds_monthly: Number(cfg.tds_monthly) || 0,
       doj: cfg.doj || null,
