@@ -23,6 +23,7 @@ import { AdvanceManagement } from "./AdvanceManagement";
 interface Payment {
   id: string; project_name: string; client_name: string; milestone_description: string;
   due_date: string; amount: number; status: string;
+  source: "billing" | "manual";
 }
 
 function CashPositionCard() {
