@@ -428,9 +428,19 @@ export default function Drawings() {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs">Module (optional)</Label>
-                  <Select value={dqForm.module_id} onValueChange={(v) => setDqForm({ ...dqForm, module_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select module" /></SelectTrigger>
+                  <Label className="text-xs">Query Type</Label>
+                  <Select value={dqScope} onValueChange={(v) => setDqScope(v as "module" | "general")}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="module">Module-Specific</SelectItem>
+                      <SelectItem value="general">General / Project-Wide</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs" style={{ color: dqScope === "general" ? "#999" : undefined }}>Module (optional)</Label>
+                  <Select value={dqForm.module_id} onValueChange={(v) => setDqForm({ ...dqForm, module_id: v })} disabled={dqScope === "general"}>
+                    <SelectTrigger><SelectValue placeholder={dqScope === "general" ? "Not applicable — general query" : "Select module"} /></SelectTrigger>
                     <SelectContent>
                       {modules.filter((m) => m.project_id === dqForm.project_id).map((m) => (
                         <SelectItem key={m.id} value={m.id}>{m.module_code ?? m.name}</SelectItem>
