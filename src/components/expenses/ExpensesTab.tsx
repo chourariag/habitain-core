@@ -404,11 +404,11 @@ export function ExpensesTab() {
                 <div className="flex gap-2 flex-wrap">
                   {status === "pending_hr" && isHR && (
                     <Button size="sm" onClick={() => handleHRApprove(items.map((e: any) => e.id))} style={{ backgroundColor: "#006039" }} className="text-white text-xs">
-                      <Check className="h-3 w-3 mr-1" /> Approve & Send to HOD
+                      <Check className="h-3 w-3 mr-1" /> HR Approve & Send to Finance
                     </Button>
                   )}
-                  {status === "pending_hod" && isHOD && (
-                    <Button size="sm" onClick={() => handleHODApprove(items.map((e: any) => e.id))} style={{ backgroundColor: "#006039" }} className="text-white text-xs">
+                  {(status === "pending_hod" || status === "pending_finance") && isFinanceApprover && (
+                    <Button size="sm" onClick={() => handleFinanceApprove(items.map((e: any) => e.id))} style={{ backgroundColor: "#006039" }} className="text-white text-xs">
                       <Check className="h-3 w-3 mr-1" /> Approve for Payment
                     </Button>
                   )}
