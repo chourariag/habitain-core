@@ -13,6 +13,8 @@ const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
   draft: { color: "#666", bg: "#F7F7F7" },
   pending_hr: { color: "#D4860A", bg: "#FFF8E8" },
   pending_hod: { color: "#D4860A", bg: "#FFF8E8" },
+  pending_finance: { color: "#D4860A", bg: "#FFF8E8" },
+  flagged: { color: "#D4860A", bg: "#FFF8E8" },
   approved: { color: "#006039", bg: "#E8F2ED" },
   rejected: { color: "#F40009", bg: "#FEE2E2" },
   paid: { color: "#006039", bg: "#E8F2ED" },
@@ -20,9 +22,11 @@ const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
-  pending_hr: "Submitted",
-  pending_hod: "Awaiting HOD",
-  approved: "Approved",
+  pending_hr: "Submitted — HR Review",
+  pending_hod: "HR Approved — Pending Finance",
+  pending_finance: "HR Approved — Pending Finance",
+  flagged: "Flagged — Action Required",
+  approved: "Approved for Payment",
   rejected: "Rejected",
   paid: "Paid",
 };

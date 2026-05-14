@@ -28,12 +28,37 @@ Deno.serve(async (req) => {
       .from("expense_entries")
       .update({ status: "pending_hr" })
       .eq("status", "draft")
-      .select("id, submitted_by");
+      .select("id, submitted_by, amount");
 
     if (error) throw error;
 
+    const submitted = data ?? [];
+
+    // Notify Sindhu (and any other HR Admins) once that new reports are awaiting HR review.
+    if (submitted.length > 0) {
+      const { data: hrRecips } = await supabase
+        .from("profiles")
+        .select("auth_user_id")
+        .eq("role", "hr_admin")
+        .eq("is_active", true);
+
+      if (hrRecips && hrRecips.length > 0) {
+        const totalAmt = submitted.reduce((s, e: any) => s + Number(e.amount || 0), 0);
+        const uniqueEmployees = new Set(submitted.map((e: any) => e.submitted_by)).size;
+        const notes = hrRecips.map((r: any) => ({
+          recipient_id: r.auth_user_id,
+          title: "Expense Reports Awaiting HR Review",
+          body: `${submitted.length} expense entr${submitted.length === 1 ? "y" : "ies"} from ${uniqueEmployees} employee${uniqueEmployees === 1 ? "" : "s"} (₹${totalAmt.toLocaleString("en-IN")} total) auto-submitted today and need your review. Open HR Management → Expense Reports.`,
+          category: "Finance",
+          related_table: "expense_entries",
+          navigate_to: "/admin/hr",
+        }));
+        await supabase.from("notifications").insert(notes);
+      }
+    }
+
     return new Response(
-      JSON.stringify({ submitted: data?.length ?? 0, day: istDay }),
+      JSON.stringify({ submitted: submitted.length, day: istDay }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {

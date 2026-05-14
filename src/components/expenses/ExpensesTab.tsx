@@ -13,34 +13,32 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
+import { insertNotifications } from "@/lib/notifications";
 import * as XLSX from "xlsx";
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
   draft: { color: "#666", bg: "#F7F7F7" },
   pending_hr: { color: "#D4860A", bg: "#FFF8E8" },
   pending_hod: { color: "#D4860A", bg: "#FFF8E8" },
+  pending_finance: { color: "#D4860A", bg: "#FFF8E8" },
+  flagged: { color: "#D4860A", bg: "#FFF8E8" },
   approved: { color: "#006039", bg: "#E8F2ED" },
+  approved_for_payment: { color: "#006039", bg: "#E8F2ED" },
   rejected: { color: "#F40009", bg: "#FEE2E2" },
   paid: { color: "#006039", bg: "#E8F2ED" },
 };
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
-  pending_hr: "Awaiting HR",
-  pending_hod: "Awaiting HOD",
-  approved: "Approved",
+  pending_hr: "Submitted — HR Review",
+  pending_hod: "HR Approved — Pending Finance",
+  pending_finance: "HR Approved — Pending Finance",
+  flagged: "Flagged — Action Required",
+  approved: "Approved for Payment",
+  approved_for_payment: "Approved for Payment",
   rejected: "Rejected",
   paid: "Paid",
 };
-
-const PRODUCTION_ROLES = ["factory_floor_supervisor", "fabrication_foreman", "electrical_installer", "elec_plumbing_installer", "production_head"];
-const OPS_ROLES = ["head_operations", "site_installation_mgr", "site_engineer", "delivery_rm_lead"];
-
-function getHodForRole(submitterRole: string): string {
-  if (PRODUCTION_ROLES.includes(submitterRole)) return "production_head";
-  if (OPS_ROLES.includes(submitterRole)) return "head_operations";
-  return "managing_director";
-}
 
 export function ExpensesTab() {
   const { user } = useAuth();
@@ -79,17 +77,15 @@ export function ExpensesTab() {
   const getRole = (uid: string) => profiles.find((p) => p.auth_user_id === uid)?.role || "";
   const getProject = (pid: string | null) => pid ? projects.find((p) => p.id === pid)?.name || "—" : "—";
 
-  const isHR = role === "hr_executive" || role === "super_admin" || role === "managing_director";
-  const isHOD = ["production_head", "head_operations", "managing_director", "finance_director", "sales_director", "architecture_director", "super_admin"].includes(role || "");
+  // Stage 1 — HR review (Sindhu / hr_admin). MD / super_admin retain oversight.
+  const isHR = role === "hr_admin" || role === "super_admin" || role === "managing_director";
+  // Stage 2 — Finance payment approval (Finance Director / MD). Mary (finance_manager) does NOT approve expenses.
+  const isFinanceApprover = role === "finance_director" || role === "managing_director" || role === "super_admin";
 
-  // Group entries by report_period + submitted_by for pending_hr
+  // Group entries by report_period + submitted_by for pending review
   const pendingEntries = entries.filter((e) => {
     if (isHR && e.status === "pending_hr") return true;
-    if (isHOD && e.status === "pending_hod") {
-      const submitterRole = getRole(e.submitted_by);
-      const target = getHodForRole(submitterRole);
-      return role === target || role === "managing_director" || role === "super_admin";
-    }
+    if (isFinanceApprover && (e.status === "pending_hod" || e.status === "pending_finance")) return true;
     return false;
   });
 
@@ -110,20 +106,47 @@ export function ExpensesTab() {
     return true;
   });
 
+  async function notifyByRole(roles: string[], payload: { title: string; body: string; relatedId?: string }) {
+    const { data: recips } = await supabase
+      .from("profiles")
+      .select("auth_user_id")
+      .in("role", roles as any)
+      .eq("is_active", true);
+    if (!recips?.length) return;
+    await insertNotifications(recips.map((r: any) => ({
+      recipient_id: r.auth_user_id,
+      title: payload.title,
+      body: payload.body,
+      category: "Finance",
+      related_table: "expense_entries",
+      related_id: payload.relatedId,
+      navigate_to: "/admin/hr",
+    })));
+  }
+
   const handleHRApprove = async (entryIds: string[]) => {
     if (!user) return;
     for (const id of entryIds) {
       await supabase.from("expense_entries").update({
-        status: "pending_hod",
+        status: "pending_finance",
         hr_reviewed_by: user.id,
         hr_reviewed_at: new Date().toISOString(),
       } as any).eq("id", id);
     }
-    toast.success("Sent to HOD for approval");
+    // Notify Finance Director + MD
+    const sample = entries.find((e) => e.id === entryIds[0]);
+    const empName = sample ? getName(sample.submitted_by) : "Employee";
+    const total = entries.filter(e => entryIds.includes(e.id)).reduce((s, e) => s + Number(e.amount), 0);
+    await notifyByRole(["finance_director", "managing_director"], {
+      title: "Expense Report Pending Finance Approval",
+      body: `${empName}'s expense report (₹${total.toLocaleString("en-IN")}) was approved by HR and is awaiting your payment approval. Open Finance → Costing & Estimation.`,
+      relatedId: entryIds[0],
+    });
+    toast.success("HR approved — sent to Finance for payment approval");
     fetchData();
   };
 
-  const handleHODApprove = async (entryIds: string[]) => {
+  const handleFinanceApprove = async (entryIds: string[]) => {
     if (!user) return;
     for (const id of entryIds) {
       await supabase.from("expense_entries").update({
@@ -132,16 +155,42 @@ export function ExpensesTab() {
         hod_approved_at: new Date().toISOString(),
       } as any).eq("id", id);
     }
-    toast.success("Expenses approved for payment ✓");
+    // Notify employee
+    const sample = entries.find((e) => e.id === entryIds[0]);
+    if (sample?.submitted_by) {
+      const total = entries.filter(e => entryIds.includes(e.id)).reduce((s, e) => s + Number(e.amount), 0);
+      await insertNotifications({
+        recipient_id: sample.submitted_by,
+        title: "Expense Approved for Payment",
+        body: `Your expense report of ₹${total.toLocaleString("en-IN")} has been approved for payment.`,
+        category: "Finance",
+        related_table: "expense_entries",
+        related_id: entryIds[0],
+        navigate_to: "/my-hr",
+      });
+    }
+    toast.success("Approved for payment ✓");
     fetchData();
   };
 
   const handleReject = async () => {
     if (!rejectId || !rejectReason.trim()) return;
+    const entry = entries.find((e) => e.id === rejectId);
     await supabase.from("expense_entries").update({
       status: "rejected",
       rejection_reason: rejectReason.trim(),
     } as any).eq("id", rejectId);
+    if (entry?.submitted_by) {
+      await insertNotifications({
+        recipient_id: entry.submitted_by,
+        title: "Expense Rejected",
+        body: `Your expense entry of ₹${Number(entry.amount).toLocaleString("en-IN")} was rejected. Reason: ${rejectReason.trim()}`,
+        category: "Finance",
+        related_table: "expense_entries",
+        related_id: entry.id,
+        navigate_to: "/my-hr",
+      });
+    }
     toast.success("Expense rejected");
     setRejectId(null);
     setRejectReason("");
@@ -150,10 +199,24 @@ export function ExpensesTab() {
 
   const handleFlag = async () => {
     if (!flagId || !flagNote.trim()) return;
+    const entry = entries.find((e) => e.id === flagId);
+    // Flag → return to employee for correction. Status moves to "flagged" so they can edit and resubmit.
     await supabase.from("expense_entries").update({
+      status: "flagged",
       hr_flag_note: flagNote.trim(),
     } as any).eq("id", flagId);
-    toast.success("Flagged for clarification");
+    if (entry?.submitted_by) {
+      await insertNotifications({
+        recipient_id: entry.submitted_by,
+        title: "Expense Flagged — Action Required",
+        body: `HR has flagged your expense (₹${Number(entry.amount).toLocaleString("en-IN")}) for clarification: ${flagNote.trim()}. Please correct and resubmit.`,
+        category: "Finance",
+        related_table: "expense_entries",
+        related_id: entry.id,
+        navigate_to: "/my-hr",
+      });
+    }
+    toast.success("Returned to employee for correction");
     setFlagId(null);
     setFlagNote("");
     fetchData();
@@ -341,11 +404,11 @@ export function ExpensesTab() {
                 <div className="flex gap-2 flex-wrap">
                   {status === "pending_hr" && isHR && (
                     <Button size="sm" onClick={() => handleHRApprove(items.map((e: any) => e.id))} style={{ backgroundColor: "#006039" }} className="text-white text-xs">
-                      <Check className="h-3 w-3 mr-1" /> Approve & Send to HOD
+                      <Check className="h-3 w-3 mr-1" /> HR Approve & Send to Finance
                     </Button>
                   )}
-                  {status === "pending_hod" && isHOD && (
-                    <Button size="sm" onClick={() => handleHODApprove(items.map((e: any) => e.id))} style={{ backgroundColor: "#006039" }} className="text-white text-xs">
+                  {(status === "pending_hod" || status === "pending_finance") && isFinanceApprover && (
+                    <Button size="sm" onClick={() => handleFinanceApprove(items.map((e: any) => e.id))} style={{ backgroundColor: "#006039" }} className="text-white text-xs">
                       <Check className="h-3 w-3 mr-1" /> Approve for Payment
                     </Button>
                   )}
