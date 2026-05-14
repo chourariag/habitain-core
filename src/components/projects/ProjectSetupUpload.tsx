@@ -508,7 +508,7 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
 
       const out: SheetResult[] = [];
       out.push(await processBilling(findSheet("Billing Milestones", "Billing")));
-      out.push(await processBOQ(findSheet("Tender BOQ", "BOQ"), userId, userName));
+      out.push(await processBOQ(findSheet("BOQ + Margin", "Tender BOQ", "BOQ"), userId, userName));
       out.push(await processSchedule(findSheet("Project Schedule", "Schedule")));
       out.push(await processMaterial(findSheet("Material Plan", "Materials"), userId));
       if (userId) out.push(await processScope(findSheet("Scope of Work", "Scope"), userId));
