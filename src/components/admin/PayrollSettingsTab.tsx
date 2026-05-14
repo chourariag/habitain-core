@@ -120,7 +120,7 @@ export function PayrollSettingsTab() {
               return (
                 <tr key={e.auth_user_id} className="border-t border-border align-middle">
                   <td className="px-2 py-1.5">
-                    <div className="font-medium whitespace-nowrap">{e.display_name || "—"}</div>
+                    <div className="font-medium whitespace-nowrap">{e.display_name?.trim() || nameFromEmail(e.email)}</div>
                     <div className="text-[10px]" style={{ color: "#999" }}>{ROLE_LABELS[e.role as AppRole] || e.role}</div>
                   </td>
                   <td className="px-2 py-1.5">{i("designation", "text", "w-28")}</td>
