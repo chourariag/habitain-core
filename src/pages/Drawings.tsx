@@ -51,6 +51,7 @@ export default function Drawings() {
 
   // DQ dialog
   const [dqOpen, setDqOpen] = useState(false);
+  const [dqScope, setDqScope] = useState<"module" | "general">("module");
   const [dqForm, setDqForm] = useState({
     project_id: "", module_id: "", drawing_id: "", description: "",
   });
@@ -284,7 +285,7 @@ export default function Drawings() {
       const { client } = await getAuthedClient();
       const { error } = await (client.from("design_queries") as any).insert({
         project_id: dqForm.project_id,
-        module_id: dqForm.module_id || null,
+        module_id: dqScope === "general" ? null : (dqForm.module_id || null),
         dq_code: dqCode,
         drawing_id: dqForm.drawing_id || null,
         description: dqForm.description,
@@ -318,6 +319,7 @@ export default function Drawings() {
       toast.success(`Design Query ${dqCode} raised successfully`);
       setDqOpen(false);
       setDqForm({ project_id: "", module_id: "", drawing_id: "", description: "" });
+      setDqScope("module");
       setDqPhoto(null);
       setDqVoice(null);
       fetchData();
@@ -426,9 +428,19 @@ export default function Drawings() {
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-xs">Module (optional)</Label>
-                  <Select value={dqForm.module_id} onValueChange={(v) => setDqForm({ ...dqForm, module_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select module" /></SelectTrigger>
+                  <Label className="text-xs">Query Type</Label>
+                  <Select value={dqScope} onValueChange={(v) => setDqScope(v as "module" | "general")}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="module">Module-Specific</SelectItem>
+                      <SelectItem value="general">General / Project-Wide</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-xs" style={{ color: dqScope === "general" ? "#999" : undefined }}>Module (optional)</Label>
+                  <Select value={dqForm.module_id} onValueChange={(v) => setDqForm({ ...dqForm, module_id: v })} disabled={dqScope === "general"}>
+                    <SelectTrigger><SelectValue placeholder={dqScope === "general" ? "Not applicable — general query" : "Select module"} /></SelectTrigger>
                     <SelectContent>
                       {modules.filter((m) => m.project_id === dqForm.project_id).map((m) => (
                         <SelectItem key={m.id} value={m.id}>{m.module_code ?? m.name}</SelectItem>
@@ -656,7 +668,7 @@ export default function Drawings() {
                         <p className="text-sm mt-1 line-clamp-2" style={{ color: "#666" }}>{dq.description}</p>
                         <div className="flex flex-wrap gap-3 mt-1.5 text-xs" style={{ color: "#999" }}>
                           <span>{projectMap[dq.project_id] ?? "—"}</span>
-                          {dq.module_id && <span>{moduleMap[dq.module_id]?.name ?? "—"}</span>}
+                          <span>{dq.module_id ? (moduleMap[dq.module_id]?.name ?? "—") : "General"}</span>
                           <span>by {dq.raised_by_name ?? "—"}</span>
                           <span>{formatDistanceToNow(new Date(dq.created_at), { addSuffix: true })}</span>
                         </div>
@@ -686,12 +698,10 @@ export default function Drawings() {
                 <p className="text-xs font-medium" style={{ color: "#999" }}>Project</p>
                 <p className="text-sm">{projectMap[selectedDq.project_id] ?? "—"}</p>
               </div>
-              {selectedDq.module_id && (
-                <div>
-                  <p className="text-xs font-medium" style={{ color: "#999" }}>Module</p>
-                  <p className="text-sm">{moduleMap[selectedDq.module_id]?.name ?? "—"}</p>
-                </div>
-              )}
+              <div>
+                <p className="text-xs font-medium" style={{ color: "#999" }}>Module</p>
+                <p className="text-sm">{selectedDq.module_id ? (moduleMap[selectedDq.module_id]?.name ?? "—") : "General"}</p>
+              </div>
               <div>
                 <p className="text-xs font-medium" style={{ color: "#999" }}>Description</p>
                 <p className="text-sm">{selectedDq.description}</p>
