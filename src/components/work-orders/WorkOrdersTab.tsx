@@ -31,7 +31,8 @@ const BOQ_CATEGORIES = [
 ];
 
 const STATUS_LABEL: Record<string,{label:string;bg:string;color:string}> = {
-  pending_costing_approval: { label: "Pending Costing", bg:"#FFF8E8", color:"#D4860A" },
+  draft: { label: "Draft", bg:"#F5F5F5", color:"#666" },
+  pending_costing_approval: { label: "Pending Approval", bg:"#FFF8E8", color:"#D4860A" },
   clarification_needed: { label: "Clarification Needed", bg:"#FFF8E8", color:"#D4860A" },
   rejected: { label: "Rejected", bg:"#FFF0F0", color:"#F40009" },
   approved_pending_issue: { label: "Approved — Pending Issue", bg:"#E8F2ED", color:"#006039" },
@@ -42,6 +43,8 @@ const STATUS_LABEL: Record<string,{label:string;bg:string;color:string}> = {
   measured_signed_off: { label: "Measured & Signed Off", bg:"#E8F2ED", color:"#006039" },
   closed: { label: "Closed", bg:"#E0E0E0", color:"#666" },
 };
+
+const SUBMIT_ROLES = ["super_admin","managing_director","production_head","planning_head","site_installation_mgr"];
 
 const fmtINR = (n: number) => `₹${(n||0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
@@ -227,7 +230,7 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
     }));
   };
 
-  const save = async () => {
+  const save = async (submitForApproval: boolean) => {
     if (!form.project_id || !form.subcontractor_id || !form.scope_of_work || !form.location_area || !form.planned_completion_date) {
       toast.error("Fill all required fields"); return;
     }
@@ -251,23 +254,27 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
         notes_to_costing: form.notes_to_costing.trim() || null,
         raised_by: userId,
         raised_by_name: profile?.display_name ?? null,
-        status: "pending_costing_approval",
+        status: submitForApproval ? "pending_costing_approval" : "draft",
       } as any);
       if (error) throw error;
 
-      // Notify costing engineers
-      const { data: costingUsers } = await supabase
-        .from("profiles").select("auth_user_id")
-        .in("role", ["planning_engineer","costing_engineer"]).eq("is_active", true);
-      if (costingUsers?.length) {
-        await insertNotifications(costingUsers.map((u:any) => ({
-          recipient_id: u.auth_user_id,
-          title: "Work Order pending approval",
-          body: `${form.work_type} | ${fmtINR(total)} — review against budget`,
-          category: "work_order",
-        })));
+      if (submitForApproval) {
+        // Notify costing engineers + finance director
+        const { data: approvers } = await supabase
+          .from("profiles").select("auth_user_id")
+          .in("role", ["planning_engineer","costing_engineer","finance_director"]).eq("is_active", true);
+        if (approvers?.length) {
+          await insertNotifications(approvers.map((u:any) => ({
+            recipient_id: u.auth_user_id,
+            title: "Work Order pending approval",
+            body: `${form.work_type} | ${fmtINR(total)} — review against budget`,
+            category: "work_order",
+          })));
+        }
+        toast.success("Work Order submitted for costing approval");
+      } else {
+        toast.success("Work Order saved as Draft");
       }
-      toast.success("Work Order submitted for costing approval");
       onSaved(); onClose();
     } catch (e:any) { toast.error(e.message); } finally { setSaving(false); }
   };
@@ -368,7 +375,10 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={save} disabled={saving} style={{ background: "#006039" }}>
+          <Button variant="outline" onClick={() => save(false)} disabled={saving}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save as Draft"}
+          </Button>
+          <Button onClick={() => save(true)} disabled={saving} style={{ background: "#006039" }}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit for Approval"}
           </Button>
         </DialogFooter>
@@ -507,6 +517,29 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
     } catch (e:any) { toast.error(e.message); } finally { setBusy(false); }
   };
 
+  const canSubmitDraft =
+    wo.status === "draft" && (
+      wo.raised_by === userId ||
+      SUBMIT_ROLES.includes(role ?? "")
+    );
+
+  const doSubmitForApproval = async () => {
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("work_orders")
+        .update({ status: "pending_costing_approval" })
+        .eq("id", wo.id);
+      if (error) throw error;
+      await notify(
+        ["planning_engineer","costing_engineer","finance_director"],
+        "Work Order pending approval",
+        `${wo.wo_number} — ${wo.work_type} | ${fmtINR(Number(wo.total_value))}`
+      );
+      toast.success("Submitted for approval");
+      onChanged();
+    } catch (e:any) { toast.error(e.message); } finally { setBusy(false); }
+  };
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -536,6 +569,19 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
           </div>
           {wo.notes_to_costing && (
             <div><Label className="text-xs">Notes to Costing</Label><p className="text-xs mt-1">{wo.notes_to_costing}</p></div>
+          )}
+
+          {/* Submit Draft for Approval */}
+          {canSubmitDraft && (
+            <div className="border-t pt-3 space-y-2">
+              <p className="text-xs font-semibold">Draft — ready to submit?</p>
+              <p className="text-[11px] text-muted-foreground">
+                On submit, this WO will be routed to Finance → Costing &amp; Estimation for approval.
+              </p>
+              <Button size="sm" onClick={doSubmitForApproval} disabled={busy} style={{ background: "#006039" }}>
+                <Send className="h-4 w-4 mr-1" /> Submit for Approval
+              </Button>
+            </div>
           )}
 
           {/* Budget panel for costing approval */}
