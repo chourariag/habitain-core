@@ -149,6 +149,7 @@ function ProductionContent() {
                 <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
                 <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
                 <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>
+                <TabsTrigger value="measurements" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> Measurements</TabsTrigger>
               </TabsList>
             </ScrollableTabsWrapper>
 
