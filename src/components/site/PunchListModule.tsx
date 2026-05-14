@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Loader2, CheckCircle2, AlertTriangle, Camera, ClipboardList, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { effectiveDisplayName } from "@/lib/effective-user";
 
 interface Props {
   projectId: string;

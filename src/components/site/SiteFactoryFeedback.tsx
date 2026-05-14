@@ -11,6 +11,7 @@ import { Plus, Loader2, AlertTriangle, Camera, MessageSquareWarning, Clock, Chec
 import { toast } from "sonner";
 import { format, differenceInHours } from "date-fns";
 import { insertNotifications } from "@/lib/notifications";
+import { effectiveDisplayName } from "@/lib/effective-user";
 
 interface Props {
   projectId: string;
