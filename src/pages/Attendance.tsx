@@ -2,12 +2,13 @@ import { useState } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { CalendarDays, Plane, Receipt, Wallet, FileBadge } from "lucide-react";
+import { CalendarDays, Plane, Receipt, Wallet, FileBadge, BarChart3 } from "lucide-react";
 import { MyAttendanceTab } from "@/components/attendance/MyAttendanceTab";
 import { MyLeaveTab } from "@/components/attendance/MyLeaveTab";
 import { MyExpenses } from "@/components/expenses/MyExpenses";
 import { MyPayslipsTab } from "@/components/attendance/MyPayslipsTab";
 import { MyDocumentsTab } from "@/components/attendance/MyDocumentsTab";
+import { MyKpisTab } from "@/components/hr/MyKpisTab";
 
 export default function Attendance() {
   const { role } = useUserRole();
