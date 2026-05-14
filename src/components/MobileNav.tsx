@@ -21,7 +21,7 @@ const allTabs = [
   { to: "/finance?tab=mis-invoices", label: "Finance", icon: DollarSign, section: "finance" },
   { to: "/sales", label: "Sales", icon: BarChart3, section: "sales" },
   { to: "/design", label: "Design", icon: Compass, section: "design" },
-  { to: "/attendance", label: "HR", icon: Users, section: "altree" },
+  { to: "/attendance", label: "My HR", icon: Users, section: "altree" },
   { to: "/admin", label: "Admin", icon: Users, section: "admin" },
   { to: "/settings", label: "Settings", icon: Settings, section: "altree" },
 ];
