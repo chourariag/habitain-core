@@ -324,7 +324,7 @@ export function PaymentsTab() {
                   <td className="py-1.5 text-xs">{p.project_name}</td>
                   <td className="py-1.5 text-xs">{p.client_name}</td>
                   <td className="py-1.5 text-xs">{p.milestone_description}</td>
-                  <td className="py-1.5 text-xs">{p.due_date}</td>
+                  <td className="py-1.5 text-xs">{p.due_date || <span style={{ color: "#999" }}>Not yet billed</span>}</td>
                   <td className="text-right py-1.5 text-xs font-mono">₹{p.amount.toLocaleString("en-IN")}</td>
                   <td className="text-center py-1.5">
                     <select className="text-xs border rounded px-1 py-0.5" value={p.status} onChange={e => updateStatus(p.id, e.target.value)}>
