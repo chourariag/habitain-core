@@ -109,7 +109,7 @@ export function PayrollSettingsTab() {
         <table className="w-full text-xs min-w-[1400px]">
           <thead>
             <tr style={{ backgroundColor: "#F7F7F7" }}>
-              {["Employee", "Designation", "Dept", "DOJ", "PAN", "PF No.", "Bank A/c", "Bank", "IFSC", "Monthly CTC ₹", "Basic %", "HRA %", "PT ₹", "TDS ₹", ""].map(h => (
+              {["Employee", "Designation", "Dept", "DOJ", "PAN", "PF No.", "Bank A/c", "Bank", "IFSC", "Monthly CTC ₹", "Basic %", "HRA %", "Conveyance ₹", "PT ₹", "TDS ₹", ""].map(h => (
                 <th key={h} className="px-2 py-2 text-left font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: "#666" }}>{h}</th>
               ))}
             </tr>
