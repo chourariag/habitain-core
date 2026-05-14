@@ -23,6 +23,7 @@ import { AdvanceManagement } from "./AdvanceManagement";
 interface Payment {
   id: string; project_name: string; client_name: string; milestone_description: string;
   due_date: string; amount: number; status: string;
+  source: "billing" | "manual";
 }
 
 function CashPositionCard() {
@@ -111,17 +112,56 @@ export function PaymentsTab() {
   const [expensesOpen, setExpensesOpen] = useState(false);
 
   const fetchData = async () => {
-    const [{ data }, { data: expData }, { data: profData }] = await Promise.all([
+    const today = new Date().toISOString().slice(0, 10);
+    const [{ data: manualData }, { data: billingData }, { data: projectsData }, { data: expData }, { data: profData }] = await Promise.all([
       supabase.from("finance_payments").select("*").order("due_date"),
+      supabase.from("project_billing_milestones").select("*").order("milestone_number"),
+      supabase.from("projects").select("id,name,client_name,is_archived,status"),
       supabase.from("expense_entries").select("*").eq("status", "approved").order("created_at", { ascending: false }),
       supabase.from("profiles").select("auth_user_id, display_name"),
     ]);
-    const rows = (data as Payment[]) || [];
-    const today = new Date().toISOString().slice(0, 10);
-    setPayments(rows.map(r => ({
-      ...r,
-      status: (r.status === "pending" || r.status === "invoiced") && r.due_date < today ? "overdue" : r.status,
-    })));
+
+    const projectMap = new Map<string, { name: string; client: string; active: boolean }>(
+      (projectsData ?? []).map((p: any) => [p.id, {
+        name: p.name,
+        client: p.client_name ?? "—",
+        active: !p.is_archived,
+      }])
+    );
+
+    const billingPayments: Payment[] = ((billingData ?? []) as any[])
+      .filter((m: any) => projectMap.get(m.project_id)?.active)
+      .map((m: any) => {
+        const proj = projectMap.get(m.project_id)!;
+        const due = m.billed_date as string | null;
+        let status: string;
+        if (m.received_date || m.status === "received") status = "received";
+        else if (due && due < today) status = "overdue";
+        else status = "pending";
+        return {
+          id: `billing:${m.id}`,
+          project_name: proj.name,
+          client_name: proj.client,
+          milestone_description: `M${m.milestone_number}: ${m.description}`,
+          due_date: due ?? "",
+          amount: Number(m.amount_incl_gst) || 0,
+          status,
+          source: "billing" as const,
+        };
+      });
+
+    const manualPayments: Payment[] = ((manualData ?? []) as any[]).map((r: any) => ({
+      id: `manual:${r.id}`,
+      project_name: r.project_name,
+      client_name: r.client_name,
+      milestone_description: r.milestone_description,
+      due_date: r.due_date,
+      amount: Number(r.amount) || 0,
+      status: (r.status === "pending" || r.status === "invoiced") && r.due_date && r.due_date < today ? "overdue" : r.status,
+      source: "manual" as const,
+    }));
+
+    setPayments([...billingPayments, ...manualPayments].sort((a, b) => (a.due_date || "9999").localeCompare(b.due_date || "9999")));
     setApprovedExpenses((expData ?? []) as any[]);
     setExpenseProfiles(profData ?? []);
   };
@@ -183,7 +223,7 @@ export function PaymentsTab() {
   const exportCSV = () => {
     const header = "Project,Client,Milestone,Due Date,Amount,Status,Days Overdue\n";
     const rows = payments.map(p => {
-      const days = p.status === "overdue" ? differenceInDays(new Date(), new Date(p.due_date)) : 0;
+      const days = p.status === "overdue" && p.due_date ? differenceInDays(new Date(), new Date(p.due_date)) : 0;
       return `${p.project_name},${p.client_name},${p.milestone_description},${p.due_date},${p.amount},${p.status},${days || "—"}`;
     }).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
@@ -191,7 +231,14 @@ export function PaymentsTab() {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    await supabase.from("finance_payments").update({ status }).eq("id", id);
+    const [source, realId] = id.split(":");
+    if (source === "billing") {
+      const patch: any = { status };
+      if (status === "received") patch.received_date = new Date().toISOString().slice(0, 10);
+      await supabase.from("project_billing_milestones").update(patch).eq("id", realId);
+    } else {
+      await supabase.from("finance_payments").update({ status }).eq("id", realId);
+    }
     fetchData();
   };
 
@@ -208,7 +255,7 @@ export function PaymentsTab() {
       { name: "60+ days", min: 61, max: Infinity, color: "#F40009", count: 0, total: 0 },
     ];
     payments.forEach(p => {
-      if (p.status === "received") return;
+      if (p.status === "received" || !p.due_date) return;
       const days = differenceInDays(today, new Date(p.due_date));
       if (days <= 0) { buckets[0].count++; buckets[0].total += p.amount; }
       else if (days <= 30) { buckets[1].count++; buckets[1].total += p.amount; }
@@ -230,7 +277,6 @@ export function PaymentsTab() {
               <span className="cursor-pointer flex items-center gap-2"><Upload className="h-4 w-4" /> Upload Milestones</span>
             </Button>
           </label>
-          <Button variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4 mr-2" /> Template</Button>
           <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}><Plus className="h-3 w-3 mr-1" /> Quick Add</Button>
         </div>
         <Button variant="outline" size="sm" onClick={exportCSV}><FileDown className="h-4 w-4 mr-1" /> Export CSV</Button>
@@ -272,13 +318,13 @@ export function PaymentsTab() {
               <th className="text-right py-2 text-xs font-display">Days Overdue</th>
             </tr></thead>
             <tbody>{payments.map(p => {
-              const days = p.status === "overdue" ? differenceInDays(new Date(), new Date(p.due_date)) : 0;
+              const days = p.status === "overdue" && p.due_date ? differenceInDays(new Date(), new Date(p.due_date)) : 0;
               return (
                 <tr key={p.id} className="border-b" style={{ backgroundColor: p.status === "overdue" ? "#FFF8E8" : undefined }}>
                   <td className="py-1.5 text-xs">{p.project_name}</td>
                   <td className="py-1.5 text-xs">{p.client_name}</td>
                   <td className="py-1.5 text-xs">{p.milestone_description}</td>
-                  <td className="py-1.5 text-xs">{p.due_date}</td>
+                  <td className="py-1.5 text-xs">{p.due_date || <span style={{ color: "#999" }}>Not yet billed</span>}</td>
                   <td className="text-right py-1.5 text-xs font-mono">₹{p.amount.toLocaleString("en-IN")}</td>
                   <td className="text-center py-1.5">
                     <select className="text-xs border rounded px-1 py-0.5" value={p.status} onChange={e => updateStatus(p.id, e.target.value)}>
@@ -291,7 +337,7 @@ export function PaymentsTab() {
               );
             })}</tbody>
           </table>
-          {payments.length === 0 && <p className="text-center text-xs py-8" style={{ color: "#999" }}>Upload or add payment milestones</p>}
+          {payments.length === 0 && <p className="text-center text-xs py-8" style={{ color: "#999" }}>No billing milestones found. Add them in each project's Billing tab, or use Quick Add for one-off entries.</p>}
         </CardContent>
       </Card>
 
