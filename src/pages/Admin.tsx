@@ -3,15 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Users, ShieldOff, TrendingUp, FileText, CalendarClock, ShieldAlert } from "lucide-react";
+import { Search, Users, ShieldOff, TrendingUp, FileText } from "lucide-react";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
 import { UserRow } from "@/components/admin/UserRow";
 import { ROLE_LABELS, AppRole } from "@/lib/roles";
 import { BenchmarksView } from "@/components/kpi/BenchmarksView";
 import { BoardPaperGenerator } from "@/components/admin/BoardPaperGenerator";
-import { WeeklyReportConfigsTab } from "@/components/reports/WeeklyReportConfigsTab";
-import { ReportComplianceTab } from "@/components/reports/ReportComplianceTab";
-import { SafetyIncidentsTab } from "@/components/safety/SafetyIncidentsTab";
 
 export default function Admin() {
   const [search, setSearch] = useState("");
@@ -91,18 +88,6 @@ export default function Admin() {
             <FileText className="h-3.5 w-3.5" />
             Reports
           </TabsTrigger>
-          <TabsTrigger value="weekly" className="gap-1.5">
-            <CalendarClock className="h-3.5 w-3.5" />
-            Weekly Reports
-          </TabsTrigger>
-          <TabsTrigger value="compliance" className="gap-1.5">
-            <CalendarClock className="h-3.5 w-3.5" />
-            Report Compliance
-          </TabsTrigger>
-          <TabsTrigger value="safety" className="gap-1.5">
-            <ShieldAlert className="h-3.5 w-3.5" />
-            Safety Log
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="mt-4">
@@ -149,17 +134,6 @@ export default function Admin() {
           <BoardPaperGenerator />
         </TabsContent>
 
-        <TabsContent value="weekly" className="mt-4">
-          <WeeklyReportConfigsTab />
-        </TabsContent>
-
-        <TabsContent value="compliance" className="mt-4">
-          <ReportComplianceTab />
-        </TabsContent>
-
-        <TabsContent value="safety" className="mt-4">
-          <SafetyIncidentsTab />
-        </TabsContent>
       </Tabs>
     </div>
   );

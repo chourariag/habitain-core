@@ -20,7 +20,7 @@ import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
-import { DeliveryChecklistButton } from "@/components/production/DeliveryChecklistButton";
+
 import { WeeklyManpowerPlanner } from "@/components/production/WeeklyManpowerPlanner";
 import { ManpowerWeeklyExcel } from "@/components/labour/ManpowerWeeklyExcel";
 import { DryAssemblyCheck } from "@/components/production/DryAssemblyCheck";
@@ -64,9 +64,17 @@ function ProductionContent() {
       .from("modules")
       .select("*, projects(name)")
       .eq("is_archived", false)
-      .eq("project_id", selectedProjectId)
-      .order("created_at", { ascending: false });
-    setModules((data as ModuleWithProject[] | null) ?? []);
+      .eq("project_id", selectedProjectId);
+    // Sort ascending by leading number in module_code/name (1, 2, 3, ...)
+    const numKey = (m: any) => {
+      const s = (m.module_code ?? m.name ?? "") as string;
+      const match = s.match(/\d+/);
+      return match ? parseInt(match[0], 10) : Number.MAX_SAFE_INTEGER;
+    };
+    const sorted = ((data as ModuleWithProject[] | null) ?? []).slice().sort(
+      (a, b) => numKey(a) - numKey(b) || (a.module_code ?? a.name ?? "").localeCompare(b.module_code ?? b.name ?? ""),
+    );
+    setModules(sorted);
     setLoading(false);
   }, [selectedProjectId]);
 
@@ -95,8 +103,7 @@ function ProductionContent() {
           <ProjectChatButton projectId={selectedProjectId} projectName={selectedProject.name} projectType="production" />
         )}
         {selectedProjectId && (
-         <div className="flex items-center justify-between gap-2 flex-wrap">
-            <DeliveryChecklistButton projectId={selectedProjectId} />
+         <div className="flex items-center justify-end gap-2 flex-wrap">
             <DryAssemblyCheck
               projectId={selectedProjectId}
               projectName={selectedProject?.name ?? ""}
