@@ -67,7 +67,7 @@ export function PayrollSettingsTab() {
     const q = filter.trim().toLowerCase();
     if (!q) return employees;
     return employees.filter(e =>
-      (e.display_name || "").toLowerCase().includes(q) ||
+      (e.display_name || nameFromEmail(e.email)).toLowerCase().includes(q) ||
       (e.email || "").toLowerCase().includes(q) ||
       (ROLE_LABELS[e.role as AppRole] || "").toLowerCase().includes(q),
     );
