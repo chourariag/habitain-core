@@ -277,7 +277,6 @@ export function PaymentsTab() {
               <span className="cursor-pointer flex items-center gap-2"><Upload className="h-4 w-4" /> Upload Milestones</span>
             </Button>
           </label>
-          <Button variant="outline" onClick={downloadTemplate}><Download className="h-4 w-4 mr-2" /> Template</Button>
           <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}><Plus className="h-3 w-3 mr-1" /> Quick Add</Button>
         </div>
         <Button variant="outline" size="sm" onClick={exportCSV}><FileDown className="h-4 w-4 mr-1" /> Export CSV</Button>
