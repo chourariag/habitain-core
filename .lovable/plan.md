@@ -1,110 +1,117 @@
-# Running Bill System — Daily Measurement Sheets
 
-A large feature with new schema, two new entry tabs, a Running Bill view, WIP wiring, and scheduled escalations. Sized to fit cleanly into the existing app without changing established business logic.
+# KPI Dashboard — Auto-RAG from Live Data
 
-## 1. Database (one migration)
+Builds on the existing `kpi_definitions` / `kpi_snapshots` / `kpi_targets_history` tables and the `KPI` + `KPISettings` pages. Adds the metric calculators, nightly recompute, MD note, employee self-view, and the 13-person overview grid.
 
-New tables (RLS on, audit fields, no hard delete):
+## 1. The 13 KPI employees (mapped to existing roles)
 
-```text
-boq_items
-  id, project_id, item_code, description, unit, boq_qty, boq_rate,
-  stage, trade ('general'|'electrical'|'plumbing'),
-  created_by, updated_by, created_at, updated_at, is_archived
+| Name | Role used for KPI definitions |
+|------|-------------------------------|
+| Suraj Rao | `head_operations` |
+| Azad Ali | `production_head` |
+| Awaiz Ahmed | `site_installation_mgr` |
+| Karthik | `planning_engineer` |
+| Mohammed Nakeem | `costing_engineer` |
+| Vijay | `procurement` |
+| Tagore | `qc_inspector` |
+| Bala | `delivery_rm_lead` (logistics/R&M) |
+| Rakesh | `factory_floor_supervisor` |
+| Sandeep | `stores_executive` |
+| Nakeem | second costing — same role, identified by profile |
+| Mary | `finance_manager` |
+| Venkat | `principal_architect` (Operations Architect) |
 
-daily_measurements
-  id, project_id, module_id (nullable for site), stage,
-  measurement_date, location ('factory'|'site'),
-  submitted_by, team_id, notes,
-  is_locked (default true on insert),
-  unlock_reason, unlocked_by, unlocked_at,
-  created_by, updated_by, created_at, updated_at, is_archived
+A new `kpi_tracked_employees` config table pins which 13 `auth_user_id`s are shown on the MD overview grid (resolved by `display_name` match on first run, editable in Super Admin → KPI Settings).
 
-measurement_line_items
-  id, measurement_id, boq_item_id, today_qty,
-  cumulative_qty_snapshot, value_today_snapshot, pct_complete_snapshot,
-  created_at
-```
+## 2. Database
 
-Indexes: `(project_id, module_id, measurement_date)`, `(boq_item_id)`, `(submitted_by, measurement_date)`.
+Migration adds:
+- `kpi_tracked_employees(id, user_id unique, sort_order, is_active)` — drives the 13-card grid.
+- `kpi_md_notes(id, user_id, month date, note, written_by, created_at)` — one note per employee per month, MD-only writes.
+- `kpi_snapshots`: add `period_type` (`daily`|`weekly`|`monthly`), `period_date`, `metric_payload jsonb`, drop reliance on `week_start_date` only. Backfill existing rows as `weekly`.
+- Seed `kpi_definitions` for every metric in the spec (rake → Rakesh's 4 metrics, Azad's 4, Awaiz's 3, etc.) with `kpi_key`, `target_value`, `unit`, `measurement_period`, `coaching_template_below/above`. Idempotent upsert by `kpi_key`.
+- RLS: `kpi_md_notes` readable by MD/directors + the subject employee, writable by MD only. `kpi_tracked_employees` readable by all authenticated, writable by super_admin.
 
-A SECURITY DEFINER function `recalc_running_bill(_project_id)` returns per-BOQ aggregates (qty_done_factory, qty_done_site, value_earned). Called by the UI; not exposed as a generic RPC for arbitrary SQL.
+## 3. Metric calculators — single edge function `kpi-recompute`
 
-RLS:
-- `boq_items`: read = project access roles, write = Karthik/Suraj/super_admin/managing_director.
-- `daily_measurements` + lines: read = project participants + finance + MD; insert = Rakesh (factory) / Mohan / Venugopal (factory, trade-filtered) / Nazim (site); update only when `is_locked = false`; unlock = Azad (factory) / Awaiz (site) / MD / super_admin.
+One Deno edge function with a `metric_key → calculator` map. Each calculator returns `{ actual, denominator, status: 'green'|'amber'|'red'|'no_data', score 0–100 }`. Examples:
 
-## 2. Daily entry UI
+- `rakesh.measurement_submission_rate` — count distinct submission days in `daily_measurements` (location='factory') over working days in window.
+- `azad.module_on_time_dispatch` — `dispatch_packs.actual_dispatch_date <= planned_dispatch_date`.
+- `azad.ncr_closure_hours` — avg `closed_at - raised_at` from `ncrs`.
+- `awaiz.installation_sequence_lead_time` — `installation_sequence_docs.created_at` vs `dispatch_packs.planned_dispatch_date - 14d`.
+- `karthik.project_setup_completeness` — count of project_setup uploads per project.
+- `nakeem.wo_approval_turnaround` — `work_orders.approved_at - created_at`.
+- `vijay.po_lead_time`, `vijay.grn_within_24h`, `vijay.vendor_otd`.
+- `tagore.qc_turnaround`, `tagore.ncr_accuracy`, `tagore.qc_checklist_complete`.
+- `venkat.dq_response_hours`, `venkat.drawing_on_time`, `venkat.client_approval_hours`.
+- `mary.invoice_within_milestone`, `mary.payslip_by_5th`, `mary.tally_upload_by_10th`.
+- `bala.rm_response_hours`, `bala.amc_renewal_lead`.
+- `sandeep.grn_accuracy`, `sandeep.stock_count_done`, `sandeep.dispatch_sign_within_2h`.
+- `suraj.projects_on_schedule`, `suraj.weekly_review_done`, `suraj.escalations_within_sla`.
 
-Reusable component `MeasurementSheet` with a `location` prop:
+Status mapping per definition: `green` if actual meets target, `amber` within ±10–15%, `red` beyond that, `no_data` if denominator = 0 or table empty.
 
-- Date (today, locked), Project (current scope), Module (factory only), Stage (auto from module current stage / installation stage), Team dropdown.
-- BOQ table filtered by stage and (for trade users) by trade. Today's Qty is the only editable column. Submit creates one `daily_measurements` row + N `measurement_line_items` rows server-side, snapshotting cumulative + value.
-- Submitted entries render read-only with a "Request Unlock" action that pings the approver.
-- "BOQ not uploaded yet — ask Karthik to upload Project Setup" empty state when no BOQ rows exist.
+Function modes:
+- `?mode=daily` — recompute today's snapshot for all 13.
+- `?mode=weekly` — aggregate the last 7 daily snapshots, write a `period_type='weekly'` row, and post a notification to MD with team RAG vs prior week (Monday digest).
+- `?user_id=…` — recompute live for one user when the dashboard opens (so screen always reflects fresh data without waiting for cron).
 
-Mounted in:
-- Production → Factory Floor → new tab **Measurements** (`/production?tab=measurements`).
-- On Site Works → Site Diary → new tab **Measurements** (`/site-hub?tab=site-measurements`).
+Cron via `pg_cron` + `pg_net` (set up with `supabase--insert`):
+- 00:05 IST daily → `mode=daily`
+- Mon 08:00 IST → `mode=weekly`
 
-Trade filtering: Mohan (`electrical_installer`) → only `trade='electrical'`; Venugopal (`elec_plumbing_installer` for plumbing) → only `trade='plumbing'`.
+## 4. UI changes
 
-## 3. Running Bill view
+### Admin → KPI Dashboard (rebuild Director view top section)
+- Replaces the current "departments accordion" header with a **KPI Overview Panel**: responsive grid of 13 employee cards.
+- Each card: avatar, name, role, overall RAG dot, top 3 metrics with mini RAG dots and value/target. "Insufficient Data" pill instead of red when status is `no_data`.
+- Card click opens the existing `KPIScorecard` drilldown, augmented with:
+  - 4-week trend sparkline per metric (queries weekly snapshots).
+  - "Last week vs this week" delta.
+  - **MD note panel** — month picker, single textarea, save button (only `is_md(auth.uid())`).
+- Departments accordion stays below for directors who want the broader rollup.
 
-New component `RunningBillTable` driven by `recalc_running_bill`:
-- Columns: Item | Unit | BOQ Qty | BOQ Rate | BOQ Value | Qty Done (Factory) | Qty Done (Site) | Total Qty Done | % Complete | Value Earned.
-- Summary tiles: Total BOQ Value, Value Earned, % Complete, Remaining, 7-day Daily Burn.
-- Mounted under Projects → Budget tab and Finance → Projects → Revenue & Margin.
+### My HR → My KPIs (new tab)
+- Add `MyKpisTab.tsx` to `Profile.tsx` / `AdminHR.tsx` "My HR" tabs.
+- Renders `KPIScorecard` for `auth.uid()` only — same metrics, same RAG, no compensation data, no other employees visible.
 
-## 4. WIP & revenue curve
+### Super Admin → KPI Settings (extend existing page)
+- Existing per-definition target editor stays.
+- New section "Tracked Employees" — list 13 rows mapped to profiles, allow swap if a person changes.
 
-WIP formula card: `materials (GRN sum) + labour (daily log × rate) + 5% overhead`. Displayed alongside Running Bill. Pure read; no schema changes to materials/labour.
+## 5. Notifications
 
-Revenue curve: weekly planned value from `project_tasks` schedule vs weekly earned value from measurements — line chart in Finance → Projects → Revenue & Margin.
+- Monday 08:00 weekly digest: insert one notification per director/MD with link to KPI dashboard, summarising team avg + count of red employees vs prior week.
+- Real-time: no per-metric pings (would be too noisy).
 
-## 5. Escalations (edge function + cron)
+## 6. Files
 
-New edge function `measurement-submission-checks`:
-- 8pm IST daily: for each active project, find missing factory submission for today → notify Azad; missing site submission → notify Awaiz.
-- For each user with no submission for 2 consecutive working days → notify Suraj + MD.
-- Reuses existing `insertNotifications` via direct table insert (no new notification channel).
+New:
+- `supabase/migrations/<ts>_kpi_dashboard.sql`
+- `supabase/functions/kpi-recompute/index.ts`
+- `src/components/kpi/KpiOverviewGrid.tsx`
+- `src/components/kpi/KpiEmployeeCard.tsx`
+- `src/components/kpi/KpiTrendSparkline.tsx`
+- `src/components/kpi/MdNotePanel.tsx`
+- `src/components/hr/MyKpisTab.tsx`
+- `src/lib/kpi-metrics.ts` — metric metadata (display labels + per-role grouping for the cards).
 
-Cron via `pg_cron` + `pg_net` calling the function URL with the anon key. Created by `supabase--insert` (not migration) per the schedule rule.
+Edited:
+- `src/pages/KPI.tsx` — add overview grid above departments accordion; trigger `kpi-recompute?user_id=` on drilldown.
+- `src/pages/KPISettings.tsx` — add Tracked Employees section.
+- `src/pages/AdminHR.tsx` (or wherever My HR tabs live) — add "My KPIs" tab.
+- `src/integrations/supabase/types.ts` — auto-regen after migration.
 
-## 6. AI anomaly flags
+## 7. Rules enforced
 
-Inline checks computed client-side at submit time and stored on the measurement row as `anomaly_flags jsonb` (added in the migration). Three rules implemented in `src/lib/measurement-anomalies.ts`:
-- Output vs labour: `today_qty > expected_per_worker × workers_logged_today` for that bay/stage.
-- 100% complete without QC inspection record.
-- Site item with no matching GRN for the required material.
+- All scoring server-side in the edge function — UI never computes scores.
+- `no_data` shows "Insufficient Data" badge, never red.
+- Targets editable only via `kpi_definitions` (Super Admin → KPI Settings).
+- Salary / compensation data never queried or shown.
+- MD note is the only manual field; everyone else read-only.
+- Employees never see other employees' scores (RLS already enforces this on `kpi_snapshots`; `MyKpisTab` only queries own `auth.uid()`).
 
-Flags surface as red badges on the entry and feed the existing MD Dashboard data-compliance area (already on the dashboard scaffold).
+## Open question
 
-## 7. KPI hook
-
-Daily-entry consistency rolls into Rakesh's and Nazim's KPI scorecards via the existing `kpi-helpers` aggregator — add two metric definitions (`measurement_submit_streak`, `measurement_missed_days`) without changing the scorecard component.
-
-## 8. Files
-
-- Migration: `boq_items`, `daily_measurements`, `measurement_line_items`, `recalc_running_bill`, RLS, indexes.
-- Edge function: `supabase/functions/measurement-submission-checks/index.ts`.
-- Cron: separate `supabase--insert` call after function deploys.
-- Components: `src/components/measurements/MeasurementSheet.tsx`, `RunningBillTable.tsx`, `WIPCard.tsx`, `RevenueCurveChart.tsx`.
-- Lib: `src/lib/measurement-anomalies.ts`, `src/lib/measurement-helpers.ts`.
-- Page edits: `src/pages/Production.tsx` (+Measurements tab), `src/pages/SiteHub.tsx` (+Measurements tab), `src/pages/Finance.tsx` (Revenue & Margin tab content), `src/components/projects/ProjectBudgetTab.tsx` (Running Bill section).
-- KPI: `src/lib/kpi-helpers.ts` adds two metrics.
-- Memory: new entry `mem://features/running-bill-system`.
-
-## 9. Out of scope (call out for later)
-
-- Importing BOQ from the existing Project Setup Template — needs the parser change. I will add a manual BOQ entry table in Projects → Budget for now and a follow-up prompt can wire the Excel parser.
-- Replacing the existing stage-based WIP everywhere it's referenced — kept side-by-side; switching the canonical WIP source is a separate prompt.
-
-## 10. Order of operations
-
-1. Migration (waits for your approval).
-2. Edge function + cron.
-3. UI components and tab wiring.
-4. KPI metric additions and memory entry.
-
-Approve to proceed, or tell me what to adjust before I run the migration.
+The spec lists "Nakeem" twice (Mohammed Nakeem at line 5 and Nakeem at line 8) and assigns Costing-Engineer KPIs to Mohammed Nakeem. Should the second "Nakeem" card just be Mohammed Nakeem (so 12 cards, not 13), or is Nakeem a separate person with a different role? I'll default to **12 unique cards (treating both as Mohammed Nakeem)** unless you confirm otherwise.
