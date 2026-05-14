@@ -40,6 +40,14 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
   ],
   system: [], // everyone
   knowledge: [], // everyone — SOP library
+  approvals: [...DIRECTORS, "head_operations"],
+  site: [
+    ...DIRECTORS, "head_operations", "site_installation_mgr", "site_engineer",
+    "delivery_rm_lead", "production_head",
+  ],
+  finance: [...DIRECTORS, "finance_manager", "accounts_executive"],
+  sales: [...DIRECTORS, "sales_director", "marketing" as AppRole, "sales_executive" as AppRole],
+  altree: [], // everyone — group header; child items have their own gates
 };
 
 // Roles that need the sidebar project selector
