@@ -97,8 +97,8 @@ export function PayrollSettingsTab() {
   return (
     <div className="space-y-3">
       <Input placeholder="Search employee…" value={filter} onChange={e => setFilter(e.target.value)} className="max-w-sm" />
-      <div className="rounded-lg border border-border overflow-x-auto bg-card">
-        <table className="w-full text-xs">
+      <div className="rounded-lg border border-border overflow-x-auto bg-card -mx-2 sm:mx-0" style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x pan-y" }}>
+        <table className="w-full text-xs min-w-[1400px]">
           <thead>
             <tr style={{ backgroundColor: "#F7F7F7" }}>
               {["Employee", "Designation", "Dept", "DOJ", "PAN", "PF No.", "Bank A/c", "Bank", "IFSC", "Monthly CTC ₹", "Basic %", "HRA %", "PT ₹", "TDS ₹", ""].map(h => (
