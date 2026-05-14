@@ -3848,6 +3848,98 @@ export type Database = {
         }
         Relationships: []
       }
+      labour_team_members: {
+        Row: {
+          created_at: string
+          id: string
+          joined_date: string
+          left_date: string | null
+          reassign_reason: string | null
+          team_id: string
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          joined_date?: string
+          left_date?: string | null
+          reassign_reason?: string | null
+          team_id: string
+          worker_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          joined_date?: string
+          left_date?: string | null
+          reassign_reason?: string | null
+          team_id?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "labour_teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labour_team_members_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labour_teams: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_archived: boolean
+          specialisation: string | null
+          status: string
+          team_head_id: string
+          team_name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          specialisation?: string | null
+          status?: string
+          team_head_id: string
+          team_name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          specialisation?: string | null
+          status?: string
+          team_head_id?: string
+          team_name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_teams_team_head_id_fkey"
+            columns: ["team_head_id"]
+            isOneToOne: false
+            referencedRelation: "labour_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       labour_worker_rate_history: {
         Row: {
           changed_by: string | null
@@ -4588,6 +4680,7 @@ export type Database = {
           stage_name: string
           target_end: string | null
           target_start: string | null
+          team_id: string | null
           updated_at: string | null
           velocity_ratio: number | null
         }
@@ -4603,6 +4696,7 @@ export type Database = {
           stage_name: string
           target_end?: string | null
           target_start?: string | null
+          team_id?: string | null
           updated_at?: string | null
           velocity_ratio?: number | null
         }
@@ -4618,6 +4712,7 @@ export type Database = {
           stage_name?: string
           target_end?: string | null
           target_start?: string | null
+          team_id?: string | null
           updated_at?: string | null
           velocity_ratio?: number | null
         }
@@ -4627,6 +4722,80 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_schedule_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "labour_teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      module_team_assignments: {
+        Row: {
+          assigned_by: string | null
+          assignment_date: string
+          created_at: string
+          expected_tasks: string | null
+          id: string
+          is_archived: boolean
+          module_id: string
+          notes: string | null
+          project_id: string
+          stage: string | null
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_by?: string | null
+          assignment_date?: string
+          created_at?: string
+          expected_tasks?: string | null
+          id?: string
+          is_archived?: boolean
+          module_id: string
+          notes?: string | null
+          project_id: string
+          stage?: string | null
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_by?: string | null
+          assignment_date?: string
+          created_at?: string
+          expected_tasks?: string | null
+          id?: string
+          is_archived?: boolean
+          module_id?: string
+          notes?: string | null
+          project_id?: string
+          stage?: string | null
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "module_team_assignments_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_team_assignments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "module_team_assignments_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "labour_teams"
             referencedColumns: ["id"]
           },
         ]
