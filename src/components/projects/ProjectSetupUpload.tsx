@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,8 +9,6 @@ import { Upload, Download, Loader2, Check, AlertTriangle, ArrowRight } from "luc
 import { dispatchProjectImported } from "@/lib/use-project-import";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { buildBoqWorksheet } from "@/lib/xlsx-templates";
-import { FACTORY_STAGES } from "@/lib/hstack-stages";
 
 interface Props {
   projectId: string;
