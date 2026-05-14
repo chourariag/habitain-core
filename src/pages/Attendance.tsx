@@ -33,6 +33,7 @@ export default function Attendance() {
             <TabsTrigger value="expenses" className="gap-1.5"><Receipt className="h-4 w-4" /> Expenses</TabsTrigger>
             <TabsTrigger value="payslips" className="gap-1.5"><Wallet className="h-4 w-4" /> Payslips</TabsTrigger>
             <TabsTrigger value="documents" className="gap-1.5"><FileBadge className="h-4 w-4" /> Documents</TabsTrigger>
+            <TabsTrigger value="kpis" className="gap-1.5"><BarChart3 className="h-4 w-4" /> My KPIs</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -41,6 +42,7 @@ export default function Attendance() {
         <TabsContent value="expenses" className="mt-4"><MyExpenses /></TabsContent>
         <TabsContent value="payslips" className="mt-4"><MyPayslipsTab /></TabsContent>
         <TabsContent value="documents" className="mt-4"><MyDocumentsTab /></TabsContent>
+        <TabsContent value="kpis" className="mt-4"><MyKpisTab /></TabsContent>
       </Tabs>
     </div>
   );
