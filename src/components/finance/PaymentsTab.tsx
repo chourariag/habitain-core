@@ -112,17 +112,56 @@ export function PaymentsTab() {
   const [expensesOpen, setExpensesOpen] = useState(false);
 
   const fetchData = async () => {
-    const [{ data }, { data: expData }, { data: profData }] = await Promise.all([
+    const today = new Date().toISOString().slice(0, 10);
+    const [{ data: manualData }, { data: billingData }, { data: projectsData }, { data: expData }, { data: profData }] = await Promise.all([
       supabase.from("finance_payments").select("*").order("due_date"),
+      supabase.from("project_billing_milestones").select("*").order("milestone_number"),
+      supabase.from("projects").select("id,name,client_name,is_archived,status"),
       supabase.from("expense_entries").select("*").eq("status", "approved").order("created_at", { ascending: false }),
       supabase.from("profiles").select("auth_user_id, display_name"),
     ]);
-    const rows = (data as Payment[]) || [];
-    const today = new Date().toISOString().slice(0, 10);
-    setPayments(rows.map(r => ({
-      ...r,
-      status: (r.status === "pending" || r.status === "invoiced") && r.due_date < today ? "overdue" : r.status,
-    })));
+
+    const projectMap = new Map<string, { name: string; client: string; active: boolean }>(
+      (projectsData ?? []).map((p: any) => [p.id, {
+        name: p.name,
+        client: p.client_name ?? "—",
+        active: !p.is_archived,
+      }])
+    );
+
+    const billingPayments: Payment[] = ((billingData ?? []) as any[])
+      .filter((m: any) => projectMap.get(m.project_id)?.active)
+      .map((m: any) => {
+        const proj = projectMap.get(m.project_id)!;
+        const due = m.billed_date as string | null;
+        let status: string;
+        if (m.received_date || m.status === "received") status = "received";
+        else if (due && due < today) status = "overdue";
+        else status = "pending";
+        return {
+          id: `billing:${m.id}`,
+          project_name: proj.name,
+          client_name: proj.client,
+          milestone_description: `M${m.milestone_number}: ${m.description}`,
+          due_date: due ?? "",
+          amount: Number(m.amount_incl_gst) || 0,
+          status,
+          source: "billing" as const,
+        };
+      });
+
+    const manualPayments: Payment[] = ((manualData ?? []) as any[]).map((r: any) => ({
+      id: `manual:${r.id}`,
+      project_name: r.project_name,
+      client_name: r.client_name,
+      milestone_description: r.milestone_description,
+      due_date: r.due_date,
+      amount: Number(r.amount) || 0,
+      status: (r.status === "pending" || r.status === "invoiced") && r.due_date && r.due_date < today ? "overdue" : r.status,
+      source: "manual" as const,
+    }));
+
+    setPayments([...billingPayments, ...manualPayments].sort((a, b) => (a.due_date || "9999").localeCompare(b.due_date || "9999")));
     setApprovedExpenses((expData ?? []) as any[]);
     setExpenseProfiles(profData ?? []);
   };
