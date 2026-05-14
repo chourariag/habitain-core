@@ -262,21 +262,7 @@ export function ExpenseExcelUpload() {
           <Download className="h-3.5 w-3.5" /> Download Expense Template
         </Button>
 
-        {/* HR: on behalf of */}
-        {isHR && (
-          <div>
-            <label className="text-[11px] font-inter" style={{ color: "#666" }}>Uploading for Employee</label>
-            <Select value={onBehalfOf} onValueChange={setOnBehalfOf}>
-              <SelectTrigger className="mt-1 font-inter text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="self" className="font-inter text-xs">Self</SelectItem>
-                {profiles.map((p) => (
-                  <SelectItem key={p.auth_user_id} value={p.auth_user_id} className="font-inter text-xs">{p.display_name || p.auth_user_id}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+        {/* Every user uploads only for themselves — no employee selector. */}
 
         {/* Submission window status */}
         {window.isOpen ? (
