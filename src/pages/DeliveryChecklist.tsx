@@ -325,10 +325,10 @@ export default function DeliveryChecklist() {
             ) : null}
           </TabsContent>
 
-          {/* TAB 2: Tools */}
+          {/* TAB 2: Stores Confirmation (Sandeep) */}
           <TabsContent value="tools" className="space-y-3">
             <p className="text-xs" style={{ color: "#666666" }}>
-              Done by: Stores Executive.
+              Done by: Sandeep — Stores Manager.
               {!canEditTools && " (Read-only for your role)"}
             </p>
             {TOOLS_ITEMS.map((item, idx) => (
@@ -364,86 +364,61 @@ export default function DeliveryChecklist() {
                 style={toolsChecked.every(Boolean) ? { backgroundColor: "#006039", color: "#FFFFFF" } : {}}
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
-                Sign Off — Tools and Equipment
+                Sign as Stores Manager
               </Button>
             ) : null}
           </TabsContent>
 
-          {/* TAB 3: Additional Materials */}
+          {/* TAB 3: SIM Confirmation (Awaiz) */}
           <TabsContent value="additional" className="space-y-3">
             <p className="text-xs" style={{ color: "#666666" }}>
-              Done by: Site Installation Manager. Add any project-specific materials needed.
+              Done by: Awaiz — Site Installation Manager.
               {!canEditAdditional && " (Read-only for your role)"}
             </p>
+            {SIM_ITEMS.map((item, idx) => {
+              // Reuse additional_materials jsonb to persist SIM checklist as boolean array
+              const checked = Boolean((additionalMaterials as any[])?.[idx]?.checked);
+              return (
+                <Card key={idx} style={{ backgroundColor: "#F7F7F7" }}>
+                  <CardContent className="p-3 flex items-start gap-3">
+                    <Checkbox
+                      checked={checked}
+                      disabled={additionalSigned || !canEditAdditional}
+                      onCheckedChange={(v) => {
+                        if (additionalSigned || !canEditAdditional) return;
+                        setAdditionalMaterials((prev) => {
+                          const next = [...(prev as any[])];
+                          while (next.length < SIM_ITEMS.length) next.push({ checked: false });
+                          next[idx] = { ...next[idx], checked: !!v, label: item };
+                          return next as any;
+                        });
+                      }}
+                    />
+                    <span className="text-sm flex-1" style={{ color: "#1A1A1A" }}>{item}</span>
+                    {checked && <Check className="h-4 w-4 shrink-0" style={{ color: "#006039" }} />}
+                  </CardContent>
+                </Card>
+              );
+            })}
 
-            {additionalMaterials.length === 0 && additionalSigned && (
-              <p className="text-sm italic" style={{ color: "#999999" }}>No additional materials required.</p>
-            )}
-
-            {additionalMaterials.map((m, idx) => (
-              <Card key={idx} style={{ backgroundColor: "#F7F7F7" }}>
-                <CardContent className="p-3 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Input
-                      placeholder="Material description"
-                      value={m.description}
-                      onChange={(e) => updateMaterial(idx, "description", e.target.value)}
-                      disabled={additionalSigned || !canEditAdditional}
-                      className="flex-1 text-sm"
-                    />
-                    {!additionalSigned && canEditAdditional && (
-                      <Button variant="ghost" size="icon" onClick={() => removeMaterial(idx)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Qty"
-                      value={m.qty}
-                      onChange={(e) => updateMaterial(idx, "qty", Number(e.target.value))}
-                      disabled={additionalSigned || !canEditAdditional}
-                      className="text-sm"
-                    />
-                    <Input
-                      placeholder="Unit"
-                      value={m.unit}
-                      onChange={(e) => updateMaterial(idx, "unit", e.target.value)}
-                      disabled={additionalSigned || !canEditAdditional}
-                      className="text-sm"
-                    />
-                    <Select
-                      value={m.source}
-                      onValueChange={(v) => updateMaterial(idx, "source", v)}
-                      disabled={additionalSigned || !canEditAdditional}
-                    >
-                      <SelectTrigger className="text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Factory Stock">Factory Stock</SelectItem>
-                        <SelectItem value="Procure Fresh">Procure Fresh</SelectItem>
-                        <SelectItem value="Already on Site">Already on Site</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      placeholder="Notes"
-                      value={m.notes}
-                      onChange={(e) => updateMaterial(idx, "notes", e.target.value)}
-                      disabled={additionalSigned || !canEditAdditional}
-                      className="text-sm"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-
-            {!additionalSigned && canEditAdditional && (
-              <Button variant="outline" onClick={addMaterialRow} className="gap-1.5" style={{ borderColor: "#006039", color: "#006039" }}>
-                <Plus className="h-4 w-4" /> Add Row
-              </Button>
-            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium" style={{ color: "#666" }}>Estimated arrival at site</label>
+                <Input
+                  type="time"
+                  value={(additionalMaterials as any)?.eta ?? ""}
+                  disabled={additionalSigned || !canEditAdditional}
+                  onChange={(e) => {
+                    setAdditionalMaterials((prev) => {
+                      const next: any = [...(prev as any[])];
+                      (next as any).eta = e.target.value;
+                      return next;
+                    });
+                  }}
+                  className="mt-1"
+                />
+              </div>
+            </div>
 
             {additionalSigned ? (
               <div className="flex items-center gap-2 p-3 rounded-lg" style={{ backgroundColor: "#E8F2ED" }}>
@@ -455,12 +430,12 @@ export default function DeliveryChecklist() {
             ) : canEditAdditional ? (
               <Button
                 onClick={handleSignOffAdditional}
-                disabled={saving}
+                disabled={saving || !SIM_ITEMS.every((_, i) => (additionalMaterials as any[])?.[i]?.checked)}
                 className="w-full"
                 style={{ backgroundColor: "#006039", color: "#FFFFFF" }}
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
-                Confirm Additional Materials
+                Sign as Site Installation Manager
               </Button>
             ) : null}
           </TabsContent>
