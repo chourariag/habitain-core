@@ -230,7 +230,7 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
     }));
   };
 
-  const save = async () => {
+  const save = async (submitForApproval: boolean) => {
     if (!form.project_id || !form.subcontractor_id || !form.scope_of_work || !form.location_area || !form.planned_completion_date) {
       toast.error("Fill all required fields"); return;
     }
@@ -254,23 +254,27 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
         notes_to_costing: form.notes_to_costing.trim() || null,
         raised_by: userId,
         raised_by_name: profile?.display_name ?? null,
-        status: "pending_costing_approval",
+        status: submitForApproval ? "pending_costing_approval" : "draft",
       } as any);
       if (error) throw error;
 
-      // Notify costing engineers
-      const { data: costingUsers } = await supabase
-        .from("profiles").select("auth_user_id")
-        .in("role", ["planning_engineer","costing_engineer"]).eq("is_active", true);
-      if (costingUsers?.length) {
-        await insertNotifications(costingUsers.map((u:any) => ({
-          recipient_id: u.auth_user_id,
-          title: "Work Order pending approval",
-          body: `${form.work_type} | ${fmtINR(total)} — review against budget`,
-          category: "work_order",
-        })));
+      if (submitForApproval) {
+        // Notify costing engineers + finance director
+        const { data: approvers } = await supabase
+          .from("profiles").select("auth_user_id")
+          .in("role", ["planning_engineer","costing_engineer","finance_director"]).eq("is_active", true);
+        if (approvers?.length) {
+          await insertNotifications(approvers.map((u:any) => ({
+            recipient_id: u.auth_user_id,
+            title: "Work Order pending approval",
+            body: `${form.work_type} | ${fmtINR(total)} — review against budget`,
+            category: "work_order",
+          })));
+        }
+        toast.success("Work Order submitted for costing approval");
+      } else {
+        toast.success("Work Order saved as Draft");
       }
-      toast.success("Work Order submitted for costing approval");
       onSaved(); onClose();
     } catch (e:any) { toast.error(e.message); } finally { setSaving(false); }
   };
