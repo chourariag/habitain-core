@@ -231,7 +231,14 @@ export function PaymentsTab() {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    await supabase.from("finance_payments").update({ status }).eq("id", id);
+    const [source, realId] = id.split(":");
+    if (source === "billing") {
+      const patch: any = { status };
+      if (status === "received") patch.received_date = new Date().toISOString().slice(0, 10);
+      await supabase.from("project_billing_milestones").update(patch).eq("id", realId);
+    } else {
+      await supabase.from("finance_payments").update({ status }).eq("id", realId);
+    }
     fetchData();
   };
 
