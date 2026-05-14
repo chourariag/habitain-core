@@ -392,11 +392,10 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
         material_description: material,
         unit: String(r[3] ?? "").trim() || null,
         tender_qty: r[4] === "" || r[4] == null ? null : Number(r[4]) || null,
-        ordered_qty: r[5] === "" || r[5] == null ? null : Number(r[5]) || null,
+        material_qty_ordered: r[5] === "" || r[5] == null ? null : Number(r[5]) || null,
         planned_po_release_date: parseDate(r[6]),
         planned_delivery_date: parseDate(r[7]),
-        destination: String(r[8] ?? "").trim() || null,
-        notes: String(r[9] ?? "").trim() || null,
+        notes: [String(r[8] ?? "").trim() && `Destination: ${String(r[8]).trim()}`, String(r[9] ?? "").trim()].filter(Boolean).join(" | ") || null,
         status: "Planned",
       });
     }
