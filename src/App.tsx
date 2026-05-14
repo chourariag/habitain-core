@@ -77,6 +77,7 @@ const App = () => (
                 <Route path="/site-dashboard" element={<SiteDashboard />} />
                 <Route path="/site-hub" element={<SiteHub />} />
                 <Route path="/site-hub/dispatch-pack" element={<DispatchPackForm />} />
+                <Route path="/dispatch-pack-form" element={<DispatchPackForm />} />
                 <Route path="/site-hub/advance-request" element={<AdvanceRequest />} />
                 <Route path="/design" element={<DesignRouteGuard><DesignPortal /></DesignRouteGuard>} />
                 <Route path="/drawings" element={<DesignRouteGuard><Drawings /></DesignRouteGuard>} />
