@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus, Package, Users, ClipboardList, MessageSquareWarning, FileCheck, Hammer, HardHat } from "lucide-react";
 import { DailyLabourLog } from "@/components/labour/DailyLabourLog";
+import { ManpowerWeeklyExcel } from "@/components/labour/ManpowerWeeklyExcel";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
