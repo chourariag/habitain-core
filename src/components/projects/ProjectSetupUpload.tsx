@@ -49,16 +49,16 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
     try {
       // Fetch project + counts for pre-fill
       const { data: proj } = await (supabase.from("projects") as any)
-        .select("id, name, code, client_name, division, production_system, contract_value, start_date, est_completion, delivery_date, module_count, panel_count")
+        .select("id, name, client_name, division, production_system, contract_value, start_date, est_completion")
         .eq("id", projectId).single();
 
       const { data: mods } = await (supabase.from("modules") as any)
         .select("id").eq("project_id", projectId).eq("is_archived", false);
       const modIds = (mods || []).map((m: any) => m.id);
-      const moduleCount = Number(proj?.module_count) || modIds.length;
+      const moduleCount = modIds.length;
 
-      let panelCount = Number(proj?.panel_count) || 0;
-      if (!panelCount && modIds.length) {
+      let panelCount = 0;
+      if (modIds.length) {
         const { data: panelRows } = await (supabase.from("panels") as any).select("id, module_id");
         panelCount = (panelRows || []).filter((p: any) => modIds.includes(p.module_id)).length;
       }
