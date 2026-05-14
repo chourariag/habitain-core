@@ -319,6 +319,7 @@ export default function Drawings() {
       toast.success(`Design Query ${dqCode} raised successfully`);
       setDqOpen(false);
       setDqForm({ project_id: "", module_id: "", drawing_id: "", description: "" });
+      setDqScope("module");
       setDqPhoto(null);
       setDqVoice(null);
       fetchData();
