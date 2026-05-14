@@ -31,7 +31,8 @@ const BOQ_CATEGORIES = [
 ];
 
 const STATUS_LABEL: Record<string,{label:string;bg:string;color:string}> = {
-  pending_costing_approval: { label: "Pending Costing", bg:"#FFF8E8", color:"#D4860A" },
+  draft: { label: "Draft", bg:"#F5F5F5", color:"#666" },
+  pending_costing_approval: { label: "Pending Approval", bg:"#FFF8E8", color:"#D4860A" },
   clarification_needed: { label: "Clarification Needed", bg:"#FFF8E8", color:"#D4860A" },
   rejected: { label: "Rejected", bg:"#FFF0F0", color:"#F40009" },
   approved_pending_issue: { label: "Approved — Pending Issue", bg:"#E8F2ED", color:"#006039" },
@@ -42,6 +43,8 @@ const STATUS_LABEL: Record<string,{label:string;bg:string;color:string}> = {
   measured_signed_off: { label: "Measured & Signed Off", bg:"#E8F2ED", color:"#006039" },
   closed: { label: "Closed", bg:"#E0E0E0", color:"#666" },
 };
+
+const SUBMIT_ROLES = ["super_admin","managing_director","production_head","planning_head","site_installation_mgr"];
 
 const fmtINR = (n: number) => `₹${(n||0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
