@@ -282,10 +282,13 @@ export function ManpowerWeeklyExcel({ location, projectId }: Props) {
         .eq("is_active", true);
       if (dirs?.length) {
         await supabase.from("notifications").insert(dirs.map((d: any) => ({
-          user_id: d.auth_user_id,
+          recipient_id: d.auth_user_id,
+          category: "manpower_plan",
+          type: "info",
           title: `Manpower Plan submitted — ${location === "factory" ? "Factory" : "Site"}`,
-          message: `Week of ${weekStartStr}. ${planEntries.length} workers, ${totalManDays} man-days${isLate ? " (LATE)" : ""}.`,
-          type: "manpower_plan", link: location === "factory" ? "/production" : "/sitehub",
+          content: `Week of ${weekStartStr}. ${planEntries.length} workers, ${totalManDays} man-days${isLate ? " (LATE)" : ""}.`,
+          body: `Week of ${weekStartStr}. ${planEntries.length} workers, ${totalManDays} man-days${isLate ? " (LATE)" : ""}.`,
+          navigate_to: location === "factory" ? "/production" : "/sitehub",
         })));
       }
 
