@@ -244,7 +244,7 @@ export default function DeliveryChecklist() {
         <div className="mt-4 flex items-center gap-3">
           <span className="text-xs font-medium" style={{ color: "#666666" }}>Sections complete:</span>
           <div className="flex gap-1.5">
-            {["Modules", "Tools", "Additional"].map((label, i) => {
+            {["Pre-Dispatch", "Stores", "SIM"].map((label, i) => {
               const done = [modulesSigned, toolsSigned, additionalSigned][i];
               return (
                 <Badge key={label} variant="outline" className={done ? "border-primary/30" : ""} 
