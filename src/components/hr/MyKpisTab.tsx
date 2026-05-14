@@ -18,7 +18,7 @@ export function MyKpisTab() {
       setLoading(true);
       const today = new Date().toISOString().slice(0, 10);
       const [{ data: d }, { data: s }] = await Promise.all([
-        supabase.from("kpi_definitions").select("*").eq("role", role).eq("is_active", true),
+        supabase.from("kpi_definitions").select("*").eq("role", role as any).eq("is_active", true),
         supabase.from("kpi_snapshots").select("*").eq("user_id", user.id).eq("period_type", "daily").eq("period_date", today),
       ]);
       setDefs(d ?? []); setSnaps(s ?? []); setLoading(false);
