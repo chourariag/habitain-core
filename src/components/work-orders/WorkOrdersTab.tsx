@@ -571,6 +571,19 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
             <div><Label className="text-xs">Notes to Costing</Label><p className="text-xs mt-1">{wo.notes_to_costing}</p></div>
           )}
 
+          {/* Submit Draft for Approval */}
+          {canSubmitDraft && (
+            <div className="border-t pt-3 space-y-2">
+              <p className="text-xs font-semibold">Draft — ready to submit?</p>
+              <p className="text-[11px] text-muted-foreground">
+                On submit, this WO will be routed to Finance → Costing &amp; Estimation for approval.
+              </p>
+              <Button size="sm" onClick={doSubmitForApproval} disabled={busy} style={{ background: "#006039" }}>
+                <Send className="h-4 w-4 mr-1" /> Submit for Approval
+              </Button>
+            </div>
+          )}
+
           {/* Budget panel for costing approval */}
           {wo.status === "pending_costing_approval" && canCostingApprove && budgetInfo && (
             <div className="border rounded p-3 space-y-2" style={{
