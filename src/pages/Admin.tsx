@@ -91,18 +91,6 @@ export default function Admin() {
             <FileText className="h-3.5 w-3.5" />
             Reports
           </TabsTrigger>
-          <TabsTrigger value="weekly" className="gap-1.5">
-            <CalendarClock className="h-3.5 w-3.5" />
-            Weekly Reports
-          </TabsTrigger>
-          <TabsTrigger value="compliance" className="gap-1.5">
-            <CalendarClock className="h-3.5 w-3.5" />
-            Report Compliance
-          </TabsTrigger>
-          <TabsTrigger value="safety" className="gap-1.5">
-            <ShieldAlert className="h-3.5 w-3.5" />
-            Safety Log
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="mt-4">
@@ -149,17 +137,6 @@ export default function Admin() {
           <BoardPaperGenerator />
         </TabsContent>
 
-        <TabsContent value="weekly" className="mt-4">
-          <WeeklyReportConfigsTab />
-        </TabsContent>
-
-        <TabsContent value="compliance" className="mt-4">
-          <ReportComplianceTab />
-        </TabsContent>
-
-        <TabsContent value="safety" className="mt-4">
-          <SafetyIncidentsTab />
-        </TabsContent>
       </Tabs>
     </div>
   );
