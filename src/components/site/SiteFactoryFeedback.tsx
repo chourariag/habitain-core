@@ -98,7 +98,7 @@ export function SiteFactoryFeedback({ projectId, projectName, userRole, modules 
         photos: photoUrls,
         severity,
         raised_by: user.id,
-        raised_by_name: profile?.display_name ?? user.email,
+        raised_by_name: effectiveDisplayName(profile?.display_name, user.email),
       }).select("id").single();
 
       // Notify Azad (production_head), Suraj (head_operations), and Gaurav (managing_director) simultaneously
@@ -108,7 +108,7 @@ export function SiteFactoryFeedback({ projectId, projectName, userRole, modules 
         await insertNotifications(recipients.map((r: any) => ({
           recipient_id: r.auth_user_id,
           title: `Site Feedback — ${severity.toUpperCase()}`,
-          body: `${profile?.display_name ?? "Site team"} reported: ${issueType} at ${projectName}. "${description.trim().slice(0, 80)}..." Response required within 12 hours.`,
+          body: `${effectiveDisplayName(profile?.display_name, "Site team")} reported: ${issueType} at ${projectName}. "${description.trim().slice(0, 80)}..." Response required within 12 hours.`,
           category: "Production",
           related_table: "site_factory_feedback",
           related_id: inserted?.id,
