@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Loader2, ArrowLeft, AlertTriangle, Upload, Zap } from "lucide-react";
 import { format, differenceInDays, differenceInHours } from "date-fns";
 import { insertNotifications } from "@/lib/notifications";
+import { effectiveDisplayName } from "@/lib/effective-user";
 
 interface LineItem {
   category: string;
@@ -149,7 +150,7 @@ export default function AdvanceRequest() {
     const { error } = await supabase.from("advance_requests").insert({
       advance_id: advanceId,
       employee_id: userProfile.id,
-      employee_name: userProfile.display_name || userProfile.email,
+      employee_name: effectiveDisplayName(userProfile.display_name, userProfile.email),
       project_id: projectId || null,
       project_name: projectName,
       dispatch_date: dispatchDate,
@@ -164,7 +165,7 @@ export default function AdvanceRequest() {
       is_emergency: isEmergency,
       status: isEmergency ? "pending_md" : "pending",
       purpose: `Advance for ${projectName} dispatch on ${format(new Date(dispatchDate), "dd/MM/yyyy")}`,
-      bank_account_name: userProfile.display_name,
+      bank_account_name: effectiveDisplayName(userProfile.display_name),
       payment_method: "bank_transfer",
     } as any);
 
@@ -177,7 +178,7 @@ export default function AdvanceRequest() {
     // Send notification
     const notifTitle = isEmergency
       ? `EMERGENCY: Advance request for ${projectName}`
-      : `Advance request from ${userProfile.display_name || "SIM"} for ${projectName}`;
+      : `Advance request from ${effectiveDisplayName(userProfile.display_name, "SIM")} for ${projectName}`;
     const notifBody = isEmergency
       ? `Advance of ₹${totalAmount.toLocaleString("en-IN")} for ${projectName} dispatching within 24 hours. Immediate approval required.`
       : `₹${totalAmount.toLocaleString("en-IN")}. ${abovePolicy > 0 ? `${lineItems.filter((i) => i.above_policy).length} items above policy.` : ""} Please review and approve.`;
