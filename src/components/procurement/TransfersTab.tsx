@@ -158,9 +158,9 @@ export function TransfersTab() {
     try { return isWithinInterval(parseISO(t.created_at), { start: monthStart, end: monthEnd }); } catch { return false; }
   }).length;
   const activeProjectCount = new Set(
-    transfers.filter((t) => ["dispatched", "complete", "in_progress"].includes(t.status)).map((t) => t.project_id)
+    transfers.filter((t) => ["in_transit", "dispatched", "complete", "in_progress", "pending"].includes(t.status) && t.project_id).map((t) => t.project_id)
   ).size;
-  const pendingCount = transfers.filter((t) => ["pending", "in_progress"].includes(t.status)).length;
+  const pendingCount = transfers.filter((t) => ["pending", "in_progress", "in_transit", "dispatched", "complete"].includes(t.status)).length;
 
   const openDetail = (t: Transfer) => {
     setSelectedTransfer(t);
