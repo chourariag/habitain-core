@@ -23,6 +23,7 @@ import { projectCode } from "@/lib/code-generators";
 import { BriefScopeSection } from "@/components/design/BriefScopeSection";
 import { ConsultantRow } from "@/components/design/ConsultantRow";
 import { ProjectHealthCard } from "@/components/design/ProjectHealthCard";
+import { getTestingModeData } from "@/hooks/useUserRole";
 import { MasterQCChecklist } from "@/components/design/MasterQCChecklist";
 import { DetailLibraryTab } from "@/components/design/DetailLibraryTab";
 import { DrawingApprovalSheet } from "@/components/design/DrawingApprovalSheet";
@@ -429,6 +430,8 @@ export default function DesignPortal() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
+      const tmDQ = getTestingModeData();
+      const effectiveName = tmDQ ? tmDQ.overrideName : userName;
 
       let photoUrl = null, voiceUrl = null;
       if (dqPhoto) {
@@ -460,7 +463,7 @@ export default function DesignPortal() {
         photo_url: photoUrl,
         voice_note_url: voiceUrl,
         raised_by: user.id,
-        raised_by_name: userName,
+        raised_by_name: effectiveName,
         assigned_architect_id: assignedArchitect?.auth_user_id ?? null,
         status: "open",
       });

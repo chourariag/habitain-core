@@ -240,6 +240,8 @@ function DailyLogTab() {
 /* ─── Leave Requests ─── */
 function LeaveRequestsTab() {
   const { user } = useAuth();
+  const { role: userRole } = useUserRole();
+  const canApproveLeave = ["hr_executive", "managing_director", "super_admin", "head_operations"].includes(userRole ?? "");
   const [requests, setRequests] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -321,7 +323,7 @@ function LeaveRequestsTab() {
                   </Badge>
                 </td>
                 <td className="px-3 py-2">
-                  {r.status === "pending" && (
+                  {r.status === "pending" && canApproveLeave && (
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleApprove(r.id)}>
                         <Check className="h-4 w-4" style={{ color: "#006039" }} />

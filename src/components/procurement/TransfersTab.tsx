@@ -52,14 +52,17 @@ export function TransfersTab() {
 
   const fetchTransfers = useCallback(async () => {
     setLoading(true);
-    const [{ data: checklists }, { data: projList }, { data: profiles }] = await Promise.all([
+    const [checklistsRes, projListRes, profilesRes] = await Promise.all([
       (supabase.from("delivery_checklists") as any)
         .select("*")
         .order("created_at", { ascending: false }),
       supabase.from("projects").select("id, name").eq("is_archived", false),
-      // Fix #2: query display_name (not full_name — profiles table uses display_name)
       supabase.from("profiles").select("auth_user_id, display_name, role"),
     ]);
+    if (checklistsRes.error) { setLoading(false); return; }
+    const checklists = checklistsRes.data;
+    const projList = projListRes.data;
+    const profiles = profilesRes.data;
 
     const projMap: Record<string, string> = {};
     (projList ?? []).forEach((p: any) => { projMap[p.id] = p.name; });

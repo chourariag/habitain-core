@@ -317,7 +317,7 @@ export function AppSidebar() {
                   return true;
                 })
                 .map((item) => (
-                  <NavLink key={item.to} to={item.to} className={navLinkClass} style={navLinkStyle}>
+                  <NavLink key={item.to} to={item.to} className={navLinkClass} style={navLinkStyle} end={item.to === "/admin"}>
                     <item.icon className="h-4 w-4 shrink-0" />
                     {!collapsed && <span>{item.label}</span>}
                   </NavLink>

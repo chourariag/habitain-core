@@ -107,7 +107,8 @@ export function PaymentsTab() {
   };
 
   const updateStatus = async (id: string, status: string) => {
-    await supabase.from("finance_payments").update({ status }).eq("id", id);
+    const { error } = await supabase.from("finance_payments").update({ status }).eq("id", id);
+    if (error) { toast.error(error.message); return; }
     fetchData();
   };
 

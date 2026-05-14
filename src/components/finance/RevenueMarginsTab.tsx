@@ -62,7 +62,7 @@ export function RevenueMarginsTab() {
     (async () => {
       const { data: projects } = await supabase
         .from("projects")
-        .select("id, name, status, contract_value, client_name")
+        .select("id, name, status, contract_value, client_name, gfc_budget")
         .eq("is_archived", false)
         .order("created_at", { ascending: false });
 
@@ -107,10 +107,15 @@ export function RevenueMarginsTab() {
         const finalContract = contractValue + variationValue;
         const invoiced = invoiceMap[p.id]?.invoiced ?? 0;
         const paid = invoiceMap[p.id]?.paid ?? milestoneMap[p.id] ?? 0;
-        // Estimate actual cost at ~72% of contract value (placeholder without actual cost tracking)
-        const actualCost = contractValue * 0.72;
+        // Use GFC Budget if uploaded; otherwise estimate at 72% of contract value
+        const gfcBudget = (p as any).gfc_budget ? Number((p as any).gfc_budget) : 0;
+        const actualCost = gfcBudget > 0 ? gfcBudget : contractValue * 0.72;
         const grossMargin = finalContract - actualCost;
         const actualMarginPct = finalContract > 0 ? (grossMargin / finalContract) * 100 : null;
+        // Standard BOQ split: materials 52%, labour 20%, overhead 10%, remainder MEP+logistics
+        const materialCost = gfcBudget > 0 ? actualCost * 0.52 : actualCost * 0.6;
+        const labourCost = gfcBudget > 0 ? actualCost * 0.20 : actualCost * 0.25;
+        const overheadCost = gfcBudget > 0 ? actualCost * 0.10 : actualCost * 0.15;
 
         return {
           id: p.id,
@@ -126,9 +131,9 @@ export function RevenueMarginsTab() {
           paid_amount: paid,
           variation_value: variationValue,
           final_contract: finalContract,
-          material_cost: actualCost * 0.6,
-          labour_cost: actualCost * 0.25,
-          overheads: actualCost * 0.15,
+          material_cost: materialCost,
+          labour_cost: labourCost,
+          overheads: overheadCost,
           wip_value: finalContract - paid,
           retention: finalContract * 0.05,
           gross_margin: grossMargin,

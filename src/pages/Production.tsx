@@ -56,7 +56,7 @@ function ProductionContent() {
       .select("*, projects(name)")
       .eq("is_archived", false)
       .eq("project_id", selectedProjectId)
-      .order("created_at", { ascending: false });
+      .order("module_number", { ascending: true });
     setModules((data as ModuleWithProject[] | null) ?? []);
     setLoading(false);
   }, [selectedProjectId]);

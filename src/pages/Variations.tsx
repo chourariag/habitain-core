@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Loader2, Plus, ChevronRight, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
+import { Loader2, Plus, AlertTriangle, CheckCircle2, Clock, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
@@ -69,6 +69,8 @@ function VariationsContent() {
   const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [variationToDelete, setVariationToDelete] = useState<Variation | null>(null);
   const [form, setForm] = useState({
     description: "",
     scope_type: "Client Request",
@@ -85,7 +87,8 @@ function VariationsContent() {
     const { data } = await (supabase.from("variations" as any) as any)
       .select("*")
       .eq("project_id", selectedProjectId)
-      .order("created_at", { ascending: false });
+      .eq("is_deleted", false)
+      .order("ref_number", { ascending: true });
     setVariations(data ?? []);
     setLoading(false);
   }, [selectedProjectId]);
@@ -181,6 +184,17 @@ function VariationsContent() {
     }).eq("id", v.id);
     if (error) toast.error(error.message);
     else { toast.success("Submitted for approval"); fetch(); }
+  };
+
+  const handleDelete = async () => {
+    if (!variationToDelete) return;
+    const { error } = await (supabase.from("variations" as any) as any)
+      .update({ is_deleted: true })
+      .eq("id", variationToDelete.id);
+    if (error) toast.error(error.message);
+    else { toast.success(`${variationToDelete.ref_number} deleted`); fetch(); }
+    setDeleteConfirmOpen(false);
+    setVariationToDelete(null);
   };
 
   const handleReject = async (v: Variation) => {
@@ -280,6 +294,18 @@ function VariationsContent() {
                           </Button>
                         </>
                       )}
+                      {userRole === "managing_director" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0"
+                          style={{ color: "#F40009" }}
+                          title="Delete variation"
+                          onClick={() => { setVariationToDelete(v); setDeleteConfirmOpen(true); }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -362,6 +388,23 @@ function VariationsContent() {
           <DialogFooter>
             <Button onClick={handleCreate} disabled={saving} style={{ backgroundColor: "#006039" }} className="text-white">
               {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}Create Variation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Delete Variation?</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete <span className="font-bold">{variationToDelete?.ref_number}</span>?
+            This action cannot be undone (soft delete — MD audit trail preserved).
+          </p>
+          <DialogFooter className="gap-2 mt-2">
+            <Button variant="outline" size="sm" onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+            <Button size="sm" className="text-white" style={{ backgroundColor: "#F40009" }} onClick={handleDelete}>
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

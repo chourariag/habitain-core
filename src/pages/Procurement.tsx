@@ -122,6 +122,7 @@ function SubcontractorsTab() {
         />
       </div>
       <div className="rounded-xl border overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow style={{ backgroundColor: "#F7F7F7" }}>
@@ -150,6 +151,7 @@ function SubcontractorsTab() {
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
