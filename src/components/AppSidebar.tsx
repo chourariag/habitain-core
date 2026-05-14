@@ -58,6 +58,8 @@ const sectionConfig = [
     items: [
       { to: "/site-dashboard", label: "Site Dashboard", icon: LayoutDashboard },
       { to: "/site-hub", label: "Site Hub", icon: Truck },
+      { to: "/rm", label: "R&M", icon: Wrench },
+      { to: "/amc", label: "AMC", icon: ShoppingCart },
     ],
   },
   {
@@ -95,8 +97,6 @@ const sectionConfig = [
       { to: "/finance?tab=pl-cashflow", label: "Project P&L & Cash Flow", icon: BarChart3 },
       { to: "/finance?tab=bank-overdue", label: "Bank Ledger & Overdue", icon: DollarSign },
       { to: "/finance?tab=statutory", label: "Statutory", icon: ShieldCheck },
-      { to: "/rm", label: "R&M", icon: Wrench },
-      { to: "/amc", label: "AMC", icon: ShoppingCart },
     ],
   },
   {
