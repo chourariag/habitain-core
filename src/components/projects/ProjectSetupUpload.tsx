@@ -48,130 +48,127 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
   const downloadTemplate = async () => {
     setDownloading(true);
     try {
-    const wb = XLSX.utils.book_new();
+      const wb = XLSX.utils.book_new();
 
-    const billing = [
-      ["#", "Milestone Description", "%", "GST Applicable (Y/N)", "Trigger Event"],
-      [1, "Booking Advance", 10, "No", "Booking"],
-      [2, "Shell & Core Phase 1", 30, "Yes", "Shell & Core Start"],
-      [3, "Shell & Core Phase 2", 25, "Yes", "Shell & Core Complete"],
-      [4, "Builder Finish", 15, "Yes", "Builder Finish"],
-      [5, "Finishing Works", 15, "Yes", "Finishing Complete"],
-      [6, "Handover", 5, "Yes", "Handover"],
-    ];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(billing), "Billing Milestones");
+      // Fetch project + module list for pre-fill
+      const { data: proj } = await (supabase.from("projects") as any)
+        .select("id, name, client_name, division, production_system, contract_value, start_date, est_completion, location")
+        .eq("id", projectId).single();
+      const sys = (proj?.production_system || productionSystem || "modular").toLowerCase();
 
-    XLSX.utils.book_append_sheet(wb, buildBoqWorksheet(30), "BOQ");
+      const { data: mods } = await (supabase.from("modules") as any)
+        .select("id, name, module_code")
+        .eq("project_id", projectId).eq("is_archived", false)
+        .order("name", { ascending: true });
+      const moduleNames: string[] = (mods || []).map((m: any) => m.name || m.module_code || "").filter(Boolean);
+      if (moduleNames.length === 0) moduleNames.push("M1");
 
-    // ── Project Schedule sheet (STAGES ONLY — Karthik fills factory stage 1–15 dates only)
-    // Site stages (16–23) are entered separately by Awaiz in Site Hub → Schedule.
-    const sys = (productionSystem || "modular").toLowerCase();
-    const { data: mods } = await (supabase.from("modules") as any)
-      .select("id, name, module_code")
-      .eq("project_id", projectId)
-      .eq("is_archived", false)
-      .order("name", { ascending: true });
-    const moduleNames: string[] = (mods || []).map((m: any) => m.name || m.module_code || "").filter(Boolean);
-    if (moduleNames.length === 0) moduleNames.push("M1");
+      const modIdSet = new Set((mods || []).map((m: any) => m.id));
+      const { data: panelRows } = await (supabase.from("panels") as any).select("id, module_id");
+      const panelCount = (panelRows || []).filter((p: any) => modIdSet.has(p.module_id)).length;
 
-    const schRows: any[][] = [
-      [`HStack — Project Schedule  |  Stages only  |  System: ${sys}  |  Fill Planned Start + End for each module`],
-      [`Site stages (Erection → Handover) are entered by Site Installation Manager in Site Hub → Schedule, 14 days before dispatch. Do NOT add them here.`],
-      [`Notes column: enter "N/A" to exclude an optional stage (e.g. Internal Wall Finishing) for that module. Blank = in scope.`],
-      [],
-      ["Stage #", "Stage Name", "Module #", "Planned Start (DD/MM/YYYY)", "Planned End (DD/MM/YYYY)", "Notes / N/A"],
-    ];
-    for (const stage of FACTORY_STAGES) {
-      const label = stage.parallel
-        ? `${stage.name}  (∥ ${stage.parallel})`
-        : stage.name + (stage.na_eligible ? "  (mark N/A if not in scope)" : "");
-      for (const mn of moduleNames) {
-        schRows.push([stage.number, label, mn, "", "", ""]);
+      // Auto project code from name + year + short id (display only)
+      const yr = String(new Date().getFullYear()).slice(-2);
+      const prefix = String(proj?.name || "").replace(/[^A-Za-z]/g, "").slice(0, 4).toUpperCase().padEnd(4, "X");
+      const seq = String(projectId).replace(/-/g, "").slice(0, 3).toUpperCase();
+      const projectCode = `${prefix}/${yr}/${seq}`;
+
+      const fmt = (d: any) => d ? format(new Date(d), "dd/MM/yyyy") : "";
+
+      // ── Sheet 1: Project Details (pre-filled) ──
+      const detailRows: any[][] = [
+        ["THE HABITAINER — PROJECT SETUP TEMPLATE  |  Fill and upload to HStack"],
+        ["Version 1.0  |  Project Details (grey fields) are pre-filled from HStack. Fill white fields only. Upload via Projects → [Project] → Overview → Upload Project Setup."],
+        ["  🔒 Grey = Pre-filled from HStack (do not change)      ✏ White = Fill this in"],
+        [],
+        ["  PROJECT IDENTIFICATION"],
+        ["Project Code", projectCode],
+        ["Project Name", proj?.name || ""],
+        ["Division", proj?.division || ""],
+        ["Production System", sys],
+        ["Client Name", proj?.client_name || ""],
+        ["Client Email", ""],
+        ["Client Phone", ""],
+        ["Site Location", proj?.location || ""],
+        ["Site City", ""],
+        ["Site State", ""],
+        ["Sales Owner", proj?.division === "ADS" ? "Karan Awtaney" : "John Kunnath"],
+        ["Project Manager", "Suraj Rao"],
+        [],
+        ["  COMMERCIAL DETAILS"],
+        ["Contract Value (₹)", Number(proj?.contract_value) || 0],
+        ["Contract Start Date", fmt(proj?.start_date)],
+        ["Expected Delivery Date", fmt(proj?.est_completion)],
+        ["Number of Modules", moduleNames.length],
+        ["Number of Panels", panelCount],
+        ["GST Applicable", "Yes"],
+        [],
+        ["  TEAM (System Defaults)"],
+        ["Operations Head", "Azad"],
+        ["Site Installation Manager", "Awaiz"],
+        ["Planning Engineer", "Karthik"],
+        ["Costing / QS", "Nakeem"],
+        ["Procurement", "Venkat"],
+      ];
+      const detailWs = XLSX.utils.aoa_to_sheet(detailRows);
+      detailWs["!cols"] = [{ wch: 28 }, { wch: 38 }];
+      detailWs["!merges"] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } },
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } },
+      ];
+      XLSX.utils.book_append_sheet(wb, detailWs, "Project Details");
+
+      // ── Sheet 2: BOQ + Margin ──
+      XLSX.utils.book_append_sheet(wb, buildBoqWorksheet(30), "BOQ + Margin");
+
+      // ── Sheet 3: Project Schedule (factory stages × modules) ──
+      const schRows: any[][] = [
+        [`HStack — Project Schedule  |  Stages only  |  System: ${sys}  |  Fill Planned Start + End for each module`],
+        [`Site stages (Erection → Handover) are entered by Awaiz in Site Hub → Schedule, 14 days before dispatch. Do NOT add them here.`],
+        [`Notes column: enter "N/A" to exclude an optional stage for that module. Blank = in scope.`],
+        [],
+        ["Stage #", "Stage Name", "Module #", "Planned Start (DD/MM/YYYY)", "Planned End (DD/MM/YYYY)", "Notes / N/A"],
+      ];
+      for (const stage of FACTORY_STAGES) {
+        const label = stage.parallel
+          ? `${stage.name}  (∥ ${stage.parallel})`
+          : stage.name + (stage.na_eligible ? "  (mark N/A if not in scope)" : "");
+        for (const mn of moduleNames) {
+          schRows.push([stage.number, label, mn, "", "", ""]);
+        }
       }
-    }
-    const schWs = XLSX.utils.aoa_to_sheet(schRows);
-    schWs["!cols"] = [{ wch: 8 }, { wch: 38 }, { wch: 12 }, { wch: 22 }, { wch: 22 }, { wch: 24 }];
-    schWs["!merges"] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
-      { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },
-    ];
-    XLSX.utils.book_append_sheet(wb, schWs, "Project Schedule");
+      const schWs = XLSX.utils.aoa_to_sheet(schRows);
+      schWs["!cols"] = [{ wch: 8 }, { wch: 38 }, { wch: 12 }, { wch: 22 }, { wch: 22 }, { wch: 24 }];
+      schWs["!merges"] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
+        { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },
+      ];
+      XLSX.utils.book_append_sheet(wb, schWs, "Project Schedule");
 
-    const material: any[][] = [
-      ["Section", "Material", "Tender Qty", "Unit", "PO Release Date", "Procurement Date", "Delivery Date"],
-      ["Shell and Core", "Structural Steel — Beams, Columns, Framed Structure", "", "KG", "", "", ""],
-      ["Shell and Core", "LGSF — Wall framing", "", "KG", "", "", ""],
-      ["Shell and Core", "Deck Sheet 1.0mm — Floor & Roof", "", "KG", "", "", ""],
-      ["Shell and Core", "Welded Wire Mesh 2.5mm 50mm C/C", "", "KG", "", "", ""],
-      ["Shell and Core", "Chicken Wire Mesh 1mm 25mm", "", "KG", "", "", ""],
-      ["Shell and Core", "EPS Thermocol Sheet", "", "Nos", "", "", ""],
-      ["Shell and Core", "Self Drilling Screws", "", "Nos", "", "", ""],
-      ["Shell and Core", "Roofing Concrete Plain Cement Mortar", "", "CFT", "", "", ""],
-      ["Builder Finish", "Rockwool Slab 48kg 50mm — Inner Wall", "", "SFT", "", "", ""],
-      ["Builder Finish", "Habit Board 13mm — Inner Wall", "", "SFT", "", "", ""],
-      ["Builder Finish", "Toilet Cement Board", "", "SFT", "", "", ""],
-      ["Builder Finish", "Shera Neu Wall Board 10mm — External", "", "SFT", "", "", ""],
-      ["Builder Finish", "Gypsum Board 12.5mm — Ceiling", "", "SFT", "", "", ""],
-      ["Builder Finish", "Internal Painting (Compound, Putty, Primer, Paint)", "", "SFT", "", "", ""],
-      ["Builder Finish", "Shera Plank — Exterior Finish", "", "SFT", "", "", ""],
-      ["Builder Finish", "Aluminium Foil", "", "SQM", "", "", ""],
-      ["Builder Finish", "Aluminium Glass Windows", "", "SFT", "", "", ""],
-      ["Builder Finish", "Aluminium Vents", "", "SFT", "", "", ""],
-      ["Builder Finish", "Wooden Flooring", "", "SFT", "", "", ""],
-      ["Builder Finish", "Vitrified Flooring and Tile Dadoing", "", "SFT", "", "", ""],
-      ["Builder Finish", "Rain Water Gutter PVC", "", "KG", "", "", ""],
-      ["Builder Finish", "Concealed Items — Electrical", "", "Lot", "", "", ""],
-      ["Builder Finish", "Concealed Items — Plumbing", "", "Lot", "", "", ""],
-      ["Builder Finish", "Plumbing Fixtures", "", "Lot", "", "", ""],
-      ["Builder Finish", "Electrical Fixtures", "", "Lot", "", "", ""],
-      ["Builder Finish", "Roof Screeding 50mm", "", "CFT", "", "", ""],
-      ["Builder Finish", "AC Copper Piping 1.5MT", "", "MTR", "", "", ""],
-      ["Builder Finish", "MS Flashing", "", "Lot", "", "", ""],
-      ["Builder Finish", "Wooden Doors (internal)", "", "Nos", "", "", ""],
-      ["Builder Finish", "External Doors (main entry)", "", "Nos", "", "", ""],
-      ["Builder Finish", "Door Hardware (hinges, locks, handles)", "", "Lots", "", "", ""],
-      ["Builder Finish", "Skirting — Wooden or Tile", "", "RFT", "", "", ""],
-      ["Builder Finish", "Silicon Sealant — external joints", "", "Tubes", "", "", ""],
-      ["Builder Finish", "Waterproofing Membrane", "", "SQM", "", "", ""],
-      ["Builder Finish", "Tile Grout", "", "KG", "", "", ""],
-      ["Builder Finish", "Caulking Compound", "", "Tubes", "", "", ""],
-      ["Builder Finish", "SS Railings (if in scope)", "", "RFT", "", "", ""],
-      ["Builder Finish", "Staircase (if in scope)", "", "Nos", "", "", ""],
-      ["Site", "Foundation Bolts and Anchor Plates", "", "Nos", "", "", ""],
-      ["Site", "Anti-termite Treatment", "", "SQM", "", "", ""],
-      ["Site", "Crane Hire (site erection)", "", "Days", "", "", ""],
-      ["Site", "Site Electricity Connection", "", "Lot", "", "", ""],
-      ["Site", "Temporary Site Toilet", "", "Nos", "", "", ""],
-    ];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(material), "Material Plan");
+      // ── Sheet 4: Material Plan ──
+      const material: any[][] = [
+        ["Section", "Material", "Tender Qty", "Unit", "PO Release Date", "Procurement Date", "Delivery Date"],
+        ["Shell and Core", "Structural Steel — Beams, Columns, Framed Structure", "", "KG", "", "", ""],
+        ["Shell and Core", "LGSF — Wall framing", "", "KG", "", "", ""],
+        ["Shell and Core", "Deck Sheet 1.0mm — Floor & Roof", "", "KG", "", "", ""],
+        ["Shell and Core", "Welded Wire Mesh 2.5mm 50mm C/C", "", "KG", "", "", ""],
+        ["Shell and Core", "EPS Thermocol Sheet", "", "Nos", "", "", ""],
+        ["Builder Finish", "Rockwool Slab 48kg 50mm — Inner Wall", "", "SFT", "", "", ""],
+        ["Builder Finish", "Habit Board 13mm — Inner Wall", "", "SFT", "", "", ""],
+        ["Builder Finish", "Shera Neu Wall Board 10mm — External", "", "SFT", "", "", ""],
+        ["Builder Finish", "Gypsum Board 12.5mm — Ceiling", "", "SFT", "", "", ""],
+        ["Builder Finish", "Internal Painting (Compound, Putty, Primer, Paint)", "", "SFT", "", "", ""],
+        ["Builder Finish", "Aluminium Glass Windows", "", "SFT", "", "", ""],
+        ["Builder Finish", "Wooden Doors (internal)", "", "Nos", "", "", ""],
+        ["Site", "Foundation Bolts and Anchor Plates", "", "Nos", "", "", ""],
+        ["Site", "Crane Hire (site erection)", "", "Days", "", "", ""],
+      ];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(material), "Material Plan");
 
-    const scope: any[][] = [
-      ["Area", "Item", "Scope"],
-      ["Builder Finish", "Structure", "Habitainer"],
-      ["Builder Finish", "Internal Wall Panelling", "Habitainer"],
-      ["Builder Finish", "External Cladding", "Habitainer"],
-      ["Builder Finish", "Flooring", "Habitainer"],
-      ["Builder Finish", "Ceiling", "Habitainer"],
-      ["Builder Finish", "Painting", "Habitainer"],
-      ["Builder Finish", "MEP — Electrical", "Habitainer"],
-      ["Builder Finish", "MEP — Plumbing", "Habitainer"],
-      ["Builder Finish", "HVAC", "TBD"],
-      ["Builder Finish", "Windows and Doors", "Habitainer"],
-      ["Builder Finish", "Kitchen Fittings", "TBD"],
-      ["Builder Finish", "Bathroom Fittings", "Habitainer"],
-      ["Site-Related", "Foundation", "External"],
-      ["Site-Related", "Compound Wall", "External"],
-      ["Site-Related", "Site Levelling", "External"],
-      ["Site-Related", "Landscaping", "TBD"],
-      ["External Structures", "Pergola", "TBD"],
-      ["External Structures", "Outdoor Deck", "TBD"],
-      ["External Structures", "Boundary Wall", "External"],
-      ["External Structures", "Swimming Pool", "Not in Scope"],
-    ];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(scope), "Scope of Work");
-
-    XLSX.writeFile(wb, "Project_Setup_Template.xlsx");
+      const safeName = (proj?.name || "Project").replace(/[^A-Za-z0-9]+/g, "_");
+      XLSX.writeFile(wb, `Project_Setup_${safeName}.xlsx`);
     } catch (err: any) {
       toast.error(err?.message || "Template download failed");
     } finally {
