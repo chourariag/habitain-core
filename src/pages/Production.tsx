@@ -26,6 +26,7 @@ import { DryAssemblyCheck } from "@/components/production/DryAssemblyCheck";
 import { ScheduleConflictBanner } from "@/components/production/ScheduleConflictBanner";
 import { useUserRole } from "@/hooks/useUserRole";
 import type { Tables } from "@/integrations/supabase/types";
+import { MeasurementSheet } from "@/components/measurements/MeasurementSheet";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
 
