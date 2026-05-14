@@ -244,24 +244,43 @@ export function AppSidebar() {
                   </span>
                 </div>
               )}
-              {section.items.filter((item: any) => !item.roles || (userRole && item.roles.includes(userRole))).map((item) => {
-                const [itemPath, itemQuery] = item.to.split("?");
-                const itemTab = itemQuery ? new URLSearchParams(itemQuery).get("tab") : null;
+              {(() => {
+                const visible = section.items.filter((item: any) => !item.roles || (userRole && item.roles.includes(userRole)));
                 const currentTab = new URLSearchParams(location.search).get("tab");
-                const itemActive = location.pathname === itemPath && (itemTab ? currentTab === itemTab : !currentTab || section.items.filter(s => s.to.startsWith(itemPath + "?")).length === 0);
-                return (
-                <NavLink key={item.to} to={item.to} className={() => navLinkClass({ isActive: itemActive })} style={() => navLinkStyle({ isActive: itemActive })}>
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  {!collapsed && <span className="flex-1">{item.label}</span>}
-                  {item.to === "/approvals" && pendingApprovals > 0 && !collapsed && (
-                    <span className="rounded-full text-white text-[10px] font-bold flex items-center justify-center px-1.5 h-5 min-w-[20px]"
-                      style={{ background: "#F40009" }}>
-                      {pendingApprovals > 99 ? "99+" : pendingApprovals}
-                    </span>
-                  )}
-                </NavLink>
-                );
-              })}
+                // Determine the single best-matching item for the current location.
+                // Prefer (a) exact path + matching tab, then (b) exact path + no tab,
+                // then (c) the longest prefix path. Only one item is ever fully active.
+                let bestKey: string | null = null;
+                let bestScore = -1;
+                visible.forEach((item: any) => {
+                  const [p, q] = item.to.split("?");
+                  const t = q ? new URLSearchParams(q).get("tab") : null;
+                  let score = -1;
+                  if (location.pathname === p) {
+                    if (t && currentTab === t) score = 100;
+                    else if (!t && !currentTab) score = 90;
+                    else if (!t) score = 50;
+                  } else if (location.pathname.startsWith(p + "/")) {
+                    score = 10 + p.length;
+                  }
+                  if (score > bestScore) { bestScore = score; bestKey = item.to; }
+                });
+                return visible.map((item) => {
+                  const itemActive = item.to === bestKey;
+                  return (
+                    <NavLink key={item.to} to={item.to} end className={() => navLinkClass({ isActive: itemActive })} style={() => navLinkStyle({ isActive: itemActive })}>
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span className="flex-1">{item.label}</span>}
+                      {item.to === "/approvals" && pendingApprovals > 0 && !collapsed && (
+                        <span className="rounded-full text-white text-[10px] font-bold flex items-center justify-center px-1.5 h-5 min-w-[20px]"
+                          style={{ background: "#F40009" }}>
+                          {pendingApprovals > 99 ? "99+" : pendingApprovals}
+                        </span>
+                      )}
+                    </NavLink>
+                  );
+                });
+              })()}
             </div>
           );
         })}
