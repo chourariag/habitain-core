@@ -239,6 +239,12 @@ export default function ProjectDetail() {
           <h2 className="font-display text-lg font-semibold text-foreground">Handover</h2>
           <HandoverPack projectId={id!} clientName={project.client_name} userRole={userRole} installationComplete={modules.some((m: any) => m.production_status === "dispatched")} onHandedOver={fetchData} />
         </TabsContent>
+
+        {PL_VIEW_ROLES.includes(userRole ?? "") && (
+          <TabsContent value="project-pl" className="space-y-4">
+            <ProjectPLTab projectId={id!} contractValue={Number(proj.contract_value) || 0} />
+          </TabsContent>
+        )}
       </Tabs>
 
       <AddModuleDialog open={addModuleOpen} onOpenChange={setAddModuleOpen} projectId={id!} onCreated={fetchData} />
