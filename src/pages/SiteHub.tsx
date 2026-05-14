@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, PackagePlus, Package, Users, ClipboardList, MessageSquareWarning, FileCheck, Hammer, HardHat } from "lucide-react";
 import { DailyLabourLog } from "@/components/labour/DailyLabourLog";
+import { ManpowerWeeklyExcel } from "@/components/labour/ManpowerWeeklyExcel";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
@@ -364,7 +365,18 @@ function SiteHubContent() {
           <SiteFactoryFeedback projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} modules={modules.map(m => ({ id: m.id, name: m.name, module_code: m.module_code || m.name }))} />
         </TabsContent>
         <TabsContent value="labour">
-          <DailyLabourLog mode="site" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
+          <Tabs defaultValue="daily" className="space-y-3">
+            <TabsList>
+              <TabsTrigger value="daily">Daily Labour Log</TabsTrigger>
+              <TabsTrigger value="weekly">Weekly Plan (Excel)</TabsTrigger>
+            </TabsList>
+            <TabsContent value="daily">
+              <DailyLabourLog mode="site" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
+            </TabsContent>
+            <TabsContent value="weekly">
+              <ManpowerWeeklyExcel location="site" projectId={selectedProjectId} />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
         <TabsContent value="work-orders">
           <WorkOrdersTab mode="site" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />

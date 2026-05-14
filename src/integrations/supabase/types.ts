@@ -4332,6 +4332,172 @@ export type Database = {
         }
         Relationships: []
       }
+      manpower_plan_entries: {
+        Row: {
+          created_at: string
+          friday: string | null
+          id: string
+          monday: string | null
+          notes: string | null
+          plan_id: string
+          saturday: string | null
+          thursday: string | null
+          total_days: number
+          tuesday: string | null
+          wednesday: string | null
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string
+          friday?: string | null
+          id?: string
+          monday?: string | null
+          notes?: string | null
+          plan_id: string
+          saturday?: string | null
+          thursday?: string | null
+          total_days?: number
+          tuesday?: string | null
+          wednesday?: string | null
+          worker_id: string
+        }
+        Update: {
+          created_at?: string
+          friday?: string | null
+          id?: string
+          monday?: string | null
+          notes?: string | null
+          plan_id?: string
+          saturday?: string | null
+          thursday?: string | null
+          total_days?: number
+          tuesday?: string | null
+          wednesday?: string | null
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manpower_plan_entries_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "manpower_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manpower_plan_entries_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manpower_plans: {
+        Row: {
+          budgeted_mandays: number | null
+          created_at: string
+          id: string
+          is_late: boolean
+          location: string
+          notes: string | null
+          project_id: string | null
+          status: string
+          submitted_at: string
+          submitted_by: string
+          total_planned_mandays: number | null
+          updated_at: string
+          week_ending: string
+          week_starting: string
+        }
+        Insert: {
+          budgeted_mandays?: number | null
+          created_at?: string
+          id?: string
+          is_late?: boolean
+          location: string
+          notes?: string | null
+          project_id?: string | null
+          status?: string
+          submitted_at?: string
+          submitted_by: string
+          total_planned_mandays?: number | null
+          updated_at?: string
+          week_ending: string
+          week_starting: string
+        }
+        Update: {
+          budgeted_mandays?: number | null
+          created_at?: string
+          id?: string
+          is_late?: boolean
+          location?: string
+          notes?: string | null
+          project_id?: string | null
+          status?: string
+          submitted_at?: string
+          submitted_by?: string
+          total_planned_mandays?: number | null
+          updated_at?: string
+          week_ending?: string
+          week_starting?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manpower_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manpower_subcontractor_plan: {
+        Row: {
+          created_at: string
+          days_on_site: number | null
+          id: string
+          plan_id: string
+          planned_end: string | null
+          planned_start: string | null
+          scope: string | null
+          sub_name: string
+          subcontractor_id: string | null
+          trade: string | null
+        }
+        Insert: {
+          created_at?: string
+          days_on_site?: number | null
+          id?: string
+          plan_id: string
+          planned_end?: string | null
+          planned_start?: string | null
+          scope?: string | null
+          sub_name: string
+          subcontractor_id?: string | null
+          trade?: string | null
+        }
+        Update: {
+          created_at?: string
+          days_on_site?: number | null
+          id?: string
+          plan_id?: string
+          planned_end?: string | null
+          planned_start?: string | null
+          scope?: string | null
+          sub_name?: string
+          subcontractor_id?: string | null
+          trade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manpower_subcontractor_plan_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "manpower_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       master_data_uploads: {
         Row: {
           data_set: string
@@ -10764,6 +10930,10 @@ export type Database = {
       can_read_measurements: { Args: { _user_id: string }; Returns: boolean }
       can_submit_factory_measurement: {
         Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_submit_manpower: {
+        Args: { _location: string; _user_id: string }
         Returns: boolean
       }
       can_submit_site_measurement: {

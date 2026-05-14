@@ -22,6 +22,7 @@ import { useProjectContext } from "@/contexts/ProjectContext";
 import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import { DeliveryChecklistButton } from "@/components/production/DeliveryChecklistButton";
 import { WeeklyManpowerPlanner } from "@/components/production/WeeklyManpowerPlanner";
+import { ManpowerWeeklyExcel } from "@/components/labour/ManpowerWeeklyExcel";
 import { DryAssemblyCheck } from "@/components/production/DryAssemblyCheck";
 import { ScheduleConflictBanner } from "@/components/production/ScheduleConflictBanner";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -203,7 +204,18 @@ function ProductionContent() {
             </TabsContent>
 
             <TabsContent value="manpower">
-              <WeeklyManpowerPlanner projectId={selectedProjectId!} userRole={userRole} />
+              <Tabs defaultValue="weekly" className="space-y-3">
+                <TabsList>
+                  <TabsTrigger value="weekly" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Weekly Plan (Excel)</TabsTrigger>
+                  <TabsTrigger value="planner" className="gap-1.5"><Users className="h-4 w-4" /> Module Planner</TabsTrigger>
+                </TabsList>
+                <TabsContent value="weekly">
+                  <ManpowerWeeklyExcel location="factory" projectId={selectedProjectId} />
+                </TabsContent>
+                <TabsContent value="planner">
+                  <WeeklyManpowerPlanner projectId={selectedProjectId!} userRole={userRole} />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
 
             <TabsContent value="drawings">
