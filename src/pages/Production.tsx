@@ -27,6 +27,8 @@ import { ScheduleConflictBanner } from "@/components/production/ScheduleConflict
 import { useUserRole } from "@/hooks/useUserRole";
 import type { Tables } from "@/integrations/supabase/types";
 import { MeasurementSheet } from "@/components/measurements/MeasurementSheet";
+import { LabourTeamsManager } from "@/components/production/LabourTeamsManager";
+import { ModuleTeamAssignment } from "@/components/production/ModuleTeamAssignment";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
 
@@ -175,6 +177,7 @@ function ProductionContent() {
                   {expandedModule === m.id && (
                     <div className="border-t border-border p-4 space-y-4">
                       <SupervisorDailyLog moduleId={m.id} moduleName={m.name} moduleCode={m.module_code} currentStage={m.current_stage} userRole={userRole} />
+                      <ModuleTeamAssignment projectId={selectedProjectId!} moduleId={m.id} currentStage={m.current_stage} userRole={userRole} />
                       <ModuleSchedule moduleId={m.id} currentStage={m.current_stage} userRole={userRole} />
                     </div>
                   )}
@@ -188,11 +191,13 @@ function ProductionContent() {
                   <TabsTrigger value="daily" className="gap-1.5"><HardHat className="h-4 w-4" /> Daily Work Log</TabsTrigger>
                   <TabsTrigger value="approvals" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> Labour Log Approvals</TabsTrigger>
                   <TabsTrigger value="register" className="gap-1.5"><Users className="h-4 w-4" /> Labour Register</TabsTrigger>
+                  <TabsTrigger value="teams" className="gap-1.5"><Users className="h-4 w-4" /> Teams</TabsTrigger>
                   <TabsTrigger value="subs" className="gap-1.5"><Users className="h-4 w-4" /> Subcontractors</TabsTrigger>
                 </TabsList>
                 <TabsContent value="daily"><DailyLabourLog mode="factory" projectId={selectedProjectId!} userRole={userRole} /></TabsContent>
                 <TabsContent value="approvals"><LabourClaimsTab /></TabsContent>
                 <TabsContent value="register"><LabourRegisterTab /></TabsContent>
+                <TabsContent value="teams"><LabourTeamsManager userRole={userRole} /></TabsContent>
                 <TabsContent value="subs"><SubcontractorsTab /></TabsContent>
               </Tabs>
             </TabsContent>
