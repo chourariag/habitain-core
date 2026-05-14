@@ -10,6 +10,7 @@ import { StatutoryTab } from "@/components/finance/StatutoryTab";
 import { InvoicesTab } from "@/components/finance/InvoicesTab";
 import { RevenueMarginTab } from "@/components/finance/RevenueMarginTab";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
+import { AdvanceApprovalsTab } from "@/components/finance/AdvanceApprovalsTab";
 import { Card, CardContent } from "@/components/ui/card";
 import { Info } from "lucide-react";
 
