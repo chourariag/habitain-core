@@ -735,6 +735,65 @@ export type Database = {
         }
         Relationships: []
       }
+      boq_items: {
+        Row: {
+          boq_qty: number
+          boq_rate: number
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          is_archived: boolean
+          item_code: string | null
+          project_id: string
+          stage: string | null
+          trade: string
+          unit: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          boq_qty?: number
+          boq_rate?: number
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          is_archived?: boolean
+          item_code?: string | null
+          project_id: string
+          stage?: string | null
+          trade?: string
+          unit: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          boq_qty?: number
+          boq_rate?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          is_archived?: boolean
+          item_code?: string | null
+          project_id?: string
+          stage?: string | null
+          trade?: string
+          unit?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boq_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       capacity_forecast_settings: {
         Row: {
           active_days_per_week: number
@@ -1134,6 +1193,90 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "daily_labour_logs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_measurements: {
+        Row: {
+          anomaly_flags: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          is_archived: boolean
+          is_locked: boolean
+          location: string
+          measurement_date: string
+          module_id: string | null
+          notes: string | null
+          project_id: string
+          stage: string | null
+          submitted_by: string
+          team_label: string | null
+          trade: string
+          unlock_reason: string | null
+          unlocked_at: string | null
+          unlocked_by: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          anomaly_flags?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          is_locked?: boolean
+          location: string
+          measurement_date?: string
+          module_id?: string | null
+          notes?: string | null
+          project_id: string
+          stage?: string | null
+          submitted_by: string
+          team_label?: string | null
+          trade?: string
+          unlock_reason?: string | null
+          unlocked_at?: string | null
+          unlocked_by?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          anomaly_flags?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          is_locked?: boolean
+          location?: string
+          measurement_date?: string
+          module_id?: string | null
+          notes?: string | null
+          project_id?: string
+          stage?: string | null
+          submitted_by?: string
+          team_label?: string | null
+          trade?: string
+          unlock_reason?: string | null
+          unlocked_at?: string | null
+          unlocked_by?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_measurements_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_measurements_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
@@ -4380,6 +4523,54 @@ export type Database = {
             columns: ["to_project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      measurement_line_items: {
+        Row: {
+          boq_item_id: string
+          created_at: string
+          cumulative_qty_snapshot: number
+          id: string
+          measurement_id: string
+          pct_complete_snapshot: number
+          today_qty: number
+          value_today_snapshot: number
+        }
+        Insert: {
+          boq_item_id: string
+          created_at?: string
+          cumulative_qty_snapshot?: number
+          id?: string
+          measurement_id: string
+          pct_complete_snapshot?: number
+          today_qty?: number
+          value_today_snapshot?: number
+        }
+        Update: {
+          boq_item_id?: string
+          created_at?: string
+          cumulative_qty_snapshot?: number
+          id?: string
+          measurement_id?: string
+          pct_complete_snapshot?: number
+          today_qty?: number
+          value_today_snapshot?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "measurement_line_items_boq_item_id_fkey"
+            columns: ["boq_item_id"]
+            isOneToOne: false
+            referencedRelation: "boq_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "measurement_line_items_measurement_id_fkey"
+            columns: ["measurement_id"]
+            isOneToOne: false
+            referencedRelation: "daily_measurements"
             referencedColumns: ["id"]
           },
         ]
@@ -10038,6 +10229,7 @@ export type Database = {
       }
     }
     Functions: {
+      boq_cumulative_qty: { Args: { _boq_item_id: string }; Returns: number }
       can_access_labour_register: {
         Args: { _user_id: string }
         Returns: boolean
@@ -10069,6 +10261,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      can_manage_boq: { Args: { _user_id: string }; Returns: boolean }
       can_manage_finance_pl: { Args: { _user_id: string }; Returns: boolean }
       can_manage_hr_documents: { Args: { _user_id: string }; Returns: boolean }
       can_manage_labour_register: {
@@ -10089,6 +10282,19 @@ export type Database = {
         Returns: boolean
       }
       can_raise_work_order: { Args: { _user_id: string }; Returns: boolean }
+      can_read_measurements: { Args: { _user_id: string }; Returns: boolean }
+      can_submit_factory_measurement: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_submit_site_measurement: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_unlock_measurement: {
+        Args: { _location: string; _user_id: string }
+        Returns: boolean
+      }
       can_view_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_view_work_orders: { Args: { _user_id: string }; Returns: boolean }
       clone_task_templates_to_project: {
@@ -10109,6 +10315,24 @@ export type Database = {
       is_director: { Args: { _user_id: string }; Returns: boolean }
       is_full_admin: { Args: { _user_id: string }; Returns: boolean }
       is_md: { Args: { _user_id: string }; Returns: boolean }
+      recalc_running_bill: {
+        Args: { _project_id: string }
+        Returns: {
+          boq_item_id: string
+          boq_qty: number
+          boq_rate: number
+          boq_value: number
+          description: string
+          pct_complete: number
+          qty_done_factory: number
+          qty_done_site: number
+          stage: string
+          total_qty_done: number
+          trade: string
+          unit: string
+          value_earned: number
+        }[]
+      }
     }
     Enums: {
       app_role:
