@@ -7,11 +7,11 @@ import { useProjectContext } from "@/contexts/ProjectContext";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { DispatchPacksTab } from "@/components/site/DispatchPacksTab";
-import { DeliveryChecklistButton } from "@/components/production/DeliveryChecklistButton";
 import { InstallationSequenceDoc } from "@/components/site/InstallationSequenceDoc";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Truck, ClipboardCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ALLOWED_ROLES = [
   "super_admin", "managing_director",
@@ -23,6 +23,7 @@ function DispatchDeliveryContent() {
   const { role } = useUserRole();
   const { selectedProjectId, selectedProject } = useProjectContext();
   const [userRole, setUserRole] = useState<string | null>(role ?? null);
+  const navigate = useNavigate();
 
   useEffect(() => { setUserRole(role ?? null); }, [role]);
 
@@ -56,9 +57,25 @@ function DispatchDeliveryContent() {
         </TabsContent>
         <TabsContent value="delivery">
           <Card>
-            <CardHeader><CardTitle className="text-sm">Delivery Checklist</CardTitle></CardHeader>
-            <CardContent>
-              <DeliveryChecklistButton projectId={selectedProjectId} />
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <ClipboardCheck className="h-4 w-4" style={{ color: "#006039" }} /> Delivery Checklist — 3-Part Sign-Off
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs" style={{ color: "#666" }}>
+                Three sign-offs required before dispatch:
+                <br/>1. <strong>Rakesh</strong> — Pre-Dispatch (Factory Supervisor)
+                <br/>2. <strong>Sandeep</strong> — Stores Confirmation
+                <br/>3. <strong>Awaiz</strong> — Site Installation Manager
+              </p>
+              <Button
+                onClick={() => navigate(`/production/delivery-checklist/${selectedProjectId}`)}
+                className="gap-1.5"
+                style={{ backgroundColor: "#006039", color: "#FFFFFF" }}
+              >
+                <ClipboardCheck className="h-4 w-4" /> Open Delivery Checklist
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
