@@ -122,6 +122,9 @@ export type Database = {
           project_id: string | null
           project_name: string | null
           purpose: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
           released_at: string | null
           released_by: string | null
           settled_amount: number | null
@@ -163,6 +166,9 @@ export type Database = {
           project_id?: string | null
           project_name?: string | null
           purpose?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           released_at?: string | null
           released_by?: string | null
           settled_amount?: number | null
@@ -204,6 +210,9 @@ export type Database = {
           project_id?: string | null
           project_name?: string | null
           purpose?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
           released_at?: string | null
           released_by?: string | null
           settled_amount?: number | null
