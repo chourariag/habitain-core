@@ -4,22 +4,35 @@ import { createUserWithPassword, reassignAndDeactivate } from "@/lib/admin-api";
 import { logAudit } from "@/lib/super-admin";
 import type { AppRole } from "@/lib/roles";
 
-const TEMP_PASSWORD = "HStack@2026";
+function generateTempPassword(): string {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const lower = "abcdefghijkmnpqrstuvwxyz";
+  const digits = "23456789";
+  const symbols = "!@#$%^&*";
+  const all = upper + lower + digits + symbols;
+  const buf = new Uint32Array(16);
+  crypto.getRandomValues(buf);
+  const pick = (set: string, n: number) => set[n % set.length];
+  let pwd = pick(upper, buf[0]) + pick(lower, buf[1]) + pick(digits, buf[2]) + pick(symbols, buf[3]);
+  for (let i = 4; i < 16; i++) pwd += pick(all, buf[i]);
+  return pwd;
+}
 
 export async function approveRequest(req: ApprovalRequest, currentUserId?: string): Promise<{ tempPassword?: string }> {
   if (req.request_type === "add_user") {
     const p = req.payload as Record<string, string>;
+    const tempPassword = generateTempPassword();
     await createUserWithPassword({
       email: p.email,
       role: p.role as AppRole,
-      password: TEMP_PASSWORD,
+      password: tempPassword,
       display_name: p.full_name,
       phone: p.phone,
       reporting_manager_id: p.reporting_to,
     });
-    await setApprovalDecision(req.id, "approved", undefined, `Created with temp password ${TEMP_PASSWORD}`);
+    await setApprovalDecision(req.id, "approved", undefined, `User created — temporary password delivered to approver only.`);
     await logAudit({ section: "User Management", action: "approve_add_user", entity: p.email, summary: `Added ${p.full_name}` });
-    return { tempPassword: TEMP_PASSWORD };
+    return { tempPassword };
   }
   if (req.request_type === "deactivate_user") {
     const p = req.payload as Record<string, string>;
