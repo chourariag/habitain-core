@@ -7,11 +7,11 @@ import { useProjectContext } from "@/contexts/ProjectContext";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { DispatchPacksTab } from "@/components/site/DispatchPacksTab";
-import { DeliveryChecklistButton } from "@/components/production/DeliveryChecklistButton";
 import { InstallationSequenceDoc } from "@/components/site/InstallationSequenceDoc";
-import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Truck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Truck, ClipboardCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ALLOWED_ROLES = [
   "super_admin", "managing_director",
