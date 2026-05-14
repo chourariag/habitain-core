@@ -267,24 +267,24 @@ export default function DeliveryChecklist() {
           <ScrollableTabsWrapper>
             <TabsList>
               <TabsTrigger value="modules" className="gap-1.5">
-                <Package className="h-4 w-4" /> Modules & Panels
+                <Package className="h-4 w-4" /> Pre-Dispatch (Rakesh)
                 {modulesSigned && <Check className="h-3.5 w-3.5 ml-1" style={{ color: "#006039" }} />}
               </TabsTrigger>
               <TabsTrigger value="tools" className="gap-1.5">
-                <Wrench className="h-4 w-4" /> Tools & Equipment
+                <Wrench className="h-4 w-4" /> Stores (Sandeep)
                 {toolsSigned && <Check className="h-3.5 w-3.5 ml-1" style={{ color: "#006039" }} />}
               </TabsTrigger>
               <TabsTrigger value="additional" className="gap-1.5">
-                <Plus className="h-4 w-4" /> Additional Materials
+                <ShieldCheck className="h-4 w-4" /> SIM (Awaiz)
                 {additionalSigned && <Check className="h-3.5 w-3.5 ml-1" style={{ color: "#006039" }} />}
               </TabsTrigger>
             </TabsList>
           </ScrollableTabsWrapper>
 
-          {/* TAB 1: Modules */}
+          {/* TAB 1: Pre-Dispatch (Rakesh) */}
           <TabsContent value="modules" className="space-y-3">
             <p className="text-xs" style={{ color: "#666666" }}>
-              Done by: Factory Supervisor or Production Head.
+              Done by: Rakesh — Factory Supervisor (or Production Head).
               {!canEditModules && " (Read-only for your role)"}
             </p>
             {MODULES_ITEMS.map((item, idx) => (
