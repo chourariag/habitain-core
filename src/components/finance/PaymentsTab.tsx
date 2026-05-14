@@ -223,7 +223,7 @@ export function PaymentsTab() {
   const exportCSV = () => {
     const header = "Project,Client,Milestone,Due Date,Amount,Status,Days Overdue\n";
     const rows = payments.map(p => {
-      const days = p.status === "overdue" ? differenceInDays(new Date(), new Date(p.due_date)) : 0;
+      const days = p.status === "overdue" && p.due_date ? differenceInDays(new Date(), new Date(p.due_date)) : 0;
       return `${p.project_name},${p.client_name},${p.milestone_description},${p.due_date},${p.amount},${p.status},${days || "—"}`;
     }).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
