@@ -218,9 +218,10 @@ function HODView({ role, week }: { role: AppRole; week: ReturnType<typeof getWee
 
   if (selectedUser) {
     return (
-      <div>
-        <Button variant="ghost" className="mb-4 text-sm" onClick={() => setSelectedUser(null)}>← Back to Team</Button>
+      <div className="space-y-4">
+        <Button variant="ghost" className="text-sm" onClick={() => setSelectedUser(null)}>← Back to Team</Button>
         <KPIScorecard userId={selectedUser.id} userRole={selectedUser.role} week={week} />
+        <MdNotePanel userId={selectedUser.id} />
       </div>
     );
   }
