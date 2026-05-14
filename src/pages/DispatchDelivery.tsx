@@ -6,12 +6,10 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
-import { DispatchPacksTab } from "@/components/site/DispatchPacksTab";
-import { InstallationSequenceDoc } from "@/components/site/InstallationSequenceDoc";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Truck, ClipboardCheck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { DispatchPackFormV2 } from "@/components/dispatch/DispatchPackFormV2";
+import { DeliveryChecklistV2 } from "@/components/dispatch/DeliveryChecklistV2";
+import { InstallationSequenceV2 } from "@/components/dispatch/InstallationSequenceV2";
+import { Truck } from "lucide-react";
 
 const ALLOWED_ROLES = [
   "super_admin", "managing_director",
