@@ -87,7 +87,7 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
           ["Client Name", proj?.client_name || ""],
           ["Contract Value", Number(proj?.contract_value) || 0],
           ["Contract Start Date", fmtDate(proj?.start_date)],
-          ["Expected Delivery Date", fmtDate(proj?.delivery_date || proj?.est_completion)],
+          ["Expected Delivery Date", fmtDate(proj?.est_completion)],
           ["Number of Modules", moduleCount],
           ["Number of Panels", panelCount],
           ["Production Head", "Azad Ali"],
