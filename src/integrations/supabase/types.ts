@@ -1803,13 +1803,17 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          destination: string | null
           dispatch_date: string
           dispatch_pack_id: string
+          documents: Json
           driver_name: string | null
           driver_phone: string | null
           id: string
           loading_checklist_complete: boolean | null
+          module_id: string | null
           notes: string | null
+          pieces_count: number | null
           project_id: string
           site_installation_manager_id: string | null
           status: string
@@ -1818,17 +1822,22 @@ export type Database = {
           transporter_name: string | null
           vehicle_number: string | null
           vehicle_type: string | null
+          weight_kg: number | null
         }
         Insert: {
           created_at?: string
           created_by?: string | null
+          destination?: string | null
           dispatch_date?: string
           dispatch_pack_id: string
+          documents?: Json
           driver_name?: string | null
           driver_phone?: string | null
           id?: string
           loading_checklist_complete?: boolean | null
+          module_id?: string | null
           notes?: string | null
+          pieces_count?: number | null
           project_id: string
           site_installation_manager_id?: string | null
           status?: string
@@ -1837,17 +1846,22 @@ export type Database = {
           transporter_name?: string | null
           vehicle_number?: string | null
           vehicle_type?: string | null
+          weight_kg?: number | null
         }
         Update: {
           created_at?: string
           created_by?: string | null
+          destination?: string | null
           dispatch_date?: string
           dispatch_pack_id?: string
+          documents?: Json
           driver_name?: string | null
           driver_phone?: string | null
           id?: string
           loading_checklist_complete?: boolean | null
+          module_id?: string | null
           notes?: string | null
+          pieces_count?: number | null
           project_id?: string
           site_installation_manager_id?: string | null
           status?: string
@@ -1856,6 +1870,7 @@ export type Database = {
           transporter_name?: string | null
           vehicle_number?: string | null
           vehicle_type?: string | null
+          weight_kg?: number | null
         }
         Relationships: []
       }
