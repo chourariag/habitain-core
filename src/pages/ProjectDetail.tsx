@@ -22,6 +22,7 @@ import { ScopeOfWorkTab } from "@/components/projects/ScopeOfWorkTab";
 import { BudgetTrackingTab } from "@/components/projects/BudgetTrackingTab";
 import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
+import { ProjectPLTab } from "@/components/projects/ProjectPLTab";
 import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { useProjectContext } from "@/contexts/ProjectContext";
@@ -29,6 +30,7 @@ import { useProjectContext } from "@/contexts/ProjectContext";
 const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admin", "managing_director"];
 const ARCHIVE_REQUEST_ROLES = ["managing_director", "super_admin", "finance_director", "sales_director", "architecture_director"];
+const PL_VIEW_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director", "head_operations", "finance_manager", "accounts_executive"];
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -182,6 +184,9 @@ export default function ProjectDetail() {
             <TabsTrigger value="budget" className="gap-1.5"><Wallet className="h-4 w-4" /> Budget</TabsTrigger>
             <TabsTrigger value="scope" className="gap-1.5"><ScrollText className="h-4 w-4" /> Scope</TabsTrigger>
             <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover</TabsTrigger>
+            {PL_VIEW_ROLES.includes(userRole ?? "") && (
+              <TabsTrigger value="project-pl" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Project P&amp;L</TabsTrigger>
+            )}
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -234,6 +239,12 @@ export default function ProjectDetail() {
           <h2 className="font-display text-lg font-semibold text-foreground">Handover</h2>
           <HandoverPack projectId={id!} clientName={project.client_name} userRole={userRole} installationComplete={modules.some((m: any) => m.production_status === "dispatched")} onHandedOver={fetchData} />
         </TabsContent>
+
+        {PL_VIEW_ROLES.includes(userRole ?? "") && (
+          <TabsContent value="project-pl" className="space-y-4">
+            <ProjectPLTab projectId={id!} contractValue={Number(proj.contract_value) || 0} />
+          </TabsContent>
+        )}
       </Tabs>
 
       <AddModuleDialog open={addModuleOpen} onOpenChange={setAddModuleOpen} projectId={id!} onCreated={fetchData} />
