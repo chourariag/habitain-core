@@ -125,7 +125,7 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       // ── Sheet 3: Project Schedule (factory stages × modules) ──
       const schRows: any[][] = [
         [`HStack — Project Schedule  |  Stages only  |  System: ${sys}  |  Fill Planned Start + End for each module`],
-        [`Site stages (Erection → Handover) are entered by Awaiz in Site Hub → Schedule, 14 days before dispatch. Do NOT add them here.`],
+        [`Site stage dates filled by Karthik in HStack 14 days before dispatch — leave blank here`],
         [`Notes column: enter "N/A" to exclude an optional stage for that module. Blank = in scope.`],
         [],
         ["Stage #", "Stage Name", "Module #", "Planned Start (DD/MM/YYYY)", "Planned End (DD/MM/YYYY)", "Notes / N/A"],

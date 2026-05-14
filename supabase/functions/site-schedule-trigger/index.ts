@@ -25,13 +25,13 @@ Deno.serve(async (req) => {
   const target = new Date(today); target.setUTCDate(target.getUTCDate() + 14);
   const targetIso = target.toISOString().slice(0, 10);
 
-  // Find SIM(s) and Planning Head(s)
+  // Karthik (planning_engineer) owns site schedule dates. Planning Head escalates.
   const { data: roleUsers } = await supabase
     .from("profiles")
     .select("auth_user_id, role")
-    .in("role", ["site_installation_mgr", "planning_head"])
+    .in("role", ["planning_engineer", "planning_head"])
     .eq("is_active", true);
-  const sims = (roleUsers ?? []).filter((u) => u.role === "site_installation_mgr").map((u) => u.auth_user_id);
+  const sims = (roleUsers ?? []).filter((u) => u.role === "planning_engineer").map((u) => u.auth_user_id);
   const planningHeads = (roleUsers ?? []).filter((u) => u.role === "planning_head").map((u) => u.auth_user_id);
 
   // 1) Trigger unlock for projects with a Dispatch stage on target date
@@ -52,14 +52,14 @@ Deno.serve(async (req) => {
 
     const notes = sims.map((uid) => ({
       recipient_id: uid,
-      title: "⏰ Site schedule required",
-      body: `${proj.name} — dispatch is in 14 days on ${targetIso}. Please set up the site installation schedule now so the site is ready to receive.`,
+      title: "Site stage dates needed",
+      body: `Site stage dates needed for ${proj.name}. Dispatch is in 14 days on ${targetIso}. Please fill site stage planned dates in Projects → ${proj.name} → Schedule → Site Stages section.`,
       category: "site_schedule",
       type: "site_schedule",
-      content: `${proj.name} dispatch in 14 days. Set up site schedule.`,
+      content: `${proj.name} dispatch in 14 days. Karthik to fill site stage dates.`,
       related_table: "projects",
       related_id: proj.id,
-      navigate_to: `/site-hub?project=${proj.id}`,
+      navigate_to: `/projects/${proj.id}?tab=schedule`,
     }));
     if (notes.length) await supabase.from("notifications").insert(notes as any);
     triggered.push(proj.id);
