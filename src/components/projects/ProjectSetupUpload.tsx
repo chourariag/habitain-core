@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,8 +9,6 @@ import { Upload, Download, Loader2, Check, AlertTriangle, ArrowRight } from "luc
 import { dispatchProjectImported } from "@/lib/use-project-import";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { buildBoqWorksheet } from "@/lib/xlsx-templates";
-import { FACTORY_STAGES } from "@/lib/hstack-stages";
 
 interface Props {
   projectId: string;
@@ -48,127 +47,77 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
   const downloadTemplate = async () => {
     setDownloading(true);
     try {
-      const wb = XLSX.utils.book_new();
-
-      // Fetch project + module list for pre-fill
+      // Fetch project + counts for pre-fill
       const { data: proj } = await (supabase.from("projects") as any)
-        .select("id, name, client_name, division, production_system, contract_value, start_date, est_completion, location")
+        .select("id, name, client_name, division, production_system, contract_value, start_date, est_completion")
         .eq("id", projectId).single();
-      const sys = (proj?.production_system || productionSystem || "modular").toLowerCase();
 
       const { data: mods } = await (supabase.from("modules") as any)
-        .select("id, name, module_code")
-        .eq("project_id", projectId).eq("is_archived", false)
-        .order("name", { ascending: true });
-      const moduleNames: string[] = (mods || []).map((m: any) => m.name || m.module_code || "").filter(Boolean);
-      if (moduleNames.length === 0) moduleNames.push("M1");
+        .select("id").eq("project_id", projectId).eq("is_archived", false);
+      const modIds = (mods || []).map((m: any) => m.id);
+      const moduleCount = modIds.length;
 
-      const modIdSet = new Set((mods || []).map((m: any) => m.id));
-      const { data: panelRows } = await (supabase.from("panels") as any).select("id, module_id");
-      const panelCount = (panelRows || []).filter((p: any) => modIdSet.has(p.module_id)).length;
+      let panelCount = 0;
+      if (modIds.length) {
+        const { data: panelRows } = await (supabase.from("panels") as any).select("id, module_id");
+        panelCount = (panelRows || []).filter((p: any) => modIds.includes(p.module_id)).length;
+      }
 
-      // Auto project code from name + year + short id (display only)
       const yr = String(new Date().getFullYear()).slice(-2);
       const prefix = String(proj?.name || "").replace(/[^A-Za-z]/g, "").slice(0, 4).toUpperCase().padEnd(4, "X");
       const seq = String(projectId).replace(/-/g, "").slice(0, 3).toUpperCase();
       const projectCode = `${prefix}/${yr}/${seq}`;
+      const fmtDate = (d: any) => d ? format(new Date(d), "dd/MM/yyyy") : "";
 
-      const fmt = (d: any) => d ? format(new Date(d), "dd/MM/yyyy") : "";
+      // Load the official template from /public/templates/ — preserves layout, styles, formulas.
+      const res = await fetch(`/templates/Project_Setup_Template.xlsx`, { cache: "no-cache" });
+      if (!res.ok) throw new Error("Template file not found");
+      const buf = await res.arrayBuffer();
+      const wb = new ExcelJS.Workbook();
+      await wb.xlsx.load(buf);
 
-      // ── Sheet 1: Project Details (pre-filled) ──
-      const detailRows: any[][] = [
-        ["THE HABITAINER — PROJECT SETUP TEMPLATE  |  Fill and upload to HStack"],
-        ["Version 1.0  |  Project Details (grey fields) are pre-filled from HStack. Fill white fields only. Upload via Projects → [Project] → Overview → Upload Project Setup."],
-        ["  🔒 Grey = Pre-filled from HStack (do not change)      ✏ White = Fill this in"],
-        [],
-        ["  PROJECT IDENTIFICATION"],
-        ["Project Code", projectCode],
-        ["Project Name", proj?.name || ""],
-        ["Division", proj?.division || ""],
-        ["Production System", sys],
-        ["Client Name", proj?.client_name || ""],
-        ["Client Email", ""],
-        ["Client Phone", ""],
-        ["Site Location", proj?.location || ""],
-        ["Site City", ""],
-        ["Site State", ""],
-        ["Sales Owner", proj?.division === "ADS" ? "Karan Awtaney" : "John Kunnath"],
-        ["Project Manager", "Suraj Rao"],
-        [],
-        ["  COMMERCIAL DETAILS"],
-        ["Contract Value (₹)", Number(proj?.contract_value) || 0],
-        ["Contract Start Date", fmt(proj?.start_date)],
-        ["Expected Delivery Date", fmt(proj?.est_completion)],
-        ["Number of Modules", moduleNames.length],
-        ["Number of Panels", panelCount],
-        ["GST Applicable", "Yes"],
-        [],
-        ["  TEAM (System Defaults)"],
-        ["Operations Head", "Azad"],
-        ["Site Installation Manager", "Awaiz"],
-        ["Planning Engineer", "Karthik"],
-        ["Costing / QS", "Nakeem"],
-        ["Procurement", "Venkat"],
-      ];
-      const detailWs = XLSX.utils.aoa_to_sheet(detailRows);
-      detailWs["!cols"] = [{ wch: 28 }, { wch: 38 }];
-      detailWs["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 1 } },
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 1 } },
-      ];
-      XLSX.utils.book_append_sheet(wb, detailWs, "Project Details");
-
-      // ── Sheet 2: BOQ + Margin ──
-      XLSX.utils.book_append_sheet(wb, buildBoqWorksheet(30), "BOQ + Margin");
-
-      // ── Sheet 3: Project Schedule (factory stages × modules) ──
-      const schRows: any[][] = [
-        [`HStack — Project Schedule  |  Stages only  |  System: ${sys}  |  Fill Planned Start + End for each module`],
-        [`Site stage dates filled by Karthik in HStack 14 days before dispatch — leave blank here`],
-        [`Notes column: enter "N/A" to exclude an optional stage for that module. Blank = in scope.`],
-        [],
-        ["Stage #", "Stage Name", "Module #", "Planned Start (DD/MM/YYYY)", "Planned End (DD/MM/YYYY)", "Notes / N/A"],
-      ];
-      for (const stage of FACTORY_STAGES) {
-        const label = stage.parallel
-          ? `${stage.name}  (∥ ${stage.parallel})`
-          : stage.name + (stage.na_eligible ? "  (mark N/A if not in scope)" : "");
-        for (const mn of moduleNames) {
-          schRows.push([stage.number, label, mn, "", "", ""]);
+      const ws = wb.getWorksheet("Project Details");
+      if (ws) {
+        // Match labels in column A (case-insensitive contains) and fill column B.
+        const fills: Array<[string, any]> = [
+          ["Project Code", projectCode],
+          ["Project Name", proj?.name || ""],
+          ["Division", proj?.division || ""],
+          ["Production System", proj?.production_system || ""],
+          ["Client Name", proj?.client_name || ""],
+          ["Contract Value", Number(proj?.contract_value) || 0],
+          ["Contract Start Date", fmtDate(proj?.start_date)],
+          ["Expected Delivery Date", fmtDate(proj?.est_completion)],
+          ["Number of Modules", moduleCount],
+          ["Number of Panels", panelCount],
+          ["Production Head", "Azad Ali"],
+          ["Site Installation Manager", "Awaiz Ahmed"],
+          ["Planning Engineer", "Karthik"],
+          ["Costing Engineer", "Mohammed Nakeem"],
+          ["Operations Architect", "Venkat"],
+        ];
+        const matchRow = (label: string): number | null => {
+          const want = label.toLowerCase();
+          for (let r = 1; r <= ws.rowCount; r++) {
+            const v = String(ws.getCell(r, 1).value ?? "").trim().toLowerCase();
+            if (v === want || v.startsWith(want)) return r;
+          }
+          return null;
+        };
+        for (const [label, value] of fills) {
+          const r = matchRow(label);
+          if (r) ws.getCell(r, 2).value = value as any;
         }
       }
-      const schWs = XLSX.utils.aoa_to_sheet(schRows);
-      schWs["!cols"] = [{ wch: 8 }, { wch: 38 }, { wch: 12 }, { wch: 22 }, { wch: 22 }, { wch: 24 }];
-      schWs["!merges"] = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
-        { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },
-      ];
-      XLSX.utils.book_append_sheet(wb, schWs, "Project Schedule");
 
-      // ── Sheet 4: Material Plan ──
-      const material: any[][] = [
-        ["Section", "Material", "Tender Qty", "Unit", "PO Release Date", "Procurement Date", "Delivery Date"],
-        ["Shell and Core", "Structural Steel — Beams, Columns, Framed Structure", "", "KG", "", "", ""],
-        ["Shell and Core", "LGSF — Wall framing", "", "KG", "", "", ""],
-        ["Shell and Core", "Deck Sheet 1.0mm — Floor & Roof", "", "KG", "", "", ""],
-        ["Shell and Core", "Welded Wire Mesh 2.5mm 50mm C/C", "", "KG", "", "", ""],
-        ["Shell and Core", "EPS Thermocol Sheet", "", "Nos", "", "", ""],
-        ["Builder Finish", "Rockwool Slab 48kg 50mm — Inner Wall", "", "SFT", "", "", ""],
-        ["Builder Finish", "Habit Board 13mm — Inner Wall", "", "SFT", "", "", ""],
-        ["Builder Finish", "Shera Neu Wall Board 10mm — External", "", "SFT", "", "", ""],
-        ["Builder Finish", "Gypsum Board 12.5mm — Ceiling", "", "SFT", "", "", ""],
-        ["Builder Finish", "Internal Painting (Compound, Putty, Primer, Paint)", "", "SFT", "", "", ""],
-        ["Builder Finish", "Aluminium Glass Windows", "", "SFT", "", "", ""],
-        ["Builder Finish", "Wooden Doors (internal)", "", "Nos", "", "", ""],
-        ["Site", "Foundation Bolts and Anchor Plates", "", "Nos", "", "", ""],
-        ["Site", "Crane Hire (site erection)", "", "Days", "", "", ""],
-      ];
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(material), "Material Plan");
-
+      const out = await wb.xlsx.writeBuffer();
       const safeName = (proj?.name || "Project").replace(/[^A-Za-z0-9]+/g, "_");
-      XLSX.writeFile(wb, `Project_Setup_${safeName}.xlsx`);
+      const blob = new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `Project_Setup_${safeName}.xlsx`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (err: any) {
       toast.error(err?.message || "Template download failed");
     } finally {
@@ -310,7 +259,8 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       const moduleName = String(row[2] ?? "").trim();
       const ps = parseDate(row[3]);
       const pe = parseDate(row[4]);
-      const notes = String(row[5] ?? "").trim();
+      // Col F (index 5) is Duration (auto). Notes is col G (index 6).
+      const notes = String(row[6] ?? "").trim();
       const isNa = /^n\/?a$/i.test(notes) || /\bN\/A\b/i.test(notes);
 
       if (!isNa && (!ps || !pe)) {
@@ -421,19 +371,34 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
 
   async function processMaterial(ws: XLSX.WorkSheet | undefined, userId: string | null): Promise<SheetResult> {
     if (!ws) return { name: "Materials", ok: false, count: 0, message: "Sheet missing" };
-    const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
-    if (rows.length === 0) return { name: "Materials", ok: true, count: 0, message: "Sheet empty" };
-    const items = rows.filter(r => r["Material"] || r["Material Description"]).map((r, i) => ({
-      item_id: String(i + 1),
-      section: String(r["Section"] || "Shell and Core"),
-      material_description: String(r["Material"] || r["Material Description"]),
-      tender_qty: Number(r["Tender Qty"]) || null,
-      unit: String(r["Unit"] || "") || null,
-      planned_po_release_date: parseDate(r["PO Release Date"]),
-      planned_procurement_date: parseDate(r["Procurement Date"]),
-      planned_delivery_date: parseDate(r["Delivery Date"]),
-      status: "Planned",
-    }));
+    // Fixed columns: A=#, B=Section, C=Material, D=Unit, E=Tender Qty,
+    // F=Ordered Qty, G=PO Release Date, H=Delivery Date, I=Destination, J=Notes
+    const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: "dd/mm/yyyy", defval: "" });
+    let headerIdx = -1;
+    for (let i = 0; i < Math.min(rows.length, 20); i++) {
+      const r = (rows[i] || []).map((c: any) => String(c ?? "").toLowerCase());
+      if (r.some(c => c.includes("material")) && r.some(c => c.includes("section"))) { headerIdx = i; break; }
+    }
+    if (headerIdx === -1) return { name: "Materials", ok: true, count: 0, message: "Header not found" };
+
+    const items: any[] = [];
+    for (let i = headerIdx + 1; i < rows.length; i++) {
+      const r = rows[i]; if (!r) continue;
+      const material = String(r[2] ?? "").trim();
+      if (!material) continue;
+      items.push({
+        item_id: String(items.length + 1),
+        section: String(r[1] ?? "Shell and Core").trim(),
+        material_description: material,
+        unit: String(r[3] ?? "").trim() || null,
+        tender_qty: r[4] === "" || r[4] == null ? null : Number(r[4]) || null,
+        material_qty_ordered: r[5] === "" || r[5] == null ? null : Number(r[5]) || null,
+        planned_po_release_date: parseDate(r[6]),
+        planned_delivery_date: parseDate(r[7]),
+        notes: [String(r[8] ?? "").trim() && `Destination: ${String(r[8]).trim()}`, String(r[9] ?? "").trim()].filter(Boolean).join(" | ") || null,
+        status: "Planned",
+      });
+    }
     if (items.length === 0) return { name: "Materials", ok: true, count: 0, message: "No items" };
     const { data: prev } = await (supabase.from("project_material_plans") as any).select("version").eq("project_id", projectId).order("version", { ascending: false }).limit(1);
     const nextV = ((prev as any)?.[0]?.version ?? 0) + 1;
