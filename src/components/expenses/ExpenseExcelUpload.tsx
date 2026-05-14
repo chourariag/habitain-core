@@ -66,17 +66,13 @@ export function ExpenseExcelUpload() {
   const window = getSubmissionWindow();
 
   useEffect(() => {
-    Promise.all([
-      supabase.from("hr_settings").select("key, value").in("key", ["car_rate_per_km", "bike_rate_per_km"]),
-      isHR ? supabase.from("profiles").select("auth_user_id, display_name, role").eq("is_active", true) : Promise.resolve({ data: [] }),
-    ]).then(([ratesRes, profsRes]) => {
-      (ratesRes.data ?? []).forEach((r: any) => {
+    supabase.from("hr_settings").select("key, value").in("key", ["car_rate_per_km", "bike_rate_per_km"]).then(({ data }) => {
+      (data ?? []).forEach((r: any) => {
         if (r.key === "car_rate_per_km") setCarRate(Number(r.value) || 9.5);
         if (r.key === "bike_rate_per_km") setBikeRate(Number(r.value) || 3.5);
       });
-      setProfiles(profsRes.data ?? []);
     });
-  }, [isHR]);
+  }, []);
 
   const downloadTemplate = () => {
     const t = TEMPLATES.expense;
