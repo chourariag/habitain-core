@@ -226,7 +226,7 @@ export function ExpenseExcelUpload() {
         status: "pending_hr",
         report_period: reportPeriod,
         submission_method: "excel_upload",
-        uploaded_on_behalf_of: onBehalfOf !== "self" ? onBehalfOf : null,
+        uploaded_on_behalf_of: null,
         project_id: null,
       } as any;
     });
