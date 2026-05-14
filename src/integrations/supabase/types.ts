@@ -1402,14 +1402,22 @@ export type Database = {
           additional_materials: Json | null
           additional_signed_at: string | null
           additional_signed_by: string | null
+          awaiz_signed_at: string | null
+          awaiz_signed_by: string | null
           created_at: string | null
           dispatch_confirmed_at: string | null
           dispatch_confirmed_by: string | null
+          dispatch_pack_id: string | null
+          grn_destination: string | null
           id: string
           modules_checklist: Json | null
           modules_signed_at: string | null
           modules_signed_by: string | null
           project_id: string
+          rakesh_signed_at: string | null
+          rakesh_signed_by: string | null
+          sandeep_signed_at: string | null
+          sandeep_signed_by: string | null
           site_ready_confirmed_at: string | null
           status: string
           tools_checklist: Json | null
@@ -1420,14 +1428,22 @@ export type Database = {
           additional_materials?: Json | null
           additional_signed_at?: string | null
           additional_signed_by?: string | null
+          awaiz_signed_at?: string | null
+          awaiz_signed_by?: string | null
           created_at?: string | null
           dispatch_confirmed_at?: string | null
           dispatch_confirmed_by?: string | null
+          dispatch_pack_id?: string | null
+          grn_destination?: string | null
           id?: string
           modules_checklist?: Json | null
           modules_signed_at?: string | null
           modules_signed_by?: string | null
           project_id: string
+          rakesh_signed_at?: string | null
+          rakesh_signed_by?: string | null
+          sandeep_signed_at?: string | null
+          sandeep_signed_by?: string | null
           site_ready_confirmed_at?: string | null
           status?: string
           tools_checklist?: Json | null
@@ -1438,14 +1454,22 @@ export type Database = {
           additional_materials?: Json | null
           additional_signed_at?: string | null
           additional_signed_by?: string | null
+          awaiz_signed_at?: string | null
+          awaiz_signed_by?: string | null
           created_at?: string | null
           dispatch_confirmed_at?: string | null
           dispatch_confirmed_by?: string | null
+          dispatch_pack_id?: string | null
+          grn_destination?: string | null
           id?: string
           modules_checklist?: Json | null
           modules_signed_at?: string | null
           modules_signed_by?: string | null
           project_id?: string
+          rakesh_signed_at?: string | null
+          rakesh_signed_by?: string | null
+          sandeep_signed_at?: string | null
+          sandeep_signed_by?: string | null
           site_ready_confirmed_at?: string | null
           status?: string
           tools_checklist?: Json | null
@@ -1453,6 +1477,13 @@ export type Database = {
           tools_signed_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "delivery_checklists_dispatch_pack_id_fkey"
+            columns: ["dispatch_pack_id"]
+            isOneToOne: false
+            referencedRelation: "dispatch_packs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "delivery_checklists_project_id_fkey"
             columns: ["project_id"]
@@ -1953,6 +1984,7 @@ export type Database = {
       }
       dispatch_packs: {
         Row: {
+          connection_photos: Json | null
           created_at: string
           created_by: string | null
           destination: string | null
@@ -1961,13 +1993,19 @@ export type Database = {
           documents: Json
           driver_name: string | null
           driver_phone: string | null
+          factory_works_completed: Json | null
           id: string
+          items_table: Json | null
           loading_checklist_complete: boolean | null
           module_id: string | null
+          module_name: string | null
           notes: string | null
           pieces_count: number | null
+          planned_dispatch_date: string | null
           project_id: string
           site_installation_manager_id: string | null
+          site_works_pending: string | null
+          special_handling: string | null
           status: string
           supervisor_accompanying: boolean | null
           team_member_ids: string[] | null
@@ -1977,6 +2015,7 @@ export type Database = {
           weight_kg: number | null
         }
         Insert: {
+          connection_photos?: Json | null
           created_at?: string
           created_by?: string | null
           destination?: string | null
@@ -1985,13 +2024,19 @@ export type Database = {
           documents?: Json
           driver_name?: string | null
           driver_phone?: string | null
+          factory_works_completed?: Json | null
           id?: string
+          items_table?: Json | null
           loading_checklist_complete?: boolean | null
           module_id?: string | null
+          module_name?: string | null
           notes?: string | null
           pieces_count?: number | null
+          planned_dispatch_date?: string | null
           project_id: string
           site_installation_manager_id?: string | null
+          site_works_pending?: string | null
+          special_handling?: string | null
           status?: string
           supervisor_accompanying?: boolean | null
           team_member_ids?: string[] | null
@@ -2001,6 +2046,7 @@ export type Database = {
           weight_kg?: number | null
         }
         Update: {
+          connection_photos?: Json | null
           created_at?: string
           created_by?: string | null
           destination?: string | null
@@ -2009,13 +2055,19 @@ export type Database = {
           documents?: Json
           driver_name?: string | null
           driver_phone?: string | null
+          factory_works_completed?: Json | null
           id?: string
+          items_table?: Json | null
           loading_checklist_complete?: boolean | null
           module_id?: string | null
+          module_name?: string | null
           notes?: string | null
           pieces_count?: number | null
+          planned_dispatch_date?: string | null
           project_id?: string
           site_installation_manager_id?: string | null
+          site_works_pending?: string | null
+          special_handling?: string | null
           status?: string
           supervisor_accompanying?: boolean | null
           team_member_ids?: string[] | null
@@ -3351,14 +3403,26 @@ export type Database = {
           awaiz_signed_by: string | null
           azad_signed_at: string | null
           azad_signed_by: string | null
+          crane_position: string | null
+          crane_type: string | null
           created_at: string | null
           document_url: string | null
+          equipment_tools: Json | null
+          erection_sequence: Json | null
           escalation_sent: boolean | null
           id: string
           karthik_signed_at: string | null
           karthik_signed_by: string | null
+          module_no: string | null
           project_id: string
           reminder_7d_sent: boolean | null
+          risk_register: Json | null
+          safety_requirements: string | null
+          site_readiness: Json | null
+          submitted_at: string | null
+          submitted_by: string | null
+          unlock_requested_at: string | null
+          unlocked_by_md_at: string | null
           updated_at: string | null
           uploaded_at: string | null
           uploaded_by: string | null
@@ -3369,14 +3433,26 @@ export type Database = {
           awaiz_signed_by?: string | null
           azad_signed_at?: string | null
           azad_signed_by?: string | null
+          crane_position?: string | null
+          crane_type?: string | null
           created_at?: string | null
           document_url?: string | null
+          equipment_tools?: Json | null
+          erection_sequence?: Json | null
           escalation_sent?: boolean | null
           id?: string
           karthik_signed_at?: string | null
           karthik_signed_by?: string | null
+          module_no?: string | null
           project_id: string
           reminder_7d_sent?: boolean | null
+          risk_register?: Json | null
+          safety_requirements?: string | null
+          site_readiness?: Json | null
+          submitted_at?: string | null
+          submitted_by?: string | null
+          unlock_requested_at?: string | null
+          unlocked_by_md_at?: string | null
           updated_at?: string | null
           uploaded_at?: string | null
           uploaded_by?: string | null
@@ -3387,14 +3463,26 @@ export type Database = {
           awaiz_signed_by?: string | null
           azad_signed_at?: string | null
           azad_signed_by?: string | null
+          crane_position?: string | null
+          crane_type?: string | null
           created_at?: string | null
           document_url?: string | null
+          equipment_tools?: Json | null
+          erection_sequence?: Json | null
           escalation_sent?: boolean | null
           id?: string
           karthik_signed_at?: string | null
           karthik_signed_by?: string | null
+          module_no?: string | null
           project_id?: string
           reminder_7d_sent?: boolean | null
+          risk_register?: Json | null
+          safety_requirements?: string | null
+          site_readiness?: Json | null
+          submitted_at?: string | null
+          submitted_by?: string | null
+          unlock_requested_at?: string | null
+          unlocked_by_md_at?: string | null
           updated_at?: string | null
           uploaded_at?: string | null
           uploaded_by?: string | null
