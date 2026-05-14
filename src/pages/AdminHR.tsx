@@ -12,6 +12,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { ExpensesTab } from "@/components/expenses/ExpensesTab";
+import { PayrollSettingsTab } from "@/components/admin/PayrollSettingsTab";
+import { PayrollGenerateTab } from "@/components/admin/PayrollGenerateTab";
 
 function TeamAttendance() {
   const [records, setRecords] = useState<any[]>([]);
