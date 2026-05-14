@@ -198,7 +198,7 @@ export function ExpenseExcelUpload() {
     if (!user || !validRows.length) return;
     setSubmitting(true);
 
-    const targetUserId = onBehalfOf === "self" ? user.id : onBehalfOf;
+    const targetUserId = user.id;
     const now = new Date();
 
     const entries = validRows.map((r) => {
