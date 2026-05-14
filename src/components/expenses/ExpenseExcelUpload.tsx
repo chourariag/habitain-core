@@ -58,8 +58,6 @@ export function ExpenseExcelUpload() {
 
   const [carRate, setCarRate] = useState(9.5);
   const [bikeRate, setBikeRate] = useState(3.5);
-  const [profiles, setProfiles] = useState<any[]>([]);
-  const [onBehalfOf, setOnBehalfOf] = useState("self");
   const [parsedRows, setParsedRows] = useState<ParsedRow[] | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [fileName, setFileName] = useState("");
