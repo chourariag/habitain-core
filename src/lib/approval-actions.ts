@@ -37,16 +37,69 @@ export async function approveRequest(req: ApprovalRequest, currentUserId?: strin
     if (error) throw error;
     await setApprovalDecision(req.id, "approved");
     await logAudit({ section: "Projects", action: "approve_create_project", entity: String(p.name) });
+    const newProjectId = (created as any)?.id;
+
+    // Auto-create modules / panels per the request
+    try {
+      const mCount = Number((p as any).module_count) || 0;
+      const pCount = Number((p as any).panel_count) || 0;
+      const sys = String((p as any).production_system || "modular");
+      if (newProjectId && (sys === "modular" || sys === "hybrid") && mCount > 0) {
+        const moduleInserts = Array.from({ length: mCount }, (_, i) => ({
+          project_id: newProjectId,
+          name: `Module ${i + 1}`,
+          module_type: "standard",
+          current_stage: "Sub-Frame",
+          production_status: "not_started",
+          created_by: req.requested_by,
+        }));
+        await supabase.from("modules").insert(moduleInserts as never);
+      }
+      if (newProjectId && (sys === "panelised" || sys === "hybrid") && pCount > 0) {
+        const { data: parentMod } = await supabase.from("modules").insert({
+          project_id: newProjectId, name: "Panel Production", module_type: "standard",
+          current_stage: "Sub-Frame", production_status: "not_started", created_by: req.requested_by,
+        } as never).select("id").single();
+        if (parentMod) {
+          const panelInserts = Array.from({ length: pCount }, (_, i) => ({
+            module_id: (parentMod as any).id,
+            panel_code: `Panel ${i + 1}`,
+            panel_type: "wall",
+            current_stage: "Sub-Frame",
+            production_status: "not_started",
+            created_by: req.requested_by,
+          }));
+          await (supabase.from("panels") as any).insert(panelInserts);
+        }
+      }
+    } catch (e) { console.warn("auto-create modules/panels failed", e); }
+
     try {
       const { insertNotifications } = await import("@/lib/notifications");
+      // Notify the requester
       await insertNotifications({
         recipient_id: req.requested_by,
         title: `Project approved — ${p.name}`,
         body: `Your project request has been approved.`,
         category: "info",
-        related_table: "projects", related_id: (created as any)?.id,
-        navigate_to: `/projects/${(created as any)?.id}`,
+        related_table: "projects", related_id: newProjectId,
+        navigate_to: `/projects/${newProjectId}`,
       });
+      // Notify Karthik (planning_engineer) to upload the Project Setup Template
+      const { data: planners } = await supabase
+        .from("profiles").select("auth_user_id")
+        .eq("role", "planning_engineer" as any).eq("is_active", true);
+      const recipients = (planners || []).map((pl: any) => pl.auth_user_id);
+      if (recipients.length > 0) {
+        await insertNotifications(recipients.map((rid: string) => ({
+          recipient_id: rid,
+          title: `Upload Project Setup Template — ${p.name}`,
+          body: `Project is now active. Download the pre-filled template from Project → Overview, complete planning details (location, BOQ, schedule, materials), and upload back. No further uploads needed after this.`,
+          category: "task",
+          related_table: "projects", related_id: newProjectId,
+          navigate_to: `/projects/${newProjectId}`,
+        })));
+      }
     } catch { /* ignore */ }
     return {};
   }
