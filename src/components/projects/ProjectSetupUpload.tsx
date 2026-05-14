@@ -259,7 +259,8 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       const moduleName = String(row[2] ?? "").trim();
       const ps = parseDate(row[3]);
       const pe = parseDate(row[4]);
-      const notes = String(row[5] ?? "").trim();
+      // Col F (index 5) is Duration (auto). Notes is col G (index 6).
+      const notes = String(row[6] ?? "").trim();
       const isNa = /^n\/?a$/i.test(notes) || /\bN\/A\b/i.test(notes);
 
       if (!isNa && (!ps || !pe)) {
