@@ -13,10 +13,23 @@ import { NewTransferDialog } from "./NewTransferDialog";
 
 type Transfer = {
   id: string;
-  project_id: string;
+  project_id: string; // = to_project_id
   project_name: string;
   status: string;
   created_at: string;
+  material_name: string;
+  quantity: number;
+  unit: string;
+  from_location: string;
+  to_location: string;
+  transfer_date: string;
+  driver_details: string | null;
+  notes: string | null;
+  received_at: string | null;
+  received_by_name: string | null;
+  qty_received: number | null;
+  condition: string | null;
+  // legacy display compat (unused for material_transfers)
   dispatch_confirmed_at: string | null;
   dispatch_confirmed_by: string | null;
   dispatch_confirmed_name: string | null;
@@ -35,8 +48,10 @@ type Transfer = {
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string }> = {
   pending: { label: "Pending", color: "#666666", bg: "#E0E0E0" },
   in_progress: { label: "Pending", color: "#666666", bg: "#E0E0E0" },
+  in_transit: { label: "In Transit", color: "#D4860A", bg: "#FFF8E8" },
   complete: { label: "In Transit", color: "#D4860A", bg: "#FFF8E8" },
   dispatched: { label: "In Transit", color: "#D4860A", bg: "#FFF8E8" },
+  received: { label: "Delivered", color: "#006039", bg: "#E8F2ED" },
   delivered: { label: "Delivered", color: "#006039", bg: "#E8F2ED" },
 };
 
