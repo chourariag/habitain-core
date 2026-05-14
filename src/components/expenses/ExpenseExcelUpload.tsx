@@ -53,7 +53,7 @@ interface ParsedRow {
 
 export function ExpenseExcelUpload() {
   const { user } = useAuth();
-  const { role } = useUserRole();
+  
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [carRate, setCarRate] = useState(9.5);
