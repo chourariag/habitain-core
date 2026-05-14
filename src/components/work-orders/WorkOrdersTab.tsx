@@ -375,7 +375,10 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={save} disabled={saving} style={{ background: "#006039" }}>
+          <Button variant="outline" onClick={() => save(false)} disabled={saving}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save as Draft"}
+          </Button>
+          <Button onClick={() => save(true)} disabled={saving} style={{ background: "#006039" }}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit for Approval"}
           </Button>
         </DialogFooter>
