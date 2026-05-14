@@ -232,9 +232,6 @@ export function ExpenseExcelUpload() {
       return;
     }
 
-    // Get target user name for notification
-    const targetProfile = profiles.find((p) => p.auth_user_id === targetUserId);
-    const empName = targetProfile?.display_name || "Employee";
 
     toast.success(`Expense report submitted. ${validRows.length} items, Total ₹${totalAmount.toLocaleString("en-IN")}.`);
     setParsedRows(null);
