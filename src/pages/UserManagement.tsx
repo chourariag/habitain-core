@@ -102,20 +102,21 @@ export default function UserManagement() {
     try {
       if (req.request_type === "add_user") {
         const p = req.payload as Record<string, string>;
+        const tempPassword = generateTempPassword();
         await createUserWithPassword({
           email: p.email,
           role: p.role as AppRole,
-          password: TEMP_PASSWORD,
+          password: tempPassword,
           display_name: p.full_name,
           phone: p.phone,
           reporting_manager_id: p.reporting_to,
         });
-        await setApprovalDecision(req.id, "approved", undefined, `Created with temp password ${TEMP_PASSWORD}`);
+        await setApprovalDecision(req.id, "approved", undefined, `User created — temporary password delivered to approver only.`);
         await logAudit({
           section: "User Management", action: "approve_add_user",
           entity: p.email, summary: `Approved add user — ${p.full_name} as ${p.role}`,
         });
-        setTempPwShown({ name: p.full_name || p.email, password: TEMP_PASSWORD });
+        setTempPwShown({ name: p.full_name || p.email, password: tempPassword });
       } else if (req.request_type === "deactivate_user") {
         const p = req.payload as Record<string, string>;
         await reassignAndDeactivate(p.user_id, p.reassign_to);
