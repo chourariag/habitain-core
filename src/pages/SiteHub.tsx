@@ -17,6 +17,8 @@ import { FloorPlanPositionsTab } from "@/components/site/FloorPlanPositionsTab";
 import { PhotoTimelineTab } from "@/components/site/PhotoTimelineTab";
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
+import { MeasurementSheet } from "@/components/measurements/MeasurementSheet";
+import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPanel";
 import { DispatchPacksTab } from "@/components/site/DispatchPacksTab";
