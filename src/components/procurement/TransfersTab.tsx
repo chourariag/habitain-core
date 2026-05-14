@@ -69,13 +69,15 @@ export function TransfersTab() {
 
   const fetchTransfers = useCallback(async () => {
     setLoading(true);
-    const [{ data: checklists }, { data: projList }, { data: profiles }] = await Promise.all([
-      (supabase.from("delivery_checklists") as any)
+    const [{ data: rows, error }, { data: projList }, { data: profiles }] = await Promise.all([
+      (supabase.from("material_transfers") as any)
         .select("*")
         .order("created_at", { ascending: false }),
       supabase.from("projects").select("id, name").eq("is_archived", false),
       supabase.from("profiles").select("auth_user_id, full_name, role"),
     ]);
+
+    if (error) console.error("[TransfersTab] fetch error", error);
 
     const projMap: Record<string, string> = {};
     (projList ?? []).forEach((p: any) => { projMap[p.id] = p.name; });
@@ -86,25 +88,37 @@ export function TransfersTab() {
       profileMap[p.auth_user_id] = { name: p.full_name ?? "Unknown", role: (p.role ?? "").replace(/_/g, " ") };
     });
 
-    const mapped: Transfer[] = (checklists ?? []).map((c: any) => ({
-      id: c.id,
-      project_id: c.project_id,
-      project_name: projMap[c.project_id] ?? "Unknown Project",
-      status: c.status,
-      created_at: c.created_at,
-      dispatch_confirmed_at: c.dispatch_confirmed_at,
-      dispatch_confirmed_by: c.dispatch_confirmed_by,
-      dispatch_confirmed_name: c.dispatch_confirmed_by ? profileMap[c.dispatch_confirmed_by]?.name ?? null : null,
-      dispatch_confirmed_role: c.dispatch_confirmed_by ? profileMap[c.dispatch_confirmed_by]?.role ?? null : null,
-      modules_signed_at: c.modules_signed_at,
-      modules_signed_name: c.modules_signed_by ? profileMap[c.modules_signed_by]?.name ?? null : null,
-      modules_checklist: c.modules_checklist,
-      tools_signed_at: c.tools_signed_at,
-      tools_signed_name: c.tools_signed_by ? profileMap[c.tools_signed_by]?.name ?? null : null,
-      tools_checklist: c.tools_checklist,
-      additional_signed_at: c.additional_signed_at,
-      additional_signed_name: c.additional_signed_by ? profileMap[c.additional_signed_by]?.name ?? null : null,
-      additional_materials: c.additional_materials,
+    const mapped: Transfer[] = (rows ?? []).map((r: any) => ({
+      id: r.id,
+      project_id: r.to_project_id ?? "",
+      project_name: r.to_project_id ? (projMap[r.to_project_id] ?? "Unknown Project") : `${r.from_location} → ${r.to_location}`,
+      status: r.status ?? "in_transit",
+      created_at: r.created_at,
+      material_name: r.material_name,
+      quantity: Number(r.quantity ?? 0),
+      unit: r.unit ?? "Nos",
+      from_location: r.from_location,
+      to_location: r.to_location,
+      transfer_date: r.transfer_date,
+      driver_details: r.driver_details,
+      notes: r.notes,
+      received_at: r.received_at,
+      received_by_name: r.received_by ? profileMap[r.received_by]?.name ?? null : null,
+      qty_received: r.qty_received != null ? Number(r.qty_received) : null,
+      condition: r.condition,
+      dispatch_confirmed_at: null,
+      dispatch_confirmed_by: null,
+      dispatch_confirmed_name: null,
+      dispatch_confirmed_role: null,
+      modules_signed_at: null,
+      modules_signed_name: null,
+      modules_checklist: null,
+      tools_signed_at: null,
+      tools_signed_name: null,
+      tools_checklist: null,
+      additional_signed_at: null,
+      additional_signed_name: null,
+      additional_materials: null,
     }));
 
     setTransfers(mapped);
