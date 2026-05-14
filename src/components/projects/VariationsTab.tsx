@@ -102,15 +102,31 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
   const canScopeApprove = SCOPE_APPROVE_ROLES.includes(userRole ?? "");
   const canFinanceApprove = FINANCE_APPROVE_ROLES.includes(userRole ?? "");
   const canMDApprove = MD_APPROVE_ROLES.includes(userRole ?? "");
+  const canDelete = DELETE_ROLES.includes(userRole ?? "");
 
   const fetchVariations = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("project_variations")
+    const { data } = await (supabase
+      .from("project_variations") as any)
       .select("*")
       .eq("project_id", projectId)
-      .order("variation_number", { ascending: true });
-    setVariations((data ?? []) as Variation[]);
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: false });
+
+    // Dedupe by variation_number — keep only the latest revision per V.No.
+    // Then sort ascending by numeric V.No (V001, V002, V010 ...).
+    const rows = (data ?? []) as Variation[];
+    const seen = new Set<string>();
+    const latest: Variation[] = [];
+    for (const r of rows) {
+      const key = (r.variation_number || "").trim().toUpperCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      latest.push(r);
+    }
+    const num = (s: string) => parseInt((s || "").replace(/\D+/g, ""), 10) || 0;
+    latest.sort((a, b) => num(a.variation_number) - num(b.variation_number));
+    setVariations(latest);
     setLoading(false);
   }, [projectId]);
 
