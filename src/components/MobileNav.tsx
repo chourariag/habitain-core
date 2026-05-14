@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, FolderKanban, Factory, Truck,
   BarChart3, DollarSign, ClipboardCheck, ShoppingCart, Compass,
-  Wrench, Users, Settings, Clock, BookOpen,
+  Users, Settings, ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -12,19 +12,18 @@ import type { AppRole } from "@/lib/roles";
 
 const allTabs = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard, section: "dashboard" },
+  { to: "/approvals", label: "Approvals", icon: ShieldCheck, section: "approvals" },
   { to: "/projects", label: "Projects", icon: FolderKanban, section: "projects" },
-  { to: "/production", label: "Factory", icon: Factory, section: "production" },
-  { to: "/site-hub", label: "Site", icon: Truck, section: "production" },
+  { to: "/production?tab=modules", label: "Factory", icon: Factory, section: "production" },
+  { to: "/site-hub?tab=pipeline", label: "Site", icon: Truck, section: "site" },
   { to: "/qc", label: "QC", icon: ClipboardCheck, section: "production" },
-  { to: "/sales", label: "Sales", icon: BarChart3, section: "business" },
-  { to: "/finance", label: "Finance", icon: DollarSign, section: "business" },
-  { to: "/procurement", label: "Procurement", icon: ShoppingCart, section: "procurement" },
+  { to: "/procurement?tab=dashboard", label: "Procurement", icon: ShoppingCart, section: "procurement" },
+  { to: "/finance?tab=mis-invoices", label: "Finance", icon: DollarSign, section: "finance" },
+  { to: "/sales", label: "Sales", icon: BarChart3, section: "sales" },
   { to: "/design", label: "Design", icon: Compass, section: "design" },
-  { to: "/sops", label: "SOPs", icon: BookOpen, section: "dashboard" },
-  { to: "/rm", label: "R&M", icon: Wrench, section: "business" },
-  { to: "/attendance", label: "HR", icon: Clock, section: "admin" },
+  { to: "/attendance", label: "HR", icon: Users, section: "altree" },
   { to: "/admin", label: "Admin", icon: Users, section: "admin" },
-  { to: "/settings", label: "Settings", icon: Settings, section: "admin" },
+  { to: "/settings", label: "Settings", icon: Settings, section: "altree" },
 ];
 
 export function MobileNav() {
