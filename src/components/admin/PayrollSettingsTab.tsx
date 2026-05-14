@@ -142,6 +142,7 @@ export function PayrollSettingsTab() {
                   <td className="px-2 py-1.5">{i("monthly_ctc", "number", "w-24")}</td>
                   <td className="px-2 py-1.5">{i("basic_pct", "number", "w-16")}</td>
                   <td className="px-2 py-1.5">{i("hra_pct", "number", "w-16")}</td>
+                  <td className="px-2 py-1.5">{i("conveyance_allowance", "number", "w-20")}</td>
                   <td className="px-2 py-1.5">{i("pt_amount", "number", "w-16")}</td>
                   <td className="px-2 py-1.5">{i("tds_monthly", "number", "w-20")}</td>
                   <td className="px-2 py-1.5">
