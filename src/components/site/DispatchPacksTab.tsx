@@ -204,45 +204,67 @@ export function DispatchPacksTab({ projectId }: Props) {
     return <div className="flex justify-center py-12"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
   }
 
-  if (packs.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-10 text-center">
-          <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">No dispatch packs created yet.</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const statusBadge = (status: string) => {
+    if (status === "dispatched") return { bg: "#E8F2ED", fg: "#006039", label: "Dispatched" };
+    if (status === "ready_to_dispatch") return { bg: "#E8F2ED", fg: "#006039", label: "Ready to Dispatch" };
+    return { bg: "#FFF8E8", fg: "#D4860A", label: "Incomplete" };
+  };
 
   return (
-    <div className="space-y-2">
-      {packs.map((pack) => (
-        <button
-          key={pack.id}
-          onClick={() => openDetail(pack)}
-          className="w-full text-left rounded-lg border p-3 hover:shadow-sm transition-shadow bg-card"
-        >
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-sm font-semibold" style={{ color: "#006039" }}>
-                {pack.dispatch_pack_id}
-              </span>
-              <span className="text-xs" style={{ color: "#666" }}>
-                {format(new Date(pack.dispatch_date), "dd/MM/yyyy")}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              {pack.vehicle_number && (
-                <span className="text-xs" style={{ color: "#666" }}>{pack.vehicle_number}</span>
-              )}
-              <Badge variant="outline" className="gap-1 text-xs" style={{ backgroundColor: "#E8F2ED", color: "#006039", border: "none" }}>
-                <Lock className="h-2.5 w-2.5" /> Submitted
-              </Badge>
-            </div>
-          </div>
-        </button>
-      ))}
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs" style={{ color: "#666" }}>{packs.length} pack{packs.length === 1 ? "" : "s"}</p>
+        {canCreate && (
+          <Button size="sm" onClick={handleCreate} className="gap-1.5" style={{ backgroundColor: "#006039", color: "#FFFFFF" }}>
+            <Plus className="h-4 w-4" /> Create Dispatch Pack
+          </Button>
+        )}
+      </div>
+
+      {packs.length === 0 ? (
+        <Card>
+          <CardContent className="py-10 text-center">
+            <Package className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">No dispatch packs created yet.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {packs.map((pack) => {
+            const sb = statusBadge(pack.status);
+            const docCount = Array.isArray(pack.documents) ? pack.documents.length : 0;
+            return (
+              <button
+                key={pack.id}
+                onClick={() => openDetail(pack)}
+                className="w-full text-left rounded-lg border p-3 hover:shadow-sm transition-shadow bg-card"
+              >
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {pack.module_id && (
+                      <span className="font-display font-bold text-sm" style={{ color: "#1A1A1A" }}>{pack.module_id}</span>
+                    )}
+                    <span className="font-mono text-xs" style={{ color: "#006039" }}>{pack.dispatch_pack_id}</span>
+                    <span className="text-xs" style={{ color: "#666" }}>{format(new Date(pack.dispatch_date), "dd/MM/yyyy")}</span>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[11px] inline-flex items-center gap-1" style={{ color: "#666" }}>
+                      <FileText className="h-3 w-3" /> {docCount} doc{docCount === 1 ? "" : "s"}
+                    </span>
+                    {pack.vehicle_number && (
+                      <span className="text-xs" style={{ color: "#666" }}>{pack.vehicle_number}</span>
+                    )}
+                    <Badge variant="outline" className="gap-1 text-xs" style={{ backgroundColor: sb.bg, color: sb.fg, border: "none" }}>
+                      {pack.status === "dispatched" && <Lock className="h-2.5 w-2.5" />}
+                      {sb.label}
+                    </Badge>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
