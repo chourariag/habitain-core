@@ -517,6 +517,29 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
     } catch (e:any) { toast.error(e.message); } finally { setBusy(false); }
   };
 
+  const canSubmitDraft =
+    wo.status === "draft" && (
+      wo.raised_by === userId ||
+      SUBMIT_ROLES.includes(role ?? "")
+    );
+
+  const doSubmitForApproval = async () => {
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("work_orders")
+        .update({ status: "pending_costing_approval" })
+        .eq("id", wo.id);
+      if (error) throw error;
+      await notify(
+        ["planning_engineer","costing_engineer","finance_director"],
+        "Work Order pending approval",
+        `${wo.wo_number} — ${wo.work_type} | ${fmtINR(Number(wo.total_value))}`
+      );
+      toast.success("Submitted for approval");
+      onChanged();
+    } catch (e:any) { toast.error(e.message); } finally { setBusy(false); }
+  };
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
