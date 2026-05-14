@@ -35,6 +35,12 @@ const empty = (uid: string): Cfg => ({
   pan: "", pf_number: "", bank_account: "", bank_name: "", ifsc: "", designation: "", department: "", doj: null,
 });
 
+function nameFromEmail(email: string | null): string {
+  if (!email) return "Unnamed";
+  const local = email.split("@")[0] || email;
+  return local.split(/[._-]+/).filter(Boolean).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(" ") || email;
+}
+
 export function PayrollSettingsTab() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [configs, setConfigs] = useState<Record<string, Cfg>>({});
