@@ -13,34 +13,32 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
+import { insertNotifications } from "@/lib/notifications";
 import * as XLSX from "xlsx";
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
   draft: { color: "#666", bg: "#F7F7F7" },
   pending_hr: { color: "#D4860A", bg: "#FFF8E8" },
   pending_hod: { color: "#D4860A", bg: "#FFF8E8" },
+  pending_finance: { color: "#D4860A", bg: "#FFF8E8" },
+  flagged: { color: "#D4860A", bg: "#FFF8E8" },
   approved: { color: "#006039", bg: "#E8F2ED" },
+  approved_for_payment: { color: "#006039", bg: "#E8F2ED" },
   rejected: { color: "#F40009", bg: "#FEE2E2" },
   paid: { color: "#006039", bg: "#E8F2ED" },
 };
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
-  pending_hr: "Awaiting HR",
-  pending_hod: "Awaiting HOD",
-  approved: "Approved",
+  pending_hr: "Submitted — HR Review",
+  pending_hod: "HR Approved — Pending Finance",
+  pending_finance: "HR Approved — Pending Finance",
+  flagged: "Flagged — Action Required",
+  approved: "Approved for Payment",
+  approved_for_payment: "Approved for Payment",
   rejected: "Rejected",
   paid: "Paid",
 };
-
-const PRODUCTION_ROLES = ["factory_floor_supervisor", "fabrication_foreman", "electrical_installer", "elec_plumbing_installer", "production_head"];
-const OPS_ROLES = ["head_operations", "site_installation_mgr", "site_engineer", "delivery_rm_lead"];
-
-function getHodForRole(submitterRole: string): string {
-  if (PRODUCTION_ROLES.includes(submitterRole)) return "production_head";
-  if (OPS_ROLES.includes(submitterRole)) return "head_operations";
-  return "managing_director";
-}
 
 export function ExpensesTab() {
   const { user } = useAuth();
