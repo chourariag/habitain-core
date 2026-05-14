@@ -1,76 +1,119 @@
-This is a large 6-part restructure. I'll deliver it in the order below so each piece can be verified before the next builds on it. Nothing destructive — old pages stay reachable until their replacements ship.
+# Sidebar Navigation Overhaul
 
-## 1 — Project Setup as the single source of truth
+This is a navigation-only restructure. Per your rule "DATA CONNECTIONS REMAIN UNCHANGED", I will not touch Supabase queries, table structure, or business logic. I will reorganise routes, the sidebar tree, mobile nav, and create thin page wrappers that mount existing components/tabs in their new homes.
 
-- Add `setup_uploaded_at` and `setup_uploaded_by_name` on `projects`. Stamp these in the upload flow.
-- Hide Schedule / Materials / BOQ / Scope upload buttons whenever `setup_uploaded_at` is set. The only re-upload offered is "Re-upload Project Setup Template" (replaces all 5 sheets atomically).
-- Billing tab stays manually editable (% and contract value), but its milestones list becomes read-only after upload.
-- Add a small banner on each affected tab: *"Loaded from Project Setup Template — uploaded by {name} on {DD/MM/YYYY}"*.
-- GFC Budget upload (BOQ v2) is left untouched — still gated on H1.
+## 1. New sidebar tree (exact)
 
-## 2 — Remove Modules tab from Projects
-
-- Drop the Modules/Panels tab from `ProjectDetail`.
-- Move module/panel counts into the project header as read-only chips (`{n} modules · {p} panels`), populated from the Project Setup upload.
-- Module/panel CRUD remains only on Production → Factory Floor bay cards.
-
-## 3 — Production restructure
-
-New sidebar group **PRODUCTION**:
-```text
-├── Production Dashboard   (new)
-├── Factory Floor          (slim down)
-├── Capacity Planning      (Azad / Rakesh / MD only)
-├── QC & NCR
-├── Dispatch & Delivery    (new — moved out of Factory Floor)
-└── Safety                 (moved from HR)
+```
+Dashboard
+Approvals
+Projects
+Production
+  ├ Capacity Planning        (Suraj/Azad/Karthik only)
+  ├ Factory Floor
+  ├ Floor Map
+  ├ QC & NCR
+  ├ Despatch & Delivery
+  ├ Safety
+  └ People                   (NEW)
+On Site Works
+  ├ Site Hub
+  ├ Inventory
+  ├ Site Diary               (NEW standalone)
+  ├ Handover Document        (renamed)
+  ├ People                   (NEW)
+  ├ Installation Sequence
+  └ Safety
+Procurement
+  ├ Dashboard
+  ├ Material Plan
+  ├ Inventory                (Inventory | GRN | Purchase Orders)
+  ├ Transfers
+  ├ Equipments               (Asset Register — merged)
+  └ Repairs & AMC            (R&M | AMC)
+Finance
+  ├ Management               (MIS | P&L)
+  ├ Projects                 (Revenue & Margin | Cash Flow)
+  ├ General                  (Payments | Invoices | Bank Ledger | Statutory)
+  └ Costing & Estimation     (WO | PO | Expense Approvals)
+Design
+  ├ Projects
+  └ Design Queries
+Sales
+  ├ Sales Pipeline
+  ├ Quotations
+  └ Client Portal
+ALTREE  (collapsible group header — not clickable)
+  ├ HR
+  │   ├ My HR
+  │   └ HR Management
+  ├ Admin                    (Admin + User Management merged)
+  ├ Super Admin              (Vaibhav only — unchanged)
+  └ Settings                 (Factory | Office locations)
 ```
 
-- **Production Dashboard** (`/production/dashboard`): project-scoped cards — Active Stage, Schedule (current + next 3 stages green/amber/red), Open NCRs, Material Gates. Azad-only extra cards: Floor Capacity (`6/9 bays`), Team logged today, Labour Cost This Week vs budget.
-- Rename "Stage Velocity" → **"Production Pace"** (On pace / Slightly slow / Behind) everywhere it appears.
-- Strip from Factory Floor: My Tasks strip, Floor Capacity tile, Production Pace tile. Keep bay cards, QC trigger buttons, Quality flag buttons.
-- **Dispatch & Delivery** (`/production/dispatch`): tabs — Dispatch Pipeline · Delivery Checklist (3-party sign-off) · Dispatch Packs · Vehicle Arrangement. Restricted to Azad, Rakesh, Awaiz, Bala, Suraj, MD.
+## 2. Removals
 
-## 4 — QC inspector + stage list fix
+- Remove from sidebar: Report Compliance/Weekly Reports, standalone "Flow" page, standalone Purchase Orders approval page, standalone Fixed Assets entry, R&M/AMC top-level entries, Production Dashboard, Site Dashboard, Knowledge → SOPs (not in spec — moved off sidebar; route still reachable), KPI Scorecard (not in spec; route remains), Alerts (not in spec; bell stays in header).
+- Pages keep their files; only sidebar entries are cut so deep links and existing buttons continue to work.
 
-- QC Inspection Step 1 reads inspector name from the active testing-mode persona (`useTestingMode()`) and falls back to the auth profile only when no persona is selected.
-- Stage Type dropdown is rebuilt by querying `production_task_templates` where `is_qc_gate = true`, formatted as `{phase} — {task_name} ({stage_number})`. Removes the hard-coded Shell/Builder/Interiors options.
+## 3. New thin page wrappers (no logic changes)
 
-## 5 — On Site Works (renamed from Site Hub)
+- `/production/people` — tabs: Manpower Plan, Daily Labour Log, Labour Log Approvals, Labour Registers, Subcontractors. Mounts existing `WeeklyManpowerPlanner`, `DailyLabourLog`, `LabourClaimsTab`, `LabourRegisterTab`, `SubcontractorManagement`.
+- `/site/people` — tabs: Labour Log, Subcontractors. Mounts the same site components already used inside Site Hub.
+- `/site/diary` — Site Diary tab + Punch List tab (existing components).
+- `/site/handover` — wraps existing `HandoverPack` and renames title.
+- `/site/installation-sequence` — wraps existing `InstallationSequenceDoc`.
+- `/site/safety` — same `Safety` page (route alias).
+- `/procurement` keeps tabs but the "inventory" tab content gains GRN + Purchase Orders sub-tabs; the existing fixed-assets tab is renamed "Equipments" and uses the merged Asset Register component (already exists as `AssetRegisterTab`).
+- `/procurement?tab=repairs` — Repairs & AMC tab embedding existing R&M and AMC pages.
+- `/finance` tab keys reorganised into Management / Projects / General / Costing — same components mounted under new tab keys.
+- `/design/projects` and `/design/queries` — split views of existing Design Portal.
+- `/altree/admin` — merges Admin + User Management content (existing components).
+- `/altree/settings` — Factory + Office location tabs (existing settings components).
 
-New sidebar group:
-```text
-ON SITE WORKS
-├── Site Dashboard         (new — /onsite/dashboard)
-├── Site Hub               (existing, simplified)
-├── Daily Logs             (new — /onsite/logs)
-├── Site Inventory         (new — /onsite/inventory)
-├── Dispatch & Delivery    (link → /production/dispatch)
-└── Site Readiness         (new — /onsite/readiness)
-```
+## 4. Active-route highlight fix
 
-- **Site Dashboard**: project-scoped — current site stage + checklist %, planned vs actual site stages, subs active today, open punch list, days since last client update, next dispatch incoming.
-- **Site Hub** keeps only: My Site Tasks (collapsed, max 3), Request Advance, Dispatch Pipeline (incoming), Schedule, Drawings, Handover Document, Material Requests, Factory Feedback, Work Orders, Installation Sequence. Everything else moves out.
-- **Daily Logs**: 3 tabs — Site Diary (Nazim) · Labour Log · Subcontractor Log (idle reason required).
-- **Site Inventory**: confirm incoming factory transfers, current site stock, raise material requests.
-- **Site Readiness**: photo checklist (foundation, access road, crane, site office, utilities, safety barriers) + dry-run video + risk register + client briefing confirmation + submit-to-Suraj button (≥5 days before dispatch).
+The current scoring loop runs **per section**, so two sections can each elect a "best" item (HR Management vs Admin both light up). Fix: compute the single best match across the entire flattened nav once, then compare each item's key against that global winner. Result: exactly one highlighted row at any time.
 
-New tables: `site_readiness_checklists`, `site_inventory_items`, `subcontractor_daily_logs`, `installation_sequences` (or extend if existing).
+## 5. ALTREE collapsible group
 
-## 6 — Awaiz fills Schedule + Installation Sequence
+ALTREE renders as a non-clickable header with a chevron. Clicking toggles a single `useState` that hides/shows its 4 child sections. State persists in `localStorage` (`hstack_nav_altree_open`). On mobile, the same toggle drives the mobile nav grouping.
 
-- Both inputs are locked until 14 days before planned dispatch (already done for Schedule; same gate applied to Installation Sequence).
-- Installation Sequence form: order table (Module # · Position · Crane approach · Notes), crane-lift count, access restrictions, crane-operator notes, OR PDF/DWG upload.
-- On save: insert notifications for Karthik and Suraj ("Site schedule + installation sequence set for {project}").
+## 6. Mobile nav
 
-## Roll-out order
+`MobileNav.tsx` updated to mirror the top-level sections. Sub-pages reachable via the per-section drill-in (existing horizontal scroll bar + new section grouping). ALTREE collapses as one unit.
 
-1. Project Setup lock-down (Change 1) + Modules tab removal (Change 2) + Modules counts in header.
-2. QC inspector + stage list fix (Change 4) — fast, isolated.
-3. Production restructure (Change 3): new Dashboard, Dispatch & Delivery page, Factory Floor cleanup, Stage Velocity rename, sidebar reorg.
-4. On Site Works restructure (Change 5): new sidebar group, Site Dashboard, Daily Logs, Site Inventory, Site Readiness, Site Hub slim-down.
-5. Awaiz Installation Sequence + 14-day gate + notifications (Change 6).
+## 7. Role visibility
 
-## Open question
+Reuses existing `canSeeSection` + per-item `roles` arrays. New gates:
+- Capacity Planning: `["super_admin","managing_director","head_operations","planning_head","production_head"]` (Suraj/Azad/Karthik personas).
+- Approvals top-level: MD + Directors only (already the case).
+- HR Management: `hr_admin`, `finance_manager` (Mary), MD/super_admin.
+- Super Admin: `super_admin` only (Vaibhav).
+- Repairs & AMC, Equipments: existing procurement roles.
+No role permission changes — only nav visibility.
 
-This is multiple person-days of work and dozens of files. Do you want me to ship all 6 changes in a single pass (longer turnaround, one big diff), or land them in the order above in successive passes so you can verify after each block?
+## 8. Files touched
+
+- Edit: `src/components/AppSidebar.tsx` (new tree + active-route fix + ALTREE collapse).
+- Edit: `src/components/MobileNav.tsx` (mirror new sections).
+- Edit: `src/App.tsx` (add new routes; alias removed routes to their new homes via `<Navigate>` so old links don't 404).
+- Edit: `src/lib/role-nav.ts` (add new section keys: `approvals`, `site`, `finance`, `sales`, `altree`).
+- Edit: `src/pages/Finance.tsx` (regroup tab keys into Management/Projects/General/Costing — UI only).
+- Edit: `src/pages/Procurement.tsx` (rename Tally PO Upload tab → "Purchase Orders"; Equipments tab uses Asset Register).
+- Create: `src/pages/ProductionPeople.tsx`, `src/pages/SitePeople.tsx`, `src/pages/SiteDiary.tsx`, `src/pages/HandoverDocument.tsx`, `src/pages/InstallationSequence.tsx`, `src/pages/DesignProjects.tsx`, `src/pages/DesignQueries.tsx`, `src/pages/AltreeAdmin.tsx`, `src/pages/AltreeSettings.tsx`.
+- No DB migrations. No edge function changes. No query changes.
+
+## 9. Out of scope (call out for later prompts)
+
+These were referenced but require data/logic work — I will NOT build them in this prompt:
+- Data Compliance Panel (live data computation).
+- AI Anomaly Flags (model + rules engine).
+- Announcements posting/viewing system.
+- Two-stage expense flow rewiring (already partly built — verified, no further change here).
+- Renaming Mary's permissions.
+
+If you want any of those built, please send a follow-up prompt for each.
+
+Approve to implement, or tell me what to change.
