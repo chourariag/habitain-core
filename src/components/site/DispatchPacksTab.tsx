@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Lock, ArrowLeft, Package } from "lucide-react";
+import { Loader2, Lock, ArrowLeft, Package, Plus, FileText } from "lucide-react";
 import { format } from "date-fns";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useProjectContext } from "@/contexts/ProjectContext";
+
+const CREATE_ROLES = ["super_admin", "managing_director", "production_head", "factory_floor_supervisor", "head_operations"];
 
 interface DispatchPack {
   id: string;
@@ -22,6 +27,11 @@ interface DispatchPack {
   notes: string | null;
   status: string;
   created_at: string;
+  module_id: string | null;
+  pieces_count: number | null;
+  weight_kg: number | null;
+  destination: string | null;
+  documents: Array<{ key: string; name: string; url: string }> | null;
 }
 
 interface MaterialLogItem {
