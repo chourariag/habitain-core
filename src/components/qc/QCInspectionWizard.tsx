@@ -615,7 +615,7 @@ export function QCInspectionWizard({
                   Inspector
                 </label>
                 <div className="mt-1 px-3 py-2 rounded-md bg-muted text-sm text-foreground">
-                  {inspectorName}
+                  {personaName ?? inspectorName}
                 </div>
               </div>
               <div>

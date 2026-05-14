@@ -12,6 +12,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { ExpensesTab } from "@/components/expenses/ExpensesTab";
+import { PayrollSettingsTab } from "@/components/admin/PayrollSettingsTab";
+import { PayrollGenerateTab } from "@/components/admin/PayrollGenerateTab";
 
 function TeamAttendance() {
   const [records, setRecords] = useState<any[]>([]);
@@ -248,12 +250,16 @@ export default function AdminHR() {
             <TabsTrigger value="attendance">Team Attendance</TabsTrigger>
             <TabsTrigger value="leave">Leave Requests</TabsTrigger>
             <TabsTrigger value="expenses">Expense Reports</TabsTrigger>
+            <TabsTrigger value="payroll-settings">Payroll Settings</TabsTrigger>
+            <TabsTrigger value="payroll">Payroll</TabsTrigger>
             <TabsTrigger value="docs">Employee Documents</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
         <TabsContent value="attendance" className="mt-4"><TeamAttendance /></TabsContent>
         <TabsContent value="leave" className="mt-4"><LeaveApprovals /></TabsContent>
         <TabsContent value="expenses" className="mt-4"><ExpensesTab /></TabsContent>
+        <TabsContent value="payroll-settings" className="mt-4"><PayrollSettingsTab /></TabsContent>
+        <TabsContent value="payroll" className="mt-4"><PayrollGenerateTab /></TabsContent>
         <TabsContent value="docs" className="mt-4"><EmployeeDocuments /></TabsContent>
       </Tabs>
     </div>

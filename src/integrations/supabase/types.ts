@@ -4898,44 +4898,146 @@ export type Database = {
         }
         Relationships: []
       }
+      payroll_config: {
+        Row: {
+          bank_account: string | null
+          bank_name: string | null
+          basic_pct: number
+          created_at: string
+          created_by: string | null
+          department: string | null
+          designation: string | null
+          doj: string | null
+          effective_from: string
+          hra_pct: number
+          id: string
+          ifsc: string | null
+          is_archived: boolean
+          monthly_ctc: number
+          pan: string | null
+          pf_number: string | null
+          pt_amount: number
+          tds_monthly: number
+          updated_at: string
+          updated_by: string | null
+          user_id: string
+        }
+        Insert: {
+          bank_account?: string | null
+          bank_name?: string | null
+          basic_pct?: number
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          designation?: string | null
+          doj?: string | null
+          effective_from?: string
+          hra_pct?: number
+          id?: string
+          ifsc?: string | null
+          is_archived?: boolean
+          monthly_ctc?: number
+          pan?: string | null
+          pf_number?: string | null
+          pt_amount?: number
+          tds_monthly?: number
+          updated_at?: string
+          updated_by?: string | null
+          user_id: string
+        }
+        Update: {
+          bank_account?: string | null
+          bank_name?: string | null
+          basic_pct?: number
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          designation?: string | null
+          doj?: string | null
+          effective_from?: string
+          hra_pct?: number
+          id?: string
+          ifsc?: string | null
+          is_archived?: boolean
+          monthly_ctc?: number
+          pan?: string | null
+          pf_number?: string | null
+          pt_amount?: number
+          tds_monthly?: number
+          updated_at?: string
+          updated_by?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       payslips: {
         Row: {
+          basic: number
           created_at: string
+          days_in_month: number | null
+          days_worked: number | null
           deductions: number
+          generated_at: string | null
+          generated_by: string | null
           gross_amount: number
+          hra: number
           id: string
           month: number
           net_pay: number
           notes: string | null
           pdf_url: string | null
+          pf_deduction: number
+          pt_deduction: number
+          special_allowance: number
+          tds_deduction: number
           updated_at: string
           uploaded_by: string | null
           user_id: string
           year: number
         }
         Insert: {
+          basic?: number
           created_at?: string
+          days_in_month?: number | null
+          days_worked?: number | null
           deductions?: number
+          generated_at?: string | null
+          generated_by?: string | null
           gross_amount?: number
+          hra?: number
           id?: string
           month: number
           net_pay?: number
           notes?: string | null
           pdf_url?: string | null
+          pf_deduction?: number
+          pt_deduction?: number
+          special_allowance?: number
+          tds_deduction?: number
           updated_at?: string
           uploaded_by?: string | null
           user_id: string
           year: number
         }
         Update: {
+          basic?: number
           created_at?: string
+          days_in_month?: number | null
+          days_worked?: number | null
           deductions?: number
+          generated_at?: string | null
+          generated_by?: string | null
           gross_amount?: number
+          hra?: number
           id?: string
           month?: number
           net_pay?: number
           notes?: string | null
           pdf_url?: string | null
+          pf_deduction?: number
+          pt_deduction?: number
+          special_allowance?: number
+          tds_deduction?: number
           updated_at?: string
           uploaded_by?: string | null
           user_id?: string

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Plus, Loader2, CheckCircle2, AlertTriangle, Camera, ClipboardList, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { effectiveDisplayName } from "@/lib/effective-user";
 
 interface Props {
   projectId: string;
@@ -121,7 +122,7 @@ export function PunchListModule({ projectId, userRole }: Props) {
         status: "closed",
         fix_description: fixDesc.trim(),
         after_photo_url: afterUrl,
-        closed_by: profile?.display_name ?? user!.email,
+        closed_by: effectiveDisplayName(profile?.display_name, user!.email),
         closed_at: new Date().toISOString(),
       }).eq("id", id);
       toast.success("Item closed");
@@ -141,7 +142,7 @@ export function PunchListModule({ projectId, userRole }: Props) {
       await (client.from("punch_list_items") as any).update({
         status: "waived",
         waived: true,
-        waive_reason: `Waived by ${profile?.display_name ?? "Manager"}: ${waiveReason.trim()}`,
+        waive_reason: `Waived by ${effectiveDisplayName(profile?.display_name, "Manager")}: ${waiveReason.trim()}`,
       }).eq("id", id);
       toast.success("Item waived");
       setWaivingId(null); setWaiveReason("");
