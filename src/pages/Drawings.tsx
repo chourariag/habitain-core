@@ -668,7 +668,7 @@ export default function Drawings() {
                         <p className="text-sm mt-1 line-clamp-2" style={{ color: "#666" }}>{dq.description}</p>
                         <div className="flex flex-wrap gap-3 mt-1.5 text-xs" style={{ color: "#999" }}>
                           <span>{projectMap[dq.project_id] ?? "—"}</span>
-                          {dq.module_id && <span>{moduleMap[dq.module_id]?.name ?? "—"}</span>}
+                          <span>{dq.module_id ? (moduleMap[dq.module_id]?.name ?? "—") : "General"}</span>
                           <span>by {dq.raised_by_name ?? "—"}</span>
                           <span>{formatDistanceToNow(new Date(dq.created_at), { addSuffix: true })}</span>
                         </div>
