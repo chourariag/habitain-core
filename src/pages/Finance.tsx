@@ -10,6 +10,7 @@ import { StatutoryTab } from "@/components/finance/StatutoryTab";
 import { InvoicesTab } from "@/components/finance/InvoicesTab";
 import { RevenueMarginTab } from "@/components/finance/RevenueMarginTab";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
+import { AdvanceApprovalsTab } from "@/components/finance/AdvanceApprovalsTab";
 import { Card, CardContent } from "@/components/ui/card";
 import { Info } from "lucide-react";
 
@@ -85,6 +86,7 @@ export default function Finance() {
               <TabsTrigger value="work-orders">Work Order Approvals</TabsTrigger>
               <TabsTrigger value="po-approvals">PO Approvals</TabsTrigger>
               <TabsTrigger value="expense-approvals">Expense Approvals</TabsTrigger>
+              <TabsTrigger value="advance-approvals">Advance Requests</TabsTrigger>
             </TabsList>
             <TabsContent value="work-orders"><WorkOrdersTab mode="finance" /></TabsContent>
             <TabsContent value="po-approvals">
@@ -105,6 +107,7 @@ export default function Finance() {
                 </div>
               </CardContent></Card>
             </TabsContent>
+            <TabsContent value="advance-approvals"><AdvanceApprovalsTab /></TabsContent>
           </Tabs>
         </TabsContent>
 

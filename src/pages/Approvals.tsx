@@ -1,17 +1,18 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle2, Check, X, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Check, X, ShieldCheck, Wallet, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
 import { listApprovalRequests, type ApprovalRequest } from "@/lib/approval-requests";
 import { approveRequest, rejectRequest, APPROVAL_TYPE_META, summarizeRequest } from "@/lib/approval-actions";
+import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 const APPROVER_ROLES = ["managing_director", "super_admin", "sales_director", "principal_architect"];
@@ -39,6 +40,18 @@ export default function Approvals() {
   const { data: requests, refetch, isLoading } = useQuery({
     queryKey: ["all-approval-requests"],
     queryFn: () => listApprovalRequests(),
+  });
+
+  // Surface pending advance requests as a separate category (handled in Finance → Costing & Estimation)
+  const { data: pendingAdvances } = useQuery({
+    queryKey: ["pending-advance-requests-count"],
+    queryFn: async () => {
+      const { data } = await (supabase.from("advance_requests") as any)
+        .select("id, employee_name, amount, project_name, created_at, is_emergency")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      return (data ?? []) as Array<{ id: string; employee_name: string | null; amount: number; project_name: string | null; created_at: string; is_emergency: boolean | null }>;
+    },
   });
 
   // Auto-open from deep-link ?id=
@@ -114,6 +127,30 @@ export default function Approvals() {
         </TabsList>
 
         <TabsContent value="pending" className="mt-4 space-y-3">
+          {pendingAdvances && pendingAdvances.length > 0 && (
+            <div className="rounded-lg border p-3 flex items-center justify-between gap-3"
+              style={{ background: "#FFF8E8", borderColor: "#F5E0B0" }}>
+              <div className="flex items-center gap-3">
+                <Wallet className="h-5 w-5" style={{ color: "#D4860A" }} />
+                <div>
+                  <div className="text-sm font-semibold" style={{ color: "#1A1A1A" }}>
+                    {pendingAdvances.length} advance request{pendingAdvances.length === 1 ? "" : "s"} pending
+                    {pendingAdvances.some(a => a.is_emergency) && (
+                      <Badge className="ml-2 text-[10px]" style={{ background: "#FDE8E8", color: "#F40009" }}>EMERGENCY</Badge>
+                    )}
+                  </div>
+                  <div className="text-xs" style={{ color: "#666" }}>
+                    Total ₹{pendingAdvances.reduce((s, a) => s + Number(a.amount || 0), 0).toLocaleString("en-IN")} ·
+                    Action in Finance → Costing & Estimation → Advance Requests
+                  </div>
+                </div>
+              </div>
+              <Button asChild size="sm" style={{ background: "#006039", color: "#fff" }}>
+                <Link to="/finance?tab=costing">Review <ArrowRight className="h-3 w-3 ml-1" /></Link>
+              </Button>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-2">
             {(["all","project","user","financial","overdue"] as const).map(f => (
               <button key={f} onClick={() => setFilter(f)}
