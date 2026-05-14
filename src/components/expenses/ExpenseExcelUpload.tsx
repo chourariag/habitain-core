@@ -217,7 +217,7 @@ export function ExpenseExcelUpload() {
         rate_per_km: rate,
         rate_used: rate,
         vehicle_type: r.category === "Travel by Car" ? "car" : r.category === "Travel by Bike" ? "bike" : null,
-        status: "pending_hr",
+        status: "draft",
         report_period: reportPeriod,
         submission_method: "excel_upload",
         uploaded_on_behalf_of: null,
