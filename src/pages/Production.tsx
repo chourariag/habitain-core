@@ -22,6 +22,7 @@ import { useProjectContext } from "@/contexts/ProjectContext";
 import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import { DeliveryChecklistButton } from "@/components/production/DeliveryChecklistButton";
 import { WeeklyManpowerPlanner } from "@/components/production/WeeklyManpowerPlanner";
+import { ManpowerWeeklyExcel } from "@/components/labour/ManpowerWeeklyExcel";
 import { DryAssemblyCheck } from "@/components/production/DryAssemblyCheck";
 import { ScheduleConflictBanner } from "@/components/production/ScheduleConflictBanner";
 import { useUserRole } from "@/hooks/useUserRole";
