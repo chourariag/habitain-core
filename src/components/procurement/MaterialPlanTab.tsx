@@ -104,7 +104,8 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const setupUploaded = useSetupUploaded(projectId);
-  const canUpload = ["procurement", "stores_executive", "super_admin", "managing_director"].includes(userRole ?? "") && !setupUploaded;
+  const inUploadRoles = ["procurement", "stores_executive", "super_admin", "managing_director", "planning_engineer"].includes(userRole ?? "");
+  const canUpload = inUploadRoles;
   const canEdit = ["procurement", "stores_executive", "super_admin", "managing_director"].includes(userRole ?? "");
 
   const fetchData = useCallback(async () => {
@@ -380,7 +381,20 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
           <div className="flex items-center gap-2">
             <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleUpload} />
             <Button size="sm" variant="outline" onClick={downloadTemplate} style={{ borderColor: "#006039", color: "#006039" }}><Download className="h-4 w-4 mr-1" /> Template</Button>
-            <Button size="sm" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4 mr-1" /> Upload Plan</Button>
+            {items.length === 0 ? (
+              <Button size="sm" onClick={() => fileRef.current?.click()}><Upload className="h-4 w-4 mr-1" /> Upload Plan</Button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm("Re-uploading will overwrite existing material plan data. Are you sure?")) fileRef.current?.click();
+                }}
+                className="text-xs underline hover:no-underline"
+                style={{ color: "#666666" }}
+              >
+                Re-upload
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -388,7 +402,7 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
       {items.length === 0 ? (
         <Card><CardContent className="py-12 text-center">
           <Package className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">{canUpload ? 'No material plan uploaded. Click "Upload Plan" to import.' : "No material plan uploaded yet."}</p>
+          <p className="text-sm text-muted-foreground">{canUpload ? 'No material plan uploaded. Click "Upload Plan" to import.' : "No data uploaded yet. Ask Karthik to upload Project Setup Template."}</p>
         </CardContent></Card>
       ) : (
         <>
