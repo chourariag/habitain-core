@@ -302,6 +302,25 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
     }
   };
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    if (!canDelete) { toast.error("Only MD or Directors can delete variations"); return; }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+      const { client } = await getAuthedClient();
+      const { error } = await (client.from("project_variations") as any)
+        .update({ is_deleted: true, deleted_at: new Date().toISOString(), deleted_by: user.id })
+        .eq("id", deleteTarget.id);
+      if (error) throw error;
+      toast.success(`Variation ${deleteTarget.variation_number} deleted`);
+      setDeleteTarget(null);
+      fetchVariations();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
   // Excel upload
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
