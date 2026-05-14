@@ -10,6 +10,7 @@ export interface PayrollConfig {
   monthly_ctc: number;
   basic_pct: number;
   hra_pct: number;
+  conveyance_allowance?: number;
   pt_amount: number;
   tds_monthly: number;
   pan?: string | null;
@@ -25,6 +26,7 @@ export interface PayrollConfig {
 export interface PayslipBreakup {
   basic: number;
   hra: number;
+  conveyance_allowance: number;
   special_allowance: number;
   gross_earnings: number;
   pf_deduction: number;
@@ -38,16 +40,17 @@ export function calcPayslip(cfg: PayrollConfig): PayslipBreakup {
   const ctc = Number(cfg.monthly_ctc) || 0;
   const basicPct = Number(cfg.basic_pct) || 0;
   const hraPct = Number(cfg.hra_pct) || 0;
+  const conveyance_allowance = Number(cfg.conveyance_allowance) || 0;
   const basic = +(ctc * basicPct / 100).toFixed(2);
   const hra = +(basic * hraPct / 100).toFixed(2);
-  const special_allowance = +(ctc - basic - hra).toFixed(2);
-  const gross_earnings = +(basic + hra + special_allowance).toFixed(2);
+  const special_allowance = +Math.max(0, ctc - basic - hra - conveyance_allowance).toFixed(2);
+  const gross_earnings = +(basic + hra + conveyance_allowance + special_allowance).toFixed(2);
   const pf_deduction = +(basic * 0.12).toFixed(2);
   const pt_deduction = Number(cfg.pt_amount) || 0;
   const tds_deduction = Number(cfg.tds_monthly) || 0;
   const total_deductions = +(pf_deduction + pt_deduction + tds_deduction).toFixed(2);
   const net_pay = +(gross_earnings - total_deductions).toFixed(2);
-  return { basic, hra, special_allowance, gross_earnings, pf_deduction, pt_deduction, tds_deduction, total_deductions, net_pay };
+  return { basic, hra, conveyance_allowance, special_allowance, gross_earnings, pf_deduction, pt_deduction, tds_deduction, total_deductions, net_pay };
 }
 
 const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
@@ -109,10 +112,16 @@ export interface PayslipMeta {
   ifsc: string;
   days_worked: number;
   days_in_month: number;
+  working_days?: number;
+  days_present?: number;
+  days_absent?: number;
+  leave_taken?: number;
+  lop_days?: number;
   month: number; // 1-12
   year: number;
   generated_on: Date;
   company_gstin?: string;
+  revision?: number;
 }
 
 export async function generatePayslipPdf(meta: PayslipMeta, b: PayslipBreakup): Promise<Blob> {
@@ -126,14 +135,15 @@ export async function generatePayslipPdf(meta: PayslipMeta, b: PayslipBreakup): 
     try { doc.addImage(logo, "PNG", M, 32, 56, 56); } catch { /* noop */ }
   }
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(14);
+  doc.setFontSize(13);
   doc.setTextColor(26, 26, 26);
-  doc.text("Alternate Real Estate Experiences Pvt Ltd", M + 70, 50);
+  doc.text("The Habitainer", M + 70, 48);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(102, 102, 102);
-  doc.text("Peenya Industrial Area, Bangalore 560 058", M + 70, 64);
-  doc.text(`GSTIN: ${meta.company_gstin || "29AAFCA1234A1Z5"}`, M + 70, 76);
+  doc.text("Alternate Real Estate Experiences Pvt Ltd", M + 70, 62);
+  doc.text("Peenya Industrial Area, Bangalore 560 058", M + 70, 74);
+  doc.text(`GSTIN: ${meta.company_gstin || "29AAFCA1234A1Z5"}`, M + 70, 86);
 
   // Sub-header band
   doc.setFillColor(0, 96, 57); // #006039
@@ -141,7 +151,8 @@ export async function generatePayslipPdf(meta: PayslipMeta, b: PayslipBreakup): 
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
-  doc.text(`PAYSLIP FOR THE MONTH OF ${MONTHS[meta.month - 1].toUpperCase()} ${meta.year}`, W / 2, 116, { align: "center" });
+  const titleSuffix = (meta.revision ?? 1) > 1 ? `  (REVISED v${meta.revision})` : "";
+  doc.text(`SALARY SLIP — ${MONTHS[meta.month - 1].toUpperCase()} ${meta.year}${titleSuffix}`, W / 2, 116, { align: "center" });
 
   // Employee details (two columns)
   const detY = 144;
@@ -175,10 +186,9 @@ export async function generatePayslipPdf(meta: PayslipMeta, b: PayslipBreakup): 
   ];
   left.forEach(([l, v], i) => drawRow(colL, detY + i * 16, l, v));
   right.forEach(([l, v], i) => drawRow(colR, detY + i * 16, l, v));
-  drawRow(colR, detY + 5 * 16, "Days Worked", `${meta.days_worked} / ${meta.days_in_month}`);
 
   // Earnings + Deductions tables
-  const tY = detY + 6 * 16 + 16;
+  const tY = detY + 6 * 16 + 10;
   const halfW = (W - M * 2 - 8) / 2;
   const drawTable = (x: number, title: string, rows: Array<[string, number]>, totalLabel: string, totalValue: number) => {
     doc.setFillColor(247, 247, 247);
@@ -210,13 +220,15 @@ export async function generatePayslipPdf(meta: PayslipMeta, b: PayslipBreakup): 
     return y;
   };
 
-  const yE = drawTable(
-    M, "Earnings",
-    [["Basic Salary", b.basic], ["House Rent Allowance", b.hra], ["Special Allowance", b.special_allowance]],
-    "GROSS EARNINGS", b.gross_earnings,
-  );
+  const earningsRows: Array<[string, number]> = [
+    ["Basic Salary", b.basic],
+    ["House Rent Allowance", b.hra],
+    ["Conveyance Allowance", b.conveyance_allowance],
+    ["Other Allowances", b.special_allowance],
+  ];
+  const yE = drawTable(M, "Earnings", earningsRows, "GROSS EARNINGS", b.gross_earnings);
   const dedRows: Array<[string, number]> = [
-    ["Employee PF (12%)", b.pf_deduction],
+    ["Employee PF (12% of Basic)", b.pf_deduction],
     ["Professional Tax", b.pt_deduction],
   ];
   if (b.tds_deduction > 0) dedRows.push(["TDS", b.tds_deduction]);
@@ -237,13 +249,44 @@ export async function generatePayslipPdf(meta: PayslipMeta, b: PayslipBreakup): 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(60, 60, 60);
-  doc.text(`Amount in words: Rupees ${rupeesInWords(b.net_pay)} only`, W / 2, netY + 42, { align: "center" });
+  doc.text(`Amount in words: Rupees ${rupeesInWords(b.net_pay)} Only`, W / 2, netY + 42, { align: "center" });
+
+  // Attendance section
+  const attY = netY + 80;
+  doc.setFillColor(247, 247, 247);
+  doc.rect(M, attY, W - M * 2, 22, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.setTextColor(26, 26, 26);
+  doc.text("Attendance Summary", M + 8, attY + 15);
+
+  const cells: Array<[string, string]> = [
+    ["Working Days", String(meta.working_days ?? meta.days_in_month)],
+    ["Days Present", String(meta.days_present ?? meta.days_worked)],
+    ["Days Absent", String(meta.days_absent ?? 0)],
+    ["Leave Taken", String(meta.leave_taken ?? 0)],
+    ["LOP Days", String(meta.lop_days ?? 0)],
+  ];
+  const cellW = (W - M * 2) / cells.length;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  cells.forEach(([label, val], i) => {
+    const cx = M + i * cellW;
+    doc.setTextColor(102, 102, 102);
+    doc.text(label, cx + cellW / 2, attY + 40, { align: "center" });
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(26, 26, 26);
+    doc.text(val, cx + cellW / 2, attY + 58, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+  });
 
   // Footer
-  const footY = netY + 90;
+  const footY = attY + 90;
   doc.setFontSize(8);
   doc.setTextColor(120, 120, 120);
-  doc.text("This is a computer-generated payslip and does not require a signature.", W / 2, footY, { align: "center" });
+  doc.text("This is a system-generated payslip and does not require a signature.", W / 2, footY, { align: "center" });
   doc.text(
     `Generated on: ${meta.generated_on.toLocaleDateString("en-GB")} | HStack by Habitainer`,
     W / 2, footY + 14, { align: "center" },

@@ -18,6 +18,7 @@ interface Cfg {
   monthly_ctc: number;
   basic_pct: number;
   hra_pct: number;
+  conveyance_allowance: number;
   pt_amount: number;
   tds_monthly: number;
   pan: string | null;
@@ -31,7 +32,7 @@ interface Cfg {
 }
 
 const empty = (uid: string): Cfg => ({
-  user_id: uid, monthly_ctc: 0, basic_pct: 40, hra_pct: 50, pt_amount: 200, tds_monthly: 0,
+  user_id: uid, monthly_ctc: 0, basic_pct: 40, hra_pct: 50, conveyance_allowance: 1600, pt_amount: 200, tds_monthly: 0,
   pan: "", pf_number: "", bank_account: "", bank_name: "", ifsc: "", designation: "", department: "", doj: null,
 });
 
@@ -85,6 +86,7 @@ export function PayrollSettingsTab() {
       monthly_ctc: Number(cfg.monthly_ctc) || 0,
       basic_pct: Number(cfg.basic_pct) || 0,
       hra_pct: Number(cfg.hra_pct) || 0,
+      conveyance_allowance: Number(cfg.conveyance_allowance) || 0,
       pt_amount: Number(cfg.pt_amount) || 0,
       tds_monthly: Number(cfg.tds_monthly) || 0,
       doj: cfg.doj || null,
@@ -107,7 +109,7 @@ export function PayrollSettingsTab() {
         <table className="w-full text-xs min-w-[1400px]">
           <thead>
             <tr style={{ backgroundColor: "#F7F7F7" }}>
-              {["Employee", "Designation", "Dept", "DOJ", "PAN", "PF No.", "Bank A/c", "Bank", "IFSC", "Monthly CTC ₹", "Basic %", "HRA %", "PT ₹", "TDS ₹", ""].map(h => (
+              {["Employee", "Designation", "Dept", "DOJ", "PAN", "PF No.", "Bank A/c", "Bank", "IFSC", "Monthly CTC ₹", "Basic %", "HRA %", "Conveyance ₹", "PT ₹", "TDS ₹", ""].map(h => (
                 <th key={h} className="px-2 py-2 text-left font-semibold uppercase tracking-wider whitespace-nowrap" style={{ color: "#666" }}>{h}</th>
               ))}
             </tr>
@@ -140,6 +142,7 @@ export function PayrollSettingsTab() {
                   <td className="px-2 py-1.5">{i("monthly_ctc", "number", "w-24")}</td>
                   <td className="px-2 py-1.5">{i("basic_pct", "number", "w-16")}</td>
                   <td className="px-2 py-1.5">{i("hra_pct", "number", "w-16")}</td>
+                  <td className="px-2 py-1.5">{i("conveyance_allowance", "number", "w-20")}</td>
                   <td className="px-2 py-1.5">{i("pt_amount", "number", "w-16")}</td>
                   <td className="px-2 py-1.5">{i("tds_monthly", "number", "w-20")}</td>
                   <td className="px-2 py-1.5">
