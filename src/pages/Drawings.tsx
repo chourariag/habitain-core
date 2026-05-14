@@ -51,6 +51,7 @@ export default function Drawings() {
 
   // DQ dialog
   const [dqOpen, setDqOpen] = useState(false);
+  const [dqScope, setDqScope] = useState<"module" | "general">("module");
   const [dqForm, setDqForm] = useState({
     project_id: "", module_id: "", drawing_id: "", description: "",
   });
