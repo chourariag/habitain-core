@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserRole } from "@/hooks/useUserRole";
-import { ShieldAlert, ListTree, KeySquare, AlertOctagon, BadgeIndianRupee, Database, Users, History } from "lucide-react";
+import { ShieldAlert, ListTree, KeySquare, AlertOctagon, BadgeIndianRupee, Database, Users, History, UserPlus } from "lucide-react";
 import { TaskMasterTab } from "@/components/super-admin/TaskMasterTab";
 import { RolesAccessTab } from "@/components/super-admin/RolesAccessTab";
 import { EscalationMatrixTab } from "@/components/super-admin/EscalationMatrixTab";
@@ -9,6 +9,7 @@ import { ApprovalsTab } from "@/components/super-admin/ApprovalsTab";
 import { DataBankTab } from "@/components/super-admin/DataBankTab";
 import { UsersTab } from "@/components/super-admin/UsersTab";
 import { AuditTrailTab } from "@/components/super-admin/AuditTrailTab";
+import { CreateAccountsTab } from "@/components/super-admin/CreateAccountsTab";
 
 const MD_ROLES = ["managing_director", "super_admin"];
 
@@ -37,6 +38,7 @@ export default function SuperAdmin() {
           <TabsTrigger value="approvals" className="gap-1.5"><BadgeIndianRupee className="h-3.5 w-3.5" /> Approvals</TabsTrigger>
           <TabsTrigger value="databank" className="gap-1.5"><Database className="h-3.5 w-3.5" /> Data Bank</TabsTrigger>
           <TabsTrigger value="users" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Users</TabsTrigger>
+          <TabsTrigger value="create-accounts" className="gap-1.5"><UserPlus className="h-3.5 w-3.5" /> Create Accounts</TabsTrigger>
           <TabsTrigger value="audit" className="gap-1.5"><History className="h-3.5 w-3.5" /> Audit</TabsTrigger>
         </TabsList>
         <TabsContent value="tasks" className="mt-4"><TaskMasterTab /></TabsContent>
@@ -45,6 +47,7 @@ export default function SuperAdmin() {
         <TabsContent value="approvals" className="mt-4"><ApprovalsTab /></TabsContent>
         <TabsContent value="databank" className="mt-4"><DataBankTab /></TabsContent>
         <TabsContent value="users" className="mt-4"><UsersTab /></TabsContent>
+        <TabsContent value="create-accounts" className="mt-4"><CreateAccountsTab /></TabsContent>
         <TabsContent value="audit" className="mt-4"><AuditTrailTab /></TabsContent>
       </Tabs>
     </div>
