@@ -200,9 +200,9 @@ const CALCULATORS: Record<string, (t: number, u: string) => Promise<CalcResult>>
 };
 
 async function recomputeUser(userId: string, periodType: "daily" | "weekly", periodDate: string) {
-  const { data: emp } = await sb.from("kpi_tracked_employees")
-    .select("user_id, profiles:user_id(role)").eq("user_id", userId).maybeSingle();
-  const role = (emp as any)?.profiles?.role;
+  const { data: prof } = await sb.from("profiles")
+    .select("role").eq("auth_user_id", userId).maybeSingle();
+  const role = (prof as any)?.role;
   if (!role) return { user_id: userId, count: 0, note: "no role" };
 
   const { data: defs } = await sb.from("kpi_definitions")
