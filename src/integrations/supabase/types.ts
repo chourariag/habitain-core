@@ -5572,6 +5572,7 @@ export type Database = {
           children: Json | null
           created_at: string | null
           date_of_birth: string | null
+          department: string | null
           display_name: string | null
           email: string | null
           home_base: string | null
@@ -5596,6 +5597,7 @@ export type Database = {
           children?: Json | null
           created_at?: string | null
           date_of_birth?: string | null
+          department?: string | null
           display_name?: string | null
           email?: string | null
           home_base?: string | null
@@ -5620,6 +5622,7 @@ export type Database = {
           children?: Json | null
           created_at?: string | null
           date_of_birth?: string | null
+          department?: string | null
           display_name?: string | null
           email?: string | null
           home_base?: string | null
@@ -10538,6 +10541,8 @@ export type Database = {
         | "marketing"
         | "sales_executive"
         | "logistics_manager"
+        | "director"
+        | "operations_architect"
       fixed_asset_category:
         | "machinery"
         | "vehicle"
@@ -10716,6 +10721,8 @@ export const Constants = {
         "marketing",
         "sales_executive",
         "logistics_manager",
+        "director",
+        "operations_architect",
       ],
       fixed_asset_category: [
         "machinery",
