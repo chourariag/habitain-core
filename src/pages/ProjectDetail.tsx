@@ -30,6 +30,7 @@ import { useProjectContext } from "@/contexts/ProjectContext";
 const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admin", "managing_director"];
 const ARCHIVE_REQUEST_ROLES = ["managing_director", "super_admin", "finance_director", "sales_director", "architecture_director"];
+const PL_VIEW_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director", "head_operations", "finance_manager", "accounts_executive"];
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
