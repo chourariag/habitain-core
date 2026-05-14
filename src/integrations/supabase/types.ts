@@ -2998,10 +2998,17 @@ export type Database = {
           asset_tag: string
           assigned_to_profile_id: string | null
           category: Database["public"]["Enums"]["fixed_asset_category"]
+          condition: string
           created_at: string
           created_by: string | null
           current_location: string | null
+          disposal_approved_at: string | null
+          disposal_approved_by: string | null
+          disposal_reason: string | null
+          disposal_requested_at: string | null
+          disposal_requested_by: string | null
           id: string
+          insurance_expiry: string | null
           is_archived: boolean
           last_service_date: string | null
           make_model: string | null
@@ -3011,6 +3018,7 @@ export type Database = {
           purchase_value: number | null
           serial_number: string | null
           service_interval_days: number | null
+          status: Database["public"]["Enums"]["fixed_asset_status"]
           updated_at: string
           updated_by: string | null
           warranty_expiry: string | null
@@ -3020,10 +3028,17 @@ export type Database = {
           asset_tag: string
           assigned_to_profile_id?: string | null
           category?: Database["public"]["Enums"]["fixed_asset_category"]
+          condition?: string
           created_at?: string
           created_by?: string | null
           current_location?: string | null
+          disposal_approved_at?: string | null
+          disposal_approved_by?: string | null
+          disposal_reason?: string | null
+          disposal_requested_at?: string | null
+          disposal_requested_by?: string | null
           id?: string
+          insurance_expiry?: string | null
           is_archived?: boolean
           last_service_date?: string | null
           make_model?: string | null
@@ -3033,6 +3048,7 @@ export type Database = {
           purchase_value?: number | null
           serial_number?: string | null
           service_interval_days?: number | null
+          status?: Database["public"]["Enums"]["fixed_asset_status"]
           updated_at?: string
           updated_by?: string | null
           warranty_expiry?: string | null
@@ -3042,10 +3058,17 @@ export type Database = {
           asset_tag?: string
           assigned_to_profile_id?: string | null
           category?: Database["public"]["Enums"]["fixed_asset_category"]
+          condition?: string
           created_at?: string
           created_by?: string | null
           current_location?: string | null
+          disposal_approved_at?: string | null
+          disposal_approved_by?: string | null
+          disposal_reason?: string | null
+          disposal_requested_at?: string | null
+          disposal_requested_by?: string | null
           id?: string
+          insurance_expiry?: string | null
           is_archived?: boolean
           last_service_date?: string | null
           make_model?: string | null
@@ -3055,6 +3078,7 @@ export type Database = {
           purchase_value?: number | null
           serial_number?: string | null
           service_interval_days?: number | null
+          status?: Database["public"]["Enums"]["fixed_asset_status"]
           updated_at?: string
           updated_by?: string | null
           warranty_expiry?: string | null
@@ -9718,15 +9742,103 @@ export type Database = {
         }
         Relationships: []
       }
+      tool_issuance: {
+        Row: {
+          created_at: string
+          expected_return_date: string | null
+          id: string
+          issued_by: string | null
+          issued_on: string
+          issued_to_name: string
+          issued_to_team: string | null
+          notes: string | null
+          project_id: string | null
+          qty: number
+          return_condition: string | null
+          return_qty: number | null
+          returned_by: string | null
+          returned_on: string | null
+          tool_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expected_return_date?: string | null
+          id?: string
+          issued_by?: string | null
+          issued_on?: string
+          issued_to_name: string
+          issued_to_team?: string | null
+          notes?: string | null
+          project_id?: string | null
+          qty: number
+          return_condition?: string | null
+          return_qty?: number | null
+          returned_by?: string | null
+          returned_on?: string | null
+          tool_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expected_return_date?: string | null
+          id?: string
+          issued_by?: string | null
+          issued_on?: string
+          issued_to_name?: string
+          issued_to_team?: string | null
+          notes?: string | null
+          project_id?: string | null
+          qty?: number
+          return_condition?: string | null
+          return_qty?: number | null
+          returned_by?: string | null
+          returned_on?: string | null
+          tool_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_issuance_issued_by_fkey"
+            columns: ["issued_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_issuance_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_issuance_returned_by_fkey"
+            columns: ["returned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tool_issuance_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "tools_inventory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tools_inventory: {
         Row: {
           assigned_to_profile_id: string | null
+          category: string
           condition: Database["public"]["Enums"]["tool_condition"]
           created_at: string
           created_by: string | null
           id: string
           is_archived: boolean
           item_name: string
+          last_checked_date: string | null
           location: string | null
           notes: string | null
           qty_available: number | null
@@ -9737,12 +9849,14 @@ export type Database = {
         }
         Insert: {
           assigned_to_profile_id?: string | null
+          category?: string
           condition?: Database["public"]["Enums"]["tool_condition"]
           created_at?: string
           created_by?: string | null
           id?: string
           is_archived?: boolean
           item_name: string
+          last_checked_date?: string | null
           location?: string | null
           notes?: string | null
           qty_available?: number | null
@@ -9753,12 +9867,14 @@ export type Database = {
         }
         Update: {
           assigned_to_profile_id?: string | null
+          category?: string
           condition?: Database["public"]["Enums"]["tool_condition"]
           created_at?: string
           created_by?: string | null
           id?: string
           is_archived?: boolean
           item_name?: string
+          last_checked_date?: string | null
           location?: string | null
           notes?: string | null
           qty_available?: number | null
@@ -10526,6 +10642,10 @@ export type Database = {
         Returns: boolean
       }
       can_action_quality_flag: { Args: { _user_id: string }; Returns: boolean }
+      can_approve_asset_disposal: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       can_approve_labour_claims: {
         Args: { _user_id: string }
         Returns: boolean
@@ -10666,6 +10786,11 @@ export type Database = {
         | "safety_equipment"
         | "tools"
         | "other"
+      fixed_asset_status:
+        | "active"
+        | "under_repair"
+        | "pending_disposal"
+        | "disposed"
       login_type: "email" | "otp"
       production_system_type: "modular" | "panelised" | "hybrid"
       task_template_type:
@@ -10847,6 +10972,12 @@ export const Constants = {
         "safety_equipment",
         "tools",
         "other",
+      ],
+      fixed_asset_status: [
+        "active",
+        "under_repair",
+        "pending_disposal",
+        "disposed",
       ],
       login_type: ["email", "otp"],
       production_system_type: ["modular", "panelised", "hybrid"],
