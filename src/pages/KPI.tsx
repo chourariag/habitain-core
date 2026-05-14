@@ -11,6 +11,9 @@ import {
   getScoreColor, getStatusBadge, getWeekRange,
 } from "@/lib/kpi-helpers";
 import { KPIScorecard } from "@/components/kpi/KPIScorecard";
+import { KpiOverviewGrid } from "@/components/kpi/KpiOverviewGrid";
+import { MdNotePanel } from "@/components/kpi/MdNotePanel";
+import { supabase as sbForRecompute } from "@/integrations/supabase/client";
 
 export default function KPI() {
   const { role, userId, loading: roleLoading } = useUserRole();
