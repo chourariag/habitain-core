@@ -13,6 +13,8 @@ import { ManpowerWeeklyExcel } from "@/components/labour/ManpowerWeeklyExcel";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
+import { FloorPlanPositionsTab } from "@/components/site/FloorPlanPositionsTab";
+import { PhotoTimelineTab } from "@/components/site/PhotoTimelineTab";
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
@@ -337,8 +339,23 @@ function SiteHubContent() {
         </TabsContent>
 
         <TabsContent value="diary" className="space-y-4">
-          <SiteDiary projectId={selectedProjectId!} userRole={userRole} />
-          <SubcontractorSchedule projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
+          <Tabs defaultValue="daily" className="space-y-3">
+            <TabsList>
+              <TabsTrigger value="daily">Daily Log</TabsTrigger>
+              <TabsTrigger value="floor-plan">Floor Plan & Positions</TabsTrigger>
+              <TabsTrigger value="timeline">Photo Timeline</TabsTrigger>
+            </TabsList>
+            <TabsContent value="daily" className="space-y-4">
+              <SiteDiary projectId={selectedProjectId!} userRole={userRole} />
+              <SubcontractorSchedule projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
+            </TabsContent>
+            <TabsContent value="floor-plan">
+              <FloorPlanPositionsTab projectId={selectedProjectId!} userRole={userRole} />
+            </TabsContent>
+            <TabsContent value="timeline">
+              <PhotoTimelineTab projectId={selectedProjectId!} />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
         <TabsContent value="handover">
           <HandoverPack projectId={selectedProjectId!} clientName={selectedProject?.client_name ?? null} userRole={userRole} installationComplete={installationComplete} onHandedOver={fetchData} />

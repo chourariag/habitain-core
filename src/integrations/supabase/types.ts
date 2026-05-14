@@ -3107,6 +3107,59 @@ export type Database = {
           },
         ]
       }
+      floor_plans: {
+        Row: {
+          ai_analysis_error: string | null
+          ai_analysis_status: string
+          created_at: string
+          file_url: string
+          floor_name: string
+          id: string
+          is_archived: boolean
+          is_locked: boolean
+          project_id: string
+          storage_path: string | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          ai_analysis_error?: string | null
+          ai_analysis_status?: string
+          created_at?: string
+          file_url: string
+          floor_name: string
+          id?: string
+          is_archived?: boolean
+          is_locked?: boolean
+          project_id: string
+          storage_path?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          ai_analysis_error?: string | null
+          ai_analysis_status?: string
+          created_at?: string
+          file_url?: string
+          floor_name?: string
+          id?: string
+          is_archived?: boolean
+          is_locked?: boolean
+          project_id?: string
+          storage_path?: string | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floor_plans_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gfc_qc_checklist: {
         Row: {
           checked: boolean
@@ -5805,6 +5858,72 @@ export type Database = {
           year?: number
         }
         Relationships: []
+      }
+      photo_positions: {
+        Row: {
+          area_name: string
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          direction: string | null
+          floor_name: string
+          floor_plan_id: string
+          id: string
+          is_active: boolean
+          is_mandatory: boolean
+          position_number: number
+          project_id: string
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          area_name: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          direction?: string | null
+          floor_name: string
+          floor_plan_id: string
+          id?: string
+          is_active?: boolean
+          is_mandatory?: boolean
+          position_number: number
+          project_id: string
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          area_name?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          direction?: string | null
+          floor_name?: string
+          floor_plan_id?: string
+          id?: string
+          is_active?: boolean
+          is_mandatory?: boolean
+          position_number?: number
+          project_id?: string
+          source?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_positions_floor_plan_id_fkey"
+            columns: ["floor_plan_id"]
+            isOneToOne: false
+            referencedRelation: "floor_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "photo_positions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       production_stages: {
         Row: {
@@ -9240,6 +9359,82 @@ export type Database = {
           },
         ]
       }
+      site_position_photos: {
+        Row: {
+          ai_analysis_result: Json | null
+          ai_flags: string[]
+          ai_severity: string | null
+          created_at: string
+          diary_id: string | null
+          dismissed_flags: Json | null
+          file_url: string
+          gps_lat: number | null
+          gps_lng: number | null
+          id: string
+          photo_date: string
+          position_id: string
+          project_id: string
+          storage_path: string | null
+          submitted_by: string | null
+        }
+        Insert: {
+          ai_analysis_result?: Json | null
+          ai_flags?: string[]
+          ai_severity?: string | null
+          created_at?: string
+          diary_id?: string | null
+          dismissed_flags?: Json | null
+          file_url: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          photo_date?: string
+          position_id: string
+          project_id: string
+          storage_path?: string | null
+          submitted_by?: string | null
+        }
+        Update: {
+          ai_analysis_result?: Json | null
+          ai_flags?: string[]
+          ai_severity?: string | null
+          created_at?: string
+          diary_id?: string | null
+          dismissed_flags?: Json | null
+          file_url?: string
+          gps_lat?: number | null
+          gps_lng?: number | null
+          id?: string
+          photo_date?: string
+          position_id?: string
+          project_id?: string
+          storage_path?: string | null
+          submitted_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_position_photos_diary_id_fkey"
+            columns: ["diary_id"]
+            isOneToOne: false
+            referencedRelation: "site_diary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_position_photos_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "photo_positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_position_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_readiness: {
         Row: {
           crane_booked: boolean
@@ -10895,6 +11090,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_capture_site_photo: { Args: { _user_id: string }; Returns: boolean }
       can_costing_approve_wo: { Args: { _user_id: string }; Returns: boolean }
       can_edit_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_edit_sop_dept: {
@@ -10908,6 +11104,7 @@ export type Database = {
       }
       can_manage_boq: { Args: { _user_id: string }; Returns: boolean }
       can_manage_finance_pl: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_floor_plan: { Args: { _user_id: string }; Returns: boolean }
       can_manage_hr_documents: { Args: { _user_id: string }; Returns: boolean }
       can_manage_labour_register: {
         Args: { _user_id: string }
