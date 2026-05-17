@@ -89,13 +89,16 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
   const [actionDialog, setActionDialog] = useState<{ variation: Variation; action: string } | null>(null);
   const [actionReason, setActionReason] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Variation | null>(null);
+  const [editRateTarget, setEditRateTarget] = useState<Variation | null>(null);
+  const [editRate, setEditRate] = useState({ material_rate: "", labour_rate: "", margin_pct: "30" });
+  const [boqItems, setBoqItems] = useState<Array<{ id: string; description: string; unit: string; boq_rate: number }>>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [form, setForm] = useState({
     description: "", scope_change_type: "Addition", tender_qty: "",
     gfc_qty: "", unit: "nos", material_rate: "", labour_rate: "",
-    margin_pct: "30", notes: "",
+    margin_pct: "30", notes: "", linked_boq_item_id: "" as string,
   });
 
   const canCreate = CREATE_ROLES.includes(userRole ?? "");
