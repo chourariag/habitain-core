@@ -533,7 +533,22 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
                     <TableCell className={cn("text-xs text-right font-medium", Number(v.variance_qty) > 0 ? "text-red-600" : Number(v.variance_qty) < 0 ? "text-[#006039]" : "")}>
                       {Number(v.variance_qty) > 0 ? "+" : ""}{v.variance_qty}
                     </TableCell>
-                    <TableCell className="text-xs text-right font-medium">{fmt(Number(v.final_cost))}</TableCell>
+                    <TableCell className="text-xs text-right font-medium">
+                      {Number(v.final_cost) > 0 ? (
+                        fmt(Number(v.final_cost))
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => canCreate && openEditRate(v)}
+                          className="inline-flex items-center gap-1 text-amber-700 hover:underline"
+                          title="Rate missing — enter rate to calculate cost"
+                          disabled={!canCreate}
+                        >
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          <span>Rate missing</span>
+                        </button>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs text-right">{fmt(Number(v.margin_amount))}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={cn("text-xs", cfg.className)}>
