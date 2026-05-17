@@ -89,13 +89,16 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
   const [actionDialog, setActionDialog] = useState<{ variation: Variation; action: string } | null>(null);
   const [actionReason, setActionReason] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Variation | null>(null);
+  const [editRateTarget, setEditRateTarget] = useState<Variation | null>(null);
+  const [editRate, setEditRate] = useState({ material_rate: "", labour_rate: "", margin_pct: "30" });
+  const [boqItems, setBoqItems] = useState<Array<{ id: string; description: string; unit: string; boq_rate: number }>>([]);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [form, setForm] = useState({
     description: "", scope_change_type: "Addition", tender_qty: "",
     gfc_qty: "", unit: "nos", material_rate: "", labour_rate: "",
-    margin_pct: "30", notes: "",
+    margin_pct: "30", notes: "", linked_boq_item_id: "" as string,
   });
 
   const canCreate = CREATE_ROLES.includes(userRole ?? "");
@@ -132,6 +135,34 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
 
   useEffect(() => { fetchVariations(); }, [fetchVariations]);
 
+  // Load BOQ items for rate auto-fill
+  useEffect(() => {
+    (async () => {
+      const { data } = await (supabase.from("boq_items") as any)
+        .select("id, description, unit, boq_rate")
+        .eq("project_id", projectId)
+        .eq("is_archived", false)
+        .order("description");
+      setBoqItems((data ?? []) as any);
+    })();
+  }, [projectId]);
+
+  // When linked BOQ changes, auto-fill unit + material rate (user can override)
+  const handleBoqLink = (boqId: string) => {
+    if (!boqId || boqId === "__none__") {
+      setForm(f => ({ ...f, linked_boq_item_id: "" }));
+      return;
+    }
+    const item = boqItems.find(b => b.id === boqId);
+    if (!item) return;
+    setForm(f => ({
+      ...f,
+      linked_boq_item_id: boqId,
+      unit: item.unit || f.unit,
+      material_rate: f.material_rate || String(item.boq_rate || 0),
+    }));
+  };
+
   // Computed values
   const tenderQty = Number(form.tender_qty) || 0;
   const gfcQty = Number(form.gfc_qty) || 0;
@@ -156,7 +187,7 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
   const resetForm = () => setForm({
     description: "", scope_change_type: "Addition", tender_qty: "",
     gfc_qty: "", unit: "nos", material_rate: "", labour_rate: "",
-    margin_pct: "30", notes: "",
+    margin_pct: "30", notes: "", linked_boq_item_id: "",
   });
 
   const handleSubmit = async () => {
@@ -196,6 +227,7 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
         initiated_by: user.id,
         status: "Pending Scope Review",
         notes: form.notes.trim() || null,
+        linked_boq_item_id: form.linked_boq_item_id || null,
       };
 
       const { error } = await (client.from("project_variations") as any).insert(row);
@@ -321,7 +353,43 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
     }
   };
 
-  // Excel upload
+  const openEditRate = (v: Variation) => {
+    setEditRate({
+      material_rate: String(v.material_rate || ""),
+      labour_rate: String(v.labour_rate || ""),
+      margin_pct: String(v.margin_pct || 30),
+    });
+    setEditRateTarget(v);
+  };
+
+  const handleSaveRate = async () => {
+    if (!editRateTarget) return;
+    const mr = Number(editRate.material_rate) || 0;
+    const lr = Number(editRate.labour_rate) || 0;
+    const mp = Number(editRate.margin_pct) || 0;
+    const br = mr + lr;
+    if (br <= 0) { toast.error("Enter Material Rate and/or Labour Rate"); return; }
+    const marg = mp < 100 ? br * mp / (100 - mp) : 0;
+    const fr = br + marg;
+    const gq = Number(editRateTarget.gfc_qty) || 0;
+    const fc = gq * br;
+    const ma = gq * marg;
+    try {
+      const { client } = await getAuthedClient();
+      const { error } = await (client.from("project_variations") as any).update({
+        material_rate: mr, labour_rate: lr, basic_rate: br,
+        margin_pct: mp, margin_rate: marg, final_rate: fr,
+        final_cost: fc, margin_amount: ma,
+      }).eq("id", editRateTarget.id);
+      if (error) throw error;
+      toast.success(`Rate updated. Final Cost = ${fmt(fc)}`);
+      setEditRateTarget(null);
+      fetchVariations();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -465,7 +533,22 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
                     <TableCell className={cn("text-xs text-right font-medium", Number(v.variance_qty) > 0 ? "text-red-600" : Number(v.variance_qty) < 0 ? "text-[#006039]" : "")}>
                       {Number(v.variance_qty) > 0 ? "+" : ""}{v.variance_qty}
                     </TableCell>
-                    <TableCell className="text-xs text-right font-medium">{fmt(Number(v.final_cost))}</TableCell>
+                    <TableCell className="text-xs text-right font-medium">
+                      {Number(v.final_cost) > 0 ? (
+                        fmt(Number(v.final_cost))
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => canCreate && openEditRate(v)}
+                          className="inline-flex items-center gap-1 text-amber-700 hover:underline"
+                          title="Rate missing — enter rate to calculate cost"
+                          disabled={!canCreate}
+                        >
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          <span>Rate missing</span>
+                        </button>
+                      )}
+                    </TableCell>
                     <TableCell className="text-xs text-right">{fmt(Number(v.margin_amount))}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={cn("text-xs", cfg.className)}>
@@ -494,6 +577,17 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
                         )}
                         {v.rejection_reason && v.status === "Draft" && (
                           <span className="text-xs text-red-500 truncate max-w-[120px]" title={v.rejection_reason}>{v.rejection_reason}</span>
+                        )}
+                        {canCreate && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-2 text-xs"
+                            title="Edit rate"
+                            onClick={() => openEditRate(v)}
+                          >
+                            ₹ Edit
+                          </Button>
                         )}
                         {canDelete && (
                           <Button
@@ -531,6 +625,20 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {SCOPE_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Link to BOQ Item (optional — auto-fills rate)</Label>
+              <Select value={form.linked_boq_item_id || "__none__"} onValueChange={handleBoqLink}>
+                <SelectTrigger><SelectValue placeholder="Select BOQ item to inherit rate" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— None (enter rate manually) —</SelectItem>
+                  {boqItems.map(b => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.description.slice(0, 60)} · {fmt(b.boq_rate)}/{b.unit}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -614,6 +722,50 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
             >
               {actionDialog?.action === "reject" ? "Send Back" : "Confirm Approval"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Rate dialog */}
+      <Dialog open={!!editRateTarget} onOpenChange={(o) => { if (!o) setEditRateTarget(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit Rate — {editRateTarget?.variation_number}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">{editRateTarget?.description}</p>
+            <p className="text-xs text-muted-foreground">GFC Qty: <span className="font-medium text-foreground">{editRateTarget?.gfc_qty} {editRateTarget?.unit}</span></p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Material Rate ₹</Label>
+                <Input type="number" value={editRate.material_rate} onChange={e => setEditRate(r => ({ ...r, material_rate: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Labour Rate ₹</Label>
+                <Input type="number" value={editRate.labour_rate} onChange={e => setEditRate(r => ({ ...r, labour_rate: e.target.value }))} />
+              </div>
+            </div>
+            <div>
+              <Label>Margin %</Label>
+              <Input type="number" value={editRate.margin_pct} onChange={e => setEditRate(r => ({ ...r, margin_pct: e.target.value }))} />
+            </div>
+            {(() => {
+              const mr = Number(editRate.material_rate) || 0;
+              const lr = Number(editRate.labour_rate) || 0;
+              const mp = Number(editRate.margin_pct) || 0;
+              const br = mr + lr;
+              const marg = mp < 100 ? br * mp / (100 - mp) : 0;
+              const gq = Number(editRateTarget?.gfc_qty) || 0;
+              return (
+                <div className="rounded bg-muted/40 px-3 py-2 text-sm space-y-1">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Basic Rate</span><span className="font-medium">{fmt(br)}</span></div>
+                  <div className="flex justify-between border-t pt-1"><span className="text-muted-foreground">Final Cost</span><span className="font-bold">{fmt(gq * br)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Margin Amount</span><span className="font-bold" style={{ color: "#006039" }}>{fmt(gq * marg)}</span></div>
+                </div>
+              );
+            })()}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRateTarget(null)}>Cancel</Button>
+            <Button onClick={handleSaveRate} style={{ backgroundColor: "#006039" }}>Save Rate</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
