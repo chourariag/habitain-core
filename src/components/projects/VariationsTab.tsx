@@ -135,6 +135,34 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
 
   useEffect(() => { fetchVariations(); }, [fetchVariations]);
 
+  // Load BOQ items for rate auto-fill
+  useEffect(() => {
+    (async () => {
+      const { data } = await (supabase.from("boq_items") as any)
+        .select("id, description, unit, boq_rate")
+        .eq("project_id", projectId)
+        .eq("is_archived", false)
+        .order("description");
+      setBoqItems((data ?? []) as any);
+    })();
+  }, [projectId]);
+
+  // When linked BOQ changes, auto-fill unit + material rate (user can override)
+  const handleBoqLink = (boqId: string) => {
+    if (!boqId || boqId === "__none__") {
+      setForm(f => ({ ...f, linked_boq_item_id: "" }));
+      return;
+    }
+    const item = boqItems.find(b => b.id === boqId);
+    if (!item) return;
+    setForm(f => ({
+      ...f,
+      linked_boq_item_id: boqId,
+      unit: item.unit || f.unit,
+      material_rate: f.material_rate || String(item.boq_rate || 0),
+    }));
+  };
+
   // Computed values
   const tenderQty = Number(form.tender_qty) || 0;
   const gfcQty = Number(form.gfc_qty) || 0;
