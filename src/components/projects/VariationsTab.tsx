@@ -726,6 +726,50 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
         </DialogContent>
       </Dialog>
 
+      {/* Edit Rate dialog */}
+      <Dialog open={!!editRateTarget} onOpenChange={(o) => { if (!o) setEditRateTarget(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit Rate — {editRateTarget?.variation_number}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">{editRateTarget?.description}</p>
+            <p className="text-xs text-muted-foreground">GFC Qty: <span className="font-medium text-foreground">{editRateTarget?.gfc_qty} {editRateTarget?.unit}</span></p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Material Rate ₹</Label>
+                <Input type="number" value={editRate.material_rate} onChange={e => setEditRate(r => ({ ...r, material_rate: e.target.value }))} />
+              </div>
+              <div>
+                <Label>Labour Rate ₹</Label>
+                <Input type="number" value={editRate.labour_rate} onChange={e => setEditRate(r => ({ ...r, labour_rate: e.target.value }))} />
+              </div>
+            </div>
+            <div>
+              <Label>Margin %</Label>
+              <Input type="number" value={editRate.margin_pct} onChange={e => setEditRate(r => ({ ...r, margin_pct: e.target.value }))} />
+            </div>
+            {(() => {
+              const mr = Number(editRate.material_rate) || 0;
+              const lr = Number(editRate.labour_rate) || 0;
+              const mp = Number(editRate.margin_pct) || 0;
+              const br = mr + lr;
+              const marg = mp < 100 ? br * mp / (100 - mp) : 0;
+              const gq = Number(editRateTarget?.gfc_qty) || 0;
+              return (
+                <div className="rounded bg-muted/40 px-3 py-2 text-sm space-y-1">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Basic Rate</span><span className="font-medium">{fmt(br)}</span></div>
+                  <div className="flex justify-between border-t pt-1"><span className="text-muted-foreground">Final Cost</span><span className="font-bold">{fmt(gq * br)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Margin Amount</span><span className="font-bold" style={{ color: "#006039" }}>{fmt(gq * marg)}</span></div>
+                </div>
+              );
+            })()}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditRateTarget(null)}>Cancel</Button>
+            <Button onClick={handleSaveRate} style={{ backgroundColor: "#006039" }}>Save Rate</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete confirmation */}
       <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
         <DialogContent>
