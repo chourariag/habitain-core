@@ -628,6 +628,20 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label>Link to BOQ Item (optional — auto-fills rate)</Label>
+              <Select value={form.linked_boq_item_id || "__none__"} onValueChange={handleBoqLink}>
+                <SelectTrigger><SelectValue placeholder="Select BOQ item to inherit rate" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">— None (enter rate manually) —</SelectItem>
+                  {boqItems.map(b => (
+                    <SelectItem key={b.id} value={b.id}>
+                      {b.description.slice(0, 60)} · {fmt(b.boq_rate)}/{b.unit}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Tender Qty</Label>
