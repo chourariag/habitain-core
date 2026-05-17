@@ -353,7 +353,43 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
     }
   };
 
-  // Excel upload
+  const openEditRate = (v: Variation) => {
+    setEditRate({
+      material_rate: String(v.material_rate || ""),
+      labour_rate: String(v.labour_rate || ""),
+      margin_pct: String(v.margin_pct || 30),
+    });
+    setEditRateTarget(v);
+  };
+
+  const handleSaveRate = async () => {
+    if (!editRateTarget) return;
+    const mr = Number(editRate.material_rate) || 0;
+    const lr = Number(editRate.labour_rate) || 0;
+    const mp = Number(editRate.margin_pct) || 0;
+    const br = mr + lr;
+    if (br <= 0) { toast.error("Enter Material Rate and/or Labour Rate"); return; }
+    const marg = mp < 100 ? br * mp / (100 - mp) : 0;
+    const fr = br + marg;
+    const gq = Number(editRateTarget.gfc_qty) || 0;
+    const fc = gq * br;
+    const ma = gq * marg;
+    try {
+      const { client } = await getAuthedClient();
+      const { error } = await (client.from("project_variations") as any).update({
+        material_rate: mr, labour_rate: lr, basic_rate: br,
+        margin_pct: mp, margin_rate: marg, final_rate: fr,
+        final_cost: fc, margin_amount: ma,
+      }).eq("id", editRateTarget.id);
+      if (error) throw error;
+      toast.success(`Rate updated. Final Cost = ${fmt(fc)}`);
+      setEditRateTarget(null);
+      fetchVariations();
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
