@@ -159,7 +159,7 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
   const resetForm = () => setForm({
     description: "", scope_change_type: "Addition", tender_qty: "",
     gfc_qty: "", unit: "nos", material_rate: "", labour_rate: "",
-    margin_pct: "30", notes: "",
+    margin_pct: "30", notes: "", linked_boq_item_id: "",
   });
 
   const handleSubmit = async () => {
