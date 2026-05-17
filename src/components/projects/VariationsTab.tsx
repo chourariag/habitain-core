@@ -227,6 +227,7 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
         initiated_by: user.id,
         status: "Pending Scope Review",
         notes: form.notes.trim() || null,
+        linked_boq_item_id: form.linked_boq_item_id || null,
       };
 
       const { error } = await (client.from("project_variations") as any).insert(row);
