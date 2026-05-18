@@ -192,8 +192,8 @@ export function RolePermissionsTab() {
           </TableHeader>
           <TableBody>
             {filteredGroups.map(g => (
-              <>
-                <TableRow key={`g-${g.section}`} className="bg-muted/40">
+              <Fragment key={g.section}>
+                <TableRow className="bg-muted/40">
                   <TableCell colSpan={shownRoles.length + 1} className="font-display font-bold text-xs uppercase tracking-wide py-2">
                     {g.section}
                   </TableCell>
@@ -223,7 +223,7 @@ export function RolePermissionsTab() {
                     })}
                   </TableRow>
                 ))}
-              </>
+              </Fragment>
             ))}
           </TableBody>
         </Table>
