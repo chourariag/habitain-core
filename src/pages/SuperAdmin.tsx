@@ -1,9 +1,10 @@
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserRole } from "@/hooks/useUserRole";
-import { ShieldAlert, ListTree, KeySquare, AlertOctagon, BadgeIndianRupee, Database, Users, History, UserPlus } from "lucide-react";
+import { ShieldAlert, ListTree, KeySquare, AlertOctagon, BadgeIndianRupee, Database, Users, History, UserPlus, Shield } from "lucide-react";
 import { TaskMasterTab } from "@/components/super-admin/TaskMasterTab";
 import { RolesAccessTab } from "@/components/super-admin/RolesAccessTab";
+import { RolePermissionsTab } from "@/components/super-admin/RolePermissionsTab";
 import { EscalationMatrixTab } from "@/components/super-admin/EscalationMatrixTab";
 import { ApprovalsTab } from "@/components/super-admin/ApprovalsTab";
 import { DataBankTab } from "@/components/super-admin/DataBankTab";
@@ -34,6 +35,7 @@ export default function SuperAdmin() {
         <TabsList>
           <TabsTrigger value="tasks" className="gap-1.5"><ListTree className="h-3.5 w-3.5" /> Task Master</TabsTrigger>
           <TabsTrigger value="roles" className="gap-1.5"><KeySquare className="h-3.5 w-3.5" /> Roles &amp; Access</TabsTrigger>
+          <TabsTrigger value="role-permissions" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Role Permissions</TabsTrigger>
           <TabsTrigger value="escalation" className="gap-1.5"><AlertOctagon className="h-3.5 w-3.5" /> Escalation</TabsTrigger>
           <TabsTrigger value="approvals" className="gap-1.5"><BadgeIndianRupee className="h-3.5 w-3.5" /> Approvals</TabsTrigger>
           <TabsTrigger value="databank" className="gap-1.5"><Database className="h-3.5 w-3.5" /> Data Bank</TabsTrigger>
@@ -43,6 +45,7 @@ export default function SuperAdmin() {
         </TabsList>
         <TabsContent value="tasks" className="mt-4"><TaskMasterTab /></TabsContent>
         <TabsContent value="roles" className="mt-4"><RolesAccessTab /></TabsContent>
+        <TabsContent value="role-permissions" className="mt-4"><RolePermissionsTab /></TabsContent>
         <TabsContent value="escalation" className="mt-4"><EscalationMatrixTab /></TabsContent>
         <TabsContent value="approvals" className="mt-4"><ApprovalsTab /></TabsContent>
         <TabsContent value="databank" className="mt-4"><DataBankTab /></TabsContent>
