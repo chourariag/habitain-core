@@ -149,6 +149,34 @@ export default function Admin() {
         </TabsContent>
 
       </Tabs>
+
+      {showSuperAdmin && (
+        <div className="pt-8 mt-8" style={{ borderTop: "2px solid #F40009" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <ShieldAlert className="h-5 w-5" style={{ color: "#F40009" }} />
+            <h2 className="font-display text-xl font-bold" style={{ color: "#F40009" }}>Super Admin</h2>
+          </div>
+          <p className="text-muted-foreground text-sm mb-4">
+            System-wide configuration. Visible to MD &amp; Super Admin only.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {SUPER_ADMIN_LINKS.map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                className="flex items-start gap-3 p-4 rounded-lg bg-card border border-border hover:border-[#F40009] transition-colors group"
+              >
+                <l.icon className="h-5 w-5 mt-0.5 shrink-0" style={{ color: "#F40009" }} />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm text-foreground">{l.label}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{l.desc}</div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-[#F40009] shrink-0" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
