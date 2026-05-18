@@ -8622,6 +8622,63 @@ export type Database = {
         }
         Relationships: []
       }
+      role_permissions: {
+        Row: {
+          id: string
+          page_key: string
+          permission_level: string
+          role_code: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          page_key: string
+          permission_level: string
+          role_code: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          page_key?: string
+          permission_level?: string
+          role_code?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      role_permissions_audit: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_value: string | null
+          old_value: string | null
+          page_key: string
+          role_code: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          page_key: string
+          role_code: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          page_key?: string
+          role_code?: string
+        }
+        Relationships: []
+      }
       safety_incidents: {
         Row: {
           closed_at: string | null
