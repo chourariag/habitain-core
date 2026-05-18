@@ -35,6 +35,7 @@ export default function SuperAdmin() {
         <TabsList>
           <TabsTrigger value="tasks" className="gap-1.5"><ListTree className="h-3.5 w-3.5" /> Task Master</TabsTrigger>
           <TabsTrigger value="roles" className="gap-1.5"><KeySquare className="h-3.5 w-3.5" /> Roles &amp; Access</TabsTrigger>
+          <TabsTrigger value="role-permissions" className="gap-1.5"><Shield className="h-3.5 w-3.5" /> Role Permissions</TabsTrigger>
           <TabsTrigger value="escalation" className="gap-1.5"><AlertOctagon className="h-3.5 w-3.5" /> Escalation</TabsTrigger>
           <TabsTrigger value="approvals" className="gap-1.5"><BadgeIndianRupee className="h-3.5 w-3.5" /> Approvals</TabsTrigger>
           <TabsTrigger value="databank" className="gap-1.5"><Database className="h-3.5 w-3.5" /> Data Bank</TabsTrigger>
