@@ -45,6 +45,7 @@ export default function SuperAdmin() {
         </TabsList>
         <TabsContent value="tasks" className="mt-4"><TaskMasterTab /></TabsContent>
         <TabsContent value="roles" className="mt-4"><RolesAccessTab /></TabsContent>
+        <TabsContent value="role-permissions" className="mt-4"><RolePermissionsTab /></TabsContent>
         <TabsContent value="escalation" className="mt-4"><EscalationMatrixTab /></TabsContent>
         <TabsContent value="approvals" className="mt-4"><ApprovalsTab /></TabsContent>
         <TabsContent value="databank" className="mt-4"><DataBankTab /></TabsContent>
