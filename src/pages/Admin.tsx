@@ -25,6 +25,8 @@ const SUPER_ADMIN_LINKS = [
 export default function Admin() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("active");
+  const { role } = useUserRole();
+  const showSuperAdmin = !!role && SUPER_ADMIN_ROLES.includes(role);
 
   const { data: profiles, refetch, isLoading } = useQuery({
     queryKey: ["admin-profiles"],
