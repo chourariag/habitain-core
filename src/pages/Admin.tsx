@@ -1,18 +1,32 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Users, ShieldOff, TrendingUp, FileText } from "lucide-react";
+import { Search, Users, ShieldOff, TrendingUp, FileText, ShieldAlert, Shield, UserPlus, BarChart3, AlertOctagon, BadgeIndianRupee, ChevronRight } from "lucide-react";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
 import { UserRow } from "@/components/admin/UserRow";
 import { ROLE_LABELS, AppRole } from "@/lib/roles";
 import { BenchmarksView } from "@/components/kpi/BenchmarksView";
 import { BoardPaperGenerator } from "@/components/admin/BoardPaperGenerator";
+import { useUserRole } from "@/hooks/useUserRole";
+
+const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
+
+const SUPER_ADMIN_LINKS = [
+  { to: "/admin/super-admin?tab=role-permissions", label: "Role Permissions", icon: Shield, desc: "Control which pages each role can see" },
+  { to: "/admin/super-admin?tab=create-accounts", label: "Create All Accounts", icon: UserPlus, desc: "Bulk create user accounts" },
+  { to: "/admin/kpi-settings", label: "KPI Settings", icon: BarChart3, desc: "Configure KPI weights and targets" },
+  { to: "/admin/super-admin?tab=escalation", label: "Escalation Matrix", icon: AlertOctagon, desc: "Define escalation chains" },
+  { to: "/admin/super-admin?tab=approvals", label: "Approval Thresholds", icon: BadgeIndianRupee, desc: "Set financial approval limits" },
+];
 
 export default function Admin() {
   const [search, setSearch] = useState("");
   const [tab, setTab] = useState("active");
+  const { role } = useUserRole();
+  const showSuperAdmin = !!role && SUPER_ADMIN_ROLES.includes(role);
 
   const { data: profiles, refetch, isLoading } = useQuery({
     queryKey: ["admin-profiles"],
@@ -135,6 +149,34 @@ export default function Admin() {
         </TabsContent>
 
       </Tabs>
+
+      {showSuperAdmin && (
+        <div className="pt-8 mt-8" style={{ borderTop: "2px solid #F40009" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <ShieldAlert className="h-5 w-5" style={{ color: "#F40009" }} />
+            <h2 className="font-display text-xl font-bold" style={{ color: "#F40009" }}>Super Admin</h2>
+          </div>
+          <p className="text-muted-foreground text-sm mb-4">
+            System-wide configuration. Visible to MD &amp; Super Admin only.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {SUPER_ADMIN_LINKS.map((l) => (
+              <Link
+                key={l.to}
+                to={l.to}
+                className="flex items-start gap-3 p-4 rounded-lg bg-card border border-border hover:border-[#F40009] transition-colors group"
+              >
+                <l.icon className="h-5 w-5 mt-0.5 shrink-0" style={{ color: "#F40009" }} />
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm text-foreground">{l.label}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{l.desc}</div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-[#F40009] shrink-0" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

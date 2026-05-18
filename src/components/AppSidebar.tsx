@@ -25,7 +25,7 @@ type NavSection = { key: string; label?: string; items: NavItem[]; group?: "altr
 
 const CAPACITY_ROLES = ["super_admin", "managing_director", "head_operations", "planning_head", "production_head"];
 const HR_MGMT_ROLES = ["super_admin", "managing_director", "hr_admin", "hr_executive", "finance_manager"];
-const SUPER_ADMIN_ROLES = ["super_admin"];
+const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
 
 // Strict spec-defined sidebar
 const sectionConfig: NavSection[] = [

@@ -12,18 +12,11 @@ import type { AppRole } from "@/lib/roles";
 
 const allTabs = [
   { to: "/dashboard", label: "Home", icon: LayoutDashboard, section: "dashboard" },
-  { to: "/approvals", label: "Approvals", icon: ShieldCheck, section: "approvals" },
   { to: "/projects", label: "Projects", icon: FolderKanban, section: "projects" },
   { to: "/production?tab=modules", label: "Factory", icon: Factory, section: "production" },
   { to: "/site-hub?tab=pipeline", label: "Site", icon: Truck, section: "site" },
-  { to: "/qc", label: "QC", icon: ClipboardCheck, section: "production" },
-  { to: "/procurement?tab=dashboard", label: "Procurement", icon: ShoppingCart, section: "procurement" },
   { to: "/finance?tab=mis-invoices", label: "Finance", icon: DollarSign, section: "finance" },
-  { to: "/sales", label: "Sales", icon: BarChart3, section: "sales" },
-  { to: "/design", label: "Design", icon: Compass, section: "design" },
-  { to: "/attendance", label: "My HR", icon: Users, section: "altree" },
   { to: "/admin", label: "Admin", icon: Users, section: "admin" },
-  { to: "/settings", label: "Settings", icon: Settings, section: "altree" },
 ];
 
 export function MobileNav() {
