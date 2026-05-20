@@ -377,6 +377,16 @@ function SiteHubContent() {
         <TabsContent value="install-seq">
           <InstallationSequenceDoc projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
         </TabsContent>
+        <TabsContent value="safety">
+          <Card>
+            <CardContent className="py-10 text-center space-y-3">
+              <HardHat className="h-10 w-10 mx-auto" style={{ color: "#006039" }} />
+              <h3 className="font-display font-bold text-lg" style={{ color: "#1A1A1A" }}>Site Safety</h3>
+              <p className="text-sm" style={{ color: "#666666" }}>Open the Safety module to log incidents, view PPE compliance, and run toolbox talks.</p>
+              <Button onClick={() => navigate("/safety")} style={{ backgroundColor: "#006039", color: "#FFFFFF" }}>Open Safety Module</Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
         <TabsContent value="factory-feedback">
           <SiteFactoryFeedback projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} modules={modules.map(m => ({ id: m.id, name: m.name, module_code: m.module_code || m.name }))} />
         </TabsContent>
