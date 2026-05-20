@@ -219,20 +219,17 @@ function SiteHubContent() {
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="pipeline" className="gap-1.5"><Truck className="h-4 w-4" /> Dispatch Pipeline</TabsTrigger>
-            <TabsTrigger value="schedule" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Site Schedule</TabsTrigger>
+            <TabsTrigger value="schedule" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Schedule</TabsTrigger>
             <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
-            <TabsTrigger value="diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
-            <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Pack</TabsTrigger>
-            <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
-            <TabsTrigger value="dispatch-packs" className="gap-1.5"><Package className="h-4 w-4" /> Dispatch Packs</TabsTrigger>
-            <TabsTrigger value="site-inventory" className="gap-1.5"><Boxes className="h-4 w-4" /> Site Inventory</TabsTrigger>
-            <TabsTrigger value="subcontractors" className="gap-1.5"><Users className="h-4 w-4" /> Subcontractors</TabsTrigger>
-            <TabsTrigger value="punch-list" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Punch List</TabsTrigger>
-            <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Install Sequence</TabsTrigger>
-            <TabsTrigger value="factory-feedback" className="gap-1.5"><MessageSquareWarning className="h-4 w-4" /> Factory Feedback</TabsTrigger>
-            <TabsTrigger value="labour" className="gap-1.5"><HardHat className="h-4 w-4" /> Labour Log</TabsTrigger>
             <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>
-            <TabsTrigger value="site-measurements" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> Measurements</TabsTrigger>
+            <TabsTrigger value="factory-feedback" className="gap-1.5"><MessageSquareWarning className="h-4 w-4" /> Factory Feedback</TabsTrigger>
+            <TabsTrigger value="dispatch-packs" className="gap-1.5"><Package className="h-4 w-4" /> Dispatch Pack</TabsTrigger>
+            <TabsTrigger value="site-inventory" className="gap-1.5"><Boxes className="h-4 w-4" /> Inventory</TabsTrigger>
+            <TabsTrigger value="diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
+            <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Document</TabsTrigger>
+            <TabsTrigger value="labour" className="gap-1.5"><Users className="h-4 w-4" /> People</TabsTrigger>
+            <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Installation Sequence</TabsTrigger>
+            <TabsTrigger value="safety" className="gap-1.5"><HardHat className="h-4 w-4" /> Safety</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
