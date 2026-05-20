@@ -3,9 +3,9 @@ import {
   LayoutDashboard, FolderKanban, Factory, ClipboardCheck,
   Truck, Package, Compass, BarChart3, DollarSign, Wrench,
   Users, Settings, ChevronLeft, ChevronRight, ChevronDown,
-  LogOut, Globe, ShieldAlert, ShieldCheck, Map, HardHat,
-  BookOpen, MessageSquare, Receipt, Building2, UserCog,
-  Briefcase, ArrowLeftRight, ClipboardList, ListChecks,
+  LogOut, Globe, ShieldAlert, ShieldCheck, Map,
+  MessageSquare, Receipt, Building2, UserCog,
+  Briefcase, ArrowLeftRight, ClipboardList,
 } from "lucide-react";
 import { usePendingApprovalsCount } from "@/hooks/usePendingApprovalsCount";
 import { cn } from "@/lib/utils";
@@ -20,11 +20,13 @@ import { useTranslation } from "react-i18next";
 import type { AppRole } from "@/lib/roles";
 import { RoleSwitcher } from "./RoleSwitcher";
 
-type NavItem = { to: string; label: string; icon: any; roles?: string[]; section: string };
+type NavItem = { to: string; label: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean };
 type NavSection = { key: string; label?: string; items: NavItem[]; group?: "altree" };
 
 const CAPACITY_ROLES = ["super_admin", "managing_director", "head_operations", "planning_head", "production_head"];
-const HR_MGMT_ROLES = ["super_admin", "managing_director", "hr_admin", "hr_executive", "finance_manager"];
+const HR_MGMT_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director", "hr_admin", "hr_executive", "finance_manager"];
+const ADMIN_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director", "hr_admin"];
+const SETTINGS_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
 const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
 
 // Strict spec-defined sidebar
@@ -41,19 +43,12 @@ const sectionConfig: NavSection[] = [
       { section: "production", to: "/qc", label: "QC & NCR", icon: ClipboardCheck },
       { section: "production", to: "/dispatch-delivery", label: "Despatch & Delivery", icon: Truck },
       { section: "production", to: "/safety", label: "Safety", icon: ShieldAlert },
-      { section: "production", to: "/production?tab=people", label: "People", icon: Users },
     ],
   },
   {
     key: "site", label: "On Site Works",
     items: [
       { section: "site", to: "/site-hub?tab=pipeline", label: "Site Hub", icon: Truck },
-      { section: "site", to: "/site-hub?tab=site-inventory", label: "Inventory", icon: Package },
-      { section: "site", to: "/site-hub?tab=diary", label: "Site Diary", icon: BookOpen },
-      { section: "site", to: "/site-hub?tab=handover", label: "Handover Document", icon: ClipboardList },
-      { section: "site", to: "/site-hub?tab=labour", label: "People", icon: HardHat },
-      { section: "site", to: "/site-hub?tab=install-seq", label: "Installation Sequence", icon: ListChecks },
-      { section: "site", to: "/safety", label: "Safety", icon: ShieldAlert },
     ],
   },
   {
@@ -87,17 +82,17 @@ const sectionConfig: NavSection[] = [
     key: "sales", label: "Sales",
     items: [{ section: "sales", to: "/sales", label: "Sales", icon: BarChart3 }],
   },
-  // ALTREE group
+  // ALTREE group — always visible (every employee gets My HR)
   {
     key: "altree-hr", label: "HR", group: "altree",
     items: [
-      { section: "altree", to: "/attendance", label: "My HR", icon: UserCog },
+      { section: "altree", to: "/attendance", label: "My HR", icon: UserCog, alwaysVisible: true },
       { section: "altree", to: "/admin/hr", label: "HR Management", icon: Users, roles: HR_MGMT_ROLES },
     ],
   },
-  { key: "altree-admin", group: "altree", items: [{ section: "admin", to: "/admin", label: "Admin", icon: Briefcase }] },
+  { key: "altree-admin", group: "altree", items: [{ section: "altree", to: "/admin", label: "Admin", icon: Briefcase, roles: ADMIN_ROLES }] },
   { key: "altree-super", group: "altree", items: [{ section: "altree", to: "/admin/super-admin", label: "Super Admin", icon: ShieldAlert, roles: SUPER_ADMIN_ROLES }] },
-  { key: "altree-settings", group: "altree", items: [{ section: "altree", to: "/settings", label: "Settings", icon: Settings }] },
+  { key: "altree-settings", group: "altree", items: [{ section: "altree", to: "/settings", label: "Settings", icon: Settings, roles: SETTINGS_ROLES }] },
 ];
 
 const ALTREE_OPEN_KEY = "hstack_nav_altree_open";
@@ -143,12 +138,15 @@ export function AppSidebar() {
     : { color: "#666666" };
 
   // Filter visible sections by section-level role + per-item role
+  // ALTREE items use alwaysVisible to bypass section gate (every employee gets My HR)
   const visibleSections = sectionConfig
     .map((s) => ({
       ...s,
-      items: s.items.filter(
-        (it) => canSeeSection(userRole, it.section) && (!it.roles || (userRole && it.roles.includes(userRole))),
-      ),
+      items: s.items.filter((it) => {
+        const sectionOk = it.alwaysVisible || canSeeSection(userRole, it.section);
+        const roleOk = !it.roles || (userRole && it.roles.includes(userRole));
+        return sectionOk && roleOk;
+      }),
     }))
     .filter((s) => s.items.length > 0);
 
