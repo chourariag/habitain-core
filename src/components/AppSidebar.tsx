@@ -33,6 +33,7 @@ const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
 const sectionConfig: NavSection[] = [
   { key: "dashboard", items: [{ section: "dashboard", to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }] },
   { key: "approvals", items: [{ section: "approvals", to: "/approvals", label: "Approvals", icon: ShieldCheck }] },
+  { key: "announcements", items: [{ section: "dashboard", to: "/announcements", label: "Announcements", icon: MessageSquare }] },
   { key: "projects", items: [{ section: "projects", to: "/projects", label: "Projects", icon: FolderKanban }] },
   {
     key: "production", label: "Production",

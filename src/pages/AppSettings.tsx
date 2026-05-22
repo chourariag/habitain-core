@@ -61,10 +61,16 @@ export default function AppSettings() {
       { key: "factory_lng", value: factoryLng },
       { key: "factory_radius", value: factoryRadius },
     ];
+    const errors: string[] = [];
     for (const u of updates) {
-      await supabase.from("app_settings").update({ value: u.value }).eq("key", u.key);
+      const { error } = await supabase.from("app_settings").update({ value: u.value }).eq("key", u.key);
+      if (error) errors.push(`${u.key}: ${error.message}`);
     }
-    toast.success("Factory location saved");
+    if (errors.length) {
+      toast.error(`Save failed — ${errors.join("; ")}`);
+    } else {
+      toast.success("Factory location saved");
+    }
     setSaving(false);
   };
 

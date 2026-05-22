@@ -30,7 +30,7 @@ import Sales from "@/pages/Sales";
 import Profile from "@/pages/Profile";
 import Attendance from "@/pages/Attendance";
 import NotFound from "@/pages/NotFound";
-import ComingSoon from "@/pages/ComingSoon";
+import Announcements from "@/pages/Announcements";
 import Finance from "@/pages/Finance";
 import KPI from "@/pages/KPI";
 import KPISettings from "@/pages/KPISettings";
@@ -105,6 +105,7 @@ const App = () => (
                 <Route path="/admin/hr" element={<AdminHR />} />
                 <Route path="/safety" element={<Safety />} />
                 <Route path="/approvals" element={<Approvals />} />
+                <Route path="/announcements" element={<Announcements />} />
               </Route>
               <Route path="/client/:projectToken" element={<ClientPortal />} />
               <Route path="*" element={<NotFound />} />
