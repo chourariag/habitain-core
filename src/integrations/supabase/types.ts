@@ -2360,6 +2360,51 @@ export type Database = {
         }
         Relationships: []
       }
+      expense_approvals: {
+        Row: {
+          action: string
+          actioned_at: string | null
+          approver_id: string
+          created_at: string | null
+          id: string
+          remarks: string | null
+          report_id: string
+        }
+        Insert: {
+          action: string
+          actioned_at?: string | null
+          approver_id: string
+          created_at?: string | null
+          id?: string
+          remarks?: string | null
+          report_id: string
+        }
+        Update: {
+          action?: string
+          actioned_at?: string | null
+          approver_id?: string
+          created_at?: string | null
+          id?: string
+          remarks?: string | null
+          report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_approvals_approver_id_fkey"
+            columns: ["approver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expense_approvals_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "expense_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expense_entries: {
         Row: {
           amount: number
@@ -2590,6 +2635,65 @@ export type Database = {
             columns: ["deal_id"]
             isOneToOne: false
             referencedRelation: "sales_deals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      file_attachments: {
+        Row: {
+          created_at: string | null
+          entity_id: string
+          entity_type: string
+          file_name: string | null
+          file_size_bytes: number | null
+          file_type: string
+          file_url: string
+          id: string
+          is_archived: boolean
+          mime_type: string | null
+          storage_bucket: string | null
+          storage_path: string | null
+          uploaded_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          entity_id: string
+          entity_type: string
+          file_name?: string | null
+          file_size_bytes?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          is_archived?: boolean
+          mime_type?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          entity_id?: string
+          entity_type?: string
+          file_name?: string | null
+          file_size_bytes?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          is_archived?: boolean
+          mime_type?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+          uploaded_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -5370,6 +5474,74 @@ export type Database = {
           },
         ]
       }
+      notification_preferences: {
+        Row: {
+          created_at: string | null
+          email_enabled: boolean
+          id: string
+          notify_announcements: boolean
+          notify_design_queries: boolean
+          notify_dispatch: boolean
+          notify_labour: boolean
+          notify_material: boolean
+          notify_production: boolean
+          notify_qc: boolean
+          notify_rm_tickets: boolean
+          profile_id: string
+          push_enabled: boolean
+          quiet_from: string | null
+          quiet_hours_enabled: boolean
+          quiet_to: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email_enabled?: boolean
+          id?: string
+          notify_announcements?: boolean
+          notify_design_queries?: boolean
+          notify_dispatch?: boolean
+          notify_labour?: boolean
+          notify_material?: boolean
+          notify_production?: boolean
+          notify_qc?: boolean
+          notify_rm_tickets?: boolean
+          profile_id: string
+          push_enabled?: boolean
+          quiet_from?: string | null
+          quiet_hours_enabled?: boolean
+          quiet_to?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email_enabled?: boolean
+          id?: string
+          notify_announcements?: boolean
+          notify_design_queries?: boolean
+          notify_dispatch?: boolean
+          notify_labour?: boolean
+          notify_material?: boolean
+          notify_production?: boolean
+          notify_qc?: boolean
+          notify_rm_tickets?: boolean
+          profile_id?: string
+          push_enabled?: boolean
+          quiet_from?: string | null
+          quiet_hours_enabled?: boolean
+          quiet_to?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_preferences_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           body: string
@@ -7408,6 +7580,67 @@ export type Database = {
           },
           {
             foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_team_members: {
+        Row: {
+          access_level: string
+          assigned_at: string | null
+          assigned_by: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean
+          profile_id: string
+          project_id: string
+          role: string
+          updated_at: string | null
+        }
+        Insert: {
+          access_level?: string
+          assigned_at?: string | null
+          assigned_by?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          profile_id: string
+          project_id: string
+          role: string
+          updated_at?: string | null
+        }
+        Update: {
+          access_level?: string
+          assigned_at?: string | null
+          assigned_by?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean
+          profile_id?: string
+          project_id?: string
+          role?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_team_members_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_team_members_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_team_members_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
