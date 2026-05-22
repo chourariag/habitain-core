@@ -13,10 +13,14 @@ export function NotificationBell() {
 
   const fetchUnread = useCallback(async () => {
     if (!userId) return;
-    const { count } = await (supabase.from("notifications") as any)
+    const { count, error } = await (supabase.from("notifications") as any)
       .select("id", { count: "exact", head: true })
       .eq("recipient_id", userId)
       .eq("is_read", false);
+    if (error) {
+      console.error("[NotificationBell] fetch failed", error);
+      return;
+    }
     setUnreadCount(count ?? 0);
   }, [userId]);
 

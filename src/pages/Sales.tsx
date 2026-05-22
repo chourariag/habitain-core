@@ -17,11 +17,15 @@ export default function Sales() {
   const [newDrawerOpen, setNewDrawerOpen] = useState(false);
 
   const fetchDeals = useCallback(async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("sales_deals")
       .select("*")
       .eq("is_archived", false)
       .order("updated_at", { ascending: false });
+    if (error) {
+      const { toast } = await import("sonner");
+      toast.error(`Failed to load deals: ${error.message}`);
+    }
     setDeals(data || []);
     setLoading(false);
   }, []);
