@@ -7671,7 +7671,9 @@ export type Database = {
           is_design_only: boolean
           location: string | null
           milestones_locked: boolean
+          module_count: number
           name: string
+          panel_count: number
           planned_labour_cost: number | null
           production_system: string
           setup_uploaded_at: string | null
@@ -7716,7 +7718,9 @@ export type Database = {
           is_design_only?: boolean
           location?: string | null
           milestones_locked?: boolean
+          module_count?: number
           name: string
+          panel_count?: number
           planned_labour_cost?: number | null
           production_system?: string
           setup_uploaded_at?: string | null
@@ -7761,7 +7765,9 @@ export type Database = {
           is_design_only?: boolean
           location?: string | null
           milestones_locked?: boolean
+          module_count?: number
           name?: string
+          panel_count?: number
           planned_labour_cost?: number | null
           production_system?: string
           setup_uploaded_at?: string | null
