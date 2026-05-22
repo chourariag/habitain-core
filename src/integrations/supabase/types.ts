@@ -504,6 +504,7 @@ export type Database = {
           id: string
           month: number
           sent_to_finance_at: string | null
+          updated_at: string | null
           year: number
         }
         Insert: {
@@ -512,6 +513,7 @@ export type Database = {
           id?: string
           month: number
           sent_to_finance_at?: string | null
+          updated_at?: string | null
           year: number
         }
         Update: {
@@ -520,6 +522,7 @@ export type Database = {
           id?: string
           month?: number
           sent_to_finance_at?: string | null
+          updated_at?: string | null
           year?: number
         }
         Relationships: []
@@ -2116,6 +2119,7 @@ export type Database = {
           id: string
           logged_at: string | null
           reason: string | null
+          updated_at: string | null
           worker_id: string
         }
         Insert: {
@@ -2123,6 +2127,7 @@ export type Database = {
           id?: string
           logged_at?: string | null
           reason?: string | null
+          updated_at?: string | null
           worker_id: string
         }
         Update: {
@@ -2130,6 +2135,7 @@ export type Database = {
           id?: string
           logged_at?: string | null
           reason?: string | null
+          updated_at?: string | null
           worker_id?: string
         }
         Relationships: [
@@ -9004,6 +9010,7 @@ export type Database = {
           followup_date: string | null
           id: string
           notes: string | null
+          updated_at: string | null
         }
         Insert: {
           contacted_by?: string | null
@@ -9012,6 +9019,7 @@ export type Database = {
           followup_date?: string | null
           id?: string
           notes?: string | null
+          updated_at?: string | null
         }
         Update: {
           contacted_by?: string | null
@@ -9020,6 +9028,7 @@ export type Database = {
           followup_date?: string | null
           id?: string
           notes?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -11328,6 +11337,69 @@ export type Database = {
       }
     }
     Views: {
+      design_queries_with_names: {
+        Row: {
+          affected_area: string | null
+          assigned_architect_id: string | null
+          created_at: string | null
+          description: string | null
+          dq_category: string | null
+          dq_code: string | null
+          drawing_id: string | null
+          id: string | null
+          is_archived: boolean | null
+          module_id: string | null
+          photo_url: string | null
+          project_id: string | null
+          query_type: string | null
+          raised_by: string | null
+          raised_by_name: string | null
+          raised_by_name_live: string | null
+          resolution_reminder_sent: boolean | null
+          resolution_timeline: string | null
+          resolved_at: string | null
+          responded_at: string | null
+          responded_by: string | null
+          responded_by_name: string | null
+          responded_by_name_live: string | null
+          response_drawing_id: string | null
+          response_text: string | null
+          status: string | null
+          updated_at: string | null
+          urgency: string | null
+          voice_note_url: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "design_queries_drawing_id_fkey"
+            columns: ["drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "design_queries_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "design_queries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "design_queries_response_drawing_id_fkey"
+            columns: ["response_drawing_id"]
+            isOneToOne: false
+            referencedRelation: "drawings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_latest_panel_handover: {
         Row: {
           handover_id: string | null
