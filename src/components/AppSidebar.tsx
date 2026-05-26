@@ -92,6 +92,7 @@ const sectionConfig: NavSection[] = [
     ],
   },
   { key: "altree-admin", group: "altree", items: [{ section: "altree", to: "/admin", label: "Admin", icon: Briefcase, roles: ADMIN_ROLES }] },
+  { key: "altree-employees", group: "altree", items: [{ section: "altree", to: "/admin/employees", label: "Employees", icon: Users, roles: SUPER_ADMIN_ROLES }] },
   { key: "altree-super", group: "altree", items: [{ section: "altree", to: "/admin/super-admin", label: "Super Admin", icon: ShieldAlert, roles: SUPER_ADMIN_ROLES }] },
   { key: "altree-settings", group: "altree", items: [{ section: "altree", to: "/settings", label: "Settings", icon: Settings, roles: SETTINGS_ROLES }] },
 ];

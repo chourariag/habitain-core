@@ -360,6 +360,155 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── CREATE EMPLOYEE (full panel) ─────────────────────────────
+    if (action === "create_employee") {
+      // Only super_admin / managing_director may use this endpoint
+      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+        return new Response(JSON.stringify({ error: "Forbidden: super_admin or managing_director only" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { full_name, email, phone, role, department, reporting_manager_id, temp_password } = payload;
+      const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+      const password = (typeof temp_password === "string" && temp_password.length >= 8) ? temp_password : "Altree@1234";
+      if (!normalizedEmail || !role || !full_name) {
+        return new Response(JSON.stringify({ error: "full_name, email and role are required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Privilege escalation guard
+      if (["super_admin", "managing_director"].includes(role) && callerProfile.role !== "super_admin" && callerProfile.role !== "managing_director") {
+        return new Response(JSON.stringify({ error: "Only super_admin/managing_director can assign that role" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: newUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+        email: normalizedEmail,
+        password,
+        email_confirm: true,
+        user_metadata: { display_name: full_name },
+      });
+      if (createErr || !newUser?.user) {
+        return new Response(JSON.stringify({ error: createErr?.message || "Create failed", already_exists: /already|exists|registered/i.test(createErr?.message || "") }), {
+          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const userId = newUser.user.id;
+      const { error: profileErr } = await supabaseAdmin.from("profiles").upsert({
+        auth_user_id: userId,
+        email: normalizedEmail,
+        display_name: full_name,
+        phone: phone || null,
+        role,
+        department: department || null,
+        reporting_manager_id: reporting_manager_id || null,
+        login_type: "email",
+        is_active: true,
+        is_archived: false,
+      }, { onConflict: "auth_user_id" });
+      if (profileErr) {
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+        return new Response(JSON.stringify({ error: profileErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      await supabaseAdmin.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
+      await supabaseAdmin.from("admin_audit_log").insert({
+        action: "create_employee",
+        performed_by: callerId,
+        entity_type: "profile",
+        entity_id: userId,
+        new_value: { email: normalizedEmail, full_name, role, department, phone, reporting_manager_id },
+      });
+      return new Response(JSON.stringify({ success: true, user_id: userId, email: normalizedEmail, temp_password: password }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── UPDATE EMPLOYEE (role, dept, manager, active) ────────────
+    if (action === "update_employee") {
+      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { user_id, role, department, reporting_manager_id, is_active, display_name, phone } = payload;
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: oldProfile } = await supabaseAdmin.from("profiles").select("*").eq("auth_user_id", user_id).single();
+      const patch: Record<string, unknown> = {};
+      if (role !== undefined) patch.role = role;
+      if (department !== undefined) patch.department = department;
+      if (reporting_manager_id !== undefined) patch.reporting_manager_id = reporting_manager_id || null;
+      if (is_active !== undefined) { patch.is_active = is_active; patch.is_archived = !is_active; }
+      if (display_name !== undefined) patch.display_name = display_name;
+      if (phone !== undefined) patch.phone = phone;
+
+      const { error: updErr } = await supabaseAdmin.from("profiles").update(patch).eq("auth_user_id", user_id);
+      if (updErr) {
+        return new Response(JSON.stringify({ error: updErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (role) {
+        await supabaseAdmin.from("user_roles").upsert({ user_id, role }, { onConflict: "user_id,role" });
+      }
+      if (is_active === false) {
+        await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "876600h" });
+      } else if (is_active === true) {
+        await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "none" });
+      }
+      await supabaseAdmin.from("admin_audit_log").insert({
+        action: "update_employee",
+        performed_by: callerId,
+        entity_type: "profile",
+        entity_id: user_id,
+        old_value: oldProfile,
+        new_value: patch,
+      });
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── RESET PASSWORD ───────────────────────────────────────────
+    if (action === "reset_password") {
+      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { user_id, temp_password } = payload;
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const newPwd = (typeof temp_password === "string" && temp_password.length >= 8)
+        ? temp_password
+        : ("Altree@" + Math.random().toString(36).slice(-6) + Math.floor(Math.random() * 90 + 10));
+      const { error: pwdErr } = await supabaseAdmin.auth.admin.updateUserById(user_id, { password: newPwd });
+      if (pwdErr) {
+        return new Response(JSON.stringify({ error: pwdErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      await supabaseAdmin.from("admin_audit_log").insert({
+        action: "reset_password",
+        performed_by: callerId,
+        entity_type: "profile",
+        entity_id: user_id,
+        new_value: { reset_at: new Date().toISOString() },
+      });
+      return new Response(JSON.stringify({ success: true, temp_password: newPwd }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

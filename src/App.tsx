@@ -49,6 +49,7 @@ import Safety from "@/pages/Safety";
 import ProductionDashboard from "@/pages/ProductionDashboard";
 import DispatchDelivery from "@/pages/DispatchDelivery";
 import SiteDashboard from "@/pages/SiteDashboard";
+import EmployeeManagement from "@/pages/EmployeeManagement";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +94,7 @@ const App = () => (
                 <Route path="/kpi/settings" element={<KPISettings />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/users" element={<UserManagement />} />
+                <Route path="/admin/employees" element={<EmployeeManagement />} />
                 <Route path="/settings" element={<AppSettings />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/attendance" element={<Attendance />} />
