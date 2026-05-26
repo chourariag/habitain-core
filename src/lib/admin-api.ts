@@ -59,3 +59,23 @@ export async function createUserWithPassword(opts: {
 export async function reassignAndDeactivate(userId: string, reassignTo?: string) {
   return callAdminFunction({ action: "reassign_and_deactivate", user_id: userId, reassign_to: reassignTo });
 }
+
+export async function createEmployee(opts: {
+  full_name: string; email: string; role: AppRole;
+  phone?: string; department?: string; reporting_manager_id?: string; temp_password?: string;
+}) {
+  return callAdminFunction({ action: "create_employee", ...opts });
+}
+
+export async function updateEmployee(opts: {
+  user_id: string; role?: AppRole; department?: string | null;
+  reporting_manager_id?: string | null; is_active?: boolean;
+  display_name?: string; phone?: string | null;
+}) {
+  return callAdminFunction({ action: "update_employee", ...opts });
+}
+
+export async function resetEmployeePassword(userId: string, tempPassword?: string) {
+  return callAdminFunction({ action: "reset_password", user_id: userId, temp_password: tempPassword });
+}
+
