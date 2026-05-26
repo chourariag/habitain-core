@@ -543,19 +543,38 @@ function SeedDialog({ open, onClose, managers }: { open: boolean; onClose: () =>
       const e = entries[i];
       try {
         const managerId = e.manager_email ? emailToId.get(e.manager_email) : undefined;
+        if (e.manager_email && !managerId) {
+          throw new Error(`Manager not yet created: ${e.manager_email}`);
+        }
         const res = await createEmployee({
           full_name: e.full_name, email: e.email, role: e.role,
           department: e.department, reporting_manager_id: managerId,
           temp_password: DEFAULT_PWD,
         });
-        emailToId.set(e.email, res.user_id);
+        // res.user_id is auth_user_id; FK reporting_manager_id references profiles.id — look it up
+        const { data: newProfile } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("auth_user_id", res.user_id)
+          .maybeSingle();
+        if (newProfile?.id) emailToId.set(e.email, newProfile.id);
         setLogs((prev) => prev.map((l) => l.idx === i ? { ...l, status: "ok", password: res.temp_password } : l));
       } catch (err) {
         const msg = (err as Error).message || "Failed";
         const skipped = /already|exists|registered/i.test(msg);
+        // If the user already exists, backfill the id map so downstream subordinates resolve
+        if (skipped) {
+          const { data: existing } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("email", e.email)
+            .maybeSingle();
+          if (existing?.id) emailToId.set(e.email, existing.id);
+        }
         setLogs((prev) => prev.map((l) => l.idx === i ? { ...l, status: skipped ? "skipped" : "error", message: msg } : l));
       }
     }
+
     setRunning(false);
     toast.success("Bulk seed complete");
   };
