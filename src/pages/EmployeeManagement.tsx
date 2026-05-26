@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Copy, KeyRound, Pencil, Search, ShieldOff, ShieldCheck, UserPlus, Loader2, Download, Sparkles } from "lucide-react";
+import { Copy, KeyRound, Pencil, Search, ShieldOff, ShieldCheck, UserPlus, Loader2, Download, Sparkles, Trash2, AlertTriangle } from "lucide-react";
 
 const DEFAULT_PWD = "Altree@1234";
 
