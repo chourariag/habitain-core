@@ -49,6 +49,7 @@ import Safety from "@/pages/Safety";
 import ProductionDashboard from "@/pages/ProductionDashboard";
 import DispatchDelivery from "@/pages/DispatchDelivery";
 import SiteDashboard from "@/pages/SiteDashboard";
+import EmployeeManagement from "@/pages/EmployeeManagement";
 
 const queryClient = new QueryClient();
 
