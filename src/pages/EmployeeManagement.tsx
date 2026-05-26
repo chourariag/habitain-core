@@ -470,10 +470,44 @@ function CredentialsDialog({ open, onClose, title, email, password }: {
 type SeedEntry = { full_name: string; email: string; role: AppRole; department?: string; manager_email?: string };
 type SeedLog = { idx: number; email: string; status: "queued" | "ok" | "skipped" | "error"; message?: string; password?: string };
 
-const SAMPLE_SEED = `Full Name, email@altree.in, role_key, Department, manager@altree.in
-# Lines starting with # are ignored. Manager email is optional.
-# Example:
-# Aarav Sharma, aarav@altree.in, production_head, Operations, md@altree.in`;
+const SAMPLE_SEED = `# HStack Altree Org Chart — 35 employees (Dec 2025)
+# Format: Full Name, email@altree.in, role_key, Designation/Department, manager_email (optional)
+# Note: "hr_manager" in the source sheet is mapped to hr_executive (actual enum value).
+Gaurav Chauraria, gaurav.chauraria@altree.in, managing_director, Managing Director,
+John Kunnath, john.kunnath@altree.in, sales_director, Sales & Marketing, gaurav.chauraria@altree.in
+Venkat, venkat@altree.in, principal_architect, Senior Architect and Design Coordinator, gaurav.chauraria@altree.in
+Shiv Choudhari, shiv.choudhari@altree.in, finance_director, Business Services and Finance, gaurav.chauraria@altree.in
+Bala, bala@altree.in, head_operations, Facilities / Installation Manager, gaurav.chauraria@altree.in
+Mohan, mohan@altree.in, delivery_rm_lead, Maintenance, bala@altree.in
+Mary, mary@altree.in, finance_manager, Finance and HR Manager, shiv.choudhari@altree.in
+Ribunzad, ribunzad@altree.in, project_architect, Senior Architect, venkat@altree.in
+Aditi, aditi@altree.in, project_architect, Project Architect, venkat@altree.in
+Sindhu Mary, sindhu.mary@altree.in, hr_executive, HR Executive, mary@altree.in
+Yukta, yukta@altree.in, factory_floor_supervisor, Intern, azad@altree.in
+Tejaswini, tejaswini@altree.in, costing_engineer, Estimator, venkat@altree.in
+Awaiz, awaiz@altree.in, head_operations, Site Installation Manager, bala@altree.in
+Vijay, vijay@altree.in, procurement, Purchase Manager, shiv.choudhari@altree.in
+Rakesh, rakesh@altree.in, factory_floor_supervisor, Factory Supervisor, azad@altree.in
+Akash, akash@altree.in, structural_architect, Structural Eng, venkat@altree.in
+Tagore, tagore@altree.in, delivery_rm_lead, Site Engineer, awaiz@altree.in
+Nakhim, nakhim@altree.in, costing_engineer, Costing Engineer, venkat@altree.in
+Nasim, nasim@altree.in, head_operations, Site Manager, bala@altree.in
+Suraj, suraj@altree.in, head_operations, Ops and Planning Head, gaurav.chauraria@altree.in
+Vaishnavi, vaishnavi@altree.in, project_architect, Jr. Architect, venkat@altree.in
+Karthik, karthik@altree.in, planning_engineer, Planning Engineer, suraj@altree.in
+Abu Hassan, abu.hassan@altree.in, factory_floor_supervisor, Wall Panelling Foreman, azad@altree.in
+Jitendra Mallik, jitendra.mallik@altree.in, factory_floor_supervisor, Fabrication Foreman, azad@altree.in
+Azad, azad@altree.in, production_head, Plant Head / Production Manager, bala@altree.in
+Vaibhav, vaibhav@altree.in, project_architect, Jr Product Designer, venkat@altree.in
+Lekhapriya, lekhapriya@altree.in, sales_director, Marketing Executive, john.kunnath@altree.in
+George, george@altree.in, sales_director, Sales Manager, john.kunnath@altree.in
+Venugopal, venugopal@altree.in, delivery_rm_lead, Maintenance, bala@altree.in
+Sandeep, sandeep@altree.in, stores_executive, Stores, vijay@altree.in
+Ajay Nishad, ajay.nishad@altree.in, factory_floor_supervisor, General Foreman, azad@altree.in
+Shambu Yadav, shambu.yadav@altree.in, factory_floor_supervisor, General Foreman, azad@altree.in
+Smaran, smaran@altree.in, sales_director, Sales Executive, john.kunnath@altree.in
+Stanley, stanley@altree.in, head_operations, Head of Projects / Engineering, gaurav.chauraria@altree.in
+Karan Nadig, karan.nadig@altree.in, principal_architect, Design and Development, venkat@altree.in`;
 
 function parseSeedText(text: string): SeedEntry[] {
   return text.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#")).map((line) => {
