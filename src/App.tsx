@@ -94,6 +94,7 @@ const App = () => (
                 <Route path="/kpi/settings" element={<KPISettings />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/users" element={<UserManagement />} />
+                <Route path="/admin/employees" element={<EmployeeManagement />} />
                 <Route path="/settings" element={<AppSettings />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/attendance" element={<Attendance />} />
