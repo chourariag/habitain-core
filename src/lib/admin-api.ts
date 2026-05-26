@@ -79,3 +79,12 @@ export async function resetEmployeePassword(userId: string, tempPassword?: strin
   return callAdminFunction({ action: "reset_password", user_id: userId, temp_password: tempPassword });
 }
 
+export async function deleteEmployee(userId: string) {
+  return callAdminFunction({ action: "delete_employee", user_id: userId });
+}
+
+export async function logBulkDeleteAllEmployees() {
+  return callAdminFunction({ action: "bulk_delete_all_employees" });
+}
+
+
