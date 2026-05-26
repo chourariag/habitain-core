@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { AppRole, ROLE_LABELS, ROLE_TIERS } from "@/lib/roles";
-import { createEmployee, updateEmployee, resetEmployeePassword } from "@/lib/admin-api";
+import { createEmployee, updateEmployee, resetEmployeePassword, deleteEmployee, logBulkDeleteAllEmployees } from "@/lib/admin-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
