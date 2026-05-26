@@ -646,3 +646,141 @@ function SeedDialog({ open, onClose, managers }: { open: boolean; onClose: () =>
     </Dialog>
   );
 }
+
+/* ───────────────────── Danger Zone ───────────────────── */
+
+function DangerZone({ rows, onCleared }: { rows: ProfileRow[]; onCleared: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [running, setRunning] = useState(false);
+  const [log, setLog] = useState<string[]>([]);
+  const [summary, setSummary] = useState<{ deleted: number; failed: number; skipped: number } | null>(null);
+
+  const append = (line: string) => setLog((l) => [...l, line]);
+
+  const run = async () => {
+    setRunning(true);
+    setLog([]);
+    setSummary(null);
+    let deleted = 0, failed = 0, skipped = 0;
+
+    try {
+      await logBulkDeleteAllEmployees();
+    } catch (e) {
+      append(`⚠️ Audit log failed: ${(e as Error).message}`);
+    }
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    const currentAuthId = sessionData.session?.user?.id;
+
+    const { data: profiles, error } = await supabase
+      .from("profiles")
+      .select("auth_user_id, email, display_name")
+      .not("auth_user_id", "is", null);
+
+    if (error) {
+      append(`❌ Failed to load profiles: ${error.message}`);
+      setRunning(false);
+      return;
+    }
+
+    for (const p of profiles || []) {
+      const label = p.email || p.display_name || p.auth_user_id;
+      if (p.auth_user_id === currentAuthId) {
+        append(`⏭️ Skipped ${label} (current user)`);
+        skipped++;
+        continue;
+      }
+      try {
+        await deleteEmployee(p.auth_user_id as string);
+        append(`✅ Deleted ${label}`);
+        deleted++;
+      } catch (e) {
+        append(`❌ Failed ${label}: ${(e as Error).message}`);
+        failed++;
+      }
+    }
+
+    setSummary({ deleted, failed, skipped });
+    setRunning(false);
+    onCleared();
+  };
+
+  return (
+    <>
+      <div className="border-2 border-dashed rounded-lg p-5 mt-8" style={{ borderColor: "#F40009", background: "#FFF5F5" }}>
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="h-6 w-6 mt-0.5" style={{ color: "#F40009" }} />
+          <div className="flex-1">
+            <h2 className="text-lg font-bold" style={{ color: "#F40009" }}>Danger Zone</h2>
+            <p className="text-sm text-muted-foreground mb-3">
+              Irreversible destructive actions. Use with extreme caution.
+            </p>
+            <Button
+              variant="destructive"
+              onClick={() => { setOpen(true); setConfirmText(""); setLog([]); setSummary(null); }}
+            >
+              <Trash2 className="h-4 w-4 mr-2" /> ⚠️ Delete All Seeded Employees
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <Dialog open={open} onOpenChange={(o) => { if (!running) setOpen(o); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle style={{ color: "#F40009" }}>Delete All Seeded Employees</DialogTitle>
+            <DialogDescription>
+              This will permanently delete all {rows.length} seeded employee accounts from both Supabase Auth and the profiles table. This cannot be undone. Type <strong>DELETE</strong> to confirm.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!summary && !running && (
+            <div className="space-y-2">
+              <Label>Type DELETE to confirm</Label>
+              <Input
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="DELETE"
+                autoFocus
+              />
+            </div>
+          )}
+
+          {(log.length > 0 || running) && (
+            <div className="bg-black text-green-300 font-mono text-xs rounded p-3 max-h-72 overflow-auto">
+              {log.map((l, i) => <div key={i}>{l}</div>)}
+              {running && <div className="opacity-70">Working…</div>}
+            </div>
+          )}
+
+          {summary && (
+            <div className="rounded p-3 border" style={{ background: "#E8F2ED", borderColor: "#006039" }}>
+              <div className="font-semibold" style={{ color: "#006039" }}>
+                {summary.deleted} accounts deleted successfully, {summary.failed} failed
+                {summary.skipped > 0 && `, ${summary.skipped} skipped`}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            {!summary ? (
+              <>
+                <Button variant="ghost" onClick={() => setOpen(false)} disabled={running}>Cancel</Button>
+                <Button
+                  variant="destructive"
+                  disabled={running || confirmText !== "DELETE"}
+                  onClick={run}
+                >
+                  {running ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Deleting…</> : "Permanently delete all"}
+                </Button>
+              </>
+            ) : (
+              <Button onClick={() => setOpen(false)}>Close</Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
