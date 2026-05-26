@@ -509,6 +509,69 @@ Deno.serve(async (req) => {
       });
     }
 
+    // ── DELETE EMPLOYEE (hard delete) ────────────────────────────
+    if (action === "delete_employee") {
+      if (callerProfile.role !== "super_admin") {
+        return new Response(JSON.stringify({ error: "Forbidden: super_admin only" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { user_id } = payload;
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: "user_id required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (user_id === callerId) {
+        return new Response(JSON.stringify({ error: "Cannot delete self" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: oldProfile } = await supabaseAdmin.from("profiles").select("*").eq("auth_user_id", user_id).single();
+      // Remove user_roles + profile first to avoid FK issues, then auth user
+      await supabaseAdmin.from("user_roles").delete().eq("user_id", user_id);
+      const { error: delProfileErr } = await supabaseAdmin.from("profiles").delete().eq("auth_user_id", user_id);
+      if (delProfileErr) {
+        return new Response(JSON.stringify({ error: delProfileErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { error: delAuthErr } = await supabaseAdmin.auth.admin.deleteUser(user_id);
+      if (delAuthErr) {
+        return new Response(JSON.stringify({ error: delAuthErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      await supabaseAdmin.from("admin_audit_log").insert({
+        action: "delete_employee",
+        performed_by: callerId,
+        entity_type: "profile",
+        entity_id: user_id,
+        old_value: oldProfile,
+      });
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── BULK DELETE ALL EMPLOYEES (super_admin only) ─────────────
+    if (action === "bulk_delete_all_employees") {
+      if (callerProfile.role !== "super_admin") {
+        return new Response(JSON.stringify({ error: "Forbidden: super_admin only" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      await supabaseAdmin.from("admin_audit_log").insert({
+        action: "bulk_delete_all_employees",
+        performed_by: callerId,
+        entity_type: "profile",
+        new_value: { initiated_at: new Date().toISOString() },
+      });
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
