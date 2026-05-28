@@ -282,9 +282,11 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
     if (stageRows.length === 0) return { name: "Schedule", ok: true, count: 0, message: "No stage rows" };
 
     // Replace project_stages for this project (factory rows only — site rows are entered in Site Hub)
-    await (supabase as any).from("project_stages").delete().eq("project_id", projectId).lte("stage_number", 15);
+    const { error: stageDelErr } = await (supabase as any).from("project_stages").delete().eq("project_id", projectId).lte("stage_number", 15);
+    if (stageDelErr) console.warn("project_stages delete blocked (non-fatal):", stageDelErr.message);
     for (let i = 0; i < stageRows.length; i += 50) {
-      await (supabase as any).from("project_stages").insert(stageRows.slice(i, i + 50));
+      const { error } = await (supabase as any).from("project_stages").insert(stageRows.slice(i, i + 50));
+      if (error) return { name: "Schedule", ok: false, count: 0, message: `project_stages insert failed: ${error.message}` };
     }
 
     // Auto-clone all factory templates (stage_number 1–15) as project_tasks for each non-N/A stage row.
@@ -358,9 +360,11 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       }
     }
 
-    await supabase.from("project_tasks").delete().eq("project_id", projectId);
+    const { error: taskDelErr } = await supabase.from("project_tasks").delete().eq("project_id", projectId);
+    if (taskDelErr) return { name: "Schedule", ok: false, count: 0, message: `project_tasks delete failed: ${taskDelErr.message}` };
     for (let i = 0; i < tasksToInsert.length; i += 100) {
-      await supabase.from("project_tasks").insert(tasksToInsert.slice(i, i + 100) as any);
+      const { error } = await supabase.from("project_tasks").insert(tasksToInsert.slice(i, i + 100) as any);
+      if (error) return { name: "Schedule", ok: false, count: 0, message: `project_tasks insert failed: ${error.message}` };
     }
 
     const naCount = stageRows.filter(s => s.is_na).length;
@@ -405,7 +409,10 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
     const { data: plan, error } = await (supabase.from("project_material_plans") as any).insert({ project_id: projectId, version: nextV, uploaded_by: userId ?? "" }).select("id").single();
     if (error || !plan) return { name: "Materials", ok: false, count: 0, message: error?.message || "Plan create failed" };
     const withPlan = items.map(it => ({ ...it, plan_id: (plan as any).id }));
-    for (let i = 0; i < withPlan.length; i += 50) await (supabase.from("project_material_plan_items") as any).insert(withPlan.slice(i, i + 50));
+    for (let i = 0; i < withPlan.length; i += 50) {
+      const { error: e2 } = await (supabase.from("project_material_plan_items") as any).insert(withPlan.slice(i, i + 50));
+      if (e2) return { name: "Materials", ok: false, count: 0, message: `project_material_plan_items insert failed: ${e2.message}` };
+    }
     return { name: "Materials", ok: true, count: items.length, message: `${items.length} items imported` };
   }
 
@@ -480,7 +487,10 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
 
       setResults(out);
       const totalImported = out.reduce((s, r) => s + (r.ok ? r.count : 0), 0);
-      if (totalImported > 0) {
+      const failures = out.filter(r => !r.ok);
+      if (failures.length > 0) {
+        toast.error(`${failures.length} sheet${failures.length > 1 ? "s" : ""} failed: ${failures.map(f => `${f.name} — ${f.message}`).join(" | ")}`);
+      } else if (totalImported > 0) {
         toast.success(`Project setup imported — ${totalImported} rows total`);
         // Stamp the project so individual upload buttons hide on every tab
         await (supabase.from("projects") as any)
