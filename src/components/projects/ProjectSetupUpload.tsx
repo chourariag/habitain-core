@@ -282,9 +282,11 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
     if (stageRows.length === 0) return { name: "Schedule", ok: true, count: 0, message: "No stage rows" };
 
     // Replace project_stages for this project (factory rows only — site rows are entered in Site Hub)
-    await (supabase as any).from("project_stages").delete().eq("project_id", projectId).lte("stage_number", 15);
+    const { error: stageDelErr } = await (supabase as any).from("project_stages").delete().eq("project_id", projectId).lte("stage_number", 15);
+    if (stageDelErr) console.warn("project_stages delete blocked (non-fatal):", stageDelErr.message);
     for (let i = 0; i < stageRows.length; i += 50) {
-      await (supabase as any).from("project_stages").insert(stageRows.slice(i, i + 50));
+      const { error } = await (supabase as any).from("project_stages").insert(stageRows.slice(i, i + 50));
+      if (error) return { name: "Schedule", ok: false, count: 0, message: `project_stages insert failed: ${error.message}` };
     }
 
     // Auto-clone all factory templates (stage_number 1–15) as project_tasks for each non-N/A stage row.
