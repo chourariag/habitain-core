@@ -360,9 +360,11 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       }
     }
 
-    await supabase.from("project_tasks").delete().eq("project_id", projectId);
+    const { error: taskDelErr } = await supabase.from("project_tasks").delete().eq("project_id", projectId);
+    if (taskDelErr) return { name: "Schedule", ok: false, count: 0, message: `project_tasks delete failed: ${taskDelErr.message}` };
     for (let i = 0; i < tasksToInsert.length; i += 100) {
-      await supabase.from("project_tasks").insert(tasksToInsert.slice(i, i + 100) as any);
+      const { error } = await supabase.from("project_tasks").insert(tasksToInsert.slice(i, i + 100) as any);
+      if (error) return { name: "Schedule", ok: false, count: 0, message: `project_tasks insert failed: ${error.message}` };
     }
 
     const naCount = stageRows.filter(s => s.is_na).length;
