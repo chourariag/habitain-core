@@ -124,7 +124,6 @@ Deno.serve(async (req) => {
         role,
         login_type: effectiveLoginType,
         phone: normalizedPhone ? `+91${normalizedPhone}` : null,
-        kiosk_pin: normalizedPin || null,
         is_active: true,
         is_archived: false,
       };
@@ -139,6 +138,12 @@ Deno.serve(async (req) => {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+
+      if (normalizedPin) {
+        await supabaseAdmin
+          .from("profile_kiosk_pins")
+          .upsert({ auth_user_id: userId, kiosk_pin: normalizedPin }, { onConflict: "auth_user_id" });
       }
 
       const { error: roleError } = await supabaseAdmin
