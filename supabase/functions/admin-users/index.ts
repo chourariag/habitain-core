@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
           role,
           login_type: effectiveLoginType,
           phone: profilePayload.phone,
-          kiosk_pin_set: Boolean(profilePayload.kiosk_pin),
+          kiosk_pin_set: Boolean(normalizedPin),
         },
       });
 
