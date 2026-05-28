@@ -409,7 +409,10 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
     const { data: plan, error } = await (supabase.from("project_material_plans") as any).insert({ project_id: projectId, version: nextV, uploaded_by: userId ?? "" }).select("id").single();
     if (error || !plan) return { name: "Materials", ok: false, count: 0, message: error?.message || "Plan create failed" };
     const withPlan = items.map(it => ({ ...it, plan_id: (plan as any).id }));
-    for (let i = 0; i < withPlan.length; i += 50) await (supabase.from("project_material_plan_items") as any).insert(withPlan.slice(i, i + 50));
+    for (let i = 0; i < withPlan.length; i += 50) {
+      const { error: e2 } = await (supabase.from("project_material_plan_items") as any).insert(withPlan.slice(i, i + 50));
+      if (e2) return { name: "Materials", ok: false, count: 0, message: `project_material_plan_items insert failed: ${e2.message}` };
+    }
     return { name: "Materials", ok: true, count: items.length, message: `${items.length} items imported` };
   }
 
