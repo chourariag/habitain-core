@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
     const { data: profile, error: profileError } = await supabaseAdmin
       .from("profiles")
-      .select("id, auth_user_id, kiosk_pin, email, is_active, role, display_name, phone")
+      .select("id, auth_user_id, email, is_active, role, display_name, phone")
       .or(phoneVariants.map(p => `phone.eq.${p}`).join(","))
       .single();
 
@@ -60,14 +60,20 @@ Deno.serve(async (req) => {
       });
     }
 
-    if (!profile.kiosk_pin) {
+    const { data: pinRow } = await supabaseAdmin
+      .from("profile_kiosk_pins")
+      .select("kiosk_pin")
+      .eq("auth_user_id", profile.auth_user_id)
+      .maybeSingle();
+
+    if (!pinRow?.kiosk_pin) {
       return new Response(JSON.stringify({ error: "No PIN set for this account. Contact your admin." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    if (profile.kiosk_pin !== pin) {
+    if (pinRow.kiosk_pin !== pin) {
       return new Response(JSON.stringify({ error: "Incorrect PIN" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

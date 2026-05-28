@@ -6239,6 +6239,24 @@ export type Database = {
           },
         ]
       }
+      profile_kiosk_pins: {
+        Row: {
+          auth_user_id: string
+          kiosk_pin: string
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id: string
+          kiosk_pin: string
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string
+          kiosk_pin?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           auth_user_id: string
@@ -6253,7 +6271,6 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_archived: boolean | null
-          kiosk_pin: string | null
           language: string | null
           login_type: Database["public"]["Enums"]["login_type"] | null
           onboarding_completed: boolean
@@ -6278,7 +6295,6 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_archived?: boolean | null
-          kiosk_pin?: string | null
           language?: string | null
           login_type?: Database["public"]["Enums"]["login_type"] | null
           onboarding_completed?: boolean
@@ -6303,7 +6319,6 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_archived?: boolean | null
-          kiosk_pin?: string | null
           language?: string | null
           login_type?: Database["public"]["Enums"]["login_type"] | null
           onboarding_completed?: boolean
