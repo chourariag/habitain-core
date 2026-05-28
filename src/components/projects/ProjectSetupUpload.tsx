@@ -487,7 +487,10 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
 
       setResults(out);
       const totalImported = out.reduce((s, r) => s + (r.ok ? r.count : 0), 0);
-      if (totalImported > 0) {
+      const failures = out.filter(r => !r.ok);
+      if (failures.length > 0) {
+        toast.error(`${failures.length} sheet${failures.length > 1 ? "s" : ""} failed: ${failures.map(f => `${f.name} — ${f.message}`).join(" | ")}`);
+      } else if (totalImported > 0) {
         toast.success(`Project setup imported — ${totalImported} rows total`);
         // Stamp the project so individual upload buttons hide on every tab
         await (supabase.from("projects") as any)
