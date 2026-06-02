@@ -152,6 +152,7 @@ export default function FactoryFloorMap() {
   const [panelBatches, setPanelBatches] = useState<PanelBatch[]>([]);
   const [handovers, setHandovers] = useState<PanelHandover[]>([]);
   const [projectSystems, setProjectSystems] = useState<Record<string, "modular" | "panelised" | "hybrid">>({});
+  const [stagesByModule, setStagesByModule] = useState<Map<string, StageRow[]>>(new Map());
   const [loading, setLoading] = useState(true);
   const [selectedBay, setSelectedBay] = useState<number | null>(null);
   const [checklistDrawer, setChecklistDrawer] = useState<{ projectId: string; projectName?: string; moduleLabel: string; stageName?: string } | null>(null);
