@@ -230,16 +230,24 @@ function injectVaishnaviBoqOnSite(ws: ExcelJS.Worksheet) {
   ws.getRow(r).height = 22;
   r++;
 
-  // ROW 2 — Column Headers
+  // ROW 2 — Column Headers (visual anchor: thick green top border, bold white on green).
+  // Note: ExcelJS supports only one freeze pane per sheet, and the existing BOQ + Margin
+  // sheet already freezes row 4 for the factory items. We keep that freeze intact and
+  // make this on-site header row a strong visual anchor instead.
   headers.forEach((h, i) => {
     const cell = ws.getCell(r, i + 1);
     cell.value = h;
-    cell.font = { name: "Arial", bold: true, size: 9, color: { argb: "FFFFFFFF" } };
+    cell.font = { name: "Arial", bold: true, size: 10, color: { argb: "FFFFFFFF" } };
     cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
     cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF006039" } };
-    cell.border = thinBorder;
+    cell.border = {
+      top: { style: "thick", color: { argb: "FF006039" } },
+      left: { style: "thin", color: { argb: "FFCCCCCC" } },
+      right: { style: "thin", color: { argb: "FFCCCCCC" } },
+      bottom: { style: "thin", color: { argb: "FFCCCCCC" } },
+    };
   });
-  ws.getRow(r).height = 40;
+  ws.getRow(r).height = 42;
   r++;
 
   const writeSubsection = (
