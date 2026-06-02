@@ -206,14 +206,14 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       }
 
       // Project-specific pre-fill: Vaishnavi Life Mysore 238-244 (VAIS/26/B4C)
-      // Inject the On-Site Work block into the BOQ + Margin sheet after the
-      // existing factory TOTAL row (row 71). Only this project is affected.
+      // Append the On-Site Work section to the Material Plan sheet (BOQ + Margin
+      // sheet is left untouched). Only this project is affected.
       const isVaishnavi =
         String(proj?.name || "").trim() === "Vaishnavi Life Mysore 238-244" ||
         projectCode === "VAIS/26/B4C";
       if (isVaishnavi) {
-        const boqWs = wb.getWorksheet("BOQ + Margin");
-        if (boqWs) injectVaishnaviOnSiteWork(boqWs);
+        const mpWs = wb.getWorksheet("Material Plan") || wb.getWorksheet("Materials");
+        if (mpWs) injectVaishnaviMaterialPlanOnSite(mpWs);
       }
 
       const out = await wb.xlsx.writeBuffer();
