@@ -37,22 +37,38 @@ const PANEL_TYPE_LABELS: Record<string, string> = {
   external_cladding_panel: "External Cladding Panel",
 };
 
-const STAGE_NAMES = [
-  "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
-  "MEP Final", "Windows & Doors", "Finishing", "QC Inspection", "Dispatch Ready",
-];
+// Fallback palette only (cycled when a module has more stages than colours).
 const STAGE_COLOURS = [
   "#8B8B8B", "#5B8DD9", "#9B59B6", "#E67E22", "#F1C40F",
   "#1ABC9C", "#3498DB", "#E91E63", "#006039", "#F40009",
 ];
+const colourFor = (i: number) => STAGE_COLOURS[((i % STAGE_COLOURS.length) + STAGE_COLOURS.length) % STAGE_COLOURS.length];
+
+// Used only as the legend fallback when no module data is loaded yet.
+const FALLBACK_STAGE_NAMES = [
+  "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
+  "MEP Final", "Windows & Doors", "Finishing", "QC Inspection", "Dispatch Ready",
+];
 
 const CAN_ASSIGN_ROLES = ["production_head", "factory_floor_supervisor", "super_admin", "managing_director"];
 
-function stageIndex(stage: string | null): number {
-  if (!stage) return 0;
-  const s = stage.toLowerCase().replace(/[^a-z ]/g, "").trim();
-  const idx = STAGE_NAMES.findIndex((n) => n.toLowerCase().replace(/[^a-z ]/g, "").trim() === s);
-  return idx >= 0 ? idx : 0;
+type StageRow = {
+  id: string;
+  module_id: string;
+  stage_name: string;
+  stage_order: number;
+  status: string | null;
+  completed_at: string | null;
+};
+
+const normaliseStage = (s: string | null) => (s ?? "").toLowerCase().replace(/[^a-z ]/g, "").trim();
+
+/** Index of current_stage within a module's stage list (-1 if not found / no stages). */
+function stageIndexFor(stages: StageRow[] | undefined, current: string | null): number {
+  if (!stages || stages.length === 0) return -1;
+  const target = normaliseStage(current);
+  if (!target) return -1;
+  return stages.findIndex((s) => normaliseStage(s.stage_name) === target);
 }
 
 type BayAssignment = {
