@@ -34,6 +34,135 @@ const parseDate = (val: any): string | null => {
   return isNaN(d.getTime()) ? null : format(d, "yyyy-MM-dd");
 };
 
+/**
+ * Inject the On-Site Work block into the "BOQ + Margin" sheet for the
+ * Vaishnavi Life Mysore 238-244 project. Inserts 33 new rows after the
+ * existing factory TOTAL row (row 71) and updates the Margin Summary
+ * formulas to include the new On-Site Grand Total.
+ */
+function injectVaishnaviOnSiteWork(ws: ExcelJS.Worksheet) {
+  const sections: Array<{ title: string; subtotal: string; items: Array<[string, string]> }> = [
+    {
+      title: "I. PRE-FABRICATED PATHWAY",
+      subtotal: "Total — Pre-Fabricated Pathway",
+      items: [
+        ["Structural Steel — Beams, Columns / Framed Structure", "Kg"],
+        ["LGSF — Wall Framing", "Kg"],
+        ["Inner Wall Rockwool Slab 48kg 75mm Thickness", "Sft"],
+        ["External Wall — Shera Neu Wall Board 2440x1220x8mm", "Sft"],
+        ["Internal Painting — Royal Emulsion", "Sft"],
+        ["External Wall Shera Board with Paint", "Sft"],
+        ["Vitrified Tiling", "Sft"],
+        ["Toughened Glass", "Sft"],
+        ["Aluminium Sliding Door", "Sft"],
+        ["Aluminium Window", "Sft"],
+        ["Internal Electrical Work", "Sft"],
+      ],
+    },
+    {
+      title: "II. ENTRY DECK",
+      subtotal: "Total — Entry Deck",
+      items: [
+        ["Structural Steel — Beams, Columns / Framed Structure", "Kg"],
+        ["Puff Panel Roof", "Sft"],
+        ["PVC / Vox Ceiling", "Sft"],
+        ["Vitrified Tiling", "Sft"],
+        ["Internal Electrical Work", "Sft"],
+      ],
+    },
+    {
+      title: "III. OUTDOOR DECK",
+      subtotal: "Total — Outdoor Deck",
+      items: [
+        ["Structural Steel — Beams, Columns / Framed Structure", "Kg"],
+        ["Puff Panel Roof", "Sft"],
+        ["PVC / Vox Ceiling", "Sft"],
+        ["Vitrified Tiling", "Sft"],
+        ["Internal Electrical Work", "Sft"],
+      ],
+    },
+    {
+      title: "C. ADD-ON",
+      subtotal: "Total — Add-On",
+      items: [
+        ["AC Copper Piping", "m"],
+        ["Transportation", "LS"],
+      ],
+    },
+  ];
+
+  // 1 section header + per-section (1 sub-header + items + 1 sub-total) + 1 grand total
+  const totalNew = 1 + sections.reduce((s, sec) => s + 1 + sec.items.length + 1, 0) + 1;
+
+  // Push the Margin Summary block down by `totalNew` rows. Formula refs to
+  // M71/N71 stay valid because the factory TOTAL row is above the insertion.
+  ws.spliceRows(72, 0, ...Array.from({ length: totalNew }, () => [] as any[]));
+
+  let r = 72;
+  // Section header — matches the existing "  ▶  …" style
+  ws.getCell(`A${r}`).value = "  ▶  ON-SITE WORK";
+  ws.mergeCells(`A${r}:P${r}`);
+  ws.getRow(r).font = { bold: true };
+  r++;
+
+  const subtotalRows: number[] = [];
+  let sno = 53;
+  for (const sec of sections) {
+    ws.getCell(`A${r}`).value = sec.title;
+    ws.mergeCells(`A${r}:P${r}`);
+    ws.getRow(r).font = { bold: true, italic: true };
+    r++;
+
+    const startItem = r;
+    for (const [desc, unit] of sec.items) {
+      ws.getCell(`A${r}`).value = sno++;
+      ws.getCell(`B${r}`).value = "On-Site Work";
+      ws.getCell(`C${r}`).value = desc;
+      ws.getCell(`D${r}`).value = unit;
+      ws.getCell(`G${r}`).value = 0.05;
+      ws.getCell(`H${r}`).value = { formula: `IF(F${r}>0,F${r}*(1+G${r}),E${r}*(1+G${r}))` } as any;
+      ws.getCell(`L${r}`).value = { formula: `I${r}+J${r}+K${r}` } as any;
+      ws.getCell(`M${r}`).value = { formula: `IF(E${r}>0,E${r}*L${r},0)` } as any;
+      ws.getCell(`N${r}`).value = { formula: `IF(F${r}>0,H${r}*L${r},0)` } as any;
+      ws.getCell(`P${r}`).value = "On-Site";
+      r++;
+    }
+    const endItem = r - 1;
+
+    ws.getCell(`A${r}`).value = sec.subtotal;
+    ws.mergeCells(`A${r}:L${r}`);
+    ws.getCell(`M${r}`).value = { formula: `SUM(M${startItem}:M${endItem})` } as any;
+    ws.getCell(`N${r}`).value = { formula: `SUM(N${startItem}:N${endItem})` } as any;
+    ws.getRow(r).font = { bold: true };
+    subtotalRows.push(r);
+    r++;
+  }
+
+  // Grand total
+  const grandRow = r;
+  ws.getCell(`A${r}`).value = "GRAND TOTAL — On-Site Work";
+  ws.mergeCells(`A${r}:L${r}`);
+  ws.getCell(`M${r}`).value = { formula: subtotalRows.map(x => `M${x}`).join("+") } as any;
+  ws.getCell(`N${r}`).value = { formula: subtotalRows.map(x => `N${x}`).join("+") } as any;
+  ws.getRow(r).font = { bold: true };
+
+  // Margin Summary originally lived at rows 74-85, now shifted down by totalNew.
+  const shift = totalNew;
+  const tenderTotal = `(M71+M${grandRow})`;
+  const gfcTotal = `(N71+N${grandRow})`;
+  // 76→Tender BOQ Total, 77→Tender Margin, 78→Tender Margin %
+  ws.getCell(`K${76 + shift}`).value = { formula: `M71+M${grandRow}` } as any;
+  ws.getCell(`K${77 + shift}`).value = { formula: `'Project Details'!B10-${tenderTotal}` } as any;
+  ws.getCell(`K${78 + shift}`).value = { formula: `IF('Project Details'!B10>0,('Project Details'!B10-${tenderTotal})/'Project Details'!B10,0)` } as any;
+  // 80→GFC BOQ Total, 81→GFC Margin, 82→GFC Margin %
+  ws.getCell(`K${80 + shift}`).value = { formula: `N71+N${grandRow}` } as any;
+  ws.getCell(`K${81 + shift}`).value = { formula: `'Project Details'!B10-${gfcTotal}` } as any;
+  ws.getCell(`K${82 + shift}`).value = { formula: `IF('Project Details'!B10>0,('Project Details'!B10-${gfcTotal})/'Project Details'!B10,0)` } as any;
+  // 84→Tender vs GFC Variance, 85→Variance %
+  ws.getCell(`K${84 + shift}`).value = { formula: `${gfcTotal}-${tenderTotal}` } as any;
+  ws.getCell(`K${85 + shift}`).value = { formula: `IF(${tenderTotal}>0,(${gfcTotal}-${tenderTotal})/${tenderTotal},0)` } as any;
+}
+
 export function ProjectSetupUpload({ projectId, userRole, productionSystem, onImported }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -108,6 +237,17 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
           const r = matchRow(label);
           if (r) ws.getCell(r, 2).value = value as any;
         }
+      }
+
+      // Project-specific pre-fill: Vaishnavi Life Mysore 238-244 (VAIS/26/B4C)
+      // Inject the On-Site Work block into the BOQ + Margin sheet after the
+      // existing factory TOTAL row (row 71). Only this project is affected.
+      const isVaishnavi =
+        String(proj?.name || "").trim() === "Vaishnavi Life Mysore 238-244" ||
+        projectCode === "VAIS/26/B4C";
+      if (isVaishnavi) {
+        const boqWs = wb.getWorksheet("BOQ + Margin");
+        if (boqWs) injectVaishnaviOnSiteWork(boqWs);
       }
 
       const out = await wb.xlsx.writeBuffer();
