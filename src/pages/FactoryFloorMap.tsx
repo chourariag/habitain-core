@@ -288,9 +288,13 @@ export default function FactoryFloorMap() {
       if (!mod) return;
       const status = mod.production_status;
       if (status === "hold") materialHold++;
-      const si = stageIndex(mod.current_stage);
-      if (si === 8) qcReady++;
-      if (si === 9) dispatchReady++;
+      const modStages = stagesByModule.get(mod.id);
+      const total = modStages?.length ?? 0;
+      const si = stageIndexFor(modStages, mod.current_stage);
+      if (total > 0 && si >= 0) {
+        if (si === total - 2) qcReady++;
+        if (si === total - 1) dispatchReady++;
+      }
       if (status === "in_progress") behind++; // simplified heuristic
     });
     return { active: occupied, behind, qcReady, dispatchReady, materialHold };
