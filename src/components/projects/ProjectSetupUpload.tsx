@@ -106,7 +106,7 @@ function injectVaishnaviOnSiteWork(ws: ExcelJS.Worksheet) {
   let r = 72;
   // Section header — matches the existing "  ▶  …" style
   ws.getCell(`A${r}`).value = "  ▶  ON-SITE WORK";
-  ws.mergeCells(`A${r}:P${r}`);
+  safeMerge(ws, `A${r}:P${r}`);
   ws.getRow(r).font = { bold: true };
   r++;
 
@@ -114,7 +114,7 @@ function injectVaishnaviOnSiteWork(ws: ExcelJS.Worksheet) {
   let sno = 53;
   for (const sec of sections) {
     ws.getCell(`A${r}`).value = sec.title;
-    ws.mergeCells(`A${r}:P${r}`);
+    safeMerge(ws, `A${r}:P${r}`);
     ws.getRow(r).font = { bold: true, italic: true };
     r++;
 
@@ -135,7 +135,7 @@ function injectVaishnaviOnSiteWork(ws: ExcelJS.Worksheet) {
     const endItem = r - 1;
 
     ws.getCell(`A${r}`).value = sec.subtotal;
-    ws.mergeCells(`A${r}:L${r}`);
+    safeMerge(ws, `A${r}:L${r}`);
     ws.getCell(`M${r}`).value = { formula: `SUM(M${startItem}:M${endItem})` } as any;
     ws.getCell(`N${r}`).value = { formula: `SUM(N${startItem}:N${endItem})` } as any;
     ws.getRow(r).font = { bold: true };
@@ -146,7 +146,7 @@ function injectVaishnaviOnSiteWork(ws: ExcelJS.Worksheet) {
   // Grand total
   const grandRow = r;
   ws.getCell(`A${r}`).value = "GRAND TOTAL — On-Site Work";
-  ws.mergeCells(`A${r}:L${r}`);
+  safeMerge(ws, `A${r}:L${r}`);
   ws.getCell(`M${r}`).value = { formula: subtotalRows.map(x => `M${x}`).join("+") } as any;
   ws.getCell(`N${r}`).value = { formula: subtotalRows.map(x => `N${x}`).join("+") } as any;
   ws.getRow(r).font = { bold: true };
