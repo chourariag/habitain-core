@@ -110,6 +110,17 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
         }
       }
 
+      // Project-specific pre-fill: Vaishnavi Life Mysore 238-244 (VAIS/26/B4C)
+      // Inject the On-Site Work block into the BOQ + Margin sheet after the
+      // existing factory TOTAL row (row 71). Only this project is affected.
+      const isVaishnavi =
+        String(proj?.name || "").trim() === "Vaishnavi Life Mysore 238-244" ||
+        projectCode === "VAIS/26/B4C";
+      if (isVaishnavi) {
+        const boqWs = wb.getWorksheet("BOQ + Margin");
+        if (boqWs) injectVaishnaviOnSiteWork(boqWs);
+      }
+
       const out = await wb.xlsx.writeBuffer();
       const safeName = (proj?.name || "Project").replace(/[^A-Za-z0-9]+/g, "_");
       const blob = new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
