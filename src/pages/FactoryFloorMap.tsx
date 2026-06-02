@@ -727,28 +727,40 @@ export default function FactoryFloorMap() {
                       <div><span style={{ color: "#666" }}>Current Stage:</span> <span style={{ color: "#1A1A1A" }}>{selectedModule.current_stage ?? "—"}</span></div>
                       <div><span style={{ color: "#666" }}>Status:</span> <span style={{ color: "#1A1A1A" }}>{selectedModule.production_status?.replace(/_/g, " ") ?? "—"}</span></div>
                     </div>
-                    {/* Stage progress dots */}
-                    <div className="flex gap-1 items-center mt-2">
-                      {STAGE_NAMES.map((name, i) => {
-                        const si = stageIndex(selectedModule.current_stage);
-                        const done = i < si;
-                        const current = i === si;
+                    {/* Stage progress dots — driven by production_stages for this module */}
+                    {(() => {
+                      const modStages = stagesByModule.get(selectedModule.id) ?? [];
+                      if (modStages.length === 0) {
                         return (
-                          <div
-                            key={name}
-                            title={name}
-                            className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold"
-                            style={{
-                              backgroundColor: done ? STAGE_COLOURS[i] : current ? STAGE_COLOURS[i] : "#E0E0E0",
-                              color: done || current ? "#fff" : "#999",
-                              border: current ? "2px solid #1A1A1A" : "none",
-                            }}
-                          >
-                            {i + 1}
-                          </div>
+                          <p className="text-xs italic mt-2" style={{ color: "#999" }}>
+                            No production stages set up for this project yet.
+                          </p>
                         );
-                      })}
-                    </div>
+                      }
+                      const si = stageIndexFor(modStages, selectedModule.current_stage);
+                      return (
+                        <div className="flex gap-1 items-center mt-2 flex-wrap">
+                          {modStages.map((s, i) => {
+                            const done = s.status === "completed" || (si >= 0 && i < si);
+                            const current = si >= 0 && i === si && !done;
+                            return (
+                              <div
+                                key={s.id}
+                                title={`${s.stage_name} — ${s.status ?? "pending"}`}
+                                className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold"
+                                style={{
+                                  backgroundColor: done || current ? colourFor(i) : "#E0E0E0",
+                                  color: done || current ? "#fff" : "#999",
+                                  border: current ? "2px solid #1A1A1A" : "none",
+                                }}
+                              >
+                                {s.stage_order}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                     {/* Assigned workers */}
                     <div className="mt-3">
                       <p className="text-xs font-semibold mb-1" style={{ color: "#999" }}>WORKERS THIS WEEK</p>
