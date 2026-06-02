@@ -893,9 +893,11 @@ export default function FactoryFloorMap() {
           <Select value={assignTask} onValueChange={setAssignTask}>
             <SelectTrigger><SelectValue placeholder="Select stage/task" /></SelectTrigger>
             <SelectContent>
-              {STAGE_NAMES.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
+              {(() => {
+                const opts = assignDialog ? (stagesByModule.get(assignDialog.moduleId)?.map((s) => s.stage_name) ?? []) : [];
+                const list = opts.length > 0 ? opts : legendStageNames;
+                return list.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>);
+              })()}
             </SelectContent>
           </Select>
           <DialogFooter>
