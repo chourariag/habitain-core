@@ -129,6 +129,217 @@ function injectVaishnaviMaterialPlanOnSite(ws: ExcelJS.Worksheet) {
   }
 }
 
+/**
+ * Append the complete ON-SITE WORK block to the "BOQ + Margin" sheet for the
+ * Vaishnavi Life Mysore 238-244 project. 18-column layout (A..R) with full
+ * borders, fills, sub-totals and grand total / GST rows. Hard-coded values
+ * per project spec.
+ */
+function injectVaishnaviBoqOnSite(ws: ExcelJS.Worksheet) {
+  type Row = (string | number)[];
+
+  const headers = [
+    "Sl. No.", "Item Description", "Unit", "Tender Std Qty",
+    "Tender Rate (₹)", "Tender Amount (₹)", "GFC Qty", "Add 10% Qty",
+    "Add 15% Qty", "Total Qty (I+II+III)", "Materials Rate (₹)",
+    "Labour Rate (₹)", "Basic Rate (₹) (K+L)", "Margin Rate (₹)",
+    "Final Rate (₹) (M+N)", "Final Cost (₹) (J×M)",
+    "Margin Amount (₹) (J×N)", "Final Amount (₹) (P+Q)",
+  ];
+
+  const pathway: Row[] = [
+    [1, "Structural steel — Beams, Columns / Framed Structure", "Kg", 887, 150, 133050, 568, 0, 0, 568, 65, 40, 105, 42, 150, 59640, 23856, 133050],
+    [2, "LGSF — Wall framing", "Kg", 0, 148, 0, 319, 0, 0, 319, 65, 40, 105, 42, 147, 33495, 13398, 0],
+    [3, "Inner wall Rockwool Slab 48kg 75mm Thickness", "sft", 65, 70, 4551, 65, 0, 0, 65, 35, 15, 50, 20, 70, 3250, 1300, 4550],
+    [4, "External wall — Shera Neu Wall Board 2440x1220x8mm", "sft", 224, 77, 17249, 192, 0, 0, 192, 40, 15, 55, 22, 77, 10560, 4224, 17248],
+    [5, "Internal Painting — Royal Emulsion", "sft", 70, 42, 2941, 73, 0, 0, 73, 18, 12, 30, 12, 42, 2190, 876, 2940],
+    [6, "External wall Shera Board with Paint", "sft", 128, 188, 24065, 96, 0, 0, 96, 105, 30, 135, 53, 188, 12960, 5088, 24064],
+    [7, "Vitrified Tiling", "sft", 296, 174, 51505, 296, 0, 0, 296, 60, 65, 125, 49, 174, 37000, 14504, 51504],
+    [8, "Toughened Glass", "sft", 343, 348, 119365, 296, 0, 0, 296, 200, 50, 250, 98, 348, 74000, 29008, 119364],
+    [9, "Aluminium Sliding Door", "sft", 159, 903, 143578, 153, 0, 0, 153, 595, 50, 645, 258, 903, 98685, 39474, 143577],
+    [10, "Aluminium Window", "sft", 68, 903, 61405, 114, 0, 0, 115, 595, 50, 645, 258, 903, 74175, 29670, 61404],
+    [11, "Internal Electrical work", "sft", 296, 70, 20712, 296, 0, 0, 296, 50, 0, 50, 20, 70, 14800, 5920, 20720],
+  ];
+  const entryDeck: Row[] = [
+    [1, "Structural steel — Beams, Columns / Framed Structure", "Kg", 880, 150, 132000, 675, 0, 0, 675, 65, 40, 105, 45, 150, 70875, 30375, 132000],
+    [2, "PUFF Panel Roof", "Sft", 207, 278, 57546, 280, 1, 0, 281, 178.5, 20, 198.5, 79.4, 278, 55778, 22306, 57546],
+    [3, "PVC / Vox Ceiling", "sft", 207, 278, 57546, 280, 1, 0, 281, 178.5, 20, 198.5, 79.4, 278, 55778, 22306, 57546],
+    [4, "Vitrified Tiling", "sft", 207, 174, 36018, 201, 0, 0, 201, 59, 65, 124, 49.6, 174, 24924, 9970, 36018],
+    [5, "Internal Electrical work", "sft", 207, 70, 14491, 201, 0, 0, 201, 50, 0, 50, 20, 70, 10050, 4020, 14490],
+  ];
+  const outdoorDeck: Row[] = [
+    [1, "Structural steel — Beams, Columns / Framed Structure", "Kg", 1045, 150, 156750, 1846, 1, 0, 1847, 65, 40, 105, 45, 150, 193935, 83115, 156750],
+    [2, "PUFF Panel Roof", "Sft", 349, 278, 97022, 336, 0, 0, 336, 178.5, 20, 198.5, 79.4, 278, 66696, 26678, 97022],
+    [3, "PVC / Vox Ceiling", "sft", 349, 278, 97022, 336, 0, 0, 336, 178.5, 20, 198.5, 79.4, 278, 66696, 26678, 97022],
+    [4, "Vitrified Tiling", "sft", 254, 174, 44196, 257, 0, 0, 257, 59, 65, 124, 49.6, 174, 31868, 12747, 44196],
+    [5, "Internal Electrical work", "sft", 254, 70, 17781, 257, 0, 0, 257, 50, 0, 50, 20, 70, 12850, 5140, 17780],
+  ];
+  const addon: Row[] = [
+    [1, "AC Copper Piping", "m", 30, 1751, 52519, 30, 0, 0, 30, 960.45, 290, 1250.45, 500.18, 1750.63, 37514, 15005, 52519],
+    [2, "Transportation", "LS", 1, 295000, 295000, 1, 0, 0, 1, 191750, 0, 191750, 76700, 268450, 191750, 76700, 295000],
+  ];
+
+  const widths = [6, 42, 8, 14, 14, 16, 12, 12, 12, 14, 14, 14, 14, 14, 14, 16, 16, 18];
+  widths.forEach((w, i) => {
+    const col = ws.getColumn(i + 1);
+    if ((col.width ?? 0) < w) col.width = w;
+  });
+
+  // Find last used row
+  let lastRow = 1;
+  for (let i = ws.rowCount; i >= 1; i--) {
+    const row = ws.getRow(i);
+    let hasData = false;
+    row.eachCell({ includeEmpty: false }, () => { hasData = true; });
+    if (hasData) { lastRow = i; break; }
+  }
+  let r = lastRow + 2; // leave a blank spacer above
+
+  const thinBorder = {
+    top: { style: "thin" as const, color: { argb: "FFCCCCCC" } },
+    left: { style: "thin" as const, color: { argb: "FFCCCCCC" } },
+    bottom: { style: "thin" as const, color: { argb: "FFCCCCCC" } },
+    right: { style: "thin" as const, color: { argb: "FFCCCCCC" } },
+  };
+
+  const colLetter = (n: number) => String.fromCharCode(64 + n); // 1->A
+  const rangeRow = (row: number) => `${colLetter(1)}${row}:${colLetter(18)}${row}`;
+  const rangeAQ = (row: number) => `A${row}:Q${row}`;
+  const rangeAO = (row: number) => `A${row}:O${row}`;
+
+  const applyBorders = (row: number) => {
+    for (let c = 1; c <= 18; c++) {
+      ws.getCell(row, c).border = thinBorder;
+    }
+  };
+
+  const fillRow = (row: number, argb: string) => {
+    for (let c = 1; c <= 18; c++) {
+      ws.getCell(row, c).fill = { type: "pattern", pattern: "solid", fgColor: { argb } };
+    }
+  };
+
+  // ROW 1 — Section Title
+  safeMerge(ws, rangeRow(r));
+  const title = ws.getCell(`A${r}`);
+  title.value = "B — ON-SITE WORK";
+  title.font = { name: "Arial", bold: true, size: 11, color: { argb: "FFFFFFFF" } };
+  title.alignment = { vertical: "middle", horizontal: "left" };
+  fillRow(r, "FF1A4B5A");
+  applyBorders(r);
+  ws.getRow(r).height = 22;
+  r++;
+
+  // ROW 2 — Column Headers
+  headers.forEach((h, i) => {
+    const cell = ws.getCell(r, i + 1);
+    cell.value = h;
+    cell.font = { name: "Arial", bold: true, size: 9, color: { argb: "FFFFFFFF" } };
+    cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF006039" } };
+    cell.border = thinBorder;
+  });
+  ws.getRow(r).height = 40;
+  r++;
+
+  const writeSubsection = (
+    headerText: string,
+    rows: Row[],
+    subTotalLabel: string,
+    pTotal: number, qTotal: number, rTotal: number,
+  ) => {
+    // Sub-section header
+    safeMerge(ws, rangeRow(r));
+    const h = ws.getCell(`A${r}`);
+    h.value = headerText;
+    h.font = { name: "Arial", bold: true, size: 10, color: { argb: "FF1A4B5A" } };
+    h.alignment = { vertical: "middle", horizontal: "left" };
+    fillRow(r, "FFD4EAF0");
+    applyBorders(r);
+    ws.getRow(r).height = 16;
+    r++;
+
+    // Data rows
+    rows.forEach((data, idx) => {
+      const bg = idx % 2 === 0 ? "FFF7F7F7" : "FFFFFFFF";
+      data.forEach((v, ci) => {
+        const cell = ws.getCell(r, ci + 1);
+        cell.value = v as any;
+        cell.font = { name: "Arial", size: 9 };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bg } };
+        cell.border = thinBorder;
+        cell.alignment = { vertical: "middle", wrapText: false,
+          horizontal: ci === 1 ? "left" : ci === 2 ? "center" : ci === 0 ? "center" : "right" };
+        // Number formats
+        if ([5, 15, 16, 17].includes(ci)) cell.numFmt = "#,##0"; // F,P,Q,R
+        else if ([10, 11, 12, 13, 14].includes(ci)) cell.numFmt = "#,##0.00"; // K,L,M,N,O
+        else if ([3, 4, 6, 7, 8, 9].includes(ci)) cell.numFmt = "#,##0";
+      });
+      ws.getRow(r).height = 18;
+      r++;
+    });
+
+    // Sub-total row
+    safeMerge(ws, rangeAO(r));
+    const lbl = ws.getCell(`A${r}`);
+    lbl.value = subTotalLabel;
+    lbl.font = { name: "Arial", bold: true, color: { argb: "FF006039" } };
+    lbl.alignment = { vertical: "middle", horizontal: "right" };
+    for (let c = 1; c <= 18; c++) {
+      const cell = ws.getCell(r, c);
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE8F2ED" } };
+      cell.border = thinBorder;
+    }
+    const setTot = (col: number, val: number) => {
+      const cell = ws.getCell(r, col);
+      cell.value = val;
+      cell.font = { name: "Arial", bold: true, color: { argb: "FF006039" } };
+      cell.numFmt = "#,##0";
+      cell.alignment = { vertical: "middle", horizontal: "right" };
+    };
+    setTot(16, pTotal); setTot(17, qTotal); setTot(18, rTotal);
+    ws.getRow(r).height = 18;
+    r++;
+  };
+
+  writeSubsection("I — PRE-FABRICATED PATHWAY (296 SFT)", pathway,
+    "Total Budget of Pre-Fabricated Pathway Rs.", 420755, 157666, 578421);
+  writeSubsection("II — ENTRY DECK (207 SFT)", entryDeck,
+    "Total Budget of Entry Deck Rs.", 217406, 79977, 297601);
+  writeSubsection("III — OUTDOOR DECK (254 SFT)", outdoorDeck,
+    "Total Budget of Outdoor Deck Rs.", 372045, 154358, 412771);
+  writeSubsection("C — ADD-ON", addon,
+    "Total Budget of Add-On Rs.", 229264, 91705, 347519);
+
+  // Blank spacer
+  r++;
+
+  // Grand Total
+  const writeFooter = (label: string, amount: number, fillArgb: string, size = 11) => {
+    safeMerge(ws, rangeAQ(r));
+    const lbl = ws.getCell(`A${r}`);
+    lbl.value = label;
+    lbl.font = { name: "Arial", bold: true, size, color: { argb: "FFFFFFFF" } };
+    lbl.alignment = { vertical: "middle", horizontal: "right" };
+    for (let c = 1; c <= 18; c++) {
+      const cell = ws.getCell(r, c);
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: fillArgb } };
+      cell.border = thinBorder;
+    }
+    const amt = ws.getCell(r, 18);
+    amt.value = amount;
+    amt.font = { name: "Arial", bold: true, size, color: { argb: "FFFFFFFF" } };
+    amt.numFmt = "#,##0";
+    amt.alignment = { vertical: "middle", horizontal: "right" };
+    ws.getRow(r).height = 22;
+    r++;
+  };
+
+  writeFooter("Grand Total (On-Site Work)", 1636312, "FF006039", 11);
+  writeFooter("GST @ 18%", 294536, "FF1A4B5A", 10);
+  writeFooter("Total (incl. GST)", 1930848, "FF0E7490", 11);
+}
+
 export function ProjectSetupUpload({ projectId, userRole, productionSystem, onImported }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -206,14 +417,17 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       }
 
       // Project-specific pre-fill: Vaishnavi Life Mysore 238-244 (VAIS/26/B4C)
-      // Append the On-Site Work section to the Material Plan sheet (BOQ + Margin
-      // sheet is left untouched). Only this project is affected.
+      // Append the complete ON-SITE WORK block to the BOQ + Margin sheet only.
+      // Material Plan sheet is intentionally left untouched.
       const isVaishnavi =
         String(proj?.name || "").trim() === "Vaishnavi Life Mysore 238-244" ||
         projectCode === "VAIS/26/B4C";
       if (isVaishnavi) {
-        const mpWs = wb.getWorksheet("Material Plan") || wb.getWorksheet("Materials");
-        if (mpWs) injectVaishnaviMaterialPlanOnSite(mpWs);
+        const boqWs =
+          wb.getWorksheet("BOQ + Margin") ||
+          wb.getWorksheet("Tender BOQ") ||
+          wb.getWorksheet("BOQ");
+        if (boqWs) injectVaishnaviBoqOnSite(boqWs);
       }
 
       const out = await wb.xlsx.writeBuffer();
