@@ -546,9 +546,9 @@ export default function FactoryFloorMap() {
           <span className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#666" }}>Outdoor Bay</span>
         </div>
         <span className="text-xs font-semibold ml-3" style={{ color: "#999" }}>STAGES:</span>
-        {STAGE_NAMES.map((name, i) => (
+        {legendStageNames.map((name, i) => (
           <div key={name} className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: STAGE_COLOURS[i] }} />
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: colourFor(i) }} />
             <span className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#666" }}>{name}</span>
           </div>
         ))}
