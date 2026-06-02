@@ -707,6 +707,7 @@ export default function FactoryFloorMap() {
                     outdoor
                     productionSystem={sys}
                     pendingHandover={projHandover}
+                    stages={mod ? stagesByModule.get(mod.id) : undefined}
                   />
                 );
               })}
