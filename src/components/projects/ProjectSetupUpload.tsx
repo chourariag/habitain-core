@@ -40,6 +40,11 @@ const parseDate = (val: any): string | null => {
  * existing factory TOTAL row (row 71) and updates the Margin Summary
  * formulas to include the new On-Site Grand Total.
  */
+function safeMerge(ws: ExcelJS.Worksheet, range: string) {
+  try { ws.unMergeCells(range); } catch { /* not merged */ }
+  try { ws.mergeCells(range); } catch { /* already merged, skip */ }
+}
+
 function injectVaishnaviOnSiteWork(ws: ExcelJS.Worksheet) {
   const sections: Array<{ title: string; subtotal: string; items: Array<[string, string]> }> = [
     {
