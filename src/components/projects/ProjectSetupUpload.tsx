@@ -137,8 +137,56 @@ function injectVaishnaviMaterialPlanOnSite(ws: ExcelJS.Worksheet) {
  */
 function injectVaishnaviBoqOnSite(ws: ExcelJS.Worksheet, startRow?: number) {
   type Row = (string | number)[];
-...
+
+  const headers = [
+    "Sl. No.", "Item Description", "Unit", "Tender Std Qty",
+    "Tender Rate (₹)", "Tender Amount (₹)", "GFC Qty", "Add 10% Qty",
+    "Add 15% Qty", "Total Qty (I+II+III)", "Materials Rate (₹)",
+    "Labour Rate (₹)", "Basic Rate (₹) (K+L)", "Margin Rate (₹)",
+    "Final Rate (₹) (M+N)", "Final Cost (₹) (J×M)",
+    "Margin Amount (₹) (J×N)", "Final Amount (₹) (P+Q)",
+  ];
+
+  const pathway: Row[] = [
+    [1, "Structural steel — Beams, Columns / Framed Structure", "Kg", 887, 150, 133050, 568, 0, 0, 568, 65, 40, 105, 42, 150, 59640, 23856, 133050],
+    [2, "LGSF — Wall framing", "Kg", 0, 148, 0, 319, 0, 0, 319, 65, 40, 105, 42, 147, 33495, 13398, 0],
+    [3, "Inner wall Rockwool Slab 48kg 75mm Thickness", "sft", 65, 70, 4551, 65, 0, 0, 65, 35, 15, 50, 20, 70, 3250, 1300, 4550],
+    [4, "External wall — Shera Neu Wall Board 2440x1220x8mm", "sft", 224, 77, 17249, 192, 0, 0, 192, 40, 15, 55, 22, 77, 10560, 4224, 17248],
+    [5, "Internal Painting — Royal Emulsion", "sft", 70, 42, 2941, 73, 0, 0, 73, 18, 12, 30, 12, 42, 2190, 876, 2940],
+    [6, "External wall Shera Board with Paint", "sft", 128, 188, 24065, 96, 0, 0, 96, 105, 30, 135, 53, 188, 12960, 5088, 24064],
+    [7, "Vitrified Tiling", "sft", 296, 174, 51505, 296, 0, 0, 296, 60, 65, 125, 49, 174, 37000, 14504, 51504],
+    [8, "Toughened Glass", "sft", 343, 348, 119365, 296, 0, 0, 296, 200, 50, 250, 98, 348, 74000, 29008, 119364],
+    [9, "Aluminium Sliding Door", "sft", 159, 903, 143578, 153, 0, 0, 153, 595, 50, 645, 258, 903, 98685, 39474, 143577],
+    [10, "Aluminium Window", "sft", 68, 903, 61405, 114, 0, 0, 115, 595, 50, 645, 258, 903, 74175, 29670, 61404],
+    [11, "Internal Electrical work", "sft", 296, 70, 20712, 296, 0, 0, 296, 50, 0, 50, 20, 70, 14800, 5920, 20720],
+  ];
+  const entryDeck: Row[] = [
+    [1, "Structural steel — Beams, Columns / Framed Structure", "Kg", 880, 150, 132000, 675, 0, 0, 675, 65, 40, 105, 45, 150, 70875, 30375, 132000],
+    [2, "PUFF Panel Roof", "Sft", 207, 278, 57546, 280, 1, 0, 281, 178.5, 20, 198.5, 79.4, 278, 55778, 22306, 57546],
+    [3, "PVC / Vox Ceiling", "sft", 207, 278, 57546, 280, 1, 0, 281, 178.5, 20, 198.5, 79.4, 278, 55778, 22306, 57546],
+    [4, "Vitrified Tiling", "sft", 207, 174, 36018, 201, 0, 0, 201, 59, 65, 124, 49.6, 174, 24924, 9970, 36018],
+    [5, "Internal Electrical work", "sft", 207, 70, 14491, 201, 0, 0, 201, 50, 0, 50, 20, 70, 10050, 4020, 14490],
+  ];
+  const outdoorDeck: Row[] = [
+    [1, "Structural steel — Beams, Columns / Framed Structure", "Kg", 1045, 150, 156750, 1846, 1, 0, 1847, 65, 40, 105, 45, 150, 193935, 83115, 156750],
+    [2, "PUFF Panel Roof", "Sft", 349, 278, 97022, 336, 0, 0, 336, 178.5, 20, 198.5, 79.4, 278, 66696, 26678, 97022],
+    [3, "PVC / Vox Ceiling", "sft", 349, 278, 97022, 336, 0, 0, 336, 178.5, 20, 198.5, 79.4, 278, 66696, 26678, 97022],
+    [4, "Vitrified Tiling", "sft", 254, 174, 44196, 257, 0, 0, 257, 59, 65, 124, 49.6, 174, 31868, 12747, 44196],
+    [5, "Internal Electrical work", "sft", 254, 70, 17781, 257, 0, 0, 257, 50, 0, 50, 20, 70, 12850, 5140, 17780],
+  ];
+  const addon: Row[] = [
+    [1, "AC Copper Piping", "m", 30, 1751, 52519, 30, 0, 0, 30, 960.45, 290, 1250.45, 500.18, 1750.63, 37514, 15005, 52519],
+    [2, "Transportation", "LS", 1, 295000, 295000, 1, 0, 0, 1, 191750, 0, 191750, 76700, 268450, 191750, 76700, 295000],
+  ];
+
+  const widths = [6, 42, 8, 14, 14, 16, 12, 12, 12, 14, 14, 14, 14, 14, 14, 16, 16, 18];
+  widths.forEach((w, i) => {
+    const col = ws.getColumn(i + 1);
+    if ((col.width ?? 0) < w) col.width = w;
+  });
+
   // Determine starting row: explicit (for dedicated sheet) or append after last data row
+
   let r: number;
   if (typeof startRow === "number") {
     r = startRow;
