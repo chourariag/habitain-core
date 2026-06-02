@@ -658,6 +658,7 @@ export default function FactoryFloorMap() {
                       onTapAssign={() => isMobile && tapWorkerId ? handleTapAssign(n) : undefined}
                       productionSystem={sys}
                       pendingHandover={projHandover}
+                      stages={mod ? stagesByModule.get(mod.id) : undefined}
                     />
                   );
                 })}
