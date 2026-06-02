@@ -34,22 +34,21 @@ const parseDate = (val: any): string | null => {
   return isNaN(d.getTime()) ? null : format(d, "yyyy-MM-dd");
 };
 
-/**
- * Inject the On-Site Work block into the "BOQ + Margin" sheet for the
- * Vaishnavi Life Mysore 238-244 project. Inserts 33 new rows after the
- * existing factory TOTAL row (row 71) and updates the Margin Summary
- * formulas to include the new On-Site Grand Total.
- */
 function safeMerge(ws: ExcelJS.Worksheet, range: string) {
   try { ws.unMergeCells(range); } catch { /* not merged */ }
   try { ws.mergeCells(range); } catch { /* already merged, skip */ }
 }
 
-function injectVaishnaviOnSiteWork(ws: ExcelJS.Worksheet) {
-  const sections: Array<{ title: string; subtotal: string; items: Array<[string, string]> }> = [
+/**
+ * Append the On-Site Work section to the "Material Plan" sheet for the
+ * Vaishnavi Life Mysore 238-244 project. Adds a main section header,
+ * four sub-section headers, and their item rows after the existing list
+ * (which ends at row 67, S.No 53). All on-site rows have Destination = "Site".
+ */
+function injectVaishnaviMaterialPlanOnSite(ws: ExcelJS.Worksheet) {
+  const sections: Array<{ title: string; items: Array<[string, string]> }> = [
     {
-      title: "I. PRE-FABRICATED PATHWAY",
-      subtotal: "Total — Pre-Fabricated Pathway",
+      title: "I. Pre-Fabricated Pathway",
       items: [
         ["Structural Steel — Beams, Columns / Framed Structure", "Kg"],
         ["LGSF — Wall Framing", "Kg"],
@@ -65,8 +64,7 @@ function injectVaishnaviOnSiteWork(ws: ExcelJS.Worksheet) {
       ],
     },
     {
-      title: "II. ENTRY DECK",
-      subtotal: "Total — Entry Deck",
+      title: "II. Entry Deck",
       items: [
         ["Structural Steel — Beams, Columns / Framed Structure", "Kg"],
         ["Puff Panel Roof", "Sft"],
@@ -76,8 +74,7 @@ function injectVaishnaviOnSiteWork(ws: ExcelJS.Worksheet) {
       ],
     },
     {
-      title: "III. OUTDOOR DECK",
-      subtotal: "Total — Outdoor Deck",
+      title: "III. Outdoor Deck",
       items: [
         ["Structural Steel — Beams, Columns / Framed Structure", "Kg"],
         ["Puff Panel Roof", "Sft"],
@@ -87,8 +84,7 @@ function injectVaishnaviOnSiteWork(ws: ExcelJS.Worksheet) {
       ],
     },
     {
-      title: "C. ADD-ON",
-      subtotal: "Total — Add-On",
+      title: "C. Add-On",
       items: [
         ["AC Copper Piping", "m"],
         ["Transportation", "LS"],
@@ -96,76 +92,41 @@ function injectVaishnaviOnSiteWork(ws: ExcelJS.Worksheet) {
     },
   ];
 
-  // 1 section header + per-section (1 sub-header + items + 1 sub-total) + 1 grand total
-  const totalNew = 1 + sections.reduce((s, sec) => s + 1 + sec.items.length + 1, 0) + 1;
+  // Find the last row containing data (existing list ends at row 67, item 53)
+  let lastRow = 1;
+  for (let i = ws.rowCount; i >= 1; i--) {
+    const row = ws.getRow(i);
+    let hasData = false;
+    row.eachCell({ includeEmpty: false }, () => { hasData = true; });
+    if (hasData) { lastRow = i; break; }
+  }
+  let r = lastRow + 1;
+  let sno = 54;
 
-  // Push the Margin Summary block down by `totalNew` rows. Formula refs to
-  // M71/N71 stay valid because the factory TOTAL row is above the insertion.
-  ws.spliceRows(72, 0, ...Array.from({ length: totalNew }, () => [] as any[]));
-
-  let r = 72;
-  // Section header — matches the existing "  ▶  …" style
-  ws.getCell(`A${r}`).value = "  ▶  ON-SITE WORK";
-  safeMerge(ws, `A${r}:P${r}`);
-  ws.getRow(r).font = { bold: true };
+  // Main section header — styled like SHELL AND CORE etc.
+  ws.getCell(`A${r}`).value = "ON-SITE WORK";
+  safeMerge(ws, `A${r}:J${r}`);
+  ws.getRow(r).font = { bold: true, size: 12 };
   r++;
 
-  const subtotalRows: number[] = [];
-  let sno = 53;
   for (const sec of sections) {
+    // Sub-section header
     ws.getCell(`A${r}`).value = sec.title;
-    safeMerge(ws, `A${r}:P${r}`);
+    safeMerge(ws, `A${r}:J${r}`);
     ws.getRow(r).font = { bold: true, italic: true };
     r++;
 
-    const startItem = r;
     for (const [desc, unit] of sec.items) {
+      // 10-column layout: A=#, B=Section, C=Material, D=Unit, E=Tender Qty,
+      // F=Ordered Qty, G=PO Release Date, H=Delivery Date Target, I=Destination, J=Notes
       ws.getCell(`A${r}`).value = sno++;
       ws.getCell(`B${r}`).value = "On-Site Work";
       ws.getCell(`C${r}`).value = desc;
       ws.getCell(`D${r}`).value = unit;
-      ws.getCell(`G${r}`).value = 0.05;
-      ws.getCell(`H${r}`).value = { formula: `IF(F${r}>0,F${r}*(1+G${r}),E${r}*(1+G${r}))` } as any;
-      ws.getCell(`L${r}`).value = { formula: `I${r}+J${r}+K${r}` } as any;
-      ws.getCell(`M${r}`).value = { formula: `IF(E${r}>0,E${r}*L${r},0)` } as any;
-      ws.getCell(`N${r}`).value = { formula: `IF(F${r}>0,H${r}*L${r},0)` } as any;
-      ws.getCell(`P${r}`).value = "On-Site";
+      ws.getCell(`I${r}`).value = "Site";
       r++;
     }
-    const endItem = r - 1;
-
-    ws.getCell(`A${r}`).value = sec.subtotal;
-    safeMerge(ws, `A${r}:L${r}`);
-    ws.getCell(`M${r}`).value = { formula: `SUM(M${startItem}:M${endItem})` } as any;
-    ws.getCell(`N${r}`).value = { formula: `SUM(N${startItem}:N${endItem})` } as any;
-    ws.getRow(r).font = { bold: true };
-    subtotalRows.push(r);
-    r++;
   }
-
-  // Grand total
-  const grandRow = r;
-  ws.getCell(`A${r}`).value = "GRAND TOTAL — On-Site Work";
-  safeMerge(ws, `A${r}:L${r}`);
-  ws.getCell(`M${r}`).value = { formula: subtotalRows.map(x => `M${x}`).join("+") } as any;
-  ws.getCell(`N${r}`).value = { formula: subtotalRows.map(x => `N${x}`).join("+") } as any;
-  ws.getRow(r).font = { bold: true };
-
-  // Margin Summary originally lived at rows 74-85, now shifted down by totalNew.
-  const shift = totalNew;
-  const tenderTotal = `(M71+M${grandRow})`;
-  const gfcTotal = `(N71+N${grandRow})`;
-  // 76→Tender BOQ Total, 77→Tender Margin, 78→Tender Margin %
-  ws.getCell(`K${76 + shift}`).value = { formula: `M71+M${grandRow}` } as any;
-  ws.getCell(`K${77 + shift}`).value = { formula: `'Project Details'!B10-${tenderTotal}` } as any;
-  ws.getCell(`K${78 + shift}`).value = { formula: `IF('Project Details'!B10>0,('Project Details'!B10-${tenderTotal})/'Project Details'!B10,0)` } as any;
-  // 80→GFC BOQ Total, 81→GFC Margin, 82→GFC Margin %
-  ws.getCell(`K${80 + shift}`).value = { formula: `N71+N${grandRow}` } as any;
-  ws.getCell(`K${81 + shift}`).value = { formula: `'Project Details'!B10-${gfcTotal}` } as any;
-  ws.getCell(`K${82 + shift}`).value = { formula: `IF('Project Details'!B10>0,('Project Details'!B10-${gfcTotal})/'Project Details'!B10,0)` } as any;
-  // 84→Tender vs GFC Variance, 85→Variance %
-  ws.getCell(`K${84 + shift}`).value = { formula: `${gfcTotal}-${tenderTotal}` } as any;
-  ws.getCell(`K${85 + shift}`).value = { formula: `IF(${tenderTotal}>0,(${gfcTotal}-${tenderTotal})/${tenderTotal},0)` } as any;
 }
 
 export function ProjectSetupUpload({ projectId, userRole, productionSystem, onImported }: Props) {
@@ -245,14 +206,14 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       }
 
       // Project-specific pre-fill: Vaishnavi Life Mysore 238-244 (VAIS/26/B4C)
-      // Inject the On-Site Work block into the BOQ + Margin sheet after the
-      // existing factory TOTAL row (row 71). Only this project is affected.
+      // Append the On-Site Work section to the Material Plan sheet (BOQ + Margin
+      // sheet is left untouched). Only this project is affected.
       const isVaishnavi =
         String(proj?.name || "").trim() === "Vaishnavi Life Mysore 238-244" ||
         projectCode === "VAIS/26/B4C";
       if (isVaishnavi) {
-        const boqWs = wb.getWorksheet("BOQ + Margin");
-        if (boqWs) injectVaishnaviOnSiteWork(boqWs);
+        const mpWs = wb.getWorksheet("Material Plan") || wb.getWorksheet("Materials");
+        if (mpWs) injectVaishnaviMaterialPlanOnSite(mpWs);
       }
 
       const out = await wb.xlsx.writeBuffer();
