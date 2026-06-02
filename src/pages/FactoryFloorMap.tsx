@@ -298,7 +298,20 @@ export default function FactoryFloorMap() {
       if (status === "in_progress") behind++; // simplified heuristic
     });
     return { active: occupied, behind, qcReady, dispatchReady, materialHold };
-  }, [bays, moduleMap]);
+  }, [bays, moduleMap, stagesByModule]);
+
+  // Legend stage names: union across all loaded modules (preserving first-seen order via stage_order).
+  const legendStageNames = useMemo(() => {
+    const seen = new Map<string, number>(); // name -> min order
+    stagesByModule.forEach((rows) => {
+      rows.forEach((r) => {
+        const prev = seen.get(r.stage_name);
+        if (prev === undefined || r.stage_order < prev) seen.set(r.stage_name, r.stage_order);
+      });
+    });
+    if (seen.size === 0) return FALLBACK_STAGE_NAMES;
+    return Array.from(seen.entries()).sort((a, b) => a[1] - b[1]).map(([n]) => n);
+  }, [stagesByModule]);
 
   /* ── ASSIGN WORKER ── */
   const handleDrop = (bayNumber: number) => {
