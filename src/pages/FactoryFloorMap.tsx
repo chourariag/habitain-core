@@ -969,7 +969,7 @@ export default function FactoryFloorMap() {
 /* ──────── BAY CARD ──────── */
 function BayCard({
   bayNumber, bayLabel, assignment, module, workers, workerMap, selected, canAssign,
-  onSelect, onDrop, onDragOver, onTapAssign, outdoor, productionSystem, pendingHandover,
+  onSelect, onDrop, onDragOver, onTapAssign, outdoor, productionSystem, pendingHandover, stages,
 }: {
   bayNumber: number;
   bayLabel?: string;
@@ -986,16 +986,22 @@ function BayCard({
   outdoor?: boolean;
   productionSystem?: "modular" | "panelised" | "hybrid";
   pendingHandover?: PanelHandover;
+  stages?: StageRow[];
 }) {
   const occupied = !!assignment && !!module;
-  const si = occupied ? stageIndex(module!.current_stage) : 0;
-  const stageColour = STAGE_COLOURS[si];
+  const total = stages?.length ?? 0;
+  const si = occupied ? stageIndexFor(stages, module!.current_stage) : -1;
+  const safeIdx = si >= 0 ? si : 0;
+  const stageColour = colourFor(safeIdx);
+  const stageLabel = si >= 0 && stages ? stages[si].stage_name : (module?.current_stage ?? "—");
   const status = module?.production_status;
   const isHybrid = productionSystem === "hybrid";
   const leftBorderColor = isHybrid ? "hsl(270 60% 50%)" : outdoor ? "#999" : "#006039";
 
-  const flagColor = status === "hold" ? "#D4860A" : si === 9 ? "#F40009" : si === 8 ? "#006039" : "#006039";
-  const flagIcon = status === "hold" ? "⚠" : si === 9 ? "🚚" : si === 8 ? "!" : "✓";
+  const isLast = total > 0 && si === total - 1;
+  const isPenultimate = total > 0 && si === total - 2;
+  const flagColor = status === "hold" ? "#D4860A" : isLast ? "#F40009" : "#006039";
+  const flagIcon = status === "hold" ? "⚠" : isLast ? "🚚" : isPenultimate ? "!" : "✓";
 
   // Hybrid: amber overlay if module is awaiting panels (current_stage = "Awaiting Panels" and no received handover)
   const isAwaitingPanels = isHybrid && occupied && module?.current_stage === "Awaiting Panels";
