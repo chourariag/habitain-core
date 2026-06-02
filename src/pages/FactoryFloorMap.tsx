@@ -1074,7 +1074,7 @@ function BayCard({
                 className="text-[10px]"
                 style={{ backgroundColor: `${stageColour}20`, color: stageColour, border: `1px solid ${stageColour}40` }}
               >
-                {STAGE_NAMES[si]}
+                {stageLabel}
               </Badge>
             </div>
           )}
