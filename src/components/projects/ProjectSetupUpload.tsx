@@ -135,7 +135,7 @@ function injectVaishnaviMaterialPlanOnSite(ws: ExcelJS.Worksheet) {
  * borders, fills, sub-totals and grand total / GST rows. Hard-coded values
  * per project spec.
  */
-function injectVaishnaviBoqOnSite(ws: ExcelJS.Worksheet) {
+function injectVaishnaviBoqOnSite(ws: ExcelJS.Worksheet, startRow?: number) {
   type Row = (string | number)[];
 
   const headers = [
@@ -185,15 +185,21 @@ function injectVaishnaviBoqOnSite(ws: ExcelJS.Worksheet) {
     if ((col.width ?? 0) < w) col.width = w;
   });
 
-  // Find last used row
-  let lastRow = 1;
-  for (let i = ws.rowCount; i >= 1; i--) {
-    const row = ws.getRow(i);
-    let hasData = false;
-    row.eachCell({ includeEmpty: false }, () => { hasData = true; });
-    if (hasData) { lastRow = i; break; }
+  // Determine starting row: explicit (for dedicated sheet) or append after last data row
+
+  let r: number;
+  if (typeof startRow === "number") {
+    r = startRow;
+  } else {
+    let lastRow = 1;
+    for (let i = ws.rowCount; i >= 1; i--) {
+      const row = ws.getRow(i);
+      let hasData = false;
+      row.eachCell({ includeEmpty: false }, () => { hasData = true; });
+      if (hasData) { lastRow = i; break; }
+    }
+    r = lastRow + 2;
   }
-  let r = lastRow + 2; // leave a blank spacer above
 
   const thinBorder = {
     top: { style: "thin" as const, color: { argb: "FFCCCCCC" } },
@@ -425,8 +431,9 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       }
 
       // Project-specific pre-fill: Vaishnavi Life Mysore 238-244 (VAIS/26/B4C)
-      // Append the complete ON-SITE WORK block to the BOQ + Margin sheet only.
-      // Material Plan sheet is intentionally left untouched.
+      // Split the BOQ + Margin sheet into two: a Factory sheet (frozen row 4 header)
+      // and a dedicated On-Site sheet (frozen row 2 header). ExcelJS only supports
+      // a single freeze pane per worksheet, so two sheets are required.
       const isVaishnavi =
         String(proj?.name || "").trim() === "Vaishnavi Life Mysore 238-244" ||
         projectCode === "VAIS/26/B4C";
@@ -435,8 +442,24 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
           wb.getWorksheet("BOQ + Margin") ||
           wb.getWorksheet("Tender BOQ") ||
           wb.getWorksheet("BOQ");
-        if (boqWs) injectVaishnaviBoqOnSite(boqWs);
+        if (boqWs) {
+          // Rename existing factory sheet and freeze row 4 (column-header row).
+          boqWs.name = "BOQ + Margin (Factory)";
+          boqWs.views = [{ state: "frozen", xSplit: 0, ySplit: 4, topLeftCell: "A5", activeCell: "A5" }];
+
+          // Create the dedicated On-Site sheet immediately after the Factory sheet.
+          const factoryIdx = wb.worksheets.indexOf(boqWs);
+          const onSiteWs = wb.addWorksheet("BOQ + Margin (On-Site)");
+          // Move it directly after the factory sheet
+          if (typeof (onSiteWs as any).orderNo !== "undefined") {
+            (onSiteWs as any).orderNo = factoryIdx + 1;
+          }
+          // Inject the on-site block starting at row 1; freeze after row 2 (header row).
+          injectVaishnaviBoqOnSite(onSiteWs, 1);
+          onSiteWs.views = [{ state: "frozen", xSplit: 0, ySplit: 2, topLeftCell: "A3", activeCell: "A3" }];
+        }
       }
+
 
       const out = await wb.xlsx.writeBuffer();
       const safeName = (proj?.name || "Project").replace(/[^A-Za-z0-9]+/g, "_");
