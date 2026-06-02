@@ -37,22 +37,38 @@ const PANEL_TYPE_LABELS: Record<string, string> = {
   external_cladding_panel: "External Cladding Panel",
 };
 
-const STAGE_NAMES = [
-  "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
-  "MEP Final", "Windows & Doors", "Finishing", "QC Inspection", "Dispatch Ready",
-];
+// Fallback palette only (cycled when a module has more stages than colours).
 const STAGE_COLOURS = [
   "#8B8B8B", "#5B8DD9", "#9B59B6", "#E67E22", "#F1C40F",
   "#1ABC9C", "#3498DB", "#E91E63", "#006039", "#F40009",
 ];
+const colourFor = (i: number) => STAGE_COLOURS[((i % STAGE_COLOURS.length) + STAGE_COLOURS.length) % STAGE_COLOURS.length];
+
+// Used only as the legend fallback when no module data is loaded yet.
+const FALLBACK_STAGE_NAMES = [
+  "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
+  "MEP Final", "Windows & Doors", "Finishing", "QC Inspection", "Dispatch Ready",
+];
 
 const CAN_ASSIGN_ROLES = ["production_head", "factory_floor_supervisor", "super_admin", "managing_director"];
 
-function stageIndex(stage: string | null): number {
-  if (!stage) return 0;
-  const s = stage.toLowerCase().replace(/[^a-z ]/g, "").trim();
-  const idx = STAGE_NAMES.findIndex((n) => n.toLowerCase().replace(/[^a-z ]/g, "").trim() === s);
-  return idx >= 0 ? idx : 0;
+type StageRow = {
+  id: string;
+  module_id: string;
+  stage_name: string;
+  stage_order: number;
+  status: string | null;
+  completed_at: string | null;
+};
+
+const normaliseStage = (s: string | null) => (s ?? "").toLowerCase().replace(/[^a-z ]/g, "").trim();
+
+/** Index of current_stage within a module's stage list (-1 if not found / no stages). */
+function stageIndexFor(stages: StageRow[] | undefined, current: string | null): number {
+  if (!stages || stages.length === 0) return -1;
+  const target = normaliseStage(current);
+  if (!target) return -1;
+  return stages.findIndex((s) => normaliseStage(s.stage_name) === target);
 }
 
 type BayAssignment = {
@@ -136,6 +152,7 @@ export default function FactoryFloorMap() {
   const [panelBatches, setPanelBatches] = useState<PanelBatch[]>([]);
   const [handovers, setHandovers] = useState<PanelHandover[]>([]);
   const [projectSystems, setProjectSystems] = useState<Record<string, "modular" | "panelised" | "hybrid">>({});
+  const [stagesByModule, setStagesByModule] = useState<Map<string, StageRow[]>>(new Map());
   const [loading, setLoading] = useState(true);
   const [selectedBay, setSelectedBay] = useState<number | null>(null);
   const [checklistDrawer, setChecklistDrawer] = useState<{ projectId: string; projectName?: string; moduleLabel: string; stageName?: string } | null>(null);
@@ -182,17 +199,50 @@ export default function FactoryFloorMap() {
         .order("ready_at", { ascending: false }),
       supabase.from("projects").select("id, production_system").eq("is_archived", false),
     ]);
+    const moduleRows = (modRes.data as ModuleRow[] | null) ?? [];
     setBays((bayRes.data as BayAssignment[] | null) ?? []);
-    setModules((modRes.data as ModuleRow[] | null) ?? []);
+    setModules(moduleRows);
     setWorkers((workerRes.data as WorkerRow[] | null) ?? []);
     setManpower((mpRes.data as ManpowerPlan[] | null) ?? []);
     setPanelBatches((panelRes.data as PanelBatch[] | null) ?? []);
     setHandovers((handoverRes.data as PanelHandover[] | null) ?? []);
     setProjectSystems(((projRes.data as { id: string; production_system: string | null }[] | null) ?? []).reduce((acc, p) => { acc[p.id] = (p.production_system ?? "modular") as any; return acc; }, {} as Record<string, "modular" | "panelised" | "hybrid">));
+
+    // Load production_stages for every visible module (ordered by stage_order).
+    const moduleIds = moduleRows.map((m) => m.id);
+    if (moduleIds.length > 0) {
+      const { data: stageData } = await supabase
+        .from("production_stages")
+        .select("id, module_id, stage_name, stage_order, status, completed_at")
+        .in("module_id", moduleIds)
+        .eq("is_archived", false)
+        .order("stage_order", { ascending: true });
+      const map = new Map<string, StageRow[]>();
+      ((stageData as StageRow[] | null) ?? []).forEach((s) => {
+        const arr = map.get(s.module_id) ?? [];
+        arr.push(s);
+        map.set(s.module_id, arr);
+      });
+      setStagesByModule(map);
+    } else {
+      setStagesByModule(new Map());
+    }
+
     setLoading(false);
   }, [weekStart]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // Realtime: refresh when stages change so badges/progress update live.
+  useEffect(() => {
+    const ch = supabase
+      .channel("factory-floor-stages")
+      .on("postgres_changes", { event: "*", schema: "public", table: "production_stages" }, () => fetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "modules" }, () => fetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "bay_assignments" }, () => fetchAll())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [fetchAll]);
 
   // Derived
   const bayMap = useMemo(() => {
@@ -238,13 +288,30 @@ export default function FactoryFloorMap() {
       if (!mod) return;
       const status = mod.production_status;
       if (status === "hold") materialHold++;
-      const si = stageIndex(mod.current_stage);
-      if (si === 8) qcReady++;
-      if (si === 9) dispatchReady++;
+      const modStages = stagesByModule.get(mod.id);
+      const total = modStages?.length ?? 0;
+      const si = stageIndexFor(modStages, mod.current_stage);
+      if (total > 0 && si >= 0) {
+        if (si === total - 2) qcReady++;
+        if (si === total - 1) dispatchReady++;
+      }
       if (status === "in_progress") behind++; // simplified heuristic
     });
     return { active: occupied, behind, qcReady, dispatchReady, materialHold };
-  }, [bays, moduleMap]);
+  }, [bays, moduleMap, stagesByModule]);
+
+  // Legend stage names: union across all loaded modules (preserving first-seen order via stage_order).
+  const legendStageNames = useMemo(() => {
+    const seen = new Map<string, number>(); // name -> min order
+    stagesByModule.forEach((rows) => {
+      rows.forEach((r) => {
+        const prev = seen.get(r.stage_name);
+        if (prev === undefined || r.stage_order < prev) seen.set(r.stage_name, r.stage_order);
+      });
+    });
+    if (seen.size === 0) return FALLBACK_STAGE_NAMES;
+    return Array.from(seen.entries()).sort((a, b) => a[1] - b[1]).map(([n]) => n);
+  }, [stagesByModule]);
 
   /* ── ASSIGN WORKER ── */
   const handleDrop = (bayNumber: number) => {
@@ -479,9 +546,9 @@ export default function FactoryFloorMap() {
           <span className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#666" }}>Outdoor Bay</span>
         </div>
         <span className="text-xs font-semibold ml-3" style={{ color: "#999" }}>STAGES:</span>
-        {STAGE_NAMES.map((name, i) => (
+        {legendStageNames.map((name, i) => (
           <div key={name} className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: STAGE_COLOURS[i] }} />
+            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: colourFor(i) }} />
             <span className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#666" }}>{name}</span>
           </div>
         ))}
@@ -591,6 +658,7 @@ export default function FactoryFloorMap() {
                       onTapAssign={() => isMobile && tapWorkerId ? handleTapAssign(n) : undefined}
                       productionSystem={sys}
                       pendingHandover={projHandover}
+                      stages={mod ? stagesByModule.get(mod.id) : undefined}
                     />
                   );
                 })}
@@ -639,6 +707,7 @@ export default function FactoryFloorMap() {
                     outdoor
                     productionSystem={sys}
                     pendingHandover={projHandover}
+                    stages={mod ? stagesByModule.get(mod.id) : undefined}
                   />
                 );
               })}
@@ -660,28 +729,40 @@ export default function FactoryFloorMap() {
                       <div><span style={{ color: "#666" }}>Current Stage:</span> <span style={{ color: "#1A1A1A" }}>{selectedModule.current_stage ?? "—"}</span></div>
                       <div><span style={{ color: "#666" }}>Status:</span> <span style={{ color: "#1A1A1A" }}>{selectedModule.production_status?.replace(/_/g, " ") ?? "—"}</span></div>
                     </div>
-                    {/* Stage progress dots */}
-                    <div className="flex gap-1 items-center mt-2">
-                      {STAGE_NAMES.map((name, i) => {
-                        const si = stageIndex(selectedModule.current_stage);
-                        const done = i < si;
-                        const current = i === si;
+                    {/* Stage progress dots — driven by production_stages for this module */}
+                    {(() => {
+                      const modStages = stagesByModule.get(selectedModule.id) ?? [];
+                      if (modStages.length === 0) {
                         return (
-                          <div
-                            key={name}
-                            title={name}
-                            className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold"
-                            style={{
-                              backgroundColor: done ? STAGE_COLOURS[i] : current ? STAGE_COLOURS[i] : "#E0E0E0",
-                              color: done || current ? "#fff" : "#999",
-                              border: current ? "2px solid #1A1A1A" : "none",
-                            }}
-                          >
-                            {i + 1}
-                          </div>
+                          <p className="text-xs italic mt-2" style={{ color: "#999" }}>
+                            No production stages set up for this project yet.
+                          </p>
                         );
-                      })}
-                    </div>
+                      }
+                      const si = stageIndexFor(modStages, selectedModule.current_stage);
+                      return (
+                        <div className="flex gap-1 items-center mt-2 flex-wrap">
+                          {modStages.map((s, i) => {
+                            const done = s.status === "completed" || (si >= 0 && i < si);
+                            const current = si >= 0 && i === si && !done;
+                            return (
+                              <div
+                                key={s.id}
+                                title={`${s.stage_name} — ${s.status ?? "pending"}`}
+                                className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold"
+                                style={{
+                                  backgroundColor: done || current ? colourFor(i) : "#E0E0E0",
+                                  color: done || current ? "#fff" : "#999",
+                                  border: current ? "2px solid #1A1A1A" : "none",
+                                }}
+                              >
+                                {s.stage_order}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                     {/* Assigned workers */}
                     <div className="mt-3">
                       <p className="text-xs font-semibold mb-1" style={{ color: "#999" }}>WORKERS THIS WEEK</p>
@@ -814,9 +895,11 @@ export default function FactoryFloorMap() {
           <Select value={assignTask} onValueChange={setAssignTask}>
             <SelectTrigger><SelectValue placeholder="Select stage/task" /></SelectTrigger>
             <SelectContent>
-              {STAGE_NAMES.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
+              {(() => {
+                const opts = assignDialog ? (stagesByModule.get(assignDialog.moduleId)?.map((s) => s.stage_name) ?? []) : [];
+                const list = opts.length > 0 ? opts : legendStageNames;
+                return list.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>);
+              })()}
             </SelectContent>
           </Select>
           <DialogFooter>
@@ -888,7 +971,7 @@ export default function FactoryFloorMap() {
 /* ──────── BAY CARD ──────── */
 function BayCard({
   bayNumber, bayLabel, assignment, module, workers, workerMap, selected, canAssign,
-  onSelect, onDrop, onDragOver, onTapAssign, outdoor, productionSystem, pendingHandover,
+  onSelect, onDrop, onDragOver, onTapAssign, outdoor, productionSystem, pendingHandover, stages,
 }: {
   bayNumber: number;
   bayLabel?: string;
@@ -905,16 +988,22 @@ function BayCard({
   outdoor?: boolean;
   productionSystem?: "modular" | "panelised" | "hybrid";
   pendingHandover?: PanelHandover;
+  stages?: StageRow[];
 }) {
   const occupied = !!assignment && !!module;
-  const si = occupied ? stageIndex(module!.current_stage) : 0;
-  const stageColour = STAGE_COLOURS[si];
+  const total = stages?.length ?? 0;
+  const si = occupied ? stageIndexFor(stages, module!.current_stage) : -1;
+  const safeIdx = si >= 0 ? si : 0;
+  const stageColour = colourFor(safeIdx);
+  const stageLabel = si >= 0 && stages ? stages[si].stage_name : (module?.current_stage ?? "—");
   const status = module?.production_status;
   const isHybrid = productionSystem === "hybrid";
   const leftBorderColor = isHybrid ? "hsl(270 60% 50%)" : outdoor ? "#999" : "#006039";
 
-  const flagColor = status === "hold" ? "#D4860A" : si === 9 ? "#F40009" : si === 8 ? "#006039" : "#006039";
-  const flagIcon = status === "hold" ? "⚠" : si === 9 ? "🚚" : si === 8 ? "!" : "✓";
+  const isLast = total > 0 && si === total - 1;
+  const isPenultimate = total > 0 && si === total - 2;
+  const flagColor = status === "hold" ? "#D4860A" : isLast ? "#F40009" : "#006039";
+  const flagIcon = status === "hold" ? "⚠" : isLast ? "🚚" : isPenultimate ? "!" : "✓";
 
   // Hybrid: amber overlay if module is awaiting panels (current_stage = "Awaiting Panels" and no received handover)
   const isAwaitingPanels = isHybrid && occupied && module?.current_stage === "Awaiting Panels";
@@ -987,7 +1076,7 @@ function BayCard({
                 className="text-[10px]"
                 style={{ backgroundColor: `${stageColour}20`, color: stageColour, border: `1px solid ${stageColour}40` }}
               >
-                {STAGE_NAMES[si]}
+                {stageLabel}
               </Badge>
             </div>
           )}
