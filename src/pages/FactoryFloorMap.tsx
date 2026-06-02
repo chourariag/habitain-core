@@ -199,17 +199,50 @@ export default function FactoryFloorMap() {
         .order("ready_at", { ascending: false }),
       supabase.from("projects").select("id, production_system").eq("is_archived", false),
     ]);
+    const moduleRows = (modRes.data as ModuleRow[] | null) ?? [];
     setBays((bayRes.data as BayAssignment[] | null) ?? []);
-    setModules((modRes.data as ModuleRow[] | null) ?? []);
+    setModules(moduleRows);
     setWorkers((workerRes.data as WorkerRow[] | null) ?? []);
     setManpower((mpRes.data as ManpowerPlan[] | null) ?? []);
     setPanelBatches((panelRes.data as PanelBatch[] | null) ?? []);
     setHandovers((handoverRes.data as PanelHandover[] | null) ?? []);
     setProjectSystems(((projRes.data as { id: string; production_system: string | null }[] | null) ?? []).reduce((acc, p) => { acc[p.id] = (p.production_system ?? "modular") as any; return acc; }, {} as Record<string, "modular" | "panelised" | "hybrid">));
+
+    // Load production_stages for every visible module (ordered by stage_order).
+    const moduleIds = moduleRows.map((m) => m.id);
+    if (moduleIds.length > 0) {
+      const { data: stageData } = await supabase
+        .from("production_stages")
+        .select("id, module_id, stage_name, stage_order, status, completed_at")
+        .in("module_id", moduleIds)
+        .eq("is_archived", false)
+        .order("stage_order", { ascending: true });
+      const map = new Map<string, StageRow[]>();
+      ((stageData as StageRow[] | null) ?? []).forEach((s) => {
+        const arr = map.get(s.module_id) ?? [];
+        arr.push(s);
+        map.set(s.module_id, arr);
+      });
+      setStagesByModule(map);
+    } else {
+      setStagesByModule(new Map());
+    }
+
     setLoading(false);
   }, [weekStart]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // Realtime: refresh when stages change so badges/progress update live.
+  useEffect(() => {
+    const ch = supabase
+      .channel("factory-floor-stages")
+      .on("postgres_changes", { event: "*", schema: "public", table: "production_stages" }, () => fetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "modules" }, () => fetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "bay_assignments" }, () => fetchAll())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [fetchAll]);
 
   // Derived
   const bayMap = useMemo(() => {
