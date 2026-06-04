@@ -434,8 +434,13 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
       // Split the BOQ + Margin sheet into two: a Factory sheet (frozen row 4 header)
       // and a dedicated On-Site sheet (frozen row 2 header). ExcelJS only supports
       // a single freeze pane per worksheet, so two sheets are required.
+      // Match by stable UUID first (bulletproof across users/sessions/caches),
+      // then fall back to case-insensitive name match or derived project code.
+      const VAISHNAVI_PROJECT_ID = "b4c92051-f6c7-41c9-9462-c0f0fa95d805";
+      const normalizedName = String(proj?.name || "").trim().toLowerCase();
       const isVaishnavi =
-        String(proj?.name || "").trim() === "Vaishnavi Life Mysore 238-244" ||
+        String(projectId).toLowerCase() === VAISHNAVI_PROJECT_ID ||
+        normalizedName === "vaishnavi life mysore 238-244" ||
         projectCode === "VAIS/26/B4C";
       if (isVaishnavi) {
         const boqWs =
