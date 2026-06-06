@@ -17,6 +17,7 @@ import DeliveryChecklist from "@/pages/DeliveryChecklist";
 import SiteHub from "@/pages/SiteHub";
 import DispatchPackForm from "@/pages/DispatchPackForm";
 import DesignPortal from "@/pages/DesignPortal";
+import DesignSchedule from "@/pages/DesignSchedule";
 import { DesignRouteGuard } from "@/components/DesignRouteGuard";
 import QualityControl from "@/pages/QualityControl";
 // Inventory page consolidated into Procurement
