@@ -876,7 +876,16 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
           {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Download Project Setup Template
         </Button>
         <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleUpload} />
-        <Button size="sm" onClick={() => fileRef.current?.click()} disabled={busy} className="gap-1.5" style={{ backgroundColor: "#006039", color: "white" }}>
+        <Button
+          size="sm"
+          onClick={() => fileRef.current?.click()}
+          disabled={busy || uploadBlocked}
+          title={uploadBlocked ? "Complete pre-production checklist before uploading project setup." : undefined}
+          className="gap-1.5"
+          style={uploadBlocked
+            ? { backgroundColor: "#CCCCCC", color: "#666", cursor: "not-allowed" }
+            : { backgroundColor: "#006039", color: "white" }}
+        >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Upload Project Setup
         </Button>
       </div>
