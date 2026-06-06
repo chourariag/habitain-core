@@ -19,15 +19,15 @@ export function FactoryFloorPreProdBanner() {
       // Projects with any module (production activity), not archived, habitainer
       const { data: mods } = await supabase
         .from("modules")
-        .select("project_id, projects!inner(id, name, type, is_archived)")
+        .select("project_id, projects!inner(id, name, division, is_archived)")
         .eq("is_archived", false);
 
-      const projMap = new Map<string, { name: string; type: string | null }>();
+      const projMap = new Map<string, { name: string; division: string | null }>();
       for (const m of (mods ?? []) as any[]) {
         const p = m.projects;
         if (!p || p.is_archived) continue;
-        if ((p.type ?? "").toLowerCase().startsWith("ads")) continue;
-        projMap.set(p.id, { name: p.name, type: p.type });
+        if (String(p.division ?? "").toLowerCase() === "ads") continue;
+        projMap.set(p.id, { name: p.name, division: p.division });
       }
       if (projMap.size === 0) { setProjects([]); return; }
 

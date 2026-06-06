@@ -64,8 +64,8 @@ export function ProjectCommandCard({
             <div className="flex flex-wrap items-center gap-1 mt-1">
               {(project as any).division && (
                 <Badge className="text-[9px] px-1.5 py-0 border-0" style={{
-                  backgroundColor: (project as any).division === "ADS" ? "#66666620" : "#00603920",
-                  color: (project as any).division === "ADS" ? "#666666" : "#006039",
+                  backgroundColor: (project as any).division === "ADS" ? "#3B82F620" : "#00603920",
+                  color: (project as any).division === "ADS" ? "#1D4ED8" : "#006039",
                 }}>{(project as any).division}</Badge>
               )}
               {(project as any).is_design_only && (
