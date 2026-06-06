@@ -17,6 +17,7 @@ import {
   ArrowRight, GripVertical, Lock,
 } from "lucide-react";
 import { QualityFlagButton } from "@/components/quality/QualityFlagButton";
+import { FactoryFloorPreProdBanner } from "@/components/production/FactoryFloorPreProdBanner";
 import { StageChecklistDrawer } from "@/components/production/StageChecklistDrawer";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 import { getPhaseForStage } from "@/lib/production-phases";
