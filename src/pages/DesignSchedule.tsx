@@ -30,7 +30,7 @@ type ProjectStage = {
   status: DesignStageStatus; planned_date: string | null; actual_date: string | null;
   owner_id: string | null; notes: string | null;
 };
-type ProjectRow = { id: string; name: string; project_code: string | null; type: string | null; is_archived: boolean | null };
+type ProjectRow = { id: string; name: string; type: string | null; is_archived: boolean | null };
 type Profile = { id: string; display_name: string | null; email: string | null };
 
 const isAds = (t: string | null | undefined) => (t ?? "").toLowerCase().startsWith("ads");
