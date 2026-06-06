@@ -24,6 +24,7 @@ import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
 import { ProjectPLTab } from "@/components/projects/ProjectPLTab";
 import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
+import { ProjectDesignScheduleTab } from "@/components/projects/ProjectDesignScheduleTab";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { useProjectContext } from "@/contexts/ProjectContext";
 
