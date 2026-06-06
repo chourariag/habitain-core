@@ -55,7 +55,7 @@ export default function DesignSchedule() {
     setLoading(true);
     const [defsRes, projRes, stagesRes, profRes] = await Promise.all([
       supabase.from("design_stage_definitions").select("*").order("stage_order"),
-      supabase.from("projects").select("id, name, project_code, type, is_archived").eq("is_archived", false).order("created_at", { ascending: false }),
+      supabase.from("projects").select("id, name, type, is_archived").eq("is_archived", false).order("created_at", { ascending: false }),
       supabase.from("project_design_stages").select("*"),
       supabase.from("profiles").select("id, display_name, email").eq("is_active", true).order("display_name"),
     ]);
