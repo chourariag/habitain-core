@@ -182,7 +182,7 @@ export default function FactoryFloorMap() {
     setLoading(true);
     const [bayRes, modRes, workerRes, mpRes, panelRes, handoverRes, projRes] = await Promise.all([
       supabase.from("bay_assignments").select("*").is("moved_from", null),
-      supabase.from("modules").select("id, name, module_code, current_stage, production_status, project_id, projects(name)").eq("is_archived", false),
+      supabase.from("modules").select("id, name, module_code, current_stage, production_status, project_id, projects!inner(name, division)").eq("is_archived", false),
       supabase.from("profiles").select("id, display_name, role").in("role", [
         "fabrication_foreman", "electrical_installer", "elec_plumbing_installer",
         "factory_floor_supervisor",
@@ -200,7 +200,7 @@ export default function FactoryFloorMap() {
         .order("ready_at", { ascending: false }),
       supabase.from("projects").select("id, production_system").eq("is_archived", false),
     ]);
-    const moduleRows = (modRes.data as ModuleRow[] | null) ?? [];
+    const moduleRows = (((modRes.data as any[]) ?? []).filter((m: any) => String(m?.projects?.division ?? "").toLowerCase() !== "ads")) as ModuleRow[];
     setBays((bayRes.data as BayAssignment[] | null) ?? []);
     setModules(moduleRows);
     setWorkers((workerRes.data as WorkerRow[] | null) ?? []);
