@@ -9,6 +9,7 @@ import { Upload, Download, Loader2, Check, AlertTriangle, ArrowRight } from "luc
 import { dispatchProjectImported } from "@/lib/use-project-import";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { usePreProdGates } from "@/components/projects/PreProductionChecklist";
 
 interface Props {
   projectId: string;
