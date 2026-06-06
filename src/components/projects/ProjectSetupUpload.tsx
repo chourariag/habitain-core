@@ -355,7 +355,10 @@ function injectVaishnaviBoqOnSite(ws: ExcelJS.Worksheet, startRow?: number) {
   writeFooter("Total (incl. GST)", 1930848, "FF0E7490", 11);
 }
 
-export function ProjectSetupUpload({ projectId, userRole, productionSystem, onImported }: Props) {
+export function ProjectSetupUpload({ projectId, userRole, productionSystem, projectType, onImported }: Props) {
+  const isAdsProject = (projectType ?? "").toLowerCase().startsWith("ads");
+  const { setupReady } = usePreProdGates(projectId);
+  const uploadBlocked = !isAdsProject && !setupReady;
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
