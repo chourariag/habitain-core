@@ -27,6 +27,7 @@ import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
 import { ProjectDesignScheduleTab } from "@/components/projects/ProjectDesignScheduleTab";
 import { PreProductionChecklist } from "@/components/projects/PreProductionChecklist";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
+import { isAdsProject } from "@/lib/project-type";
 import { useProjectContext } from "@/contexts/ProjectContext";
 
 const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
@@ -114,6 +115,7 @@ export default function ProjectDetail() {
   const statusCfg = PROJECT_STATUS_CONFIG[dynamicStatus];
   const totalPanels = Object.values(panels).reduce((sum, arr) => sum + arr.length, 0);
   const proj = project as any;
+  const isAds = isAdsProject(proj);
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -125,7 +127,10 @@ export default function ProjectDetail() {
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{project.name}</h1>
             <Badge className={statusCfg.badgeClass}>{statusCfg.label}</Badge>
-            {(proj as any).production_system && (() => {
+            {isAds && (
+              <Badge style={{ backgroundColor: "#3B82F620", color: "#1D4ED8", border: "none" }}>ADS</Badge>
+            )}
+            {!isAds && (proj as any).production_system && (() => {
               const ps = (proj as any).production_system as "modular" | "panelised" | "hybrid";
               const styles = { modular: { bg: "hsl(155 100% 19% / 0.15)", fg: "hsl(155 100% 19%)" }, panelised: { bg: "hsl(210 80% 50% / 0.15)", fg: "hsl(210 80% 40%)" }, hybrid: { bg: "hsl(270 60% 50% / 0.15)", fg: "hsl(270 60% 40%)" } }[ps];
               const label = { modular: "Modular", panelised: "Panelised", hybrid: "Hybrid" }[ps];
@@ -174,20 +179,22 @@ export default function ProjectDetail() {
 
       <ClientPortalManager projectId={id!} userRole={userRole} />
 
-      <PreProductionChecklist projectId={id!} projectType={(proj as any).type ?? null} />
+      <PreProductionChecklist projectId={id!} division={proj.division ?? null} />
 
-      <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} projectType={(proj as any).type ?? null} onImported={fetchData} />
+      {!isAds && (
+        <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} projectType={proj.division ?? null} onImported={fetchData} />
+      )}
 
       <Tabs defaultValue="schedule">
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="schedule" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Schedule</TabsTrigger>
             <TabsTrigger value="billing" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Billing</TabsTrigger>
-            <TabsTrigger value="materials" className="gap-1.5"><Package className="h-4 w-4" /> Materials</TabsTrigger>
+            {!isAds && <TabsTrigger value="materials" className="gap-1.5"><Package className="h-4 w-4" /> Materials</TabsTrigger>}
             <TabsTrigger value="variations" className="gap-1.5"><GitCompareArrows className="h-4 w-4" /> Variations</TabsTrigger>
-            <TabsTrigger value="budget" className="gap-1.5"><Wallet className="h-4 w-4" /> Budget</TabsTrigger>
-            <TabsTrigger value="scope" className="gap-1.5"><ScrollText className="h-4 w-4" /> Scope</TabsTrigger>
-            <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover</TabsTrigger>
+            {!isAds && <TabsTrigger value="budget" className="gap-1.5"><Wallet className="h-4 w-4" /> Budget</TabsTrigger>}
+            {!isAds && <TabsTrigger value="scope" className="gap-1.5"><ScrollText className="h-4 w-4" /> Scope</TabsTrigger>}
+            {!isAds && <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover</TabsTrigger>}
             <TabsTrigger value="design-schedule" className="gap-1.5"><CalendarRange className="h-4 w-4" /> Design Schedule</TabsTrigger>
             {PL_VIEW_ROLES.includes(userRole ?? "") && (
               <TabsTrigger value="project-pl" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Project P&amp;L</TabsTrigger>
@@ -209,44 +216,52 @@ export default function ProjectDetail() {
           <MicroScheduleTab projectId={id!} userRole={userRole} />
         </TabsContent>
 
-        <TabsContent value="materials" className="space-y-4">
-          <MaterialPlanTab projectId={id!} userRole={userRole} />
-        </TabsContent>
+        {!isAds && (
+          <TabsContent value="materials" className="space-y-4">
+            <MaterialPlanTab projectId={id!} userRole={userRole} />
+          </TabsContent>
+        )}
 
         <TabsContent value="variations" className="space-y-4">
           <VariationsTab projectId={id!} userRole={userRole} contractValue={Number(proj.contract_value) || 0} />
         </TabsContent>
 
-        <TabsContent value="budget" className="space-y-4">
-          <Tabs defaultValue="budget-tracking">
-            <TabsList className="mb-3">
-              <TabsTrigger value="budget-tracking">Budget Tracking</TabsTrigger>
-              <TabsTrigger value="running-bill">Running Bill</TabsTrigger>
-              <TabsTrigger value="project-pl">Project P&L</TabsTrigger>
-            </TabsList>
-            <TabsContent value="budget-tracking">
-              <BudgetTrackingTab projectId={id!} contractValue={Number(proj.contract_value) || 0} userRole={userRole} />
-            </TabsContent>
-            <TabsContent value="running-bill">
-              <RunningBillTable projectId={id!} />
-            </TabsContent>
-            <TabsContent value="project-pl">
-              <ProjectPLSubTab projectId={id!} contractValue={Number(proj.contract_value) || 0} />
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
+        {!isAds && (
+          <TabsContent value="budget" className="space-y-4">
+            <Tabs defaultValue="budget-tracking">
+              <TabsList className="mb-3">
+                <TabsTrigger value="budget-tracking">Budget Tracking</TabsTrigger>
+                <TabsTrigger value="running-bill">Running Bill</TabsTrigger>
+                <TabsTrigger value="project-pl">Project P&L</TabsTrigger>
+              </TabsList>
+              <TabsContent value="budget-tracking">
+                <BudgetTrackingTab projectId={id!} contractValue={Number(proj.contract_value) || 0} userRole={userRole} />
+              </TabsContent>
+              <TabsContent value="running-bill">
+                <RunningBillTable projectId={id!} />
+              </TabsContent>
+              <TabsContent value="project-pl">
+                <ProjectPLSubTab projectId={id!} contractValue={Number(proj.contract_value) || 0} />
+              </TabsContent>
+            </Tabs>
+          </TabsContent>
+        )}
 
-        <TabsContent value="scope" className="space-y-4">
-          <ScopeOfWorkTab projectId={id!} userRole={userRole} />
-        </TabsContent>
+        {!isAds && (
+          <TabsContent value="scope" className="space-y-4">
+            <ScopeOfWorkTab projectId={id!} userRole={userRole} />
+          </TabsContent>
+        )}
 
-        <TabsContent value="handover" className="space-y-4">
-          <h2 className="font-display text-lg font-semibold text-foreground">Handover</h2>
-          <HandoverPack projectId={id!} clientName={project.client_name} userRole={userRole} installationComplete={modules.some((m: any) => m.production_status === "dispatched")} onHandedOver={fetchData} />
-        </TabsContent>
+        {!isAds && (
+          <TabsContent value="handover" className="space-y-4">
+            <h2 className="font-display text-lg font-semibold text-foreground">Handover</h2>
+            <HandoverPack projectId={id!} clientName={project.client_name} userRole={userRole} installationComplete={modules.some((m: any) => m.production_status === "dispatched")} onHandedOver={fetchData} />
+          </TabsContent>
+        )}
 
         <TabsContent value="design-schedule" className="space-y-4">
-          <ProjectDesignScheduleTab projectId={id!} projectType={(proj as any).type ?? null} userRole={userRole} />
+          <ProjectDesignScheduleTab projectId={id!} projectType={isAds ? "ads" : "habitainer"} userRole={userRole} />
         </TabsContent>
 
         {PL_VIEW_ROLES.includes(userRole ?? "") && (
