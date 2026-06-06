@@ -173,7 +173,9 @@ export default function ProjectDetail() {
 
       <ClientPortalManager projectId={id!} userRole={userRole} />
 
-      <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} onImported={fetchData} />
+      <PreProductionChecklist projectId={id!} projectType={(proj as any).type ?? null} />
+
+      <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} projectType={(proj as any).type ?? null} onImported={fetchData} />
 
       <Tabs defaultValue="schedule">
         <ScrollableTabsWrapper>
