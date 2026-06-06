@@ -1799,6 +1799,45 @@ export type Database = {
           },
         ]
       }
+      design_stage_definitions: {
+        Row: {
+          created_at: string
+          id: string
+          is_mandatory: boolean
+          is_production_gate: boolean
+          is_read_only: boolean
+          pipeline_type: string
+          stage_code: string
+          stage_group: string | null
+          stage_name: string
+          stage_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_mandatory?: boolean
+          is_production_gate?: boolean
+          is_read_only?: boolean
+          pipeline_type: string
+          stage_code: string
+          stage_group?: string | null
+          stage_name: string
+          stage_order: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_mandatory?: boolean
+          is_production_gate?: boolean
+          is_read_only?: boolean
+          pipeline_type?: string
+          stage_code?: string
+          stage_group?: string | null
+          stage_name?: string
+          stage_order?: number
+        }
+        Relationships: []
+      }
       design_stage_history: {
         Row: {
           created_at: string
@@ -6808,6 +6847,70 @@ export type Database = {
           },
         ]
       }
+      project_design_stages: {
+        Row: {
+          actual_date: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          owner_id: string | null
+          planned_date: string | null
+          project_id: string
+          stage_definition_id: string
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          actual_date?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          owner_id?: string | null
+          planned_date?: string | null
+          project_id: string
+          stage_definition_id: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          actual_date?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          owner_id?: string | null
+          planned_date?: string | null
+          project_id?: string
+          stage_definition_id?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_design_stages_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_design_stages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_design_stages_stage_definition_id_fkey"
+            columns: ["stage_definition_id"]
+            isOneToOne: false
+            referencedRelation: "design_stage_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_grns: {
         Row: {
           basic_amount_excl_gst: number
@@ -8513,6 +8616,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      quotations: {
+        Row: {
+          client_name: string
+          created_at: string
+          created_by: string | null
+          date_of_release: string | null
+          drawings_shared: string | null
+          enquiry_shared_by: string | null
+          id: string
+          notes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          client_name: string
+          created_at?: string
+          created_by?: string | null
+          date_of_release?: string | null
+          drawings_shared?: string | null
+          enquiry_shared_by?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          client_name?: string
+          created_at?: string
+          created_by?: string | null
+          date_of_release?: string | null
+          drawings_shared?: string | null
+          enquiry_shared_by?: string | null
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       rate_cards: {
         Row: {
@@ -11475,6 +11617,7 @@ export type Database = {
       }
       can_capture_site_photo: { Args: { _user_id: string }; Returns: boolean }
       can_costing_approve_wo: { Args: { _user_id: string }; Returns: boolean }
+      can_edit_design_schedule: { Args: { _user_id: string }; Returns: boolean }
       can_edit_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_edit_sop_dept: {
         Args: { _department: string; _user_id: string }

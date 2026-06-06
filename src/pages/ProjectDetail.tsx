@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Box, FileText, Phone, Mail, IndianRupee, ClipboardList, Package, GitCompareArrows, ScrollText, Wallet, Archive } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Box, FileText, Phone, Mail, IndianRupee, ClipboardList, Package, GitCompareArrows, ScrollText, Wallet, Archive, CalendarRange } from "lucide-react";
 import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 import { AddModuleDialog } from "@/components/projects/AddModuleDialog";
@@ -24,6 +24,7 @@ import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
 import { ProjectPLTab } from "@/components/projects/ProjectPLTab";
 import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
+import { ProjectDesignScheduleTab } from "@/components/projects/ProjectDesignScheduleTab";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { useProjectContext } from "@/contexts/ProjectContext";
 
@@ -184,6 +185,7 @@ export default function ProjectDetail() {
             <TabsTrigger value="budget" className="gap-1.5"><Wallet className="h-4 w-4" /> Budget</TabsTrigger>
             <TabsTrigger value="scope" className="gap-1.5"><ScrollText className="h-4 w-4" /> Scope</TabsTrigger>
             <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover</TabsTrigger>
+            <TabsTrigger value="design-schedule" className="gap-1.5"><CalendarRange className="h-4 w-4" /> Design Schedule</TabsTrigger>
             {PL_VIEW_ROLES.includes(userRole ?? "") && (
               <TabsTrigger value="project-pl" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Project P&amp;L</TabsTrigger>
             )}
@@ -238,6 +240,10 @@ export default function ProjectDetail() {
         <TabsContent value="handover" className="space-y-4">
           <h2 className="font-display text-lg font-semibold text-foreground">Handover</h2>
           <HandoverPack projectId={id!} clientName={project.client_name} userRole={userRole} installationComplete={modules.some((m: any) => m.production_status === "dispatched")} onHandedOver={fetchData} />
+        </TabsContent>
+
+        <TabsContent value="design-schedule" className="space-y-4">
+          <ProjectDesignScheduleTab projectId={id!} projectType={(proj as any).type ?? null} userRole={userRole} />
         </TabsContent>
 
         {PL_VIEW_ROLES.includes(userRole ?? "") && (

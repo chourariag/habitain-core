@@ -17,6 +17,7 @@ import DeliveryChecklist from "@/pages/DeliveryChecklist";
 import SiteHub from "@/pages/SiteHub";
 import DispatchPackForm from "@/pages/DispatchPackForm";
 import DesignPortal from "@/pages/DesignPortal";
+import DesignSchedule from "@/pages/DesignSchedule";
 import { DesignRouteGuard } from "@/components/DesignRouteGuard";
 import QualityControl from "@/pages/QualityControl";
 // Inventory page consolidated into Procurement
@@ -81,6 +82,7 @@ const App = () => (
                 <Route path="/dispatch-pack-form" element={<DispatchPackForm />} />
                 <Route path="/site-hub/advance-request" element={<AdvanceRequest />} />
                 <Route path="/design" element={<DesignRouteGuard><DesignPortal /></DesignRouteGuard>} />
+                <Route path="/design/schedule" element={<DesignRouteGuard><DesignSchedule /></DesignRouteGuard>} />
                 <Route path="/drawings" element={<DesignRouteGuard><Drawings /></DesignRouteGuard>} />
                 <Route path="/qc" element={<QualityControl />} />
                 <Route path="/procurement" element={<Procurement />} />
