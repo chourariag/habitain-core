@@ -36,7 +36,7 @@ type Profile = { id: string; display_name: string | null; email: string | null }
 const isAds = (t: string | null | undefined) => (t ?? "").toLowerCase().startsWith("ads");
 
 export default function DesignSchedule() {
-  const role = useUserRole();
+  const { role } = useUserRole();
   const canEdit = EDIT_ROLES.includes((role ?? "") as string);
 
   const [loading, setLoading] = useState(true);
