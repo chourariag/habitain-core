@@ -14,6 +14,7 @@ interface Props {
   projectId: string;
   userRole: string | null;
   productionSystem?: string | null;
+  projectType?: string | null;
   onImported?: () => void;
 }
 
