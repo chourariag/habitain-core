@@ -346,7 +346,7 @@ function PipelineTable({
                   <span className="truncate max-w-[200px]" title={p.name}>{p.name}</span>
                   <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" />
                 </Link>
-                {p.project_code && <div className="text-[10px] text-muted-foreground">{p.project_code}</div>}
+                <div className="text-[10px] text-muted-foreground">{projectCode(p.name)}</div>
               </td>
               {defs.map(d => {
                 const s = stageMap.get(`${p.id}:${d.id}`);
