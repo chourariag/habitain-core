@@ -17,6 +17,7 @@ import {
   ArrowRight, GripVertical, Lock,
 } from "lucide-react";
 import { QualityFlagButton } from "@/components/quality/QualityFlagButton";
+import { FactoryFloorPreProdBanner } from "@/components/production/FactoryFloorPreProdBanner";
 import { StageChecklistDrawer } from "@/components/production/StageChecklistDrawer";
 import { format, startOfWeek, addDays, isToday } from "date-fns";
 import { getPhaseForStage } from "@/lib/production-phases";
@@ -487,6 +488,7 @@ export default function FactoryFloorMap() {
   /* ──────── RENDER ──────── */
   return (
     <div className="p-4 md:p-6 space-y-5">
+      <FactoryFloorPreProdBanner />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>

@@ -9,11 +9,13 @@ import { Upload, Download, Loader2, Check, AlertTriangle, ArrowRight } from "luc
 import { dispatchProjectImported } from "@/lib/use-project-import";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { usePreProdGates } from "@/components/projects/PreProductionChecklist";
 
 interface Props {
   projectId: string;
   userRole: string | null;
   productionSystem?: string | null;
+  projectType?: string | null;
   onImported?: () => void;
 }
 
@@ -354,7 +356,10 @@ function injectVaishnaviBoqOnSite(ws: ExcelJS.Worksheet, startRow?: number) {
   writeFooter("Total (incl. GST)", 1930848, "FF0E7490", 11);
 }
 
-export function ProjectSetupUpload({ projectId, userRole, productionSystem, onImported }: Props) {
+export function ProjectSetupUpload({ projectId, userRole, productionSystem, projectType, onImported }: Props) {
+  const isAdsProject = (projectType ?? "").toLowerCase().startsWith("ads");
+  const { setupReady } = usePreProdGates(projectId);
+  const uploadBlocked = !isAdsProject && !setupReady;
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -871,7 +876,16 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, onIm
           {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Download Project Setup Template
         </Button>
         <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleUpload} />
-        <Button size="sm" onClick={() => fileRef.current?.click()} disabled={busy} className="gap-1.5" style={{ backgroundColor: "#006039", color: "white" }}>
+        <Button
+          size="sm"
+          onClick={() => fileRef.current?.click()}
+          disabled={busy || uploadBlocked}
+          title={uploadBlocked ? "Complete pre-production checklist before uploading project setup." : undefined}
+          className="gap-1.5"
+          style={uploadBlocked
+            ? { backgroundColor: "#CCCCCC", color: "#666", cursor: "not-allowed" }
+            : { backgroundColor: "#006039", color: "white" }}
+        >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Upload Project Setup
         </Button>
       </div>

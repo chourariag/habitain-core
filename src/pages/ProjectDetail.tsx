@@ -25,6 +25,7 @@ import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
 import { ProjectPLTab } from "@/components/projects/ProjectPLTab";
 import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
 import { ProjectDesignScheduleTab } from "@/components/projects/ProjectDesignScheduleTab";
+import { PreProductionChecklist } from "@/components/projects/PreProductionChecklist";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { useProjectContext } from "@/contexts/ProjectContext";
 
@@ -173,7 +174,9 @@ export default function ProjectDetail() {
 
       <ClientPortalManager projectId={id!} userRole={userRole} />
 
-      <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} onImported={fetchData} />
+      <PreProductionChecklist projectId={id!} projectType={(proj as any).type ?? null} />
+
+      <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} projectType={(proj as any).type ?? null} onImported={fetchData} />
 
       <Tabs defaultValue="schedule">
         <ScrollableTabsWrapper>
