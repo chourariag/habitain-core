@@ -242,6 +242,10 @@ export default function ProjectDetail() {
           <HandoverPack projectId={id!} clientName={project.client_name} userRole={userRole} installationComplete={modules.some((m: any) => m.production_status === "dispatched")} onHandedOver={fetchData} />
         </TabsContent>
 
+        <TabsContent value="design-schedule" className="space-y-4">
+          <ProjectDesignScheduleTab projectId={id!} projectType={(proj as any).type ?? null} userRole={userRole} />
+        </TabsContent>
+
         {PL_VIEW_ROLES.includes(userRole ?? "") && (
           <TabsContent value="project-pl" className="space-y-4">
             <ProjectPLTab projectId={id!} contractValue={Number(proj.contract_value) || 0} />
