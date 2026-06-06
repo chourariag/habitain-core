@@ -427,7 +427,7 @@ function EditStageDialog({
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{def.stage_code} · {def.stage_name}</DialogTitle>
-          <p className="text-xs text-muted-foreground">{project.name}{project.project_code ? ` · ${project.project_code}` : ""}</p>
+          <p className="text-xs text-muted-foreground">{project.name} · {projectCode(project.name)}</p>
         </DialogHeader>
         <div className="space-y-3">
           <div>
