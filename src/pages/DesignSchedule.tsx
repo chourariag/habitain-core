@@ -14,6 +14,7 @@ import { Loader2, Plus, Filter, AlertTriangle, CheckCircle2, Clock, ExternalLink
 import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
 import { format, parseISO, isBefore, startOfToday } from "date-fns";
+import { projectCode } from "@/lib/code-generators";
 import {
   EDIT_ROLES, STAGE_STATUSES, STATUS_STYLES, QUOTATION_STATUSES,
   type DesignStageStatus, type QuotationStatus,
