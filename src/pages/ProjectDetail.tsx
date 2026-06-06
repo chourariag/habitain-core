@@ -185,6 +185,7 @@ export default function ProjectDetail() {
             <TabsTrigger value="budget" className="gap-1.5"><Wallet className="h-4 w-4" /> Budget</TabsTrigger>
             <TabsTrigger value="scope" className="gap-1.5"><ScrollText className="h-4 w-4" /> Scope</TabsTrigger>
             <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover</TabsTrigger>
+            <TabsTrigger value="design-schedule" className="gap-1.5"><CalendarRange className="h-4 w-4" /> Design Schedule</TabsTrigger>
             {PL_VIEW_ROLES.includes(userRole ?? "") && (
               <TabsTrigger value="project-pl" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Project P&amp;L</TabsTrigger>
             )}
