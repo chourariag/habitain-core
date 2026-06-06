@@ -76,6 +76,7 @@ const sectionConfig: NavSection[] = [
     key: "design", label: "Design",
     items: [
       { section: "design", to: "/design", label: "Projects", icon: Compass },
+      { section: "design", to: "/design/schedule", label: "Design Schedule", icon: ClipboardList },
       { section: "design", to: "/design?tab=dq-register", label: "Design Queries", icon: MessageSquare },
     ],
   },
