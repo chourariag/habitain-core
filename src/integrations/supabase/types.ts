@@ -7216,6 +7216,74 @@ export type Database = {
         }
         Relationships: []
       }
+      project_progress_matrix: {
+        Row: {
+          actual_date: string | null
+          actual_pct: number | null
+          created_at: string
+          delay_days: number | null
+          forecast_date: string | null
+          id: string
+          milestone_stage: string
+          milestone_status: string | null
+          notes: string | null
+          planned_date: string | null
+          planned_pct: number | null
+          project_id: string
+          rag: string | null
+          units: number | null
+          updated_at: string
+          updated_by: string | null
+          variance_pct: number | null
+        }
+        Insert: {
+          actual_date?: string | null
+          actual_pct?: number | null
+          created_at?: string
+          delay_days?: number | null
+          forecast_date?: string | null
+          id?: string
+          milestone_stage: string
+          milestone_status?: string | null
+          notes?: string | null
+          planned_date?: string | null
+          planned_pct?: number | null
+          project_id: string
+          rag?: string | null
+          units?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          variance_pct?: number | null
+        }
+        Update: {
+          actual_date?: string | null
+          actual_pct?: number | null
+          created_at?: string
+          delay_days?: number | null
+          forecast_date?: string | null
+          id?: string
+          milestone_stage?: string
+          milestone_status?: string | null
+          notes?: string | null
+          planned_date?: string | null
+          planned_pct?: number | null
+          project_id?: string
+          rag?: string | null
+          units?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          variance_pct?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_progress_matrix_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_revenue_margin: {
         Row: {
           anticipated_delivery_date: string | null
