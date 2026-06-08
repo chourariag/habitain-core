@@ -50,27 +50,19 @@ const sectionConfig: NavSection[] = [
   {
     key: "site", label: "On Site Works",
     items: [
-      { section: "site", to: "/site-hub?tab=pipeline", label: "Site Hub", icon: Truck },
+      { section: "site", to: "/site-hub", label: "Site Hub", icon: Truck },
     ],
   },
   {
     key: "procurement", label: "Procurement",
     items: [
-      { section: "procurement", to: "/procurement?tab=dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { section: "procurement", to: "/procurement?tab=material-plan", label: "Material Plan", icon: ClipboardList },
-      { section: "procurement", to: "/procurement?tab=inventory", label: "Inventory", icon: Package },
-      { section: "procurement", to: "/procurement?tab=transfers", label: "Transfers", icon: ArrowLeftRight },
-      { section: "procurement", to: "/procurement?tab=asset-register", label: "Equipments", icon: Wrench },
-      { section: "procurement", to: "/rm", label: "Repairs & AMC", icon: Wrench },
+      { section: "procurement", to: "/procurement", label: "Procurement", icon: Package },
     ],
   },
   {
     key: "finance", label: "Finance",
     items: [
-      { section: "finance", to: "/finance?tab=mis-invoices", label: "Management", icon: BarChart3 },
-      { section: "finance", to: "/finance?tab=revenue-margin", label: "Projects", icon: DollarSign },
-      { section: "finance", to: "/finance?tab=bank-overdue", label: "General", icon: Receipt },
-      { section: "finance", to: "/finance?tab=costing", label: "Costing & Estimation", icon: ClipboardCheck },
+      { section: "finance", to: "/finance", label: "Finance", icon: DollarSign },
     ],
   },
   {
