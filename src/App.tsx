@@ -19,6 +19,8 @@ import DispatchPackForm from "@/pages/DispatchPackForm";
 import DesignPortal from "@/pages/DesignPortal";
 import DesignSchedule from "@/pages/DesignSchedule";
 import { DesignRouteGuard } from "@/components/DesignRouteGuard";
+import { ManagementRouteGuard } from "@/components/ManagementRouteGuard";
+import Management from "@/pages/Management";
 import QualityControl from "@/pages/QualityControl";
 // Inventory page consolidated into Procurement
 import Admin from "@/pages/Admin";
@@ -72,6 +74,7 @@ const App = () => (
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/projects" element={<Projects />} />
                 <Route path="/projects/:id" element={<ProjectDetail />} />
+                <Route path="/management" element={<ManagementRouteGuard><Management /></ManagementRouteGuard>} />
                 <Route path="/production" element={<Production />} />
                 <Route path="/production/dashboard" element={<ProductionDashboard />} />
                 <Route path="/production/delivery-checklist/:projectId" element={<DeliveryChecklist />} />

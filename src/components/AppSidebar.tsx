@@ -35,6 +35,7 @@ const sectionConfig: NavSection[] = [
   { key: "approvals", items: [{ section: "approvals", to: "/approvals", label: "Approvals", icon: ShieldCheck }] },
   { key: "announcements", items: [{ section: "dashboard", to: "/announcements", label: "Announcements", icon: MessageSquare }] },
   { key: "projects", items: [{ section: "projects", to: "/projects", label: "Projects", icon: FolderKanban }] },
+  { key: "management", items: [{ section: "management", to: "/management", label: "Management", icon: BarChart3 }] },
   {
     key: "production", label: "Production",
     items: [
