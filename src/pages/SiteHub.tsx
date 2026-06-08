@@ -389,6 +389,9 @@ function SiteHubContent() {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="rm">
+          <RMPage />
+        </TabsContent>
         <TabsContent value="factory-feedback">
           <SiteFactoryFeedback projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} modules={modules.map(m => ({ id: m.id, name: m.name, module_code: m.module_code || m.name }))} />
         </TabsContent>
