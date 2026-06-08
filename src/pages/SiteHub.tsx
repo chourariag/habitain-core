@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, Package, Users, MessageSquareWarning, FileCheck, Hammer, HardHat, Wrench } from "lucide-react";
-import RMPage from "@/pages/RM";
+import { Loader2, Truck, BookOpen, FileText, Boxes, CheckCircle2, XCircle, ClipboardCheck, PenTool, Package, Users, MessageSquareWarning, FileCheck, Hammer, HardHat } from "lucide-react";
 import { DailyLabourLog } from "@/components/labour/DailyLabourLog";
 import { ManpowerWeeklyExcel } from "@/components/labour/ManpowerWeeklyExcel";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
@@ -231,7 +230,6 @@ function SiteHubContent() {
             <TabsTrigger value="labour" className="gap-1.5"><Users className="h-4 w-4" /> People</TabsTrigger>
             <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Installation Sequence</TabsTrigger>
             <TabsTrigger value="safety" className="gap-1.5"><HardHat className="h-4 w-4" /> Safety</TabsTrigger>
-            <TabsTrigger value="rm" className="gap-1.5"><Wrench className="h-4 w-4" /> Repairs & AMC</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -388,9 +386,6 @@ function SiteHubContent() {
               <Button onClick={() => navigate("/safety")} style={{ backgroundColor: "#006039", color: "#FFFFFF" }}>Open Safety Module</Button>
             </CardContent>
           </Card>
-        </TabsContent>
-        <TabsContent value="rm">
-          <RMPage />
         </TabsContent>
         <TabsContent value="factory-feedback">
           <SiteFactoryFeedback projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} modules={modules.map(m => ({ id: m.id, name: m.name, module_code: m.module_code || m.name }))} />
