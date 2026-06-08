@@ -72,7 +72,8 @@ export function getDashboardTier(role: AppRole | null): 1 | 2 | 3 | 4 {
 export function canSeeSection(role: AppRole | null, section: string): boolean {
   if (section === "dashboard") return true;
   const allowed = SECTION_ROLES[section];
-  if (!allowed) return true;
+  // Undefined OR empty array means "no restriction — everyone"
+  if (!allowed || allowed.length === 0) return true;
   if (!role) return false;
   return allowed.includes(role);
 }
