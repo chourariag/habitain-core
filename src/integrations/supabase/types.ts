@@ -8033,6 +8033,7 @@ export type Database = {
           panel_count: number
           planned_labour_cost: number | null
           production_system: string
+          project_type: string | null
           setup_uploaded_at: string | null
           setup_uploaded_by_name: string | null
           site_lat: number | null
@@ -8080,6 +8081,7 @@ export type Database = {
           panel_count?: number
           planned_labour_cost?: number | null
           production_system?: string
+          project_type?: string | null
           setup_uploaded_at?: string | null
           setup_uploaded_by_name?: string | null
           site_lat?: number | null
@@ -8127,6 +8129,7 @@ export type Database = {
           panel_count?: number
           planned_labour_cost?: number | null
           production_system?: string
+          project_type?: string | null
           setup_uploaded_at?: string | null
           setup_uploaded_by_name?: string | null
           site_lat?: number | null
