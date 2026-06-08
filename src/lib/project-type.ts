@@ -1,7 +1,9 @@
 // Helpers for distinguishing Habitainer vs ADS (Altree Design Studio) projects.
-// The canonical field on `projects` is `division` ("Habitainer" | "ADS").
+// Reads either `project_type` ('habitainer' | 'ads') or legacy `division` ("Habitainer" | "ADS").
 
-export function isAdsProject(project: { division?: string | null } | null | undefined): boolean {
+export function isAdsProject(project: { project_type?: string | null; division?: string | null } | null | undefined): boolean {
+  const pt = String(project?.project_type ?? "").trim().toLowerCase();
+  if (pt) return pt === "ads";
   return String(project?.division ?? "").trim().toLowerCase() === "ads";
 }
 
