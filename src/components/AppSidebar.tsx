@@ -57,6 +57,7 @@ const sectionConfig: NavSection[] = [
     key: "procurement", label: "Procurement",
     items: [
       { section: "procurement", to: "/procurement", label: "Procurement", icon: Package },
+      { section: "procurement", to: "/rm", label: "Repairs & AMC", icon: Wrench },
     ],
   },
   {
