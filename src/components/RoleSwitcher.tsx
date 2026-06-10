@@ -70,8 +70,7 @@ export function RoleSwitcher({ collapsed }: Props) {
       className="px-3 py-2 mx-2 my-2 rounded-md"
       style={{ backgroundColor: "#FFF8EC", border: "1px solid #F4D58A" }}
     >
-      <div className="flex items-center gap-1.5 mb-1">
-        <FlaskConical className="h-3 w-3" style={{ color: "#D4860A" }} />
+      <div className="mb-1">
         <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "#D4860A" }}>
           {"\n"}
         </span>
