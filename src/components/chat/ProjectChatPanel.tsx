@@ -63,6 +63,27 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
 
   useEffect(() => { fetchMessages(); }, [fetchMessages]);
 
+  // Resolve sender display names from profiles
+  useEffect(() => {
+    const ids = Array.from(new Set(messages.map((m) => m.sender_id).filter((id) => id && !(id in senderNames))));
+    if (ids.length === 0) return;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("auth_user_id, display_name")
+        .in("auth_user_id", ids);
+      if (!data) return;
+      setSenderNames((prev) => {
+        const next = { ...prev };
+        (data as any[]).forEach((p) => {
+          if (p.display_name) next[p.auth_user_id] = p.display_name;
+        });
+        return next;
+      });
+    })();
+  }, [messages, senderNames]);
+
+
   // Mark as read
   useEffect(() => {
     const markRead = async () => {
