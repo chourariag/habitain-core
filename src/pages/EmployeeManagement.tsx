@@ -273,9 +273,6 @@ export default function EmployeeManagement() {
 
       <SeedDialog open={seedOpen} onClose={() => { setSeedOpen(false); loadRows(); }} managers={rows} />
 
-      {role === "super_admin" && (
-        <DangerZone rows={rows} onCleared={loadRows} />
-      )}
     </div>
   );
 }
