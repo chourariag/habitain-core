@@ -4,6 +4,8 @@ import { X, Send, Paperclip, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format, isToday, isYesterday } from "date-fns";
+import { effectiveDisplayName, getTestingPersonaName } from "@/lib/effective-user";
+
 
 interface ProjectChatPanelProps {
   projectId: string;
