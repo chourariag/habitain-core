@@ -532,8 +532,9 @@ Deno.serve(async (req) => {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { data: oldProfile } = await supabaseAdmin.from("profiles").select("*").eq("auth_user_id", user_id).single();
-      // Remove user_roles + profile first to avoid FK issues, then auth user
+      const { data: oldProfile } = await supabaseAdmin.from("profiles").select("*").eq("auth_user_id", user_id).maybeSingle();
+      // Remove profile-side records first, then soft-delete auth user to avoid FK blocks from historical records.
+      await supabaseAdmin.from("profile_kiosk_pins").delete().eq("auth_user_id", user_id);
       await supabaseAdmin.from("user_roles").delete().eq("user_id", user_id);
       const { error: delProfileErr } = await supabaseAdmin.from("profiles").delete().eq("auth_user_id", user_id);
       if (delProfileErr) {
@@ -541,11 +542,23 @@ Deno.serve(async (req) => {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { error: delAuthErr } = await supabaseAdmin.auth.admin.deleteUser(user_id);
+      const { error: delAuthErr } = await supabaseAdmin.auth.admin.deleteUser(user_id, true);
       if (delAuthErr) {
-        return new Response(JSON.stringify({ error: delAuthErr.message }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        const message = delAuthErr.message || "Database error deleting user";
+        const isAlreadyGone = /not found|does not exist|no user/i.test(message);
+        if (!isAlreadyGone) {
+          await supabaseAdmin.from("admin_audit_log").insert({
+            action: "delete_employee_auth_failed",
+            performed_by: callerId,
+            entity_type: "profile",
+            entity_id: user_id,
+            old_value: oldProfile,
+            new_value: { error: message },
+          });
+          return new Response(JSON.stringify({ error: message }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
       await supabaseAdmin.from("admin_audit_log").insert({
         action: "delete_employee",
@@ -566,13 +579,64 @@ Deno.serve(async (req) => {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      const { data: profiles, error: listErr } = await supabaseAdmin
+        .from("profiles")
+        .select("*")
+        .not("auth_user_id", "is", null);
+
+      if (listErr) {
+        return new Response(JSON.stringify({ error: listErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let deleted = 0;
+      let failed = 0;
+      let skipped = 0;
+      const failures: Array<{ user_id: string; email?: string | null; error: string }> = [];
+
+      for (const profile of profiles || []) {
+        const targetId = profile.auth_user_id as string;
+        if (targetId === callerId) {
+          skipped++;
+          continue;
+        }
+
+        await supabaseAdmin.from("profile_kiosk_pins").delete().eq("auth_user_id", targetId);
+        await supabaseAdmin.from("user_roles").delete().eq("user_id", targetId);
+        const { error: profileErr } = await supabaseAdmin.from("profiles").delete().eq("auth_user_id", targetId);
+        if (profileErr) {
+          failed++;
+          failures.push({ user_id: targetId, email: profile.email, error: profileErr.message });
+          continue;
+        }
+
+        const { error: authErr } = await supabaseAdmin.auth.admin.deleteUser(targetId, true);
+        if (authErr && !/not found|does not exist|no user/i.test(authErr.message || "")) {
+          failed++;
+          failures.push({ user_id: targetId, email: profile.email, error: authErr.message });
+          await supabaseAdmin.from("admin_audit_log").insert({
+            action: "delete_employee_auth_failed",
+            performed_by: callerId,
+            entity_type: "profile",
+            entity_id: targetId,
+            old_value: profile,
+            new_value: { error: authErr.message },
+          });
+          continue;
+        }
+
+        deleted++;
+      }
+
       await supabaseAdmin.from("admin_audit_log").insert({
         action: "bulk_delete_all_employees",
         performed_by: callerId,
         entity_type: "profile",
-        new_value: { initiated_at: new Date().toISOString() },
+        new_value: { deleted, failed, skipped, failures, completed_at: new Date().toISOString() },
       });
-      return new Response(JSON.stringify({ success: true }), {
+      return new Response(JSON.stringify({ success: true, deleted, failed, skipped, failures }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
