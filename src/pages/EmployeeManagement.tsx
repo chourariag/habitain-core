@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { AppRole, ROLE_LABELS, ROLE_TIERS } from "@/lib/roles";
-import { createEmployee, updateEmployee, resetEmployeePassword, deleteEmployee, logBulkDeleteAllEmployees } from "@/lib/admin-api";
+import { createEmployee, updateEmployee, resetEmployeePassword, logBulkDeleteAllEmployees } from "@/lib/admin-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -634,40 +634,22 @@ function RemoveAllButton({ onCleared }: { onCleared: () => void }) {
     let deleted = 0, failed = 0, skipped = 0;
 
     try {
-      await logBulkDeleteAllEmployees();
+      const res = await logBulkDeleteAllEmployees();
+      deleted = Number(res.deleted ?? 0);
+      failed = Number(res.failed ?? 0);
+      skipped = Number(res.skipped ?? 0);
+      for (const item of res.skipped_items || []) {
+        append(`⏭ Skipped ${item.email || item.display_name || item.user_id} (current user)`);
+      }
+      for (const item of res.deleted_items || []) {
+        append(`✅ Deleted ${item.email || item.display_name || item.user_id}`);
+      }
+      for (const item of res.failures || []) {
+        append(`❌ Failed: ${item.email || item.user_id} — ${item.error}`);
+      }
     } catch (e) {
-      append(`⚠️ Audit log failed: ${(e as Error).message}`);
-    }
-
-    const { data: sessionData } = await supabase.auth.getSession();
-    const currentAuthId = sessionData.session?.user?.id;
-
-    const { data: profiles, error } = await supabase
-      .from("profiles")
-      .select("auth_user_id, email, display_name")
-      .not("auth_user_id", "is", null);
-
-    if (error) {
-      append(`❌ Failed to load profiles: ${error.message}`);
-      setRunning(false);
-      return;
-    }
-
-    for (const p of profiles || []) {
-      const label = p.email || p.display_name || p.auth_user_id;
-      if (p.auth_user_id === currentAuthId) {
-        append(`⏭ Skipped ${label} (current user)`);
-        skipped++;
-        continue;
-      }
-      try {
-        await deleteEmployee(p.auth_user_id as string);
-        append(`✅ Deleted ${label}`);
-        deleted++;
-      } catch (e) {
-        append(`❌ Failed: ${label} — ${(e as Error).message}`);
-        failed++;
-      }
+      append(`❌ Failed: ${(e as Error).message}`);
+      failed++;
     }
 
     setSummary({ deleted, failed, skipped });
