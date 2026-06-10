@@ -14,7 +14,7 @@ export function TestingModeBanner() {
       <div className="flex items-center gap-2 min-w-0">
         <FlaskConical className="h-3.5 w-3.5 shrink-0" style={{ color: "#D4860A" }} />
         <span className="truncate">
-          <strong>Testing Mode</strong> — Viewing as: <strong>{roleLabel(role)}</strong>. Your actual role is MD.
+          <strong>{"\n"}</strong> — Viewing as: <strong>{roleLabel(role)}</strong>. Your actual role is MD.
         </span>
       </div>
       <button
