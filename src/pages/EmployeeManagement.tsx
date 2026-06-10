@@ -59,8 +59,13 @@ export default function EmployeeManagement() {
   const { role, loading: roleLoading } = useUserRole();
   const allowed = role === "super_admin" || role === "managing_director";
 
-  const [rows, setRows] = useState<ProfileRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  // Clear any cached profiles data on mount so we always see live DB state
+  useEffect(() => {
+    queryClient.removeQueries({ queryKey: ["profiles"] });
+  }, [queryClient]);
+
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterDept, setFilterDept] = useState<string>("all");
@@ -73,18 +78,24 @@ export default function EmployeeManagement() {
   const [createdResult, setCreatedResult] = useState<{ email: string; password: string } | null>(null);
   const [seedOpen, setSeedOpen] = useState(false);
 
-  const loadRows = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, auth_user_id, email, display_name, phone, role, department, reporting_manager_id, is_active, created_at")
-      .order("created_at", { ascending: false });
-    if (error) { toast.error(error.message); setLoading(false); return; }
-    setRows((data || []) as ProfileRow[]);
-    setLoading(false);
-  };
+  const { data: rows = [], isLoading: loading, refetch } = useQuery<ProfileRow[]>({
+    queryKey: ["profiles"],
+    enabled: allowed,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, auth_user_id, email, display_name, phone, role, department, reporting_manager_id, is_active, created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as ProfileRow[];
+    },
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+  });
 
-  useEffect(() => { if (allowed) loadRows(); }, [allowed]);
+  const loadRows = () => { refetch(); };
 
   const departments = useMemo(() => {
     const s = new Set<string>();
