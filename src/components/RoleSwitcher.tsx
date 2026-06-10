@@ -59,7 +59,7 @@ export function RoleSwitcher({ collapsed }: Props) {
 
   if (collapsed) {
     return (
-      <div className="flex items-center justify-center py-2" title="Testing Mode">
+      <div className="flex items-center justify-center py-2" title="\n">
         <FlaskConical className="h-4 w-4" style={{ color: "#D4860A" }} />
       </div>
     );
@@ -73,7 +73,7 @@ export function RoleSwitcher({ collapsed }: Props) {
       <div className="flex items-center gap-1.5 mb-1">
         <FlaskConical className="h-3 w-3" style={{ color: "#D4860A" }} />
         <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "#D4860A" }}>
-          Testing Mode
+          {"\n"}
         </span>
       </div>
       <label className="text-[10px] block mb-1" style={{ color: "#666666" }}>
