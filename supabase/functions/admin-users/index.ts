@@ -516,7 +516,7 @@ Deno.serve(async (req) => {
 
     // ── DELETE EMPLOYEE (hard delete) ────────────────────────────
     if (action === "delete_employee") {
-      if (callerProfile.role !== "super_admin") {
+      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden: super_admin only" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -561,7 +561,7 @@ Deno.serve(async (req) => {
 
     // ── BULK DELETE ALL EMPLOYEES (super_admin only) ─────────────
     if (action === "bulk_delete_all_employees") {
-      if (callerProfile.role !== "super_admin") {
+      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden: super_admin only" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
