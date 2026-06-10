@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { AppRole, ROLE_LABELS, ROLE_TIERS } from "@/lib/roles";
