@@ -664,7 +664,7 @@ function RemoveAllButton({ onCleared }: { onCleared: () => void }) {
         onClick={() => { setOpen(true); setConfirmText(""); setLog([]); setSummary(null); }}
         style={{ borderColor: "#F40009", color: "#F40009" }}
       >
-        <Trash2 className="h-4 w-4 mr-2" /> 🗑 Remove All
+        <Trash2 className="h-4 w-4 mr-2" /> Remove All
       </Button>
 
       <Dialog open={open} onOpenChange={(o) => { if (!running) setOpen(o); }}>
