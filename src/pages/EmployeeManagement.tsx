@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { AppRole, ROLE_LABELS, ROLE_TIERS } from "@/lib/roles";
@@ -59,13 +59,6 @@ export default function EmployeeManagement() {
   const { role, loading: roleLoading } = useUserRole();
   const allowed = role === "super_admin" || role === "managing_director";
 
-  const queryClient = useQueryClient();
-
-  // Clear any cached profiles data on mount so we always see live DB state
-  useEffect(() => {
-    queryClient.removeQueries({ queryKey: ["profiles"] });
-  }, [queryClient]);
-
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterDept, setFilterDept] = useState<string>("all");
@@ -78,14 +71,14 @@ export default function EmployeeManagement() {
   const [createdResult, setCreatedResult] = useState<{ email: string; password: string } | null>(null);
   const [seedOpen, setSeedOpen] = useState(false);
 
-  const { data: rows = [], isLoading: loading, refetch } = useQuery<ProfileRow[]>({
+  const { data: employees, isLoading: loading, refetch } = useQuery<ProfileRow[]>({
     queryKey: ["profiles"],
     enabled: allowed,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, auth_user_id, email, display_name, phone, role, department, reporting_manager_id, is_active, created_at")
-        .order("created_at", { ascending: false });
+        .select("*")
+        .order("display_name");
       if (error) throw error;
       return (data ?? []) as ProfileRow[];
     },
@@ -94,6 +87,9 @@ export default function EmployeeManagement() {
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
   });
+
+  const rows = employees ?? [];
+  const employeeCount = employees?.length ?? 0;
 
   const loadRows = () => { refetch(); };
 
@@ -160,7 +156,7 @@ export default function EmployeeManagement() {
             {departments.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
           </SelectContent>
         </Select>
-        <div className="text-sm text-muted-foreground ml-auto">{filtered.length} of {rows.length}</div>
+        <div className="text-sm text-muted-foreground ml-auto">{filtered.length} of {employeeCount}</div>
       </div>
 
       <div className="bg-white border rounded-lg overflow-hidden">
@@ -179,8 +175,8 @@ export default function EmployeeManagement() {
           <TableBody>
             {loading ? (
               <TableRow><TableCell colSpan={7} className="text-center py-10"><Loader2 className="h-5 w-5 animate-spin inline" /></TableCell></TableRow>
-            ) : rows.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees found. Click New Employee or Bulk Seed to add employees.</TableCell></TableRow>
+            ) : employeeCount === 0 ? (
+              <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees found. Use Bulk Seed or New Employee to add team members.</TableCell></TableRow>
             ) : filtered.length === 0 ? (
               <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees match these filters.</TableCell></TableRow>
             ) : filtered.map((r) => (
