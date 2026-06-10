@@ -638,8 +638,12 @@ function RemoveAllButton({ onCleared }: { onCleared: () => void }) {
       deleted = Number(res.deleted ?? 0);
       failed = Number(res.failed ?? 0);
       skipped = Number(res.skipped ?? 0);
-      if (skipped > 0) append("⏭ Skipped current user");
-      if (deleted > 0) append(`✅ Deleted ${deleted} employee account${deleted === 1 ? "" : "s"}`);
+      for (const item of res.skipped_items || []) {
+        append(`⏭ Skipped ${item.email || item.display_name || item.user_id} (current user)`);
+      }
+      for (const item of res.deleted_items || []) {
+        append(`✅ Deleted ${item.email || item.display_name || item.user_id}`);
+      }
       for (const item of res.failures || []) {
         append(`❌ Failed: ${item.email || item.user_id} — ${item.error}`);
       }
