@@ -231,7 +231,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
                     <div key={m.id} className={`flex mb-2 ${isOwn ? "justify-end" : "justify-start"}`}>
                       <div className="max-w-[75%]">
                         {!isOwn && (
-                          <p className="text-[11px] font-semibold mb-0.5 px-1" style={{ color: "#666666" }}>{m.sender_name}</p>
+                          <p className="text-[11px] font-bold mb-0.5 px-1" style={{ color: "#666666" }}>{senderNames[m.sender_id] || m.sender_name || "User"}</p>
                         )}
                         <div
                           className="px-3 py-2 text-[13px] leading-relaxed"
