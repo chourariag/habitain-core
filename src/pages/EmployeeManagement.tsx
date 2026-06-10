@@ -117,6 +117,7 @@ export default function EmployeeManagement() {
           <Button variant="outline" onClick={() => setSeedOpen(true)}>
             <Sparkles className="h-4 w-4 mr-2" /> Bulk Seed
           </Button>
+          {role === "super_admin" && <RemoveAllButton onCleared={loadRows} />}
           <Button onClick={() => setCreateOpen(true)}>
             <UserPlus className="h-4 w-4 mr-2" /> New Employee
           </Button>
