@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { AppRole, ROLE_LABELS, ROLE_TIERS } from "@/lib/roles";
@@ -59,13 +59,6 @@ export default function EmployeeManagement() {
   const { role, loading: roleLoading } = useUserRole();
   const allowed = role === "super_admin" || role === "managing_director";
 
-  const queryClient = useQueryClient();
-
-  // Clear any cached profiles data on mount so we always see live DB state
-  useEffect(() => {
-    queryClient.removeQueries({ queryKey: ["profiles"] });
-  }, [queryClient]);
-
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterDept, setFilterDept] = useState<string>("all");
@@ -78,14 +71,14 @@ export default function EmployeeManagement() {
   const [createdResult, setCreatedResult] = useState<{ email: string; password: string } | null>(null);
   const [seedOpen, setSeedOpen] = useState(false);
 
-  const { data: rows = [], isLoading: loading, refetch } = useQuery<ProfileRow[]>({
+  const { data: employees, isLoading: loading, refetch } = useQuery<ProfileRow[]>({
     queryKey: ["profiles"],
     enabled: allowed,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, auth_user_id, email, display_name, phone, role, department, reporting_manager_id, is_active, created_at")
-        .order("created_at", { ascending: false });
+        .select("*")
+        .order("display_name");
       if (error) throw error;
       return (data ?? []) as ProfileRow[];
     },
@@ -94,6 +87,9 @@ export default function EmployeeManagement() {
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
   });
+
+  const rows = employees ?? [];
+  const employeeCount = employees?.length ?? 0;
 
   const loadRows = () => { refetch(); };
 
@@ -160,7 +156,7 @@ export default function EmployeeManagement() {
             {departments.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
           </SelectContent>
         </Select>
-        <div className="text-sm text-muted-foreground ml-auto">{filtered.length} of {rows.length}</div>
+        <div className="text-sm text-muted-foreground ml-auto">{filtered.length} of {employeeCount}</div>
       </div>
 
       <div className="bg-white border rounded-lg overflow-hidden">
@@ -179,8 +175,8 @@ export default function EmployeeManagement() {
           <TableBody>
             {loading ? (
               <TableRow><TableCell colSpan={7} className="text-center py-10"><Loader2 className="h-5 w-5 animate-spin inline" /></TableCell></TableRow>
-            ) : rows.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees found. Click New Employee or Bulk Seed to add employees.</TableCell></TableRow>
+            ) : employeeCount === 0 ? (
+              <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees found. Use Bulk Seed or New Employee to add team members.</TableCell></TableRow>
             ) : filtered.length === 0 ? (
               <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees match these filters.</TableCell></TableRow>
             ) : filtered.map((r) => (
@@ -486,45 +482,6 @@ function CredentialsDialog({ open, onClose, title, email, password }: {
 type SeedEntry = { full_name: string; email: string; role: AppRole; department?: string; manager_email?: string };
 type SeedLog = { idx: number; email: string; status: "queued" | "ok" | "skipped" | "error"; message?: string; password?: string };
 
-const SAMPLE_SEED = `# HStack Altree Org Chart — 34 active employees (Dec 2025, v2)
-# Format: Full Name, email@altree.in, role_key, Designation/Department, manager_email (optional)
-# Note: doc uses "hr_manager" for Sindhu Mary — mapped to hr_executive (closest valid app_role enum value).
-Gaurav Chauraria, gaurav.chauraria@altree.in, managing_director, Managing Director,
-John Kunnath, john.kunnath@altree.in, sales_director, Sales & Marketing, gaurav.chauraria@altree.in
-Venkat, venkat@altree.in, head_operations, Head of Operations - Design, gaurav.chauraria@altree.in
-Shiv Choudhari, shiv.choudhari@altree.in, finance_director, Business Services and Finance, gaurav.chauraria@altree.in
-Bala, bala@altree.in, head_operations, Facilities / Installation Manager, gaurav.chauraria@altree.in
-Mohan, mohan@altree.in, delivery_rm_lead, Maintenance, bala@altree.in
-Mary, mary@altree.in, finance_manager, Finance and HR Manager, shiv.choudhari@altree.in
-Ribunzad, ribunzad@altree.in, project_architect, Senior Architect, venkat@altree.in
-Aditi, aditi@altree.in, project_architect, Project Architect, venkat@altree.in
-Sindhu Mary, sindhu.mary@altree.in, hr_executive, HR Executive, mary@altree.in
-Yukta, yukta@altree.in, factory_floor_supervisor, Intern, azad@altree.in
-Vaishnavi, vaishnavi@altree.in, project_architect, Project Architect, venkat@altree.in
-Awaiz, awaiz@altree.in, head_operations, Site Installation Manager, bala@altree.in
-Vijay, vijay@altree.in, procurement, Purchase Manager, shiv.choudhari@altree.in
-Rakesh, rakesh@altree.in, factory_floor_supervisor, Factory Supervisor, azad@altree.in
-Tejaswini, tejaswini@altree.in, costing_engineer, Estimator, venkat@altree.in
-Tagore, tagore@altree.in, delivery_rm_lead, Site Engineer, awaiz@altree.in
-Nakhim, nakhim@altree.in, costing_engineer, Costing Engineer, venkat@altree.in
-Nasim, nasim@altree.in, head_operations, Site Manager, bala@altree.in
-Suraj, suraj@altree.in, head_operations, Ops and Planning Head, gaurav.chauraria@altree.in
-Karthik, karthik@altree.in, planning_engineer, Planning Engineer, suraj@altree.in
-Abu Hassan, abu.hassan@altree.in, factory_floor_supervisor, Wall Panelling Foreman, azad@altree.in
-Jitendra Mallik, jitendra.mallik@altree.in, factory_floor_supervisor, Fabrication Foreman, azad@altree.in
-Azad, azad@altree.in, production_head, Plant Head / Production Manager, bala@altree.in
-Vaibhav, vaibhav@altree.in, project_architect, Product Designer, venkat@altree.in
-Lekhapriya, lekhapriya@altree.in, sales_director, Marketing Executive, john.kunnath@altree.in
-George, george@altree.in, sales_director, Sales Manager, john.kunnath@altree.in
-Venugopal, venugopal@altree.in, delivery_rm_lead, Maintenance, bala@altree.in
-Sandeep, sandeep@altree.in, stores_executive, Stores, vijay@altree.in
-Ajay Nishad, ajay.nishad@altree.in, factory_floor_supervisor, General Foreman, azad@altree.in
-Shambu Yadav, shambu.yadav@altree.in, factory_floor_supervisor, General Foreman, azad@altree.in
-Smaran, smaran@altree.in, sales_director, Sales Executive, john.kunnath@altree.in
-Stanley, stanley@altree.in, head_operations, Head of Projects / Engineering, gaurav.chauraria@altree.in
-Karan Nadig, karan.nadig@altree.in, principal_architect, Design and Development, venkat@altree.in`;
-
-
 function parseSeedText(text: string): SeedEntry[] {
   return text.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#")).map((line) => {
     const parts = line.split(",").map((p) => p.trim());
@@ -539,7 +496,7 @@ function parseSeedText(text: string): SeedEntry[] {
 }
 
 function SeedDialog({ open, onClose, managers }: { open: boolean; onClose: () => void; managers: ProfileRow[] }) {
-  const [text, setText] = useState(SAMPLE_SEED);
+  const [text, setText] = useState("");
   const [running, setRunning] = useState(false);
   const [logs, setLogs] = useState<SeedLog[]>([]);
   const [tab, setTab] = useState("paste");
