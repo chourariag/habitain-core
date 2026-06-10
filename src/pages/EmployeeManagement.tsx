@@ -179,6 +179,8 @@ export default function EmployeeManagement() {
           <TableBody>
             {loading ? (
               <TableRow><TableCell colSpan={7} className="text-center py-10"><Loader2 className="h-5 w-5 animate-spin inline" /></TableCell></TableRow>
+            ) : rows.length === 0 ? (
+              <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees found. Click New Employee or Bulk Seed to add employees.</TableCell></TableRow>
             ) : filtered.length === 0 ? (
               <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees match these filters.</TableCell></TableRow>
             ) : filtered.map((r) => (
