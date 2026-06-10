@@ -4,6 +4,8 @@ import { X, Send, Paperclip, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format, isToday, isYesterday } from "date-fns";
+import { effectiveDisplayName, getTestingPersonaName } from "@/lib/effective-user";
+
 
 interface ProjectChatPanelProps {
   projectId: string;
@@ -32,6 +34,7 @@ function dateSeparatorLabel(dateStr: string) {
 
 export function ProjectChatPanel({ projectId, projectName, projectType, userId, onClose }: ProjectChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
@@ -41,11 +44,12 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Get sender name
+  // Get sender name (own)
   useEffect(() => {
     supabase.from("profiles").select("display_name").eq("auth_user_id", userId).maybeSingle()
-      .then(({ data }) => setSenderName((data as any)?.display_name ?? "User"));
+      .then(({ data }) => setSenderName(effectiveDisplayName((data as any)?.display_name, "User")));
   }, [userId]);
+
 
   // Fetch messages
   const fetchMessages = useCallback(async () => {
@@ -58,6 +62,27 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
   }, [projectId, projectType]);
 
   useEffect(() => { fetchMessages(); }, [fetchMessages]);
+
+  // Resolve sender display names from profiles
+  useEffect(() => {
+    const ids = Array.from(new Set(messages.map((m) => m.sender_id).filter((id) => id && !(id in senderNames))));
+    if (ids.length === 0) return;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("auth_user_id, display_name")
+        .in("auth_user_id", ids);
+      if (!data) return;
+      setSenderNames((prev) => {
+        const next = { ...prev };
+        (data as any[]).forEach((p) => {
+          if (p.display_name) next[p.auth_user_id] = p.display_name;
+        });
+        return next;
+      });
+    })();
+  }, [messages, senderNames]);
+
 
   // Mark as read
   useEffect(() => {
@@ -123,7 +148,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
         project_id: projectId,
         project_type: projectType,
         sender_id: userId,
-        sender_name: senderName || "User",
+        sender_name: getTestingPersonaName() || senderName || "User",
         message_text: text.trim() || null,
         attachment_urls: urls,
         read_by: [userId],
@@ -206,7 +231,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
                     <div key={m.id} className={`flex mb-2 ${isOwn ? "justify-end" : "justify-start"}`}>
                       <div className="max-w-[75%]">
                         {!isOwn && (
-                          <p className="text-[11px] font-semibold mb-0.5 px-1" style={{ color: "#666666" }}>{m.sender_name}</p>
+                          <p className="text-[11px] font-bold mb-0.5 px-1" style={{ color: "#666666" }}>{senderNames[m.sender_id] || m.sender_name || "User"}</p>
                         )}
                         <div
                           className="px-3 py-2 text-[13px] leading-relaxed"
