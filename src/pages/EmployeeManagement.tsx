@@ -117,6 +117,7 @@ export default function EmployeeManagement() {
           <Button variant="outline" onClick={() => setSeedOpen(true)}>
             <Sparkles className="h-4 w-4 mr-2" /> Bulk Seed
           </Button>
+          {role === "super_admin" && <RemoveAllButton onCleared={loadRows} />}
           <Button onClick={() => setCreateOpen(true)}>
             <UserPlus className="h-4 w-4 mr-2" /> New Employee
           </Button>
@@ -272,9 +273,6 @@ export default function EmployeeManagement() {
 
       <SeedDialog open={seedOpen} onClose={() => { setSeedOpen(false); loadRows(); }} managers={rows} />
 
-      {role === "super_admin" && (
-        <DangerZone rows={rows} onCleared={loadRows} />
-      )}
     </div>
   );
 }
@@ -647,9 +645,9 @@ function SeedDialog({ open, onClose, managers }: { open: boolean; onClose: () =>
   );
 }
 
-/* ───────────────────── Danger Zone ───────────────────── */
+/* ───────────────────── Remove All (Danger) ───────────────────── */
 
-function DangerZone({ rows, onCleared }: { rows: ProfileRow[]; onCleared: () => void }) {
+function RemoveAllButton({ onCleared }: { onCleared: () => void }) {
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [running, setRunning] = useState(false);
@@ -687,7 +685,7 @@ function DangerZone({ rows, onCleared }: { rows: ProfileRow[]; onCleared: () => 
     for (const p of profiles || []) {
       const label = p.email || p.display_name || p.auth_user_id;
       if (p.auth_user_id === currentAuthId) {
-        append(`⏭️ Skipped ${label} (current user)`);
+        append(`⏭ Skipped ${label} (current user)`);
         skipped++;
         continue;
       }
@@ -696,7 +694,7 @@ function DangerZone({ rows, onCleared }: { rows: ProfileRow[]; onCleared: () => 
         append(`✅ Deleted ${label}`);
         deleted++;
       } catch (e) {
-        append(`❌ Failed ${label}: ${(e as Error).message}`);
+        append(`❌ Failed: ${label} — ${(e as Error).message}`);
         failed++;
       }
     }
@@ -708,40 +706,30 @@ function DangerZone({ rows, onCleared }: { rows: ProfileRow[]; onCleared: () => 
 
   return (
     <>
-      <div className="border-2 border-dashed rounded-lg p-5 mt-8" style={{ borderColor: "#F40009", background: "#FFF5F5" }}>
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="h-6 w-6 mt-0.5" style={{ color: "#F40009" }} />
-          <div className="flex-1">
-            <h2 className="text-lg font-bold" style={{ color: "#F40009" }}>Danger Zone</h2>
-            <p className="text-sm text-muted-foreground mb-3">
-              Irreversible destructive actions. Use with extreme caution.
-            </p>
-            <Button
-              variant="destructive"
-              onClick={() => { setOpen(true); setConfirmText(""); setLog([]); setSummary(null); }}
-            >
-              <Trash2 className="h-4 w-4 mr-2" /> ⚠️ Delete All Seeded Employees
-            </Button>
-          </div>
-        </div>
-      </div>
+      <Button
+        variant="outline"
+        onClick={() => { setOpen(true); setConfirmText(""); setLog([]); setSummary(null); }}
+        style={{ borderColor: "#F40009", color: "#F40009" }}
+      >
+        <Trash2 className="h-4 w-4 mr-2" /> 🗑 Remove All
+      </Button>
 
       <Dialog open={open} onOpenChange={(o) => { if (!running) setOpen(o); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle style={{ color: "#F40009" }}>Delete All Seeded Employees</DialogTitle>
+            <DialogTitle style={{ color: "#F40009" }}>Delete All Employees</DialogTitle>
             <DialogDescription>
-              This will permanently delete all {rows.length} seeded employee accounts from both Supabase Auth and the profiles table. This cannot be undone. Type <strong>DELETE</strong> to confirm.
+              This will permanently delete all employee accounts from both Supabase Auth and the profiles table. This cannot be undone. Type <strong>CONFIRM</strong> to proceed.
             </DialogDescription>
           </DialogHeader>
 
           {!summary && !running && (
             <div className="space-y-2">
-              <Label>Type DELETE to confirm</Label>
+              <Label>Type CONFIRM to enable delete</Label>
               <Input
                 value={confirmText}
                 onChange={(e) => setConfirmText(e.target.value)}
-                placeholder="DELETE"
+                placeholder="CONFIRM"
                 autoFocus
               />
             </div>
@@ -769,10 +757,10 @@ function DangerZone({ rows, onCleared }: { rows: ProfileRow[]; onCleared: () => 
                 <Button variant="ghost" onClick={() => setOpen(false)} disabled={running}>Cancel</Button>
                 <Button
                   variant="destructive"
-                  disabled={running || confirmText !== "DELETE"}
+                  disabled={running || confirmText !== "CONFIRM"}
                   onClick={run}
                 >
-                  {running ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Deleting…</> : "Permanently delete all"}
+                  {running ? <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Deleting…</> : "Delete"}
                 </Button>
               </>
             ) : (
@@ -784,3 +772,4 @@ function DangerZone({ rows, onCleared }: { rows: ProfileRow[]; onCleared: () => 
     </>
   );
 }
+
