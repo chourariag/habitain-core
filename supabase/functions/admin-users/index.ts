@@ -594,12 +594,15 @@ Deno.serve(async (req) => {
       let deleted = 0;
       let failed = 0;
       let skipped = 0;
+      const deletedItems: Array<{ user_id: string; email?: string | null; display_name?: string | null }> = [];
+      const skippedItems: Array<{ user_id: string; email?: string | null; display_name?: string | null; reason: string }> = [];
       const failures: Array<{ user_id: string; email?: string | null; error: string }> = [];
 
       for (const profile of profiles || []) {
         const targetId = profile.auth_user_id as string;
         if (targetId === callerId) {
           skipped++;
+          skippedItems.push({ user_id: targetId, email: profile.email, display_name: profile.display_name, reason: "current user" });
           continue;
         }
 
@@ -628,15 +631,16 @@ Deno.serve(async (req) => {
         }
 
         deleted++;
+        deletedItems.push({ user_id: targetId, email: profile.email, display_name: profile.display_name });
       }
 
       await supabaseAdmin.from("admin_audit_log").insert({
         action: "bulk_delete_all_employees",
         performed_by: callerId,
         entity_type: "profile",
-        new_value: { deleted, failed, skipped, failures, completed_at: new Date().toISOString() },
+        new_value: { deleted, failed, skipped, deleted_items: deletedItems, skipped_items: skippedItems, failures, completed_at: new Date().toISOString() },
       });
-      return new Response(JSON.stringify({ success: true, deleted, failed, skipped, failures }), {
+      return new Response(JSON.stringify({ success: true, deleted, failed, skipped, deleted_items: deletedItems, skipped_items: skippedItems, failures }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
