@@ -53,6 +53,7 @@ import ProductionDashboard from "@/pages/ProductionDashboard";
 import DispatchDelivery from "@/pages/DispatchDelivery";
 import SiteDashboard from "@/pages/SiteDashboard";
 import EmployeeManagement from "@/pages/EmployeeManagement";
+import AuthCallback from "@/pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/setup" element={<Setup />} />
               <Route path="/welcome" element={<Welcome />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route element={<AppLayout />}>
