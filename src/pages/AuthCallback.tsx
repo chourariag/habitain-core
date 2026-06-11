@@ -7,18 +7,22 @@ export default function AuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Invite & recovery links should land the user on the set-password page
+    const hash = window.location.hash;
+    const isSetPasswordFlow = hash.includes("type=invite") || hash.includes("type=recovery");
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") {
         navigate("/reset-password", { replace: true });
         return;
       }
       if (session) {
-        navigate("/dashboard", { replace: true });
+        navigate(isSetPasswordFlow ? "/reset-password" : "/dashboard", { replace: true });
       }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate("/dashboard", { replace: true });
+      if (session) navigate(isSetPasswordFlow ? "/reset-password" : "/dashboard", { replace: true });
     });
 
     return () => subscription.unsubscribe();
