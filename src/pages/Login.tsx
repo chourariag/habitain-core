@@ -11,17 +11,72 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"password" | "magic">("password");
   const navigate = useNavigate();
+
+  const cleanEmail = () => email.trim().toLowerCase();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: cleanEmail(),
+        password,
+      });
       if (error) throw error;
       navigate("/dashboard");
     } catch (err: any) {
       toast.error(err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      toast.error("Enter your email first");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: cleanEmail(),
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          shouldCreateUser: false,
+        },
+      });
+      if (error) throw error;
+      toast.success("Magic link sent!", {
+        description: "Check your email and click the link to log in.",
+        duration: 8000,
+      });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send magic link");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      toast.error("Enter your email above first");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Password reset email sent!", {
+        description: "Check your email for the reset link.",
+        duration: 8000,
+      });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send reset email");
     } finally {
       setLoading(false);
     }
@@ -34,34 +89,86 @@ export default function Login() {
           <Logo size="lg" />
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div className="bg-card rounded-lg p-6 space-y-4 shadow-card border border-border">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@altree.in"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+        {mode === "password" ? (
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="bg-card rounded-lg p-6 space-y-4 shadow-card border border-border">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@altree.in"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing in…" : "Sign In"}
+              </Button>
+              <div className="flex items-center justify-between text-xs">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-primary hover:underline"
+                  disabled={loading}
+                >
+                  Forgot Password?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("magic")}
+                  className="text-muted-foreground hover:text-foreground hover:underline"
+                  disabled={loading}
+                >
+                  Use Magic Link
+                </button>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+          </form>
+        ) : (
+          <form onSubmit={handleMagicLink} className="space-y-4">
+            <div className="bg-card rounded-lg p-6 space-y-4 shadow-card border border-border">
+              <div className="space-y-2">
+                <Label htmlFor="magic-email">Email</Label>
+                <Input
+                  id="magic-email"
+                  type="email"
+                  placeholder="you@altree.in"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  We'll email you a link that logs you in instantly — no password needed.
+                </p>
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Sending…" : "Send Magic Link"}
+              </Button>
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setMode("password")}
+                  className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+                  disabled={loading}
+                >
+                  ← Back to password login
+                </button>
+              </div>
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in…" : "Sign In"}
-            </Button>
-          </div>
-        </form>
+          </form>
+        )}
 
         <p className="text-center text-xs text-muted-foreground mt-6">
           Contact your administrator for access credentials

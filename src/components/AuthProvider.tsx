@@ -17,7 +17,9 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
-const PUBLIC_ROUTES = ["/login", "/setup", "/welcome", "/onboarding", "/auth/callback"];
+const PUBLIC_ROUTES = ["/login", "/setup", "/welcome", "/onboarding", "/auth/callback", "/reset-password"];
+// Routes where a logged-in user should NOT be auto-redirected to dashboard
+const NO_AUTO_REDIRECT = ["/onboarding", "/reset-password", "/auth/callback"];
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -106,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loading, session, location.pathname, navigate]);
 
   useEffect(() => {
-    if (!loading && session && PUBLIC_ROUTES.includes(location.pathname) && location.pathname !== "/onboarding") {
+    if (!loading && session && PUBLIC_ROUTES.includes(location.pathname) && !NO_AUTO_REDIRECT.includes(location.pathname)) {
       // Check onboarding status before redirecting to dashboard
       const checkOnboarding = async () => {
         const { data: profile } = await supabase
