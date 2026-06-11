@@ -54,6 +54,7 @@ import DispatchDelivery from "@/pages/DispatchDelivery";
 import SiteDashboard from "@/pages/SiteDashboard";
 import EmployeeManagement from "@/pages/EmployeeManagement";
 import AuthCallback from "@/pages/AuthCallback";
+import ResetPassword from "@/pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
               <Route path="/setup" element={<Setup />} />
               <Route path="/welcome" element={<Welcome />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route element={<AppLayout />}>
