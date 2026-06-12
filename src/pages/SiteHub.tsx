@@ -341,10 +341,15 @@ function SiteHubContent() {
           <Tabs defaultValue="daily" className="space-y-3">
             <TabsList>
               <TabsTrigger value="daily">Daily Log</TabsTrigger>
-              <TabsTrigger value="floor-plan">Floor Plan & Positions</TabsTrigger>
-              <TabsTrigger value="timeline">Photo Timeline</TabsTrigger>
+              <TabsTrigger value="floor-plan">Site Layout & Zones</TabsTrigger>
+              <TabsTrigger value="timeline">Zone Timeline</TabsTrigger>
             </TabsList>
             <TabsContent value="daily" className="space-y-4">
+              <Card>
+                <CardContent className="pt-4">
+                  <GuidedPhotoCapture projectId={selectedProjectId!} />
+                </CardContent>
+              </Card>
               <SiteDiary projectId={selectedProjectId!} userRole={userRole} />
               <SubcontractorSchedule projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
             </TabsContent>
