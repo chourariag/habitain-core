@@ -8408,6 +8408,63 @@ export type Database = {
           },
         ]
       }
+      qc_checklist_definitions: {
+        Row: {
+          check_category: string | null
+          check_text: string
+          checked_by_role: string | null
+          construction_type: string
+          created_at: string
+          evidence_required: string | null
+          id: string
+          is_active: boolean
+          is_archived: boolean
+          item_order: number
+          pass_criteria: string | null
+          severity: string | null
+          stage_id: string
+          stage_label: string
+          standard_specification: string | null
+          updated_at: string
+        }
+        Insert: {
+          check_category?: string | null
+          check_text: string
+          checked_by_role?: string | null
+          construction_type: string
+          created_at?: string
+          evidence_required?: string | null
+          id?: string
+          is_active?: boolean
+          is_archived?: boolean
+          item_order: number
+          pass_criteria?: string | null
+          severity?: string | null
+          stage_id: string
+          stage_label: string
+          standard_specification?: string | null
+          updated_at?: string
+        }
+        Update: {
+          check_category?: string | null
+          check_text?: string
+          checked_by_role?: string | null
+          construction_type?: string
+          created_at?: string
+          evidence_required?: string | null
+          id?: string
+          is_active?: boolean
+          is_archived?: boolean
+          item_order?: number
+          pass_criteria?: string | null
+          severity?: string | null
+          stage_id?: string
+          stage_label?: string
+          standard_specification?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       qc_checklist_items: {
         Row: {
           created_at: string | null
@@ -8451,8 +8508,10 @@ export type Database = {
         Row: {
           ai_quality_checked: boolean | null
           ai_severity: string | null
-          checklist_item_id: string
+          check_text_snapshot: string | null
+          checklist_item_id: string | null
           created_at: string | null
+          definition_id: string | null
           id: string
           inspection_id: string
           notes: string | null
@@ -8460,12 +8519,15 @@ export type Database = {
           quality_issues: string[] | null
           quality_override: boolean | null
           result: string | null
+          severity_snapshot: string | null
         }
         Insert: {
           ai_quality_checked?: boolean | null
           ai_severity?: string | null
-          checklist_item_id: string
+          check_text_snapshot?: string | null
+          checklist_item_id?: string | null
           created_at?: string | null
+          definition_id?: string | null
           id?: string
           inspection_id: string
           notes?: string | null
@@ -8473,12 +8535,15 @@ export type Database = {
           quality_issues?: string[] | null
           quality_override?: boolean | null
           result?: string | null
+          severity_snapshot?: string | null
         }
         Update: {
           ai_quality_checked?: boolean | null
           ai_severity?: string | null
-          checklist_item_id?: string
+          check_text_snapshot?: string | null
+          checklist_item_id?: string | null
           created_at?: string | null
+          definition_id?: string | null
           id?: string
           inspection_id?: string
           notes?: string | null
@@ -8486,6 +8551,7 @@ export type Database = {
           quality_issues?: string[] | null
           quality_override?: boolean | null
           result?: string | null
+          severity_snapshot?: string | null
         }
         Relationships: [
           {
@@ -8493,6 +8559,13 @@ export type Database = {
             columns: ["checklist_item_id"]
             isOneToOne: false
             referencedRelation: "qc_checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qc_inspection_items_definition_id_fkey"
+            columns: ["definition_id"]
+            isOneToOne: false
+            referencedRelation: "qc_checklist_definitions"
             referencedColumns: ["id"]
           },
           {
@@ -8507,12 +8580,19 @@ export type Database = {
       qc_inspections: {
         Row: {
           ai_response: Json | null
+          construction_type: string | null
           created_at: string | null
           dispatch_decision: string | null
           id: string
           inspector_id: string
           is_archived: boolean | null
           module_id: string
+          project_id: string | null
+          sop_fail_count: number | null
+          sop_na_count: number | null
+          sop_pass_count: number | null
+          stage_id: string | null
+          stage_label: string | null
           stage_name: string
           stage_type: string | null
           status: string | null
@@ -8521,12 +8601,19 @@ export type Database = {
         }
         Insert: {
           ai_response?: Json | null
+          construction_type?: string | null
           created_at?: string | null
           dispatch_decision?: string | null
           id?: string
           inspector_id: string
           is_archived?: boolean | null
           module_id: string
+          project_id?: string | null
+          sop_fail_count?: number | null
+          sop_na_count?: number | null
+          sop_pass_count?: number | null
+          stage_id?: string | null
+          stage_label?: string | null
           stage_name: string
           stage_type?: string | null
           status?: string | null
@@ -8535,12 +8622,19 @@ export type Database = {
         }
         Update: {
           ai_response?: Json | null
+          construction_type?: string | null
           created_at?: string | null
           dispatch_decision?: string | null
           id?: string
           inspector_id?: string
           is_archived?: boolean | null
           module_id?: string
+          project_id?: string | null
+          sop_fail_count?: number | null
+          sop_na_count?: number | null
+          sop_pass_count?: number | null
+          stage_id?: string | null
+          stage_label?: string | null
           stage_name?: string
           stage_type?: string | null
           status?: string | null
@@ -8553,6 +8647,13 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qc_inspections_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
