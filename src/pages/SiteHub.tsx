@@ -15,6 +15,7 @@ import { ModulePanelCard } from "@/components/projects/ModulePanelCard";
 import { SiteDiary } from "@/components/site/SiteDiary";
 import { FloorPlanPositionsTab } from "@/components/site/FloorPlanPositionsTab";
 import { PhotoTimelineTab } from "@/components/site/PhotoTimelineTab";
+import { GuidedPhotoCapture } from "@/components/site/GuidedPhotoCapture";
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
 import { MeasurementSheet } from "@/components/measurements/MeasurementSheet";
