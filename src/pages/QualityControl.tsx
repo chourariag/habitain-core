@@ -21,7 +21,7 @@ import {
 import { Plus, ClipboardCheck, AlertTriangle, Loader2, Camera, RotateCcw, ArrowDownLeft } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { QCInspectionWizard } from "@/components/qc/QCInspectionWizard";
+import { SOPInspectionWizard } from "@/components/qc/SOPInspectionWizard";
 import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
 import { ReworkSummaryTab } from "@/components/qc/ReworkSummaryTab";
 import { ReworkLogSection } from "@/components/production/ReworkLogSection";
