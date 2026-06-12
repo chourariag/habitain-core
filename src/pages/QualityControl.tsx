@@ -754,7 +754,7 @@ export default function QualityControl() {
         </DialogContent>
       </Dialog>
 
-      <QCInspectionWizard open={wizardOpen} onOpenChange={setWizardOpen} onCompleted={fetchData} />
+      <SOPInspectionWizard open={wizardOpen} onOpenChange={setWizardOpen} onCompleted={fetchData} userId={userId} />
     </div>
   );
 }
