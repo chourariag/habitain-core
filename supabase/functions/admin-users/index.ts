@@ -433,20 +433,20 @@ Deno.serve(async (req) => {
         is_archived: false,
       }, { onConflict: "auth_user_id" });
       if (profileErr) {
-        await supabaseAdmin.auth.admin.deleteUser(userId);
+        if (!alreadyExisted) await supabaseAdmin.auth.admin.deleteUser(userId);
         return new Response(JSON.stringify({ error: profileErr.message }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       await supabaseAdmin.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
       await supabaseAdmin.from("admin_audit_log").insert({
-        action: "create_employee",
+        action: alreadyExisted ? "link_existing_employee" : "create_employee",
         performed_by: callerId,
         entity_type: "profile",
         entity_id: userId,
-        new_value: { email: normalizedEmail, full_name, role, department, phone, reporting_manager_id },
+        new_value: { email: normalizedEmail, full_name, role, department, phone, reporting_manager_id, already_existed: alreadyExisted },
       });
-      return new Response(JSON.stringify({ success: true, user_id: userId, email: normalizedEmail, temp_password: password }), {
+      return new Response(JSON.stringify({ success: true, user_id: userId, email: normalizedEmail, temp_password: alreadyExisted ? null : password, already_existed: alreadyExisted }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
