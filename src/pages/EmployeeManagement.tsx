@@ -640,7 +640,7 @@ function SeedDialog({ open, onClose, managers }: { open: boolean; onClose: () =>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Bulk seed employees</DialogTitle>
-          <DialogDescription>Paste one row per line: <code>Full Name, email@altree.in, role_key, Department, manager_email</code>. Default password: <code>{DEFAULT_PWD}</code>.</DialogDescription>
+          <DialogDescription>Paste one row per line: <code>Full Name, email@altree.in, role_key, Department, manager_email, secondary_manager_email</code>. The secondary manager email is optional. Default password: <code>{DEFAULT_PWD}</code>.</DialogDescription>
         </DialogHeader>
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
