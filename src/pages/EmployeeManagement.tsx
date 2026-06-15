@@ -287,9 +287,9 @@ export default function EmployeeManagement() {
       <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && !deleting && setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle style={{ color: "#F40009" }}>Delete {deleteTarget?.display_name || deleteTarget?.email}?</DialogTitle>
+            <DialogTitle>Delete Employee</DialogTitle>
             <DialogDescription>
-              This permanently removes the auth account and profile. This cannot be undone. Consider Deactivate instead to preserve history.
+              Are you sure you want to permanently delete {deleteTarget?.display_name || deleteTarget?.email}? This will remove their account from both HStack and Supabase Auth. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -304,7 +304,7 @@ export default function EmployeeManagement() {
                 loadRows();
               } catch (e) { toast.error((e as Error).message); }
               finally { setDeleting(false); }
-            }}>{deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Deleting…</> : "Delete permanently"}</Button>
+            }}>{deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Deleting…</> : "Delete"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
