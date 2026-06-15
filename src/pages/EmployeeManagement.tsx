@@ -200,6 +200,7 @@ export default function EmployeeManagement() {
                     {r.is_active
                       ? <Button size="sm" variant="ghost" title="Deactivate" onClick={() => setDeactivateTarget(r)}><ShieldOff className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
                       : <Button size="sm" variant="ghost" title="Reactivate" onClick={async () => { await updateEmployee({ user_id: r.auth_user_id, is_active: true }); toast.success("Reactivated"); loadRows(); }}><ShieldCheck className="h-4 w-4" style={{ color: "#006039" }} /></Button>}
+                    <Button size="sm" variant="ghost" title="Delete employee" onClick={() => setDeleteTarget(r)}><Trash2 className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
                   </div>
                 </TableCell>
               </TableRow>
