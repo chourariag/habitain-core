@@ -68,6 +68,8 @@ export default function EmployeeManagement() {
   const [resetTarget, setResetTarget] = useState<ProfileRow | null>(null);
   const [resetResult, setResetResult] = useState<{ email: string; password: string } | null>(null);
   const [deactivateTarget, setDeactivateTarget] = useState<ProfileRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ProfileRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [createdResult, setCreatedResult] = useState<{ email: string; password: string } | null>(null);
   const [seedOpen, setSeedOpen] = useState(false);
 
