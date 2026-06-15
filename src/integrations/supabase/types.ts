@@ -6318,6 +6318,7 @@ export type Database = {
           phone: string | null
           reporting_manager_id: string | null
           role: Database["public"]["Enums"]["app_role"]
+          secondary_manager_id: string | null
           updated_at: string | null
           wedding_anniversary: string | null
         }
@@ -6342,6 +6343,7 @@ export type Database = {
           phone?: string | null
           reporting_manager_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          secondary_manager_id?: string | null
           updated_at?: string | null
           wedding_anniversary?: string | null
         }
@@ -6366,6 +6368,7 @@ export type Database = {
           phone?: string | null
           reporting_manager_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
+          secondary_manager_id?: string | null
           updated_at?: string | null
           wedding_anniversary?: string | null
         }
@@ -6373,6 +6376,13 @@ export type Database = {
           {
             foreignKeyName: "profiles_reporting_manager_id_fkey"
             columns: ["reporting_manager_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_secondary_manager_id_fkey"
+            columns: ["secondary_manager_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
