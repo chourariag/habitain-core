@@ -428,6 +428,7 @@ Deno.serve(async (req) => {
         role,
         department: department || null,
         reporting_manager_id: reporting_manager_id || null,
+        secondary_manager_id: secondary_manager_id || null,
         login_type: "email",
         is_active: true,
         is_archived: false,
