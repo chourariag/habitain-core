@@ -435,13 +435,14 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function EditEmployeeDialog({ target, onClose, managers, onSaved }: {
   target: ProfileRow | null; onClose: () => void; managers: ProfileRow[]; onSaved: () => void;
 }) {
-  const [form, setForm] = useState({ role: "" as AppRole, department: "", reporting_manager_id: "", display_name: "", phone: "" });
+  const [form, setForm] = useState({ role: "" as AppRole, department: "", reporting_manager_id: "", secondary_manager_id: "", display_name: "", phone: "" });
   const [saving, setSaving] = useState(false);
   useEffect(() => {
     if (target) setForm({
       role: target.role,
       department: target.department || "",
       reporting_manager_id: target.reporting_manager_id || "",
+      secondary_manager_id: target.secondary_manager_id || "",
       display_name: target.display_name || "",
       phone: target.phone || "",
     });
@@ -480,6 +481,17 @@ function EditEmployeeDialog({ target, onClose, managers, onSaved }: {
               </SelectContent>
             </Select>
           </Field>
+          <Field label="Secondary Manager (optional)">
+            <Select value={form.secondary_manager_id || "none"} onValueChange={(v) => setForm({ ...form, secondary_manager_id: v === "none" ? "" : v })}>
+              <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="none">— None —</SelectItem>
+                {managers.filter((m) => m.is_active && m.id !== target.id && m.id !== form.reporting_manager_id).map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.display_name || m.email}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -491,6 +503,7 @@ function EditEmployeeDialog({ target, onClose, managers, onSaved }: {
                 role: form.role,
                 department: form.department || null,
                 reporting_manager_id: form.reporting_manager_id || null,
+                secondary_manager_id: form.secondary_manager_id || null,
                 display_name: form.display_name,
                 phone: form.phone || null,
               });
