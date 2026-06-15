@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { AppRole, ROLE_LABELS, ROLE_TIERS } from "@/lib/roles";
-import { createEmployee, updateEmployee, resetEmployeePassword, logBulkDeleteAllEmployees } from "@/lib/admin-api";
+import { createEmployee, updateEmployee, resetEmployeePassword, logBulkDeleteAllEmployees, deleteEmployee } from "@/lib/admin-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,6 +68,8 @@ export default function EmployeeManagement() {
   const [resetTarget, setResetTarget] = useState<ProfileRow | null>(null);
   const [resetResult, setResetResult] = useState<{ email: string; password: string } | null>(null);
   const [deactivateTarget, setDeactivateTarget] = useState<ProfileRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ProfileRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [createdResult, setCreatedResult] = useState<{ email: string; password: string } | null>(null);
   const [seedOpen, setSeedOpen] = useState(false);
 
@@ -198,6 +200,7 @@ export default function EmployeeManagement() {
                     {r.is_active
                       ? <Button size="sm" variant="ghost" title="Deactivate" onClick={() => setDeactivateTarget(r)}><ShieldOff className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
                       : <Button size="sm" variant="ghost" title="Reactivate" onClick={async () => { await updateEmployee({ user_id: r.auth_user_id, is_active: true }); toast.success("Reactivated"); loadRows(); }}><ShieldCheck className="h-4 w-4" style={{ color: "#006039" }} /></Button>}
+                    <Button size="sm" variant="ghost" title="Delete employee" onClick={() => setDeleteTarget(r)}><Trash2 className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -277,6 +280,31 @@ export default function EmployeeManagement() {
                 loadRows();
               } catch (e) { toast.error((e as Error).message); }
             }}>Deactivate</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && !deleting && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle style={{ color: "#F40009" }}>Delete {deleteTarget?.display_name || deleteTarget?.email}?</DialogTitle>
+            <DialogDescription>
+              This permanently removes the auth account and profile. This cannot be undone. Consider Deactivate instead to preserve history.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" disabled={deleting} onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="destructive" disabled={deleting} onClick={async () => {
+              if (!deleteTarget) return;
+              setDeleting(true);
+              try {
+                await deleteEmployee(deleteTarget.auth_user_id);
+                toast.success("Employee deleted");
+                setDeleteTarget(null);
+                loadRows();
+              } catch (e) { toast.error((e as Error).message); }
+              finally { setDeleting(false); }
+            }}>{deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Deleting…</> : "Delete permanently"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
