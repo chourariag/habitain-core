@@ -220,7 +220,7 @@ export default function EmployeeManagement() {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+            );})}
           </TableBody>
         </Table>
       </div>
