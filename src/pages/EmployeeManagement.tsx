@@ -548,7 +548,7 @@ function CredentialsDialog({ open, onClose, title, email, password }: {
 
 /* ───────────────────── Seed dialog ───────────────────── */
 
-type SeedEntry = { full_name: string; email: string; role: AppRole; department?: string; manager_email?: string };
+type SeedEntry = { full_name: string; email: string; role: AppRole; department?: string; manager_email?: string; secondary_manager_email?: string };
 type SeedLog = { idx: number; email: string; status: "queued" | "ok" | "skipped" | "error"; message?: string; password?: string };
 
 function parseSeedText(text: string): SeedEntry[] {
@@ -560,6 +560,7 @@ function parseSeedText(text: string): SeedEntry[] {
       role: (parts[2] || "") as AppRole,
       department: parts[3] || undefined,
       manager_email: parts[4]?.toLowerCase() || undefined,
+      secondary_manager_email: parts[5]?.toLowerCase() || undefined,
     };
   }).filter((e) => e.full_name && e.email && e.role);
 }
@@ -588,9 +589,14 @@ function SeedDialog({ open, onClose, managers }: { open: boolean; onClose: () =>
         if (e.manager_email && !managerId) {
           throw new Error(`Manager not yet created: ${e.manager_email}`);
         }
+        const secondaryManagerId = e.secondary_manager_email ? emailToId.get(e.secondary_manager_email) : undefined;
+        if (e.secondary_manager_email && !secondaryManagerId) {
+          throw new Error(`Secondary manager not yet created: ${e.secondary_manager_email}`);
+        }
         const res = await createEmployee({
           full_name: e.full_name, email: e.email, role: e.role,
           department: e.department, reporting_manager_id: managerId,
+          secondary_manager_id: secondaryManagerId,
           temp_password: DEFAULT_PWD,
         });
         // res.user_id is auth_user_id; FK reporting_manager_id references profiles.id — look it up
