@@ -304,7 +304,7 @@ export default function EmployeeManagement() {
                 loadRows();
               } catch (e) { toast.error((e as Error).message); }
               finally { setDeleting(false); }
-            }}>{deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Deleting…</> : "Delete permanently"}</Button>
+            }}>{deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Deleting…</> : "Delete"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
