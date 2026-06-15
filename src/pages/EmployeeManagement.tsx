@@ -399,6 +399,17 @@ function CreateEmployeeDialog({ open, onOpenChange, managers, onCreated }: {
               </SelectContent>
             </Select>
           </Field>
+          <Field label="Secondary Manager (optional)">
+            <Select value={form.secondary_manager_id || "none"} onValueChange={(v) => setForm({ ...form, secondary_manager_id: v === "none" ? "" : v })}>
+              <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="none">— None —</SelectItem>
+                {managers.filter((m) => m.is_active && m.id !== form.reporting_manager_id).map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.display_name || m.email} · {ROLE_LABELS[m.role] || m.role}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
           <Field label="Temporary Password">
             <div className="flex gap-2">
               <Input value={form.temp_password} onChange={(e) => setForm({ ...form, temp_password: e.target.value })} />
