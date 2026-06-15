@@ -373,7 +373,7 @@ Deno.serve(async (req) => {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { full_name, email, phone, role, department, reporting_manager_id, temp_password } = payload;
+      const { full_name, email, phone, role, department, reporting_manager_id, secondary_manager_id, temp_password } = payload;
       const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
       const password = (typeof temp_password === "string" && temp_password.length >= 8) ? temp_password : "Altree@1234";
       if (!normalizedEmail || !role || !full_name) {
