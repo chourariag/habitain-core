@@ -339,11 +339,11 @@ function CreateEmployeeDialog({ open, onOpenChange, managers, onCreated }: {
 }) {
   const [form, setForm] = useState({
     full_name: "", email: "", phone: "", role: "" as AppRole | "",
-    department: "", reporting_manager_id: "", temp_password: DEFAULT_PWD,
+    department: "", reporting_manager_id: "", secondary_manager_id: "", temp_password: DEFAULT_PWD,
   });
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { if (open) setForm({ full_name: "", email: "", phone: "", role: "" as AppRole | "", department: "", reporting_manager_id: "", temp_password: DEFAULT_PWD }); }, [open]);
+  useEffect(() => { if (open) setForm({ full_name: "", email: "", phone: "", role: "" as AppRole | "", department: "", reporting_manager_id: "", secondary_manager_id: "", temp_password: DEFAULT_PWD }); }, [open]);
 
   const submit = async () => {
     if (!form.full_name || !form.email || !form.role) { toast.error("Name, email and role are required"); return; }
@@ -356,6 +356,7 @@ function CreateEmployeeDialog({ open, onOpenChange, managers, onCreated }: {
         role: form.role as AppRole,
         department: form.department || undefined,
         reporting_manager_id: form.reporting_manager_id || undefined,
+        secondary_manager_id: form.secondary_manager_id || undefined,
         temp_password: form.temp_password || DEFAULT_PWD,
       });
       toast.success("Employee created");
