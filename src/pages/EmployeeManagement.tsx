@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { AppRole, ROLE_LABELS, ROLE_TIERS } from "@/lib/roles";
-import { createEmployee, updateEmployee, resetEmployeePassword, logBulkDeleteAllEmployees } from "@/lib/admin-api";
+import { createEmployee, updateEmployee, resetEmployeePassword, logBulkDeleteAllEmployees, deleteEmployee } from "@/lib/admin-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
