@@ -182,9 +182,24 @@ export default function EmployeeManagement() {
               <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees found. Use Bulk Seed or New Employee to add team members.</TableCell></TableRow>
             ) : filtered.length === 0 ? (
               <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees match these filters.</TableCell></TableRow>
-            ) : filtered.map((r) => (
+            ) : filtered.map((r) => {
+              const primaryMgr = r.reporting_manager_id ? rows.find((m) => m.id === r.reporting_manager_id) : null;
+              const secondaryMgr = r.secondary_manager_id ? rows.find((m) => m.id === r.secondary_manager_id) : null;
+              return (
               <TableRow key={r.id}>
-                <TableCell className="font-medium">{r.display_name || "—"}</TableCell>
+                <TableCell className="font-medium">
+                  <div>{r.display_name || "—"}</div>
+                  {primaryMgr && (
+                    <div className="text-xs text-muted-foreground font-normal">
+                      Reports to: {primaryMgr.display_name || primaryMgr.email}
+                    </div>
+                  )}
+                  {secondaryMgr && (
+                    <div className="text-xs text-muted-foreground font-normal">
+                      Also reports to: {secondaryMgr.display_name || secondaryMgr.email}
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell className="text-sm">{r.email}</TableCell>
                 <TableCell><Badge variant="secondary">{ROLE_LABELS[r.role] || r.role}</Badge></TableCell>
                 <TableCell>{r.department || "—"}</TableCell>
