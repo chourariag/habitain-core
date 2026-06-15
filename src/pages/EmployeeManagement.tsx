@@ -28,6 +28,7 @@ interface ProfileRow {
   role: AppRole;
   department: string | null;
   reporting_manager_id: string | null;
+  secondary_manager_id: string | null;
   is_active: boolean | null;
   created_at: string;
 }
