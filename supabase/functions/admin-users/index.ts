@@ -373,7 +373,7 @@ Deno.serve(async (req) => {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { full_name, email, phone, role, department, reporting_manager_id, temp_password } = payload;
+      const { full_name, email, phone, role, department, reporting_manager_id, secondary_manager_id, temp_password } = payload;
       const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
       const password = (typeof temp_password === "string" && temp_password.length >= 8) ? temp_password : "Altree@1234";
       if (!normalizedEmail || !role || !full_name) {
@@ -428,6 +428,7 @@ Deno.serve(async (req) => {
         role,
         department: department || null,
         reporting_manager_id: reporting_manager_id || null,
+        secondary_manager_id: secondary_manager_id || null,
         login_type: "email",
         is_active: true,
         is_archived: false,
@@ -458,7 +459,7 @@ Deno.serve(async (req) => {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const { user_id, role, department, reporting_manager_id, is_active, display_name, phone } = payload;
+      const { user_id, role, department, reporting_manager_id, secondary_manager_id, is_active, display_name, phone } = payload;
       if (!user_id) {
         return new Response(JSON.stringify({ error: "user_id required" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -469,6 +470,7 @@ Deno.serve(async (req) => {
       if (role !== undefined) patch.role = role;
       if (department !== undefined) patch.department = department;
       if (reporting_manager_id !== undefined) patch.reporting_manager_id = reporting_manager_id || null;
+      if (secondary_manager_id !== undefined) patch.secondary_manager_id = secondary_manager_id || null;
       if (is_active !== undefined) { patch.is_active = is_active; patch.is_archived = !is_active; }
       if (display_name !== undefined) patch.display_name = display_name;
       if (phone !== undefined) patch.phone = phone;

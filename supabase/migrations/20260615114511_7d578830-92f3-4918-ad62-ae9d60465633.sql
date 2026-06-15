@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS secondary_manager_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL;

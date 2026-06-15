@@ -28,6 +28,7 @@ interface ProfileRow {
   role: AppRole;
   department: string | null;
   reporting_manager_id: string | null;
+  secondary_manager_id: string | null;
   is_active: boolean | null;
   created_at: string;
 }
@@ -181,9 +182,24 @@ export default function EmployeeManagement() {
               <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees found. Use Bulk Seed or New Employee to add team members.</TableCell></TableRow>
             ) : filtered.length === 0 ? (
               <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees match these filters.</TableCell></TableRow>
-            ) : filtered.map((r) => (
+            ) : filtered.map((r) => {
+              const primaryMgr = r.reporting_manager_id ? rows.find((m) => m.id === r.reporting_manager_id) : null;
+              const secondaryMgr = r.secondary_manager_id ? rows.find((m) => m.id === r.secondary_manager_id) : null;
+              return (
               <TableRow key={r.id}>
-                <TableCell className="font-medium">{r.display_name || "—"}</TableCell>
+                <TableCell className="font-medium">
+                  <div>{r.display_name || "—"}</div>
+                  {primaryMgr && (
+                    <div className="text-xs text-muted-foreground font-normal">
+                      Reports to: {primaryMgr.display_name || primaryMgr.email}
+                    </div>
+                  )}
+                  {secondaryMgr && (
+                    <div className="text-xs text-muted-foreground font-normal">
+                      Also reports to: {secondaryMgr.display_name || secondaryMgr.email}
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell className="text-sm">{r.email}</TableCell>
                 <TableCell><Badge variant="secondary">{ROLE_LABELS[r.role] || r.role}</Badge></TableCell>
                 <TableCell>{r.department || "—"}</TableCell>
@@ -204,7 +220,7 @@ export default function EmployeeManagement() {
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+            );})}
           </TableBody>
         </Table>
       </div>
@@ -323,11 +339,11 @@ function CreateEmployeeDialog({ open, onOpenChange, managers, onCreated }: {
 }) {
   const [form, setForm] = useState({
     full_name: "", email: "", phone: "", role: "" as AppRole | "",
-    department: "", reporting_manager_id: "", temp_password: DEFAULT_PWD,
+    department: "", reporting_manager_id: "", secondary_manager_id: "", temp_password: DEFAULT_PWD,
   });
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { if (open) setForm({ full_name: "", email: "", phone: "", role: "" as AppRole | "", department: "", reporting_manager_id: "", temp_password: DEFAULT_PWD }); }, [open]);
+  useEffect(() => { if (open) setForm({ full_name: "", email: "", phone: "", role: "" as AppRole | "", department: "", reporting_manager_id: "", secondary_manager_id: "", temp_password: DEFAULT_PWD }); }, [open]);
 
   const submit = async () => {
     if (!form.full_name || !form.email || !form.role) { toast.error("Name, email and role are required"); return; }
@@ -340,6 +356,7 @@ function CreateEmployeeDialog({ open, onOpenChange, managers, onCreated }: {
         role: form.role as AppRole,
         department: form.department || undefined,
         reporting_manager_id: form.reporting_manager_id || undefined,
+        secondary_manager_id: form.secondary_manager_id || undefined,
         temp_password: form.temp_password || DEFAULT_PWD,
       });
       toast.success("Employee created");
@@ -382,6 +399,17 @@ function CreateEmployeeDialog({ open, onOpenChange, managers, onCreated }: {
               </SelectContent>
             </Select>
           </Field>
+          <Field label="Secondary Manager (optional)">
+            <Select value={form.secondary_manager_id || "none"} onValueChange={(v) => setForm({ ...form, secondary_manager_id: v === "none" ? "" : v })}>
+              <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="none">— None —</SelectItem>
+                {managers.filter((m) => m.is_active && m.id !== form.reporting_manager_id).map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.display_name || m.email} · {ROLE_LABELS[m.role] || m.role}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
           <Field label="Temporary Password">
             <div className="flex gap-2">
               <Input value={form.temp_password} onChange={(e) => setForm({ ...form, temp_password: e.target.value })} />
@@ -407,13 +435,14 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function EditEmployeeDialog({ target, onClose, managers, onSaved }: {
   target: ProfileRow | null; onClose: () => void; managers: ProfileRow[]; onSaved: () => void;
 }) {
-  const [form, setForm] = useState({ role: "" as AppRole, department: "", reporting_manager_id: "", display_name: "", phone: "" });
+  const [form, setForm] = useState({ role: "" as AppRole, department: "", reporting_manager_id: "", secondary_manager_id: "", display_name: "", phone: "" });
   const [saving, setSaving] = useState(false);
   useEffect(() => {
     if (target) setForm({
       role: target.role,
       department: target.department || "",
       reporting_manager_id: target.reporting_manager_id || "",
+      secondary_manager_id: target.secondary_manager_id || "",
       display_name: target.display_name || "",
       phone: target.phone || "",
     });
@@ -452,6 +481,17 @@ function EditEmployeeDialog({ target, onClose, managers, onSaved }: {
               </SelectContent>
             </Select>
           </Field>
+          <Field label="Secondary Manager (optional)">
+            <Select value={form.secondary_manager_id || "none"} onValueChange={(v) => setForm({ ...form, secondary_manager_id: v === "none" ? "" : v })}>
+              <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+              <SelectContent className="max-h-72">
+                <SelectItem value="none">— None —</SelectItem>
+                {managers.filter((m) => m.is_active && m.id !== target.id && m.id !== form.reporting_manager_id).map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.display_name || m.email}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -463,6 +503,7 @@ function EditEmployeeDialog({ target, onClose, managers, onSaved }: {
                 role: form.role,
                 department: form.department || null,
                 reporting_manager_id: form.reporting_manager_id || null,
+                secondary_manager_id: form.secondary_manager_id || null,
                 display_name: form.display_name,
                 phone: form.phone || null,
               });
@@ -507,7 +548,7 @@ function CredentialsDialog({ open, onClose, title, email, password }: {
 
 /* ───────────────────── Seed dialog ───────────────────── */
 
-type SeedEntry = { full_name: string; email: string; role: AppRole; department?: string; manager_email?: string };
+type SeedEntry = { full_name: string; email: string; role: AppRole; department?: string; manager_email?: string; secondary_manager_email?: string };
 type SeedLog = { idx: number; email: string; status: "queued" | "ok" | "skipped" | "error"; message?: string; password?: string };
 
 function parseSeedText(text: string): SeedEntry[] {
@@ -519,6 +560,7 @@ function parseSeedText(text: string): SeedEntry[] {
       role: (parts[2] || "") as AppRole,
       department: parts[3] || undefined,
       manager_email: parts[4]?.toLowerCase() || undefined,
+      secondary_manager_email: parts[5]?.toLowerCase() || undefined,
     };
   }).filter((e) => e.full_name && e.email && e.role);
 }
@@ -547,9 +589,14 @@ function SeedDialog({ open, onClose, managers }: { open: boolean; onClose: () =>
         if (e.manager_email && !managerId) {
           throw new Error(`Manager not yet created: ${e.manager_email}`);
         }
+        const secondaryManagerId = e.secondary_manager_email ? emailToId.get(e.secondary_manager_email) : undefined;
+        if (e.secondary_manager_email && !secondaryManagerId) {
+          throw new Error(`Secondary manager not yet created: ${e.secondary_manager_email}`);
+        }
         const res = await createEmployee({
           full_name: e.full_name, email: e.email, role: e.role,
           department: e.department, reporting_manager_id: managerId,
+          secondary_manager_id: secondaryManagerId,
           temp_password: DEFAULT_PWD,
         });
         // res.user_id is auth_user_id; FK reporting_manager_id references profiles.id — look it up
@@ -593,7 +640,7 @@ function SeedDialog({ open, onClose, managers }: { open: boolean; onClose: () =>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Bulk seed employees</DialogTitle>
-          <DialogDescription>Paste one row per line: <code>Full Name, email@altree.in, role_key, Department, manager_email</code>. Default password: <code>{DEFAULT_PWD}</code>.</DialogDescription>
+          <DialogDescription>Paste one row per line: <code>Full Name, email@altree.in, role_key, Department, manager_email, secondary_manager_email</code>. The secondary manager email is optional. Default password: <code>{DEFAULT_PWD}</code>.</DialogDescription>
         </DialogHeader>
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
