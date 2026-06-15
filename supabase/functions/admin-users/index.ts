@@ -394,12 +394,32 @@ Deno.serve(async (req) => {
         email_confirm: true,
         user_metadata: { display_name: full_name },
       });
-      if (createErr || !newUser?.user) {
-        return new Response(JSON.stringify({ error: createErr?.message || "Create failed", already_exists: /already|exists|registered/i.test(createErr?.message || "") }), {
-          status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      let userId: string | undefined = newUser?.user?.id;
+      let alreadyExisted = false;
+      if (createErr || !userId) {
+        const msg = createErr?.message || "";
+        const isDuplicate = /already|exists|registered/i.test(msg);
+        if (!isDuplicate) {
+          return new Response(JSON.stringify({ error: msg || "Create failed" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        // Email already registered — locate existing auth user and link / refresh profile
+        let foundId: string | undefined;
+        for (let page = 1; page <= 20 && !foundId; page++) {
+          const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
+          if (listErr) break;
+          foundId = list?.users?.find((u: any) => (u.email || "").toLowerCase() === normalizedEmail)?.id;
+          if (!list || list.users.length < 200) break;
+        }
+        if (!foundId) {
+          return new Response(JSON.stringify({ error: msg, already_exists: true }), {
+            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        userId = foundId;
+        alreadyExisted = true;
       }
-      const userId = newUser.user.id;
       const { error: profileErr } = await supabaseAdmin.from("profiles").upsert({
         auth_user_id: userId,
         email: normalizedEmail,
@@ -413,20 +433,20 @@ Deno.serve(async (req) => {
         is_archived: false,
       }, { onConflict: "auth_user_id" });
       if (profileErr) {
-        await supabaseAdmin.auth.admin.deleteUser(userId);
+        if (!alreadyExisted) await supabaseAdmin.auth.admin.deleteUser(userId);
         return new Response(JSON.stringify({ error: profileErr.message }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       await supabaseAdmin.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
       await supabaseAdmin.from("admin_audit_log").insert({
-        action: "create_employee",
+        action: alreadyExisted ? "link_existing_employee" : "create_employee",
         performed_by: callerId,
         entity_type: "profile",
         entity_id: userId,
-        new_value: { email: normalizedEmail, full_name, role, department, phone, reporting_manager_id },
+        new_value: { email: normalizedEmail, full_name, role, department, phone, reporting_manager_id, already_existed: alreadyExisted },
       });
-      return new Response(JSON.stringify({ success: true, user_id: userId, email: normalizedEmail, temp_password: password }), {
+      return new Response(JSON.stringify({ success: true, user_id: userId, email: normalizedEmail, temp_password: alreadyExisted ? null : password, already_existed: alreadyExisted }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
