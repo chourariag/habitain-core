@@ -284,6 +284,31 @@ export default function EmployeeManagement() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => !o && !deleting && setDeleteTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle style={{ color: "#F40009" }}>Delete {deleteTarget?.display_name || deleteTarget?.email}?</DialogTitle>
+            <DialogDescription>
+              This permanently removes the auth account and profile. This cannot be undone. Consider Deactivate instead to preserve history.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" disabled={deleting} onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="destructive" disabled={deleting} onClick={async () => {
+              if (!deleteTarget) return;
+              setDeleting(true);
+              try {
+                await deleteEmployee(deleteTarget.auth_user_id);
+                toast.success("Employee deleted");
+                setDeleteTarget(null);
+                loadRows();
+              } catch (e) { toast.error((e as Error).message); }
+              finally { setDeleting(false); }
+            }}>{deleting ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Deleting…</> : "Delete permanently"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <SeedDialog open={seedOpen} onClose={() => { setSeedOpen(false); loadRows(); }} managers={rows} />
 
     </div>
