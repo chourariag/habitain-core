@@ -124,6 +124,7 @@ export function AppSidebar() {
   const { signOut } = useAuth();
   const { role } = useUserRole();
   const userRole = role as AppRole | null;
+  const { canView, canAccessAdminPanel } = usePermissions();
   const { projects, selectedProjectId, setSelectedProjectId } = useProjectContext();
   const { i18n } = useTranslation();
   const location = useLocation();
@@ -135,12 +136,17 @@ export function AppSidebar() {
     ? { backgroundColor: "#E8F2ED", color: "#006039", borderLeft: "3px solid #006039" }
     : { color: "#666666" };
 
-  // Filter visible sections by section-level role + per-item role
-  // ALTREE items use alwaysVisible to bypass section gate (every employee gets My HR)
+  // Visibility per item:
+  //   1. requireAdminPanel  → STEP 6 allow-list (super_admin / MD / head_of_projects)
+  //   2. module             → RBAC matrix: hide on NONE
+  //   3. legacy roles list  → explicit role allow-list
+  //   4. fallback           → canSeeSection
   const visibleSections = sectionConfig
     .map((s) => ({
       ...s,
       items: s.items.filter((it) => {
+        if (it.requireAdminPanel) return canAccessAdminPanel();
+        if (it.module) return canView(it.module);
         const sectionOk = it.alwaysVisible || canSeeSection(userRole, it.section);
         const roleOk = !it.roles || (userRole && it.roles.includes(userRole));
         return sectionOk && roleOk;
