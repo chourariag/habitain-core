@@ -8,7 +8,7 @@ export const ROLE_LABELS: Record<string, string> = {
   finance_director: "Finance Director",
   sales_director: "Sales Director",
   architecture_director: "Architecture Director",
-  head_operations: "Head of Operations",
+  head_operations: "Head of Operations - Design",
   head_of_projects: "Head of Projects",
   production_head: "Production Head",
   finance_manager: "Finance Manager",
