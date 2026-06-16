@@ -127,7 +127,7 @@ export default function EmployeeManagement() {
             style={{ background: "#1A6645" }}
           >
             <Users className="h-4 w-4" />
-            Total Employees: {employeeCount}
+            Total Users: {employeeCount}
           </div>
         </div>
         <div className="flex flex-wrap items-end justify-between gap-4">
