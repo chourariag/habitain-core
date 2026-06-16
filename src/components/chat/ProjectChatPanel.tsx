@@ -35,6 +35,7 @@ function dateSeparatorLabel(dateStr: string) {
 export function ProjectChatPanel({ projectId, projectName, projectType, userId, onClose }: ProjectChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
+  const fetchedSenderIds = useRef<Set<string>>(new Set());
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
@@ -65,8 +66,12 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
 
   // Resolve sender display names from profiles
   useEffect(() => {
-    const ids = Array.from(new Set(messages.map((m) => m.sender_id).filter((id) => id && !(id in senderNames))));
+    const ids = Array.from(
+      new Set(messages.map((m) => m.sender_id).filter((id) => id && !fetchedSenderIds.current.has(id)))
+    );
     if (ids.length === 0) return;
+    ids.forEach((id) => fetchedSenderIds.current.add(id));
+
     (async () => {
       const { data } = await supabase
         .from("profiles")
@@ -81,7 +86,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
         return next;
       });
     })();
-  }, [messages, senderNames]);
+  }, [messages]);
 
 
   // Mark as read
