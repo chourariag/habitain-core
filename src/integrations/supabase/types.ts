@@ -11887,6 +11887,13 @@ export type Database = {
           value_earned: number
         }[]
       }
+      user_has_any_role: {
+        Args: {
+          _roles: Database["public"]["Enums"]["app_role"][]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
