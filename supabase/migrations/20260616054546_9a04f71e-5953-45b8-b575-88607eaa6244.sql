@@ -1,0 +1,1 @@
+TRUNCATE TABLE public.profit_loss_uploads, public.profit_loss_line_items RESTART IDENTITY CASCADE;
