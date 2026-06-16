@@ -9,6 +9,8 @@ import {
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/hooks/useUserRole";
 import { canSeeSection } from "@/lib/role-nav";
+import { usePermissions } from "@/hooks/usePermissions";
+import type { ModuleKey } from "@/lib/rbac-matrix";
 import type { AppRole } from "@/lib/roles";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
@@ -19,23 +21,23 @@ type Tab = {
   section: string;
   alwaysVisible?: boolean;
   roles?: string[];
+  module?: ModuleKey;
 };
 
 const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
-const ADMIN_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director", "hr_admin"];
 const SETTINGS_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
 
 const allTabs: Tab[] = [
-  { to: "/dashboard", label: "Home", icon: LayoutDashboard, section: "dashboard", alwaysVisible: true },
-  { to: "/approvals", label: "Approvals", icon: ShieldCheck, section: "approvals" },
-  { to: "/projects", label: "Projects", icon: FolderKanban, section: "projects" },
-  { to: "/production?tab=modules", label: "Factory", icon: Factory, section: "production" },
-  { to: "/site-hub?tab=pipeline", label: "Site", icon: Truck, section: "site" },
-  { to: "/procurement?tab=dashboard", label: "Procurement", icon: ShoppingCart, section: "procurement" },
-  { to: "/finance?tab=mis-invoices", label: "Finance", icon: DollarSign, section: "finance" },
-  { to: "/design", label: "Design", icon: Compass, section: "design" },
-  { to: "/sales", label: "Sales", icon: BarChart3, section: "sales" },
-  { to: "/attendance", label: "HR", icon: UserCog, section: "altree", alwaysVisible: true },
+  { to: "/dashboard", label: "Home", icon: LayoutDashboard, section: "dashboard", module: "dashboard" },
+  { to: "/approvals", label: "Approvals", icon: ShieldCheck, section: "approvals", module: "approvals" },
+  { to: "/projects", label: "Projects", icon: FolderKanban, section: "projects", module: "projects" },
+  { to: "/production?tab=modules", label: "Factory", icon: Factory, section: "production", module: "factory" },
+  { to: "/site-hub?tab=pipeline", label: "Site", icon: Truck, section: "site", module: "site" },
+  { to: "/procurement?tab=dashboard", label: "Procurement", icon: ShoppingCart, section: "procurement", module: "procurement" },
+  { to: "/finance?tab=mis-invoices", label: "Finance", icon: DollarSign, section: "finance", module: "finance" },
+  { to: "/design", label: "Design", icon: Compass, section: "design", module: "design" },
+  { to: "/sales", label: "Sales", icon: BarChart3, section: "sales", module: "sales" },
+  { to: "/attendance", label: "HR", icon: UserCog, section: "altree", module: "hr" },
 ];
 
 type MoreItem = {
@@ -44,12 +46,13 @@ type MoreItem = {
   icon: any;
   desc: string;
   critical?: boolean;
-  roles: string[];
+  roles?: string[];
+  requireAdminPanel?: boolean;
 };
 
 const moreItems: MoreItem[] = [
-  { to: "/admin", label: "Admin", icon: Briefcase, desc: "User directory & benchmarks", roles: ADMIN_ROLES },
-  { to: "/admin/employees", label: "Employee Management", icon: Users, desc: "Manage employee profiles & roles", roles: SUPER_ADMIN_ROLES },
+  { to: "/admin", label: "Admin", icon: Briefcase, desc: "User directory & benchmarks", requireAdminPanel: true },
+  { to: "/admin/employees", label: "Employee Management", icon: Users, desc: "Manage employee profiles & roles", requireAdminPanel: true },
   { to: "/settings", label: "App Settings", icon: Settings, desc: "Application preferences", roles: SETTINGS_ROLES },
   { to: "/admin/super-admin", label: "Super Admin", icon: ShieldAlert, desc: "System configuration & audit log", critical: true, roles: SUPER_ADMIN_ROLES },
 ];
