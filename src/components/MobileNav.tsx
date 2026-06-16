@@ -60,20 +60,23 @@ const moreItems: MoreItem[] = [
 export function MobileNav() {
   const { role } = useUserRole();
   const userRole = role as AppRole | null;
+  const { canView, canAccessAdminPanel } = usePermissions();
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
 
   const visibleTabs = allTabs.filter((t) => {
+    if (t.module) return canView(t.module);
     if (t.alwaysVisible) return true;
     if (t.roles) return userRole ? t.roles.includes(userRole) : false;
     return canSeeSection(userRole, t.section);
   });
 
-  const visibleMoreItems = moreItems.filter((i) =>
-    userRole ? i.roles.includes(userRole) : false
-  );
+  const visibleMoreItems = moreItems.filter((i) => {
+    if (i.requireAdminPanel) return canAccessAdminPanel();
+    return i.roles ? (userRole ? i.roles.includes(userRole) : false) : false;
+  });
 
   const showMore = visibleMoreItems.length > 0;
 
