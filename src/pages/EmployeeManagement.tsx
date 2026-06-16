@@ -198,68 +198,148 @@ export default function EmployeeManagement() {
         <div className="text-sm text-muted-foreground ml-auto">{filtered.length} of {employeeCount}</div>
       </div>
 
-      <div className="bg-white border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-10"><Loader2 className="h-5 w-5 animate-spin inline" /></TableCell></TableRow>
-            ) : employeeCount === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees found. Use Bulk Seed or New Employee to add team members.</TableCell></TableRow>
-            ) : filtered.length === 0 ? (
-              <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees match these filters.</TableCell></TableRow>
-            ) : filtered.map((r) => {
-              const primaryMgr = r.reporting_manager_id ? rows.find((m) => m.id === r.reporting_manager_id) : null;
-              const secondaryMgr = r.secondary_manager_id ? rows.find((m) => m.id === r.secondary_manager_id) : null;
+      <Tabs value={view} onValueChange={(v) => setView(v as "table" | "hierarchy")}>
+        <TabsList className="mb-3">
+          <TabsTrigger value="table">Table View</TabsTrigger>
+          <TabsTrigger value="hierarchy">Hierarchy View</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="table" className="mt-0">
+          <div className="bg-white border rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-10"><Loader2 className="h-5 w-5 animate-spin inline" /></TableCell></TableRow>
+                ) : employeeCount === 0 ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees found. Use Bulk Seed or New Employee to add team members.</TableCell></TableRow>
+                ) : filtered.length === 0 ? (
+                  <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees match these filters.</TableCell></TableRow>
+                ) : filtered.map((r) => {
+                  const primaryMgr = r.reporting_manager_id ? rows.find((m) => m.id === r.reporting_manager_id) : null;
+                  const secondaryMgr = r.secondary_manager_id ? rows.find((m) => m.id === r.secondary_manager_id) : null;
+                  return (
+                  <TableRow key={r.id}>
+                    <TableCell className="font-medium">
+                      <div>{r.display_name || "—"}</div>
+                      {primaryMgr && (
+                        <div className="text-xs text-muted-foreground font-normal">
+                          Reports to: {primaryMgr.display_name || primaryMgr.email}
+                        </div>
+                      )}
+                      {secondaryMgr && (
+                        <div className="text-xs text-muted-foreground font-normal">
+                          Also reports to: {secondaryMgr.display_name || secondaryMgr.email}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-sm">{r.email}</TableCell>
+                    <TableCell><Badge variant="secondary">{ROLE_LABELS[r.role] || r.role}</Badge></TableCell>
+                    <TableCell>{r.department || "—"}</TableCell>
+                    <TableCell>
+                      {r.is_active
+                        ? <Badge style={{ background: "#E8F2ED", color: "#006039" }}>Active</Badge>
+                        : <Badge style={{ background: "#FDE7E9", color: "#F40009" }}>Inactive</Badge>}
+                    </TableCell>
+                    <TableCell className="text-sm">{fmtDate(r.created_at)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button size="sm" variant="ghost" title="Edit" onClick={() => setEditTarget(r)}><Pencil className="h-4 w-4" /></Button>
+                        <Button size="sm" variant="ghost" title="Reset password" onClick={() => setResetTarget(r)}><KeyRound className="h-4 w-4" /></Button>
+                        {r.is_active
+                          ? <Button size="sm" variant="ghost" title="Deactivate" onClick={() => setDeactivateTarget(r)}><ShieldOff className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
+                          : <Button size="sm" variant="ghost" title="Reactivate" onClick={async () => { await updateEmployee({ user_id: r.auth_user_id, is_active: true }); toast.success("Reactivated"); loadRows(); }}><ShieldCheck className="h-4 w-4" style={{ color: "#006039" }} /></Button>}
+                        <Button size="sm" variant="ghost" title="Delete employee" onClick={() => setDeleteTarget(r)}><Trash2 className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );})}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="hierarchy" className="mt-0 space-y-3">
+          {loading ? (
+            <div className="text-center py-10 bg-white border rounded-lg"><Loader2 className="h-5 w-5 animate-spin inline" /></div>
+          ) : employeeCount === 0 ? (
+            <div className="text-center py-10 text-muted-foreground bg-white border rounded-lg">No employees found.</div>
+          ) : (() => {
+            const assignedRoles = new Set<string>(HIERARCHY_TIERS.flatMap((t) => t.roles));
+            const sections = HIERARCHY_TIERS.map((t) => ({
+              ...t,
+              members: filtered.filter((r) => t.roles.includes(r.role)),
+            }));
+            const unassigned = filtered.filter((r) => !assignedRoles.has(r.role));
+            if (unassigned.length) {
+              sections.push({ key: "tx", label: "Unassigned", roles: [], members: unassigned });
+            }
+            const anyMatches = sections.some((s) => s.members.length > 0);
+            if (!anyMatches) {
+              return <div className="text-center py-10 text-muted-foreground bg-white border rounded-lg">No employees match these filters.</div>;
+            }
+            return sections.map((section) => {
+              if (section.members.length === 0) return null;
+              const isCollapsed = !!collapsedTiers[section.key];
               return (
-              <TableRow key={r.id}>
-                <TableCell className="font-medium">
-                  <div>{r.display_name || "—"}</div>
-                  {primaryMgr && (
-                    <div className="text-xs text-muted-foreground font-normal">
-                      Reports to: {primaryMgr.display_name || primaryMgr.email}
-                    </div>
-                  )}
-                  {secondaryMgr && (
-                    <div className="text-xs text-muted-foreground font-normal">
-                      Also reports to: {secondaryMgr.display_name || secondaryMgr.email}
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell className="text-sm">{r.email}</TableCell>
-                <TableCell><Badge variant="secondary">{ROLE_LABELS[r.role] || r.role}</Badge></TableCell>
-                <TableCell>{r.department || "—"}</TableCell>
-                <TableCell>
-                  {r.is_active
-                    ? <Badge style={{ background: "#E8F2ED", color: "#006039" }}>Active</Badge>
-                    : <Badge style={{ background: "#FDE7E9", color: "#F40009" }}>Inactive</Badge>}
-                </TableCell>
-                <TableCell className="text-sm">{fmtDate(r.created_at)}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button size="sm" variant="ghost" title="Edit" onClick={() => setEditTarget(r)}><Pencil className="h-4 w-4" /></Button>
-                    <Button size="sm" variant="ghost" title="Reset password" onClick={() => setResetTarget(r)}><KeyRound className="h-4 w-4" /></Button>
-                    {r.is_active
-                      ? <Button size="sm" variant="ghost" title="Deactivate" onClick={() => setDeactivateTarget(r)}><ShieldOff className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
-                      : <Button size="sm" variant="ghost" title="Reactivate" onClick={async () => { await updateEmployee({ user_id: r.auth_user_id, is_active: true }); toast.success("Reactivated"); loadRows(); }}><ShieldCheck className="h-4 w-4" style={{ color: "#006039" }} /></Button>}
-                    <Button size="sm" variant="ghost" title="Delete employee" onClick={() => setDeleteTarget(r)}><Trash2 className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            );})}
-          </TableBody>
-        </Table>
-      </div>
+                <Collapsible
+                  key={section.key}
+                  open={!isCollapsed}
+                  onOpenChange={(o) => setCollapsedTiers((s) => ({ ...s, [section.key]: !o }))}
+                  className="border rounded-lg overflow-hidden bg-white"
+                >
+                  <CollapsibleTrigger asChild>
+                    <button
+                      type="button"
+                      className="w-full flex items-center justify-between px-4 py-3 text-white font-bold text-left"
+                      style={{ background: "#006039" }}
+                    >
+                      <span className="flex items-center gap-2">
+                        {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        {section.label} ({section.members.length})
+                      </span>
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <ul className="divide-y">
+                      {section.members.map((r) => (
+                        <li key={r.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                          <span
+                            className={`inline-block h-2.5 w-2.5 rounded-full flex-shrink-0 ${r.is_active ? "bg-[#006039]" : "bg-[#F40009]"}`}
+                            title={r.is_active ? "Active" : "Inactive"}
+                          />
+                          <div className="font-bold min-w-[140px]">{r.display_name || "—"}</div>
+                          <div className="text-sm text-muted-foreground min-w-[160px]">{ROLE_LABELS[r.role] || r.role}</div>
+                          <div className="text-sm text-muted-foreground flex-1 break-all">{r.email || "—"}</div>
+                          <div className="flex gap-1 ml-auto">
+                            <Button size="sm" variant="ghost" title="Edit" onClick={() => setEditTarget(r)}><Pencil className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="ghost" title="Reset password" onClick={() => setResetTarget(r)}><KeyRound className="h-4 w-4" /></Button>
+                            {r.is_active
+                              ? <Button size="sm" variant="ghost" title="Deactivate" onClick={() => setDeactivateTarget(r)}><ShieldOff className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
+                              : <Button size="sm" variant="ghost" title="Reactivate" onClick={async () => { await updateEmployee({ user_id: r.auth_user_id, is_active: true }); toast.success("Reactivated"); loadRows(); }}><ShieldCheck className="h-4 w-4" style={{ color: "#006039" }} /></Button>}
+                            <Button size="sm" variant="ghost" title="Delete employee" onClick={() => setDeleteTarget(r)}><Trash2 className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            });
+          })()}
+        </TabsContent>
+      </Tabs>
+
 
       <CreateEmployeeDialog
         open={createOpen}
