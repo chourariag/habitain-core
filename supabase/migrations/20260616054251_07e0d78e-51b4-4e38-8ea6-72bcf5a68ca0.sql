@@ -1,0 +1,1 @@
+TRUNCATE TABLE public.finance_mis_uploads, public.finance_pl_data, public.finance_cashflow, public.finance_cashflow_balances, public.finance_project_cashflow, public.finance_payments, public.finance_statutory, public.finance_project_budgets, public.ledger_mappings RESTART IDENTITY CASCADE;
