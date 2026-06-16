@@ -4,6 +4,7 @@ export type AppRole = Database["public"]["Enums"]["app_role"];
 
 export const ROLE_LABELS: Record<string, string> = {
   super_admin: "Super Admin",
+  chairman: "Chairman",
   managing_director: "Managing Director",
   finance_director: "Finance Director",
   sales_director: "Sales Director",
@@ -40,7 +41,7 @@ export const ROLE_LABELS: Record<string, string> = {
 
 export const ROLE_TIERS: Record<string, AppRole[]> = {
   "Tier 0 — Super Admin": ["super_admin" as AppRole],
-  "Tier 1 — Directors & MD": ["managing_director", "finance_director", "sales_director", "architecture_director"] as AppRole[],
+  "Tier 1 — Directors & MD": ["chairman", "managing_director", "finance_director", "sales_director", "architecture_director"] as AppRole[],
   "Tier 2 — Functional Heads": ["head_operations", "head_of_projects" as AppRole, "planning_head" as AppRole, "production_head", "finance_manager", "planning_engineer", "costing_engineer", "quantity_surveyor"] as AppRole[],
   "Tier 3 — Site & Delivery": ["site_installation_mgr", "delivery_rm_lead", "site_engineer", "logistics_manager" as AppRole] as AppRole[],
   "Tier 4 — Factory Floor": ["qc_inspector", "factory_floor_supervisor", "fabrication_foreman", "electrical_installer", "elec_plumbing_installer"] as AppRole[],
