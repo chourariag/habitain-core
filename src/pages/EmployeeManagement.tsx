@@ -552,7 +552,6 @@ type SeedEntry = { full_name: string; email: string; role: AppRole; department?:
 type SeedLog = { idx: number; email: string; status: "queued" | "ok" | "skipped" | "error"; message?: string; password?: string };
 
 const ROLE_ALIASES: Record<string, AppRole> = {
-  chairman: "managing_director" as AppRole,
   "managing director": "managing_director" as AppRole,
   "principal architect/director": "principal_architect" as AppRole,
   "principal architect": "principal_architect" as AppRole,
