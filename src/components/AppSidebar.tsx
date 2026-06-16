@@ -15,17 +15,17 @@ import { Logo } from "./Logo";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { canSeeSection, canSeeProjectSelector } from "@/lib/role-nav";
+import { usePermissions } from "@/hooks/usePermissions";
+import type { ModuleKey } from "@/lib/rbac-matrix";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 import type { AppRole } from "@/lib/roles";
 import { RoleSwitcher } from "./RoleSwitcher";
 
-type NavItem = { to: string; label: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean };
+type NavItem = { to: string; label: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean; module?: ModuleKey; requireAdminPanel?: boolean };
 type NavSection = { key: string; label?: string; items: NavItem[]; group?: "altree" };
 
 const CAPACITY_ROLES = ["super_admin", "managing_director", "head_operations", "planning_head", "production_head"];
-const HR_MGMT_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director", "hr_admin", "hr_executive", "finance_manager"];
-const ADMIN_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director", "hr_admin"];
 const SETTINGS_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
 const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
 
