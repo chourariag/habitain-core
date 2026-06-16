@@ -28,10 +28,6 @@ export function RoleSwitcher({ collapsed }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
-  const host = window.location.hostname;
-  const isAllowedHost = host === "localhost" || host.endsWith(".lovable.app");
-  if (!isAllowedHost) return null;
-
   const currentRole = role ?? actualRole ?? "managing_director";
 
   const currentUser =
@@ -52,6 +48,10 @@ export function RoleSwitcher({ collapsed }: Props) {
       return { group, users };
     }).filter((g) => g.users.length > 0);
   }, [query]);
+
+  const host = window.location.hostname;
+  const isAllowedHost = host === "localhost" || host.endsWith(".lovable.app");
+  if (!isAllowedHost) return null;
 
   function selectUser(role: string, name: string) {
     if (role === actualRole) setOverrideRole(null);
