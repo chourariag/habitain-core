@@ -55,6 +55,7 @@ import SiteDashboard from "@/pages/SiteDashboard";
 import EmployeeManagement from "@/pages/EmployeeManagement";
 import AuthCallback from "@/pages/AuthCallback";
 import ResetPassword from "@/pages/ResetPassword";
+import { ModuleGuard } from "@/components/ModuleGuard";
 
 const queryClient = new QueryClient();
 
