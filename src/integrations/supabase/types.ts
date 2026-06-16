@@ -11927,6 +11927,7 @@ export type Database = {
         | "operations_architect"
         | "chairman"
         | "factory_supervisor"
+        | "senior_architect"
       fixed_asset_category:
         | "machinery"
         | "vehicle"
@@ -12114,6 +12115,7 @@ export const Constants = {
         "operations_architect",
         "chairman",
         "factory_supervisor",
+        "senior_architect",
       ],
       fixed_asset_category: [
         "machinery",
