@@ -86,6 +86,20 @@ export default function EmployeeManagement() {
   const [deleting, setDeleting] = useState(false);
   const [createdResult, setCreatedResult] = useState<{ email: string; password: string } | null>(null);
   const [seedOpen, setSeedOpen] = useState(false);
+  const [view, setView] = useState<"table" | "hierarchy">("table");
+  const isMobile = useIsMobile();
+  const [collapsedTiers, setCollapsedTiers] = useState<Record<string, boolean>>({});
+  // Initialise mobile-default collapse once we know viewport
+  useEffect(() => {
+    if (isMobile) {
+      const init: Record<string, boolean> = {};
+      HIERARCHY_TIERS.forEach((t) => { init[t.key] = true; });
+      setCollapsedTiers(init);
+    } else {
+      setCollapsedTiers({});
+    }
+  }, [isMobile]);
+
 
   const { data: employees, isLoading: loading, refetch } = useQuery<ProfileRow[]>({
     queryKey: ["profiles"],
