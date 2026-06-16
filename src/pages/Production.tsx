@@ -155,14 +155,12 @@ function ProductionContent() {
             <ScrollableTabsWrapper>
               <TabsList>
                 <TabsTrigger value="modules" className="gap-1.5"><Factory className="h-4 w-4" /> Modules</TabsTrigger>
-                <TabsTrigger value="people" className="gap-1.5"><Users className="h-4 w-4" /> People</TabsTrigger>
-                <TabsTrigger value="manpower" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Manpower</TabsTrigger>
-                <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
-                <TabsTrigger value="materials" className="gap-1.5"><PackagePlus className="h-4 w-4" /> Material Requests</TabsTrigger>
                 <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>
-                <TabsTrigger value="measurements" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> Measurements</TabsTrigger>
+                <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
+                <TabsTrigger value="people" className="gap-1.5"><Users className="h-4 w-4" /> People</TabsTrigger>
               </TabsList>
             </ScrollableTabsWrapper>
+
 
             <TabsContent value="modules" className="space-y-3">
               {modules.map((m) => (
