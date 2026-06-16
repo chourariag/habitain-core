@@ -28,7 +28,12 @@ export function RoleSwitcher({ collapsed }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
 
+  const host = window.location.hostname;
+  const isAllowedHost = host === "localhost" || host.endsWith(".lovable.app");
+  if (!isAllowedHost) return null;
+
   const currentRole = role ?? actualRole ?? "managing_director";
+
   const currentUser =
     (personaName ? { name: personaName, role: currentRole, group: "" } : null) ??
     HSTACK_USERS.find((u) => u.role === currentRole) ??
