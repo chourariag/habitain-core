@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { AppRole, ROLE_LABELS, ROLE_TIERS } from "@/lib/roles";
 import { createEmployee, updateEmployee, resetEmployeePassword, logBulkDeleteAllEmployees, deleteEmployee } from "@/lib/admin-api";
 import { Button } from "@/components/ui/button";
@@ -13,9 +14,21 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Copy, KeyRound, Pencil, Search, ShieldOff, ShieldCheck, UserPlus, Loader2, Download, Sparkles, Trash2, AlertTriangle, Users } from "lucide-react";
+import { Copy, KeyRound, Pencil, Search, ShieldOff, ShieldCheck, UserPlus, Loader2, Download, Sparkles, Trash2, AlertTriangle, Users, ChevronDown, ChevronRight } from "lucide-react";
+
+// Hierarchy View tier definitions (role -> tier). Order of tiers preserved.
+const HIERARCHY_TIERS: { key: string; label: string; roles: AppRole[] }[] = [
+  { key: "t0", label: "Tier 0 — Super Admin", roles: ["super_admin"] as AppRole[] },
+  { key: "t1", label: "Tier 1 — Directors & MD", roles: ["chairman", "managing_director", "finance_director", "sales_director", "architecture_director", "principal_architect"] as AppRole[] },
+  { key: "t2", label: "Tier 2 — Department Heads", roles: ["head_of_projects", "planning_head", "production_head", "site_installation_mgr", "finance_manager", "hr_admin", "head_operations"] as AppRole[] },
+  { key: "t3", label: "Tier 3 — Senior / Specialist", roles: ["planning_engineer", "costing_engineer", "senior_architect", "qc_inspector", "factory_supervisor", "accounts_executive"] as AppRole[] },
+  { key: "t4", label: "Tier 4 — Executives & Engineers", roles: ["project_architect", "site_engineer", "logistics_manager", "marketing", "sales_executive", "stores_executive", "procurement", "quantity_surveyor", "structural_architect", "hr_executive", "delivery_rm_lead", "fabrication_foreman"] as AppRole[] },
+  { key: "t5", label: "Tier 5 — Field / Support Staff", roles: ["electrical_installer", "elec_plumbing_installer", "procurement_assistant", "factory_floor_supervisor"] as AppRole[] },
+];
+
 
 const DEFAULT_PWD = "Altree@1234";
 
