@@ -192,34 +192,34 @@ function ProductionContent() {
             </TabsContent>
 
             <TabsContent value="people">
-              <Tabs defaultValue="daily" className="space-y-3">
+              <Tabs defaultValue="manpower-plan" className="space-y-3">
                 <TabsList>
-                  <TabsTrigger value="daily" className="gap-1.5"><HardHat className="h-4 w-4" /> Daily Work Log</TabsTrigger>
+                  <TabsTrigger value="manpower-plan" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Manpower Plan</TabsTrigger>
+                  <TabsTrigger value="daily" className="gap-1.5"><HardHat className="h-4 w-4" /> Daily Labour Log</TabsTrigger>
                   <TabsTrigger value="approvals" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> Labour Log Approvals</TabsTrigger>
-                  <TabsTrigger value="register" className="gap-1.5"><Users className="h-4 w-4" /> Labour Register</TabsTrigger>
-                  <TabsTrigger value="teams" className="gap-1.5"><Users className="h-4 w-4" /> Teams</TabsTrigger>
+                  <TabsTrigger value="register" className="gap-1.5"><Users className="h-4 w-4" /> Labour Registers</TabsTrigger>
                   <TabsTrigger value="subs" className="gap-1.5"><Users className="h-4 w-4" /> Subcontractors</TabsTrigger>
+                  <TabsTrigger value="teams" className="gap-1.5"><Users className="h-4 w-4" /> Teams</TabsTrigger>
                 </TabsList>
+                <TabsContent value="manpower-plan">
+                  <Tabs defaultValue="weekly" className="space-y-3">
+                    <TabsList>
+                      <TabsTrigger value="weekly" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Weekly Plan (Excel)</TabsTrigger>
+                      <TabsTrigger value="planner" className="gap-1.5"><Users className="h-4 w-4" /> Module Planner</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="weekly">
+                      <ManpowerWeeklyExcel location="factory" projectId={selectedProjectId} />
+                    </TabsContent>
+                    <TabsContent value="planner">
+                      <WeeklyManpowerPlanner projectId={selectedProjectId!} userRole={userRole} />
+                    </TabsContent>
+                  </Tabs>
+                </TabsContent>
                 <TabsContent value="daily"><DailyLabourLog mode="factory" projectId={selectedProjectId!} userRole={userRole} /></TabsContent>
                 <TabsContent value="approvals"><LabourClaimsTab /></TabsContent>
                 <TabsContent value="register"><LabourRegisterTab /></TabsContent>
-                <TabsContent value="teams"><LabourTeamsManager userRole={userRole} /></TabsContent>
                 <TabsContent value="subs"><SubcontractorsTab /></TabsContent>
-              </Tabs>
-            </TabsContent>
-
-            <TabsContent value="manpower">
-              <Tabs defaultValue="weekly" className="space-y-3">
-                <TabsList>
-                  <TabsTrigger value="weekly" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Weekly Plan (Excel)</TabsTrigger>
-                  <TabsTrigger value="planner" className="gap-1.5"><Users className="h-4 w-4" /> Module Planner</TabsTrigger>
-                </TabsList>
-                <TabsContent value="weekly">
-                  <ManpowerWeeklyExcel location="factory" projectId={selectedProjectId} />
-                </TabsContent>
-                <TabsContent value="planner">
-                  <WeeklyManpowerPlanner projectId={selectedProjectId!} userRole={userRole} />
-                </TabsContent>
+                <TabsContent value="teams"><LabourTeamsManager userRole={userRole} /></TabsContent>
               </Tabs>
             </TabsContent>
 
@@ -229,17 +229,10 @@ function ProductionContent() {
               </div>
             </TabsContent>
 
-            <TabsContent value="materials">
-              <MaterialRequestsPanel projectId={selectedProjectId!} />
-            </TabsContent>
-
             <TabsContent value="work-orders">
               <WorkOrdersTab mode="factory" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
             </TabsContent>
 
-            <TabsContent value="measurements">
-              <MeasurementSheet location="factory" />
-            </TabsContent>
           </Tabs>
         )}
       </div>
