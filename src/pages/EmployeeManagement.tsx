@@ -119,19 +119,28 @@ export default function EmployeeManagement() {
 
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
+      <header className="space-y-4">
+        <div className="flex items-center justify-between gap-4">
           <h1 className="text-2xl font-display font-bold" style={{ color: "#006039" }}>Employee Management</h1>
-          <p className="text-sm text-muted-foreground">Create, edit, deactivate and reset passwords for all HStack employees.</p>
+          <div
+            className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold text-white"
+            style={{ background: "#1A6645" }}
+          >
+            <Users className="h-4 w-4" />
+            Total Employees: {employeeCount}
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setSeedOpen(true)}>
-            <Sparkles className="h-4 w-4 mr-2" /> Bulk Seed
-          </Button>
-          <Button onClick={() => setCreateOpen(true)}>
-            <UserPlus className="h-4 w-4 mr-2" /> New Employee
-          </Button>
-          {(role === "super_admin" || role === "managing_director") && <RemoveAllButton onCleared={loadRows} />}
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <p className="text-sm text-muted-foreground">Create, edit, deactivate and reset passwords for all HStack employees.</p>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setSeedOpen(true)}>
+              <Sparkles className="h-4 w-4 mr-2" /> Bulk Seed
+            </Button>
+            <Button onClick={() => setCreateOpen(true)}>
+              <UserPlus className="h-4 w-4 mr-2" /> New Employee
+            </Button>
+            {(role === "super_admin" || role === "managing_director") && <RemoveAllButton onCleared={loadRows} />}
+          </div>
         </div>
       </header>
 
