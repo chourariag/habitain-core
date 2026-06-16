@@ -29,65 +29,66 @@ const CAPACITY_ROLES = ["super_admin", "managing_director", "head_operations", "
 const SETTINGS_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
 const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
 
-// Strict spec-defined sidebar
+// Strict spec-defined sidebar. Each item declares the RBAC `module` it maps to;
+// items with no `module` fall back to legacy canSeeSection/role checks.
 const sectionConfig: NavSection[] = [
-  { key: "dashboard", items: [{ section: "dashboard", to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }] },
-  { key: "approvals", items: [{ section: "approvals", to: "/approvals", label: "Approvals", icon: ShieldCheck }] },
-  { key: "announcements", items: [{ section: "dashboard", to: "/announcements", label: "Announcements", icon: MessageSquare }] },
-  { key: "projects", items: [{ section: "projects", to: "/projects", label: "Projects", icon: FolderKanban }] },
-  { key: "management", items: [{ section: "management", to: "/management", label: "Management", icon: BarChart3 }] },
+  { key: "dashboard", items: [{ section: "dashboard", to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, module: "dashboard" }] },
+  { key: "approvals", items: [{ section: "approvals", to: "/approvals", label: "Approvals", icon: ShieldCheck, module: "approvals" }] },
+  { key: "announcements", items: [{ section: "dashboard", to: "/announcements", label: "Announcements", icon: MessageSquare, module: "announcements" }] },
+  { key: "projects", items: [{ section: "projects", to: "/projects", label: "Projects", icon: FolderKanban, module: "projects" }] },
+  { key: "management", items: [{ section: "management", to: "/management", label: "Management", icon: BarChart3, module: "reports" }] },
   {
     key: "production", label: "Production",
     items: [
-      { section: "production", to: "/capacity", label: "Capacity Planning", icon: BarChart3, roles: CAPACITY_ROLES },
-      { section: "production", to: "/production?tab=modules", label: "Factory Floor", icon: Factory },
-      { section: "production", to: "/factory/floor-map", label: "Floor Map", icon: Map },
-      { section: "production", to: "/qc", label: "QC & NCR", icon: ClipboardCheck },
-      { section: "production", to: "/dispatch-delivery", label: "Despatch & Delivery", icon: Truck },
-      { section: "production", to: "/safety", label: "Safety", icon: ShieldAlert },
+      { section: "production", to: "/capacity", label: "Capacity Planning", icon: BarChart3, roles: CAPACITY_ROLES, module: "factory" },
+      { section: "production", to: "/production?tab=modules", label: "Factory Floor", icon: Factory, module: "factory" },
+      { section: "production", to: "/factory/floor-map", label: "Floor Map", icon: Map, module: "factory" },
+      { section: "production", to: "/qc", label: "QC & NCR", icon: ClipboardCheck, module: "qc" },
+      { section: "production", to: "/dispatch-delivery", label: "Despatch & Delivery", icon: Truck, module: "dispatch" },
+      { section: "production", to: "/safety", label: "Safety", icon: ShieldAlert, module: "factory" },
     ],
   },
   {
     key: "site", label: "On Site Works",
     items: [
-      { section: "site", to: "/site-hub", label: "Site Hub", icon: Truck },
+      { section: "site", to: "/site-hub", label: "Site Hub", icon: Truck, module: "site" },
     ],
   },
-  { key: "rm", items: [{ section: "site", to: "/rm", label: "Repairs & AMC", icon: Wrench }] },
+  { key: "rm", items: [{ section: "site", to: "/rm", label: "Repairs & AMC", icon: Wrench, module: "site" }] },
   {
     key: "procurement", label: "Procurement",
     items: [
-      { section: "procurement", to: "/procurement", label: "Procurement", icon: Package },
+      { section: "procurement", to: "/procurement", label: "Procurement", icon: Package, module: "procurement" },
     ],
   },
   {
     key: "finance", label: "Finance",
     items: [
-      { section: "finance", to: "/finance", label: "Finance", icon: DollarSign },
+      { section: "finance", to: "/finance", label: "Finance", icon: DollarSign, module: "finance" },
     ],
   },
   {
     key: "design", label: "Design",
     items: [
-      { section: "design", to: "/design", label: "Projects", icon: Compass },
-      { section: "design", to: "/design/schedule", label: "Design Schedule", icon: ClipboardList },
-      { section: "design", to: "/design?tab=dq-register", label: "Design Queries", icon: MessageSquare },
+      { section: "design", to: "/design", label: "Projects", icon: Compass, module: "design" },
+      { section: "design", to: "/design/schedule", label: "Design Schedule", icon: ClipboardList, module: "design" },
+      { section: "design", to: "/design?tab=dq-register", label: "Design Queries", icon: MessageSquare, module: "design" },
     ],
   },
   {
     key: "sales", label: "Sales",
-    items: [{ section: "sales", to: "/sales", label: "Sales", icon: BarChart3 }],
+    items: [{ section: "sales", to: "/sales", label: "Sales", icon: BarChart3, module: "sales" }],
   },
-  // ALTREE group — always visible (every employee gets My HR)
+  // ALTREE group — HR is gated by module access; My HR (own attendance) is visible to anyone with at least VIEW.
   {
     key: "altree-hr", label: "HR", group: "altree",
     items: [
-      { section: "altree", to: "/attendance", label: "My HR", icon: UserCog, alwaysVisible: true },
-      { section: "altree", to: "/admin/hr", label: "HR Management", icon: Users, roles: HR_MGMT_ROLES },
+      { section: "altree", to: "/attendance", label: "My HR", icon: UserCog, module: "hr" },
+      { section: "altree", to: "/admin/hr", label: "HR Management", icon: Users, module: "hr" },
     ],
   },
-  { key: "altree-admin", group: "altree", items: [{ section: "altree", to: "/admin", label: "Admin", icon: Briefcase, roles: ADMIN_ROLES }] },
-  { key: "altree-employees", group: "altree", items: [{ section: "altree", to: "/admin/employees", label: "Employees", icon: Users, roles: SUPER_ADMIN_ROLES }] },
+  { key: "altree-admin", group: "altree", items: [{ section: "altree", to: "/admin", label: "Admin", icon: Briefcase, requireAdminPanel: true }] },
+  { key: "altree-employees", group: "altree", items: [{ section: "altree", to: "/admin/employees", label: "Employees", icon: Users, requireAdminPanel: true }] },
   { key: "altree-super", group: "altree", items: [{ section: "altree", to: "/admin/super-admin", label: "Super Admin", icon: ShieldAlert, roles: SUPER_ADMIN_ROLES }] },
   { key: "altree-settings", group: "altree", items: [{ section: "altree", to: "/settings", label: "Settings", icon: Settings, roles: SETTINGS_ROLES }] },
 ];
