@@ -11869,6 +11869,10 @@ export type Database = {
       is_director: { Args: { _user_id: string }; Returns: boolean }
       is_full_admin: { Args: { _user_id: string }; Returns: boolean }
       is_md: { Args: { _user_id: string }; Returns: boolean }
+      is_reporting_manager_of: {
+        Args: { _employee_auth_id: string; _manager_auth_id: string }
+        Returns: boolean
+      }
       recalc_running_bill: {
         Args: { _project_id: string }
         Returns: {
