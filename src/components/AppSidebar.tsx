@@ -51,9 +51,9 @@ const sectionConfig: NavSection[] = [
     key: "site", label: "On Site Works",
     items: [
       { section: "site", to: "/site-hub", label: "Site Hub", icon: Truck },
-      { section: "site", to: "/rm", label: "Repairs & AMC", icon: Wrench },
     ],
   },
+  { key: "rm", items: [{ section: "site", to: "/rm", label: "Repairs & AMC", icon: Wrench }] },
   {
     key: "procurement", label: "Procurement",
     items: [
