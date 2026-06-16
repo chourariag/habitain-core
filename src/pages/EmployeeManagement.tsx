@@ -551,13 +551,40 @@ function CredentialsDialog({ open, onClose, title, email, password }: {
 type SeedEntry = { full_name: string; email: string; role: AppRole; department?: string; manager_email?: string; secondary_manager_email?: string };
 type SeedLog = { idx: number; email: string; status: "queued" | "ok" | "skipped" | "error"; message?: string; password?: string };
 
+const ROLE_ALIASES: Record<string, AppRole> = {
+  chairman: "managing_director" as AppRole,
+  "managing director": "managing_director" as AppRole,
+  "principal architect/director": "principal_architect" as AppRole,
+  "principal architect": "principal_architect" as AppRole,
+  "finance manager": "finance_manager" as AppRole,
+  "hr admin": "hr_admin" as AppRole,
+  "hr executive": "hr_executive" as AppRole,
+  "marketing executive": "marketing" as AppRole,
+  marketing: "marketing" as AppRole,
+  "sales executive": "sales_executive" as AppRole,
+  "sales director": "sales_director" as AppRole,
+  "finance director": "finance_director" as AppRole,
+  "architecture director": "architecture_director" as AppRole,
+};
+
+function normalizeRole(raw: string): AppRole | "" {
+  const v = raw.trim();
+  if (!v) return "";
+  if (ROLE_LABELS[v]) return v as AppRole;
+  const lower = v.toLowerCase();
+  if (ROLE_ALIASES[lower]) return ROLE_ALIASES[lower];
+  const snake = lower.replace(/[\s/\-]+/g, "_");
+  if (ROLE_LABELS[snake]) return snake as AppRole;
+  return "";
+}
+
 function parseSeedText(text: string): SeedEntry[] {
   return text.split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#")).map((line) => {
     const parts = line.split(",").map((p) => p.trim());
     return {
       full_name: parts[0] || "",
       email: (parts[1] || "").toLowerCase(),
-      role: (parts[2] || "") as AppRole,
+      role: normalizeRole(parts[2] || "") as AppRole,
       department: parts[3] || undefined,
       manager_email: parts[4]?.toLowerCase() || undefined,
       secondary_manager_email: parts[5]?.toLowerCase() || undefined,
