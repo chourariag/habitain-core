@@ -72,7 +72,7 @@ export const ROLE_ACCESS_MATRIX: Partial<Record<AppRole, ModuleAccess>> = {
 
   // Heads
   head_of_projects:
-    m("FULL","FULL","FULL","FULL","FULL","VIEW","MANAGE","VIEW","VIEW","FULL","FULL","FULL","FULL","FULL","FULL"),
+    m("FULL","FULL","FULL","FULL","FULL","VIEW","MANAGE","VIEW","VIEW","FULL","FULL","FULL","FULL","NONE","FULL"),
   planning_head:
     m("FULL","FULL","FULL","FULL","FULL","VIEW","MANAGE","VIEW","VIEW","VIEW","VIEW","FULL","FULL","NONE","VIEW"),
   head_operations:
@@ -153,11 +153,10 @@ export function getAccessLevel(role: AppRole | null | undefined, mod: ModuleKey)
   return row[mod];
 }
 
-// Admin Panel (Employee Management) — explicit allow-list per STEP 6.
+// Admin Panel (Employee Management) — explicit allow-list per matrix.
 const ADMIN_PANEL_ROLES: AppRole[] = [
   "super_admin" as AppRole,
   "managing_director" as AppRole,
-  "head_of_projects" as AppRole,
 ];
 
 export function canAccessAdminPanel(role: AppRole | null | undefined): boolean {
