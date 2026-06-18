@@ -124,7 +124,7 @@ export function AppSidebar() {
   const { signOut } = useAuth();
   const { role } = useUserRole();
   const userRole = role as AppRole | null;
-  const { canView, canAccessAdminPanel, getLevel } = usePermissions();
+  const { canView, canAccessAdminPanel } = usePermissions();
   const { projects, selectedProjectId, setSelectedProjectId } = useProjectContext();
   const { i18n } = useTranslation();
   const location = useLocation();
@@ -165,18 +165,6 @@ export function AppSidebar() {
 
   const langCode = (i18n.language || "en").toUpperCase().slice(0, 2);
 
-  const accessTag = (item: NavItem): string => {
-    if (item.module) {
-      const lvl = getLevel(item.module);
-      if (lvl === "FULL") return "(✓)";
-      if (lvl === "MANAGE") return "(M)";
-      if (lvl === "VIEW") return "(👁)";
-      return "";
-    }
-    if (item.requireAdminPanel) return canAccessAdminPanel() ? "(✓)" : "";
-    return "";
-  };
-
   const renderItem = (item: NavItem) => {
     const isActive = item.to === activeKey;
     const isApprovals = item.to === "/approvals";
@@ -186,7 +174,6 @@ export function AppSidebar() {
           ? { backgroundColor: "#FDE7E9", color: "#F40009", borderLeft: "3px solid #F40009" }
           : { color: "#F40009" })
       : linkStyle(isActive);
-    const tag = accessTag(item);
     return (
       <NavLink
         key={item.to}
@@ -195,12 +182,7 @@ export function AppSidebar() {
         style={baseStyle}
       >
         <item.icon className="h-4 w-4 shrink-0" />
-        {!collapsed && (
-          <span className="flex-1">
-            {item.label}
-            {tag && <span className="ml-1 text-[10px] font-normal" style={{ color: "#999999" }}>{tag}</span>}
-          </span>
-        )}
+        {!collapsed && <span className="flex-1">{item.label}</span>}
         {!collapsed && isApprovals && pendingApprovals > 0 && (
           <span className="rounded-full text-white text-[10px] font-bold flex items-center justify-center px-1.5 h-5 min-w-[20px]"
             style={{ background: "#F40009" }}>
