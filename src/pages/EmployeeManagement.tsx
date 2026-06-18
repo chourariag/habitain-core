@@ -1,3 +1,4 @@
+import { PROFILE_SAFE_COLUMNS } from "@/lib/profile-columns";
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";

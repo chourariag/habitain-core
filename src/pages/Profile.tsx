@@ -1,3 +1,4 @@
+import { PROFILE_SAFE_COLUMNS } from "@/lib/profile-columns";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
