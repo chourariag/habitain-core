@@ -124,7 +124,7 @@ export function AppSidebar() {
   const { signOut } = useAuth();
   const { role } = useUserRole();
   const userRole = role as AppRole | null;
-  const { canView, canAccessAdminPanel, getLevel } = usePermissions();
+  const { canView, canAccessAdminPanel } = usePermissions();
   const { projects, selectedProjectId, setSelectedProjectId } = useProjectContext();
   const { i18n } = useTranslation();
   const location = useLocation();
