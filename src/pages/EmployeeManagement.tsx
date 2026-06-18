@@ -1,3 +1,4 @@
+import { PROFILE_SAFE_COLUMNS } from "@/lib/profile-columns";
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -37,7 +38,7 @@ interface ProfileRow {
   auth_user_id: string;
   email: string | null;
   display_name: string | null;
-  phone: string | null;
+  phone?: string | null;
   role: AppRole;
   department: string | null;
   reporting_manager_id: string | null;
@@ -107,7 +108,7 @@ export default function EmployeeManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select(PROFILE_SAFE_COLUMNS)
         .order("display_name");
       if (error) throw error;
       return (data ?? []) as ProfileRow[];
@@ -554,14 +555,20 @@ function EditEmployeeDialog({ target, onClose, managers, onSaved }: {
   const [form, setForm] = useState({ role: "" as AppRole, department: "", reporting_manager_id: "", secondary_manager_id: "", display_name: "", phone: "" });
   const [saving, setSaving] = useState(false);
   useEffect(() => {
-    if (target) setForm({
-      role: target.role,
-      department: target.department || "",
-      reporting_manager_id: target.reporting_manager_id || "",
-      secondary_manager_id: target.secondary_manager_id || "",
-      display_name: target.display_name || "",
-      phone: target.phone || "",
-    });
+    if (target) {
+      setForm({
+        role: target.role,
+        department: target.department || "",
+        reporting_manager_id: target.reporting_manager_id || "",
+        secondary_manager_id: target.secondary_manager_id || "",
+        display_name: target.display_name || "",
+        phone: "",
+      });
+      // Phone is PII — fetch via security-definer RPC (owner or HR only)
+      supabase.rpc("get_profile_pii", { _profile_id: target.id }).maybeSingle().then(({ data }) => {
+        setForm((f) => ({ ...f, phone: (data as any)?.phone || "" }));
+      });
+    }
   }, [target]);
 
   if (!target) return null;

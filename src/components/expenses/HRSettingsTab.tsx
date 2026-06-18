@@ -36,10 +36,10 @@ export function HRSettingsTab() {
     setLoading(true);
     const [{ data: s }, { data: p }] = await Promise.all([
       supabase.from("hr_settings").select("*"),
-      supabase.from("profiles").select("auth_user_id, display_name, date_of_birth, wedding_anniversary, children, role, is_active").eq("is_active", true),
+      supabase.rpc("get_employee_celebrations"),
     ]);
     setSettings(s ?? []);
-    setProfiles(p ?? []);
+    setProfiles((p as any) ?? []);
     setLoading(false);
   };
 

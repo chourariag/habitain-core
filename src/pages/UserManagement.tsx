@@ -1,3 +1,4 @@
+import { PROFILE_SAFE_COLUMNS } from "@/lib/profile-columns";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -66,7 +67,7 @@ export default function UserManagement() {
   const { data: profiles, refetch: refetchProfiles } = useQuery({
     queryKey: ["um-profiles"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+      const { data } = await supabase.from("profiles").select(PROFILE_SAFE_COLUMNS).order("created_at", { ascending: false });
       return (data as unknown as Profile[]) || [];
     },
   });

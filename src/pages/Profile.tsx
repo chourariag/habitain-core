@@ -1,3 +1,4 @@
+import { PROFILE_SAFE_COLUMNS } from "@/lib/profile-columns";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,15 +48,18 @@ export default function Profile() {
   const fetchProfile = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("auth_user_id", user.id)
-      .single();
+    const [{ data }, { data: pii }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select(PROFILE_SAFE_COLUMNS)
+        .eq("auth_user_id", user.id)
+        .single(),
+      supabase.rpc("get_my_profile_pii").maybeSingle(),
+    ]);
     if (data) {
-      setProfile(data);
-      setDisplayName(data.display_name || "");
-      setPhone(data.phone || "");
+      setProfile({ ...(data as any), phone: (pii as any)?.phone ?? null });
+      setDisplayName((data as any).display_name || "");
+      setPhone((pii as any)?.phone || "");
       setHomeBase((data as any).home_base || "");
       setAvatarUrl((data as any).avatar_url || null);
     }

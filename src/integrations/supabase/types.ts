@@ -11850,10 +11850,40 @@ export type Database = {
         Returns: boolean
       }
       can_view_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
+      can_view_profile_pii: { Args: { _user_id: string }; Returns: boolean }
       can_view_work_orders: { Args: { _user_id: string }; Returns: boolean }
       clone_task_templates_to_project: {
         Args: { _project_id: string; _system: string }
         Returns: number
+      }
+      get_employee_celebrations: {
+        Args: never
+        Returns: {
+          auth_user_id: string
+          children: Json
+          date_of_birth: string
+          display_name: string
+          wedding_anniversary: string
+        }[]
+      }
+      get_my_profile_pii: {
+        Args: never
+        Returns: {
+          children: Json
+          date_of_birth: string
+          phone: string
+          wedding_anniversary: string
+        }[]
+      }
+      get_profile_pii: {
+        Args: { _profile_id: string }
+        Returns: {
+          children: Json
+          date_of_birth: string
+          phone: string
+          profile_id: string
+          wedding_anniversary: string
+        }[]
       }
       get_user_role: {
         Args: { _user_id: string }
