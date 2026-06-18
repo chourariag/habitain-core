@@ -38,7 +38,7 @@ interface ProfileRow {
   auth_user_id: string;
   email: string | null;
   display_name: string | null;
-  phone: string | null;
+  phone?: string | null;
   role: AppRole;
   department: string | null;
   reporting_manager_id: string | null;
