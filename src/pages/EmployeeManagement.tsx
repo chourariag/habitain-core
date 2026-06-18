@@ -107,7 +107,7 @@ export default function EmployeeManagement() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("*")
+        .select(PROFILE_SAFE_COLUMNS)
         .order("display_name");
       if (error) throw error;
       return (data ?? []) as ProfileRow[];

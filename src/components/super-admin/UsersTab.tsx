@@ -26,7 +26,7 @@ export function UsersTab() {
   const { data: profiles, refetch } = useQuery({
     queryKey: ["super-admin-users"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+      const { data } = await supabase.from("profiles").select(PROFILE_SAFE_COLUMNS).order("created_at", { ascending: false });
       return (data as unknown as Profile[]) || [];
     },
   });
