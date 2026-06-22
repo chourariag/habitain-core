@@ -92,7 +92,7 @@ export function PayrollGenerateTab() {
     setLoading(true);
     const [psRes, profRes, cfgRes] = await Promise.all([
       supabase.from("payslips").select("*").eq("month", month).eq("year", year).order("revision", { ascending: false }),
-      supabase.from("profiles").select("auth_user_id, display_name, email"),
+      (supabase.rpc as any)("get_active_profiles_directory"),
       (supabase.from("payroll_config") as any).select("*").eq("is_archived", false),
     ]);
     setSlips(psRes.data ?? []);
