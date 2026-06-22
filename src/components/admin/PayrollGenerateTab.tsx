@@ -92,7 +92,7 @@ export function PayrollGenerateTab() {
     setLoading(true);
     const [psRes, profRes, cfgRes] = await Promise.all([
       supabase.from("payslips").select("*").eq("month", month).eq("year", year).order("revision", { ascending: false }),
-      supabase.from("profiles").select("auth_user_id, display_name, email"),
+      (supabase.rpc as any)("get_active_profiles_directory"),
       (supabase.from("payroll_config") as any).select("*").eq("is_archived", false),
     ]);
     setSlips(psRes.data ?? []);
@@ -109,7 +109,7 @@ export function PayrollGenerateTab() {
 
     const b = calcPayslip(cfg as PayrollConfig);
     const prof = profileMap[cfg.user_id]
-      ?? (await supabase.from("profiles").select("auth_user_id, display_name, email").eq("auth_user_id", cfg.user_id).maybeSingle()).data;
+      ?? ((await (supabase.rpc as any)("get_active_profiles_directory")).data ?? []).find((p: any) => p.auth_user_id === cfg.user_id);
     const empName = prof?.display_name || prof?.email || "Employee";
     const att = await fetchAttendance(cfg.user_id, month, year);
 

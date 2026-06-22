@@ -11856,6 +11856,42 @@ export type Database = {
         Args: { _project_id: string; _system: string }
         Returns: number
       }
+      get_active_profiles_directory: {
+        Args: never
+        Returns: {
+          auth_user_id: string
+          department: string
+          display_name: string
+          email: string
+          id: string
+          is_active: boolean
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
+      get_admin_profiles_full: {
+        Args: never
+        Returns: {
+          auth_user_id: string
+          avatar_url: string
+          created_at: string
+          department: string
+          display_name: string
+          email: string
+          home_base: string
+          id: string
+          is_active: boolean
+          is_archived: boolean
+          language: string
+          login_type: string
+          onboarding_completed: boolean
+          onboarding_completed_at: string
+          onboarding_quiz_scores: Json
+          reporting_manager_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          secondary_manager_id: string
+          updated_at: string
+        }[]
+      }
       get_employee_celebrations: {
         Args: never
         Returns: {
@@ -11864,6 +11900,13 @@ export type Database = {
           date_of_birth: string
           display_name: string
           wedding_anniversary: string
+        }[]
+      }
+      get_my_profile_email: {
+        Args: never
+        Returns: {
+          display_name: string
+          email: string
         }[]
       }
       get_my_profile_pii: {

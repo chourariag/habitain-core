@@ -57,7 +57,7 @@ export default function DesignSchedule() {
       supabase.from("design_stage_definitions").select("*").order("stage_order"),
       supabase.from("projects").select("id, name, type, is_archived").eq("is_archived", false).order("created_at", { ascending: false }),
       supabase.from("project_design_stages").select("*"),
-      supabase.from("profiles").select("id, display_name, email").eq("is_active", true).order("display_name"),
+      supabase.from("profiles").select("id, display_name").eq("is_active", true).order("display_name"),
     ]);
     setDefs((defsRes.data ?? []) as StageDef[]);
     setProjects((projRes.data ?? []) as ProjectRow[]);

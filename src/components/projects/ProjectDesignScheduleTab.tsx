@@ -45,7 +45,7 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
     const [defsRes, stagesRes, profRes] = await Promise.all([
       supabase.from("design_stage_definitions").select("*").eq("pipeline_type", pipeline).order("stage_order"),
       supabase.from("project_design_stages").select("*").eq("project_id", projectId),
-      supabase.from("profiles").select("id, display_name, email").eq("is_active", true).order("display_name"),
+      supabase.from("profiles").select("id, display_name").eq("is_active", true).order("display_name"),
     ]);
     const defsData = (defsRes.data ?? []) as StageDef[];
     const stagesData = (stagesRes.data ?? []) as ProjectStage[];

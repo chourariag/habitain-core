@@ -25,7 +25,7 @@ export function SalesSettingsTab({ deals }: { deals: any[] }) {
     const fetch = async () => {
       const [{ data: t }, { data: p }] = await Promise.all([
         supabase.from("sales_targets").select("*").eq("fiscal_year", "FY27").order("salesperson_name"),
-        supabase.from("profiles").select("id, auth_user_id, full_name, email, role").eq("is_active", true),
+        (supabase.rpc as any)("get_active_profiles_directory"),
       ]);
       setTargets(t || []);
       setProfiles(p || []);

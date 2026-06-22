@@ -54,7 +54,7 @@ export function PayrollSettingsTab() {
   async function load() {
     setLoading(true);
     const [empRes, cfgRes] = await Promise.all([
-      supabase.from("profiles").select("auth_user_id, display_name, email, role").eq("is_active", true).order("display_name"),
+      (supabase.rpc as any)("get_active_profiles_directory"),
       (supabase.from("payroll_config") as any).select("*").eq("is_archived", false),
     ]);
     setEmployees((empRes.data ?? []) as Employee[]);

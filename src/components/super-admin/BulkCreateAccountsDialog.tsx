@@ -42,8 +42,8 @@ export function BulkCreateAccountsDialog({ onDone }: Props) {
 
   async function init() {
     // Load existing emails to pre-mark "skipped"
-    const { data: existing } = await supabase.from("profiles").select("email");
-    const existingEmails = new Set((existing || []).map((p) => (p.email || "").toLowerCase()).filter(Boolean));
+    const { data: existing } = await (supabase.rpc as any)("get_active_profiles_directory");
+    const existingEmails = new Set((existing || []).map((p: any) => (p.email || "").toLowerCase()).filter(Boolean));
     setRows(
       HSTACK_USERS.map((u) => {
         const email = slugEmail(u.name);
