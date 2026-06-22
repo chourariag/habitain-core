@@ -53,7 +53,7 @@ export function TaskMasterTab() {
   const { data: profiles } = useQuery({
     queryKey: ["profiles-min"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select("id, display_name, email").eq("is_active", true);
+      const { data } = await (supabase.rpc as any)("get_active_profiles_directory");
       return (data || []) as Profile[];
     },
   });
