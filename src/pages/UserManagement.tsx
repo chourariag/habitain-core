@@ -67,7 +67,7 @@ export default function UserManagement() {
   const { data: profiles, refetch: refetchProfiles } = useQuery({
     queryKey: ["um-profiles"],
     queryFn: async () => {
-      const { data } = await supabase.from("profiles").select(PROFILE_SAFE_COLUMNS).order("created_at", { ascending: false });
+      const { data } = await (supabase.rpc as any)("get_admin_profiles_full");
       return (data as unknown as Profile[]) || [];
     },
   });
