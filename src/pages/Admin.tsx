@@ -31,10 +31,7 @@ export default function Admin() {
   const { data: profiles, refetch, isLoading } = useQuery({
     queryKey: ["admin-profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const { data, error } = await (supabase.rpc as any)("get_admin_profiles_full");
       if (error) throw error;
       return data;
     },
