@@ -63,8 +63,8 @@ export async function setApprovalDecision(
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) throw new Error("Not authenticated");
   const { data: prof } = await supabase
-    .from("profiles").select("display_name,email").eq("auth_user_id", auth.user.id).single();
-  const approved_by_name = prof?.display_name || prof?.email || "MD";
+    .from("profiles").select("display_name").eq("auth_user_id", auth.user.id).single();
+  const approved_by_name = prof?.display_name || auth.user.email || "MD";
   const { error } = await supabase
     .from("approval_requests" as never)
     .update({
