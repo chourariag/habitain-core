@@ -74,47 +74,6 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
     onOpenChange(false);
   };
 
-  const PasswordField = ({
-    id,
-    label,
-    value,
-    onChange,
-    show,
-    setShow,
-  }: {
-    id: string;
-    label: string;
-    value: string;
-    onChange: (v: string) => void;
-    show: boolean;
-    setShow: (v: boolean) => void;
-  }) => (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="relative">
-        <Input
-          id={id}
-          type={show ? "text" : "password"}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="pr-10"
-          autoComplete={id === "current-password" ? "current-password" : "new-password"}
-          autoCorrect="off"
-          autoCapitalize="none"
-          spellCheck={false}
-          inputMode="text"
-        />
-        <button
-          type="button"
-          onClick={() => setShow(!show)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          tabIndex={-1}
-        >
-          {show ? <EyeOff size={18} /> : <Eye size={18} />}
-        </button>
-      </div>
-    </div>
-  );
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
