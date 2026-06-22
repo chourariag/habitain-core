@@ -109,7 +109,7 @@ export function PayrollGenerateTab() {
 
     const b = calcPayslip(cfg as PayrollConfig);
     const prof = profileMap[cfg.user_id]
-      ?? (await supabase.from("profiles").select("auth_user_id, display_name, email").eq("auth_user_id", cfg.user_id).maybeSingle()).data;
+      ?? ((await (supabase.rpc as any)("get_active_profiles_directory")).data ?? []).find((p: any) => p.auth_user_id === cfg.user_id);
     const empName = prof?.display_name || prof?.email || "Employee";
     const att = await fetchAttendance(cfg.user_id, month, year);
 
