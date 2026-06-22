@@ -11856,6 +11856,18 @@ export type Database = {
         Args: { _project_id: string; _system: string }
         Returns: number
       }
+      get_active_profiles_directory: {
+        Args: never
+        Returns: {
+          auth_user_id: string
+          department: string
+          display_name: string
+          email: string
+          id: string
+          is_active: boolean
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       get_employee_celebrations: {
         Args: never
         Returns: {
@@ -11864,6 +11876,13 @@ export type Database = {
           date_of_birth: string
           display_name: string
           wedding_anniversary: string
+        }[]
+      }
+      get_my_profile_email: {
+        Args: never
+        Returns: {
+          display_name: string
+          email: string
         }[]
       }
       get_my_profile_pii: {
