@@ -99,6 +99,10 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
           onChange={(e) => onChange(e.target.value)}
           className="pr-10"
           autoComplete={id === "current-password" ? "current-password" : "new-password"}
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
+          inputMode="text"
         />
         <button
           type="button"

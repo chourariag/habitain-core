@@ -103,6 +103,10 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  autoComplete="email"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
                 />
               </div>
               <div className="space-y-2">
@@ -115,6 +119,11 @@ export default function Login() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     className="pr-10"
+                    autoComplete="current-password"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    inputMode="text"
                   />
                   <button
                     type="button"
@@ -152,6 +161,10 @@ export default function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  autoComplete="email"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  spellCheck={false}
                 />
                 <p className="text-xs text-muted-foreground">
                   We'll email you a link that logs you in instantly — no password needed.
