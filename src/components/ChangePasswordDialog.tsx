@@ -110,6 +110,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
             setShow={setShowConfirm}
           />
 
+
           {error && (
             <p className="text-sm text-[#F40009] font-medium">{error}</p>
           )}
