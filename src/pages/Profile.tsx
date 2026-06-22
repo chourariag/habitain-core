@@ -115,8 +115,8 @@ export default function Profile() {
   };
 
   const handleChangePassword = async () => {
-    if (newPassword.length < 8) {
-      toast.error("New password must be at least 8 characters");
+    if (newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -288,7 +288,7 @@ export default function Profile() {
           </div>
           <div className="space-y-2">
             <Label>New Password</Label>
-            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 8 characters" />
+            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 6 characters" />
           </div>
           <div className="space-y-2">
             <Label>Confirm New Password</Label>
