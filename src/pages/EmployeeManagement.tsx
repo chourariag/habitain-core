@@ -106,12 +106,12 @@ export default function EmployeeManagement() {
     queryKey: ["profiles"],
     enabled: allowed,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select(PROFILE_SAFE_COLUMNS)
-        .order("display_name");
+      const { data, error } = await (supabase.rpc as any)("get_admin_profiles_full");
       if (error) throw error;
-      return (data ?? []) as ProfileRow[];
+      const rows = (data ?? []).slice().sort((a: any, b: any) =>
+        (a.display_name || "").localeCompare(b.display_name || "")
+      );
+      return rows as ProfileRow[];
     },
     staleTime: 0,
     gcTime: 0,
