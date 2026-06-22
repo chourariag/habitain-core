@@ -111,6 +111,10 @@ export default function Setup() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="bg-background text-foreground border-border"
+                autoComplete="email"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
               />
             </div>
             <div className="space-y-2">
