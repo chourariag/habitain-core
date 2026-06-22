@@ -41,8 +41,8 @@ export default function Welcome() {
       toast.error("Please enter your full name");
       return;
     }
-    if (password.length < 8) {
-      toast.error("Password must be at least 8 characters");
+    if (password.length < 6) {
+      toast.error("Password must be at least 6 characters");
       return;
     }
     if (password !== confirmPassword) {
@@ -114,11 +114,11 @@ export default function Welcome() {
               <Input
                 id="password"
                 type="password"
-                placeholder="Min 8 characters"
+                placeholder="Min 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={8}
+                minLength={6}
                 className="bg-background text-foreground border-border"
               />
             </div>
