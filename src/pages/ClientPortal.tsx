@@ -64,11 +64,9 @@ export default function ClientPortal() {
     setLoading(true);
 
     const { data: proj, error: projErr } = await supabase
-      .from("projects")
-      .select("*")
-      .eq("client_portal_token", projectToken)
-      .eq("client_portal_enabled", true)
+      .rpc("get_project_by_portal_token", { _token: projectToken })
       .maybeSingle();
+
 
     if (projErr || !proj) {
       setError("This link is invalid or has expired.");
