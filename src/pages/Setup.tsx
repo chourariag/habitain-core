@@ -127,6 +127,11 @@ export default function Setup() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="bg-background text-foreground border-border"
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                inputMode="text"
               />
             </div>
             <div className="space-y-2">
@@ -138,6 +143,11 @@ export default function Setup() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 className="bg-background text-foreground border-border"
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                inputMode="text"
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
