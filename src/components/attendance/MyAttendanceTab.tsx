@@ -11,6 +11,7 @@ interface Props { userRole: string | null }
 export function MyAttendanceTab({ userRole }: Props) {
   const { user } = useAuth();
   const [records, setRecords] = useState<any[]>([]);
+  const [accountCreatedAt, setAccountCreatedAt] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState<Date>(new Date());
   const [selected, setSelected] = useState<Date | undefined>(new Date());
@@ -21,18 +22,28 @@ export function MyAttendanceTab({ userRole }: Props) {
       setLoading(true);
       const start = format(startOfMonth(month), "yyyy-MM-dd");
       const end = format(endOfMonth(month), "yyyy-MM-dd");
-      const { data } = await supabase
-        .from("attendance_records")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("date", start)
-        .lte("date", end);
+      const [{ data }, { data: prof }] = await Promise.all([
+        supabase
+          .from("attendance_records")
+          .select("*")
+          .eq("user_id", user.id)
+          .gte("date", start)
+          .lte("date", end),
+        supabase
+          .from("profiles")
+          .select("created_at")
+          .eq("auth_user_id", user.id)
+          .maybeSingle(),
+      ]);
       setRecords(data ?? []);
+      setAccountCreatedAt(prof?.created_at ? new Date(new Date(prof.created_at).setHours(0, 0, 0, 0)) : null);
       setLoading(false);
     })();
   }, [user, month]);
 
-  const workingDays = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) }).filter(d => !isSunday(d) && d <= new Date()).length;
+  const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
+  const workingDays = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) })
+    .filter(d => !isSunday(d) && d < todayStart && (!accountCreatedAt || d >= accountCreatedAt)).length;
   const present = records.filter(r => r.check_in_time).length;
   const absent = Math.max(0, workingDays - present);
   const lateArrivals = records.filter(r => {

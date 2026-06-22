@@ -2,51 +2,63 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { Loader2, Calendar as CalIcon } from "lucide-react";
-import { format, subDays, isSunday, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
+import { format, subDays, isSunday, startOfMonth, endOfMonth, eachDayOfInterval, startOfDay } from "date-fns";
 import { LeaveRequestDrawer } from "./LeaveRequestDrawer";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-
-const ARCHITECT_ROLES = ["principal_architect", "project_architect", "structural_architect"];
 
 interface Props {
   userRole: string | null;
 }
 
-export function ProfileAttendance({ userRole }: Props) {
+export function ProfileAttendance({ userRole: _userRole }: Props) {
   const { user } = useAuth();
   const [records, setRecords] = useState<any[]>([]);
+  const [accountCreatedAt, setAccountCreatedAt] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const isArchitect = userRole && ARCHITECT_ROLES.includes(userRole);
-
   useEffect(() => {
-    if (!user || isArchitect) return;
-    fetchRecords();
+    if (!user) return;
+    fetchAll();
   }, [user]);
 
-  const fetchRecords = async () => {
+  const fetchAll = async () => {
     if (!user) return;
     setLoading(true);
     const thirtyDaysAgo = format(subDays(new Date(), 30), "yyyy-MM-dd");
     const today = format(new Date(), "yyyy-MM-dd");
-    const { data } = await supabase
-      .from("attendance_records")
-      .select("date, location_type, check_in_time")
-      .eq("user_id", user.id)
-      .gte("date", thirtyDaysAgo)
-      .lte("date", today);
-    setRecords(data ?? []);
+    const [{ data: recs }, { data: prof }] = await Promise.all([
+      supabase
+        .from("attendance_records")
+        .select("date, location_type, check_in_time")
+        .eq("user_id", user.id)
+        .gte("date", thirtyDaysAgo)
+        .lte("date", today),
+      supabase
+        .from("profiles")
+        .select("created_at")
+        .eq("auth_user_id", user.id)
+        .maybeSingle(),
+    ]);
+    setRecords(recs ?? []);
+    setAccountCreatedAt(prof?.created_at ? startOfDay(new Date(prof.created_at)) : null);
     setLoading(false);
   };
 
-  if (isArchitect || !user) return null;
+  if (!user) return null;
+
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const isPastWorkingDay = (d: Date) =>
+    !isSunday(d) &&
+    d < todayStart &&
+    (!accountCreatedAt || d >= accountCreatedAt);
 
   // This month stats
-  const now = new Date();
   const monthStart = format(startOfMonth(now), "yyyy-MM-dd");
   const monthEnd = format(endOfMonth(now), "yyyy-MM-dd");
   const monthRecords = records.filter((r: any) => r.date >= monthStart && r.date <= monthEnd);
-  const monthWorkingDays = eachDayOfInterval({ start: startOfMonth(now), end: now }).filter((d) => !isSunday(d)).length;
+  const monthWorkingDays = eachDayOfInterval({ start: startOfMonth(now), end: now })
+    .filter((d) => isPastWorkingDay(d)).length;
   const presentDays = monthRecords.filter((r: any) => r.check_in_time).length;
   const absentDays = Math.max(0, monthWorkingDays - presentDays);
 
@@ -55,18 +67,27 @@ export function ProfileAttendance({ userRole }: Props) {
     const d = subDays(now, 29 - i);
     const dateStr = format(d, "yyyy-MM-dd");
     const rec = records.find((r: any) => r.date === dateStr);
+    const beforeAccount = accountCreatedAt && d < accountCreatedAt;
     const isWeekend = isSunday(d);
-    const isFuture = d > now;
-    let color = "#E5E7EB"; // grey = weekend/future
+    const isFutureOrToday = d >= todayStart;
+
+    let color = "#E5E7EB";
     let label = "Weekend";
-    if (!isWeekend && !isFuture) {
-      if (rec?.check_in_time) {
-        color = "#006039"; // present
-        label = "Present";
-      } else {
-        color = "#F40009"; // absent
-        label = "Absent";
-      }
+    if (beforeAccount) {
+      color = "transparent";
+      label = "Before account";
+    } else if (isWeekend) {
+      color = "#E5E7EB";
+      label = "Weekend";
+    } else if (isFutureOrToday) {
+      color = "#E5E7EB";
+      label = d.toDateString() === now.toDateString() ? "Today" : "Upcoming";
+    } else if (rec?.check_in_time) {
+      color = "#006039";
+      label = "Present";
+    } else {
+      color = "#F40009";
+      label = "Absent";
     }
     return { date: d, color, label };
   });
@@ -79,7 +100,7 @@ export function ProfileAttendance({ userRole }: Props) {
         <h2 className="font-display text-base font-semibold flex items-center gap-2" style={{ color: "#1A1A1A" }}>
           <CalIcon className="h-4 w-4" style={{ color: "#006039" }} /> My Attendance
         </h2>
-        <LeaveRequestDrawer onSuccess={fetchRecords} />
+        <LeaveRequestDrawer onSuccess={fetchAll} />
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-4">
@@ -102,7 +123,13 @@ export function ProfileAttendance({ userRole }: Props) {
         {last30.map((d, i) => (
           <Tooltip key={i}>
             <TooltipTrigger asChild>
-              <div className="w-[14px] h-[14px] rounded-[2px]" style={{ backgroundColor: d.color }} />
+              <div
+                className="w-[14px] h-[14px] rounded-[2px]"
+                style={{
+                  backgroundColor: d.color,
+                  border: d.color === "transparent" ? "1px dashed #E5E7EB" : "none",
+                }}
+              />
             </TooltipTrigger>
             <TooltipContent side="top">
               <p className="text-xs">{format(d.date, "dd MMM")} — {d.label}</p>
@@ -110,11 +137,11 @@ export function ProfileAttendance({ userRole }: Props) {
           </Tooltip>
         ))}
       </div>
-      <div className="flex gap-3 mt-2 text-[10px]" style={{ color: "#999" }}>
+      <div className="flex gap-3 mt-2 text-[10px] flex-wrap" style={{ color: "#999" }}>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm" style={{ backgroundColor: "#006039" }} /> Present</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm" style={{ backgroundColor: "#D4860A" }} /> Leave</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm" style={{ backgroundColor: "#F40009" }} /> Absent</span>
-        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm" style={{ backgroundColor: "#E5E7EB" }} /> Weekend</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm" style={{ backgroundColor: "#E5E7EB" }} /> Weekend / Today</span>
       </div>
     </div>
   );
