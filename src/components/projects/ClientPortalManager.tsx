@@ -30,11 +30,9 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
 
   useEffect(() => {
     supabase
-      .from("projects")
-      .select("client_portal_token, client_portal_enabled, client_portal_expires_at, client_portal_status_message")
-      .eq("id", projectId)
-      .single()
-      .then(({ data }) => {
+      .rpc("get_project_client_portal_token", { _project_id: projectId })
+      .maybeSingle()
+      .then(({ data }: any) => {
         if (data) {
           setPortalToken(data.client_portal_token);
           setEnabled(data.client_portal_enabled ?? false);
@@ -43,6 +41,7 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
         }
       });
   }, [projectId]);
+
 
   if (!canManage) return null;
 

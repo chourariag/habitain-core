@@ -11928,6 +11928,72 @@ export type Database = {
           wedding_anniversary: string
         }[]
       }
+      get_project_by_portal_token: {
+        Args: { _token: string }
+        Returns: {
+          actually_spent: number | null
+          archive_reason: string | null
+          archived_at: string | null
+          client_email: string | null
+          client_name: string | null
+          client_phone: string | null
+          client_portal_enabled: boolean
+          client_portal_expires_at: string | null
+          client_portal_status_message: string | null
+          client_portal_token: string | null
+          construction_type: string | null
+          contract_value: number | null
+          created_at: string | null
+          created_by: string | null
+          division: string
+          est_completion: string | null
+          gfc_budget: number | null
+          gfc_budget_total: number | null
+          id: string
+          is_archived: boolean | null
+          is_design_only: boolean
+          location: string | null
+          milestones_locked: boolean
+          module_count: number
+          name: string
+          panel_count: number
+          planned_labour_cost: number | null
+          production_system: string
+          project_type: string | null
+          setup_uploaded_at: string | null
+          setup_uploaded_by_name: string | null
+          site_lat: number | null
+          site_lng: number | null
+          site_radius: number | null
+          site_ready_confirmed: boolean | null
+          site_schedule_escalated_at: string | null
+          site_schedule_notified_at: string | null
+          site_schedule_unlocked_at: string | null
+          start_date: string | null
+          status: string | null
+          type: string | null
+          updated_at: string | null
+          updated_by: string | null
+          wip_close_date: string | null
+          wip_start_date: string | null
+          wip_status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "projects"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_project_client_portal_token: {
+        Args: { _project_id: string }
+        Returns: {
+          client_portal_enabled: boolean
+          client_portal_expires_at: string
+          client_portal_status_message: string
+          client_portal_token: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
