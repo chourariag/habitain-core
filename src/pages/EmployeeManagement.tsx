@@ -148,26 +148,30 @@ export default function EmployeeManagement() {
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
       <header className="space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-display font-bold" style={{ color: "#006039" }}>Employee Management</h1>
+        <div className="flex items-center justify-between gap-2">
+          <h1 className="text-2xl max-sm:text-xl font-display font-bold" style={{ color: "#006039" }}>Employee Management</h1>
           <div
-            className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold text-white"
+            className="inline-flex items-center gap-2 max-sm:gap-1 rounded-full px-4 py-1.5 max-sm:px-2 max-sm:py-0.5 text-sm max-sm:text-[10px] font-bold text-white whitespace-nowrap"
             style={{ background: "#1A6645" }}
           >
-            <Users className="h-4 w-4" />
+            <Users className="h-4 w-4 max-sm:h-3 max-sm:w-3" />
             Total Users: {employeeCount}
           </div>
         </div>
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <p className="text-sm text-muted-foreground">Create, edit, deactivate and reset passwords for all HStack employees.</p>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setSeedOpen(true)}>
-              <Sparkles className="h-4 w-4 mr-2" /> Bulk Seed
+          <div className="flex flex-nowrap gap-2 max-sm:gap-1.5 max-sm:w-full max-sm:justify-between">
+            <Button variant="outline" onClick={() => setSeedOpen(true)} className="max-sm:h-8 max-sm:px-2 max-sm:text-xs">
+              <Sparkles className="h-4 w-4 max-sm:h-3 max-sm:w-3 mr-2 max-sm:mr-1" />
+              <span className="hidden sm:inline">Bulk Seed</span>
+              <span className="sm:hidden">Seed</span>
             </Button>
-            <Button onClick={() => setCreateOpen(true)}>
-              <UserPlus className="h-4 w-4 mr-2" /> New Employee
+            <Button onClick={() => setCreateOpen(true)} className="max-sm:h-8 max-sm:px-2 max-sm:text-xs">
+              <UserPlus className="h-4 w-4 max-sm:h-3 max-sm:w-3 mr-2 max-sm:mr-1" />
+              <span className="hidden sm:inline">New Employee</span>
+              <span className="sm:hidden">New</span>
             </Button>
-            {(role === "super_admin" || role === "managing_director") && <RemoveAllButton onCleared={loadRows} />}
+            {(role === "super_admin" || role === "managing_director") && <RemoveAllButton onCleared={loadRows} compact />}
           </div>
         </div>
       </header>
@@ -200,9 +204,9 @@ export default function EmployeeManagement() {
       </div>
 
       <Tabs value={view} onValueChange={(v) => setView(v as "table" | "hierarchy")}>
-        <TabsList className="mb-3">
-          <TabsTrigger value="table">Table View</TabsTrigger>
-          <TabsTrigger value="hierarchy">Hierarchy View</TabsTrigger>
+        <TabsList className="mb-3 max-sm:h-8 max-sm:p-0.5">
+          <TabsTrigger value="table" className="max-sm:px-2 max-sm:py-1 max-sm:text-[11px]">Table<span className="hidden sm:inline"> View</span></TabsTrigger>
+          <TabsTrigger value="hierarchy" className="max-sm:px-2 max-sm:py-1 max-sm:text-[11px]">Hierarchy<span className="hidden sm:inline"> View</span></TabsTrigger>
         </TabsList>
 
         <TabsContent value="table" className="mt-0">
@@ -842,7 +846,7 @@ function SeedDialog({ open, onClose, managers }: { open: boolean; onClose: () =>
 
 /* ───────────────────── Remove All (Danger) ───────────────────── */
 
-function RemoveAllButton({ onCleared }: { onCleared: () => void }) {
+function RemoveAllButton({ onCleared, compact }: { onCleared: () => void; compact?: boolean }) {
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [running, setRunning] = useState(false);
@@ -885,10 +889,14 @@ function RemoveAllButton({ onCleared }: { onCleared: () => void }) {
     <>
       <Button
         variant="outline"
+        size={compact ? "sm" : "default"}
         onClick={() => { setOpen(true); setConfirmText(""); setLog([]); setSummary(null); }}
         style={{ borderColor: "#F40009", color: "#F40009" }}
+        className={compact ? "max-sm:h-8 max-sm:px-2 max-sm:text-xs" : ""}
       >
-        <Trash2 className="h-4 w-4 mr-2" /> Remove All
+        <Trash2 className={`h-4 w-4 mr-2 ${compact ? "max-sm:h-3 max-sm:w-3 max-sm:mr-1" : ""}`} />
+        <span className="hidden sm:inline">Remove All</span>
+        <span className="sm:hidden">Remove</span>
       </Button>
 
       <Dialog open={open} onOpenChange={(o) => { if (!running) setOpen(o); }}>
