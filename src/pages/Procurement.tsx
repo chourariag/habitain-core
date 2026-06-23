@@ -731,6 +731,10 @@ export default function Procurement() {
           <GRNTab filterProjectId={projectFromUrl} />
         </TabsContent>
 
+        <TabsContent value="contracts">
+          <ContractsRegisterTab userRole={userRole} projects={projects} />
+        </TabsContent>
+
         {/* Subcontractors tab moved to Production → People */}
       </Tabs>
 
