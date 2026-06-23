@@ -120,9 +120,11 @@ export default function Finance() {
             <TabsList>
               <TabsTrigger value="pl">P&amp;L</TabsTrigger>
               <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
+              <TabsTrigger value="receivables">Receivables</TabsTrigger>
             </TabsList>
             <TabsContent value="pl"><ProfitLossTab /></TabsContent>
             <TabsContent value="cashflow"><CashFlowTab /></TabsContent>
+            <TabsContent value="receivables"><ReceivablesTab /></TabsContent>
           </Tabs>
         </TabsContent>
 
