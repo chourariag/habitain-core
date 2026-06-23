@@ -25,6 +25,17 @@
 </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+  <script type="module" src="/src/main.tsx"></script>
+  <script>
+    (function () {
+      if (window.location.hostname === 'h-stack.com' || window.location.hostname === 'www.h-stack.com') {
+        const style = document.createElement('style');
+        style.textContent = '[data-lovable-badge], .lovable-badge, #lovable-badge { display: none !important; }';
+        document.head.appendChild(style);
+      }
+    })();
+  </script>
+
+
   </body>
 </html>
