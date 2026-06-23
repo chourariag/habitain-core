@@ -162,7 +162,7 @@ export function RevenueMarginTab() {
         project_id: p.id,
         project_code: p.name?.split(" ")[0] || p.id.slice(0, 8),
         project_name: p.name || "",
-        site_manager: "—",
+        site_manager: rm.primary_manager || "—",
         original_valuation: originalVal,
         billed_revenue_incl_gst: billedRev,
         received_value_incl_gst: receivedVal,
