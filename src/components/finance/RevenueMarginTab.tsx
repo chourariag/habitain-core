@@ -552,6 +552,7 @@ export function RevenueMarginTab() {
                   <div>
                     <Label className="text-xs">Expected Variations (₹)</Label>
                     <Input type="number" value={editVariations} onChange={e => setEditVariations(e.target.value)} />
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <Label className="text-xs">Previous Claim (GST) ₹</Label>
