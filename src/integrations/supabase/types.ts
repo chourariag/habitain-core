@@ -1113,6 +1113,83 @@ export type Database = {
           },
         ]
       }
+      contracts_register: {
+        Row: {
+          contract_number: string | null
+          contract_type: string | null
+          contract_value_excl_gst: number | null
+          contract_value_incl_gst: number | null
+          created_at: string
+          created_by: string | null
+          end_date: string | null
+          gst_percent: number | null
+          id: string
+          is_archived: boolean
+          payment_terms: string | null
+          project_id: string | null
+          remarks: string | null
+          retention_amount: number | null
+          retention_percent: number | null
+          scope_of_work: string | null
+          start_date: string | null
+          status: string
+          updated_at: string
+          vendor_name: string
+        }
+        Insert: {
+          contract_number?: string | null
+          contract_type?: string | null
+          contract_value_excl_gst?: number | null
+          contract_value_incl_gst?: number | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          gst_percent?: number | null
+          id?: string
+          is_archived?: boolean
+          payment_terms?: string | null
+          project_id?: string | null
+          remarks?: string | null
+          retention_amount?: number | null
+          retention_percent?: number | null
+          scope_of_work?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          vendor_name: string
+        }
+        Update: {
+          contract_number?: string | null
+          contract_type?: string | null
+          contract_value_excl_gst?: number | null
+          contract_value_incl_gst?: number | null
+          created_at?: string
+          created_by?: string | null
+          end_date?: string | null
+          gst_percent?: number | null
+          id?: string
+          is_archived?: boolean
+          payment_terms?: string | null
+          project_id?: string | null
+          remarks?: string | null
+          retention_amount?: number | null
+          retention_percent?: number | null
+          scope_of_work?: string | null
+          start_date?: string | null
+          status?: string
+          updated_at?: string
+          vendor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creditor_ledger_entries: {
         Row: {
           amount: number
@@ -5764,6 +5841,77 @@ export type Database = {
           type?: string
         }
         Relationships: []
+      }
+      order_book: {
+        Row: {
+          category: string
+          contract_value_cr: number | null
+          created_at: string
+          created_by: string | null
+          display_order: number | null
+          financial_year: string
+          id: string
+          is_archived: boolean
+          location: string | null
+          modules_count: number | null
+          monthly_output: Json
+          notes: string | null
+          project_id: string | null
+          project_name: string
+          sqft: number | null
+          status: string | null
+          tech_type: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          contract_value_cr?: number | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number | null
+          financial_year: string
+          id?: string
+          is_archived?: boolean
+          location?: string | null
+          modules_count?: number | null
+          monthly_output?: Json
+          notes?: string | null
+          project_id?: string | null
+          project_name: string
+          sqft?: number | null
+          status?: string | null
+          tech_type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          contract_value_cr?: number | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number | null
+          financial_year?: string
+          id?: string
+          is_archived?: boolean
+          location?: string | null
+          modules_count?: number | null
+          monthly_output?: Json
+          notes?: string | null
+          project_id?: string | null
+          project_name?: string
+          sqft?: number | null
+          status?: string | null
+          tech_type?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_book_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       panel_batches: {
         Row: {

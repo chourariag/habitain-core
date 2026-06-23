@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { Tier1Dashboard } from "@/components/dashboard/Tier1Dashboard";
+import { OrderBookTab } from "@/components/dashboard/OrderBookTab";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { PlaceholderDashboard } from "@/components/dashboard/PlaceholderDashboard";
 import { SharedDashboardBottom } from "@/components/dashboard/SharedDashboardBottom";
@@ -26,6 +28,12 @@ export default function Dashboard() {
   const { user } = useAuth();
   const userRole = role as AppRole | null;
   const [firstName, setFirstName] = useState("User");
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from("projects").select("id,name").eq("is_archived", false).order("name")
+      .then(({ data }) => setProjects(data ?? []));
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -82,7 +90,18 @@ export default function Dashboard() {
       <ReportsToReviewSection />
 
       {tier === 1 ? (
-        <Tier1Dashboard today={today} firstName={firstName} />
+        <Tabs defaultValue="command-centre" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="command-centre">Command Centre</TabsTrigger>
+            <TabsTrigger value="order-book">Order Book</TabsTrigger>
+          </TabsList>
+          <TabsContent value="command-centre" className="space-y-6">
+            <Tier1Dashboard today={today} firstName={firstName} />
+          </TabsContent>
+          <TabsContent value="order-book">
+            <OrderBookTab projects={projects} />
+          </TabsContent>
+        </Tabs>
       ) : tier === 2 ? (
         <PlaceholderDashboard title={`My Dashboard — ${roleName}`} today={today} tier={2} role={userRole} firstName={firstName} />
       ) : tier === 4 ? (

@@ -34,6 +34,7 @@ import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
 import { Calendar, Hammer, Bell, ClipboardCheck, HardHat, Wrench } from "lucide-react";
 import { FixedAssetsTab } from "@/components/procurement/FixedAssetsTab";
 import { DeliveryTrackerTab } from "@/components/procurement/DeliveryTrackerTab";
+import { ContractsRegisterTab } from "@/components/procurement/ContractsRegisterTab";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
@@ -307,6 +308,7 @@ export default function Procurement() {
             <TabsTrigger value="tally-po" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
             <TabsTrigger value="supplier-intel" className="gap-1.5"><TrendingUp className="h-4 w-4" /> Supplier Intelligence</TabsTrigger>
             <TabsTrigger value="material-alerts" className="gap-1.5"><Bell className="h-4 w-4" /> Material Alerts</TabsTrigger>
+            <TabsTrigger value="contracts" className="gap-1.5"><FileText className="h-4 w-4" /> Contracts</TabsTrigger>
             {/* Subcontractors moved to Production → People */}
           </TabsList>
         </ScrollableTabsWrapper>
@@ -727,6 +729,10 @@ export default function Procurement() {
 
         <TabsContent value="grn">
           <GRNTab filterProjectId={projectFromUrl} />
+        </TabsContent>
+
+        <TabsContent value="contracts">
+          <ContractsRegisterTab userRole={userRole} projects={projects} />
         </TabsContent>
 
         {/* Subcontractors tab moved to Production → People */}
