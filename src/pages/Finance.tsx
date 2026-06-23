@@ -62,10 +62,12 @@ export default function Finance() {
             <TabsList>
               <TabsTrigger value="mis">MIS</TabsTrigger>
               <TabsTrigger value="invoices">Invoices</TabsTrigger>
+              <TabsTrigger value="billing-tracker">Billing Tracker</TabsTrigger>
               <TabsTrigger value="tally-ledger">Tally Ledger Classification</TabsTrigger>
             </TabsList>
             <TabsContent value="mis"><MISTab /></TabsContent>
             <TabsContent value="invoices"><InvoicesTab /></TabsContent>
+            <TabsContent value="billing-tracker"><BillingTrackerTab /></TabsContent>
             <TabsContent value="tally-ledger">
               <Card><CardContent className="p-6 flex items-start gap-3">
                 <Info className="h-5 w-5 mt-0.5" style={{ color: "#006039" }} />
