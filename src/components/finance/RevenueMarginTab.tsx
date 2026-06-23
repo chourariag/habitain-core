@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,8 +10,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { format, parseISO, differenceInDays } from "date-fns";
-import { Download, Search, Save, Loader2 } from "lucide-react";
+import { Download, Search, Save, Loader2, ChevronRight, ChevronDown } from "lucide-react";
 import { RunningBillTable } from "@/components/measurements/RunningBillTable";
+import { VariationRegister } from "./VariationRegister";
 
 const ACCESS_ROLES = [
   "super_admin", "managing_director", "finance_director", "finance_manager",
@@ -46,6 +47,11 @@ interface ProjectRow {
   remaining_to_claim: number;
   notes: string | null;
   status: string;
+  previous_claim_gst: number;
+  next_claim_gst: number;
+  primary_manager: string | null;
+  secondary_manager: string | null;
+  remaining_to_claim_gst: number;
 }
 
 const fmt = (n: number) => "₹" + (n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -84,6 +90,20 @@ export function RevenueMarginTab() {
   const [editHandover, setEditHandover] = useState("");
   const [editVariations, setEditVariations] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [editPrevClaim, setEditPrevClaim] = useState("");
+  const [editNextClaim, setEditNextClaim] = useState("");
+  const [editPrimaryMgr, setEditPrimaryMgr] = useState("");
+  const [editSecondaryMgr, setEditSecondaryMgr] = useState("");
+
+  // Expanded rows for variation register
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const toggleExpand = (id: string) => {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   // Filters
   const [search, setSearch] = useState("");
@@ -156,7 +176,7 @@ export function RevenueMarginTab() {
         project_id: p.id,
         project_code: p.name?.split(" ")[0] || p.id.slice(0, 8),
         project_name: p.name || "",
-        site_manager: "—",
+        site_manager: rm.primary_manager || "—",
         original_valuation: originalVal,
         billed_revenue_incl_gst: billedRev,
         received_value_incl_gst: receivedVal,
@@ -175,6 +195,11 @@ export function RevenueMarginTab() {
         remaining_to_claim: Math.max(0, remainingToClaim),
         notes: rm.notes || null,
         status: p.status || "active",
+        previous_claim_gst: Number(rm.previous_claim_gst) || 0,
+        next_claim_gst: Number(rm.next_claim_gst) || 0,
+        primary_manager: rm.primary_manager || null,
+        secondary_manager: rm.secondary_manager || null,
+        remaining_to_claim_gst: Math.max(0, anticipatedRevenue * 1.18 - billedRev),
       };
     });
 
@@ -219,6 +244,9 @@ export function RevenueMarginTab() {
       expectedCost: active.reduce((s, r) => s + r.expected_final_cost, 0),
       anticipatedMargin: active.reduce((s, r) => s + r.anticipated_margin, 0),
       remaining: active.reduce((s, r) => s + r.remaining_to_claim, 0),
+      prevClaimGst: active.reduce((s, r) => s + r.previous_claim_gst, 0),
+      nextClaimGst: active.reduce((s, r) => s + r.next_claim_gst, 0),
+      remainingClaimGst: active.reduce((s, r) => s + r.remaining_to_claim_gst, 0),
     };
   }, [filtered]);
 
@@ -229,6 +257,10 @@ export function RevenueMarginTab() {
     setEditHandover(row.actual_handover || "");
     setEditVariations(String(row.expected_variations || ""));
     setEditNotes(row.notes || "");
+    setEditPrevClaim(String(row.previous_claim_gst || ""));
+    setEditNextClaim(String(row.next_claim_gst || ""));
+    setEditPrimaryMgr(row.primary_manager || "");
+    setEditSecondaryMgr(row.secondary_manager || "");
   }
 
   async function handleSave() {
@@ -245,6 +277,10 @@ export function RevenueMarginTab() {
       notes: editNotes.slice(0, 50) || null,
       tender_margin_pct: editRow.tender_margin_pct,
       gfc_margin_pct: editRow.gfc_margin_pct,
+      previous_claim_gst: parseFloat(editPrevClaim) || 0,
+      next_claim_gst: parseFloat(editNextClaim) || 0,
+      primary_manager: editPrimaryMgr.trim() || null,
+      secondary_manager: editSecondaryMgr.trim() || null,
     };
 
     const { error } = await supabase.from("project_revenue_margin").upsert(payload as any, { onConflict: "project_id" });
@@ -258,8 +294,10 @@ export function RevenueMarginTab() {
 
   async function exportToExcel() {
     const headers = [
-      "Project Code", "Project Name", "Site Manager", "Original Valuation (₹)",
-      "Billed Revenue incl GST (₹)", "Received Value incl GST (₹)", "Cost to Date (₹)",
+      "Project Code", "Project Name", "Primary Manager", "Secondary Manager", "Original Valuation (₹)",
+      "Billed Revenue incl GST (₹)", "Previous Claim GST (₹)", "Next Claim GST (₹)",
+      "Remaining to be Claimed GST (₹)",
+      "Received Value incl GST (₹)", "Cost to Date (₹)",
       "Expected Final Cost (₹)", "Anticipated Margin (₹)", "Tender Margin %",
       "GFC Margin %", "Actual Margin %", "Planned Delivery", "Actual Delivery",
       "Planned Handover", "Actual Handover", "Expected Variations (₹)",
@@ -269,8 +307,11 @@ export function RevenueMarginTab() {
     const csvRows = [headers.join(",")];
     filtered.forEach(r => {
       csvRows.push([
-        r.project_code, `"${r.project_name}"`, r.site_manager,
-        r.original_valuation, r.billed_revenue_incl_gst, r.received_value_incl_gst,
+        r.project_code, `"${r.project_name}"`,
+        `"${r.primary_manager || ""}"`, `"${r.secondary_manager || ""}"`,
+        r.original_valuation, r.billed_revenue_incl_gst,
+        r.previous_claim_gst, r.next_claim_gst, r.remaining_to_claim_gst,
+        r.received_value_incl_gst,
         r.cost_to_date, r.expected_final_cost, r.anticipated_margin,
         r.tender_margin_pct ?? "", r.gfc_margin_pct ?? "",
         r.actual_margin_pct.toFixed(1), fmtDate(r.planned_delivery),
@@ -359,8 +400,11 @@ export function RevenueMarginTab() {
         <table className="w-full text-xs whitespace-nowrap">
           <thead>
             <tr className="bg-muted/50 border-b">
-              {["Code", "Project", "Manager", "Original Val", "Billed (GST)", "Received (GST)",
-                "Cost to Date", "Exp. Cost", "Ant. Margin", "Tender %", "GFC %", "Actual %",
+              <th className="px-1 py-2 w-6" />
+              {["Code", "Project", "Primary Mgr", "Secondary Mgr", "Original Val",
+                "Billed (GST)", "Prev. Claim (GST)", "Next Claim (GST)", "Remaining (GST)",
+                "Received (GST)", "Cost to Date", "Exp. Cost", "Ant. Margin",
+                "Tender %", "GFC %", "Actual %",
                 "Plan Del.", "Act. Del.", "Plan Hand.", "Act. Hand.",
                 "Exp. Var.", "Ant. Revenue", "Remaining", "Notes"].map(h => (
                 <th key={h} className="px-2 py-2 text-left font-semibold text-muted-foreground">{h}</th>
@@ -369,45 +413,69 @@ export function RevenueMarginTab() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={20} className="text-center py-8 text-muted-foreground">
+              <tr><td colSpan={25} className="text-center py-8 text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin inline mr-2" />Loading…
               </td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={20} className="text-center py-8 text-muted-foreground">No projects found</td></tr>
+              <tr><td colSpan={25} className="text-center py-8 text-muted-foreground">No projects found</td></tr>
             ) : (
               filtered.map(r => {
                 const mStyle = marginBg(r.actual_margin_pct);
                 const delDot = deliveryDot(r.planned_delivery, r.actual_delivery);
                 const handDot = deliveryDot(r.planned_handover, r.actual_handover);
+                const isExpanded = expanded.has(r.project_id);
                 return (
-                  <tr key={r.project_id}
-                    className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
-                    onClick={() => canEdit && openEdit(r)}>
-                    <td className="px-2 py-2 font-mono text-[11px]">{r.project_code}</td>
-                    <td className="px-2 py-2 font-medium max-w-[160px] truncate">{r.project_name}</td>
-                    <td className="px-2 py-2">{r.site_manager}</td>
-                    <td className="px-2 py-2 text-right">{fmt(r.original_valuation)}</td>
-                    <td className="px-2 py-2 text-right">{fmt(r.billed_revenue_incl_gst)}</td>
-                    <td className="px-2 py-2 text-right">{fmt(r.received_value_incl_gst)}</td>
-                    <td className="px-2 py-2 text-right">{fmt(r.cost_to_date)}</td>
-                    <td className="px-2 py-2 text-right">{fmt(r.expected_final_cost)}</td>
-                    <td className="px-2 py-2 text-right font-semibold">{fmt(r.anticipated_margin)}</td>
-                    <td className="px-2 py-2 text-right">{r.tender_margin_pct != null ? fmtPct(r.tender_margin_pct) : "—"}</td>
-                    <td className="px-2 py-2 text-right">{r.gfc_margin_pct != null ? fmtPct(r.gfc_margin_pct) : "—"}</td>
-                    <td className="px-2 py-2 text-right font-bold rounded" style={mStyle}>{fmtPct(r.actual_margin_pct)}</td>
-                    <td className="px-2 py-2">{fmtDate(r.planned_delivery)}</td>
-                    <td className="px-2 py-2">
-                      <span style={{ color: delDot.color }}>{delDot.label}</span>{" "}{fmtDate(r.actual_delivery)}
-                    </td>
-                    <td className="px-2 py-2">{fmtDate(r.planned_handover)}</td>
-                    <td className="px-2 py-2">
-                      <span style={{ color: handDot.color }}>{handDot.label}</span>{" "}{fmtDate(r.actual_handover)}
-                    </td>
-                    <td className="px-2 py-2 text-right">{fmt(r.expected_variations)}</td>
-                    <td className="px-2 py-2 text-right font-semibold">{fmt(r.anticipated_revenue)}</td>
-                    <td className="px-2 py-2 text-right">{fmt(r.remaining_to_claim)}</td>
-                    <td className="px-2 py-2 max-w-[100px] truncate text-muted-foreground">{r.notes || "—"}</td>
-                  </tr>
+                  <Fragment key={r.project_id}>
+                    <tr key={r.project_id}
+                      className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
+                      onClick={() => canEdit && openEdit(r)}>
+                      <td className="px-1 py-2">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleExpand(r.project_id); }}
+                          className="text-muted-foreground hover:text-foreground"
+                          aria-label={isExpanded ? "Collapse variations" : "Expand variations"}
+                        >
+                          {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                        </button>
+                      </td>
+                      <td className="px-2 py-2 font-mono text-[11px]">{r.project_code}</td>
+                      <td className="px-2 py-2 font-medium max-w-[160px] truncate">{r.project_name}</td>
+                      <td className="px-2 py-2">{r.primary_manager || "—"}</td>
+                      <td className="px-2 py-2">{r.secondary_manager || "—"}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.original_valuation)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.billed_revenue_incl_gst)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.previous_claim_gst)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.next_claim_gst)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.remaining_to_claim_gst)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.received_value_incl_gst)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.cost_to_date)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.expected_final_cost)}</td>
+                      <td className="px-2 py-2 text-right font-semibold">{fmt(r.anticipated_margin)}</td>
+                      <td className="px-2 py-2 text-right">{r.tender_margin_pct != null ? fmtPct(r.tender_margin_pct) : "—"}</td>
+                      <td className="px-2 py-2 text-right">{r.gfc_margin_pct != null ? fmtPct(r.gfc_margin_pct) : "—"}</td>
+                      <td className="px-2 py-2 text-right font-bold rounded" style={mStyle}>{fmtPct(r.actual_margin_pct)}</td>
+                      <td className="px-2 py-2">{fmtDate(r.planned_delivery)}</td>
+                      <td className="px-2 py-2">
+                        <span style={{ color: delDot.color }}>{delDot.label}</span>{" "}{fmtDate(r.actual_delivery)}
+                      </td>
+                      <td className="px-2 py-2">{fmtDate(r.planned_handover)}</td>
+                      <td className="px-2 py-2">
+                        <span style={{ color: handDot.color }}>{handDot.label}</span>{" "}{fmtDate(r.actual_handover)}
+                      </td>
+                      <td className="px-2 py-2 text-right">{fmt(r.expected_variations)}</td>
+                      <td className="px-2 py-2 text-right font-semibold">{fmt(r.anticipated_revenue)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.remaining_to_claim)}</td>
+                      <td className="px-2 py-2 max-w-[100px] truncate text-muted-foreground">{r.notes || "—"}</td>
+                    </tr>
+                    {isExpanded && (
+                      <tr key={r.project_id + "-var"}>
+                        <td colSpan={25} className="p-0">
+                          <VariationRegister projectId={r.project_id} canEdit={canEdit} onChange={loadData} />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 );
               })
             )}
@@ -416,9 +484,12 @@ export function RevenueMarginTab() {
           {filtered.length > 0 && (
             <tfoot>
               <tr className="bg-muted/50 border-t font-semibold text-xs sticky bottom-0">
-                <td className="px-2 py-2" colSpan={3}>Totals</td>
+                <td className="px-2 py-2" colSpan={5}>Totals</td>
                 <td className="px-2 py-2 text-right">{fmt(totals.originalVal)}</td>
                 <td className="px-2 py-2 text-right">{fmt(totals.billed)}</td>
+                <td className="px-2 py-2 text-right">{fmt(totals.prevClaimGst)}</td>
+                <td className="px-2 py-2 text-right">{fmt(totals.nextClaimGst)}</td>
+                <td className="px-2 py-2 text-right">{fmt(totals.remainingClaimGst)}</td>
                 <td className="px-2 py-2 text-right">{fmt(totals.received)}</td>
                 <td className="px-2 py-2 text-right">{fmt(totals.costToDate)}</td>
                 <td className="px-2 py-2 text-right">{fmt(totals.expectedCost)}</td>
@@ -433,6 +504,7 @@ export function RevenueMarginTab() {
           )}
         </table>
       </div>
+
 
       {/* Edit Panel */}
       <Sheet open={!!editRow} onOpenChange={() => setEditRow(null)}>
@@ -480,6 +552,24 @@ export function RevenueMarginTab() {
                   <div>
                     <Label className="text-xs">Expected Variations (₹)</Label>
                     <Input type="number" value={editVariations} onChange={e => setEditVariations(e.target.value)} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Previous Claim (GST) ₹</Label>
+                      <Input type="number" value={editPrevClaim} onChange={e => setEditPrevClaim(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Next Claim (GST) ₹</Label>
+                      <Input type="number" value={editNextClaim} onChange={e => setEditNextClaim(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Primary Manager</Label>
+                      <Input value={editPrimaryMgr} onChange={e => setEditPrimaryMgr(e.target.value)} placeholder="e.g. Azad" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Secondary Manager</Label>
+                      <Input value={editSecondaryMgr} onChange={e => setEditSecondaryMgr(e.target.value)} placeholder="e.g. Bala" />
+                    </div>
                   </div>
                   <div>
                     <Label className="text-xs">Notes (max 50 chars)</Label>

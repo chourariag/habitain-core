@@ -7303,9 +7303,13 @@ export type Database = {
           expected_variations: number
           gfc_margin_pct: number | null
           id: string
+          next_claim_gst: number
           notes: string | null
           original_valuation: number
+          previous_claim_gst: number
+          primary_manager: string | null
           project_id: string
+          secondary_manager: string | null
           tender_margin_pct: number | null
           updated_at: string
         }
@@ -7317,9 +7321,13 @@ export type Database = {
           expected_variations?: number
           gfc_margin_pct?: number | null
           id?: string
+          next_claim_gst?: number
           notes?: string | null
           original_valuation?: number
+          previous_claim_gst?: number
+          primary_manager?: string | null
           project_id: string
+          secondary_manager?: string | null
           tender_margin_pct?: number | null
           updated_at?: string
         }
@@ -7331,9 +7339,13 @@ export type Database = {
           expected_variations?: number
           gfc_margin_pct?: number | null
           id?: string
+          next_claim_gst?: number
           notes?: string | null
           original_valuation?: number
+          previous_claim_gst?: number
+          primary_manager?: string | null
           project_id?: string
+          secondary_manager?: string | null
           tender_margin_pct?: number | null
           updated_at?: string
         }
@@ -11060,6 +11072,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "variation_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      variation_register: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          previous_claim_excl_gst: number
+          project_id: string
+          status: string
+          this_claim_excl_gst: number
+          updated_at: string
+          valuation_excl_gst: number
+          variation_number: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          previous_claim_excl_gst?: number
+          project_id: string
+          status?: string
+          this_claim_excl_gst?: number
+          updated_at?: string
+          valuation_excl_gst?: number
+          variation_number: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          previous_claim_excl_gst?: number
+          project_id?: string
+          status?: string
+          this_claim_excl_gst?: number
+          updated_at?: string
+          valuation_excl_gst?: number
+          variation_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "variation_register_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
