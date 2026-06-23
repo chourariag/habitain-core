@@ -10,7 +10,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tier1Dashboard } from "@/components/dashboard/Tier1Dashboard";
 import { OrderBookTab } from "@/components/dashboard/OrderBookTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEffect as useEffect2, useState as useState2 } from "react";
 
 import { PlaceholderDashboard } from "@/components/dashboard/PlaceholderDashboard";
 import { SharedDashboardBottom } from "@/components/dashboard/SharedDashboardBottom";
