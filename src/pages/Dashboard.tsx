@@ -28,6 +28,12 @@ export default function Dashboard() {
   const { user } = useAuth();
   const userRole = role as AppRole | null;
   const [firstName, setFirstName] = useState("User");
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    supabase.from("projects").select("id,name").eq("is_archived", false).order("name")
+      .then(({ data }) => setProjects(data ?? []));
+  }, []);
 
   useEffect(() => {
     if (!user) return;
