@@ -94,8 +94,7 @@ export default function Profile() {
     }
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const uploadAvatarFile = async (file: File) => {
     if (!file || !user) return;
     setUploading(true);
     try {
@@ -108,12 +107,25 @@ export default function Profile() {
         .update({ avatar_url: urlData.publicUrl } as any)
         .eq("auth_user_id", user.id);
       setAvatarUrl(urlData.publicUrl);
-      toast.success("Photo uploaded");
+      toast.success("Profile photo updated");
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
     } finally {
       setUploading(false);
     }
+  };
+
+  const openPicker = (capture: boolean) => {
+    setPhotoSheetOpen(false);
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    if (capture) input.setAttribute("capture", "user");
+    input.onchange = (e: any) => {
+      const file = e.target.files?.[0];
+      if (file) uploadAvatarFile(file);
+    };
+    input.click();
   };
 
   const handleChangePassword = async () => {
