@@ -254,6 +254,10 @@ export function RevenueMarginTab() {
     setEditHandover(row.actual_handover || "");
     setEditVariations(String(row.expected_variations || ""));
     setEditNotes(row.notes || "");
+    setEditPrevClaim(String(row.previous_claim_gst || ""));
+    setEditNextClaim(String(row.next_claim_gst || ""));
+    setEditPrimaryMgr(row.primary_manager || "");
+    setEditSecondaryMgr(row.secondary_manager || "");
   }
 
   async function handleSave() {
@@ -270,6 +274,10 @@ export function RevenueMarginTab() {
       notes: editNotes.slice(0, 50) || null,
       tender_margin_pct: editRow.tender_margin_pct,
       gfc_margin_pct: editRow.gfc_margin_pct,
+      previous_claim_gst: parseFloat(editPrevClaim) || 0,
+      next_claim_gst: parseFloat(editNextClaim) || 0,
+      primary_manager: editPrimaryMgr.trim() || null,
+      secondary_manager: editSecondaryMgr.trim() || null,
     };
 
     const { error } = await supabase.from("project_revenue_margin").upsert(payload as any, { onConflict: "project_id" });
@@ -283,8 +291,10 @@ export function RevenueMarginTab() {
 
   async function exportToExcel() {
     const headers = [
-      "Project Code", "Project Name", "Site Manager", "Original Valuation (₹)",
-      "Billed Revenue incl GST (₹)", "Received Value incl GST (₹)", "Cost to Date (₹)",
+      "Project Code", "Project Name", "Primary Manager", "Secondary Manager", "Original Valuation (₹)",
+      "Billed Revenue incl GST (₹)", "Previous Claim GST (₹)", "Next Claim GST (₹)",
+      "Remaining to be Claimed GST (₹)",
+      "Received Value incl GST (₹)", "Cost to Date (₹)",
       "Expected Final Cost (₹)", "Anticipated Margin (₹)", "Tender Margin %",
       "GFC Margin %", "Actual Margin %", "Planned Delivery", "Actual Delivery",
       "Planned Handover", "Actual Handover", "Expected Variations (₹)",
@@ -294,8 +304,11 @@ export function RevenueMarginTab() {
     const csvRows = [headers.join(",")];
     filtered.forEach(r => {
       csvRows.push([
-        r.project_code, `"${r.project_name}"`, r.site_manager,
-        r.original_valuation, r.billed_revenue_incl_gst, r.received_value_incl_gst,
+        r.project_code, `"${r.project_name}"`,
+        `"${r.primary_manager || ""}"`, `"${r.secondary_manager || ""}"`,
+        r.original_valuation, r.billed_revenue_incl_gst,
+        r.previous_claim_gst, r.next_claim_gst, r.remaining_to_claim_gst,
+        r.received_value_incl_gst,
         r.cost_to_date, r.expected_final_cost, r.anticipated_margin,
         r.tender_margin_pct ?? "", r.gfc_margin_pct ?? "",
         r.actual_margin_pct.toFixed(1), fmtDate(r.planned_delivery),
