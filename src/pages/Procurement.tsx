@@ -451,6 +451,8 @@ export default function Procurement() {
               </CardContent>
             </Card>
           )}
+            </TabsContent>
+          </Tabs>
         </TabsContent>
 
         {/* Requests Tab */}
