@@ -23,9 +23,27 @@ const FLOOR_ROLES = ["factory_floor_supervisor", "fabrication_foreman", "electri
 
 export default function Dashboard() {
   const { role, userId, loading } = useUserRole();
+  const { user } = useAuth();
   const userRole = role as AppRole | null;
+  const [firstName, setFirstName] = useState("User");
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("auth_user_id", user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) return;
+        const name = data?.display_name?.trim();
+        if (name) setFirstName(name.split(/\s+/)[0]);
+        else if (user.email) setFirstName(user.email.split("@")[0]);
+      });
+  }, [user]);
 
   if (loading) {
+
     return <div className="flex justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
