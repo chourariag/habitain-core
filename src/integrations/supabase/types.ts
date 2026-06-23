@@ -693,6 +693,71 @@ export type Database = {
           },
         ]
       }
+      billing_sales_tracker: {
+        Row: {
+          amount_excl_gst: number
+          amount_incl_gst: number
+          business_unit: string
+          created_at: string
+          created_by: string | null
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          milestone_name: string | null
+          milestone_value_excl_gst: number
+          payment_received_date: string | null
+          payment_status: string
+          project_id: string | null
+          project_name: string
+          remarks: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_excl_gst?: number
+          amount_incl_gst?: number
+          business_unit: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          milestone_name?: string | null
+          milestone_value_excl_gst?: number
+          payment_received_date?: string | null
+          payment_status?: string
+          project_id?: string | null
+          project_name: string
+          remarks?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_excl_gst?: number
+          amount_incl_gst?: number
+          business_unit?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          milestone_name?: string | null
+          milestone_value_excl_gst?: number
+          payment_received_date?: string | null
+          payment_status?: string
+          project_id?: string | null
+          project_name?: string
+          remarks?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_sales_tracker_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       board_papers: {
         Row: {
           commentary: Json | null
@@ -8882,6 +8947,71 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      receivables_tracker: {
+        Row: {
+          basic_amount_this_bill: number
+          created_at: string
+          cumulative_received_incl_gst: number
+          current_receivables_incl_gst: number
+          id: string
+          pending_amount_excl_retention: number
+          project_id: string | null
+          project_name: string
+          received_amount_incl_gst: number
+          remarks: string | null
+          retention_amount: number
+          retention_percent: number
+          section: string
+          total_amount_incl_gst: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          basic_amount_this_bill?: number
+          created_at?: string
+          cumulative_received_incl_gst?: number
+          current_receivables_incl_gst?: number
+          id?: string
+          pending_amount_excl_retention?: number
+          project_id?: string | null
+          project_name: string
+          received_amount_incl_gst?: number
+          remarks?: string | null
+          retention_amount?: number
+          retention_percent?: number
+          section: string
+          total_amount_incl_gst?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          basic_amount_this_bill?: number
+          created_at?: string
+          cumulative_received_incl_gst?: number
+          current_receivables_incl_gst?: number
+          id?: string
+          pending_amount_excl_retention?: number
+          project_id?: string | null
+          project_name?: string
+          received_amount_incl_gst?: number
+          remarks?: string | null
+          retention_amount?: number
+          retention_percent?: number
+          section?: string
+          total_amount_incl_gst?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receivables_tracker_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       red_flag_alerts: {
         Row: {
