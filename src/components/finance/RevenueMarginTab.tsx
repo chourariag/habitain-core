@@ -475,7 +475,7 @@ export function RevenueMarginTab() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 );
               })
             )}
