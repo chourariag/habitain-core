@@ -39,6 +39,7 @@ export default function Profile() {
   const [homeBase, setHomeBase] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
 
   // Password fields
   const [currentPassword, setCurrentPassword] = useState("");
