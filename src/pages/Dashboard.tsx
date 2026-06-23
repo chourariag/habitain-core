@@ -1,10 +1,14 @@
+import { useEffect, useState } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getDashboardTier } from "@/lib/role-nav";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { Loader2, HardHat } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
 import { Tier1Dashboard } from "@/components/dashboard/Tier1Dashboard";
+
 import { PlaceholderDashboard } from "@/components/dashboard/PlaceholderDashboard";
 import { SharedDashboardBottom } from "@/components/dashboard/SharedDashboardBottom";
 import { CheckInButton } from "@/components/attendance/CheckInButton";
