@@ -82,14 +82,15 @@ export default function Dashboard() {
       <ReportsToReviewSection />
 
       {tier === 1 ? (
-        <Tier1Dashboard today={today} />
+        <Tier1Dashboard today={today} firstName={firstName} />
       ) : tier === 2 ? (
-        <PlaceholderDashboard title={`My Dashboard — ${roleName}`} today={today} tier={2} role={userRole} />
+        <PlaceholderDashboard title={`My Dashboard — ${roleName}`} today={today} tier={2} role={userRole} firstName={firstName} />
       ) : tier === 4 ? (
-        <PlaceholderDashboard title="Design Workspace" today={today} tier={4} role={userRole} />
+        <PlaceholderDashboard title="Design Workspace" today={today} tier={4} role={userRole} firstName={firstName} />
       ) : (
-        <PlaceholderDashboard title={`My Workspace — ${roleName}`} today={today} tier={3} role={userRole} />
+        <PlaceholderDashboard title={`My Workspace — ${roleName}`} today={today} tier={3} role={userRole} firstName={firstName} />
       )}
+
       <SharedDashboardBottom userRole={userRole} />
     </div>
   );
