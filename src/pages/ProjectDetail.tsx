@@ -63,7 +63,7 @@ export default function ProjectDetail() {
     if (!id) return;
     setLoading(true);
 
-    const [projectRes, modulesRes, roleRes, handoverRes] = await Promise.all([
+    const [projectRes, modulesRes, roleRes, handoverRes, contactRes] = await Promise.all([
       supabase.from("projects").select("*").eq("id", id).single(),
       supabase.from("modules").select("*").eq("project_id", id).eq("is_archived", false).order("created_at", { ascending: true }),
       supabase.auth.getUser().then(async ({ data: { user } }) => {
@@ -72,9 +72,11 @@ export default function ProjectDetail() {
         return data;
       }),
       supabase.from("handover_pack").select("id").eq("project_id", id).limit(1),
+      supabase.rpc("get_project_client_contact", { _project_id: id }),
     ]);
 
-    setProject(projectRes.data);
+    const contact = Array.isArray(contactRes.data) ? contactRes.data[0] : null;
+    setProject(projectRes.data ? { ...projectRes.data, ...(contact || {}) } : projectRes.data);
     setModules(modulesRes.data ?? []);
     setUserRole(roleRes as string | null);
     setHasHandover((handoverRes.data ?? []).length > 0);

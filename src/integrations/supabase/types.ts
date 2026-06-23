@@ -11985,6 +11985,13 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_project_client_contact: {
+        Args: { _project_id: string }
+        Returns: {
+          client_email: string
+          client_phone: string
+        }[]
+      }
       get_project_client_portal_token: {
         Args: { _project_id: string }
         Returns: {
