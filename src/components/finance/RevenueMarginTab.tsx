@@ -181,6 +181,11 @@ export function RevenueMarginTab() {
         remaining_to_claim: Math.max(0, remainingToClaim),
         notes: rm.notes || null,
         status: p.status || "active",
+        previous_claim_gst: Number(rm.previous_claim_gst) || 0,
+        next_claim_gst: Number(rm.next_claim_gst) || 0,
+        primary_manager: rm.primary_manager || null,
+        secondary_manager: rm.secondary_manager || null,
+        remaining_to_claim_gst: Math.max(0, anticipatedRevenue * 1.18 - billedRev),
       };
     });
 
