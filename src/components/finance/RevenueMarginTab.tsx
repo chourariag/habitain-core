@@ -47,6 +47,11 @@ interface ProjectRow {
   remaining_to_claim: number;
   notes: string | null;
   status: string;
+  previous_claim_gst: number;
+  next_claim_gst: number;
+  primary_manager: string | null;
+  secondary_manager: string | null;
+  remaining_to_claim_gst: number;
 }
 
 const fmt = (n: number) => "₹" + (n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
