@@ -194,7 +194,7 @@ export function Tier1Dashboard({ today, firstName }: { today: string; firstName?
   return (
     <>
       <div>
-        <p className="font-display text-xl md:text-2xl font-normal text-primary/90 mb-1">Hi {firstName || "User"}</p>
+        <p className="font-display text-[32px] leading-tight font-bold text-primary/90 mb-5">Hi {firstName || "User"}</p>
         <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "#1A1A1A" }}>Command Centre</h1>
         <p className="text-sm mt-1" style={{ color: "#666666" }}>{today}</p>
       </div>
