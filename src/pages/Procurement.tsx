@@ -33,6 +33,7 @@ import { GRNTab } from "@/components/procurement/GRNTab";
 import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
 import { Calendar, Hammer, Bell, ClipboardCheck, HardHat, Wrench } from "lucide-react";
 import { FixedAssetsTab } from "@/components/procurement/FixedAssetsTab";
+import { DeliveryTrackerTab } from "@/components/procurement/DeliveryTrackerTab";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
