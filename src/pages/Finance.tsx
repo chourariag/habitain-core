@@ -11,6 +11,8 @@ import { InvoicesTab } from "@/components/finance/InvoicesTab";
 import { RevenueMarginTab } from "@/components/finance/RevenueMarginTab";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 import { AdvanceApprovalsTab } from "@/components/finance/AdvanceApprovalsTab";
+import { ReceivablesTab } from "@/components/finance/ReceivablesTab";
+import { BillingTrackerTab } from "@/components/finance/BillingTrackerTab";
 import { Card, CardContent } from "@/components/ui/card";
 import { Info } from "lucide-react";
 
@@ -60,10 +62,12 @@ export default function Finance() {
             <TabsList>
               <TabsTrigger value="mis">MIS</TabsTrigger>
               <TabsTrigger value="invoices">Invoices</TabsTrigger>
+              <TabsTrigger value="billing-tracker">Billing Tracker</TabsTrigger>
               <TabsTrigger value="tally-ledger">Tally Ledger Classification</TabsTrigger>
             </TabsList>
             <TabsContent value="mis"><MISTab /></TabsContent>
             <TabsContent value="invoices"><InvoicesTab /></TabsContent>
+            <TabsContent value="billing-tracker"><BillingTrackerTab /></TabsContent>
             <TabsContent value="tally-ledger">
               <Card><CardContent className="p-6 flex items-start gap-3">
                 <Info className="h-5 w-5 mt-0.5" style={{ color: "#006039" }} />
@@ -116,9 +120,11 @@ export default function Finance() {
             <TabsList>
               <TabsTrigger value="pl">P&amp;L</TabsTrigger>
               <TabsTrigger value="cashflow">Cash Flow</TabsTrigger>
+              <TabsTrigger value="receivables">Receivables</TabsTrigger>
             </TabsList>
             <TabsContent value="pl"><ProfitLossTab /></TabsContent>
             <TabsContent value="cashflow"><CashFlowTab /></TabsContent>
+            <TabsContent value="receivables"><ReceivablesTab /></TabsContent>
           </Tabs>
         </TabsContent>
 
