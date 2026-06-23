@@ -109,24 +109,24 @@ export function AlertCentreDrawer({ open, onOpenChange }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-[400px] p-0 flex flex-col">
-        <SheetHeader className="px-4 pt-4 pb-3 border-b border-border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <SheetTitle className="text-base font-bold" style={{ fontFamily: "var(--font-heading)" }}>
-                Notifications
-              </SheetTitle>
-              {unreadTotal > 0 && (
-                <span className="flex items-center justify-center min-w-[20px] h-5 rounded-full text-white text-xs font-bold px-1.5"
-                  style={{ backgroundColor: "#F40009" }}>{unreadTotal}</span>
-              )}
-            </div>
-            {unreadTotal > 0 && (
-              <button onClick={markAllRead} className="text-xs font-medium" style={{ color: "#006039" }}>
-                <CheckCheck className="inline h-3.5 w-3.5 mr-1" />Mark all read
-              </button>
-            )}
-          </div>
-        </SheetHeader>
+    <SheetHeader className="px-4 pt-4 pb-3 border-b border-border">
+      <div className="flex items-center justify-between gap-4 pr-10">
+        <div className="flex items-center gap-2">
+          <SheetTitle className="text-base font-bold" style={{ fontFamily: "var(--font-heading)" }}>
+            Notifications
+          </SheetTitle>
+          {unreadTotal > 0 && (
+            <span className="flex items-center justify-center min-w-[20px] h-5 rounded-full text-white text-xs font-bold px-1.5"
+              style={{ backgroundColor: "#F40009" }}>{unreadTotal}</span>
+          )}
+        </div>
+        {unreadTotal > 0 && (
+          <button onClick={markAllRead} className="text-xs font-medium whitespace-nowrap shrink-0" style={{ color: "#006039" }}>
+            <CheckCheck className="inline h-3.5 w-3.5 mr-1" />Mark all read
+          </button>
+        )}
+      </div>
+    </SheetHeader>
 
         <ScrollArea className="flex-1">
           {items.length === 0 ? (
