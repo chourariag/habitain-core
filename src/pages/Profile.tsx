@@ -15,6 +15,7 @@ import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { useTranslation } from "react-i18next";
 import { ProfileAttendance } from "@/components/attendance/ProfileAttendance";
 import { MyExpenses } from "@/components/expenses/MyExpenses";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const LANG_OPTIONS = [
   { value: "en", label: "English" },
