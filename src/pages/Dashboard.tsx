@@ -1,10 +1,14 @@
+import { useEffect, useState } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getDashboardTier } from "@/lib/role-nav";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { Loader2, HardHat } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/AuthProvider";
+import { supabase } from "@/integrations/supabase/client";
 import { Tier1Dashboard } from "@/components/dashboard/Tier1Dashboard";
+
 import { PlaceholderDashboard } from "@/components/dashboard/PlaceholderDashboard";
 import { SharedDashboardBottom } from "@/components/dashboard/SharedDashboardBottom";
 import { CheckInButton } from "@/components/attendance/CheckInButton";
@@ -19,9 +23,27 @@ const FLOOR_ROLES = ["factory_floor_supervisor", "fabrication_foreman", "electri
 
 export default function Dashboard() {
   const { role, userId, loading } = useUserRole();
+  const { user } = useAuth();
   const userRole = role as AppRole | null;
+  const [firstName, setFirstName] = useState("User");
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("auth_user_id", user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) return;
+        const name = data?.display_name?.trim();
+        if (name) setFirstName(name.split(/\s+/)[0]);
+        else if (user.email) setFirstName(user.email.split("@")[0]);
+      });
+  }, [user]);
 
   if (loading) {
+
     return <div className="flex justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
@@ -60,14 +82,15 @@ export default function Dashboard() {
       <ReportsToReviewSection />
 
       {tier === 1 ? (
-        <Tier1Dashboard today={today} />
+        <Tier1Dashboard today={today} firstName={firstName} />
       ) : tier === 2 ? (
-        <PlaceholderDashboard title={`My Dashboard — ${roleName}`} today={today} tier={2} role={userRole} />
+        <PlaceholderDashboard title={`My Dashboard — ${roleName}`} today={today} tier={2} role={userRole} firstName={firstName} />
       ) : tier === 4 ? (
-        <PlaceholderDashboard title="Design Workspace" today={today} tier={4} role={userRole} />
+        <PlaceholderDashboard title="Design Workspace" today={today} tier={4} role={userRole} firstName={firstName} />
       ) : (
-        <PlaceholderDashboard title={`My Workspace — ${roleName}`} today={today} tier={3} role={userRole} />
+        <PlaceholderDashboard title={`My Workspace — ${roleName}`} today={today} tier={3} role={userRole} firstName={firstName} />
       )}
+
       <SharedDashboardBottom userRole={userRole} />
     </div>
   );
