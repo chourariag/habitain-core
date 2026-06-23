@@ -244,6 +244,9 @@ export function RevenueMarginTab() {
       expectedCost: active.reduce((s, r) => s + r.expected_final_cost, 0),
       anticipatedMargin: active.reduce((s, r) => s + r.anticipated_margin, 0),
       remaining: active.reduce((s, r) => s + r.remaining_to_claim, 0),
+      prevClaimGst: active.reduce((s, r) => s + r.previous_claim_gst, 0),
+      nextClaimGst: active.reduce((s, r) => s + r.next_claim_gst, 0),
+      remainingClaimGst: active.reduce((s, r) => s + r.remaining_to_claim_gst, 0),
     };
   }, [filtered]);
 
