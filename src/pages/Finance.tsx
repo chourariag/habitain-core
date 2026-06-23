@@ -11,6 +11,8 @@ import { InvoicesTab } from "@/components/finance/InvoicesTab";
 import { RevenueMarginTab } from "@/components/finance/RevenueMarginTab";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 import { AdvanceApprovalsTab } from "@/components/finance/AdvanceApprovalsTab";
+import { ReceivablesTab } from "@/components/finance/ReceivablesTab";
+import { BillingTrackerTab } from "@/components/finance/BillingTrackerTab";
 import { Card, CardContent } from "@/components/ui/card";
 import { Info } from "lucide-react";
 
