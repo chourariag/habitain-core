@@ -34,6 +34,7 @@ import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
 import { Calendar, Hammer, Bell, ClipboardCheck, HardHat, Wrench } from "lucide-react";
 import { FixedAssetsTab } from "@/components/procurement/FixedAssetsTab";
 import { DeliveryTrackerTab } from "@/components/procurement/DeliveryTrackerTab";
+import { ContractsRegisterTab } from "@/components/procurement/ContractsRegisterTab";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
