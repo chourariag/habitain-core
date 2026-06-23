@@ -15,6 +15,7 @@ import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { useTranslation } from "react-i18next";
 import { ProfileAttendance } from "@/components/attendance/ProfileAttendance";
 import { MyExpenses } from "@/components/expenses/MyExpenses";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const LANG_OPTIONS = [
   { value: "en", label: "English" },
@@ -38,6 +39,7 @@ export default function Profile() {
   const [homeBase, setHomeBase] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [photoSheetOpen, setPhotoSheetOpen] = useState(false);
 
   // Password fields
   const [currentPassword, setCurrentPassword] = useState("");
@@ -92,8 +94,7 @@ export default function Profile() {
     }
   };
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const uploadAvatarFile = async (file: File) => {
     if (!file || !user) return;
     setUploading(true);
     try {
@@ -106,12 +107,25 @@ export default function Profile() {
         .update({ avatar_url: urlData.publicUrl } as any)
         .eq("auth_user_id", user.id);
       setAvatarUrl(urlData.publicUrl);
-      toast.success("Photo uploaded");
+      toast.success("Profile photo updated");
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
     } finally {
       setUploading(false);
     }
+  };
+
+  const openPicker = (capture: boolean) => {
+    setPhotoSheetOpen(false);
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    if (capture) input.setAttribute("capture", "user");
+    input.onchange = (e: any) => {
+      const file = e.target.files?.[0];
+      if (file) uploadAvatarFile(file);
+    };
+    input.click();
   };
 
   const handleChangePassword = async () => {
@@ -189,10 +203,15 @@ export default function Profile() {
                   {initials}
                 </div>
               )}
-              <label className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-card border border-border flex items-center justify-center cursor-pointer hover:bg-accent/50 transition-colors">
+              <button
+                type="button"
+                onClick={() => setPhotoSheetOpen(true)}
+                disabled={uploading}
+                className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-card border border-border flex items-center justify-center cursor-pointer hover:bg-accent/50 transition-colors"
+                aria-label="Change profile photo"
+              >
                 {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5 text-muted-foreground" />}
-                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-              </label>
+              </button>
             </div>
             <div>
               <h2 className="text-xl font-semibold text-foreground">{displayName || "No name set"}</h2>
@@ -301,6 +320,39 @@ export default function Profile() {
           <p className="text-xs text-muted-foreground text-center">You will be logged out after changing your password.</p>
         </CardContent>
       </Card>
+
+      <Dialog open={photoSheetOpen} onOpenChange={setPhotoSheetOpen}>
+        <DialogContent className="sm:max-w-sm p-0 gap-0 sm:rounded-lg max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:bottom-0 max-sm:top-auto max-sm:translate-y-0 max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:slide-out-to-bottom">
+          <DialogHeader className="p-4 border-b">
+            <DialogTitle className="text-base">Update Profile Photo</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col">
+            <button
+              type="button"
+              onClick={() => openPicker(true)}
+              className="flex items-center gap-3 px-5 py-4 hover:bg-accent/30 transition-colors text-left border-b"
+            >
+              <Camera className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">Take Photo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => openPicker(false)}
+              className="flex items-center gap-3 px-5 py-4 hover:bg-accent/30 transition-colors text-left border-b"
+            >
+              <User className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">Choose from Gallery</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPhotoSheetOpen(false)}
+              className="px-5 py-4 text-sm text-muted-foreground hover:bg-accent/30 transition-colors text-center"
+            >
+              Cancel
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
