@@ -34,6 +34,7 @@ export const ROLE_LABELS: Record<string, string> = {
   hr_admin: "HR Admin",
   marketing: "Marketing",
   sales_executive: "Sales Executive",
+  sales_associate: "Sales Associate",
   logistics_manager: "Logistics & Facilities Manager",
   principal_architect: "Principal Architect",
   senior_architect: "Senior Architect",
@@ -48,7 +49,7 @@ export const ROLE_TIERS: Record<string, AppRole[]> = {
   "Tier 3 — Site & Delivery": ["site_installation_mgr", "delivery_rm_lead", "site_engineer", "logistics_manager" as AppRole] as AppRole[],
   "Tier 4 — Factory Floor": ["factory_supervisor", "qc_inspector", "factory_floor_supervisor", "fabrication_foreman", "electrical_installer", "elec_plumbing_installer"] as AppRole[],
   "Tier 5 — Procurement & Finance": ["procurement", "procurement_assistant" as AppRole, "stores_executive", "accounts_executive"] as AppRole[],
-  "Tier 6 — HR & Marketing": ["hr_executive", "hr_admin" as AppRole, "marketing" as AppRole, "sales_executive" as AppRole] as AppRole[],
+  "Tier 6 — HR & Marketing": ["hr_executive", "hr_admin" as AppRole, "marketing" as AppRole, "sales_executive" as AppRole, "sales_associate" as AppRole] as AppRole[],
   "Architects": ["principal_architect", "senior_architect", "project_architect", "structural_architect"] as AppRole[],
 };
 
