@@ -90,6 +90,20 @@ export function RevenueMarginTab() {
   const [editHandover, setEditHandover] = useState("");
   const [editVariations, setEditVariations] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [editPrevClaim, setEditPrevClaim] = useState("");
+  const [editNextClaim, setEditNextClaim] = useState("");
+  const [editPrimaryMgr, setEditPrimaryMgr] = useState("");
+  const [editSecondaryMgr, setEditSecondaryMgr] = useState("");
+
+  // Expanded rows for variation register
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const toggleExpand = (id: string) => {
+    setExpanded(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
 
   // Filters
   const [search, setSearch] = useState("");
