@@ -368,6 +368,15 @@ export default function Procurement() {
 
         {/* Material Plan Tab */}
         <TabsContent value="material-plan" className="space-y-4">
+          <Tabs defaultValue="plan" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="plan">Plan</TabsTrigger>
+              <TabsTrigger value="delivery-tracker">Delivery Tracker</TabsTrigger>
+            </TabsList>
+            <TabsContent value="delivery-tracker">
+              <DeliveryTrackerTab userRole={userRole} projects={projects} />
+            </TabsContent>
+            <TabsContent value="plan" className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Material Plan</h2>
             {canPlan && (
