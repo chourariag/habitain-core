@@ -203,10 +203,15 @@ export default function Profile() {
                   {initials}
                 </div>
               )}
-              <label className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-card border border-border flex items-center justify-center cursor-pointer hover:bg-accent/50 transition-colors">
+              <button
+                type="button"
+                onClick={() => setPhotoSheetOpen(true)}
+                disabled={uploading}
+                className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-card border border-border flex items-center justify-center cursor-pointer hover:bg-accent/50 transition-colors"
+                aria-label="Change profile photo"
+              >
                 {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5 text-muted-foreground" />}
-                <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
-              </label>
+              </button>
             </div>
             <div>
               <h2 className="text-xl font-semibold text-foreground">{displayName || "No name set"}</h2>
