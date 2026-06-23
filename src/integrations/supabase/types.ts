@@ -4936,6 +4936,65 @@ export type Database = {
           },
         ]
       }
+      material_delivery_tracker: {
+        Row: {
+          actual_delivery_date: string | null
+          created_at: string
+          created_by: string | null
+          delay_days: number | null
+          id: string
+          is_archived: boolean
+          material_category: string
+          mitigation_note: string | null
+          planned_delivery_date: string | null
+          project_id: string
+          risk_level: string | null
+          status: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          actual_delivery_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          delay_days?: number | null
+          id?: string
+          is_archived?: boolean
+          material_category: string
+          mitigation_note?: string | null
+          planned_delivery_date?: string | null
+          project_id: string
+          risk_level?: string | null
+          status?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          actual_delivery_date?: string | null
+          created_at?: string
+          created_by?: string | null
+          delay_days?: number | null
+          id?: string
+          is_archived?: boolean
+          material_category?: string
+          mitigation_note?: string | null
+          planned_delivery_date?: string | null
+          project_id?: string
+          risk_level?: string | null
+          status?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_delivery_tracker_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       material_plan_items: {
         Row: {
           category: string
