@@ -425,7 +425,7 @@ export function RevenueMarginTab() {
                 const handDot = deliveryDot(r.planned_handover, r.actual_handover);
                 const isExpanded = expanded.has(r.project_id);
                 return (
-                  <>
+                  <Fragment key={r.project_id}>
                     <tr key={r.project_id}
                       className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
                       onClick={() => canEdit && openEdit(r)}>
