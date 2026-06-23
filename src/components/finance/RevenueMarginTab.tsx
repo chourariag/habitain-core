@@ -552,6 +552,23 @@ export function RevenueMarginTab() {
                   <div>
                     <Label className="text-xs">Expected Variations (₹)</Label>
                     <Input type="number" value={editVariations} onChange={e => setEditVariations(e.target.value)} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Previous Claim (GST) ₹</Label>
+                      <Input type="number" value={editPrevClaim} onChange={e => setEditPrevClaim(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Next Claim (GST) ₹</Label>
+                      <Input type="number" value={editNextClaim} onChange={e => setEditNextClaim(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Primary Manager</Label>
+                      <Input value={editPrimaryMgr} onChange={e => setEditPrimaryMgr(e.target.value)} placeholder="e.g. Azad" />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Secondary Manager</Label>
+                      <Input value={editSecondaryMgr} onChange={e => setEditSecondaryMgr(e.target.value)} placeholder="e.g. Bala" />
+                    </div>
                   </div>
                   <div>
                     <Label className="text-xs">Notes (max 50 chars)</Label>
