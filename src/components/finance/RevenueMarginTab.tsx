@@ -400,8 +400,11 @@ export function RevenueMarginTab() {
         <table className="w-full text-xs whitespace-nowrap">
           <thead>
             <tr className="bg-muted/50 border-b">
-              {["Code", "Project", "Manager", "Original Val", "Billed (GST)", "Received (GST)",
-                "Cost to Date", "Exp. Cost", "Ant. Margin", "Tender %", "GFC %", "Actual %",
+              <th className="px-1 py-2 w-6" />
+              {["Code", "Project", "Primary Mgr", "Secondary Mgr", "Original Val",
+                "Billed (GST)", "Prev. Claim (GST)", "Next Claim (GST)", "Remaining (GST)",
+                "Received (GST)", "Cost to Date", "Exp. Cost", "Ant. Margin",
+                "Tender %", "GFC %", "Actual %",
                 "Plan Del.", "Act. Del.", "Plan Hand.", "Act. Hand.",
                 "Exp. Var.", "Ant. Revenue", "Remaining", "Notes"].map(h => (
                 <th key={h} className="px-2 py-2 text-left font-semibold text-muted-foreground">{h}</th>
@@ -410,45 +413,69 @@ export function RevenueMarginTab() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={20} className="text-center py-8 text-muted-foreground">
+              <tr><td colSpan={25} className="text-center py-8 text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin inline mr-2" />Loading…
               </td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={20} className="text-center py-8 text-muted-foreground">No projects found</td></tr>
+              <tr><td colSpan={25} className="text-center py-8 text-muted-foreground">No projects found</td></tr>
             ) : (
               filtered.map(r => {
                 const mStyle = marginBg(r.actual_margin_pct);
                 const delDot = deliveryDot(r.planned_delivery, r.actual_delivery);
                 const handDot = deliveryDot(r.planned_handover, r.actual_handover);
+                const isExpanded = expanded.has(r.project_id);
                 return (
-                  <tr key={r.project_id}
-                    className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
-                    onClick={() => canEdit && openEdit(r)}>
-                    <td className="px-2 py-2 font-mono text-[11px]">{r.project_code}</td>
-                    <td className="px-2 py-2 font-medium max-w-[160px] truncate">{r.project_name}</td>
-                    <td className="px-2 py-2">{r.site_manager}</td>
-                    <td className="px-2 py-2 text-right">{fmt(r.original_valuation)}</td>
-                    <td className="px-2 py-2 text-right">{fmt(r.billed_revenue_incl_gst)}</td>
-                    <td className="px-2 py-2 text-right">{fmt(r.received_value_incl_gst)}</td>
-                    <td className="px-2 py-2 text-right">{fmt(r.cost_to_date)}</td>
-                    <td className="px-2 py-2 text-right">{fmt(r.expected_final_cost)}</td>
-                    <td className="px-2 py-2 text-right font-semibold">{fmt(r.anticipated_margin)}</td>
-                    <td className="px-2 py-2 text-right">{r.tender_margin_pct != null ? fmtPct(r.tender_margin_pct) : "—"}</td>
-                    <td className="px-2 py-2 text-right">{r.gfc_margin_pct != null ? fmtPct(r.gfc_margin_pct) : "—"}</td>
-                    <td className="px-2 py-2 text-right font-bold rounded" style={mStyle}>{fmtPct(r.actual_margin_pct)}</td>
-                    <td className="px-2 py-2">{fmtDate(r.planned_delivery)}</td>
-                    <td className="px-2 py-2">
-                      <span style={{ color: delDot.color }}>{delDot.label}</span>{" "}{fmtDate(r.actual_delivery)}
-                    </td>
-                    <td className="px-2 py-2">{fmtDate(r.planned_handover)}</td>
-                    <td className="px-2 py-2">
-                      <span style={{ color: handDot.color }}>{handDot.label}</span>{" "}{fmtDate(r.actual_handover)}
-                    </td>
-                    <td className="px-2 py-2 text-right">{fmt(r.expected_variations)}</td>
-                    <td className="px-2 py-2 text-right font-semibold">{fmt(r.anticipated_revenue)}</td>
-                    <td className="px-2 py-2 text-right">{fmt(r.remaining_to_claim)}</td>
-                    <td className="px-2 py-2 max-w-[100px] truncate text-muted-foreground">{r.notes || "—"}</td>
-                  </tr>
+                  <>
+                    <tr key={r.project_id}
+                      className="border-b hover:bg-muted/30 cursor-pointer transition-colors"
+                      onClick={() => canEdit && openEdit(r)}>
+                      <td className="px-1 py-2">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); toggleExpand(r.project_id); }}
+                          className="text-muted-foreground hover:text-foreground"
+                          aria-label={isExpanded ? "Collapse variations" : "Expand variations"}
+                        >
+                          {isExpanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                        </button>
+                      </td>
+                      <td className="px-2 py-2 font-mono text-[11px]">{r.project_code}</td>
+                      <td className="px-2 py-2 font-medium max-w-[160px] truncate">{r.project_name}</td>
+                      <td className="px-2 py-2">{r.primary_manager || "—"}</td>
+                      <td className="px-2 py-2">{r.secondary_manager || "—"}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.original_valuation)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.billed_revenue_incl_gst)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.previous_claim_gst)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.next_claim_gst)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.remaining_to_claim_gst)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.received_value_incl_gst)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.cost_to_date)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.expected_final_cost)}</td>
+                      <td className="px-2 py-2 text-right font-semibold">{fmt(r.anticipated_margin)}</td>
+                      <td className="px-2 py-2 text-right">{r.tender_margin_pct != null ? fmtPct(r.tender_margin_pct) : "—"}</td>
+                      <td className="px-2 py-2 text-right">{r.gfc_margin_pct != null ? fmtPct(r.gfc_margin_pct) : "—"}</td>
+                      <td className="px-2 py-2 text-right font-bold rounded" style={mStyle}>{fmtPct(r.actual_margin_pct)}</td>
+                      <td className="px-2 py-2">{fmtDate(r.planned_delivery)}</td>
+                      <td className="px-2 py-2">
+                        <span style={{ color: delDot.color }}>{delDot.label}</span>{" "}{fmtDate(r.actual_delivery)}
+                      </td>
+                      <td className="px-2 py-2">{fmtDate(r.planned_handover)}</td>
+                      <td className="px-2 py-2">
+                        <span style={{ color: handDot.color }}>{handDot.label}</span>{" "}{fmtDate(r.actual_handover)}
+                      </td>
+                      <td className="px-2 py-2 text-right">{fmt(r.expected_variations)}</td>
+                      <td className="px-2 py-2 text-right font-semibold">{fmt(r.anticipated_revenue)}</td>
+                      <td className="px-2 py-2 text-right">{fmt(r.remaining_to_claim)}</td>
+                      <td className="px-2 py-2 max-w-[100px] truncate text-muted-foreground">{r.notes || "—"}</td>
+                    </tr>
+                    {isExpanded && (
+                      <tr key={r.project_id + "-var"}>
+                        <td colSpan={25} className="p-0">
+                          <VariationRegister projectId={r.project_id} canEdit={canEdit} onChange={loadData} />
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 );
               })
             )}
@@ -457,9 +484,12 @@ export function RevenueMarginTab() {
           {filtered.length > 0 && (
             <tfoot>
               <tr className="bg-muted/50 border-t font-semibold text-xs sticky bottom-0">
-                <td className="px-2 py-2" colSpan={3}>Totals</td>
+                <td className="px-2 py-2" colSpan={5}>Totals</td>
                 <td className="px-2 py-2 text-right">{fmt(totals.originalVal)}</td>
                 <td className="px-2 py-2 text-right">{fmt(totals.billed)}</td>
+                <td className="px-2 py-2 text-right">{fmt(totals.prevClaimGst)}</td>
+                <td className="px-2 py-2 text-right">{fmt(totals.nextClaimGst)}</td>
+                <td className="px-2 py-2 text-right">{fmt(totals.remainingClaimGst)}</td>
                 <td className="px-2 py-2 text-right">{fmt(totals.received)}</td>
                 <td className="px-2 py-2 text-right">{fmt(totals.costToDate)}</td>
                 <td className="px-2 py-2 text-right">{fmt(totals.expectedCost)}</td>
@@ -474,6 +504,7 @@ export function RevenueMarginTab() {
           )}
         </table>
       </div>
+
 
       {/* Edit Panel */}
       <Sheet open={!!editRow} onOpenChange={() => setEditRow(null)}>
