@@ -90,7 +90,18 @@ export default function Dashboard() {
       <ReportsToReviewSection />
 
       {tier === 1 ? (
-        <Tier1Dashboard today={today} firstName={firstName} />
+        <Tabs defaultValue="command-centre" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="command-centre">Command Centre</TabsTrigger>
+            <TabsTrigger value="order-book">Order Book</TabsTrigger>
+          </TabsList>
+          <TabsContent value="command-centre" className="space-y-6">
+            <Tier1Dashboard today={today} firstName={firstName} />
+          </TabsContent>
+          <TabsContent value="order-book">
+            <OrderBookTab projects={projects} />
+          </TabsContent>
+        </Tabs>
       ) : tier === 2 ? (
         <PlaceholderDashboard title={`My Dashboard — ${roleName}`} today={today} tier={2} role={userRole} firstName={firstName} />
       ) : tier === 4 ? (
