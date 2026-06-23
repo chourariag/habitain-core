@@ -320,6 +320,39 @@ export default function Profile() {
           <p className="text-xs text-muted-foreground text-center">You will be logged out after changing your password.</p>
         </CardContent>
       </Card>
+
+      <Dialog open={photoSheetOpen} onOpenChange={setPhotoSheetOpen}>
+        <DialogContent className="sm:max-w-sm p-0 gap-0 sm:rounded-lg max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:bottom-0 max-sm:top-auto max-sm:translate-y-0 max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:slide-out-to-bottom">
+          <DialogHeader className="p-4 border-b">
+            <DialogTitle className="text-base">Update Profile Photo</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col">
+            <button
+              type="button"
+              onClick={() => openPicker(true)}
+              className="flex items-center gap-3 px-5 py-4 hover:bg-accent/30 transition-colors text-left border-b"
+            >
+              <Camera className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">Take Photo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => openPicker(false)}
+              className="flex items-center gap-3 px-5 py-4 hover:bg-accent/30 transition-colors text-left border-b"
+            >
+              <User className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium">Choose from Gallery</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPhotoSheetOpen(false)}
+              className="px-5 py-4 text-sm text-muted-foreground hover:bg-accent/30 transition-colors text-center"
+            >
+              Cancel
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
