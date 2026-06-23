@@ -25,8 +25,8 @@ const HIERARCHY_TIERS: { key: string; label: string; roles: AppRole[] }[] = [
   { key: "t0", label: "Tier 0 — Super Admin", roles: ["super_admin"] as AppRole[] },
   { key: "t1", label: "Tier 1 — Directors & MD", roles: ["chairman", "managing_director", "finance_director", "sales_director", "architecture_director", "principal_architect"] as AppRole[] },
   { key: "t2", label: "Tier 2 — Department Heads", roles: ["head_of_projects", "planning_head", "production_head", "site_installation_mgr", "finance_manager", "hr_admin", "head_operations"] as AppRole[] },
-  { key: "t3", label: "Tier 3 — Senior / Specialist", roles: ["planning_engineer", "costing_engineer", "senior_architect", "qc_inspector", "factory_supervisor", "accounts_executive"] as AppRole[] },
-  { key: "t4", label: "Tier 4 — Executives & Engineers", roles: ["project_architect", "site_engineer", "logistics_manager", "marketing", "sales_executive", "sales_associate", "stores_executive", "procurement", "quantity_surveyor", "structural_architect", "hr_executive", "delivery_rm_lead", "fabrication_foreman"] as AppRole[] },
+  { key: "t3", label: "Tier 3 — Senior / Specialist", roles: ["planning_engineer", "costing_engineer", "senior_architect", "qc_inspector", "senior_factory_supervisor", "accounts_executive"] as AppRole[] },
+  { key: "t4", label: "Tier 4 — Executives & Engineers", roles: ["project_architect", "logistics_manager", "marketing", "sales_executive", "sales_associate", "stores_executive", "quantity_surveyor", "structural_architect", "hr_executive", "delivery_rm_lead", "fabrication_foreman"] as AppRole[] },
   { key: "t5", label: "Tier 5 — Field / Support Staff", roles: ["electrical_installer", "elec_plumbing_installer", "procurement_assistant", "factory_floor_supervisor"] as AppRole[] },
 ];
 
