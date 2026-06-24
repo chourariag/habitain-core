@@ -35,7 +35,9 @@ function dateSeparatorLabel(dateStr: string) {
 export function ProjectChatPanel({ projectId, projectName, projectType, userId, onClose }: ProjectChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const fetchedSenderIds = useRef<Set<string>>(new Set());
+  const signedFetched = useRef<Set<string>>(new Set());
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
@@ -87,6 +89,40 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
       });
     })();
   }, [messages]);
+
+  // Resolve signed URLs for chat-media attachments (private bucket)
+  useEffect(() => {
+    const pathFromValue = (v: string): string | null => {
+      if (!v) return null;
+      const marker = "/chat-media/";
+      const idx = v.indexOf(marker);
+      if (idx >= 0) return v.substring(idx + marker.length).split("?")[0];
+      if (v.startsWith("http")) return null;
+      return v;
+    };
+    const toResolve: string[] = [];
+    messages.forEach((m) => {
+      (m.attachment_urls ?? []).forEach((v) => {
+        if (!v || signedFetched.current.has(v)) return;
+        const p = pathFromValue(v);
+        if (p) toResolve.push(v);
+      });
+    });
+    if (toResolve.length === 0) return;
+    toResolve.forEach((v) => signedFetched.current.add(v));
+    (async () => {
+      const updates: Record<string, string> = {};
+      for (const v of toResolve) {
+        const p = pathFromValue(v);
+        if (!p) continue;
+        const { data } = await supabase.storage.from("chat-media").createSignedUrl(p, 3600);
+        if (data?.signedUrl) updates[v] = data.signedUrl;
+      }
+      if (Object.keys(updates).length) setSignedUrls((prev) => ({ ...prev, ...updates }));
+    })();
+  }, [messages]);
+
+
 
 
   // Mark as read
@@ -145,8 +181,8 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
         const path = `${projectId}/${Date.now()}-${file.name}`;
         const { error } = await supabase.storage.from("chat-media").upload(path, file);
         if (error) throw error;
-        const { data: urlData } = supabase.storage.from("chat-media").getPublicUrl(path);
-        urls.push(urlData.publicUrl);
+        // Store storage path; signed URLs are minted on render
+        urls.push(path);
       }
 
       await (supabase.from("project_messages") as any).insert({
@@ -248,16 +284,19 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
                         >
                           {(m.attachment_urls ?? []).length > 0 && (
                             <div className="flex gap-1.5 mb-1.5 flex-wrap">
-                              {m.attachment_urls.map((url, i) => (
-                                <img
-                                  key={i}
-                                  src={url}
-                                  alt="attachment"
-                                  className="w-[160px] h-[120px] object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                  onClick={() => setPreviewImg(url)}
-                                  loading="lazy"
-                                />
-                              ))}
+                              {m.attachment_urls.map((url, i) => {
+                                const display = signedUrls[url] ?? (url.startsWith("http") ? url : "");
+                                return (
+                                  <img
+                                    key={i}
+                                    src={display}
+                                    alt="attachment"
+                                    className="w-[160px] h-[120px] object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity bg-muted"
+                                    onClick={() => display && setPreviewImg(display)}
+                                    loading="lazy"
+                                  />
+                                );
+                              })}
                             </div>
                           )}
                           {m.message_text && <p className="whitespace-pre-wrap break-words">{m.message_text}</p>}
