@@ -85,30 +85,43 @@ export function CheckInButton({ userRole }: Props) {
   const handleSelectType = async (type: string) => {
     setLocationType(type);
     setGpsNotConfigured(false);
+    setGpsDisabled(false);
     if (type === "office") {
-      setStep("confirm");
-      return;
+      // Check office GPS toggle
+      const { data: settings } = await supabase.from("app_settings").select("key, value").in("key", ["office_lat", "office_lng", "office_radius", "office_gps_enabled"]);
+      const enabled = settings?.find((s: any) => s.key === "office_gps_enabled")?.value === "true";
+      if (!enabled) {
+        setGpsDisabled(true);
+        setStep("confirm");
+        return;
+      }
+      // fallthrough — office GPS enabled; treat like factory below using office_* coords
     }
 
-    if (type === "factory" || type === "site") {
+    if (type === "factory" || type === "site" || type === "office") {
+      let refLat = 0, refLng = 0, radius = 200, enabled = true;
       try {
-        const pos = await getGPS();
-        setGpsLat(pos.coords.latitude);
-        setGpsLng(pos.coords.longitude);
-
-        let refLat = 0, refLng = 0, radius = 200;
         if (type === "factory") {
-          const { data: settings } = await supabase.from("app_settings").select("key, value").in("key", ["factory_lat", "factory_lng", "factory_radius"]);
+          const { data: settings } = await supabase.from("app_settings").select("key, value").in("key", ["factory_lat", "factory_lng", "factory_radius", "factory_gps_enabled"]);
           const latVal = settings?.find((s: any) => s.key === "factory_lat")?.value;
           const lngVal = settings?.find((s: any) => s.key === "factory_lng")?.value;
           const radVal = settings?.find((s: any) => s.key === "factory_radius")?.value;
+          enabled = settings?.find((s: any) => s.key === "factory_gps_enabled")?.value === "true";
           refLat = parseFloat(latVal || "0");
           refLng = parseFloat(lngVal || "0");
           radius = parseInt(radVal || "200") || 200;
-
-          if (!latVal || !lngVal || latVal === "" || lngVal === "") {
-            setGpsNotConfigured(true);
-            setGpsVerified(false);
+          if (!enabled) {
+            setGpsDisabled(true);
+            setStep("confirm");
+            return;
+          }
+        } else if (type === "office") {
+          const { data: settings } = await supabase.from("app_settings").select("key, value").in("key", ["office_lat", "office_lng", "office_radius"]);
+          refLat = parseFloat(settings?.find((s: any) => s.key === "office_lat")?.value || "0");
+          refLng = parseFloat(settings?.find((s: any) => s.key === "office_lng")?.value || "0");
+          radius = parseInt(settings?.find((s: any) => s.key === "office_radius")?.value || "200") || 200;
+          if (!refLat || !refLng) {
+            setGpsDisabled(true);
             setStep("confirm");
             return;
           }
@@ -120,12 +133,15 @@ export function CheckInButton({ userRole }: Props) {
             radius = parseInt(String((proj as any).site_radius || "300")) || 300;
           }
           if (!refLat && !refLng) {
-            setGpsNotConfigured(true);
-            setGpsVerified(false);
+            setGpsDisabled(true);
             setStep("confirm");
             return;
           }
         }
+
+        const pos = await getGPS();
+        setGpsLat(pos.coords.latitude);
+        setGpsLng(pos.coords.longitude);
 
         if (refLat && refLng) {
           const dist = haversineDistance(pos.coords.latitude, pos.coords.longitude, refLat, refLng);
