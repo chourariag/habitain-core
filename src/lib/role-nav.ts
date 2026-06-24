@@ -1,7 +1,8 @@
 import type { AppRole } from "@/lib/roles";
 
 // Roles that see everything
-const FULL_ACCESS: AppRole[] = ["super_admin", "managing_director"];
+// principal_architect has IDENTICAL access to managing_director per confirmed business rule
+const FULL_ACCESS: AppRole[] = ["super_admin", "managing_director", "principal_architect"];
 const DIRECTORS: AppRole[] = [...FULL_ACCESS, "finance_director", "sales_director", "architecture_director"];
 
 export type NavSection = {
@@ -65,7 +66,7 @@ export function getDashboardTier(role: AppRole | null): 1 | 2 | 3 | 4 {
   if (!role) return 3;
   if (FULL_ACCESS.includes(role) || ["finance_director", "sales_director", "architecture_director"].includes(role)) return 1;
   if (["production_head", "head_operations", "site_installation_mgr", "finance_manager"].includes(role)) return 2;
-  if (["principal_architect", "project_architect", "structural_architect"].includes(role)) return 4;
+  if (["project_architect", "structural_architect"].includes(role)) return 4;
   return 3;
 }
 
