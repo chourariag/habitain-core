@@ -1,7 +1,8 @@
 import type { AppRole } from "@/lib/roles";
 
 // Roles that see everything
-const FULL_ACCESS: AppRole[] = ["super_admin", "managing_director"];
+// principal_architect has IDENTICAL access to managing_director per confirmed business rule
+const FULL_ACCESS: AppRole[] = ["super_admin", "managing_director", "principal_architect"];
 const DIRECTORS: AppRole[] = [...FULL_ACCESS, "finance_director", "sales_director", "architecture_director"];
 
 export type NavSection = {
