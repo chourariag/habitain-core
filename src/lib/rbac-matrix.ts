@@ -74,7 +74,7 @@ export const ROLE_ACCESS_MATRIX: Partial<Record<AppRole, ModuleAccess>> = {
   head_of_projects:
     m("FULL","FULL","FULL","FULL","FULL","VIEW","MANAGE","VIEW","VIEW","FULL","FULL","FULL","FULL","NONE","FULL"),
   planning_head:
-    m("FULL","FULL","FULL","FULL","FULL","VIEW","MANAGE","VIEW","VIEW","VIEW","VIEW","FULL","FULL","NONE","VIEW"),
+    m("FULL","FULL","FULL","FULL","FULL","VIEW","MANAGE","VIEW","VIEW","VIEW","VIEW","FULL","FULL","NONE","FULL"),
   head_operations:
     m("VIEW","VIEW","VIEW","VIEW","NONE","NONE","MANAGE","NONE","FULL","VIEW","VIEW","FULL","VIEW","NONE","VIEW"),
 
