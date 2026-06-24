@@ -11,13 +11,12 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
   approvals: [
     "super_admin", "managing_director", "finance_director", "sales_director", "architecture_director",
     "head_operations", "production_head", "site_installation_mgr", "site_engineer",
-    "factory_floor_supervisor", "finance_manager", "accounts_executive", "hr_executive",
-    "project_architect", "structural_architect", "principal_architect",
-    "procurement", "stores_executive", "quantity_surveyor",
+    "finance_manager", "structural_architect", "principal_architect",
+    "procurement", "stores_executive",
   ],
   projects: [
     "super_admin", "managing_director", "finance_director", "sales_director", "architecture_director",
-    "head_operations", "production_head", "site_installation_mgr", "factory_floor_supervisor",
+    "head_operations", "production_head", "site_installation_mgr",
     "planning_engineer", "costing_engineer", "quantity_surveyor",
     "finance_manager", "procurement",
     "project_architect", "structural_architect", "principal_architect",
@@ -35,7 +34,6 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
     "delivery_rm_lead", "factory_floor_supervisor", "fabrication_foreman",
     "qc_inspector", "electrical_installer", "elec_plumbing_installer",
     "planning_engineer", "project_architect", "structural_architect", "principal_architect",
-    "procurement", "stores_executive",
   ],
   procurement: [
     "super_admin", "managing_director", "finance_director", "sales_director", "architecture_director",
@@ -46,20 +44,20 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
   ],
   finance: [
     "super_admin", "managing_director", "finance_director", "sales_director", "architecture_director",
-    "head_operations", "production_head",
+    "head_operations",
     "finance_manager", "accounts_executive", "costing_engineer",
     "procurement", "principal_architect",
   ],
   design: [
     "super_admin", "managing_director", "finance_director", "sales_director", "architecture_director",
     "head_operations", "production_head", "site_installation_mgr", "site_engineer",
-    "factory_floor_supervisor", "qc_inspector", "delivery_rm_lead",
+    "qc_inspector", "delivery_rm_lead",
     "planning_engineer", "costing_engineer", "quantity_surveyor",
     "project_architect", "structural_architect", "principal_architect",
   ],
   sales: [
     "super_admin", "managing_director", "finance_director", "sales_director", "architecture_director",
-    "head_operations", "production_head", "principal_architect",
+    "head_operations", "principal_architect",
     "sales_executive", "marketing_executive",
   ],
   business: [
@@ -89,7 +87,7 @@ export const PROJECT_SELECTOR_ROLES: AppRole[] = [
 export function getDashboardTier(role: AppRole | null): 1 | 2 | 3 | 4 {
   if (!role) return 3;
   if (["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director", "principal_architect"].includes(role)) return 1;
-  if (["head_operations", "production_head", "site_installation_mgr", "finance_manager"].includes(role)) return 2;
+  if (["head_operations"].includes(role)) return 2;
   return 3;
 }
 
