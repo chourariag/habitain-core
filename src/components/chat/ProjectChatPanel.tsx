@@ -90,6 +90,40 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
     })();
   }, [messages]);
 
+  // Resolve signed URLs for chat-media attachments (private bucket)
+  useEffect(() => {
+    const pathFromValue = (v: string): string | null => {
+      if (!v) return null;
+      const marker = "/chat-media/";
+      const idx = v.indexOf(marker);
+      if (idx >= 0) return v.substring(idx + marker.length).split("?")[0];
+      if (v.startsWith("http")) return null;
+      return v;
+    };
+    const toResolve: string[] = [];
+    messages.forEach((m) => {
+      (m.attachment_urls ?? []).forEach((v) => {
+        if (!v || signedFetched.current.has(v)) return;
+        const p = pathFromValue(v);
+        if (p) toResolve.push(v);
+      });
+    });
+    if (toResolve.length === 0) return;
+    toResolve.forEach((v) => signedFetched.current.add(v));
+    (async () => {
+      const updates: Record<string, string> = {};
+      for (const v of toResolve) {
+        const p = pathFromValue(v);
+        if (!p) continue;
+        const { data } = await supabase.storage.from("chat-media").createSignedUrl(p, 3600);
+        if (data?.signedUrl) updates[v] = data.signedUrl;
+      }
+      if (Object.keys(updates).length) setSignedUrls((prev) => ({ ...prev, ...updates }));
+    })();
+  }, [messages]);
+
+
+
 
   // Mark as read
   useEffect(() => {
