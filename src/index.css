@@ -128,13 +128,16 @@
   }
 }
 
-/* Global card overflow fix */
+/* Global card overflow fix — exclude dialogs/drawers so modal content can scroll */
 @layer components {
-  .bg-card, [class*="rounded-lg"][class*="border"], [class*="rounded-md"][class*="border"] {
+  .bg-card:not([role="dialog"]):not([role="alertdialog"]),
+  [class*="rounded-lg"][class*="border"]:not([role="dialog"]):not([role="alertdialog"]):not([data-vaul-drawer]),
+  [class*="rounded-md"][class*="border"]:not([role="dialog"]):not([role="alertdialog"]):not([data-vaul-drawer]) {
     max-width: 100%;
     overflow: hidden;
   }
 }
+
 
 /* Ensure flex rows inside cards wrap on mobile */
 @layer utilities {
