@@ -12313,6 +12313,7 @@ export type Database = {
         Returns: {
           children: Json
           date_of_birth: string
+          home_base: string
           phone: string
           wedding_anniversary: string
         }[]
@@ -12322,6 +12323,7 @@ export type Database = {
         Returns: {
           children: Json
           date_of_birth: string
+          home_base: string
           phone: string
           profile_id: string
           wedding_anniversary: string
