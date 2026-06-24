@@ -65,7 +65,7 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
         if (r.key === "car_rate_per_km") setCarRate(Number(r.value) || 9.5);
         if (r.key === "bike_rate_per_km") setBikeRate(Number(r.value) || 3.5);
       });
-      if (profRes.data?.home_base) setFromLocation(profRes.data.home_base);
+      if ((profRes.data as any)?.home_base) setFromLocation((profRes.data as any).home_base);
     });
   }, [open, user?.id]);
 
