@@ -284,16 +284,19 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
                         >
                           {(m.attachment_urls ?? []).length > 0 && (
                             <div className="flex gap-1.5 mb-1.5 flex-wrap">
-                              {m.attachment_urls.map((url, i) => (
-                                <img
-                                  key={i}
-                                  src={url}
-                                  alt="attachment"
-                                  className="w-[160px] h-[120px] object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                  onClick={() => setPreviewImg(url)}
-                                  loading="lazy"
-                                />
-                              ))}
+                              {m.attachment_urls.map((url, i) => {
+                                const display = signedUrls[url] ?? (url.startsWith("http") ? url : "");
+                                return (
+                                  <img
+                                    key={i}
+                                    src={display}
+                                    alt="attachment"
+                                    className="w-[160px] h-[120px] object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity bg-muted"
+                                    onClick={() => display && setPreviewImg(display)}
+                                    loading="lazy"
+                                  />
+                                );
+                              })}
                             </div>
                           )}
                           {m.message_text && <p className="whitespace-pre-wrap break-words">{m.message_text}</p>}
