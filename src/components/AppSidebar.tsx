@@ -331,6 +331,10 @@ export function AppSidebar() {
                   if (item.to === "/admin/super-admin") {
                     return ["managing_director", "super_admin"].includes(effectiveRoleForNav ?? "");
                   }
+                  // User Management only visible to MD, SA, Head of Operations
+                  if (item.to === "/admin") {
+                    return ["managing_director", "super_admin", "head_operations"].includes(effectiveRoleForNav ?? "");
+                  }
                   return true;
                 })
                 .map((item) => (
