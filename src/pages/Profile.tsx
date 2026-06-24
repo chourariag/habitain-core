@@ -59,10 +59,10 @@ export default function Profile() {
       supabase.rpc("get_my_profile_pii").maybeSingle(),
     ]);
     if (data) {
-      setProfile({ ...(data as any), phone: (pii as any)?.phone ?? null });
+      setProfile({ ...(data as any), phone: (pii as any)?.phone ?? null, home_base: (pii as any)?.home_base ?? null });
       setDisplayName((data as any).display_name || "");
       setPhone((pii as any)?.phone || "");
-      setHomeBase((data as any).home_base || "");
+      setHomeBase((pii as any)?.home_base || "");
       setAvatarUrl((data as any).avatar_url || null);
     }
     setLoading(false);
