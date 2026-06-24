@@ -26,7 +26,7 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
   ],
   procurement: [
     ...DIRECTORS, "head_operations", "procurement", "stores_executive",
-    "costing_engineer", "finance_manager",
+    "costing_engineer", "finance_manager", "planning_head" as AppRole,
   ],
   design: [
     ...DIRECTORS, "principal_architect", "project_architect", "structural_architect",
@@ -38,14 +38,15 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
   ],
   performance: [], // everyone sees own KPIs
   admin: [
-    ...DIRECTORS, "hr_executive", "head_operations", "planning_head" as AppRole, "principal_architect",
+    ...DIRECTORS, "hr_executive", "head_operations", "planning_head" as AppRole,
+    "principal_architect", "operations_architect" as AppRole,
   ],
   system: [], // everyone
   knowledge: [], // everyone — SOP library
   approvals: [...DIRECTORS, "head_operations"],
   site: [
     ...DIRECTORS, "head_operations", "site_installation_mgr", "site_engineer",
-    "delivery_rm_lead", "production_head",
+    "delivery_rm_lead", "production_head", "planning_head" as AppRole,
   ],
   finance: [...DIRECTORS, "finance_manager", "accounts_executive"],
   sales: [...DIRECTORS, "sales_director", "marketing" as AppRole, "sales_executive" as AppRole],
