@@ -33,6 +33,7 @@ export function CheckInButton({ userRole }: Props) {
   const [gpsVerified, setGpsVerified] = useState(false);
   const [gpsWarning, setGpsWarning] = useState(false);
   const [gpsNotConfigured, setGpsNotConfigured] = useState(false);
+  const [gpsDisabled, setGpsDisabled] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -84,30 +85,26 @@ export function CheckInButton({ userRole }: Props) {
   const handleSelectType = async (type: string) => {
     setLocationType(type);
     setGpsNotConfigured(false);
+    setGpsDisabled(false);
     if (type === "office") {
       setStep("confirm");
       return;
     }
 
     if (type === "factory" || type === "site") {
+      let refLat = 0, refLng = 0, radius = 200, enabled = true;
       try {
-        const pos = await getGPS();
-        setGpsLat(pos.coords.latitude);
-        setGpsLng(pos.coords.longitude);
-
-        let refLat = 0, refLng = 0, radius = 200;
         if (type === "factory") {
-          const { data: settings } = await supabase.from("app_settings").select("key, value").in("key", ["factory_lat", "factory_lng", "factory_radius"]);
+          const { data: settings } = await supabase.from("app_settings").select("key, value").in("key", ["factory_lat", "factory_lng", "factory_radius", "factory_gps_enabled"]);
           const latVal = settings?.find((s: any) => s.key === "factory_lat")?.value;
           const lngVal = settings?.find((s: any) => s.key === "factory_lng")?.value;
           const radVal = settings?.find((s: any) => s.key === "factory_radius")?.value;
+          enabled = settings?.find((s: any) => s.key === "factory_gps_enabled")?.value === "true";
           refLat = parseFloat(latVal || "0");
           refLng = parseFloat(lngVal || "0");
           radius = parseInt(radVal || "200") || 200;
-
-          if (!latVal || !lngVal || latVal === "" || lngVal === "") {
-            setGpsNotConfigured(true);
-            setGpsVerified(false);
+          if (!enabled || !refLat || !refLng) {
+            setGpsDisabled(true);
             setStep("confirm");
             return;
           }
@@ -118,13 +115,16 @@ export function CheckInButton({ userRole }: Props) {
             refLng = parseFloat(String((proj as any).site_lng || "0"));
             radius = parseInt(String((proj as any).site_radius || "300")) || 300;
           }
-          if (!refLat && !refLng) {
-            setGpsNotConfigured(true);
-            setGpsVerified(false);
+          if (!refLat || !refLng) {
+            setGpsDisabled(true);
             setStep("confirm");
             return;
           }
         }
+
+        const pos = await getGPS();
+        setGpsLat(pos.coords.latitude);
+        setGpsLng(pos.coords.longitude);
 
         if (refLat && refLng) {
           const dist = haversineDistance(pos.coords.latitude, pos.coords.longitude, refLat, refLng);
@@ -148,7 +148,7 @@ export function CheckInButton({ userRole }: Props) {
     setSubmitting(true);
     const now = new Date();
     const finalLocationType = locationType === "office" ? (subType === "remote" ? "remote" : "office") : locationType;
-    const isUnmatched = (locationType === "factory" || locationType === "site") && !gpsVerified && !gpsNotConfigured;
+    const isUnmatched = (locationType === "factory" || locationType === "site") && !gpsVerified && !gpsNotConfigured && !gpsDisabled;
 
     const record: any = {
       user_id: user.id,
@@ -240,6 +240,7 @@ export function CheckInButton({ userRole }: Props) {
     setGpsVerified(false);
     setGpsWarning(false);
     setGpsNotConfigured(false);
+    setGpsDisabled(false);
     setLocationNote("");
   };
 
@@ -385,13 +386,14 @@ export function CheckInButton({ userRole }: Props) {
           )}
 
           {step === "confirm" && (() => {
-            const isUnmatched = (locationType === "factory" || locationType === "site") && !gpsVerified && !gpsNotConfigured;
+            const isUnmatched = (locationType === "factory" || locationType === "site") && !gpsVerified && !gpsNotConfigured && !gpsDisabled;
             const noteValid = !isUnmatched || locationNote.trim().length >= 10;
+            const locLabel = locationType === "factory" ? "Factory" : locationType === "site" ? "Site" : "Office";
             return (
             <div className="space-y-4">
-              {gpsNotConfigured && (
-                <div className="rounded-md p-3 text-sm" style={{ backgroundColor: "#FFF3E0", color: "#D4860A" }}>
-                  ⚠ {locationType === "factory" ? "Factory" : "Site"} GPS not set up. Contact Admin to configure location verification.
+              {gpsDisabled && (
+                <div className="rounded-md p-3 text-sm font-inter" style={{ backgroundColor: "#F7F7F7", color: "#666" }}>
+                  Location: {locLabel} — GPS verification not enabled
                 </div>
               )}
               {isUnmatched && (
@@ -414,7 +416,7 @@ export function CheckInButton({ userRole }: Props) {
                   </div>
                 </>
               )}
-              {gpsWarning && !gpsNotConfigured && !isUnmatched && (
+              {gpsWarning && !gpsNotConfigured && !gpsDisabled && !isUnmatched && (
                 <div className="rounded-md p-3 text-sm" style={{ backgroundColor: "#FFF3E0", color: "#D4860A" }}>
                   ⚠ You appear to be outside the expected area. You can still check in.
                 </div>
@@ -423,7 +425,7 @@ export function CheckInButton({ userRole }: Props) {
                 <div className="flex justify-between"><span style={{ color: "#666" }}>Date</span><span style={{ color: "#1A1A1A" }}>{format(new Date(), "dd/MM/yyyy")}</span></div>
                 <div className="flex justify-between"><span style={{ color: "#666" }}>Time</span><span style={{ color: "#1A1A1A" }}>{format(new Date(), "hh:mm a")}</span></div>
                 <div className="flex justify-between"><span style={{ color: "#666" }}>Location</span><span style={{ color: "#1A1A1A" }} className="capitalize">{locationType === "office" ? subType : locationType}</span></div>
-                <div className="flex justify-between"><span style={{ color: "#666" }}>GPS</span><span style={{ color: gpsNotConfigured ? "#D4860A" : gpsVerified ? "#006039" : "#D4860A" }}>{gpsNotConfigured ? "Not configured" : gpsVerified ? "Verified ✓" : "Not verified"}</span></div>
+                <div className="flex justify-between"><span style={{ color: "#666" }}>GPS</span><span style={{ color: gpsDisabled ? "#666" : gpsVerified ? "#006039" : "#D4860A" }}>{gpsDisabled ? "Manual" : gpsVerified ? "Verified ✓" : "Not verified"}</span></div>
               </div>
               <Button onClick={handleCheckIn} disabled={submitting || !noteValid} className="w-full" style={{ backgroundColor: noteValid && !submitting ? "#006039" : undefined }}>
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
