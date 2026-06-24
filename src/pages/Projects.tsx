@@ -7,7 +7,7 @@ import { ProjectCommandCard } from "@/components/projects/ProjectCommandCard";
 import type { Tables } from "@/integrations/supabase/types";
 import { useUserRole } from "@/hooks/useUserRole";
 
-const NEW_PROJECT_ROLES = ["planning_head", "managing_director", "super_admin"];
+const NEW_PROJECT_ROLES = ["planning_head", "planning_engineer", "managing_director", "super_admin"];
 
 export default function Projects() {
   const { role } = useUserRole();
