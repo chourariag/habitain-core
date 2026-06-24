@@ -35,7 +35,9 @@ function dateSeparatorLabel(dateStr: string) {
 export function ProjectChatPanel({ projectId, projectName, projectType, userId, onClose }: ProjectChatPanelProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({});
   const fetchedSenderIds = useRef<Set<string>>(new Set());
+  const signedFetched = useRef<Set<string>>(new Set());
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
