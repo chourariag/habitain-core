@@ -58,14 +58,14 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
     Promise.all([
       supabase.from("projects").select("id, name").eq("is_archived", false),
       supabase.from("hr_settings").select("key, value").in("key", ["car_rate_per_km", "bike_rate_per_km"]),
-      supabase.from("profiles").select("home_base").eq("auth_user_id", user?.id ?? "").single(),
+      supabase.rpc("get_my_profile_pii").maybeSingle(),
     ]).then(([projRes, ratesRes, profRes]) => {
       setProjects((projRes.data ?? []) as any[]);
       (ratesRes.data ?? []).forEach((r: any) => {
         if (r.key === "car_rate_per_km") setCarRate(Number(r.value) || 9.5);
         if (r.key === "bike_rate_per_km") setBikeRate(Number(r.value) || 3.5);
       });
-      if (profRes.data?.home_base) setFromLocation(profRes.data.home_base);
+      if ((profRes.data as any)?.home_base) setFromLocation((profRes.data as any).home_base);
     });
   }, [open, user?.id]);
 
