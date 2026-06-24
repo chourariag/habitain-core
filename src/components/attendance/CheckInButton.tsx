@@ -148,7 +148,7 @@ export function CheckInButton({ userRole }: Props) {
     setSubmitting(true);
     const now = new Date();
     const finalLocationType = locationType === "office" ? (subType === "remote" ? "remote" : "office") : locationType;
-    const isUnmatched = (locationType === "factory" || locationType === "site") && !gpsVerified && !gpsNotConfigured;
+    const isUnmatched = (locationType === "factory" || locationType === "site") && !gpsVerified && !gpsNotConfigured && !gpsDisabled;
 
     const record: any = {
       user_id: user.id,
