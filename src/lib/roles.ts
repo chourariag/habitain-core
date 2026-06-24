@@ -15,7 +15,7 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   costing_engineer: "Costing Engineer",
   quantity_surveyor: "Quantity Surveyor",
   site_installation_mgr: "Site Installation Manager",
-  delivery_rm_lead: "Delivery & R&M Lead",
+  delivery_rm_lead: "Site Installation & Finishing Manager",
   site_engineer: "Site Engineer",
   qc_inspector: "QC Inspector",
   factory_floor_supervisor: "Factory Floor Supervisor",
@@ -31,17 +31,21 @@ export const ROLE_LABELS: Record<AppRole, string> = {
   structural_architect: "Structural Architect",
   sales_executive: "Sales Executive",
   marketing_executive: "Marketing Executive",
+  chairman: "Chairman",
+  planning_head: "Planning Head",
+  operations_architect: "Head of Operations - Design",
 };
 
 export const ROLE_TIERS: Record<string, AppRole[]> = {
+  "Board": ["chairman"],
   "Tier 0 — Super Admin": ["super_admin"],
   "Tier 1 — Directors": ["managing_director", "finance_director", "sales_director", "architecture_director"],
-  "Tier 2 — Functional Heads": ["head_operations", "production_head", "finance_manager", "planning_engineer", "costing_engineer", "quantity_surveyor"],
+  "Tier 2 — Functional Heads": ["head_operations", "planning_head", "production_head", "finance_manager", "planning_engineer", "costing_engineer", "quantity_surveyor"],
   "Tier 3 — Site & Delivery": ["site_installation_mgr", "delivery_rm_lead", "site_engineer"],
   "Tier 4 — Factory Floor": ["qc_inspector", "factory_floor_supervisor", "fabrication_foreman", "electrical_installer", "elec_plumbing_installer"],
   "Tier 5 — Procurement & Finance": ["procurement", "stores_executive", "accounts_executive"],
   "Tier 6 — HR": ["hr_executive"],
-  "Architects": ["principal_architect", "project_architect", "structural_architect"],
+  "Architects": ["principal_architect", "operations_architect", "project_architect", "structural_architect"],
   "Sales & Marketing": ["sales_executive", "marketing_executive"],
 };
 

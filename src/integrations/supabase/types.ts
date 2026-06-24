@@ -3307,6 +3307,9 @@ export type Database = {
         | "principal_architect"
         | "sales_executive"
         | "marketing_executive"
+        | "chairman"
+        | "planning_head"
+        | "operations_architect"
       login_type: "email" | "otp"
     }
     CompositeTypes: {
@@ -3464,6 +3467,9 @@ export const Constants = {
         "principal_architect",
         "sales_executive",
         "marketing_executive",
+        "chairman",
+        "planning_head",
+        "operations_architect",
       ],
       login_type: ["email", "otp"],
     },
