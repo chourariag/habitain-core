@@ -87,18 +87,11 @@ export function CheckInButton({ userRole }: Props) {
     setGpsNotConfigured(false);
     setGpsDisabled(false);
     if (type === "office") {
-      // Check office GPS toggle
-      const { data: settings } = await supabase.from("app_settings").select("key, value").in("key", ["office_lat", "office_lng", "office_radius", "office_gps_enabled"]);
-      const enabled = settings?.find((s: any) => s.key === "office_gps_enabled")?.value === "true";
-      if (!enabled) {
-        setGpsDisabled(true);
-        setStep("confirm");
-        return;
-      }
-      // fallthrough — office GPS enabled; treat like factory below using office_* coords
+      setStep("confirm");
+      return;
     }
 
-    if (type === "factory" || type === "site" || type === "office") {
+    if (type === "factory" || type === "site") {
       let refLat = 0, refLng = 0, radius = 200, enabled = true;
       try {
         if (type === "factory") {
@@ -110,17 +103,7 @@ export function CheckInButton({ userRole }: Props) {
           refLat = parseFloat(latVal || "0");
           refLng = parseFloat(lngVal || "0");
           radius = parseInt(radVal || "200") || 200;
-          if (!enabled) {
-            setGpsDisabled(true);
-            setStep("confirm");
-            return;
-          }
-        } else if (type === "office") {
-          const { data: settings } = await supabase.from("app_settings").select("key, value").in("key", ["office_lat", "office_lng", "office_radius"]);
-          refLat = parseFloat(settings?.find((s: any) => s.key === "office_lat")?.value || "0");
-          refLng = parseFloat(settings?.find((s: any) => s.key === "office_lng")?.value || "0");
-          radius = parseInt(settings?.find((s: any) => s.key === "office_radius")?.value || "200") || 200;
-          if (!refLat || !refLng) {
+          if (!enabled || !refLat || !refLng) {
             setGpsDisabled(true);
             setStep("confirm");
             return;
@@ -132,7 +115,7 @@ export function CheckInButton({ userRole }: Props) {
             refLng = parseFloat(String((proj as any).site_lng || "0"));
             radius = parseInt(String((proj as any).site_radius || "300")) || 300;
           }
-          if (!refLat && !refLng) {
+          if (!refLat || !refLng) {
             setGpsDisabled(true);
             setStep("confirm");
             return;
