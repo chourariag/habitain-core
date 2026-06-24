@@ -145,8 +145,8 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
         const path = `${projectId}/${Date.now()}-${file.name}`;
         const { error } = await supabase.storage.from("chat-media").upload(path, file);
         if (error) throw error;
-        const { data: urlData } = supabase.storage.from("chat-media").getPublicUrl(path);
-        urls.push(urlData.publicUrl);
+        // Store storage path; signed URLs are minted on render
+        urls.push(path);
       }
 
       await (supabase.from("project_messages") as any).insert({
