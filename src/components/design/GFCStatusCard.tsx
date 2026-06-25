@@ -192,8 +192,8 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
             </span>
           </div>
 
-          {/* H1 / H2 rows */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* H1 / H2 / H3 rows */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* H1 */}
             <div className="border border-border rounded-lg p-3 space-y-2">
               <div className="flex items-center justify-between">
