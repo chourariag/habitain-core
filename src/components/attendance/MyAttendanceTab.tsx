@@ -46,10 +46,11 @@ export function MyAttendanceTab({ userRole }: Props) {
     .filter(d => !isSunday(d) && d < todayStart && (!accountCreatedAt || d >= accountCreatedAt)).length;
   const present = records.filter(r => r.check_in_time).length;
   const absent = Math.max(0, workingDays - present);
+  // Late arrival threshold: 10:15 AM. Check-ins at or before 10:15 are On Time.
   const lateArrivals = records.filter(r => {
     if (!r.check_in_time) return false;
     const d = new Date(r.check_in_time);
-    return d.getHours() > 9 || (d.getHours() === 9 && d.getMinutes() > 30);
+    return d.getHours() > 10 || (d.getHours() === 10 && d.getMinutes() > 15);
   }).length;
 
   const recForSelected = selected ? records.find(r => r.date === format(selected, "yyyy-MM-dd")) : null;
