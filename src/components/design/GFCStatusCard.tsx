@@ -141,7 +141,7 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
 
   if (loading) return null;
 
-  const gfcStatus = h2 ? "full" : h1 ? "advance" : "none";
+  const gfcStatus = h3 ? "interior" : h2 ? "full" : h1 ? "advance" : "none";
 
   return (
     <>
