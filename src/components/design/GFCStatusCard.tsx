@@ -180,7 +180,15 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
             </span>
             <ArrowRight className="h-3 w-3 shrink-0" style={{ color: "#999" }} />
             <span className="px-2 py-1 rounded" style={{ backgroundColor: h2 ? "#E8F2ED" : "#F5F5F5", color: h2 ? "#006039" : "#999" }}>
-              Full Production
+              MEP / Full Production
+            </span>
+            <ArrowRight className="h-3 w-3 shrink-0" style={{ color: "#999" }} />
+            <span className={`px-2 py-1 rounded ${h3 ? "font-bold" : ""}`} style={{ backgroundColor: h3 ? "#FFF8E8" : "#F5F5F5", color: h3 ? "#D4860A" : "#999" }}>
+              H3 — Interior GFC
+            </span>
+            <ArrowRight className="h-3 w-3 shrink-0" style={{ color: "#999" }} />
+            <span className="px-2 py-1 rounded" style={{ backgroundColor: h3 ? "#E8F2ED" : "#F5F5F5", color: h3 ? "#006039" : "#999" }}>
+              Interior Fitout
             </span>
           </div>
 
