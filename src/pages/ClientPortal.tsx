@@ -615,6 +615,7 @@ export default function ClientPortal() {
                 <div className="grid grid-cols-2 gap-4">
                   <GFCMilestone label="H1 — Advance GFC" record={h1} />
                   <GFCMilestone label="H2 — Final GFC" record={h2} />
+                  <GFCMilestone label="H3 — Interior GFC" record={h3} />
                 </div>
 
                 {approvedDrawings.length > 0 && (
