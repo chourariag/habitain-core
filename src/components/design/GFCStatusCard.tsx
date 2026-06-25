@@ -268,6 +268,36 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
                 <p className="text-[11px]" style={{ color: "#999" }}>Issue H1 first</p>
               )}
             </div>
+
+            {/* H3 — Interior Stage GFC */}
+            <div className="border border-border rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>H3 — Interior Stage Sign-off</span>
+                {h3 ? <CheckCircle2 className="h-4 w-4" style={{ color: "#006039" }} /> : <Lock className="h-4 w-4" style={{ color: "#999" }} />}
+              </div>
+              <p className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#666" }}>
+                Detailed interior drawings and schedule of finishes approved by Karan Nadig (Principal Architect) before interior fitout works begin on site.
+              </p>
+              {h3 ? (
+                <p className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#006039" }}>
+                  Issued on {format(new Date(h3.issued_at), "dd MMM yyyy")}
+                  {h3.module_group?.length > 0 && ` · ${h3.module_group.length} modules`}
+                </p>
+              ) : h2 ? (
+                isPrincipal && (
+                  <Button
+                    size="sm"
+                    className="text-xs mt-1 w-full font-semibold"
+                    style={{ backgroundColor: "#006039", color: "white" }}
+                    onClick={() => openIssueDialog("interior_h3")}
+                  >
+                    Issue H3 Sign-off
+                  </Button>
+                )
+              ) : (
+                <p className="text-[11px]" style={{ color: "#999" }}>Issue H2 first</p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
