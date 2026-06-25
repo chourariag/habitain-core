@@ -37,7 +37,7 @@ type GfcRecord = {
 export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, userName, modules, designFile, qcStats, onRefresh }: Props) {
   const [records, setRecords] = useState<GfcRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [issueDialog, setIssueDialog] = useState<{ open: boolean; stage: "advance_h1" | "final_h2" } | null>(null);
+  const [issueDialog, setIssueDialog] = useState<{ open: boolean; stage: "advance_h1" | "final_h2" | "interior_h3" } | null>(null);
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const [issuing, setIssuing] = useState(false);
 
@@ -54,8 +54,9 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
 
   const h1 = records.find((r) => r.gfc_stage === "advance_h1");
   const h2 = records.find((r) => r.gfc_stage === "final_h2");
+  const h3 = records.find((r) => r.gfc_stage === "interior_h3");
 
-  const openIssueDialog = (stage: "advance_h1" | "final_h2") => {
+  const openIssueDialog = (stage: "advance_h1" | "final_h2" | "interior_h3") => {
     setSelectedModules(modules.map((m) => m.id));
     setIssueDialog({ open: true, stage });
   };
