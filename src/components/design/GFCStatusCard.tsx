@@ -307,16 +307,26 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
         <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {issueDialog?.stage === "advance_h1" ? "Issue H1 Sign-off (Advance GFC)" : "Issue H2 Sign-off (Final GFC)"}
+              {issueDialog?.stage === "advance_h1"
+                ? "Issue H1 Sign-off (Advance GFC)"
+                : issueDialog?.stage === "final_h2"
+                ? "Issue H2 Sign-off (Final GFC)"
+                : "Issue H3 Sign-off (Interior GFC)"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-2 text-sm">
             <p><span className="text-muted-foreground">Project:</span> <span className="font-semibold">{projectName}</span></p>
-            <p><span className="text-muted-foreground">GFC Package:</span> {issueDialog?.stage === "advance_h1" ? "H1 — Architectural & Structural" : "H2 — MEP & Final"}</p>
+            <p><span className="text-muted-foreground">GFC Package:</span> {issueDialog?.stage === "advance_h1"
+              ? "H1 — Architectural & Structural"
+              : issueDialog?.stage === "final_h2"
+              ? "H2 — MEP & Final"
+              : "H3 — Interior Drawings & Schedule of Finishes"}</p>
             <div className="bg-[#FFF8E8] border border-[#F4D58A] rounded p-2 text-xs">
               I confirm the {issueDialog?.stage === "advance_h1"
                 ? "architectural and structural drawings are approved for production."
-                : "MEP, HVAC, material specs and client sign-off are approved for full production."}
+                : issueDialog?.stage === "final_h2"
+                ? "MEP, HVAC, material specs and client sign-off are approved for full production."
+                : "detailed interior drawings and schedule of finishes are approved for interior fitout works on site."}
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2">Modules this sign-off applies to:</p>
