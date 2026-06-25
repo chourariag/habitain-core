@@ -1,0 +1,2 @@
+ALTER TABLE public.gfc_records DROP CONSTRAINT IF EXISTS gfc_records_gfc_stage_check;
+ALTER TABLE public.gfc_records ADD CONSTRAINT gfc_records_gfc_stage_check CHECK (gfc_stage IN ('advance_h1','final_h2','interior_h3'));
