@@ -353,7 +353,7 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
               style={{ backgroundColor: "#006039", color: "white" }}
             >
               {issuing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Confirm {issueDialog?.stage === "advance_h1" ? "H1" : "H2"} Sign-off
+              Confirm {issueDialog?.stage === "advance_h1" ? "H1" : issueDialog?.stage === "final_h2" ? "H2" : "H3"} Sign-off
             </Button>
           </DialogFooter>
         </DialogContent>
