@@ -152,12 +152,13 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
             <Badge
               className="text-xs"
               style={
-                gfcStatus === "full" ? { backgroundColor: "#E8F2ED", color: "#006039", border: "none" }
+                gfcStatus === "interior" ? { backgroundColor: "#E8F2ED", color: "#006039", border: "none" }
+                  : gfcStatus === "full" ? { backgroundColor: "#E8F2ED", color: "#006039", border: "none" }
                   : gfcStatus === "advance" ? { backgroundColor: "#FFF8E8", color: "#D4860A", border: "none" }
                   : { backgroundColor: "#F5F5F5", color: "#666", border: "none" }
               }
             >
-              {gfcStatus === "full" ? "Final GFC Issued" : gfcStatus === "advance" ? "Advance GFC Only" : "No GFC"}
+              {gfcStatus === "interior" ? "Interior GFC Issued" : gfcStatus === "full" ? "Final GFC Issued" : gfcStatus === "advance" ? "Advance GFC Only" : "No GFC"}
             </Badge>
           </div>
         </CardHeader>
