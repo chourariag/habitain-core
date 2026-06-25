@@ -37,7 +37,7 @@ type GfcRecord = {
 export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, userName, modules, designFile, qcStats, onRefresh }: Props) {
   const [records, setRecords] = useState<GfcRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [issueDialog, setIssueDialog] = useState<{ open: boolean; stage: "advance_h1" | "final_h2" } | null>(null);
+  const [issueDialog, setIssueDialog] = useState<{ open: boolean; stage: "advance_h1" | "final_h2" | "interior_h3" } | null>(null);
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const [issuing, setIssuing] = useState(false);
 
@@ -54,8 +54,9 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
 
   const h1 = records.find((r) => r.gfc_stage === "advance_h1");
   const h2 = records.find((r) => r.gfc_stage === "final_h2");
+  const h3 = records.find((r) => r.gfc_stage === "interior_h3");
 
-  const openIssueDialog = (stage: "advance_h1" | "final_h2") => {
+  const openIssueDialog = (stage: "advance_h1" | "final_h2" | "interior_h3") => {
     setSelectedModules(modules.map((m) => m.id));
     setIssueDialog({ open: true, stage });
   };
@@ -77,7 +78,11 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
       if (error) throw error;
 
       // Fix 1: Record design stage transition in audit history
-      const stageKey = issueDialog.stage === "advance_h1" ? "h1_issued" : "h2_issued";
+      const stageKey = issueDialog.stage === "advance_h1"
+        ? "h1_issued"
+        : issueDialog.stage === "final_h2"
+        ? "h2_issued"
+        : "h3_issued";
       await (client.from("design_stage_history") as any).insert({
         project_id: projectId,
         stage: stageKey,
@@ -85,14 +90,23 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
         reached_by_name: userName,
       });
 
-      // Notify production + Karthik (planning_engineer)
+      // Recipients vary by stage; H3 also notifies site installation team
+      const baseRoles = ["production_head", "head_operations", "managing_director", "planning_engineer"];
+      const h3Roles = ["site_installation_mgr", "site_engineer", "head_operations", "managing_director"];
+      const recipientRoles = issueDialog.stage === "interior_h3" ? h3Roles : baseRoles;
       const { data: prodProfiles } = await supabase.from("profiles")
-        .select("auth_user_id").in("role", ["production_head", "head_operations", "managing_director", "planning_engineer"] as any[]).eq("is_active", true);
+        .select("auth_user_id").in("role", recipientRoles as any[]).eq("is_active", true);
 
-      const stageLabel = issueDialog.stage === "advance_h1" ? "H1 Sign-off (Advance GFC)" : "H2 Sign-off (Final GFC)";
+      const stageLabel = issueDialog.stage === "advance_h1"
+        ? "H1 Sign-off (Advance GFC)"
+        : issueDialog.stage === "final_h2"
+        ? "H2 Sign-off (Final GFC)"
+        : "H3 Sign-off (Interior GFC)";
       const bodyMsg = issueDialog.stage === "advance_h1"
         ? `${stageLabel} issued for ${projectName} by ${userName}. Factory Stage 1 unlocked — production schedule can begin. GFC Budget upload unlocked.`
-        : `${stageLabel} issued for ${projectName} by ${userName}. MEP works unlocked — full production cleared.`;
+        : issueDialog.stage === "final_h2"
+        ? `${stageLabel} issued for ${projectName} by ${userName}. MEP works unlocked — full production cleared.`
+        : `H3 Interior GFC approved for ${projectName} by ${userName}. Interior fitout works (carpentry, flooring, tiling, ceiling, painting) can now begin on site.`;
 
       if (prodProfiles?.length) {
         await insertNotifications(
@@ -127,7 +141,7 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
 
   if (loading) return null;
 
-  const gfcStatus = h2 ? "full" : h1 ? "advance" : "none";
+  const gfcStatus = h3 ? "interior" : h2 ? "full" : h1 ? "advance" : "none";
 
   return (
     <>
@@ -138,12 +152,13 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
             <Badge
               className="text-xs"
               style={
-                gfcStatus === "full" ? { backgroundColor: "#E8F2ED", color: "#006039", border: "none" }
+                gfcStatus === "interior" ? { backgroundColor: "#E8F2ED", color: "#006039", border: "none" }
+                  : gfcStatus === "full" ? { backgroundColor: "#E8F2ED", color: "#006039", border: "none" }
                   : gfcStatus === "advance" ? { backgroundColor: "#FFF8E8", color: "#D4860A", border: "none" }
                   : { backgroundColor: "#F5F5F5", color: "#666", border: "none" }
               }
             >
-              {gfcStatus === "full" ? "Final GFC Issued" : gfcStatus === "advance" ? "Advance GFC Only" : "No GFC"}
+              {gfcStatus === "interior" ? "Interior GFC Issued" : gfcStatus === "full" ? "Final GFC Issued" : gfcStatus === "advance" ? "Advance GFC Only" : "No GFC"}
             </Badge>
           </div>
         </CardHeader>
@@ -165,12 +180,20 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
             </span>
             <ArrowRight className="h-3 w-3 shrink-0" style={{ color: "#999" }} />
             <span className="px-2 py-1 rounded" style={{ backgroundColor: h2 ? "#E8F2ED" : "#F5F5F5", color: h2 ? "#006039" : "#999" }}>
-              Full Production
+              MEP / Full Production
+            </span>
+            <ArrowRight className="h-3 w-3 shrink-0" style={{ color: "#999" }} />
+            <span className={`px-2 py-1 rounded ${h3 ? "font-bold" : ""}`} style={{ backgroundColor: h3 ? "#FFF8E8" : "#F5F5F5", color: h3 ? "#D4860A" : "#999" }}>
+              H3 — Interior GFC
+            </span>
+            <ArrowRight className="h-3 w-3 shrink-0" style={{ color: "#999" }} />
+            <span className="px-2 py-1 rounded" style={{ backgroundColor: h3 ? "#E8F2ED" : "#F5F5F5", color: h3 ? "#006039" : "#999" }}>
+              Interior Fitout
             </span>
           </div>
 
-          {/* H1 / H2 rows */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* H1 / H2 / H3 rows */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* H1 */}
             <div className="border border-border rounded-lg p-3 space-y-2">
               <div className="flex items-center justify-between">
@@ -245,6 +268,36 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
                 <p className="text-[11px]" style={{ color: "#999" }}>Issue H1 first</p>
               )}
             </div>
+
+            {/* H3 — Interior Stage GFC */}
+            <div className="border border-border rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold" style={{ fontFamily: "var(--font-heading)", color: "#1A1A1A" }}>H3 — Interior Stage Sign-off</span>
+                {h3 ? <CheckCircle2 className="h-4 w-4" style={{ color: "#006039" }} /> : <Lock className="h-4 w-4" style={{ color: "#999" }} />}
+              </div>
+              <p className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#666" }}>
+                Detailed interior drawings and schedule of finishes approved by Karan Nadig (Principal Architect) before interior fitout works begin on site.
+              </p>
+              {h3 ? (
+                <p className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#006039" }}>
+                  Issued on {format(new Date(h3.issued_at), "dd MMM yyyy")}
+                  {h3.module_group?.length > 0 && ` · ${h3.module_group.length} modules`}
+                </p>
+              ) : h2 ? (
+                isPrincipal && (
+                  <Button
+                    size="sm"
+                    className="text-xs mt-1 w-full font-semibold"
+                    style={{ backgroundColor: "#006039", color: "white" }}
+                    onClick={() => openIssueDialog("interior_h3")}
+                  >
+                    Issue H3 Sign-off
+                  </Button>
+                )
+              ) : (
+                <p className="text-[11px]" style={{ color: "#999" }}>Issue H2 first</p>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -254,16 +307,26 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
         <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {issueDialog?.stage === "advance_h1" ? "Issue H1 Sign-off (Advance GFC)" : "Issue H2 Sign-off (Final GFC)"}
+              {issueDialog?.stage === "advance_h1"
+                ? "Issue H1 Sign-off (Advance GFC)"
+                : issueDialog?.stage === "final_h2"
+                ? "Issue H2 Sign-off (Final GFC)"
+                : "Issue H3 Sign-off (Interior GFC)"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-2 text-sm">
             <p><span className="text-muted-foreground">Project:</span> <span className="font-semibold">{projectName}</span></p>
-            <p><span className="text-muted-foreground">GFC Package:</span> {issueDialog?.stage === "advance_h1" ? "H1 — Architectural & Structural" : "H2 — MEP & Final"}</p>
+            <p><span className="text-muted-foreground">GFC Package:</span> {issueDialog?.stage === "advance_h1"
+              ? "H1 — Architectural & Structural"
+              : issueDialog?.stage === "final_h2"
+              ? "H2 — MEP & Final"
+              : "H3 — Interior Drawings & Schedule of Finishes"}</p>
             <div className="bg-[#FFF8E8] border border-[#F4D58A] rounded p-2 text-xs">
               I confirm the {issueDialog?.stage === "advance_h1"
                 ? "architectural and structural drawings are approved for production."
-                : "MEP, HVAC, material specs and client sign-off are approved for full production."}
+                : issueDialog?.stage === "final_h2"
+                ? "MEP, HVAC, material specs and client sign-off are approved for full production."
+                : "detailed interior drawings and schedule of finishes are approved for interior fitout works on site."}
             </div>
           </div>
           <p className="text-xs text-muted-foreground mt-2">Modules this sign-off applies to:</p>
@@ -290,7 +353,7 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
               style={{ backgroundColor: "#006039", color: "white" }}
             >
               {issuing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Confirm {issueDialog?.stage === "advance_h1" ? "H1" : "H2"} Sign-off
+              Confirm {issueDialog?.stage === "advance_h1" ? "H1" : issueDialog?.stage === "final_h2" ? "H2" : "H3"} Sign-off
             </Button>
           </DialogFooter>
         </DialogContent>

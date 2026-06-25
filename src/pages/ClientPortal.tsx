@@ -248,8 +248,9 @@ export default function ClientPortal() {
   const completedStages = modules.reduce((sum, m) => sum + Math.max(0, stageIndex(m.current_stage)), 0);
   const overallPct = totalStages > 0 ? Math.round((completedStages / totalStages) * 100) : 0;
 
-  const h1 = gfcRecords.find((g) => g.gfc_stage === "H1");
-  const h2 = gfcRecords.find((g) => g.gfc_stage === "H2");
+  const h1 = gfcRecords.find((g) => g.gfc_stage === "H1" || g.gfc_stage === "advance_h1");
+  const h2 = gfcRecords.find((g) => g.gfc_stage === "H2" || g.gfc_stage === "final_h2");
+  const h3 = gfcRecords.find((g) => g.gfc_stage === "H3" || g.gfc_stage === "interior_h3");
   const fmtDate = (d: string | null) => d ? format(new Date(d), "dd/MM/yyyy") : null;
 
   const pendingDrawings = drawings.filter((d) => d.approval_status === "pending" && !d.client_approved_at);
@@ -614,6 +615,7 @@ export default function ClientPortal() {
                 <div className="grid grid-cols-2 gap-4">
                   <GFCMilestone label="H1 — Advance GFC" record={h1} />
                   <GFCMilestone label="H2 — Final GFC" record={h2} />
+                  <GFCMilestone label="H3 — Interior GFC" record={h3} />
                 </div>
 
                 {approvedDrawings.length > 0 && (
