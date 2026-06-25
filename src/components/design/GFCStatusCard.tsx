@@ -78,7 +78,11 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
       if (error) throw error;
 
       // Fix 1: Record design stage transition in audit history
-      const stageKey = issueDialog.stage === "advance_h1" ? "h1_issued" : "h2_issued";
+      const stageKey = issueDialog.stage === "advance_h1"
+        ? "h1_issued"
+        : issueDialog.stage === "final_h2"
+        ? "h2_issued"
+        : "h3_issued";
       await (client.from("design_stage_history") as any).insert({
         project_id: projectId,
         stage: stageKey,
@@ -86,14 +90,23 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
         reached_by_name: userName,
       });
 
-      // Notify production + Karthik (planning_engineer)
+      // Recipients vary by stage; H3 also notifies site installation team
+      const baseRoles = ["production_head", "head_operations", "managing_director", "planning_engineer"];
+      const h3Roles = ["site_installation_mgr", "site_engineer", "head_operations", "managing_director"];
+      const recipientRoles = issueDialog.stage === "interior_h3" ? h3Roles : baseRoles;
       const { data: prodProfiles } = await supabase.from("profiles")
-        .select("auth_user_id").in("role", ["production_head", "head_operations", "managing_director", "planning_engineer"] as any[]).eq("is_active", true);
+        .select("auth_user_id").in("role", recipientRoles as any[]).eq("is_active", true);
 
-      const stageLabel = issueDialog.stage === "advance_h1" ? "H1 Sign-off (Advance GFC)" : "H2 Sign-off (Final GFC)";
+      const stageLabel = issueDialog.stage === "advance_h1"
+        ? "H1 Sign-off (Advance GFC)"
+        : issueDialog.stage === "final_h2"
+        ? "H2 Sign-off (Final GFC)"
+        : "H3 Sign-off (Interior GFC)";
       const bodyMsg = issueDialog.stage === "advance_h1"
         ? `${stageLabel} issued for ${projectName} by ${userName}. Factory Stage 1 unlocked — production schedule can begin. GFC Budget upload unlocked.`
-        : `${stageLabel} issued for ${projectName} by ${userName}. MEP works unlocked — full production cleared.`;
+        : issueDialog.stage === "final_h2"
+        ? `${stageLabel} issued for ${projectName} by ${userName}. MEP works unlocked — full production cleared.`
+        : `H3 Interior GFC approved for ${projectName} by ${userName}. Interior fitout works (carpentry, flooring, tiling, ceiling, painting) can now begin on site.`;
 
       if (prodProfiles?.length) {
         await insertNotifications(
