@@ -434,14 +434,34 @@ export function CheckInButton({ userRole }: Props) {
           )}
 
           {step === "confirm" && (() => {
-            const isUnmatched = (locationType === "factory" || locationType === "site") && !gpsVerified && !gpsNotConfigured && !gpsDisabled;
+            const gpsApplies = locationType === "factory" || locationType === "site" || (locationType === "office" && subType === "office");
+            const isUnmatched = gpsApplies && !gpsVerified && !gpsLowAccuracy && !gpsNotConfigured && !gpsDisabled;
             const noteValid = !isUnmatched || locationNote.trim().length >= 10;
             const locLabel = locationType === "factory" ? "Factory" : locationType === "site" ? "Site" : "Office";
+            const gpsLabel = gpsDisabled
+              ? "Manual"
+              : gpsVerified
+                ? "Verified ✓"
+                : gpsLowAccuracy
+                  ? "Low accuracy — manual"
+                  : "Not verified";
+            const gpsColor = gpsDisabled ? "#666" : gpsVerified ? "#006039" : gpsLowAccuracy ? "#D4860A" : "#D4860A";
             return (
             <div className="space-y-4">
               {gpsDisabled && (
                 <div className="rounded-md p-3 text-sm font-inter" style={{ backgroundColor: "#F7F7F7", color: "#666" }}>
                   Location: {locLabel} — GPS verification not enabled
+                </div>
+              )}
+              {gpsApplies && gpsDistance != null && !gpsDisabled && (
+                <div className="rounded-md p-3 text-sm font-inter" style={{ backgroundColor: "#F7F7F7", color: "#1A1A1A" }}>
+                  📍 You are <strong>{gpsDistance} metres</strong> from {locLabel.toLowerCase()}
+                  {gpsAccuracy != null && <span style={{ color: "#666" }}> · GPS accuracy ±{Math.round(gpsAccuracy)}m</span>}
+                </div>
+              )}
+              {gpsLowAccuracy && (
+                <div className="rounded-md p-3 text-sm font-inter" style={{ backgroundColor: "#FFF3E0", color: "#D4860A" }}>
+                  ⚠ GPS signal is weak (±{Math.round(gpsAccuracy ?? 0)}m). Checking in manually — location not verified by GPS.
                 </div>
               )}
               {isUnmatched && (
@@ -464,7 +484,7 @@ export function CheckInButton({ userRole }: Props) {
                   </div>
                 </>
               )}
-              {gpsWarning && !gpsNotConfigured && !gpsDisabled && !isUnmatched && (
+              {gpsWarning && !gpsNotConfigured && !gpsDisabled && !isUnmatched && !gpsLowAccuracy && (
                 <div className="rounded-md p-3 text-sm" style={{ backgroundColor: "#FFF3E0", color: "#D4860A" }}>
                   ⚠ You appear to be outside the expected area. You can still check in.
                 </div>
@@ -473,7 +493,7 @@ export function CheckInButton({ userRole }: Props) {
                 <div className="flex justify-between"><span style={{ color: "#666" }}>Date</span><span style={{ color: "#1A1A1A" }}>{format(new Date(), "dd/MM/yyyy")}</span></div>
                 <div className="flex justify-between"><span style={{ color: "#666" }}>Time</span><span style={{ color: "#1A1A1A" }}>{format(new Date(), "hh:mm a")}</span></div>
                 <div className="flex justify-between"><span style={{ color: "#666" }}>Location</span><span style={{ color: "#1A1A1A" }} className="capitalize">{locationType === "office" ? subType : locationType}</span></div>
-                <div className="flex justify-between"><span style={{ color: "#666" }}>GPS</span><span style={{ color: gpsDisabled ? "#666" : gpsVerified ? "#006039" : "#D4860A" }}>{gpsDisabled ? "Manual" : gpsVerified ? "Verified ✓" : "Not verified"}</span></div>
+                <div className="flex justify-between"><span style={{ color: "#666" }}>GPS</span><span style={{ color: gpsColor }}>{gpsLabel}</span></div>
               </div>
               <Button onClick={handleCheckIn} disabled={submitting || !noteValid} className="w-full" style={{ backgroundColor: noteValid && !submitting ? "#006039" : undefined }}>
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
