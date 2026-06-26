@@ -34,6 +34,9 @@ export function CheckInButton({ userRole }: Props) {
   const [gpsWarning, setGpsWarning] = useState(false);
   const [gpsNotConfigured, setGpsNotConfigured] = useState(false);
   const [gpsDisabled, setGpsDisabled] = useState(false);
+  const [gpsDistance, setGpsDistance] = useState<number | null>(null);
+  const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
+  const [gpsLowAccuracy, setGpsLowAccuracy] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
