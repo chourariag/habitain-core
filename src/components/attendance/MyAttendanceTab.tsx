@@ -96,11 +96,36 @@ export function MyAttendanceTab({ userRole }: Props) {
           <h3 className="font-display text-sm font-semibold" style={{ color: "#1A1A1A" }}>
             {selected ? format(selected, "EEEE, dd MMM yyyy") : "Select a day"}
           </h3>
-          {recForSelected ? (
+          {recForSelected ? (() => {
+            const ci = recForSelected.check_in_time ? new Date(recForSelected.check_in_time) : null;
+            const co = recForSelected.check_out_time ? new Date(recForSelected.check_out_time) : null;
+            const isPastDay = selected ? new Date(format(selected, "yyyy-MM-dd")) < todayStart : false;
+            const isToday = selected ? format(selected, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd") : false;
+
+            let hoursLabel = "—";
+            if (co && ci) {
+              const totalMin = Math.max(0, Math.round((co.getTime() - ci.getTime()) / 60000));
+              const h = Math.floor(totalMin / 60);
+              const m = totalMin % 60;
+              hoursLabel = `${h}h ${m}m`;
+            } else if (ci && isToday) {
+              const liveH = Math.round(((Date.now() - ci.getTime()) / 3600000) * 10) / 10;
+              hoursLabel = `${liveH.toFixed(1)}h worked so far`;
+            } else if (ci && isPastDay) {
+              hoursLabel = "No check-out recorded";
+            }
+
+            const checkOutLabel = co
+              ? format(co, "hh:mm a")
+              : ci && isPastDay
+                ? "No check-out recorded"
+                : "—";
+
+            return (
             <div className="space-y-1.5 text-sm">
-              <p><span style={{ color: "#666" }}>Check-in:</span> <span className="font-mono font-semibold">{recForSelected.check_in_time ? format(new Date(recForSelected.check_in_time), "hh:mm a") : "—"}</span></p>
-              <p><span style={{ color: "#666" }}>Check-out:</span> <span className="font-mono font-semibold">{recForSelected.check_out_time ? format(new Date(recForSelected.check_out_time), "hh:mm a") : "—"}</span></p>
-              <p><span style={{ color: "#666" }}>Hours:</span> <span className="font-mono font-semibold">{recForSelected.hours_worked?.toFixed(1) ?? "—"}h</span></p>
+              <p><span style={{ color: "#666" }}>Check-in:</span> <span className="font-mono font-semibold">{ci ? format(ci, "hh:mm a") : "—"}</span></p>
+              <p><span style={{ color: "#666" }}>Check-out:</span> <span className="font-mono font-semibold">{checkOutLabel}</span></p>
+              <p><span style={{ color: "#666" }}>Hours:</span> <span className="font-mono font-semibold">{hoursLabel}</span></p>
               <p><span style={{ color: "#666" }}>Location:</span> <span className="capitalize">{recForSelected.location_type ?? "—"}</span></p>
               {recForSelected.gps_lat && (
                 <p className="flex items-center gap-1 text-xs" style={{ color: "#666" }}>
@@ -111,7 +136,8 @@ export function MyAttendanceTab({ userRole }: Props) {
               )}
               {recForSelected.location_note && <p className="text-xs italic" style={{ color: "#666" }}>"{recForSelected.location_note}"</p>}
             </div>
-          ) : (
+            );
+          })() : (
             <p className="text-sm" style={{ color: "#999" }}>No attendance record for this day.</p>
           )}
         </div>
