@@ -286,6 +286,9 @@ export function CheckInButton({ userRole }: Props) {
     setGpsWarning(false);
     setGpsNotConfigured(false);
     setGpsDisabled(false);
+    setGpsDistance(null);
+    setGpsAccuracy(null);
+    setGpsLowAccuracy(false);
     setLocationNote("");
   };
 
