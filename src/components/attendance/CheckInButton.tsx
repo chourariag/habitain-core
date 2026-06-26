@@ -85,17 +85,25 @@ export function CheckInButton({ userRole }: Props) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
+  const MIN_RADIUS_METERS = 300;
+  const LOW_ACCURACY_THRESHOLD = 100;
+
   const handleSelectType = async (type: string) => {
     setLocationType(type);
     setGpsNotConfigured(false);
     setGpsDisabled(false);
-    if (type === "office") {
+    setGpsDistance(null);
+    setGpsAccuracy(null);
+    setGpsLowAccuracy(false);
+
+    // Office "remote" sub-type → no GPS needed
+    if (type === "office" && subType === "remote") {
       setStep("confirm");
       return;
     }
 
-    if (type === "factory" || type === "site") {
-      let refLat = 0, refLng = 0, radius = 200, enabled = true;
+    if (type === "factory" || type === "site" || type === "office") {
+      let refLat = 0, refLng = 0, radius = MIN_RADIUS_METERS, enabled = true;
       try {
         if (type === "factory") {
           const { data: settings } = await supabase.from("app_settings").select("key, value").in("key", ["factory_lat", "factory_lng", "factory_radius", "factory_gps_enabled"]);
@@ -105,7 +113,21 @@ export function CheckInButton({ userRole }: Props) {
           enabled = settings?.find((s: any) => s.key === "factory_gps_enabled")?.value === "true";
           refLat = parseFloat(latVal || "0");
           refLng = parseFloat(lngVal || "0");
-          radius = parseInt(radVal || "200") || 200;
+          radius = Math.max(parseInt(radVal || "0") || 0, MIN_RADIUS_METERS);
+          if (!enabled || !refLat || !refLng) {
+            setGpsDisabled(true);
+            setStep("confirm");
+            return;
+          }
+        } else if (type === "office") {
+          const { data: settings } = await supabase.from("app_settings").select("key, value").in("key", ["office_lat", "office_lng", "office_radius", "office_gps_enabled"]);
+          const latVal = settings?.find((s: any) => s.key === "office_lat")?.value;
+          const lngVal = settings?.find((s: any) => s.key === "office_lng")?.value;
+          const radVal = settings?.find((s: any) => s.key === "office_radius")?.value;
+          enabled = settings?.find((s: any) => s.key === "office_gps_enabled")?.value === "true";
+          refLat = parseFloat(latVal || "0");
+          refLng = parseFloat(lngVal || "0");
+          radius = Math.max(parseInt(radVal || "0") || 0, MIN_RADIUS_METERS);
           if (!enabled || !refLat || !refLng) {
             setGpsDisabled(true);
             setStep("confirm");
@@ -116,7 +138,7 @@ export function CheckInButton({ userRole }: Props) {
           if (proj) {
             refLat = parseFloat(String((proj as any).site_lat || "0"));
             refLng = parseFloat(String((proj as any).site_lng || "0"));
-            radius = parseInt(String((proj as any).site_radius || "300")) || 300;
+            radius = Math.max(parseInt(String((proj as any).site_radius || "0")) || 0, MIN_RADIUS_METERS);
           }
           if (!refLat || !refLng) {
             setGpsDisabled(true);
@@ -128,11 +150,30 @@ export function CheckInButton({ userRole }: Props) {
         const pos = await getGPS();
         setGpsLat(pos.coords.latitude);
         setGpsLng(pos.coords.longitude);
+        const accuracy = pos.coords.accuracy ?? null;
+        setGpsAccuracy(accuracy);
 
         if (refLat && refLng) {
           const dist = haversineDistance(pos.coords.latitude, pos.coords.longitude, refLat, refLng);
-          setGpsVerified(dist <= radius);
-          setGpsWarning(dist > radius);
+          const distRounded = Math.round(dist);
+          setGpsDistance(distRounded);
+          // Debug log so we can verify the calculation
+          // eslint-disable-next-line no-console
+          console.log(`[CheckIn] ${type} — distance=${distRounded}m, radius=${radius}m, accuracy=${accuracy}m`, { user: { lat: pos.coords.latitude, lng: pos.coords.longitude }, ref: { lat: refLat, lng: refLng } });
+
+          const lowAcc = accuracy != null && accuracy > LOW_ACCURACY_THRESHOLD;
+          if (lowAcc) {
+            // Weak GPS signal — allow check-in as "manual" / low accuracy
+            setGpsLowAccuracy(true);
+            setGpsVerified(false);
+            setGpsWarning(false);
+          } else if (dist <= radius) {
+            setGpsVerified(true);
+            setGpsWarning(false);
+          } else {
+            setGpsVerified(false);
+            setGpsWarning(true);
+          }
         } else {
           setGpsVerified(false);
           setGpsWarning(true);
@@ -145,6 +186,7 @@ export function CheckInButton({ userRole }: Props) {
       }
     }
   };
+
 
   const handleCheckIn = async () => {
     if (!user) return;
