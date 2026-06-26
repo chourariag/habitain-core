@@ -427,7 +427,7 @@ export function CheckInButton({ userRole }: Props) {
               {subType === "remote" && (
                 <Input placeholder="Brief reason (max 100 chars)" maxLength={100} value={remoteReason} onChange={(e) => setRemoteReason(e.target.value)} className="font-inter text-[15px]" />
               )}
-              <Button onClick={() => setStep("confirm")} className="w-full" style={{ backgroundColor: "#006039" }}>
+              <Button onClick={() => { if (subType === "remote") { setStep("confirm"); } else { handleSelectType("office"); } }} className="w-full" style={{ backgroundColor: "#006039" }}>
                 Continue
               </Button>
             </div>
