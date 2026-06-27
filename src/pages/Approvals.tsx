@@ -14,6 +14,7 @@ import { listApprovalRequests, type ApprovalRequest } from "@/lib/approval-reque
 import { approveRequest, rejectRequest, APPROVAL_TYPE_META, summarizeRequest } from "@/lib/approval-actions";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import KickoffMeetingCard from "@/components/projects/KickoffMeetingCard";
 
 const APPROVER_ROLES = ["managing_director", "super_admin", "sales_director", "principal_architect"];
 
