@@ -629,7 +629,9 @@ export function TallyPOUploadTab() {
       approved: { label: "Approved", bg: "#E8F2ED", color: "#006039" },
       pending_approval: { label: "Pending Approval", bg: "#FFF3CD", color: "#D4860A" },
       rejected: { label: "Rejected", bg: "#FDE8E8", color: "#F40009" },
+      vendor_mismatch: { label: "Vendor Mismatch", bg: "#FDE8E8", color: "#F40009" },
     };
+
     const s = map[status] ?? { label: status, bg: "#F7F7F7", color: "#666" };
     return <Badge style={{ backgroundColor: s.bg, color: s.color, border: "none" }}>{s.label}</Badge>;
   };
