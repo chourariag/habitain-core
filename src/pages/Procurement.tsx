@@ -737,6 +737,10 @@ export default function Procurement() {
           <ContractsRegisterTab userRole={userRole} projects={projects} />
         </TabsContent>
 
+        <TabsContent value="quotations">
+          <QuotationsTab userRole={userRole} projects={projects} />
+        </TabsContent>
+
         {/* Subcontractors tab moved to Production → People */}
       </Tabs>
 
