@@ -233,6 +233,7 @@ function SiteHubContent() {
             <TabsTrigger value="labour" className="gap-1.5"><Users className="h-4 w-4" /> People</TabsTrigger>
             <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Installation Sequence</TabsTrigger>
             <TabsTrigger value="safety" className="gap-1.5"><HardHat className="h-4 w-4" /> Safety</TabsTrigger>
+            <TabsTrigger value="client-visits" className="gap-1.5"><Handshake className="h-4 w-4" /> Client Visits</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
