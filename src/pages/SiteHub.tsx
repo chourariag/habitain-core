@@ -325,6 +325,7 @@ function SiteHubContent() {
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-4">
+          <SiteScheduleMilestonesCard projectId={selectedProjectId!} />
           <SiteScheduleTab
             projectId={selectedProjectId!}
             projectName={selectedProject?.name ?? undefined}
