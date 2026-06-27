@@ -303,6 +303,7 @@ export default function Procurement() {
             <TabsTrigger value="requests" className="gap-1.5"><AlertTriangle className="h-4 w-4" /> Requests</TabsTrigger>
             <TabsTrigger value="purchase-orders" className="gap-1.5"><FileText className="h-4 w-4" /> Purchase Orders</TabsTrigger>
             <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>
+            <TabsTrigger value="quotations" className="gap-1.5"><FileText className="h-4 w-4" /> Quotations</TabsTrigger>
             <TabsTrigger value="transfers" className="gap-1.5"><Truck className="h-4 w-4" /> Transfers</TabsTrigger>
             <TabsTrigger value="30-day-plan" className="gap-1.5"><Calendar className="h-4 w-4" /> 30-Day Plan</TabsTrigger>
             <TabsTrigger value="equipments" className="gap-1.5"><Hammer className="h-4 w-4" /> Equipments</TabsTrigger>
