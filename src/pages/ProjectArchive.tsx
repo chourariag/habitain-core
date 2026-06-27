@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Download, FileArchive, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { StorageManagementSection } from "@/components/StorageManagementSection";
 
 type AnyRow = Record<string, any>;
 
