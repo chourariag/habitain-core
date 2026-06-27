@@ -52,11 +52,13 @@ interface UploadResult {
   pendingApproval: number;
   linked: number;
   unlinked: { poNumber: string; extractedProject: string }[];
+  vendorMismatches: { poNumber: string; vendorOnPo: string; approvedVendor: string; lineItem: string }[];
   totalPOValue: number;
   totalWOValue: number;
 }
 
-interface ProjectInfo { id: string; name: string }
+interface ProjectInfo { id: string; name: string; client_name?: string | null }
+
 
 function parseExcelDate(v: any): string | null {
   if (!v) return null;
@@ -95,15 +97,17 @@ function extractProjectFromNarration(narration: string): string | null {
 
 function matchProject(extractedName: string, projects: ProjectInfo[]): ProjectInfo | null {
   if (!extractedName) return null;
-  const lower = extractedName.toLowerCase();
-  // Exact substring match
+  const lower = extractedName.toLowerCase().trim();
+  if (!lower) return null;
   for (const p of projects) {
-    if (p.name.toLowerCase().includes(lower) || lower.includes(p.name.toLowerCase())) {
-      return p;
-    }
+    const pname = (p.name || "").toLowerCase();
+    const cname = (p.client_name || "").toLowerCase();
+    if (pname && (pname.includes(lower) || lower.includes(pname))) return p;
+    if (cname && (cname.includes(lower) || lower.includes(cname))) return p;
   }
   return null;
 }
+
 
 function isWorkOrder(vchNo: string): boolean {
   return /^\d+$/.test(vchNo.trim());
@@ -145,8 +149,9 @@ export function TallyPOUploadTab() {
     }
     const [{ data: poData }, { data: projData }] = await Promise.all([
       supabase.from("purchase_orders").select("*").eq("source", "tally_upload").eq("is_archived", false).order("created_at", { ascending: false }),
-      supabase.from("projects").select("id, name"),
+      supabase.from("projects").select("id, name, client_name"),
     ]);
+
     setPos((poData as any as TallyPO[]) ?? []);
     setAllProjects((projData as ProjectInfo[]) ?? []);
     setLoading(false);
@@ -180,10 +185,64 @@ export function TallyPOUploadTab() {
     });
   }, [pos, filterProject, filterVendor, filterStatus, filterType, filterDateFrom, filterDateTo, filterAbove50k]);
 
+  // FIX 1 + 3 — Notify approvers based on PO threshold and any vendor mismatches
+  const notifyApprovers = async (inserted: any[], mismatches: { poNumber: string; vendorOnPo: string; approvedVendor: string; lineItem: string }[]) => {
+    try {
+      const lowPos = inserted.filter((p) => p.po_type === "purchase_order" && (p.total_amount ?? 0) <= 100000 && (p.total_amount ?? 0) > 0);
+      const highPos = inserted.filter((p) => p.po_type === "purchase_order" && (p.total_amount ?? 0) > 100000);
+      const rolesToNotify = new Set<string>();
+      if (lowPos.length) { rolesToNotify.add("planning_head"); rolesToNotify.add("head_of_projects"); }
+      if (highPos.length) { rolesToNotify.add("managing_director"); rolesToNotify.add("finance_director"); rolesToNotify.add("principal_architect"); }
+      if (mismatches.length) rolesToNotify.add("planning_head");
+      if (rolesToNotify.size === 0) return;
+
+      const { data: recipients } = await supabase
+        .from("profiles")
+        .select("auth_user_id")
+        .in("role", Array.from(rolesToNotify) as any)
+        .eq("is_active", true);
+
+      const notes: any[] = [];
+      for (const r of recipients ?? []) {
+        if (!r.auth_user_id) continue;
+        if (lowPos.length) {
+          notes.push({
+            recipient_id: r.auth_user_id, category: "approval", priority: "normal",
+            title: `${lowPos.length} PO(s) ≤ ₹1L pending approval`,
+            message: `Tally upload added ${lowPos.length} purchase order(s) under ₹1 Lakh for your review.`,
+            navigate_to: "/procurement?tab=tally-pos",
+          });
+        }
+        if (highPos.length) {
+          notes.push({
+            recipient_id: r.auth_user_id, category: "approval", priority: "high",
+            title: `${highPos.length} PO(s) > ₹1L pending approval`,
+            message: `Tally upload added ${highPos.length} purchase order(s) above ₹1 Lakh requiring director approval.`,
+            navigate_to: "/procurement?tab=tally-pos",
+          });
+        }
+        if (mismatches.length) {
+          notes.push({
+            recipient_id: r.auth_user_id, category: "anomaly", priority: "high",
+            title: `${mismatches.length} vendor mismatch(es) detected`,
+            message: mismatches.slice(0, 5).map((m) =>
+              `PO ${m.poNumber} — vendor '${m.vendorOnPo}' does not match approved vendor '${m.approvedVendor}' for ${m.lineItem}.`
+            ).join(" "),
+            navigate_to: "/procurement?tab=tally-pos&status=vendor_mismatch",
+          });
+        }
+      }
+      if (notes.length) await (supabase.from("notifications") as any).insert(notes);
+    } catch (e) {
+      console.warn("notifyApprovers failed", e);
+    }
+  };
+
   const downloadTemplate = () => {
     const t = TEMPLATES.tallyPO;
     downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
+
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -228,7 +287,7 @@ export function TallyPOUploadTab() {
       const dataStart = headerIdx + 1;
 
       // Fetch projects for matching
-      const { data: projList } = await supabase.from("projects").select("id, name");
+      const { data: projList } = await supabase.from("projects").select("id, name, client_name");
       const projectsList: ProjectInfo[] = (projList as ProjectInfo[]) || [];
 
       const existingNums = new Set(pos.map((p) => p.po_number));
@@ -237,8 +296,9 @@ export function TallyPOUploadTab() {
 
       const result: UploadResult = {
         totalPOs: 0, totalWOs: 0, imported: 0, duplicates: 0, failed: 0,
-        pendingApproval: 0, linked: 0, unlinked: [], totalPOValue: 0, totalWOValue: 0,
+        pendingApproval: 0, linked: 0, unlinked: [], vendorMismatches: [], totalPOValue: 0, totalWOValue: 0,
       };
+
 
       const toInsert: any[] = [];
       let i = dataStart;
@@ -288,7 +348,9 @@ export function TallyPOUploadTab() {
         }
 
         const totalAmt = orderAmount;
-        const status = poType === "purchase_order" && totalAmt > 50000 ? "pending_approval" : "approved";
+        const APPROVAL_THRESHOLD = 100000;
+        const status = poType === "purchase_order" && totalAmt > APPROVAL_THRESHOLD ? "pending_approval" : "approved";
+
         if (status === "pending_approval") result.pendingApproval++;
 
         if (poType === "work_order") {
@@ -341,11 +403,76 @@ export function TallyPOUploadTab() {
         result.imported = toInsert.length;
       }
 
+      // FIX 3 — Vendor mismatch check against quotation_approvals
+      const linkedPos = toInsert.filter((p) => p.project_id);
+      if (linkedPos.length > 0) {
+        const projectIds = Array.from(new Set(linkedPos.map((p) => p.project_id)));
+        const { data: qReqs } = await supabase
+          .from("quotation_requests")
+          .select("id, project_id, line_item_description")
+          .in("project_id", projectIds);
+        const reqIds = (qReqs ?? []).map((r: any) => r.id);
+        let approvedMap = new Map<string, { vendor: string; lineItem: string; project_id: string }>();
+        if (reqIds.length > 0) {
+          const { data: approvals } = await supabase
+            .from("quotation_approvals")
+            .select("quotation_request_id, approved_vendor_quote_id")
+            .in("quotation_request_id", reqIds);
+          const vqIds = (approvals ?? []).map((a: any) => a.approved_vendor_quote_id).filter(Boolean);
+          const { data: vqs } = vqIds.length > 0
+            ? await supabase.from("vendor_quotes").select("id, vendor_name").in("id", vqIds)
+            : { data: [] as any[] };
+          const vqMap = new Map<string, string>((vqs ?? []).map((v: any) => [v.id, v.vendor_name]));
+          for (const a of approvals ?? []) {
+            const req = (qReqs ?? []).find((r: any) => r.id === a.quotation_request_id);
+            if (req) {
+              approvedMap.set(`${req.project_id}|${(req.line_item_description || "").toLowerCase().trim()}`,
+                { vendor: vqMap.get(a.approved_vendor_quote_id) || "", lineItem: req.line_item_description || "", project_id: req.project_id });
+            }
+          }
+        }
+        const mismatchUpdates: { po_number: string; project_id: string }[] = [];
+        for (const po of linkedPos) {
+          const desc = (po.item_description || po.items_summary || "").toLowerCase().trim();
+          // Try exact key match, then any approved item under this project that overlaps desc
+          let approved = approvedMap.get(`${po.project_id}|${desc}`);
+          if (!approved) {
+            for (const [key, val] of approvedMap.entries()) {
+              if (!key.startsWith(`${po.project_id}|`)) continue;
+              const li = val.lineItem.toLowerCase();
+              if (li && desc && (desc.includes(li) || li.includes(desc))) { approved = val; break; }
+            }
+          }
+          if (approved && approved.vendor && approved.vendor.toLowerCase() !== (po.vendor_name || "").toLowerCase()) {
+            result.vendorMismatches.push({
+              poNumber: po.po_number || "—",
+              vendorOnPo: po.vendor_name,
+              approvedVendor: approved.vendor,
+              lineItem: approved.lineItem,
+            });
+            if (po.po_number) mismatchUpdates.push({ po_number: po.po_number, project_id: po.project_id });
+          }
+        }
+        if (mismatchUpdates.length > 0) {
+          const { client } = await getAuthedClient();
+          for (const m of mismatchUpdates) {
+            await (client.from("purchase_orders") as any)
+              .update({ status: "vendor_mismatch" })
+              .eq("po_number", m.po_number)
+              .eq("source", "tally_upload");
+          }
+        }
+      }
+
+      // FIX 1 — Approval routing notifications
+      await notifyApprovers(toInsert, result.vendorMismatches);
+
       setUploadResult(result);
       toast.success(`${result.imported} records imported (${result.totalPOs} POs, ${result.totalWOs} Work Orders)`);
       fetchData();
       // Trigger Agent 10 — PO Anomaly Detector
       supabase.functions.invoke("ai-agents", { body: { agent: "po_anomaly" } }).catch(() => {});
+
     } catch (err: any) {
       toast.error("Upload failed: " + err.message);
     } finally {
@@ -370,7 +497,7 @@ export function TallyPOUploadTab() {
 
       const result: UploadResult = {
         totalPOs: 0, totalWOs: 0, imported: 0, duplicates: 0, failed: 0,
-        pendingApproval: 0, linked: 0, unlinked: [], totalPOValue: 0, totalWOValue: 0,
+        pendingApproval: 0, linked: 0, unlinked: [], vendorMismatches: [], totalPOValue: 0, totalWOValue: 0,
       };
       const toInsert: any[] = [];
 
@@ -385,7 +512,8 @@ export function TallyPOUploadTab() {
         if (!parsedDate) { result.failed++; continue; }
 
         const poType = isWorkOrder(poNum) ? "work_order" : "purchase_order";
-        const status = poType === "purchase_order" && totalAmt > 50000 ? "pending_approval" : "approved";
+        const status = poType === "purchase_order" && totalAmt > 100000 ? "pending_approval" : "approved";
+
         if (status === "pending_approval") result.pendingApproval++;
         if (poType === "work_order") { result.totalWOs++; result.totalWOValue += totalAmt; }
         else { result.totalPOs++; result.totalPOValue += totalAmt; }
@@ -501,7 +629,9 @@ export function TallyPOUploadTab() {
       approved: { label: "Approved", bg: "#E8F2ED", color: "#006039" },
       pending_approval: { label: "Pending Approval", bg: "#FFF3CD", color: "#D4860A" },
       rejected: { label: "Rejected", bg: "#FDE8E8", color: "#F40009" },
+      vendor_mismatch: { label: "Vendor Mismatch", bg: "#FDE8E8", color: "#F40009" },
     };
+
     const s = map[status] ?? { label: status, bg: "#F7F7F7", color: "#666" };
     return <Badge style={{ backgroundColor: s.bg, color: s.color, border: "none" }}>{s.label}</Badge>;
   };
@@ -573,7 +703,7 @@ export function TallyPOUploadTab() {
                   <span>POs linked to projects: <strong style={{ color: "#006039" }}>{uploadResult.linked}</strong></span>
                   <span>Total PO Value: <strong className="font-mono">₹{uploadResult.totalPOValue.toLocaleString("en-IN")}</strong></span>
                   <span>Total WO Value: <strong className="font-mono">₹{uploadResult.totalWOValue.toLocaleString("en-IN")}</strong></span>
-                  {uploadResult.pendingApproval > 0 && <span style={{ color: "#D4860A" }}>{uploadResult.pendingApproval} pending approval (above ₹50K)</span>}
+                  {uploadResult.pendingApproval > 0 && <span style={{ color: "#D4860A" }}>{uploadResult.pendingApproval} pending approval (above ₹1L)</span>}
                 </div>
                 {uploadResult.unlinked.length > 0 && (
                   <Collapsible>
@@ -583,12 +713,27 @@ export function TallyPOUploadTab() {
                     <CollapsibleContent>
                       <div className="pl-4 pt-1 space-y-0.5 max-h-32 overflow-y-auto">
                         {uploadResult.unlinked.map((u, i) => (
-                          <p key={i} className="text-[10px]" style={{ color: "#999" }}>{u.poNumber}: "{u.extractedProject}"</p>
+                          <p key={i} className="text-[10px]" style={{ color: "#999" }}>Unlinked PO {u.poNumber} — project '{u.extractedProject}' not found in HStack</p>
                         ))}
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
                 )}
+                {uploadResult.vendorMismatches.length > 0 && (
+                  <Collapsible>
+                    <CollapsibleTrigger className="text-xs cursor-pointer flex items-center gap-1" style={{ color: "#F40009" }}>
+                      <ChevronRight className="h-3 w-3" /> {uploadResult.vendorMismatches.length} vendor mismatch(es) — review required
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="pl-4 pt-1 space-y-0.5 max-h-32 overflow-y-auto">
+                        {uploadResult.vendorMismatches.map((m, i) => (
+                          <p key={i} className="text-[10px]" style={{ color: "#999" }}>PO {m.poNumber} — vendor '{m.vendorOnPo}' does not match approved vendor '{m.approvedVendor}' for {m.lineItem}. Review required.</p>
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
               </div>
             )}
           </CardContent>
