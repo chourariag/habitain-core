@@ -347,6 +347,7 @@ export default function ClientPortal() {
                 <Badge variant="destructive" className="ml-1.5 h-5 w-5 p-0 flex items-center justify-center text-[10px] rounded-full">{totalActions}</Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="design">Design Schedule</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             {isHandedOver && <TabsTrigger value="post-handover">Post-Handover</TabsTrigger>}
