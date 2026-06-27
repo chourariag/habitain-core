@@ -185,7 +185,60 @@ export function TallyPOUploadTab() {
     });
   }, [pos, filterProject, filterVendor, filterStatus, filterType, filterDateFrom, filterDateTo, filterAbove50k]);
 
-  const downloadTemplate = () => {
+  // FIX 1 + 3 — Notify approvers based on PO threshold and any vendor mismatches
+  const notifyApprovers = async (inserted: any[], mismatches: { poNumber: string; vendorOnPo: string; approvedVendor: string; lineItem: string }[]) => {
+    try {
+      const lowPos = inserted.filter((p) => p.po_type === "purchase_order" && (p.total_amount ?? 0) <= 100000 && (p.total_amount ?? 0) > 0);
+      const highPos = inserted.filter((p) => p.po_type === "purchase_order" && (p.total_amount ?? 0) > 100000);
+      const rolesToNotify = new Set<string>();
+      if (lowPos.length) { rolesToNotify.add("planning_head"); rolesToNotify.add("head_of_projects"); }
+      if (highPos.length) { rolesToNotify.add("managing_director"); rolesToNotify.add("finance_director"); rolesToNotify.add("principal_architect"); }
+      if (mismatches.length) rolesToNotify.add("planning_head");
+      if (rolesToNotify.size === 0) return;
+
+      const { data: recipients } = await supabase
+        .from("profiles")
+        .select("auth_user_id")
+        .in("role", Array.from(rolesToNotify) as any)
+        .eq("is_active", true);
+
+      const notes: any[] = [];
+      for (const r of recipients ?? []) {
+        if (!r.auth_user_id) continue;
+        if (lowPos.length) {
+          notes.push({
+            recipient_id: r.auth_user_id, category: "approval", priority: "normal",
+            title: `${lowPos.length} PO(s) ≤ ₹1L pending approval`,
+            message: `Tally upload added ${lowPos.length} purchase order(s) under ₹1 Lakh for your review.`,
+            navigate_to: "/procurement?tab=tally-pos",
+          });
+        }
+        if (highPos.length) {
+          notes.push({
+            recipient_id: r.auth_user_id, category: "approval", priority: "high",
+            title: `${highPos.length} PO(s) > ₹1L pending approval`,
+            message: `Tally upload added ${highPos.length} purchase order(s) above ₹1 Lakh requiring director approval.`,
+            navigate_to: "/procurement?tab=tally-pos",
+          });
+        }
+        if (mismatches.length) {
+          notes.push({
+            recipient_id: r.auth_user_id, category: "anomaly", priority: "high",
+            title: `${mismatches.length} vendor mismatch(es) detected`,
+            message: mismatches.slice(0, 5).map((m) =>
+              `PO ${m.poNumber} — vendor '${m.vendorOnPo}' does not match approved vendor '${m.approvedVendor}' for ${m.lineItem}.`
+            ).join(" "),
+            navigate_to: "/procurement?tab=tally-pos&status=vendor_mismatch",
+          });
+        }
+      }
+      if (notes.length) await (supabase.from("notifications") as any).insert(notes);
+    } catch (e) {
+      console.warn("notifyApprovers failed", e);
+    }
+  };
+
+
     const t = TEMPLATES.tallyPO;
     downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
