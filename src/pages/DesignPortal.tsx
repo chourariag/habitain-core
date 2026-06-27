@@ -624,10 +624,8 @@ export default function DesignPortal() {
     if (!existing) {
       const { client } = await getAuthedClient();
       await (client.from("project_design_files") as any).insert({ project_id: projId, created_by: userId });
-      const stageInserts = DESIGN_STAGES_ORDER.map((name, i) => ({
-        project_id: projId, stage_name: name, stage_order: i + 1, status: "not_started",
-      }));
-      await (client.from("design_stages") as any).insert(stageInserts);
+      // Seed full 13-stage lifecycle via SECURITY DEFINER RPC (auto-calculates planned dates)
+      await (supabase as any).rpc("initialize_design_stages_v13", { _project_id: projId, _start: new Date().toISOString().slice(0, 10) });
       await fetchData();
     }
     // Fetch modules for this project (for GFC)
