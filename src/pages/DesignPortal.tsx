@@ -1397,39 +1397,138 @@ export default function DesignPortal() {
               />
 
               <Card>
-                <CardHeader><CardTitle className="text-lg">B — Design Stages & Client Approvals</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  {selectedStages.map((stage: any) => (
-                    <div key={stage.id} className="border border-border rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <h4 className="font-semibold text-sm">{stage.stage_name}</h4>
-                        <Badge variant="outline" style={stageStatusStyle(stage.status)}>{stageStatusLabel(stage.status)}</Badge>
-                      </div>
-                      {canUpload && (
-                        <div className="flex flex-wrap gap-2">
-                          {STAGE_STATUSES.filter((s) => s !== stage.status).map((s) => (
-                            <Button key={s} size="sm" variant="outline" className="text-xs"
-                              onClick={() => {
-                                if (s === "client_approved") {
-                                  const hasDrawings = drawings.some((d: any) => d.project_id === selectedProjectId && d.status === "active");
-                                  if (!hasDrawings) { toast.error("Upload at least one drawing before approving"); return; }
-                                }
-                                updateStage(stage.id, { status: s });
-                              }}>
-                              {stageStatusLabel(s)}
-                            </Button>
-                          ))}
-                        </div>
-                      )}
-                      {stage.status === "revision_requested" && stage.revision_comments && (
-                        <div className="bg-muted/50 rounded p-2">
-                          <p className="text-xs" style={{ color: "#666666" }}>Client Comments: {stage.revision_comments}</p>
-                        </div>
-                      )}
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <CardTitle className="text-lg">B — Design Schedule (13-stage lifecycle)</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-muted-foreground">Project Size</Label>
+                      <Select
+                        value={selectedProject?.project_size ?? "medium"}
+                        onValueChange={(v) => selectedProjectId && changeProjectSize(selectedProjectId, v as any)}
+                        disabled={!canUpload}
+                      >
+                        <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="small">Small</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="large">Large</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  ))}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {(["pre_deal", "post_deal"] as const).map((grp) => {
+                    const groupStages = selectedStages
+                      .filter((s: any) => (s.stage_group ?? (s.stage_order <= 6 ? "pre_deal" : "post_deal")) === grp)
+                      .sort((a: any, b: any) => (a.stage_order ?? 0) - (b.stage_order ?? 0));
+                    if (groupStages.length === 0) return null;
+                    const isPre = grp === "pre_deal";
+                    const borderColor = isPre ? "#D4860A" : "#006039";
+                    return (
+                      <div key={grp} className="space-y-3">
+                        <h3 className="text-sm font-semibold" style={{ color: borderColor }}>
+                          {isPre ? "PRE-DEAL STAGES (1–6)" : "POST-DEAL STAGES (7–13)"}
+                        </h3>
+                        {groupStages.map((stage: any) => {
+                          const today = new Date(); today.setHours(0, 0, 0, 0);
+                          const endDate = stage.planned_end_date ? new Date(stage.planned_end_date) : null;
+                          const diffDays = endDate ? Math.round((endDate.getTime() - today.getTime()) / 86400000) : null;
+                          const isApproved = stage.status === "client_approved";
+                          const overdue = !isApproved && diffDays !== null && diffDays < 0;
+                          const noClientApproval = NO_CLIENT_APPROVAL_STAGES.has(stage.stage_name);
+                          const canMarkComplete = isApproved || noClientApproval;
+                          return (
+                            <div key={stage.id} className="rounded-lg p-4 space-y-3 bg-card" style={{ borderLeft: `4px solid ${borderColor}`, border: "1px solid hsl(var(--border))", borderLeftWidth: 4, borderLeftColor: borderColor }}>
+                              <div className="flex items-start justify-between gap-2 flex-wrap">
+                                <div className="min-w-0">
+                                  <h4 className="font-semibold text-sm">{stage.stage_order}. {stage.stage_name}</h4>
+                                  <p className="text-xs mt-0.5" style={{ color: "#666666" }}>
+                                    Planned: {stage.planned_start_date ?? "—"} → {stage.planned_end_date ?? "—"}
+                                    {stage.actual_end_date && <> · Completed: {stage.actual_end_date}</>}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant="outline" style={stageStatusStyle(stage.status)}>{stageStatusLabel(stage.status)}</Badge>
+                                  {!isApproved && diffDays !== null && (
+                                    <Badge variant="outline" style={overdue ? { backgroundColor: "#FFF0F0", color: "#F40009" } : { backgroundColor: "#F5F5F5", color: "#666666" }}>
+                                      {overdue ? `${Math.abs(diffDays)}d overdue` : `${diffDays}d remaining`}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+
+                              {stage.deliverable_url && (
+                                <div className="flex items-center gap-2 text-xs">
+                                  <FileText className="h-3.5 w-3.5" style={{ color: "#006039" }} />
+                                  <a href={stage.deliverable_url} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#006039" }}>
+                                    View deliverable
+                                  </a>
+                                </div>
+                              )}
+
+                              {canUpload && (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  {stage.deliverable_required && (
+                                    <>
+                                      <input
+                                        type="file"
+                                        accept=".pdf,.dwg,.xls,.xlsx,.png,.jpg,.jpeg"
+                                        id={`stage-file-${stage.id}`}
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const f = e.target.files?.[0];
+                                          if (f) uploadStageDeliverable(stage, f);
+                                          e.target.value = "";
+                                        }}
+                                      />
+                                      <Button size="sm" variant="outline" className="text-xs" onClick={() => document.getElementById(`stage-file-${stage.id}`)?.click()}>
+                                        <Upload className="h-3 w-3 mr-1" />
+                                        {stage.deliverable_url ? "Replace deliverable" : "Upload deliverable"}
+                                      </Button>
+                                    </>
+                                  )}
+                                  {stage.status !== "submitted_to_client" && !isApproved && !noClientApproval && (
+                                    <Button size="sm" variant="outline" className="text-xs"
+                                      onClick={() => updateStage(stage.id, { status: "submitted_to_client" })}>
+                                      Submit to Client
+                                    </Button>
+                                  )}
+                                  {stage.status !== "revision_requested" && !isApproved && (
+                                    <Button size="sm" variant="outline" className="text-xs"
+                                      onClick={() => updateStage(stage.id, { status: "revision_requested" })}>
+                                      Mark Revision Requested
+                                    </Button>
+                                  )}
+                                  {!isApproved && canMarkComplete && (
+                                    <Button size="sm" className="text-xs" style={{ backgroundColor: "#006039", color: "#FFFFFF" }}
+                                      onClick={() => updateStage(stage.id, { status: "client_approved" })}>
+                                      <CheckCircle2 className="h-3 w-3 mr-1" /> Mark Complete
+                                    </Button>
+                                  )}
+                                  {!isApproved && !canMarkComplete && stage.status === "submitted_to_client" && (
+                                    <Button size="sm" className="text-xs" style={{ backgroundColor: "#006039", color: "#FFFFFF" }}
+                                      onClick={() => updateStage(stage.id, { status: "client_approved" })}>
+                                      <CheckCircle2 className="h-3 w-3 mr-1" /> Client Approved
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+
+                              {stage.status === "revision_requested" && stage.revision_comments && (
+                                <div className="bg-muted/50 rounded p-2">
+                                  <p className="text-xs" style={{ color: "#666666" }}>Client Comments: {stage.revision_comments}</p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
                 </CardContent>
               </Card>
+
 
               {selectedProjectId && (
                 <MasterQCChecklist
