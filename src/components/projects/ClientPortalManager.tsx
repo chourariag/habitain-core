@@ -249,6 +249,64 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
             </Button>
           </>
         )}
+
+        {/* New magic-link tokens (client_portal_tokens) */}
+        <div className="pt-3 mt-3 border-t space-y-2">
+          <p className="text-xs font-heading font-bold text-foreground">Per-Client Magic Links</p>
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              className="border rounded px-2 py-1 text-xs font-body"
+              placeholder="Client name"
+              value={newClientName}
+              onChange={(e) => setNewClientName(e.target.value)}
+            />
+            <input
+              className="border rounded px-2 py-1 text-xs font-body"
+              placeholder="Client email (optional)"
+              value={newClientEmail}
+              onChange={(e) => setNewClientEmail(e.target.value)}
+            />
+          </div>
+          <Button size="sm" onClick={generateClientPortalToken}>
+            <Link2 className="h-3.5 w-3.5 mr-1" /> Generate Client Portal Link
+          </Button>
+
+          {magicTokens.length > 0 && (
+            <ul className="space-y-2 pt-1">
+              {magicTokens.map((t) => {
+                const url = `${window.location.origin}/client/${t.token}`;
+                return (
+                  <li key={t.id} className="flex items-center gap-2 text-xs">
+                    <Badge variant={t.is_active ? "default" : "outline"} className="text-[10px]">
+                      {t.is_active ? "Active" : "Revoked"}
+                    </Badge>
+                    <span className="font-body truncate flex-1">{t.client_name || "—"}</span>
+                    <code className="bg-muted px-1.5 py-0.5 rounded font-body truncate max-w-[160px]">
+                      {url}
+                    </code>
+                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyMagicLink(t.token)}>
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                    {t.is_active && (
+                      <>
+                        <Button size="icon" variant="ghost" className="h-6 w-6"
+                          onClick={() => regenerateClientPortalToken(t.id, t.client_name, t.client_email)}>
+                          <RefreshCw className="h-3 w-3" />
+                        </Button>
+                        {canRevoke && (
+                          <Button size="icon" variant="ghost" className="h-6 w-6"
+                            onClick={() => revokeClientPortalToken(t.id)}>
+                            <X className="h-3 w-3 text-destructive" />
+                          </Button>
+                        )}
+                      </>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
