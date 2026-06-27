@@ -12,6 +12,7 @@ import Welcome from "@/pages/Welcome";
 import Dashboard from "@/pages/Dashboard";
 import Projects from "@/pages/Projects";
 import ProjectDetail from "@/pages/ProjectDetail";
+import ProjectArchive from "@/pages/ProjectArchive";
 import Production from "@/pages/Production";
 import DeliveryChecklist from "@/pages/DeliveryChecklist";
 import SiteHub from "@/pages/SiteHub";
