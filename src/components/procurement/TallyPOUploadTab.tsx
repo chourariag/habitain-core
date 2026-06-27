@@ -149,8 +149,9 @@ export function TallyPOUploadTab() {
     }
     const [{ data: poData }, { data: projData }] = await Promise.all([
       supabase.from("purchase_orders").select("*").eq("source", "tally_upload").eq("is_archived", false).order("created_at", { ascending: false }),
-      supabase.from("projects").select("id, name"),
+      supabase.from("projects").select("id, name, client_name"),
     ]);
+
     setPos((poData as any as TallyPO[]) ?? []);
     setAllProjects((projData as ProjectInfo[]) ?? []);
     setLoading(false);
