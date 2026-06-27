@@ -5833,11 +5833,14 @@ export type Database = {
           category: string
           content: string
           created_at: string | null
+          email_sent: boolean
+          email_sent_at: string | null
           id: string
           is_read: boolean
           linked_entity_id: string | null
           linked_entity_type: string | null
           navigate_to: string | null
+          priority: string
           read_at: string | null
           recipient_id: string
           related_id: string | null
@@ -5850,11 +5853,14 @@ export type Database = {
           category: string
           content: string
           created_at?: string | null
+          email_sent?: boolean
+          email_sent_at?: string | null
           id?: string
           is_read?: boolean
           linked_entity_id?: string | null
           linked_entity_type?: string | null
           navigate_to?: string | null
+          priority?: string
           read_at?: string | null
           recipient_id: string
           related_id?: string | null
@@ -5867,11 +5873,14 @@ export type Database = {
           category?: string
           content?: string
           created_at?: string | null
+          email_sent?: boolean
+          email_sent_at?: string | null
           id?: string
           is_read?: boolean
           linked_entity_id?: string | null
           linked_entity_type?: string | null
           navigate_to?: string | null
+          priority?: string
           read_at?: string | null
           recipient_id?: string
           related_id?: string | null
