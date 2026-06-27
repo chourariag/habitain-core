@@ -1018,6 +1018,53 @@ export type Database = {
           },
         ]
       }
+      client_portal_tokens: {
+        Row: {
+          client_email: string | null
+          client_name: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          last_accessed_at: string | null
+          project_id: string
+          token: string
+        }
+        Insert: {
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_accessed_at?: string | null
+          project_id: string
+          token?: string
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_accessed_at?: string | null
+          project_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_portal_tokens_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients_master: {
         Row: {
           address: string | null
@@ -12350,6 +12397,7 @@ export type Database = {
       }
     }
     Functions: {
+      _cpt_validate: { Args: { _token: string }; Returns: string }
       boq_cumulative_qty: { Args: { _boq_item_id: string }; Returns: number }
       can_access_labour_register: {
         Args: { _user_id: string }
@@ -12430,6 +12478,14 @@ export type Database = {
       can_view_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_view_profile_pii: { Args: { _user_id: string }; Returns: boolean }
       can_view_work_orders: { Args: { _user_id: string }; Returns: boolean }
+      client_approve_design_stage: {
+        Args: { _stage_id: string; _token: string }
+        Returns: boolean
+      }
+      client_request_design_changes: {
+        Args: { _comment: string; _stage_id: string; _token: string }
+        Returns: boolean
+      }
       clone_task_templates_to_project: {
         Args: { _project_id: string; _system: string }
         Returns: number
@@ -12470,6 +12526,23 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_design_stages_by_portal_token: {
+        Args: { _token: string }
+        Returns: {
+          actual_end_date: string
+          approval_date: string
+          deliverable_required: boolean
+          deliverable_url: string
+          id: string
+          planned_end_date: string
+          planned_start_date: string
+          revision_comments: string
+          stage_group: string
+          stage_name: string
+          stage_order: number
+          status: string
+        }[]
+      }
       get_employee_celebrations: {
         Args: never
         Returns: {
@@ -12506,6 +12579,78 @@ export type Database = {
           phone: string
           profile_id: string
           wedding_anniversary: string
+        }[]
+      }
+      get_project_by_any_portal_token: {
+        Args: { _token: string }
+        Returns: {
+          actually_spent: number | null
+          archive_reason: string | null
+          archived_at: string | null
+          client_email: string | null
+          client_name: string | null
+          client_phone: string | null
+          client_portal_enabled: boolean
+          client_portal_expires_at: string | null
+          client_portal_status_message: string | null
+          client_portal_token: string | null
+          construction_type: string | null
+          contract_value: number | null
+          created_at: string | null
+          created_by: string | null
+          division: string
+          est_completion: string | null
+          gfc_budget: number | null
+          gfc_budget_approved_at: string | null
+          gfc_budget_total: number | null
+          id: string
+          is_archived: boolean | null
+          is_design_only: boolean
+          location: string | null
+          milestones_locked: boolean
+          module_count: number
+          name: string
+          panel_count: number
+          planned_labour_cost: number | null
+          production_system: string
+          project_setup_approved: boolean
+          project_setup_approved_at: string | null
+          project_setup_status: string
+          project_size: string | null
+          project_type: string | null
+          setup_uploaded_at: string | null
+          setup_uploaded_by_name: string | null
+          site_lat: number | null
+          site_lng: number | null
+          site_radius: number | null
+          site_ready_confirmed: boolean | null
+          site_schedule_escalated_at: string | null
+          site_schedule_notified_at: string | null
+          site_schedule_unlocked_at: string | null
+          start_date: string | null
+          status: string | null
+          type: string | null
+          updated_at: string | null
+          updated_by: string | null
+          wip_close_date: string | null
+          wip_start_date: string | null
+          wip_status: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "projects"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_project_by_client_portal_token: {
+        Args: { _token: string }
+        Returns: {
+          client_email: string
+          client_name: string
+          project_code: string
+          project_id: string
+          project_name: string
         }[]
       }
       get_project_by_portal_token: {

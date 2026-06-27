@@ -49,6 +49,8 @@ export default function ClientPortal() {
   const [journalEntries, setJournalEntries] = useState<any[]>([]);
   const [portalDocuments, setPortalDocuments] = useState<any[]>([]);
   const [amcContract, setAmcContract] = useState<any>(null);
+  const [designStages, setDesignStages] = useState<any[]>([]);
+  const [revisionCommentMap, setRevisionCommentMap] = useState<Record<string, string>>({});
 
   // Action states
   const [queryDrawingId, setQueryDrawingId] = useState<string | null>(null);
@@ -64,17 +66,17 @@ export default function ClientPortal() {
     setLoading(true);
 
     const { data: proj, error: projErr } = await supabase
-      .rpc("get_project_by_portal_token", { _token: projectToken })
+      .rpc("get_project_by_any_portal_token" as any, { _token: projectToken })
       .maybeSingle();
 
 
     if (projErr || !proj) {
-      setError("This link is invalid or has expired.");
+      setError("This link is no longer valid. Contact your project team.");
       setLoading(false);
       return;
     }
 
-    if (proj.client_portal_expires_at && new Date(proj.client_portal_expires_at) < new Date()) {
+    if ((proj as any).client_portal_expires_at && new Date((proj as any).client_portal_expires_at) < new Date()) {
       setError("This link has expired. Please contact your project manager for a new link.");
       setLoading(false);
       return;
@@ -83,25 +85,27 @@ export default function ClientPortal() {
     setProject(proj);
 
     supabase.from("client_portal_access_log").insert({
-      project_id: proj.id,
+      project_id: (proj as any).id,
       token_used: projectToken,
       action: "page_view",
     }).then(() => {});
 
-    const [modRes, gfcRes, drawRes, handRes, voRes, msRes, mpRes, cjRes, docRes, amcRes] = await Promise.all([
+    const projAny: any = proj;
+    const [modRes, gfcRes, drawRes, handRes, voRes, msRes, mpRes, cjRes, docRes, amcRes, dsRes] = await Promise.all([
       supabase.from("modules").select("id, module_code, current_stage, production_status, created_at")
-        .eq("project_id", proj.id).eq("is_archived", false).order("created_at"),
-      supabase.from("gfc_records").select("*").eq("project_id", proj.id).order("created_at"),
+        .eq("project_id", projAny.id).eq("is_archived", false).order("created_at"),
+      supabase.from("gfc_records").select("*").eq("project_id", projAny.id).order("created_at"),
       supabase.from("drawings").select("id, drawing_id_code, drawing_title, drawing_type, approval_status, approved_at, file_url, created_at, client_approved_at, client_approved_name, client_query_text")
-        .eq("project_id", proj.id).eq("is_archived", false)
+        .eq("project_id", projAny.id).eq("is_archived", false)
         .in("approval_status", ["approved", "pending"]).order("created_at"),
-      supabase.from("handover_pack").select("*").eq("project_id", proj.id).maybeSingle(),
-      supabase.from("variation_orders" as any).select("*").eq("project_id", proj.id).order("created_at"),
-      supabase.from("project_billing_milestones").select("*").eq("project_id", proj.id).order("milestone_number"),
-      supabase.from("client_milestone_photos" as any).select("*").eq("project_id", proj.id).order("created_at"),
-      supabase.from("construction_journal" as any).select("*").eq("project_id", proj.id).eq("is_approved", true).order("entry_date", { ascending: false }).limit(20),
-      supabase.from("client_portal_documents").select("*").eq("project_id", proj.id).order("uploaded_at", { ascending: false }),
-      supabase.from("amc_contracts").select("*").eq("project_id", proj.id).eq("is_archived", false).maybeSingle(),
+      supabase.from("handover_pack").select("*").eq("project_id", projAny.id).maybeSingle(),
+      supabase.from("variation_orders" as any).select("*").eq("project_id", projAny.id).order("created_at"),
+      supabase.from("project_billing_milestones").select("*").eq("project_id", projAny.id).order("milestone_number"),
+      supabase.from("client_milestone_photos" as any).select("*").eq("project_id", projAny.id).order("created_at"),
+      supabase.from("construction_journal" as any).select("*").eq("project_id", projAny.id).eq("is_approved", true).order("entry_date", { ascending: false }).limit(20),
+      supabase.from("client_portal_documents").select("*").eq("project_id", projAny.id).order("uploaded_at", { ascending: false }),
+      supabase.from("amc_contracts").select("*").eq("project_id", projAny.id).eq("is_archived", false).maybeSingle(),
+      supabase.rpc("get_design_stages_by_portal_token" as any, { _token: projectToken }),
     ]);
 
     setModules(modRes.data ?? []);
@@ -114,8 +118,35 @@ export default function ClientPortal() {
     setJournalEntries((cjRes.data as any[]) ?? []);
     setPortalDocuments(docRes.data ?? []);
     setAmcContract(amcRes.data ?? null);
+    setDesignStages((dsRes.data as any[]) ?? []);
     setLoading(false);
   }, [projectToken]);
+
+  const handleApproveDesignStage = async (stageId: string) => {
+    setSubmittingAction("ds-" + stageId);
+    const { data, error } = await supabase.rpc("client_approve_design_stage" as any, {
+      _token: projectToken, _stage_id: stageId,
+    });
+    if (error || !data) toast.error("Could not approve. Please refresh and try again.");
+    else { toast.success("Stage approved. The design team has been notified."); await fetchData(); }
+    setSubmittingAction(null);
+  };
+
+  const handleRequestDesignChanges = async (stageId: string) => {
+    const comment = (revisionCommentMap[stageId] ?? "").trim();
+    if (comment.length < 5) { toast.error("Please describe the changes you'd like."); return; }
+    setSubmittingAction("ds-" + stageId);
+    const { data, error } = await supabase.rpc("client_request_design_changes" as any, {
+      _token: projectToken, _stage_id: stageId, _comment: comment,
+    });
+    if (error || !data) toast.error("Could not submit. Please refresh and try again.");
+    else {
+      toast.success("Change request sent to the design team.");
+      setRevisionCommentMap((m) => ({ ...m, [stageId]: "" }));
+      await fetchData();
+    }
+    setSubmittingAction(null);
+  };
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -316,6 +347,7 @@ export default function ClientPortal() {
                 <Badge variant="destructive" className="ml-1.5 h-5 w-5 p-0 flex items-center justify-center text-[10px] rounded-full">{totalActions}</Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="design">Design Schedule</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             {isHandedOver && <TabsTrigger value="post-handover">Post-Handover</TabsTrigger>}
@@ -681,6 +713,109 @@ export default function ClientPortal() {
               onRefresh={fetchData}
             />
           </TabsContent>
+
+          {/* DESIGN SCHEDULE TAB */}
+          <TabsContent value="design" className="mt-4 space-y-6">
+            {(["pre_deal", "post_deal"] as const).map((group) => {
+              const items = designStages.filter((s) => s.stage_group === group);
+              if (items.length === 0) return null;
+              const isPre = group === "pre_deal";
+              return (
+                <Card key={group} className={isPre ? "border-warning/40" : "border-primary/30"}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="font-heading text-base font-bold">
+                      {isPre ? "Pre-Deal Stages" : "Post-Deal Stages"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {items.map((s) => {
+                      const submitted = s.status === "submitted_to_client";
+                      const approved = s.status === "client_approved";
+                      const revisionReq = s.status === "revision_requested";
+                      return (
+                        <div key={s.id} className="rounded-lg border p-3 space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="font-heading font-bold text-sm">
+                                {s.stage_order}. {s.stage_name}
+                              </p>
+                              <p className="text-xs text-muted-foreground font-body">
+                                Planned: {s.planned_start_date ? format(new Date(s.planned_start_date), "dd/MM/yyyy") : "—"} → {s.planned_end_date ? format(new Date(s.planned_end_date), "dd/MM/yyyy") : "—"}
+                              </p>
+                            </div>
+                            <Badge
+                              className="text-[10px]"
+                              variant={approved ? "default" : submitted ? "destructive" : revisionReq ? "outline" : "secondary"}
+                            >
+                              {s.status.replace(/_/g, " ")}
+                            </Badge>
+                          </div>
+
+                          {s.deliverable_url && (
+                            <a
+                              href={s.deliverable_url}
+                              target="_blank" rel="noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-primary underline font-body"
+                            >
+                              <Download className="h-3 w-3" /> View deliverable
+                            </a>
+                          )}
+
+                          {revisionReq && s.revision_comments && (
+                            <p className="text-xs font-body bg-muted p-2 rounded">
+                              <strong>Your last comment:</strong> {s.revision_comments}
+                            </p>
+                          )}
+
+                          {submitted && (
+                            <div className="space-y-2 pt-1">
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleApproveDesignStage(s.id)}
+                                  disabled={submittingAction === "ds-" + s.id}
+                                >
+                                  <ThumbsUp className="h-3.5 w-3.5 mr-1" /> Approve
+                                </Button>
+                              </div>
+                              <Textarea
+                                placeholder="Or describe the changes you'd like (required for Request Changes)"
+                                value={revisionCommentMap[s.id] ?? ""}
+                                onChange={(e) =>
+                                  setRevisionCommentMap((m) => ({ ...m, [s.id]: e.target.value }))
+                                }
+                                className="text-sm h-16"
+                              />
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleRequestDesignChanges(s.id)}
+                                disabled={submittingAction === "ds-" + s.id}
+                              >
+                                <MessageSquare className="h-3.5 w-3.5 mr-1" /> Request Changes
+                              </Button>
+                            </div>
+                          )}
+
+                          {approved && s.approval_date && (
+                            <p className="text-xs text-primary font-body">
+                              ✓ Approved on {format(new Date(s.approval_date), "dd/MM/yyyy")}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {designStages.length === 0 && (
+              <p className="text-sm text-muted-foreground font-body text-center py-6">
+                Design schedule will appear here once the team sets it up.
+              </p>
+            )}
+          </TabsContent>
+
 
           {/* PAYMENTS TAB */}
           <TabsContent value="payments" className="mt-4">

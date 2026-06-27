@@ -15,7 +15,7 @@ interface Props {
 
 const MANAGE_ROLES = [
   "super_admin", "managing_director", "finance_director",
-  "sales_director", "site_installation_manager", "sales_executive",
+  "sales_director", "planning_head", "site_installation_manager", "sales_executive",
 ];
 
 export function ClientPortalManager({ projectId, userRole }: Props) {
@@ -24,9 +24,21 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [magicTokens, setMagicTokens] = useState<any[]>([]);
+  const [newClientName, setNewClientName] = useState("");
+  const [newClientEmail, setNewClientEmail] = useState("");
 
   const canManage = MANAGE_ROLES.includes(userRole ?? "");
-  const canRevoke = ["super_admin", "managing_director", "finance_director", "sales_director"].includes(userRole ?? "");
+  const canRevoke = ["super_admin", "managing_director", "finance_director", "sales_director", "planning_head"].includes(userRole ?? "");
+
+  const loadMagicTokens = async () => {
+    const { data } = await supabase
+      .from("client_portal_tokens" as any)
+      .select("*")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false });
+    setMagicTokens((data as any[]) ?? []);
+  };
 
   useEffect(() => {
     supabase
@@ -40,6 +52,7 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
           setStatusMsg(data.client_portal_status_message ?? "");
         }
       });
+    loadMagicTokens();
   }, [projectId]);
 
 
@@ -134,6 +147,48 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
   };
 
   const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
+
+  const generateClientPortalToken = async () => {
+    const { data: u } = await supabase.auth.getUser();
+    const { error } = await supabase.from("client_portal_tokens" as any).insert({
+      project_id: projectId,
+      client_name: newClientName || null,
+      client_email: newClientEmail || null,
+      created_by: u.user?.id ?? null,
+    });
+    if (error) toast.error("Failed to generate client portal link");
+    else {
+      toast.success("New client portal link generated");
+      setNewClientName(""); setNewClientEmail("");
+      await loadMagicTokens();
+    }
+  };
+
+  const revokeClientPortalToken = async (id: string) => {
+    const { error } = await supabase.from("client_portal_tokens" as any)
+      .update({ is_active: false }).eq("id", id);
+    if (error) toast.error("Failed to revoke link");
+    else { toast.success("Link revoked"); await loadMagicTokens(); }
+  };
+
+  const regenerateClientPortalToken = async (oldId: string, clientName: string | null, clientEmail: string | null) => {
+    const { data: u } = await supabase.auth.getUser();
+    await supabase.from("client_portal_tokens" as any).update({ is_active: false }).eq("id", oldId);
+    const { error } = await supabase.from("client_portal_tokens" as any).insert({
+      project_id: projectId,
+      client_name: clientName,
+      client_email: clientEmail,
+      created_by: u.user?.id ?? null,
+    });
+    if (error) toast.error("Failed to regenerate link");
+    else { toast.success("New link generated; old one revoked"); await loadMagicTokens(); }
+  };
+
+  const copyMagicLink = (token: string) => {
+    const url = `${window.location.origin}/client/${token}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link copied to clipboard");
+  };
 
   return (
     <Card>
