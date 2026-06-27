@@ -7069,6 +7069,69 @@ export type Database = {
         }
         Relationships: []
       }
+      project_archives: {
+        Row: {
+          archive_generated_at: string
+          cloud_report_url: string | null
+          created_at: string
+          id: string
+          karthik_upload_confirmed_at: string | null
+          karthik_upload_task_id: string | null
+          project_id: string
+          storage_cleanup_eligible: boolean
+          updated_at: string
+          zip_download_url: string | null
+          zip_generated_at: string | null
+          zip_generation_error: string | null
+          zip_generation_status: string
+        }
+        Insert: {
+          archive_generated_at?: string
+          cloud_report_url?: string | null
+          created_at?: string
+          id?: string
+          karthik_upload_confirmed_at?: string | null
+          karthik_upload_task_id?: string | null
+          project_id: string
+          storage_cleanup_eligible?: boolean
+          updated_at?: string
+          zip_download_url?: string | null
+          zip_generated_at?: string | null
+          zip_generation_error?: string | null
+          zip_generation_status?: string
+        }
+        Update: {
+          archive_generated_at?: string
+          cloud_report_url?: string | null
+          created_at?: string
+          id?: string
+          karthik_upload_confirmed_at?: string | null
+          karthik_upload_task_id?: string | null
+          project_id?: string
+          storage_cleanup_eligible?: boolean
+          updated_at?: string
+          zip_download_url?: string | null
+          zip_generated_at?: string | null
+          zip_generation_error?: string | null
+          zip_generation_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_archives_karthik_upload_task_id_fkey"
+            columns: ["karthik_upload_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_archives_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_billing_milestones: {
         Row: {
           amount_excl_gst: number
@@ -13474,6 +13537,7 @@ export type Database = {
         Returns: boolean
       }
       kickoff_meeting_daily_reminders: { Args: never; Returns: undefined }
+      project_archive_upload_reminders: { Args: never; Returns: undefined }
       recalc_running_bill: {
         Args: { _project_id: string }
         Returns: {

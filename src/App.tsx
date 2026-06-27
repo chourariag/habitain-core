@@ -12,6 +12,7 @@ import Welcome from "@/pages/Welcome";
 import Dashboard from "@/pages/Dashboard";
 import Projects from "@/pages/Projects";
 import ProjectDetail from "@/pages/ProjectDetail";
+import ProjectArchive from "@/pages/ProjectArchive";
 import Production from "@/pages/Production";
 import DeliveryChecklist from "@/pages/DeliveryChecklist";
 import SiteHub from "@/pages/SiteHub";
@@ -81,6 +82,7 @@ const App = () => (
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/projects" element={<ModuleGuard module="projects"><Projects /></ModuleGuard>} />
                 <Route path="/projects/:id" element={<ModuleGuard module="projects"><ProjectDetail /></ModuleGuard>} />
+                <Route path="/projects/:id/archive" element={<ModuleGuard module="projects"><ProjectArchive /></ModuleGuard>} />
                 <Route path="/management" element={<ModuleGuard module="reports"><ManagementRouteGuard><Management /></ManagementRouteGuard></ModuleGuard>} />
                 <Route path="/production" element={<ModuleGuard module="factory"><Production /></ModuleGuard>} />
                 <Route path="/production/dashboard" element={<ModuleGuard module="factory"><ProductionDashboard /></ModuleGuard>} />
