@@ -128,6 +128,7 @@ export default function Approvals() {
         </TabsList>
 
         <TabsContent value="pending" className="mt-4 space-y-3">
+          <KickoffMeetingCard userRole={role} />
           {pendingAdvances && pendingAdvances.length > 0 && (
             <div className="rounded-lg border p-3 flex items-center justify-between gap-3"
               style={{ background: "#FFF8E8", borderColor: "#F5E0B0" }}>
