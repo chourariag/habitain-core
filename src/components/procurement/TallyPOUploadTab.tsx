@@ -97,15 +97,17 @@ function extractProjectFromNarration(narration: string): string | null {
 
 function matchProject(extractedName: string, projects: ProjectInfo[]): ProjectInfo | null {
   if (!extractedName) return null;
-  const lower = extractedName.toLowerCase();
-  // Exact substring match
+  const lower = extractedName.toLowerCase().trim();
+  if (!lower) return null;
   for (const p of projects) {
-    if (p.name.toLowerCase().includes(lower) || lower.includes(p.name.toLowerCase())) {
-      return p;
-    }
+    const pname = (p.name || "").toLowerCase();
+    const cname = (p.client_name || "").toLowerCase();
+    if (pname && (pname.includes(lower) || lower.includes(pname))) return p;
+    if (cname && (cname.includes(lower) || lower.includes(cname))) return p;
   }
   return null;
 }
+
 
 function isWorkOrder(vchNo: string): boolean {
   return /^\d+$/.test(vchNo.trim());
