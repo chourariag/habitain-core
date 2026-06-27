@@ -8258,6 +8258,50 @@ export type Database = {
           },
         ]
       }
+      project_storage_cleanup_log: {
+        Row: {
+          action: string
+          buckets_processed: Json
+          created_at: string
+          files_deleted_count: number
+          id: string
+          performed_at: string
+          performed_by: string | null
+          performed_by_role: string | null
+          project_id: string
+        }
+        Insert: {
+          action?: string
+          buckets_processed?: Json
+          created_at?: string
+          files_deleted_count?: number
+          id?: string
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_role?: string | null
+          project_id: string
+        }
+        Update: {
+          action?: string
+          buckets_processed?: Json
+          created_at?: string
+          files_deleted_count?: number
+          id?: string
+          performed_at?: string
+          performed_by?: string | null
+          performed_by_role?: string | null
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_storage_cleanup_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_subtasks: {
         Row: {
           completed_at: string | null
@@ -8822,6 +8866,9 @@ export type Database = {
           site_schedule_unlocked_at: string | null
           start_date: string | null
           status: string | null
+          storage_cleaned: boolean
+          storage_cleaned_at: string | null
+          storage_cleaned_by: string | null
           type: string | null
           updated_at: string | null
           updated_by: string | null
@@ -8877,6 +8924,9 @@ export type Database = {
           site_schedule_unlocked_at?: string | null
           start_date?: string | null
           status?: string | null
+          storage_cleaned?: boolean
+          storage_cleaned_at?: string | null
+          storage_cleaned_by?: string | null
           type?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -8932,6 +8982,9 @@ export type Database = {
           site_schedule_unlocked_at?: string | null
           start_date?: string | null
           status?: string | null
+          storage_cleaned?: boolean
+          storage_cleaned_at?: string | null
+          storage_cleaned_by?: string | null
           type?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -13391,6 +13444,9 @@ export type Database = {
           site_schedule_unlocked_at: string | null
           start_date: string | null
           status: string | null
+          storage_cleaned: boolean
+          storage_cleaned_at: string | null
+          storage_cleaned_by: string | null
           type: string | null
           updated_at: string | null
           updated_by: string | null
@@ -13465,6 +13521,9 @@ export type Database = {
           site_schedule_unlocked_at: string | null
           start_date: string | null
           status: string | null
+          storage_cleaned: boolean
+          storage_cleaned_at: string | null
+          storage_cleaned_by: string | null
           type: string | null
           updated_at: string | null
           updated_by: string | null

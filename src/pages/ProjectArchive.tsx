@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Download, FileArchive, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { StorageManagementSection } from "@/components/StorageManagementSection";
 
 type AnyRow = Record<string, any>;
 
@@ -134,6 +135,15 @@ export default function ProjectArchive() {
           {data.archive?.storage_cleanup_eligible && <> · <Badge>Uploaded to Zoho</Badge></>}
         </p>
       </div>
+      <StorageManagementSection
+        projectId={p.id}
+        projectName={p.name}
+        cleanupEligible={!!data.archive?.storage_cleanup_eligible}
+        storageCleaned={!!p.storage_cleaned}
+        storageCleanedAt={p.storage_cleaned_at}
+        onRefresh={load}
+      />
+
 
       <Section title="1. Project Summary">
         <KV k="Client" v={p.client_name} />
