@@ -16,6 +16,7 @@ import { HandoverPack } from "@/components/site/HandoverPack";
 import { ClientPortalManager } from "@/components/projects/ClientPortalManager";
 import { BillingMilestonesSection } from "@/components/projects/BillingMilestonesSection";
 import { MicroScheduleTab } from "@/components/projects/MicroScheduleTab";
+import { SiteScheduleSection } from "@/components/projects/SiteScheduleSection";
 import { MaterialPlanTab } from "@/components/procurement/MaterialPlanTab";
 import { VariationsTab } from "@/components/projects/VariationsTab";
 import { ScopeOfWorkTab } from "@/components/projects/ScopeOfWorkTab";
