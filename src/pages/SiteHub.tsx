@@ -31,6 +31,7 @@ import { InstallationSequenceDoc } from "@/components/site/InstallationSequenceD
 import { SiteFactoryFeedback } from "@/components/site/SiteFactoryFeedback";
 import { SiteInventoryTab } from "@/components/site/SiteInventoryTab";
 import { SiteScheduleTab } from "@/components/site/SiteScheduleTab";
+import { SiteScheduleMilestonesCard } from "@/components/site/SiteScheduleMilestonesCard";
 import { ClientVisitsTab } from "@/components/site/ClientVisitsTab";
 import { Handshake } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -325,6 +326,7 @@ function SiteHubContent() {
         </TabsContent>
 
         <TabsContent value="schedule" className="space-y-4">
+          <SiteScheduleMilestonesCard projectId={selectedProjectId!} />
           <SiteScheduleTab
             projectId={selectedProjectId!}
             projectName={selectedProject?.name ?? undefined}
