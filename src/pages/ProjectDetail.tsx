@@ -216,6 +216,7 @@ export default function ProjectDetail() {
 
         <TabsContent value="schedule" className="space-y-4">
           <MicroScheduleTab projectId={id!} userRole={userRole} />
+          <SiteScheduleSection projectId={id!} projectName={project.name} userRole={userRole} />
         </TabsContent>
 
         {!isAds && (
