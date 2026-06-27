@@ -90,20 +90,22 @@ export default function ClientPortal() {
       action: "page_view",
     }).then(() => {});
 
-    const [modRes, gfcRes, drawRes, handRes, voRes, msRes, mpRes, cjRes, docRes, amcRes] = await Promise.all([
+    const projAny: any = proj;
+    const [modRes, gfcRes, drawRes, handRes, voRes, msRes, mpRes, cjRes, docRes, amcRes, dsRes] = await Promise.all([
       supabase.from("modules").select("id, module_code, current_stage, production_status, created_at")
-        .eq("project_id", proj.id).eq("is_archived", false).order("created_at"),
-      supabase.from("gfc_records").select("*").eq("project_id", proj.id).order("created_at"),
+        .eq("project_id", projAny.id).eq("is_archived", false).order("created_at"),
+      supabase.from("gfc_records").select("*").eq("project_id", projAny.id).order("created_at"),
       supabase.from("drawings").select("id, drawing_id_code, drawing_title, drawing_type, approval_status, approved_at, file_url, created_at, client_approved_at, client_approved_name, client_query_text")
-        .eq("project_id", proj.id).eq("is_archived", false)
+        .eq("project_id", projAny.id).eq("is_archived", false)
         .in("approval_status", ["approved", "pending"]).order("created_at"),
-      supabase.from("handover_pack").select("*").eq("project_id", proj.id).maybeSingle(),
-      supabase.from("variation_orders" as any).select("*").eq("project_id", proj.id).order("created_at"),
-      supabase.from("project_billing_milestones").select("*").eq("project_id", proj.id).order("milestone_number"),
-      supabase.from("client_milestone_photos" as any).select("*").eq("project_id", proj.id).order("created_at"),
-      supabase.from("construction_journal" as any).select("*").eq("project_id", proj.id).eq("is_approved", true).order("entry_date", { ascending: false }).limit(20),
-      supabase.from("client_portal_documents").select("*").eq("project_id", proj.id).order("uploaded_at", { ascending: false }),
-      supabase.from("amc_contracts").select("*").eq("project_id", proj.id).eq("is_archived", false).maybeSingle(),
+      supabase.from("handover_pack").select("*").eq("project_id", projAny.id).maybeSingle(),
+      supabase.from("variation_orders" as any).select("*").eq("project_id", projAny.id).order("created_at"),
+      supabase.from("project_billing_milestones").select("*").eq("project_id", projAny.id).order("milestone_number"),
+      supabase.from("client_milestone_photos" as any).select("*").eq("project_id", projAny.id).order("created_at"),
+      supabase.from("construction_journal" as any).select("*").eq("project_id", projAny.id).eq("is_approved", true).order("entry_date", { ascending: false }).limit(20),
+      supabase.from("client_portal_documents").select("*").eq("project_id", projAny.id).order("uploaded_at", { ascending: false }),
+      supabase.from("amc_contracts").select("*").eq("project_id", projAny.id).eq("is_archived", false).maybeSingle(),
+      supabase.rpc("get_design_stages_by_portal_token" as any, { _token: projectToken }),
     ]);
 
     setModules(modRes.data ?? []);
@@ -116,8 +118,35 @@ export default function ClientPortal() {
     setJournalEntries((cjRes.data as any[]) ?? []);
     setPortalDocuments(docRes.data ?? []);
     setAmcContract(amcRes.data ?? null);
+    setDesignStages((dsRes.data as any[]) ?? []);
     setLoading(false);
   }, [projectToken]);
+
+  const handleApproveDesignStage = async (stageId: string) => {
+    setSubmittingAction("ds-" + stageId);
+    const { data, error } = await supabase.rpc("client_approve_design_stage" as any, {
+      _token: projectToken, _stage_id: stageId,
+    });
+    if (error || !data) toast.error("Could not approve. Please refresh and try again.");
+    else { toast.success("Stage approved. The design team has been notified."); await fetchData(); }
+    setSubmittingAction(null);
+  };
+
+  const handleRequestDesignChanges = async (stageId: string) => {
+    const comment = (revisionCommentMap[stageId] ?? "").trim();
+    if (comment.length < 5) { toast.error("Please describe the changes you'd like."); return; }
+    setSubmittingAction("ds-" + stageId);
+    const { data, error } = await supabase.rpc("client_request_design_changes" as any, {
+      _token: projectToken, _stage_id: stageId, _comment: comment,
+    });
+    if (error || !data) toast.error("Could not submit. Please refresh and try again.");
+    else {
+      toast.success("Change request sent to the design team.");
+      setRevisionCommentMap((m) => ({ ...m, [stageId]: "" }));
+      await fetchData();
+    }
+    setSubmittingAction(null);
+  };
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
