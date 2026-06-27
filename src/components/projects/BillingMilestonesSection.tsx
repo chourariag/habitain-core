@@ -467,7 +467,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
                 <TableCell />
                 <TableCell className="text-right">{fmt(totalGst)}</TableCell>
                 <TableCell className="text-right">{fmt(totalIncl)}</TableCell>
-                <TableCell colSpan={isEditable ? 3 : 2} />
+                <TableCell colSpan={isEditable ? 4 : 3} />
               </TableRow>
             </TableFooter>
           </Table>
