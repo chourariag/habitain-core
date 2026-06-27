@@ -334,6 +334,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
                 <TableHead className="text-right">GST Amt</TableHead>
                 <TableHead className="text-right">₹ Incl. GST</TableHead>
                 <TableHead>Trigger</TableHead>
+                <TableHead>Auto-Fire Event</TableHead>
                 <TableHead>Status</TableHead>
                 {isEditable && <TableHead className="w-16" />}
               </TableRow>
