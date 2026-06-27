@@ -31,6 +31,8 @@ import { InstallationSequenceDoc } from "@/components/site/InstallationSequenceD
 import { SiteFactoryFeedback } from "@/components/site/SiteFactoryFeedback";
 import { SiteInventoryTab } from "@/components/site/SiteInventoryTab";
 import { SiteScheduleTab } from "@/components/site/SiteScheduleTab";
+import { ClientVisitsTab } from "@/components/site/ClientVisitsTab";
+import { Handshake } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { CalendarDays } from "lucide-react";
 import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
@@ -231,6 +233,7 @@ function SiteHubContent() {
             <TabsTrigger value="labour" className="gap-1.5"><Users className="h-4 w-4" /> People</TabsTrigger>
             <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Installation Sequence</TabsTrigger>
             <TabsTrigger value="safety" className="gap-1.5"><HardHat className="h-4 w-4" /> Safety</TabsTrigger>
+            <TabsTrigger value="client-visits" className="gap-1.5"><Handshake className="h-4 w-4" /> Client Visits</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -426,6 +429,14 @@ function SiteHubContent() {
               <RunningBillTable projectId={selectedProjectId} />
             </TabsContent>
           </Tabs>
+        </TabsContent>
+        <TabsContent value="client-visits">
+          <ClientVisitsTab
+            projectId={selectedProjectId!}
+            projectName={selectedProject?.name ?? ""}
+            clientName={selectedProject?.client_name ?? null}
+            userRole={userRole}
+          />
         </TabsContent>
       </Tabs>
     </div>
