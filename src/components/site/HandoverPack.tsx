@@ -141,11 +141,14 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
         const projName = project?.name || "Project";
         await supabase.from("notifications").insert(
           mdRoles.map((r: any) => ({
-            user_id: r.user_id,
+            recipient_id: r.user_id,
             title: `${projName} — Handover Pack complete`,
             body: "Your approval required to close the project.",
+            content: "Your approval required to close the project.",
             type: "handover_approval",
-            project_id: projectId,
+            category: "approval",
+            related_table: "handover_pack",
+            related_id: inserted?.id,
           }))
         );
       }
