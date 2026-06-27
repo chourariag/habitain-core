@@ -237,7 +237,11 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
 
   async function billMilestone(idx: number) {
     const m = milestones[idx];
-    if (m.status !== "pending") return;
+    if (m.status !== "pending" && m.status !== "triggered") return;
+    if (m.status === "pending" && (m.auto_trigger_event || "manual") !== "manual") {
+      toast.error("This milestone fires automatically when its event occurs.");
+      return;
+    }
 
     // Create invoice
     const year = new Date().getFullYear();
