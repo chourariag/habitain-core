@@ -3714,55 +3714,94 @@ export type Database = {
       }
       handover_pack: {
         Row: {
+          as_built_drawings_url: string | null
+          client_completion_certificate_url: string | null
           client_name: string
           client_signed_at: string | null
           client_signed_name: string | null
           client_signoff_name: string
           created_at: string | null
+          dispatch_records_confirmed: boolean
           dlp_start_date: string | null
+          dq_resolutions_url: string | null
           handover_date: string
           handover_notes: string | null
           id: string
+          keys_manuals_checklist_confirmed: boolean
+          md_approval_status: string
+          md_approved_at: string | null
+          md_approved_by: string | null
+          measurement_sheets_confirmed: boolean
+          ncr_records_url: string | null
           om_document_url: string | null
           project_id: string
+          qc_reports_url: string | null
           snag_list: string | null
           snag_photos: string[] | null
+          snagging_list_closed: boolean
           submitted_by: string
           updated_at: string | null
+          warranty_docs_url: string | null
         }
         Insert: {
+          as_built_drawings_url?: string | null
+          client_completion_certificate_url?: string | null
           client_name: string
           client_signed_at?: string | null
           client_signed_name?: string | null
           client_signoff_name: string
           created_at?: string | null
+          dispatch_records_confirmed?: boolean
           dlp_start_date?: string | null
+          dq_resolutions_url?: string | null
           handover_date?: string
           handover_notes?: string | null
           id?: string
+          keys_manuals_checklist_confirmed?: boolean
+          md_approval_status?: string
+          md_approved_at?: string | null
+          md_approved_by?: string | null
+          measurement_sheets_confirmed?: boolean
+          ncr_records_url?: string | null
           om_document_url?: string | null
           project_id: string
+          qc_reports_url?: string | null
           snag_list?: string | null
           snag_photos?: string[] | null
+          snagging_list_closed?: boolean
           submitted_by: string
           updated_at?: string | null
+          warranty_docs_url?: string | null
         }
         Update: {
+          as_built_drawings_url?: string | null
+          client_completion_certificate_url?: string | null
           client_name?: string
           client_signed_at?: string | null
           client_signed_name?: string | null
           client_signoff_name?: string
           created_at?: string | null
+          dispatch_records_confirmed?: boolean
           dlp_start_date?: string | null
+          dq_resolutions_url?: string | null
           handover_date?: string
           handover_notes?: string | null
           id?: string
+          keys_manuals_checklist_confirmed?: boolean
+          md_approval_status?: string
+          md_approved_at?: string | null
+          md_approved_by?: string | null
+          measurement_sheets_confirmed?: boolean
+          ncr_records_url?: string | null
           om_document_url?: string | null
           project_id?: string
+          qc_reports_url?: string | null
           snag_list?: string | null
           snag_photos?: string[] | null
+          snagging_list_closed?: boolean
           submitted_by?: string
           updated_at?: string | null
+          warranty_docs_url?: string | null
         }
         Relationships: [
           {
@@ -8609,6 +8648,8 @@ export type Database = {
           client_portal_expires_at: string | null
           client_portal_status_message: string | null
           client_portal_token: string | null
+          closed_at: string | null
+          closed_by: string | null
           construction_type: string | null
           contract_value: number | null
           created_at: string | null
@@ -8662,6 +8703,8 @@ export type Database = {
           client_portal_expires_at?: string | null
           client_portal_status_message?: string | null
           client_portal_token?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
           construction_type?: string | null
           contract_value?: number | null
           created_at?: string | null
@@ -8715,6 +8758,8 @@ export type Database = {
           client_portal_expires_at?: string | null
           client_portal_status_message?: string | null
           client_portal_token?: string | null
+          closed_at?: string | null
+          closed_by?: string | null
           construction_type?: string | null
           contract_value?: number | null
           created_at?: string | null
@@ -8757,7 +8802,15 @@ export type Database = {
           wip_start_date?: string | null
           wip_status?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_closed_by_fkey"
+            columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       punch_list_items: {
         Row: {
@@ -12871,6 +12924,10 @@ export type Database = {
     }
     Functions: {
       _cpt_validate: { Args: { _token: string }; Returns: string }
+      approve_handover_and_close: {
+        Args: { _handover_id: string }
+        Returns: undefined
+      }
       boq_cumulative_qty: { Args: { _boq_item_id: string }; Returns: number }
       can_access_labour_register: {
         Args: { _user_id: string }
@@ -13047,6 +13104,7 @@ export type Database = {
           wedding_anniversary: string
         }[]
       }
+      get_handover_readiness: { Args: { _project_id: string }; Returns: Json }
       get_labour_rate_for_trade: { Args: { _trade: string }; Returns: number }
       get_my_profile_email: {
         Args: never
@@ -13089,6 +13147,8 @@ export type Database = {
           client_portal_expires_at: string | null
           client_portal_status_message: string | null
           client_portal_token: string | null
+          closed_at: string | null
+          closed_by: string | null
           construction_type: string | null
           contract_value: number | null
           created_at: string | null
@@ -13161,6 +13221,8 @@ export type Database = {
           client_portal_expires_at: string | null
           client_portal_status_message: string | null
           client_portal_token: string | null
+          closed_at: string | null
+          closed_by: string | null
           construction_type: string | null
           contract_value: number | null
           created_at: string | null
