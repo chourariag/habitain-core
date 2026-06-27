@@ -28,6 +28,7 @@ import { ScheduleConflictBanner } from "@/components/production/ScheduleConflict
 import { useUserRole } from "@/hooks/useUserRole";
 import type { Tables } from "@/integrations/supabase/types";
 import { MeasurementSheet } from "@/components/measurements/MeasurementSheet";
+import { FactoryMeasurementSheet } from "@/components/production/FactoryMeasurementSheet";
 import { LabourTeamsManager } from "@/components/production/LabourTeamsManager";
 import { ModuleTeamAssignment } from "@/components/production/ModuleTeamAssignment";
 
