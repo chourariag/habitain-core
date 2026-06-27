@@ -238,10 +238,11 @@ export function TallyPOUploadTab() {
     }
   };
 
-
+  const downloadTemplate = () => {
     const t = TEMPLATES.tallyPO;
     downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
   };
+
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
