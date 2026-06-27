@@ -312,6 +312,7 @@ export default function Procurement() {
             <TabsTrigger value="supplier-intel" className="gap-1.5"><TrendingUp className="h-4 w-4" /> Supplier Intelligence</TabsTrigger>
             <TabsTrigger value="material-alerts" className="gap-1.5"><Bell className="h-4 w-4" /> Material Alerts</TabsTrigger>
             <TabsTrigger value="contracts" className="gap-1.5"><FileText className="h-4 w-4" /> Contracts</TabsTrigger>
+            <TabsTrigger value="work-orders" className="gap-1.5"><HardHat className="h-4 w-4" /> Work Orders</TabsTrigger>
             {/* Subcontractors moved to Production → People */}
           </TabsList>
         </ScrollableTabsWrapper>
