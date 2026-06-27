@@ -22,6 +22,21 @@ const TRIGGER_EVENTS = [
   "Custom",
 ];
 
+const AUTO_TRIGGER_EVENTS: { value: string; label: string }[] = [
+  { value: "manual", label: "Manual" },
+  { value: "gfc_h1_approved", label: "GFC H1 approved" },
+  { value: "gfc_h2_approved", label: "GFC H2 approved" },
+  { value: "gfc_h3_approved", label: "GFC H3 approved" },
+  { value: "gfc_budget_approved", label: "GFC Budget approved" },
+  { value: "project_setup_approved", label: "Project Setup approved" },
+  { value: "site_readiness_confirmed", label: "Site readiness confirmed" },
+  { value: "dispatch_confirmed", label: "Dispatch confirmed" },
+  { value: "installation_complete", label: "Installation complete" },
+  { value: "mep_complete", label: "MEP complete" },
+  { value: "snagging_complete", label: "Snagging complete" },
+  { value: "handover_approved", label: "Handover approved" },
+];
+
 const DEFAULT_MILESTONES = [
   { milestone_number: 1, description: "Booking", percentage: 10, trigger_event: "Booking", gst_applicable: false },
   { milestone_number: 2, description: "Shell & Core Phase 1", percentage: 30, trigger_event: "Shell & Core Delivery", gst_applicable: true },
@@ -33,6 +48,7 @@ const DEFAULT_MILESTONES = [
 
 const STATUS_STYLES: Record<string, { label: string; className: string }> = {
   pending: { label: "Pending", className: "bg-muted text-muted-foreground" },
+  triggered: { label: "Triggered", className: "bg-emerald-100 text-emerald-700" },
   billed: { label: "Billed", className: "bg-primary/10 text-primary" },
   received: { label: "Received", className: "bg-emerald-100 text-emerald-700" },
 };
@@ -46,12 +62,16 @@ interface Milestone {
   gst_amount: number;
   amount_incl_gst: number;
   trigger_event: string;
+  auto_trigger_event: string;
+  triggered_at?: string | null;
+  triggered_by_event?: string | null;
   gst_applicable: boolean;
   status: string;
   invoice_id?: string | null;
   billed_date?: string | null;
   received_date?: string | null;
 }
+
 
 interface Props {
   projectId: string;
@@ -71,6 +91,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
   const [showPctError, setShowPctError] = useState(false);
 
   const canEdit = ["super_admin", "managing_director", "finance_director", "finance_manager"].includes(userRole || "");
+  const canEditAutoTrigger = ["super_admin", "managing_director", "planning_engineer", "finance_manager"].includes(userRole || "");
   const canUnlock = ["super_admin", "managing_director"].includes(userRole || "");
   const isEditable = canEdit && !locked;
 
@@ -92,6 +113,9 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
         gst_amount: Number(d.gst_amount),
         amount_incl_gst: Number(d.amount_incl_gst),
         trigger_event: d.trigger_event,
+        auto_trigger_event: d.auto_trigger_event ?? "manual",
+        triggered_at: d.triggered_at,
+        triggered_by_event: d.triggered_by_event,
         gst_applicable: d.gst_applicable,
         status: d.status,
         invoice_id: d.invoice_id,
@@ -100,7 +124,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
       })));
     } else {
       // Pre-populate defaults
-      setMilestones(DEFAULT_MILESTONES.map(d => recalc({ ...d, amount_excl_gst: 0, gst_amount: 0, amount_incl_gst: 0, status: "pending" })));
+      setMilestones(DEFAULT_MILESTONES.map(d => recalc({ ...d, amount_excl_gst: 0, gst_amount: 0, amount_incl_gst: 0, status: "pending", auto_trigger_event: "manual" })));
       setDirty(true);
     }
     setLoading(false);
@@ -150,6 +174,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
       gst_amount: 0,
       amount_incl_gst: 0,
       trigger_event: "Custom",
+      auto_trigger_event: "manual",
       gst_applicable: true,
       status: "pending",
     });
@@ -186,6 +211,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
       gst_amount: m.gst_amount,
       amount_incl_gst: m.amount_incl_gst,
       trigger_event: m.trigger_event,
+      auto_trigger_event: m.auto_trigger_event || "manual",
       gst_applicable: m.gst_applicable,
       status: m.status,
       invoice_id: m.invoice_id || null,
@@ -211,7 +237,11 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
 
   async function billMilestone(idx: number) {
     const m = milestones[idx];
-    if (m.status !== "pending") return;
+    if (m.status !== "pending" && m.status !== "triggered") return;
+    if (m.status === "pending" && (m.auto_trigger_event || "manual") !== "manual") {
+      toast.error("This milestone fires automatically when its event occurs.");
+      return;
+    }
 
     // Create invoice
     const year = new Date().getFullYear();
@@ -308,6 +338,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
                 <TableHead className="text-right">GST Amt</TableHead>
                 <TableHead className="text-right">₹ Incl. GST</TableHead>
                 <TableHead>Trigger</TableHead>
+                <TableHead>Auto-Fire Event</TableHead>
                 <TableHead>Status</TableHead>
                 {isEditable && <TableHead className="w-16" />}
               </TableRow>
@@ -371,16 +402,51 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Badge className={`text-[10px] ${st.className}`}>{st.label}</Badge>
-                        {rowLocked && m.status !== "pending" && <Lock className="h-3 w-3 text-muted-foreground" />}
+                      {canEditAutoTrigger && !locked && m.status === "pending" ? (
+                        <Select
+                          value={m.auto_trigger_event || "manual"}
+                          onValueChange={(v) => updateMilestone(idx, "auto_trigger_event", v)}
+                        >
+                          <SelectTrigger className="h-8 text-xs w-44"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {AUTO_TRIGGER_EVENTS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          {AUTO_TRIGGER_EVENTS.find(t => t.value === (m.auto_trigger_event || "manual"))?.label || "Manual"}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1">
+                          <Badge className={`text-[10px] ${st.className}`}>{st.label}</Badge>
+                          {rowLocked && m.status !== "pending" && <Lock className="h-3 w-3 text-muted-foreground" />}
+                        </div>
+                        {m.status === "triggered" && m.triggered_at && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {m.triggered_by_event || "Auto"} · {new Date(m.triggered_at).toLocaleDateString("en-GB")}
+                          </span>
+                        )}
                       </div>
                     </TableCell>
                     {isEditable && (
                       <TableCell>
                         <div className="flex gap-1">
-                          {m.status === "pending" && canEdit && (
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => billMilestone(idx)} title="Bill this milestone">
+                          {(m.status === "pending" || m.status === "triggered") && canEdit && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0"
+                              disabled={m.status === "pending" && (m.auto_trigger_event || "manual") !== "manual"}
+                              onClick={() => billMilestone(idx)}
+                              title={
+                                m.status === "pending" && (m.auto_trigger_event || "manual") !== "manual"
+                                  ? "Waiting for auto-fire event"
+                                  : "Bill this milestone"
+                              }
+                            >
                               <IndianRupee className="h-3.5 w-3.5" />
                             </Button>
                           )}
@@ -405,7 +471,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
                 <TableCell />
                 <TableCell className="text-right">{fmt(totalGst)}</TableCell>
                 <TableCell className="text-right">{fmt(totalIncl)}</TableCell>
-                <TableCell colSpan={isEditable ? 3 : 2} />
+                <TableCell colSpan={isEditable ? 4 : 3} />
               </TableRow>
             </TableFooter>
           </Table>
