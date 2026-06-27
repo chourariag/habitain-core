@@ -398,16 +398,51 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Badge className={`text-[10px] ${st.className}`}>{st.label}</Badge>
-                        {rowLocked && m.status !== "pending" && <Lock className="h-3 w-3 text-muted-foreground" />}
+                      {canEditAutoTrigger && !locked && m.status === "pending" ? (
+                        <Select
+                          value={m.auto_trigger_event || "manual"}
+                          onValueChange={(v) => updateMilestone(idx, "auto_trigger_event", v)}
+                        >
+                          <SelectTrigger className="h-8 text-xs w-44"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {AUTO_TRIGGER_EVENTS.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          {AUTO_TRIGGER_EVENTS.find(t => t.value === (m.auto_trigger_event || "manual"))?.label || "Manual"}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1">
+                          <Badge className={`text-[10px] ${st.className}`}>{st.label}</Badge>
+                          {rowLocked && m.status !== "pending" && <Lock className="h-3 w-3 text-muted-foreground" />}
+                        </div>
+                        {m.status === "triggered" && m.triggered_at && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {m.triggered_by_event || "Auto"} · {new Date(m.triggered_at).toLocaleDateString("en-GB")}
+                          </span>
+                        )}
                       </div>
                     </TableCell>
                     {isEditable && (
                       <TableCell>
                         <div className="flex gap-1">
-                          {m.status === "pending" && canEdit && (
-                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => billMilestone(idx)} title="Bill this milestone">
+                          {(m.status === "pending" || m.status === "triggered") && canEdit && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0"
+                              disabled={m.status === "pending" && (m.auto_trigger_event || "manual") !== "manual"}
+                              onClick={() => billMilestone(idx)}
+                              title={
+                                m.status === "pending" && (m.auto_trigger_event || "manual") !== "manual"
+                                  ? "Waiting for auto-fire event"
+                                  : "Bill this milestone"
+                              }
+                            >
                               <IndianRupee className="h-3.5 w-3.5" />
                             </Button>
                           )}
