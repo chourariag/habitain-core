@@ -24,9 +24,21 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [statusMsg, setStatusMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [magicTokens, setMagicTokens] = useState<any[]>([]);
+  const [newClientName, setNewClientName] = useState("");
+  const [newClientEmail, setNewClientEmail] = useState("");
 
   const canManage = MANAGE_ROLES.includes(userRole ?? "");
-  const canRevoke = ["super_admin", "managing_director", "finance_director", "sales_director"].includes(userRole ?? "");
+  const canRevoke = ["super_admin", "managing_director", "finance_director", "sales_director", "planning_head"].includes(userRole ?? "");
+
+  const loadMagicTokens = async () => {
+    const { data } = await supabase
+      .from("client_portal_tokens" as any)
+      .select("*")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false });
+    setMagicTokens((data as any[]) ?? []);
+  };
 
   useEffect(() => {
     supabase
@@ -40,6 +52,7 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
           setStatusMsg(data.client_portal_status_message ?? "");
         }
       });
+    loadMagicTokens();
   }, [projectId]);
 
 
