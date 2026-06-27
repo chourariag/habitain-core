@@ -52,11 +52,13 @@ interface UploadResult {
   pendingApproval: number;
   linked: number;
   unlinked: { poNumber: string; extractedProject: string }[];
+  vendorMismatches: { poNumber: string; vendorOnPo: string; approvedVendor: string; lineItem: string }[];
   totalPOValue: number;
   totalWOValue: number;
 }
 
-interface ProjectInfo { id: string; name: string }
+interface ProjectInfo { id: string; name: string; client_name?: string | null }
+
 
 function parseExcelDate(v: any): string | null {
   if (!v) return null;
