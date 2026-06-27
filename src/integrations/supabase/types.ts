@@ -1065,6 +1065,68 @@ export type Database = {
           },
         ]
       }
+      client_visits: {
+        Row: {
+          client_feedback: string | null
+          client_name: string
+          closed_at: string | null
+          closed_by: string | null
+          commitments_made: string
+          commitments_status: string
+          created_at: string
+          follow_up_action: string | null
+          id: string
+          last_alerted_at: string | null
+          logged_by: string
+          project_id: string
+          updated_at: string
+          visit_date: string
+          visit_time: string | null
+        }
+        Insert: {
+          client_feedback?: string | null
+          client_name: string
+          closed_at?: string | null
+          closed_by?: string | null
+          commitments_made: string
+          commitments_status?: string
+          created_at?: string
+          follow_up_action?: string | null
+          id?: string
+          last_alerted_at?: string | null
+          logged_by?: string
+          project_id: string
+          updated_at?: string
+          visit_date: string
+          visit_time?: string | null
+        }
+        Update: {
+          client_feedback?: string | null
+          client_name?: string
+          closed_at?: string | null
+          closed_by?: string | null
+          commitments_made?: string
+          commitments_status?: string
+          created_at?: string
+          follow_up_action?: string | null
+          id?: string
+          last_alerted_at?: string | null
+          logged_by?: string
+          project_id?: string
+          updated_at?: string
+          visit_date?: string
+          visit_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_visits_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients_master: {
         Row: {
           address: string | null
@@ -12904,6 +12966,7 @@ export type Database = {
         Args: { _project_id: string; _system: string }
         Returns: number
       }
+      cv_alert_overdue_commitments: { Args: never; Returns: number }
       get_active_production_stages_for_project: {
         Args: { _project_id: string }
         Returns: {
