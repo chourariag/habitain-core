@@ -5591,6 +5591,8 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           current_stage: string | null
+          gfc_h3_approved: boolean
+          gfc_h3_approved_at: string | null
           id: string
           is_archived: boolean | null
           module_code: string | null
@@ -5606,6 +5608,8 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           current_stage?: string | null
+          gfc_h3_approved?: boolean
+          gfc_h3_approved_at?: string | null
           id?: string
           is_archived?: boolean | null
           module_code?: string | null
@@ -5621,6 +5625,8 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           current_stage?: string | null
+          gfc_h3_approved?: boolean
+          gfc_h3_approved_at?: string | null
           id?: string
           is_archived?: boolean | null
           module_code?: string | null
@@ -8428,6 +8434,7 @@ export type Database = {
           panel_count: number
           planned_labour_cost: number | null
           production_system: string
+          project_setup_approved: boolean
           project_size: string | null
           project_type: string | null
           setup_uploaded_at: string | null
@@ -8477,6 +8484,7 @@ export type Database = {
           panel_count?: number
           planned_labour_cost?: number | null
           production_system?: string
+          project_setup_approved?: boolean
           project_size?: string | null
           project_type?: string | null
           setup_uploaded_at?: string | null
@@ -8526,6 +8534,7 @@ export type Database = {
           panel_count?: number
           planned_labour_cost?: number | null
           production_system?: string
+          project_setup_approved?: boolean
           project_size?: string | null
           project_type?: string | null
           setup_uploaded_at?: string | null
@@ -10816,6 +10825,78 @@ export type Database = {
           },
         ]
       }
+      stage_wastage: {
+        Row: {
+          created_at: string
+          flag_level: string
+          id: string
+          is_archived: boolean
+          material_category: string | null
+          module_id: string | null
+          notes: string | null
+          project_id: string
+          qty_consumed: number
+          qty_issued: number
+          recorded_at: string
+          recorded_by: string | null
+          stage_name: string
+          updated_at: string
+          wastage_percent: number | null
+          wastage_qty: number | null
+        }
+        Insert: {
+          created_at?: string
+          flag_level?: string
+          id?: string
+          is_archived?: boolean
+          material_category?: string | null
+          module_id?: string | null
+          notes?: string | null
+          project_id: string
+          qty_consumed?: number
+          qty_issued?: number
+          recorded_at?: string
+          recorded_by?: string | null
+          stage_name: string
+          updated_at?: string
+          wastage_percent?: number | null
+          wastage_qty?: number | null
+        }
+        Update: {
+          created_at?: string
+          flag_level?: string
+          id?: string
+          is_archived?: boolean
+          material_category?: string | null
+          module_id?: string | null
+          notes?: string | null
+          project_id?: string
+          qty_consumed?: number
+          qty_issued?: number
+          recorded_at?: string
+          recorded_by?: string | null
+          stage_name?: string
+          updated_at?: string
+          wastage_percent?: number | null
+          wastage_qty?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stage_wastage_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stage_wastage_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       statutory_calendar: {
         Row: {
           active: boolean | null
@@ -12396,6 +12477,7 @@ export type Database = {
           panel_count: number
           planned_labour_cost: number | null
           production_system: string
+          project_setup_approved: boolean
           project_size: string | null
           project_type: string | null
           setup_uploaded_at: string | null
