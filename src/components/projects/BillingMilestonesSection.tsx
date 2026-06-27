@@ -91,6 +91,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
   const [showPctError, setShowPctError] = useState(false);
 
   const canEdit = ["super_admin", "managing_director", "finance_director", "finance_manager"].includes(userRole || "");
+  const canEditAutoTrigger = ["super_admin", "managing_director", "planning_engineer", "finance_manager"].includes(userRole || "");
   const canUnlock = ["super_admin", "managing_director"].includes(userRole || "");
   const isEditable = canEdit && !locked;
 
