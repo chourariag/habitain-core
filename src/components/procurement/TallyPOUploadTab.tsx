@@ -349,11 +349,76 @@ export function TallyPOUploadTab() {
         result.imported = toInsert.length;
       }
 
+      // FIX 3 — Vendor mismatch check against quotation_approvals
+      const linkedPos = toInsert.filter((p) => p.project_id);
+      if (linkedPos.length > 0) {
+        const projectIds = Array.from(new Set(linkedPos.map((p) => p.project_id)));
+        const { data: qReqs } = await supabase
+          .from("quotation_requests")
+          .select("id, project_id, line_item_description")
+          .in("project_id", projectIds);
+        const reqIds = (qReqs ?? []).map((r: any) => r.id);
+        let approvedMap = new Map<string, { vendor: string; lineItem: string; project_id: string }>();
+        if (reqIds.length > 0) {
+          const { data: approvals } = await supabase
+            .from("quotation_approvals")
+            .select("quotation_request_id, approved_vendor_quote_id")
+            .in("quotation_request_id", reqIds);
+          const vqIds = (approvals ?? []).map((a: any) => a.approved_vendor_quote_id).filter(Boolean);
+          const { data: vqs } = vqIds.length > 0
+            ? await supabase.from("vendor_quotes").select("id, vendor_name").in("id", vqIds)
+            : { data: [] as any[] };
+          const vqMap = new Map<string, string>((vqs ?? []).map((v: any) => [v.id, v.vendor_name]));
+          for (const a of approvals ?? []) {
+            const req = (qReqs ?? []).find((r: any) => r.id === a.quotation_request_id);
+            if (req) {
+              approvedMap.set(`${req.project_id}|${(req.line_item_description || "").toLowerCase().trim()}`,
+                { vendor: vqMap.get(a.approved_vendor_quote_id) || "", lineItem: req.line_item_description || "", project_id: req.project_id });
+            }
+          }
+        }
+        const mismatchUpdates: { po_number: string; project_id: string }[] = [];
+        for (const po of linkedPos) {
+          const desc = (po.item_description || po.items_summary || "").toLowerCase().trim();
+          // Try exact key match, then any approved item under this project that overlaps desc
+          let approved = approvedMap.get(`${po.project_id}|${desc}`);
+          if (!approved) {
+            for (const [key, val] of approvedMap.entries()) {
+              if (!key.startsWith(`${po.project_id}|`)) continue;
+              const li = val.lineItem.toLowerCase();
+              if (li && desc && (desc.includes(li) || li.includes(desc))) { approved = val; break; }
+            }
+          }
+          if (approved && approved.vendor && approved.vendor.toLowerCase() !== (po.vendor_name || "").toLowerCase()) {
+            result.vendorMismatches.push({
+              poNumber: po.po_number || "—",
+              vendorOnPo: po.vendor_name,
+              approvedVendor: approved.vendor,
+              lineItem: approved.lineItem,
+            });
+            if (po.po_number) mismatchUpdates.push({ po_number: po.po_number, project_id: po.project_id });
+          }
+        }
+        if (mismatchUpdates.length > 0) {
+          const { client } = await getAuthedClient();
+          for (const m of mismatchUpdates) {
+            await (client.from("purchase_orders") as any)
+              .update({ status: "vendor_mismatch" })
+              .eq("po_number", m.po_number)
+              .eq("source", "tally_upload");
+          }
+        }
+      }
+
+      // FIX 1 — Approval routing notifications
+      await notifyApprovers(toInsert, result.vendorMismatches);
+
       setUploadResult(result);
       toast.success(`${result.imported} records imported (${result.totalPOs} POs, ${result.totalWOs} Work Orders)`);
       fetchData();
       // Trigger Agent 10 — PO Anomaly Detector
       supabase.functions.invoke("ai-agents", { body: { agent: "po_anomaly" } }).catch(() => {});
+
     } catch (err: any) {
       toast.error("Upload failed: " + err.message);
     } finally {
