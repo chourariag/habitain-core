@@ -173,6 +173,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
       gst_amount: 0,
       amount_incl_gst: 0,
       trigger_event: "Custom",
+      auto_trigger_event: "manual",
       gst_applicable: true,
       status: "pending",
     });
