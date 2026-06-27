@@ -703,7 +703,7 @@ export function TallyPOUploadTab() {
                   <span>POs linked to projects: <strong style={{ color: "#006039" }}>{uploadResult.linked}</strong></span>
                   <span>Total PO Value: <strong className="font-mono">₹{uploadResult.totalPOValue.toLocaleString("en-IN")}</strong></span>
                   <span>Total WO Value: <strong className="font-mono">₹{uploadResult.totalWOValue.toLocaleString("en-IN")}</strong></span>
-                  {uploadResult.pendingApproval > 0 && <span style={{ color: "#D4860A" }}>{uploadResult.pendingApproval} pending approval (above ₹50K)</span>}
+                  {uploadResult.pendingApproval > 0 && <span style={{ color: "#D4860A" }}>{uploadResult.pendingApproval} pending approval (above ₹1L)</span>}
                 </div>
                 {uploadResult.unlinked.length > 0 && (
                   <Collapsible>
@@ -713,12 +713,27 @@ export function TallyPOUploadTab() {
                     <CollapsibleContent>
                       <div className="pl-4 pt-1 space-y-0.5 max-h-32 overflow-y-auto">
                         {uploadResult.unlinked.map((u, i) => (
-                          <p key={i} className="text-[10px]" style={{ color: "#999" }}>{u.poNumber}: "{u.extractedProject}"</p>
+                          <p key={i} className="text-[10px]" style={{ color: "#999" }}>Unlinked PO {u.poNumber} — project '{u.extractedProject}' not found in HStack</p>
                         ))}
                       </div>
                     </CollapsibleContent>
                   </Collapsible>
                 )}
+                {uploadResult.vendorMismatches.length > 0 && (
+                  <Collapsible>
+                    <CollapsibleTrigger className="text-xs cursor-pointer flex items-center gap-1" style={{ color: "#F40009" }}>
+                      <ChevronRight className="h-3 w-3" /> {uploadResult.vendorMismatches.length} vendor mismatch(es) — review required
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="pl-4 pt-1 space-y-0.5 max-h-32 overflow-y-auto">
+                        {uploadResult.vendorMismatches.map((m, i) => (
+                          <p key={i} className="text-[10px]" style={{ color: "#999" }}>PO {m.poNumber} — vendor '{m.vendorOnPo}' does not match approved vendor '{m.approvedVendor}' for {m.lineItem}. Review required.</p>
+                        ))}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+
               </div>
             )}
           </CardContent>
