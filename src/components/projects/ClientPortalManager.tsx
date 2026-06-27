@@ -148,6 +148,48 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
 
   const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
 
+  const generateClientPortalToken = async () => {
+    const { data: u } = await supabase.auth.getUser();
+    const { error } = await supabase.from("client_portal_tokens" as any).insert({
+      project_id: projectId,
+      client_name: newClientName || null,
+      client_email: newClientEmail || null,
+      created_by: u.user?.id ?? null,
+    });
+    if (error) toast.error("Failed to generate client portal link");
+    else {
+      toast.success("New client portal link generated");
+      setNewClientName(""); setNewClientEmail("");
+      await loadMagicTokens();
+    }
+  };
+
+  const revokeClientPortalToken = async (id: string) => {
+    const { error } = await supabase.from("client_portal_tokens" as any)
+      .update({ is_active: false }).eq("id", id);
+    if (error) toast.error("Failed to revoke link");
+    else { toast.success("Link revoked"); await loadMagicTokens(); }
+  };
+
+  const regenerateClientPortalToken = async (oldId: string, clientName: string | null, clientEmail: string | null) => {
+    const { data: u } = await supabase.auth.getUser();
+    await supabase.from("client_portal_tokens" as any).update({ is_active: false }).eq("id", oldId);
+    const { error } = await supabase.from("client_portal_tokens" as any).insert({
+      project_id: projectId,
+      client_name: clientName,
+      client_email: clientEmail,
+      created_by: u.user?.id ?? null,
+    });
+    if (error) toast.error("Failed to regenerate link");
+    else { toast.success("New link generated; old one revoked"); await loadMagicTokens(); }
+  };
+
+  const copyMagicLink = (token: string) => {
+    const url = `${window.location.origin}/client/${token}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link copied to clipboard");
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
