@@ -34,7 +34,23 @@ import { GFCStatusCard } from "@/components/design/GFCStatusCard";
 import { BOQManager } from "@/components/design/BOQManager";
 
 const DRAWING_TYPES = ["Architectural", "Structural", "MEP", "BOQ Reference", "Site Plan"];
-const DESIGN_STAGES_ORDER = ["Concept Design", "Schematic Design", "Design Development", "Working Drawings", "GFC Issue"];
+// 13-stage design lifecycle (pre-deal 1-6, post-deal 7-13)
+const DESIGN_STAGES_13: Array<{ order: number; name: string; group: "pre_deal" | "post_deal"; small: number; medium: number; large: number }> = [
+  { order: 1,  name: "Initial Meeting",            group: "pre_deal",  small: 0, medium: 0, large: 0 },
+  { order: 2,  name: "Site Visit",                 group: "pre_deal",  small: 1, medium: 1, large: 1 },
+  { order: 3,  name: "Design Brief",               group: "pre_deal",  small: 1, medium: 2, large: 2 },
+  { order: 4,  name: "Concept Design",             group: "pre_deal",  small: 3, medium: 6, large: 9 },
+  { order: 5,  name: "Schematic Design",           group: "pre_deal",  small: 5, medium: 8, large: 12 },
+  { order: 6,  name: "Estimation & Quotation",     group: "pre_deal",  small: 2, medium: 3, large: 5 },
+  { order: 7,  name: "S1 — Site Level Design",     group: "post_deal", small: 2, medium: 3, large: 4 },
+  { order: 8,  name: "S2 — Site Level Execution",  group: "post_deal", small: 2, medium: 4, large: 7 },
+  { order: 9,  name: "H1 — Fabrication Stage",     group: "post_deal", small: 2, medium: 4, large: 7 },
+  { order: 10, name: "H2 — MEP & Finishing",       group: "post_deal", small: 2, medium: 5, large: 9 },
+  { order: 11, name: "H3 — Interior Stage",        group: "post_deal", small: 2, medium: 5, large: 9 },
+  { order: 12, name: "GFC Budget Submission",      group: "post_deal", small: 1, medium: 2, large: 4 },
+  { order: 13, name: "Variation Stage",            group: "post_deal", small: 1, medium: 1, large: 1 },
+];
+const NO_CLIENT_APPROVAL_STAGES = new Set(["Initial Meeting", "Site Visit"]);
 const STAGE_STATUSES = ["not_started", "in_progress", "submitted_to_client", "revision_requested", "client_approved"];
 const DQ_QUERY_TYPES = ["Missing Dimension", "Vendor Detail", "Design Detail", "Material Change", "Coordination Issue", "Structural Query", "MEP Query", "Other"];
 const DQ_URGENCY = ["Critical", "High", "Normal", "Low"];
@@ -608,10 +624,8 @@ export default function DesignPortal() {
     if (!existing) {
       const { client } = await getAuthedClient();
       await (client.from("project_design_files") as any).insert({ project_id: projId, created_by: userId });
-      const stageInserts = DESIGN_STAGES_ORDER.map((name, i) => ({
-        project_id: projId, stage_name: name, stage_order: i + 1, status: "not_started",
-      }));
-      await (client.from("design_stages") as any).insert(stageInserts);
+      // Seed full 13-stage lifecycle via SECURITY DEFINER RPC (auto-calculates planned dates)
+      await (supabase as any).rpc("initialize_design_stages_v13", { _project_id: projId, _start: new Date().toISOString().slice(0, 10) });
       await fetchData();
     }
     // Fetch modules for this project (for GFC)
@@ -624,11 +638,111 @@ export default function DesignPortal() {
   // ──── Update design stage ────
   const updateStage = async (stageId: string, updates: Record<string, any>) => {
     const { client } = await getAuthedClient();
+    const stage = designStages.find((s: any) => s.id === stageId);
+    // If transitioning to client_approved, also set actual_end_date
+    if (updates.status === "client_approved" && !updates.actual_end_date) {
+      updates.actual_end_date = new Date().toISOString().slice(0, 10);
+    }
     await (client.from("design_stages") as any).update(updates).eq("id", stageId);
+
+    // Completion notifications
+    if (updates.status === "client_approved" && stage) {
+      try {
+        const projName = projectMap[stage.project_id]?.name ?? "Project";
+        const baseRoles = ["operations_architect", "principal_architect", "planning_head", "planning_engineer"];
+        const isHGfc = ["H1 — Fabrication Stage", "H2 — MEP & Finishing", "H3 — Interior Stage", "GFC Budget Submission"].includes(stage.stage_name);
+        const isPreDeal = stage.stage_group === "pre_deal";
+        const roles = new Set<string>(baseRoles);
+        if (isHGfc) { roles.add("production_head"); roles.add("managing_director"); }
+        if (isPreDeal) { roles.add("sales_director"); }
+        const { data: recipients } = await supabase.from("profiles")
+          .select("auth_user_id").in("role", Array.from(roles) as any[]).eq("is_active", true);
+        if (recipients?.length) {
+          await insertNotifications(recipients.map((p: any) => ({
+            recipient_id: p.auth_user_id,
+            title: `Design stage approved — ${stage.stage_name}`,
+            body: `Client approved "${stage.stage_name}" for ${projName}.`,
+            category: "design",
+            related_table: "design_stages",
+            related_id: stage.id,
+            navigate_to: "/design",
+          })));
+        }
+      } catch (e) { /* notification failures should not block stage update */ }
+    }
+
     // Lightweight refetch of stages only
     const { data } = await (supabase.from("design_stages") as any).select("*").order("stage_order");
     setDesignStages(normalizeProjectLevelDesignStages(data ?? []));
   };
+
+  // ──── Upload deliverable for a stage (single file replaces existing) ────
+  const uploadStageDeliverable = async (stage: any, file: File) => {
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `design-stage-deliverables/${stage.project_id}/${stage.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("design-files").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("design-files").getPublicUrl(path);
+      const updates: any = { deliverable_url: pub.publicUrl };
+      if (stage.status === "not_started") updates.status = "in_progress";
+      await updateStage(stage.id, updates);
+      toast.success("Deliverable uploaded");
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+    }
+  };
+
+  // ──── Change project size and recalculate planned dates ────
+  const changeProjectSize = async (projId: string, size: "small" | "medium" | "large") => {
+    const { client } = await getAuthedClient();
+    await (client.from("projects") as any).update({ project_size: size }).eq("id", projId);
+    await (supabase as any).rpc("recalculate_design_stage_dates", { _project_id: projId, _start: new Date().toISOString().slice(0, 10) });
+    toast.success(`Project size set to ${size} — schedule recalculated`);
+    await fetchData();
+  };
+
+  // ──── Daily overdue alert sweep — runs on Design Portal mount ────
+  const overdueSweepRanRef = useRef(false);
+  useEffect(() => {
+    if (overdueSweepRanRef.current || !userId) return;
+    overdueSweepRanRef.current = true;
+    (async () => {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const { data: overdue } = await (supabase.from("design_stages") as any)
+          .select("id,project_id,stage_name,planned_end_date,status,overdue_alerted_day1,overdue_alerted_day2")
+          .lt("planned_end_date", today)
+          .neq("status", "client_approved");
+        if (!overdue?.length) return;
+        const { data: opsArch } = await supabase.from("profiles").select("auth_user_id").eq("role", "operations_architect" as any).eq("is_active", true);
+        const { data: principal } = await supabase.from("profiles").select("auth_user_id").eq("role", "principal_architect" as any).eq("is_active", true);
+        for (const s of overdue) {
+          const daysOverdue = Math.floor((Date.now() - new Date(s.planned_end_date).getTime()) / 86400000);
+          const projName = projectMap[s.project_id]?.name ?? "Project";
+          if (daysOverdue >= 2 && !s.overdue_alerted_day2) {
+            const all = [...(opsArch ?? []), ...(principal ?? [])];
+            if (all.length) await insertNotifications(all.map((p: any) => ({
+              recipient_id: p.auth_user_id,
+              title: `Design stage ${daysOverdue}d overdue`,
+              body: `"${s.stage_name}" on ${projName} is ${daysOverdue} days overdue.`,
+              category: "design", related_table: "design_stages", related_id: s.id, navigate_to: "/design",
+            })));
+            await (supabase.from("design_stages") as any).update({ overdue_alerted_day2: true, overdue_alerted_day1: true }).eq("id", s.id);
+          } else if (daysOverdue >= 1 && !s.overdue_alerted_day1) {
+            if (opsArch?.length) await insertNotifications(opsArch.map((p: any) => ({
+              recipient_id: p.auth_user_id,
+              title: `Design stage overdue`,
+              body: `"${s.stage_name}" on ${projName} is overdue.`,
+              category: "design", related_table: "design_stages", related_id: s.id, navigate_to: "/design",
+            })));
+            await (supabase.from("design_stages") as any).update({ overdue_alerted_day1: true }).eq("id", s.id);
+          }
+        }
+      } catch { /* silent */ }
+    })();
+  }, [userId, projectMap]);
+
 
   // ──── Add consultant ────
   const addConsultant = async (projId: string) => {
@@ -1283,39 +1397,138 @@ export default function DesignPortal() {
               />
 
               <Card>
-                <CardHeader><CardTitle className="text-lg">B — Design Stages & Client Approvals</CardTitle></CardHeader>
-                <CardContent className="space-y-4">
-                  {selectedStages.map((stage: any) => (
-                    <div key={stage.id} className="border border-border rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between gap-2 flex-wrap">
-                        <h4 className="font-semibold text-sm">{stage.stage_name}</h4>
-                        <Badge variant="outline" style={stageStatusStyle(stage.status)}>{stageStatusLabel(stage.status)}</Badge>
-                      </div>
-                      {canUpload && (
-                        <div className="flex flex-wrap gap-2">
-                          {STAGE_STATUSES.filter((s) => s !== stage.status).map((s) => (
-                            <Button key={s} size="sm" variant="outline" className="text-xs"
-                              onClick={() => {
-                                if (s === "client_approved") {
-                                  const hasDrawings = drawings.some((d: any) => d.project_id === selectedProjectId && d.status === "active");
-                                  if (!hasDrawings) { toast.error("Upload at least one drawing before approving"); return; }
-                                }
-                                updateStage(stage.id, { status: s });
-                              }}>
-                              {stageStatusLabel(s)}
-                            </Button>
-                          ))}
-                        </div>
-                      )}
-                      {stage.status === "revision_requested" && stage.revision_comments && (
-                        <div className="bg-muted/50 rounded p-2">
-                          <p className="text-xs" style={{ color: "#666666" }}>Client Comments: {stage.revision_comments}</p>
-                        </div>
-                      )}
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <CardTitle className="text-lg">B — Design Schedule (13-stage lifecycle)</CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-muted-foreground">Project Size</Label>
+                      <Select
+                        value={selectedProject?.project_size ?? "medium"}
+                        onValueChange={(v) => selectedProjectId && changeProjectSize(selectedProjectId, v as any)}
+                        disabled={!canUpload}
+                      >
+                        <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="small">Small</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="large">Large</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  ))}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {(["pre_deal", "post_deal"] as const).map((grp) => {
+                    const groupStages = selectedStages
+                      .filter((s: any) => (s.stage_group ?? (s.stage_order <= 6 ? "pre_deal" : "post_deal")) === grp)
+                      .sort((a: any, b: any) => (a.stage_order ?? 0) - (b.stage_order ?? 0));
+                    if (groupStages.length === 0) return null;
+                    const isPre = grp === "pre_deal";
+                    const borderColor = isPre ? "#D4860A" : "#006039";
+                    return (
+                      <div key={grp} className="space-y-3">
+                        <h3 className="text-sm font-semibold" style={{ color: borderColor }}>
+                          {isPre ? "PRE-DEAL STAGES (1–6)" : "POST-DEAL STAGES (7–13)"}
+                        </h3>
+                        {groupStages.map((stage: any) => {
+                          const today = new Date(); today.setHours(0, 0, 0, 0);
+                          const endDate = stage.planned_end_date ? new Date(stage.planned_end_date) : null;
+                          const diffDays = endDate ? Math.round((endDate.getTime() - today.getTime()) / 86400000) : null;
+                          const isApproved = stage.status === "client_approved";
+                          const overdue = !isApproved && diffDays !== null && diffDays < 0;
+                          const noClientApproval = NO_CLIENT_APPROVAL_STAGES.has(stage.stage_name);
+                          const canMarkComplete = isApproved || noClientApproval;
+                          return (
+                            <div key={stage.id} className="rounded-lg p-4 space-y-3 bg-card" style={{ borderLeft: `4px solid ${borderColor}`, border: "1px solid hsl(var(--border))", borderLeftWidth: 4, borderLeftColor: borderColor }}>
+                              <div className="flex items-start justify-between gap-2 flex-wrap">
+                                <div className="min-w-0">
+                                  <h4 className="font-semibold text-sm">{stage.stage_order}. {stage.stage_name}</h4>
+                                  <p className="text-xs mt-0.5" style={{ color: "#666666" }}>
+                                    Planned: {stage.planned_start_date ?? "—"} → {stage.planned_end_date ?? "—"}
+                                    {stage.actual_end_date && <> · Completed: {stage.actual_end_date}</>}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant="outline" style={stageStatusStyle(stage.status)}>{stageStatusLabel(stage.status)}</Badge>
+                                  {!isApproved && diffDays !== null && (
+                                    <Badge variant="outline" style={overdue ? { backgroundColor: "#FFF0F0", color: "#F40009" } : { backgroundColor: "#F5F5F5", color: "#666666" }}>
+                                      {overdue ? `${Math.abs(diffDays)}d overdue` : `${diffDays}d remaining`}
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+
+                              {stage.deliverable_url && (
+                                <div className="flex items-center gap-2 text-xs">
+                                  <FileText className="h-3.5 w-3.5" style={{ color: "#006039" }} />
+                                  <a href={stage.deliverable_url} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#006039" }}>
+                                    View deliverable
+                                  </a>
+                                </div>
+                              )}
+
+                              {canUpload && (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  {stage.deliverable_required && (
+                                    <>
+                                      <input
+                                        type="file"
+                                        accept=".pdf,.dwg,.xls,.xlsx,.png,.jpg,.jpeg"
+                                        id={`stage-file-${stage.id}`}
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const f = e.target.files?.[0];
+                                          if (f) uploadStageDeliverable(stage, f);
+                                          e.target.value = "";
+                                        }}
+                                      />
+                                      <Button size="sm" variant="outline" className="text-xs" onClick={() => document.getElementById(`stage-file-${stage.id}`)?.click()}>
+                                        <Upload className="h-3 w-3 mr-1" />
+                                        {stage.deliverable_url ? "Replace deliverable" : "Upload deliverable"}
+                                      </Button>
+                                    </>
+                                  )}
+                                  {stage.status !== "submitted_to_client" && !isApproved && !noClientApproval && (
+                                    <Button size="sm" variant="outline" className="text-xs"
+                                      onClick={() => updateStage(stage.id, { status: "submitted_to_client" })}>
+                                      Submit to Client
+                                    </Button>
+                                  )}
+                                  {stage.status !== "revision_requested" && !isApproved && (
+                                    <Button size="sm" variant="outline" className="text-xs"
+                                      onClick={() => updateStage(stage.id, { status: "revision_requested" })}>
+                                      Mark Revision Requested
+                                    </Button>
+                                  )}
+                                  {!isApproved && canMarkComplete && (
+                                    <Button size="sm" className="text-xs" style={{ backgroundColor: "#006039", color: "#FFFFFF" }}
+                                      onClick={() => updateStage(stage.id, { status: "client_approved" })}>
+                                      <CheckCircle2 className="h-3 w-3 mr-1" /> Mark Complete
+                                    </Button>
+                                  )}
+                                  {!isApproved && !canMarkComplete && stage.status === "submitted_to_client" && (
+                                    <Button size="sm" className="text-xs" style={{ backgroundColor: "#006039", color: "#FFFFFF" }}
+                                      onClick={() => updateStage(stage.id, { status: "client_approved" })}>
+                                      <CheckCircle2 className="h-3 w-3 mr-1" /> Client Approved
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+
+                              {stage.status === "revision_requested" && stage.revision_comments && (
+                                <div className="bg-muted/50 rounded p-2">
+                                  <p className="text-xs" style={{ color: "#666666" }}>Client Comments: {stage.revision_comments}</p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
                 </CardContent>
               </Card>
+
 
               {selectedProjectId && (
                 <MasterQCChecklist

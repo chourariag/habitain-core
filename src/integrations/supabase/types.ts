@@ -2023,17 +2023,28 @@ export type Database = {
       }
       design_stages: {
         Row: {
+          actual_end_date: string | null
           approval_date: string | null
           approval_method: string | null
           approval_proof_url: string | null
           created_at: string
+          deliverable_required: boolean
+          deliverable_url: string | null
           drawing_urls: string[]
+          duration_large_days: number | null
+          duration_medium_days: number | null
+          duration_small_days: number | null
           evidence_uploaded_at: string | null
           evidence_url: string | null
           id: string
+          overdue_alerted_day1: boolean
+          overdue_alerted_day2: boolean
+          planned_end_date: string | null
+          planned_start_date: string | null
           project_id: string
           revision_changes: string | null
           revision_comments: string | null
+          stage_group: string | null
           stage_name: string
           stage_order: number
           status: string
@@ -2042,17 +2053,28 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          actual_end_date?: string | null
           approval_date?: string | null
           approval_method?: string | null
           approval_proof_url?: string | null
           created_at?: string
+          deliverable_required?: boolean
+          deliverable_url?: string | null
           drawing_urls?: string[]
+          duration_large_days?: number | null
+          duration_medium_days?: number | null
+          duration_small_days?: number | null
           evidence_uploaded_at?: string | null
           evidence_url?: string | null
           id?: string
+          overdue_alerted_day1?: boolean
+          overdue_alerted_day2?: boolean
+          planned_end_date?: string | null
+          planned_start_date?: string | null
           project_id: string
           revision_changes?: string | null
           revision_comments?: string | null
+          stage_group?: string | null
           stage_name: string
           stage_order: number
           status?: string
@@ -2061,17 +2083,28 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          actual_end_date?: string | null
           approval_date?: string | null
           approval_method?: string | null
           approval_proof_url?: string | null
           created_at?: string
+          deliverable_required?: boolean
+          deliverable_url?: string | null
           drawing_urls?: string[]
+          duration_large_days?: number | null
+          duration_medium_days?: number | null
+          duration_small_days?: number | null
           evidence_uploaded_at?: string | null
           evidence_url?: string | null
           id?: string
+          overdue_alerted_day1?: boolean
+          overdue_alerted_day2?: boolean
+          planned_end_date?: string | null
+          planned_start_date?: string | null
           project_id?: string
           revision_changes?: string | null
           revision_comments?: string | null
+          stage_group?: string | null
           stage_name?: string
           stage_order?: number
           status?: string
@@ -8395,6 +8428,7 @@ export type Database = {
           panel_count: number
           planned_labour_cost: number | null
           production_system: string
+          project_size: string | null
           project_type: string | null
           setup_uploaded_at: string | null
           setup_uploaded_by_name: string | null
@@ -8443,6 +8477,7 @@ export type Database = {
           panel_count?: number
           planned_labour_cost?: number | null
           production_system?: string
+          project_size?: string | null
           project_type?: string | null
           setup_uploaded_at?: string | null
           setup_uploaded_by_name?: string | null
@@ -8491,6 +8526,7 @@ export type Database = {
           panel_count?: number
           planned_labour_cost?: number | null
           production_system?: string
+          project_size?: string | null
           project_type?: string | null
           setup_uploaded_at?: string | null
           setup_uploaded_by_name?: string | null
@@ -12360,6 +12396,7 @@ export type Database = {
           panel_count: number
           planned_labour_cost: number | null
           production_system: string
+          project_size: string | null
           project_type: string | null
           setup_uploaded_at: string | null
           setup_uploaded_by_name: string | null
@@ -12413,6 +12450,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      initialize_design_stages_v13: {
+        Args: { _project_id: string; _start?: string }
+        Returns: number
+      }
       is_director: { Args: { _user_id: string }; Returns: boolean }
       is_full_admin: { Args: { _user_id: string }; Returns: boolean }
       is_md: { Args: { _user_id: string }; Returns: boolean }
@@ -12437,6 +12478,10 @@ export type Database = {
           unit: string
           value_earned: number
         }[]
+      }
+      recalculate_design_stage_dates: {
+        Args: { _project_id: string; _start?: string }
+        Returns: undefined
       }
       user_has_any_role: {
         Args: {
