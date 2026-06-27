@@ -36,6 +36,7 @@ import { FixedAssetsTab } from "@/components/procurement/FixedAssetsTab";
 import { DeliveryTrackerTab } from "@/components/procurement/DeliveryTrackerTab";
 import { ContractsRegisterTab } from "@/components/procurement/ContractsRegisterTab";
 import { QuotationsTab } from "@/components/procurement/QuotationsTab";
+import { WorkOrdersTab } from "@/components/procurement/WorkOrdersTab";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
@@ -311,6 +312,7 @@ export default function Procurement() {
             <TabsTrigger value="supplier-intel" className="gap-1.5"><TrendingUp className="h-4 w-4" /> Supplier Intelligence</TabsTrigger>
             <TabsTrigger value="material-alerts" className="gap-1.5"><Bell className="h-4 w-4" /> Material Alerts</TabsTrigger>
             <TabsTrigger value="contracts" className="gap-1.5"><FileText className="h-4 w-4" /> Contracts</TabsTrigger>
+            <TabsTrigger value="work-orders" className="gap-1.5"><HardHat className="h-4 w-4" /> Work Orders</TabsTrigger>
             {/* Subcontractors moved to Production → People */}
           </TabsList>
         </ScrollableTabsWrapper>
@@ -739,6 +741,10 @@ export default function Procurement() {
 
         <TabsContent value="quotations">
           <QuotationsTab userRole={userRole} projects={projects} />
+        </TabsContent>
+
+        <TabsContent value="work-orders">
+          <WorkOrdersTab userRole={userRole} projects={projects} />
         </TabsContent>
 
         {/* Subcontractors tab moved to Production → People */}
