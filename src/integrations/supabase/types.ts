@@ -7011,6 +7011,7 @@ export type Database = {
         Row: {
           amount_excl_gst: number
           amount_incl_gst: number
+          auto_trigger_event: string
           billed_date: string | null
           created_at: string
           description: string
@@ -7026,11 +7027,14 @@ export type Database = {
           received_date: string | null
           status: string
           trigger_event: string
+          triggered_at: string | null
+          triggered_by_event: string | null
           updated_at: string
         }
         Insert: {
           amount_excl_gst?: number
           amount_incl_gst?: number
+          auto_trigger_event?: string
           billed_date?: string | null
           created_at?: string
           description: string
@@ -7046,11 +7050,14 @@ export type Database = {
           received_date?: string | null
           status?: string
           trigger_event?: string
+          triggered_at?: string | null
+          triggered_by_event?: string | null
           updated_at?: string
         }
         Update: {
           amount_excl_gst?: number
           amount_incl_gst?: number
+          auto_trigger_event?: string
           billed_date?: string | null
           created_at?: string
           description?: string
@@ -7066,6 +7073,8 @@ export type Database = {
           received_date?: string | null
           status?: string
           trigger_event?: string
+          triggered_at?: string | null
+          triggered_by_event?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -13024,6 +13033,10 @@ export type Database = {
         Returns: number
       }
       cv_alert_overdue_commitments: { Args: never; Returns: number }
+      fire_billing_milestone_event: {
+        Args: { _event: string; _event_label?: string; _project_id: string }
+        Returns: number
+      }
       get_active_production_stages_for_project: {
         Args: { _project_id: string }
         Returns: {
