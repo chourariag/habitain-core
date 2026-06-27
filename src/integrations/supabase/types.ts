@@ -8083,6 +8083,7 @@ export type Database = {
           project_id: string
           role: Database["public"]["Enums"]["app_role"]
           status: string
+          type: string
           updated_at: string
         }
         Insert: {
@@ -8094,6 +8095,7 @@ export type Database = {
           project_id: string
           role: Database["public"]["Enums"]["app_role"]
           status?: string
+          type?: string
           updated_at?: string
         }
         Update: {
@@ -8105,6 +8107,7 @@ export type Database = {
           project_id?: string
           role?: Database["public"]["Enums"]["app_role"]
           status?: string
+          type?: string
           updated_at?: string
         }
         Relationships: [
@@ -11083,6 +11086,62 @@ export type Database = {
           },
         ]
       }
+      site_schedules: {
+        Row: {
+          approved_at: string | null
+          created_at: string
+          handover_date: string | null
+          id: string
+          installation_milestones: Json
+          project_id: string
+          rejection_reason: string | null
+          reminded_at: string | null
+          site_start_date: string | null
+          status: string
+          updated_at: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string
+          handover_date?: string | null
+          id?: string
+          installation_milestones?: Json
+          project_id: string
+          rejection_reason?: string | null
+          reminded_at?: string | null
+          site_start_date?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string
+          handover_date?: string | null
+          id?: string
+          installation_milestones?: Json
+          project_id?: string
+          rejection_reason?: string | null
+          reminded_at?: string | null
+          site_start_date?: string | null
+          status?: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_schedules_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sop_procedures: {
         Row: {
           ai_generated: boolean
@@ -13437,6 +13496,7 @@ export type Database = {
         Args: { _project_id: string; _start?: string }
         Returns: undefined
       }
+      site_schedule_dispatch_reminders: { Args: never; Returns: number }
       user_has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
