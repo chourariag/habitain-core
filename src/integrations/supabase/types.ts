@@ -12933,6 +12933,7 @@ export type Database = {
     }
     Functions: {
       _cpt_validate: { Args: { _token: string }; Returns: string }
+      amc_followup_daily_reminders: { Args: never; Returns: undefined }
       approve_handover_and_close: {
         Args: { _handover_id: string }
         Returns: undefined
