@@ -249,9 +249,11 @@ export function MeasurementSheet({ projectId, projectName, userRole }: Props) {
       .eq("is_active", true);
     const rows = (people ?? []).map((p: any) => ({
       recipient_id: p.auth_user_id,
+      type: "alert",
       category: "measurement",
       title: "Material tracking ahead of BOQ",
-      message: `Costing flagged WIP > 90% of BOQ for ${projectName ?? "project"}.`,
+      body: `Costing flagged WIP > 90% of BOQ for ${projectName ?? "project"}.`,
+      content: `Costing flagged WIP > 90% of BOQ for ${projectName ?? "project"}.`,
       navigate_to: `/production?project=${projectId}&tab=measurement`,
       priority: "high",
     }));
