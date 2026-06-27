@@ -22,6 +22,21 @@ const TRIGGER_EVENTS = [
   "Custom",
 ];
 
+const AUTO_TRIGGER_EVENTS: { value: string; label: string }[] = [
+  { value: "manual", label: "Manual" },
+  { value: "gfc_h1_approved", label: "GFC H1 approved" },
+  { value: "gfc_h2_approved", label: "GFC H2 approved" },
+  { value: "gfc_h3_approved", label: "GFC H3 approved" },
+  { value: "gfc_budget_approved", label: "GFC Budget approved" },
+  { value: "project_setup_approved", label: "Project Setup approved" },
+  { value: "site_readiness_confirmed", label: "Site readiness confirmed" },
+  { value: "dispatch_confirmed", label: "Dispatch confirmed" },
+  { value: "installation_complete", label: "Installation complete" },
+  { value: "mep_complete", label: "MEP complete" },
+  { value: "snagging_complete", label: "Snagging complete" },
+  { value: "handover_approved", label: "Handover approved" },
+];
+
 const DEFAULT_MILESTONES = [
   { milestone_number: 1, description: "Booking", percentage: 10, trigger_event: "Booking", gst_applicable: false },
   { milestone_number: 2, description: "Shell & Core Phase 1", percentage: 30, trigger_event: "Shell & Core Delivery", gst_applicable: true },
@@ -33,6 +48,7 @@ const DEFAULT_MILESTONES = [
 
 const STATUS_STYLES: Record<string, { label: string; className: string }> = {
   pending: { label: "Pending", className: "bg-muted text-muted-foreground" },
+  triggered: { label: "Triggered", className: "bg-emerald-100 text-emerald-700" },
   billed: { label: "Billed", className: "bg-primary/10 text-primary" },
   received: { label: "Received", className: "bg-emerald-100 text-emerald-700" },
 };
@@ -46,12 +62,16 @@ interface Milestone {
   gst_amount: number;
   amount_incl_gst: number;
   trigger_event: string;
+  auto_trigger_event: string;
+  triggered_at?: string | null;
+  triggered_by_event?: string | null;
   gst_applicable: boolean;
   status: string;
   invoice_id?: string | null;
   billed_date?: string | null;
   received_date?: string | null;
 }
+
 
 interface Props {
   projectId: string;
