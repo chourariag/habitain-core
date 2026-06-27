@@ -7814,6 +7814,50 @@ export type Database = {
           },
         ]
       }
+      project_setup_approvals: {
+        Row: {
+          approved_at: string | null
+          approver_id: string
+          comments: string | null
+          created_at: string
+          id: string
+          project_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approver_id: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          project_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approver_id?: string
+          comments?: string | null
+          created_at?: string
+          id?: string
+          project_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_setup_approvals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_stages: {
         Row: {
           actual_end: string | null
@@ -8423,6 +8467,7 @@ export type Database = {
           division: string
           est_completion: string | null
           gfc_budget: number | null
+          gfc_budget_approved_at: string | null
           gfc_budget_total: number | null
           id: string
           is_archived: boolean | null
@@ -8435,6 +8480,8 @@ export type Database = {
           planned_labour_cost: number | null
           production_system: string
           project_setup_approved: boolean
+          project_setup_approved_at: string | null
+          project_setup_status: string
           project_size: string | null
           project_type: string | null
           setup_uploaded_at: string | null
@@ -8473,6 +8520,7 @@ export type Database = {
           division?: string
           est_completion?: string | null
           gfc_budget?: number | null
+          gfc_budget_approved_at?: string | null
           gfc_budget_total?: number | null
           id?: string
           is_archived?: boolean | null
@@ -8485,6 +8533,8 @@ export type Database = {
           planned_labour_cost?: number | null
           production_system?: string
           project_setup_approved?: boolean
+          project_setup_approved_at?: string | null
+          project_setup_status?: string
           project_size?: string | null
           project_type?: string | null
           setup_uploaded_at?: string | null
@@ -8523,6 +8573,7 @@ export type Database = {
           division?: string
           est_completion?: string | null
           gfc_budget?: number | null
+          gfc_budget_approved_at?: string | null
           gfc_budget_total?: number | null
           id?: string
           is_archived?: boolean | null
@@ -8535,6 +8586,8 @@ export type Database = {
           planned_labour_cost?: number | null
           production_system?: string
           project_setup_approved?: boolean
+          project_setup_approved_at?: string | null
+          project_setup_status?: string
           project_size?: string | null
           project_type?: string | null
           setup_uploaded_at?: string | null
@@ -12466,6 +12519,7 @@ export type Database = {
           division: string
           est_completion: string | null
           gfc_budget: number | null
+          gfc_budget_approved_at: string | null
           gfc_budget_total: number | null
           id: string
           is_archived: boolean | null
@@ -12478,6 +12532,8 @@ export type Database = {
           planned_labour_cost: number | null
           production_system: string
           project_setup_approved: boolean
+          project_setup_approved_at: string | null
+          project_setup_status: string
           project_size: string | null
           project_type: string | null
           setup_uploaded_at: string | null
