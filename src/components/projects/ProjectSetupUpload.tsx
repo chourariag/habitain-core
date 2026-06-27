@@ -10,6 +10,7 @@ import { dispatchProjectImported } from "@/lib/use-project-import";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { usePreProdGates } from "@/components/projects/PreProductionChecklist";
+import GfcSetupDeadlineBanner from "@/components/projects/GfcSetupDeadlineBanner";
 
 interface Props {
   projectId: string;
@@ -871,7 +872,9 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="space-y-2">
+        <GfcSetupDeadlineBanner projectId={projectId} />
+        <div className="flex flex-wrap items-center gap-2">
         <Button size="sm" variant="outline" onClick={downloadTemplate} disabled={downloading} className="gap-1.5">
           {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Download Project Setup Template
         </Button>
@@ -888,6 +891,7 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Upload Project Setup
         </Button>
+        </div>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>

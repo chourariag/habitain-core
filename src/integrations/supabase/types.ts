@@ -4204,6 +4204,68 @@ export type Database = {
           },
         ]
       }
+      kickoff_meetings: {
+        Row: {
+          calendar_invite_sent_at: string | null
+          created_at: string
+          escalated_at: string | null
+          id: string
+          kickoff_deadline: string
+          meeting_date: string | null
+          meeting_notes: string | null
+          meeting_time: string | null
+          project_id: string
+          project_setup_deadline: string | null
+          reminder_last_sent_at: string | null
+          status: string
+          task_assigned_to_id: string | null
+          task_assigned_to_role: string
+          updated_at: string
+        }
+        Insert: {
+          calendar_invite_sent_at?: string | null
+          created_at?: string
+          escalated_at?: string | null
+          id?: string
+          kickoff_deadline: string
+          meeting_date?: string | null
+          meeting_notes?: string | null
+          meeting_time?: string | null
+          project_id: string
+          project_setup_deadline?: string | null
+          reminder_last_sent_at?: string | null
+          status?: string
+          task_assigned_to_id?: string | null
+          task_assigned_to_role?: string
+          updated_at?: string
+        }
+        Update: {
+          calendar_invite_sent_at?: string | null
+          created_at?: string
+          escalated_at?: string | null
+          id?: string
+          kickoff_deadline?: string
+          meeting_date?: string | null
+          meeting_notes?: string | null
+          meeting_time?: string | null
+          project_id?: string
+          project_setup_deadline?: string | null
+          reminder_last_sent_at?: string | null
+          status?: string
+          task_assigned_to_id?: string | null
+          task_assigned_to_role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kickoff_meetings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kpi_definitions: {
         Row: {
           coaching_template_above: string | null
@@ -13033,6 +13095,15 @@ export type Database = {
         Args: { _project_id: string; _system: string }
         Returns: number
       }
+      confirm_kickoff_meeting: {
+        Args: {
+          _kickoff_id: string
+          _meeting_date: string
+          _meeting_time: string
+          _notes?: string
+        }
+        Returns: Json
+      }
       cv_alert_overdue_commitments: { Args: never; Returns: number }
       fire_billing_milestone_event: {
         Args: { _event: string; _event_label?: string; _project_id: string }
@@ -13343,6 +13414,7 @@ export type Database = {
         Args: { _employee_auth_id: string; _manager_auth_id: string }
         Returns: boolean
       }
+      kickoff_meeting_daily_reminders: { Args: never; Returns: undefined }
       recalc_running_bill: {
         Args: { _project_id: string }
         Returns: {

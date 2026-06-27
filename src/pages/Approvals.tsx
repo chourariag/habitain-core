@@ -14,6 +14,7 @@ import { listApprovalRequests, type ApprovalRequest } from "@/lib/approval-reque
 import { approveRequest, rejectRequest, APPROVAL_TYPE_META, summarizeRequest } from "@/lib/approval-actions";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import KickoffMeetingCard from "@/components/projects/KickoffMeetingCard";
 
 const APPROVER_ROLES = ["managing_director", "super_admin", "sales_director", "principal_architect"];
 
@@ -127,6 +128,7 @@ export default function Approvals() {
         </TabsList>
 
         <TabsContent value="pending" className="mt-4 space-y-3">
+          <KickoffMeetingCard userRole={role} />
           {pendingAdvances && pendingAdvances.length > 0 && (
             <div className="rounded-lg border p-3 flex items-center justify-between gap-3"
               style={{ background: "#FFF8E8", borderColor: "#F5E0B0" }}>
