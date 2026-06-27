@@ -234,15 +234,18 @@ export function ProductionKanban({ modules, onRefresh, productionSystem }: Props
         .select("auth_user_id")
         .in("role", roles as any)
         .eq("is_active", true);
+      const title = `${payload.flag_level === "red" ? "🚩 Red" : "⚠️ Amber"} Wastage — ${fromStage}`;
+      const body = `${payload.wastage_percent}% wastage on ${payload.material_category} (${mod.module_code || mod.name})`;
       const notifs = (recipients ?? [])
         .filter((r: any) => r.auth_user_id)
         .map((r: any) => ({
-          user_id: r.auth_user_id,
+          recipient_id: r.auth_user_id,
           type: "wastage_flag",
-          severity: payload.flag_level === "red" ? "critical" : "warning",
-          title: `${payload.flag_level === "red" ? "🚩 Red" : "⚠️ Amber"} Wastage — ${fromStage}`,
-          body: `${payload.wastage_percent}% wastage on ${payload.material_category} (${mod.module_code || mod.name})`,
-          link: "/production",
+          category: "production",
+          title,
+          body,
+          content: body,
+          navigate_to: "/production",
         }));
       if (notifs.length) await supabase.from("notifications").insert(notifs);
     }
