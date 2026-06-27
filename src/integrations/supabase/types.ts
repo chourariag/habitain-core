@@ -9209,6 +9209,119 @@ export type Database = {
           },
         ]
       }
+      quotation_approvals: {
+        Row: {
+          approved_at: string
+          approved_by: string | null
+          approved_vendor_quote_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          quotation_request_id: string
+          variance_vs_boq_percent: number | null
+        }
+        Insert: {
+          approved_at?: string
+          approved_by?: string | null
+          approved_vendor_quote_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          quotation_request_id: string
+          variance_vs_boq_percent?: number | null
+        }
+        Update: {
+          approved_at?: string
+          approved_by?: string | null
+          approved_vendor_quote_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          quotation_request_id?: string
+          variance_vs_boq_percent?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_approvals_approved_vendor_quote_id_fkey"
+            columns: ["approved_vendor_quote_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_quotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotation_approvals_quotation_request_id_fkey"
+            columns: ["quotation_request_id"]
+            isOneToOne: false
+            referencedRelation: "quotation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotation_requests: {
+        Row: {
+          boq_quantity: number
+          boq_total: number | null
+          boq_unit_rate: number
+          created_at: string
+          created_by: string | null
+          id: string
+          line_item_description: string
+          material_category: string | null
+          minimum_quotes_required: number
+          project_id: string
+          quotes_received_count: number
+          rejection_reason: string | null
+          remarks: string | null
+          status: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          boq_quantity?: number
+          boq_total?: number | null
+          boq_unit_rate?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          line_item_description: string
+          material_category?: string | null
+          minimum_quotes_required?: number
+          project_id: string
+          quotes_received_count?: number
+          rejection_reason?: string | null
+          remarks?: string | null
+          status?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          boq_quantity?: number
+          boq_total?: number | null
+          boq_unit_rate?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          line_item_description?: string
+          material_category?: string | null
+          minimum_quotes_required?: number
+          project_id?: string
+          quotes_received_count?: number
+          rejection_reason?: string | null
+          remarks?: string | null
+          status?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotation_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       quotation_versions: {
         Row: {
           created_at: string
@@ -11821,6 +11934,74 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_quotes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          delivery_date: string | null
+          id: string
+          is_approved: boolean
+          is_preferred: boolean
+          payment_terms: string | null
+          quantity: number
+          quotation_request_id: string
+          quote_file_url: string | null
+          quote_filename: string | null
+          sayeed_notes: string | null
+          total_value: number
+          unit_rate: number
+          updated_at: string
+          vendor_id: string | null
+          vendor_name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          delivery_date?: string | null
+          id?: string
+          is_approved?: boolean
+          is_preferred?: boolean
+          payment_terms?: string | null
+          quantity?: number
+          quotation_request_id: string
+          quote_file_url?: string | null
+          quote_filename?: string | null
+          sayeed_notes?: string | null
+          total_value?: number
+          unit_rate?: number
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          delivery_date?: string | null
+          id?: string
+          is_approved?: boolean
+          is_preferred?: boolean
+          payment_terms?: string | null
+          quantity?: number
+          quotation_request_id?: string
+          quote_file_url?: string | null
+          quote_filename?: string | null
+          sayeed_notes?: string | null
+          total_value?: number
+          unit_rate?: number
+          updated_at?: string
+          vendor_id?: string | null
+          vendor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_quotes_quotation_request_id_fkey"
+            columns: ["quotation_request_id"]
+            isOneToOne: false
+            referencedRelation: "quotation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       weekly_digests: {
         Row: {
           created_at: string
@@ -12447,6 +12628,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      can_approve_quotations: { Args: { _user_id: string }; Returns: boolean }
       can_approve_request: {
         Args: {
           _row: Database["public"]["Tables"]["approval_requests"]["Row"]
@@ -12475,6 +12657,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      can_manage_quotations: { Args: { _user_id: string }; Returns: boolean }
       can_manage_safety: { Args: { _user_id: string }; Returns: boolean }
       can_manage_subcontractors: {
         Args: { _user_id: string }
@@ -12508,6 +12691,7 @@ export type Database = {
       }
       can_view_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_view_profile_pii: { Args: { _user_id: string }; Returns: boolean }
+      can_view_quotations: { Args: { _user_id: string }; Returns: boolean }
       can_view_work_orders: { Args: { _user_id: string }; Returns: boolean }
       client_approve_design_stage: {
         Args: { _stage_id: string; _token: string }
