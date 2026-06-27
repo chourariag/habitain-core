@@ -430,6 +430,14 @@ function SiteHubContent() {
             </TabsContent>
           </Tabs>
         </TabsContent>
+        <TabsContent value="client-visits">
+          <ClientVisitsTab
+            projectId={selectedProjectId!}
+            projectName={selectedProject?.name ?? ""}
+            clientName={selectedProject?.client_name ?? null}
+            userRole={userRole}
+          />
+        </TabsContent>
       </Tabs>
     </div>
     </div>
