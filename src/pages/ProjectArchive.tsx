@@ -40,20 +40,21 @@ export default function ProjectArchive() {
   const load = async () => {
     if (!id) return;
     setLoading(true);
+    const sb = supabase as any;
     const [project, archive, designStages, qcInspections, ncrs, designQueries, siteDiary, punchList, variations, boq, billingMilestones, invoices] =
       await Promise.all([
-        supabase.from("projects").select("*").eq("id", id).maybeSingle(),
-        supabase.from("project_archives").select("*").eq("project_id", id).maybeSingle(),
-        supabase.from("design_stages").select("*").eq("project_id", id).order("stage_number"),
-        supabase.from("qc_inspections").select("*").eq("project_id", id).order("created_at"),
-        supabase.from("ncr_register").select("*").eq("project_id", id).order("created_at"),
-        supabase.from("design_queries").select("*").eq("project_id", id).order("created_at"),
-        supabase.from("site_diary").select("*").eq("project_id", id).order("created_at"),
-        supabase.from("punch_list_items").select("*").eq("project_id", id).order("created_at"),
-        supabase.from("variation_register").select("*").eq("project_id", id).order("created_at"),
-        supabase.from("project_boq_items").select("*").eq("project_id", id),
-        supabase.from("project_billing_milestones").select("*").eq("project_id", id).order("created_at"),
-        supabase.from("project_invoices").select("*").eq("project_id", id).order("created_at"),
+        sb.from("projects").select("*").eq("id", id).maybeSingle(),
+        sb.from("project_archives").select("*").eq("project_id", id).maybeSingle(),
+        sb.from("design_stages").select("*").eq("project_id", id).order("stage_number"),
+        sb.from("qc_inspections").select("*").eq("project_id", id).order("created_at"),
+        sb.from("ncr_register").select("*").eq("project_id", id).order("created_at"),
+        sb.from("design_queries").select("*").eq("project_id", id).order("created_at"),
+        sb.from("site_diary").select("*").eq("project_id", id).order("created_at"),
+        sb.from("punch_list_items").select("*").eq("project_id", id).order("created_at"),
+        sb.from("variation_register").select("*").eq("project_id", id).order("created_at"),
+        sb.from("project_boq_items").select("*").eq("project_id", id),
+        sb.from("project_billing_milestones").select("*").eq("project_id", id).order("created_at"),
+        sb.from("project_invoices").select("*").eq("project_id", id).order("created_at"),
       ]);
     setData({
       project: project.data,
