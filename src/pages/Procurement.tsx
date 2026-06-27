@@ -35,6 +35,7 @@ import { Calendar, Hammer, Bell, ClipboardCheck, HardHat, Wrench } from "lucide-
 import { FixedAssetsTab } from "@/components/procurement/FixedAssetsTab";
 import { DeliveryTrackerTab } from "@/components/procurement/DeliveryTrackerTab";
 import { ContractsRegisterTab } from "@/components/procurement/ContractsRegisterTab";
+import { QuotationsTab } from "@/components/procurement/QuotationsTab";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
