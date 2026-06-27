@@ -43,7 +43,7 @@ const COSTING_ROLES = ["costing_engineer", "finance_manager", "finance_director"
 
 const fmt = (n: number) => `₹${(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
-export function MeasurementSheet({ projectId, projectName, userRole }: Props) {
+export function FactoryMeasurementSheet({ projectId, projectName, userRole }: Props) {
   const canSubmit = SUPERVISOR_ROLES.includes(userRole ?? "");
   const canReview = COSTING_ROLES.includes(userRole ?? "");
   const today = format(new Date(), "yyyy-MM-dd");
