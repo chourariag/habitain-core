@@ -443,7 +443,7 @@ export function TallyPOUploadTab() {
 
       const result: UploadResult = {
         totalPOs: 0, totalWOs: 0, imported: 0, duplicates: 0, failed: 0,
-        pendingApproval: 0, linked: 0, unlinked: [], totalPOValue: 0, totalWOValue: 0,
+        pendingApproval: 0, linked: 0, unlinked: [], vendorMismatches: [], totalPOValue: 0, totalWOValue: 0,
       };
       const toInsert: any[] = [];
 
@@ -458,7 +458,8 @@ export function TallyPOUploadTab() {
         if (!parsedDate) { result.failed++; continue; }
 
         const poType = isWorkOrder(poNum) ? "work_order" : "purchase_order";
-        const status = poType === "purchase_order" && totalAmt > 50000 ? "pending_approval" : "approved";
+        const status = poType === "purchase_order" && totalAmt > 100000 ? "pending_approval" : "approved";
+
         if (status === "pending_approval") result.pendingApproval++;
         if (poType === "work_order") { result.totalWOs++; result.totalWOValue += totalAmt; }
         else { result.totalPOs++; result.totalPOValue += totalAmt; }
