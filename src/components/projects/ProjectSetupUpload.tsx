@@ -10,6 +10,7 @@ import { dispatchProjectImported } from "@/lib/use-project-import";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { usePreProdGates } from "@/components/projects/PreProductionChecklist";
+import GfcSetupDeadlineBanner from "@/components/projects/GfcSetupDeadlineBanner";
 
 interface Props {
   projectId: string;
