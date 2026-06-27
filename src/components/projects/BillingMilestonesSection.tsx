@@ -210,6 +210,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
       gst_amount: m.gst_amount,
       amount_incl_gst: m.amount_incl_gst,
       trigger_event: m.trigger_event,
+      auto_trigger_event: m.auto_trigger_event || "manual",
       gst_applicable: m.gst_applicable,
       status: m.status,
       invoice_id: m.invoice_id || null,
