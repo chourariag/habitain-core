@@ -12270,6 +12270,74 @@ export type Database = {
           },
         ]
       }
+      wo_requests: {
+        Row: {
+          costing_approved_at: string | null
+          costing_approved_by: string | null
+          costing_engineer_notes: string | null
+          created_at: string
+          created_by: string
+          estimated_value: number
+          id: string
+          operations_approved_at: string | null
+          operations_approver_id: string | null
+          project_id: string
+          rejection_reason: string | null
+          required_start_date: string | null
+          scope_of_work: string
+          stage_name: string
+          status: string
+          subcontractor_name: string
+          updated_at: string
+        }
+        Insert: {
+          costing_approved_at?: string | null
+          costing_approved_by?: string | null
+          costing_engineer_notes?: string | null
+          created_at?: string
+          created_by: string
+          estimated_value?: number
+          id?: string
+          operations_approved_at?: string | null
+          operations_approver_id?: string | null
+          project_id: string
+          rejection_reason?: string | null
+          required_start_date?: string | null
+          scope_of_work: string
+          stage_name: string
+          status?: string
+          subcontractor_name: string
+          updated_at?: string
+        }
+        Update: {
+          costing_approved_at?: string | null
+          costing_approved_by?: string | null
+          costing_engineer_notes?: string | null
+          created_at?: string
+          created_by?: string
+          estimated_value?: number
+          id?: string
+          operations_approved_at?: string | null
+          operations_approver_id?: string | null
+          project_id?: string
+          rejection_reason?: string | null
+          required_start_date?: string | null
+          scope_of_work?: string
+          stage_name?: string
+          status?: string
+          subcontractor_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wo_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       work_order_closure: {
         Row: {
           actual_qty: number
@@ -12313,6 +12381,69 @@ export type Database = {
             columns: ["wo_id"]
             isOneToOne: true
             referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      work_order_register: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          project_id: string | null
+          scope_summary: string | null
+          status: string | null
+          subcontractor: string
+          updated_at: string
+          uploaded_at: string
+          uploaded_by: string
+          wo_date: string
+          wo_number: string
+          wo_request_id: string | null
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          project_id?: string | null
+          scope_summary?: string | null
+          status?: string | null
+          subcontractor: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by: string
+          wo_date: string
+          wo_number: string
+          wo_request_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          project_id?: string | null
+          scope_summary?: string | null
+          status?: string | null
+          subcontractor?: string
+          updated_at?: string
+          uploaded_at?: string
+          uploaded_by?: string
+          wo_date?: string
+          wo_number?: string
+          wo_request_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "work_order_register_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "work_order_register_wo_request_id_fkey"
+            columns: ["wo_request_id"]
+            isOneToOne: false
+            referencedRelation: "wo_requests"
             referencedColumns: ["id"]
           },
         ]
