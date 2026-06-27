@@ -233,7 +233,7 @@ export function TallyPOUploadTab() {
       const dataStart = headerIdx + 1;
 
       // Fetch projects for matching
-      const { data: projList } = await supabase.from("projects").select("id, name");
+      const { data: projList } = await supabase.from("projects").select("id, name, client_name");
       const projectsList: ProjectInfo[] = (projList as ProjectInfo[]) || [];
 
       const existingNums = new Set(pos.map((p) => p.po_number));
@@ -242,8 +242,9 @@ export function TallyPOUploadTab() {
 
       const result: UploadResult = {
         totalPOs: 0, totalWOs: 0, imported: 0, duplicates: 0, failed: 0,
-        pendingApproval: 0, linked: 0, unlinked: [], totalPOValue: 0, totalWOValue: 0,
+        pendingApproval: 0, linked: 0, unlinked: [], vendorMismatches: [], totalPOValue: 0, totalWOValue: 0,
       };
+
 
       const toInsert: any[] = [];
       let i = dataStart;
