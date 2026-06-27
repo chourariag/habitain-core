@@ -294,7 +294,9 @@ export function TallyPOUploadTab() {
         }
 
         const totalAmt = orderAmount;
-        const status = poType === "purchase_order" && totalAmt > 50000 ? "pending_approval" : "approved";
+        const APPROVAL_THRESHOLD = 100000;
+        const status = poType === "purchase_order" && totalAmt > APPROVAL_THRESHOLD ? "pending_approval" : "approved";
+
         if (status === "pending_approval") result.pendingApproval++;
 
         if (poType === "work_order") {
