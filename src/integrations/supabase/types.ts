@@ -1405,9 +1405,12 @@ export type Database = {
           module_id: string | null
           notes: string | null
           project_id: string
+          reviewed_by: string | null
           stage: string | null
+          submitted_at: string | null
           submitted_by: string
           team_label: string | null
+          total_wip_today: number
           trade: string
           unlock_reason: string | null
           unlocked_at: string | null
@@ -1427,9 +1430,12 @@ export type Database = {
           module_id?: string | null
           notes?: string | null
           project_id: string
+          reviewed_by?: string | null
           stage?: string | null
+          submitted_at?: string | null
           submitted_by: string
           team_label?: string | null
+          total_wip_today?: number
           trade?: string
           unlock_reason?: string | null
           unlocked_at?: string | null
@@ -1449,9 +1455,12 @@ export type Database = {
           module_id?: string | null
           notes?: string | null
           project_id?: string
+          reviewed_by?: string | null
           stage?: string | null
+          submitted_at?: string | null
           submitted_by?: string
           team_label?: string | null
+          total_wip_today?: number
           trade?: string
           unlock_reason?: string | null
           unlocked_at?: string | null
@@ -1472,6 +1481,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_measurements_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -5458,30 +5474,45 @@ export type Database = {
           created_at: string
           cumulative_qty_snapshot: number
           id: string
+          labour_cost_today: number
+          material_cost_today: number
           measurement_id: string
           pct_complete_snapshot: number
+          photo_urls: string[]
+          stage_name: string | null
           today_qty: number
           value_today_snapshot: number
+          wip_today: number
         }
         Insert: {
           boq_item_id: string
           created_at?: string
           cumulative_qty_snapshot?: number
           id?: string
+          labour_cost_today?: number
+          material_cost_today?: number
           measurement_id: string
           pct_complete_snapshot?: number
+          photo_urls?: string[]
+          stage_name?: string | null
           today_qty?: number
           value_today_snapshot?: number
+          wip_today?: number
         }
         Update: {
           boq_item_id?: string
           created_at?: string
           cumulative_qty_snapshot?: number
           id?: string
+          labour_cost_today?: number
+          material_cost_today?: number
           measurement_id?: string
           pct_complete_snapshot?: number
+          photo_urls?: string[]
+          stage_name?: string | null
           today_qty?: number
           value_today_snapshot?: number
+          wip_today?: number
         }
         Relationships: [
           {
@@ -12490,6 +12521,12 @@ export type Database = {
         Args: { _project_id: string; _system: string }
         Returns: number
       }
+      get_active_production_stages_for_project: {
+        Args: { _project_id: string }
+        Returns: {
+          stage_name: string
+        }[]
+      }
       get_active_profiles_directory: {
         Args: never
         Returns: {
@@ -12526,6 +12563,17 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_boq_totals_by_stage: {
+        Args: { _project_id: string }
+        Returns: {
+          boq_qty: number
+          boq_rate: number
+          first_boq_item_id: string
+          stage: string
+          trade: string
+          unit: string
+        }[]
+      }
       get_design_stages_by_portal_token: {
         Args: { _token: string }
         Returns: {
@@ -12553,6 +12601,7 @@ export type Database = {
           wedding_anniversary: string
         }[]
       }
+      get_labour_rate_for_trade: { Args: { _trade: string }; Returns: number }
       get_my_profile_email: {
         Args: never
         Returns: {
@@ -12729,6 +12778,25 @@ export type Database = {
           client_portal_expires_at: string
           client_portal_status_message: string
           client_portal_token: string
+        }[]
+      }
+      get_project_material_cost_for_date: {
+        Args: { _on_date: string; _project_id: string }
+        Returns: number
+      }
+      get_project_wip_summary: {
+        Args: { _on_date?: string; _project_id: string }
+        Returns: {
+          boq_total: number
+          cumulative_wip: number
+          labour_today: number
+          labour_yday: number
+          material_today: number
+          material_yday: number
+          on_date: string
+          pct_consumed: number
+          wip_today: number
+          wip_yday: number
         }[]
       }
       get_user_role: {
