@@ -638,11 +638,111 @@ export default function DesignPortal() {
   // ──── Update design stage ────
   const updateStage = async (stageId: string, updates: Record<string, any>) => {
     const { client } = await getAuthedClient();
+    const stage = designStages.find((s: any) => s.id === stageId);
+    // If transitioning to client_approved, also set actual_end_date
+    if (updates.status === "client_approved" && !updates.actual_end_date) {
+      updates.actual_end_date = new Date().toISOString().slice(0, 10);
+    }
     await (client.from("design_stages") as any).update(updates).eq("id", stageId);
+
+    // Completion notifications
+    if (updates.status === "client_approved" && stage) {
+      try {
+        const projName = projectMap[stage.project_id]?.name ?? "Project";
+        const baseRoles = ["operations_architect", "principal_architect", "planning_head", "planning_engineer"];
+        const isHGfc = ["H1 — Fabrication Stage", "H2 — MEP & Finishing", "H3 — Interior Stage", "GFC Budget Submission"].includes(stage.stage_name);
+        const isPreDeal = stage.stage_group === "pre_deal";
+        const roles = new Set<string>(baseRoles);
+        if (isHGfc) { roles.add("production_head"); roles.add("managing_director"); }
+        if (isPreDeal) { roles.add("sales_director"); }
+        const { data: recipients } = await supabase.from("profiles")
+          .select("auth_user_id").in("role", Array.from(roles) as any[]).eq("is_active", true);
+        if (recipients?.length) {
+          await insertNotifications(recipients.map((p: any) => ({
+            recipient_id: p.auth_user_id,
+            title: `Design stage approved — ${stage.stage_name}`,
+            body: `Client approved "${stage.stage_name}" for ${projName}.`,
+            category: "design",
+            related_table: "design_stages",
+            related_id: stage.id,
+            navigate_to: "/design",
+          })));
+        }
+      } catch (e) { /* notification failures should not block stage update */ }
+    }
+
     // Lightweight refetch of stages only
     const { data } = await (supabase.from("design_stages") as any).select("*").order("stage_order");
     setDesignStages(normalizeProjectLevelDesignStages(data ?? []));
   };
+
+  // ──── Upload deliverable for a stage (single file replaces existing) ────
+  const uploadStageDeliverable = async (stage: any, file: File) => {
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `design-stage-deliverables/${stage.project_id}/${stage.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("design-files").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("design-files").getPublicUrl(path);
+      const updates: any = { deliverable_url: pub.publicUrl };
+      if (stage.status === "not_started") updates.status = "in_progress";
+      await updateStage(stage.id, updates);
+      toast.success("Deliverable uploaded");
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+    }
+  };
+
+  // ──── Change project size and recalculate planned dates ────
+  const changeProjectSize = async (projId: string, size: "small" | "medium" | "large") => {
+    const { client } = await getAuthedClient();
+    await (client.from("projects") as any).update({ project_size: size }).eq("id", projId);
+    await (supabase as any).rpc("recalculate_design_stage_dates", { _project_id: projId, _start: new Date().toISOString().slice(0, 10) });
+    toast.success(`Project size set to ${size} — schedule recalculated`);
+    await fetchData();
+  };
+
+  // ──── Daily overdue alert sweep — runs on Design Portal mount ────
+  const overdueSweepRanRef = useRef(false);
+  useEffect(() => {
+    if (overdueSweepRanRef.current || !userId) return;
+    overdueSweepRanRef.current = true;
+    (async () => {
+      try {
+        const today = new Date().toISOString().slice(0, 10);
+        const { data: overdue } = await (supabase.from("design_stages") as any)
+          .select("id,project_id,stage_name,planned_end_date,status,overdue_alerted_day1,overdue_alerted_day2")
+          .lt("planned_end_date", today)
+          .neq("status", "client_approved");
+        if (!overdue?.length) return;
+        const { data: opsArch } = await supabase.from("profiles").select("auth_user_id").eq("role", "operations_architect" as any).eq("is_active", true);
+        const { data: principal } = await supabase.from("profiles").select("auth_user_id").eq("role", "principal_architect" as any).eq("is_active", true);
+        for (const s of overdue) {
+          const daysOverdue = Math.floor((Date.now() - new Date(s.planned_end_date).getTime()) / 86400000);
+          const projName = projectMap[s.project_id]?.name ?? "Project";
+          if (daysOverdue >= 2 && !s.overdue_alerted_day2) {
+            const all = [...(opsArch ?? []), ...(principal ?? [])];
+            if (all.length) await insertNotifications(all.map((p: any) => ({
+              recipient_id: p.auth_user_id,
+              title: `Design stage ${daysOverdue}d overdue`,
+              body: `"${s.stage_name}" on ${projName} is ${daysOverdue} days overdue.`,
+              category: "design", related_table: "design_stages", related_id: s.id, navigate_to: "/design",
+            })));
+            await (supabase.from("design_stages") as any).update({ overdue_alerted_day2: true, overdue_alerted_day1: true }).eq("id", s.id);
+          } else if (daysOverdue >= 1 && !s.overdue_alerted_day1) {
+            if (opsArch?.length) await insertNotifications(opsArch.map((p: any) => ({
+              recipient_id: p.auth_user_id,
+              title: `Design stage overdue`,
+              body: `"${s.stage_name}" on ${projName} is overdue.`,
+              category: "design", related_table: "design_stages", related_id: s.id, navigate_to: "/design",
+            })));
+            await (supabase.from("design_stages") as any).update({ overdue_alerted_day1: true }).eq("id", s.id);
+          }
+        }
+      } catch { /* silent */ }
+    })();
+  }, [userId, projectMap]);
+
 
   // ──── Add consultant ────
   const addConsultant = async (projId: string) => {
