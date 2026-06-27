@@ -66,17 +66,17 @@ export default function ClientPortal() {
     setLoading(true);
 
     const { data: proj, error: projErr } = await supabase
-      .rpc("get_project_by_portal_token", { _token: projectToken })
+      .rpc("get_project_by_any_portal_token" as any, { _token: projectToken })
       .maybeSingle();
 
 
     if (projErr || !proj) {
-      setError("This link is invalid or has expired.");
+      setError("This link is no longer valid. Contact your project team.");
       setLoading(false);
       return;
     }
 
-    if (proj.client_portal_expires_at && new Date(proj.client_portal_expires_at) < new Date()) {
+    if ((proj as any).client_portal_expires_at && new Date((proj as any).client_portal_expires_at) < new Date()) {
       setError("This link has expired. Please contact your project manager for a new link.");
       setLoading(false);
       return;
@@ -85,7 +85,7 @@ export default function ClientPortal() {
     setProject(proj);
 
     supabase.from("client_portal_access_log").insert({
-      project_id: proj.id,
+      project_id: (proj as any).id,
       token_used: projectToken,
       action: "page_view",
     }).then(() => {});
