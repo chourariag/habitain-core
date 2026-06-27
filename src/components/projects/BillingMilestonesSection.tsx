@@ -123,7 +123,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
       })));
     } else {
       // Pre-populate defaults
-      setMilestones(DEFAULT_MILESTONES.map(d => recalc({ ...d, amount_excl_gst: 0, gst_amount: 0, amount_incl_gst: 0, status: "pending" })));
+      setMilestones(DEFAULT_MILESTONES.map(d => recalc({ ...d, amount_excl_gst: 0, gst_amount: 0, amount_incl_gst: 0, status: "pending", auto_trigger_event: "manual" })));
       setDirty(true);
     }
     setLoading(false);
