@@ -135,6 +135,15 @@ export default function ProjectArchive() {
           {data.archive?.storage_cleanup_eligible && <> · <Badge>Uploaded to Zoho</Badge></>}
         </p>
       </div>
+      <StorageManagementSection
+        projectId={p.id}
+        projectName={p.name}
+        cleanupEligible={!!data.archive?.storage_cleanup_eligible}
+        storageCleaned={!!p.storage_cleaned}
+        storageCleanedAt={p.storage_cleaned_at}
+        onRefresh={load}
+      />
+
 
       <Section title="1. Project Summary">
         <KV k="Client" v={p.client_name} />
