@@ -11078,6 +11078,74 @@ export type Database = {
           },
         ]
       }
+      special_material_requests: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string
+          id: string
+          issued_at: string | null
+          issued_by: string | null
+          material_category: string | null
+          material_name: string
+          project_id: string
+          quantity: number
+          reason: string
+          rejection_reason: string | null
+          status: string
+          unit: string
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          material_category?: string | null
+          material_name: string
+          project_id: string
+          quantity: number
+          reason: string
+          rejection_reason?: string | null
+          status?: string
+          unit: string
+          updated_at?: string
+          urgency?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          issued_at?: string | null
+          issued_by?: string | null
+          material_category?: string | null
+          material_name?: string
+          project_id?: string
+          quantity?: number
+          reason?: string
+          rejection_reason?: string | null
+          status?: string
+          unit?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "special_material_requests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stage_wastage: {
         Row: {
           created_at: string
