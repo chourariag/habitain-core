@@ -31,6 +31,8 @@ import { MeasurementSheet } from "@/components/measurements/MeasurementSheet";
 import { FactoryMeasurementSheet } from "@/components/production/FactoryMeasurementSheet";
 import { LabourTeamsManager } from "@/components/production/LabourTeamsManager";
 import { ModuleTeamAssignment } from "@/components/production/ModuleTeamAssignment";
+import { SpecialMaterialRequests } from "@/components/production/SpecialMaterialRequests";
+import { PackagePlus as PackagePlusIcon } from "lucide-react";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
 
