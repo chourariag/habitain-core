@@ -1018,6 +1018,53 @@ export type Database = {
           },
         ]
       }
+      client_portal_tokens: {
+        Row: {
+          client_email: string | null
+          client_name: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          last_accessed_at: string | null
+          project_id: string
+          token: string
+        }
+        Insert: {
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_accessed_at?: string | null
+          project_id: string
+          token?: string
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          last_accessed_at?: string | null
+          project_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_portal_tokens_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients_master: {
         Row: {
           address: string | null
@@ -12350,6 +12397,7 @@ export type Database = {
       }
     }
     Functions: {
+      _cpt_validate: { Args: { _token: string }; Returns: string }
       boq_cumulative_qty: { Args: { _boq_item_id: string }; Returns: number }
       can_access_labour_register: {
         Args: { _user_id: string }
@@ -12430,6 +12478,14 @@ export type Database = {
       can_view_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_view_profile_pii: { Args: { _user_id: string }; Returns: boolean }
       can_view_work_orders: { Args: { _user_id: string }; Returns: boolean }
+      client_approve_design_stage: {
+        Args: { _stage_id: string; _token: string }
+        Returns: boolean
+      }
+      client_request_design_changes: {
+        Args: { _comment: string; _stage_id: string; _token: string }
+        Returns: boolean
+      }
       clone_task_templates_to_project: {
         Args: { _project_id: string; _system: string }
         Returns: number
@@ -12506,6 +12562,16 @@ export type Database = {
           phone: string
           profile_id: string
           wedding_anniversary: string
+        }[]
+      }
+      get_project_by_client_portal_token: {
+        Args: { _token: string }
+        Returns: {
+          client_email: string
+          client_name: string
+          project_code: string
+          project_id: string
+          project_name: string
         }[]
       }
       get_project_by_portal_token: {
