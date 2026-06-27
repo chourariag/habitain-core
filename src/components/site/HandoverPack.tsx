@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, Camera, Loader2, Check, PartyPopper, Mail } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FileText, Camera, Loader2, Check, X, PartyPopper, Mail, AlertTriangle, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -18,11 +19,36 @@ interface Props {
   onHandedOver: () => void;
 }
 
+type Readiness = {
+  qc_ok: boolean;
+  ncr_ok: boolean;
+  dq_ok: boolean;
+  snag_ok: boolean;
+  dispatch_ok: boolean;
+  final_qc_ok: boolean;
+};
+
+const ChecklistRow = ({ ok, label }: { ok: boolean; label: string }) => (
+  <div className="flex items-center gap-2 text-xs py-1">
+    {ok ? <Check className="h-3.5 w-3.5 text-primary" /> : <X className="h-3.5 w-3.5 text-destructive" />}
+    <span className={ok ? "text-foreground" : "text-destructive"}>{label}</span>
+    <span className="ml-auto text-[10px] uppercase tracking-wide">{ok ? "Complete" : "Missing"}</span>
+  </div>
+);
+
 export function HandoverPack({ projectId, clientName, userRole, installationComplete, onHandedOver }: Props) {
   const [existing, setExisting] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [justSubmitted, setJustSubmitted] = useState(false);
   const [project, setProject] = useState<any>(null);
+  const [readiness, setReadiness] = useState<Readiness | null>(null);
+
+  // Manual uploads / confirmations
+  const [completionCertUrl, setCompletionCertUrl] = useState("");
+  const [asBuiltUrl, setAsBuiltUrl] = useState("");
+  const [warrantyUrl, setWarrantyUrl] = useState("");
+  const [measurementConfirmed, setMeasurementConfirmed] = useState(false);
+  const [keysConfirmed, setKeysConfirmed] = useState(false);
 
   const [snagList, setSnagList] = useState("");
   const [omUrl, setOmUrl] = useState("");
@@ -33,21 +59,23 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
   const [snagPhotos, setSnagPhotos] = useState<File[]>([]);
   const [snagPreviews, setSnagPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [approving, setApproving] = useState(false);
 
-  const canCreate = ["delivery_rm_lead", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canInitiate = ["head_of_projects", "super_admin"].includes(userRole ?? "");
+  const canApprove = ["managing_director", "super_admin"].includes(userRole ?? "");
 
-  useEffect(() => { loadExisting(); loadProject(); }, [projectId]);
+  useEffect(() => { loadAll(); }, [projectId]);
 
-  const loadProject = async () => {
-    const { data } = await supabase.from("projects").select("*").eq("id", projectId).single();
-    setProject(data);
-  };
-
-  const loadExisting = async () => {
+  const loadAll = async () => {
     setLoading(true);
-    const { data } = await (supabase.from("handover_pack") as any)
-      .select("*").eq("project_id", projectId).order("created_at", { ascending: false }).limit(1);
-    setExisting((data as any[])?.[0] ?? null);
+    const [{ data: proj }, { data: hp }, { data: rd }] = await Promise.all([
+      supabase.from("projects").select("*").eq("id", projectId).single(),
+      (supabase.from("handover_pack") as any).select("*").eq("project_id", projectId).order("created_at", { ascending: false }).limit(1),
+      (supabase.rpc as any)("get_handover_readiness", { _project_id: projectId }),
+    ]);
+    setProject(proj);
+    setExisting((hp as any[])?.[0] ?? null);
+    setReadiness(rd as Readiness | null);
     setLoading(false);
   };
 
@@ -57,9 +85,17 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
     setSnagPreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))]);
   };
 
+  const allReady = readiness && readiness.qc_ok && readiness.ncr_ok && readiness.dq_ok && readiness.snag_ok && readiness.dispatch_ok;
+  const finalQcDone = !!readiness?.final_qc_ok;
+  const manualReady = !!completionCertUrl.trim() && !!asBuiltUrl.trim() && measurementConfirmed && keysConfirmed;
+
   const handleSubmit = async () => {
     if (!signoffName.trim()) { toast.error("Client sign-off name is required."); return; }
     if (!declaration) { toast.error("Please confirm the declaration checkbox."); return; }
+    if (!allReady) { toast.error("All auto-checks must be complete."); return; }
+    if (!finalQcDone) { toast.error("Final QC inspection required."); return; }
+    if (!manualReady) { toast.error("Upload all mandatory documents and confirm checklist."); return; }
+
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -75,7 +111,7 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
       }
 
       const { client } = await getAuthedClient();
-      const { error: hErr } = await (client.from("handover_pack") as any).insert({
+      const { data: inserted, error: hErr } = await (client.from("handover_pack") as any).insert({
         project_id: projectId,
         client_name: clientName || "",
         snag_list: snagList.trim() || null,
@@ -85,15 +121,60 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
         client_signoff_name: signoffName.trim(),
         handover_notes: handoverNotes.trim() || null,
         submitted_by: user.id,
-      });
+        client_completion_certificate_url: completionCertUrl.trim(),
+        as_built_drawings_url: asBuiltUrl.trim(),
+        warranty_docs_url: warrantyUrl.trim() || null,
+        snagging_list_closed: readiness!.snag_ok,
+        dispatch_records_confirmed: readiness!.dispatch_ok,
+        measurement_sheets_confirmed: measurementConfirmed,
+        keys_manuals_checklist_confirmed: keysConfirmed,
+        md_approval_status: "pending",
+      }).select().single();
       if (hErr) throw hErr;
+
+      // Update project status to handover_pending
+      await supabase.from("projects").update({ status: "handover_pending" }).eq("id", projectId);
+
+      // Notify managing_director
+      const { data: mdRoles } = await supabase.from("user_roles").select("user_id").eq("role", "managing_director" as any);
+      if (mdRoles?.length) {
+        const projName = project?.name || "Project";
+        await supabase.from("notifications").insert(
+          mdRoles.map((r: any) => ({
+            recipient_id: r.user_id,
+            title: `${projName} — Handover Pack complete`,
+            body: "Your approval required to close the project.",
+            content: "Your approval required to close the project.",
+            type: "handover_approval",
+            category: "approval",
+            related_table: "handover_pack",
+            related_id: inserted?.id,
+          }))
+        );
+      }
 
       setJustSubmitted(true);
       onHandedOver();
+      await loadAll();
     } catch (err: any) {
       toast.error(err.message || "Failed to submit");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleMdApprove = async () => {
+    if (!existing?.id) return;
+    setApproving(true);
+    try {
+      const { error } = await (supabase.rpc as any)("approve_handover_and_close", { _handover_id: existing.id });
+      if (error) throw error;
+      toast.success("Project closed successfully");
+      await loadAll();
+    } catch (err: any) {
+      toast.error(err.message || "Approval failed");
+    } finally {
+      setApproving(false);
     }
   };
 
@@ -110,14 +191,17 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
 
   if (loading) return null;
 
+  // Already submitted handover pack
   if (justSubmitted || existing) {
     const data = existing;
+    const isClosed = project?.status === "closed";
+    const isPending = data?.md_approval_status === "pending";
     return (
       <Card className="border-primary/30 bg-primary/5">
         <CardHeader className="py-3 px-4">
           <CardTitle className="text-sm flex items-center gap-2 text-primary">
-            {justSubmitted ? <PartyPopper className="h-4 w-4" /> : <Check className="h-4 w-4" />}
-            {justSubmitted ? "Project Successfully Handed Over" : "Handed Over"}
+            {isClosed ? <PartyPopper className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+            {isClosed ? "Project Closed" : isPending ? "Handover Pack Submitted — Awaiting MD Approval" : "Handed Over"}
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-3 space-y-2">
@@ -126,7 +210,14 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
               <p className="text-xs text-foreground/70">Client: {data.client_name}</p>
               <p className="text-xs text-foreground/70">Date: {format(new Date(data.handover_date), "dd/MM/yyyy")}</p>
               <p className="text-xs text-foreground/70">Signed off by: {data.client_signoff_name}</p>
+              <p className="text-xs text-foreground/70">MD Approval: <span className="font-medium">{data.md_approval_status}</span></p>
             </>
+          )}
+          {isPending && canApprove && (
+            <Button size="sm" onClick={handleMdApprove} disabled={approving} className="mt-2 gap-1.5">
+              {approving && <Loader2 className="h-4 w-4 animate-spin" />}
+              <ShieldCheck className="h-4 w-4" /> Approve & Close Project
+            </Button>
           )}
           {project?.client_email && (
             <Button size="sm" variant="outline" onClick={handleSendToClient} className="mt-2 gap-1.5">
@@ -138,9 +229,11 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
     );
   }
 
-  if (!canCreate) {
+  if (!canInitiate) {
     return (
-      <Card><CardContent className="py-8 text-center"><p className="text-sm text-muted-foreground">Only authorized roles can create a handover pack.</p></CardContent></Card>
+      <Card><CardContent className="py-8 text-center">
+        <p className="text-sm text-muted-foreground">Only the Head of Projects can initiate the handover pack.</p>
+      </CardContent></Card>
     );
   }
 
@@ -148,10 +241,61 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
     <Card>
       <CardHeader className="py-3 px-4">
         <CardTitle className="text-sm flex items-center gap-2 text-card-foreground">
-          <FileText className="h-4 w-4" /> Create Handover Pack
+          <FileText className="h-4 w-4" /> Initiate Handover
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-4 pb-3 space-y-3">
+      <CardContent className="px-4 pb-3 space-y-4">
+        {/* Final QC gate */}
+        {!finalQcDone && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              Final QC inspection by QC Inspector required before handover can be initiated.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Auto-checks */}
+        <div className="rounded border border-border p-3 bg-muted/20">
+          <p className="text-xs font-semibold mb-2 text-foreground">Auto-Confirmed from HStack</p>
+          {readiness && (
+            <>
+              <ChecklistRow ok={readiness.qc_ok} label="QC Reports (all stages passed)" />
+              <ChecklistRow ok={readiness.ncr_ok} label="NCR Records (all closed)" />
+              <ChecklistRow ok={readiness.dq_ok} label="DQ Resolutions (all closed)" />
+              <ChecklistRow ok={readiness.snag_ok} label="Snagging List (all closed)" />
+              <ChecklistRow ok={readiness.dispatch_ok} label="Dispatch Records (all modules)" />
+              <ChecklistRow ok={readiness.final_qc_ok} label="Final QC Inspection passed" />
+            </>
+          )}
+        </div>
+
+        {/* Manual uploads */}
+        <div className="rounded border border-border p-3 space-y-3">
+          <p className="text-xs font-semibold text-foreground">Mandatory Document Uploads</p>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Client Completion Certificate URL *</label>
+            <Input value={completionCertUrl} onChange={(e) => setCompletionCertUrl(e.target.value)} placeholder="https://..." className="mt-1 text-sm" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">As-Built Drawings URL *</label>
+            <Input value={asBuiltUrl} onChange={(e) => setAsBuiltUrl(e.target.value)} placeholder="https://..." className="mt-1 text-sm" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Warranty Documents URL (optional)</label>
+            <Input value={warrantyUrl} onChange={(e) => setWarrantyUrl(e.target.value)} placeholder="https://..." className="mt-1 text-sm" />
+          </div>
+          <div className="flex items-start gap-2">
+            <Checkbox id="meas" checked={measurementConfirmed} onCheckedChange={(c) => setMeasurementConfirmed(c === true)} className="mt-0.5" />
+            <label htmlFor="meas" className="text-xs text-muted-foreground cursor-pointer">Measurement sheets confirmed</label>
+          </div>
+          <div className="flex items-start gap-2">
+            <Checkbox id="keys" checked={keysConfirmed} onCheckedChange={(c) => setKeysConfirmed(c === true)} className="mt-0.5" />
+            <label htmlFor="keys" className="text-xs text-muted-foreground cursor-pointer">Keys & Manuals checklist confirmed</label>
+          </div>
+        </div>
+
+        {/* Sign-off details */}
         <div>
           <label className="text-xs font-medium text-muted-foreground">Client Name</label>
           <Input value={clientName || ""} disabled className="mt-1 text-sm bg-muted/30" />
@@ -161,8 +305,8 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
           <Input type="date" value={handoverDate} onChange={(e) => setHandoverDate(e.target.value)} className="mt-1 text-sm" />
         </div>
         <div>
-          <label className="text-xs font-medium text-muted-foreground">Snag List</label>
-          <Textarea value={snagList} onChange={(e) => setSnagList(e.target.value)} placeholder="List any outstanding items..." className="mt-1 text-sm" rows={3} />
+          <label className="text-xs font-medium text-muted-foreground">Snag List (residual)</label>
+          <Textarea value={snagList} onChange={(e) => setSnagList(e.target.value)} placeholder="List any outstanding items..." className="mt-1 text-sm" rows={2} />
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground">Snag Photos</label>
@@ -182,10 +326,10 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground">Handover Notes</label>
-          <Textarea value={handoverNotes} onChange={(e) => setHandoverNotes(e.target.value)} placeholder="Additional notes..." className="mt-1 text-sm" rows={3} />
+          <Textarea value={handoverNotes} onChange={(e) => setHandoverNotes(e.target.value)} placeholder="Additional notes..." className="mt-1 text-sm" rows={2} />
         </div>
         <div>
-          <label className="text-xs font-medium text-muted-foreground">Client Digital Sign-off (typed name)</label>
+          <label className="text-xs font-medium text-muted-foreground">Client Digital Sign-off (typed name) *</label>
           <Input value={signoffName} onChange={(e) => setSignoffName(e.target.value)} placeholder="Client representative full name" className="mt-1 text-sm" />
         </div>
         <div className="flex items-start gap-2 pt-1">
@@ -194,9 +338,14 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
             I confirm the above information is accurate and the project is ready for handover.
           </label>
         </div>
-        <Button size="sm" onClick={handleSubmit} disabled={submitting || !declaration} className="w-full">
+        <Button
+          size="sm"
+          onClick={handleSubmit}
+          disabled={submitting || !declaration || !allReady || !finalQcDone || !manualReady}
+          className="w-full"
+        >
           {submitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-          Submit Handover Pack
+          Initiate Handover (sends to MD for approval)
         </Button>
       </CardContent>
     </Card>
