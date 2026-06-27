@@ -891,6 +891,7 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Upload Project Setup
         </Button>
+        </div>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
