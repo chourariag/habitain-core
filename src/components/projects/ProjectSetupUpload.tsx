@@ -939,8 +939,89 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Upload Project Setup
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setCapOpen(true)}
+          className="gap-1.5"
+          title="Run AI capacity check for your planned factory dates"
+        >
+          <Sparkles className="h-4 w-4" style={{ color: "#006039" }} /> Check Capacity
+        </Button>
         </div>
       </div>
+
+      <Dialog open={capOpen} onOpenChange={setCapOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Sparkles className="h-4 w-4" style={{ color: "#006039" }} /> Check Factory Capacity
+            </DialogTitle>
+            <DialogDescription>
+              AI checks the dates you plan to enter against current factory load and flags conflicts.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Factory start</Label>
+                <Input type="date" value={capStart} onChange={(e) => setCapStart(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Factory end</Label>
+                <Input type="date" value={capEnd} onChange={(e) => setCapEnd(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Module count</Label>
+              <Input type="number" min={1} value={capModules} onChange={(e) => setCapModules(e.target.value)} />
+            </div>
+            <Button onClick={runCheckCapacity} disabled={capBusy} size="sm"
+              style={{ backgroundColor: "#006039", color: "white" }} className="w-full gap-1.5">
+              {capBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {capBusy ? "Checking…" : "Run AI Capacity Check"}
+            </Button>
+
+            {capResult && (
+              <div className="space-y-2">
+                <div className="rounded-md p-3 flex items-start gap-2" style={
+                  capResult.verdict === "green" ? { backgroundColor: "#E8F2ED", border: "1px solid #006039" }
+                  : capResult.verdict === "amber" ? { backgroundColor: "#FFF8E8", border: "1px solid #D4860A" }
+                  : { backgroundColor: "#FFF0F0", border: "1px solid #F40009" }
+                }>
+                  {capResult.verdict === "green" ? <CheckCircle2 className="h-5 w-5 mt-0.5" style={{ color: "#006039" }} />
+                    : <AlertTriangle className="h-5 w-5 mt-0.5" style={{ color: capResult.verdict === "amber" ? "#D4860A" : "#F40009" }} />}
+                  <div className="text-sm flex-1">
+                    <p className="font-bold" style={{
+                      color: capResult.verdict === "green" ? "#006039" : capResult.verdict === "amber" ? "#D4860A" : "#F40009"
+                    }}>
+                      {capResult.verdict === "green" ? "Green light — capacity available"
+                        : capResult.verdict === "amber" ? "Caution — some weeks near capacity"
+                        : "Conflicts detected — factory at/over capacity"}
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap" style={{ color: "#1A1A1A" }}>{capResult.summary}</p>
+                  </div>
+                </div>
+                {capResult.conflicts.length > 0 && (
+                  <div className="rounded-md p-2 text-xs space-y-1" style={{ backgroundColor: "#F7F7F7", border: "1px solid #E0E0E0" }}>
+                    <p className="font-semibold" style={{ color: "#1A1A1A" }}>Weeks with capacity pressure:</p>
+                    {capResult.conflicts.map((c, i) => <p key={i} style={{ color: "#666" }}>• {c}</p>)}
+                  </div>
+                )}
+                {capResult.recommended_start && (
+                  <p className="text-xs" style={{ color: "#666" }}>
+                    <strong>Suggested start:</strong> {new Date(capResult.recommended_start).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button size="sm" variant="outline" onClick={() => setCapOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">
