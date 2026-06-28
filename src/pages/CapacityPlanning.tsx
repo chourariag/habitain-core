@@ -10,6 +10,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { Loader2, Factory, Target, AlertTriangle, TrendingUp, Save, Activity, Layers } from "lucide-react";
 import { differenceInDays, startOfMonth, endOfMonth, addDays, subDays } from "date-fns";
 import { toast } from "sonner";
+import { AICapacityAnalysisCard } from "@/components/production/AICapacityAnalysisCard";
 
 // Floor map: 5 indoor module bays (1-5), 7 outdoor module bays (11-17), 3 panel bays (101-103)
 const INDOOR_MODULE_BAYS = 5;
