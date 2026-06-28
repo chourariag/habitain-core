@@ -369,6 +369,52 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
   const [busy, setBusy] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [results, setResults] = useState<SheetResult[]>([]);
+  const [capOpen, setCapOpen] = useState(false);
+  const [capBusy, setCapBusy] = useState(false);
+  const [capStart, setCapStart] = useState("");
+  const [capEnd, setCapEnd] = useState("");
+  const [capModules, setCapModules] = useState("");
+  const [capResult, setCapResult] = useState<{ summary: string; recommended_start: string; verdict: "green" | "amber" | "red"; conflicts: string[] } | null>(null);
+
+  async function runCheckCapacity() {
+    if (!capStart || !capEnd || !capModules) {
+      toast.error("Enter target start, end and module count");
+      return;
+    }
+    setCapBusy(true);
+    setCapResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("capacity-ai-analysis", {
+        body: {
+          factory_dates: {
+            start: capStart, end: capEnd, modules: Number(capModules), project_name: "Project Setup check",
+          },
+          new_project: { module_count: Number(capModules), target_start: capStart },
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const a = data.analysis;
+      const conflicts = (a.capacity_weeks ?? [])
+        .filter((w: any) => {
+          const ws = new Date(w.week_start).getTime();
+          const we = new Date(w.week_end).getTime();
+          const ts = new Date(capStart).getTime();
+          const te = new Date(capEnd).getTime();
+          return we >= ts && ws <= te && (w.utilisation_pct >= 80 || (w.status ?? "").toLowerCase().includes("full"));
+        })
+        .map((w: any) => `${new Date(w.week_start).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })} — ${w.utilisation_pct}% ${w.status}`);
+      const verdict: "green" | "amber" | "red" =
+        conflicts.some((c: string) => c.toLowerCase().includes("full")) || conflicts.length >= 3 ? "red"
+        : conflicts.length > 0 ? "amber" : "green";
+      setCapResult({ summary: a.summary, recommended_start: a.recommended_start, verdict, conflicts });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Capacity check failed");
+    } finally {
+      setCapBusy(false);
+    }
+  }
+
 
   if (!ALLOWED.includes(userRole ?? "")) return null;
 
