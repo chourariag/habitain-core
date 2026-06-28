@@ -5,7 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Upload, Download, Loader2, Check, AlertTriangle, ArrowRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Upload, Download, Loader2, Check, AlertTriangle, ArrowRight, Sparkles, CheckCircle2 } from "lucide-react";
 import { dispatchProjectImported } from "@/lib/use-project-import";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -367,6 +369,52 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
   const [busy, setBusy] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [results, setResults] = useState<SheetResult[]>([]);
+  const [capOpen, setCapOpen] = useState(false);
+  const [capBusy, setCapBusy] = useState(false);
+  const [capStart, setCapStart] = useState("");
+  const [capEnd, setCapEnd] = useState("");
+  const [capModules, setCapModules] = useState("");
+  const [capResult, setCapResult] = useState<{ summary: string; recommended_start: string; verdict: "green" | "amber" | "red"; conflicts: string[] } | null>(null);
+
+  async function runCheckCapacity() {
+    if (!capStart || !capEnd || !capModules) {
+      toast.error("Enter target start, end and module count");
+      return;
+    }
+    setCapBusy(true);
+    setCapResult(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("capacity-ai-analysis", {
+        body: {
+          factory_dates: {
+            start: capStart, end: capEnd, modules: Number(capModules), project_name: "Project Setup check",
+          },
+          new_project: { module_count: Number(capModules), target_start: capStart },
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const a = data.analysis;
+      const conflicts = (a.capacity_weeks ?? [])
+        .filter((w: any) => {
+          const ws = new Date(w.week_start).getTime();
+          const we = new Date(w.week_end).getTime();
+          const ts = new Date(capStart).getTime();
+          const te = new Date(capEnd).getTime();
+          return we >= ts && ws <= te && (w.utilisation_pct >= 80 || (w.status ?? "").toLowerCase().includes("full"));
+        })
+        .map((w: any) => `${new Date(w.week_start).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })} — ${w.utilisation_pct}% ${w.status}`);
+      const verdict: "green" | "amber" | "red" =
+        conflicts.some((c: string) => c.toLowerCase().includes("full")) || conflicts.length >= 3 ? "red"
+        : conflicts.length > 0 ? "amber" : "green";
+      setCapResult({ summary: a.summary, recommended_start: a.recommended_start, verdict, conflicts });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Capacity check failed");
+    } finally {
+      setCapBusy(false);
+    }
+  }
+
 
   if (!ALLOWED.includes(userRole ?? "")) return null;
 
@@ -891,8 +939,89 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Upload Project Setup
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setCapOpen(true)}
+          className="gap-1.5"
+          title="Run AI capacity check for your planned factory dates"
+        >
+          <Sparkles className="h-4 w-4" style={{ color: "#006039" }} /> Check Capacity
+        </Button>
         </div>
       </div>
+
+      <Dialog open={capOpen} onOpenChange={setCapOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <Sparkles className="h-4 w-4" style={{ color: "#006039" }} /> Check Factory Capacity
+            </DialogTitle>
+            <DialogDescription>
+              AI checks the dates you plan to enter against current factory load and flags conflicts.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs">Factory start</Label>
+                <Input type="date" value={capStart} onChange={(e) => setCapStart(e.target.value)} />
+              </div>
+              <div>
+                <Label className="text-xs">Factory end</Label>
+                <Input type="date" value={capEnd} onChange={(e) => setCapEnd(e.target.value)} />
+              </div>
+            </div>
+            <div>
+              <Label className="text-xs">Module count</Label>
+              <Input type="number" min={1} value={capModules} onChange={(e) => setCapModules(e.target.value)} />
+            </div>
+            <Button onClick={runCheckCapacity} disabled={capBusy} size="sm"
+              style={{ backgroundColor: "#006039", color: "white" }} className="w-full gap-1.5">
+              {capBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {capBusy ? "Checking…" : "Run AI Capacity Check"}
+            </Button>
+
+            {capResult && (
+              <div className="space-y-2">
+                <div className="rounded-md p-3 flex items-start gap-2" style={
+                  capResult.verdict === "green" ? { backgroundColor: "#E8F2ED", border: "1px solid #006039" }
+                  : capResult.verdict === "amber" ? { backgroundColor: "#FFF8E8", border: "1px solid #D4860A" }
+                  : { backgroundColor: "#FFF0F0", border: "1px solid #F40009" }
+                }>
+                  {capResult.verdict === "green" ? <CheckCircle2 className="h-5 w-5 mt-0.5" style={{ color: "#006039" }} />
+                    : <AlertTriangle className="h-5 w-5 mt-0.5" style={{ color: capResult.verdict === "amber" ? "#D4860A" : "#F40009" }} />}
+                  <div className="text-sm flex-1">
+                    <p className="font-bold" style={{
+                      color: capResult.verdict === "green" ? "#006039" : capResult.verdict === "amber" ? "#D4860A" : "#F40009"
+                    }}>
+                      {capResult.verdict === "green" ? "Green light — capacity available"
+                        : capResult.verdict === "amber" ? "Caution — some weeks near capacity"
+                        : "Conflicts detected — factory at/over capacity"}
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap" style={{ color: "#1A1A1A" }}>{capResult.summary}</p>
+                  </div>
+                </div>
+                {capResult.conflicts.length > 0 && (
+                  <div className="rounded-md p-2 text-xs space-y-1" style={{ backgroundColor: "#F7F7F7", border: "1px solid #E0E0E0" }}>
+                    <p className="font-semibold" style={{ color: "#1A1A1A" }}>Weeks with capacity pressure:</p>
+                    {capResult.conflicts.map((c, i) => <p key={i} style={{ color: "#666" }}>• {c}</p>)}
+                  </div>
+                )}
+                {capResult.recommended_start && (
+                  <p className="text-xs" style={{ color: "#666" }}>
+                    <strong>Suggested start:</strong> {new Date(capResult.recommended_start).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button size="sm" variant="outline" onClick={() => setCapOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md">

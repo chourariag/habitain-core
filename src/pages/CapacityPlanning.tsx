@@ -10,6 +10,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { Loader2, Factory, Target, AlertTriangle, TrendingUp, Save, Activity, Layers } from "lucide-react";
 import { differenceInDays, startOfMonth, endOfMonth, addDays, subDays } from "date-fns";
 import { toast } from "sonner";
+import { AICapacityAnalysisCard } from "@/components/production/AICapacityAnalysisCard";
 
 // Floor map: 5 indoor module bays (1-5), 7 outdoor module bays (11-17), 3 panel bays (101-103)
 const INDOOR_MODULE_BAYS = 5;
@@ -413,6 +414,8 @@ export default function CapacityPlanning() {
         <Factory className="h-6 w-6" style={{ color: "#006039" }} />
         <h1 className="text-2xl font-display font-bold" style={{ color: "#1A1A1A" }}>Capacity Planning</h1>
       </div>
+
+      <AICapacityAnalysisCard role={role} />
 
       {/* Throughput Panel */}
       <Card>
