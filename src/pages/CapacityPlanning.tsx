@@ -415,6 +415,8 @@ export default function CapacityPlanning() {
         <h1 className="text-2xl font-display font-bold" style={{ color: "#1A1A1A" }}>Capacity Planning</h1>
       </div>
 
+      <AICapacityAnalysisCard role={role} />
+
       {/* Throughput Panel */}
       <Card>
         <CardHeader className="pb-2">
