@@ -51,6 +51,21 @@ const DESIGN_STAGES_13: Array<{ order: number; name: string; group: "pre_deal" |
   { order: 13, name: "Variation Stage",            group: "post_deal", small: 1, medium: 1, large: 1 },
 ];
 const NO_CLIENT_APPROVAL_STAGES = new Set(["Initial Meeting", "Site Visit"]);
+const STAGE_EXPECTED_DELIVERABLE: Record<string, string> = {
+  "Initial Meeting":            "Call notes or meeting record",
+  "Site Visit":                 "Site visit report",
+  "Design Brief":               "Design brief presentation",
+  "Concept Design":             "Floor plan + moodboard",
+  "Schematic Design":           "Floor plan + 3D renders + tentative budget",
+  "Estimation & Quotation":     "Tender BOQ / formatted quotation",
+  "S1 — Site Level Design":     "Site plan + MEP site level services drawings",
+  "S2 — Site Level Execution":  "Detailed construction + MEP drawings",
+  "H1 — Fabrication Stage":     "Detailed drawings + schedule of openings",
+  "H2 — MEP & Finishing":       "Detailed MEP drawings + schedule of finishes",
+  "H3 — Interior Stage":        "Detailed interior drawings + schedule of finishes",
+  "GFC Budget Submission":      "GFC Budget Excel file",
+  "Variation Stage":            "Variation Excel file",
+};
 const STAGE_STATUSES = ["not_started", "in_progress", "submitted_to_client", "revision_requested", "client_approved"];
 const DQ_QUERY_TYPES = ["Missing Dimension", "Vendor Detail", "Design Detail", "Material Change", "Coordination Issue", "Structural Query", "MEP Query", "Other"];
 const DQ_URGENCY = ["Critical", "High", "Normal", "Low"];
@@ -688,6 +703,28 @@ export default function DesignPortal() {
       if (stage.status === "not_started") updates.status = "in_progress";
       await updateStage(stage.id, updates);
       toast.success("Deliverable uploaded");
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+    }
+  };
+
+  // ──── Upload client approval proof (WhatsApp screenshot / email confirmation) ────
+  const uploadApprovalProof = async (stage: any, file: File) => {
+    try {
+      const isPre = (stage.stage_group ?? (stage.stage_order <= 6 ? "pre_deal" : "post_deal")) === "pre_deal";
+      const method = isPre ? "whatsapp" : "email";
+      const ext = file.name.split(".").pop();
+      const path = `design-stage-approvals/${stage.project_id}/${stage.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("design-files").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("design-files").getPublicUrl(path);
+      await updateStage(stage.id, {
+        approval_proof_url: pub.publicUrl,
+        approval_method: method,
+        approval_date: new Date().toISOString().slice(0, 10),
+        status: "client_approved",
+      });
+      toast.success("Client approval recorded");
     } catch (e: any) {
       toast.error(e.message || "Upload failed");
     }
@@ -1458,11 +1495,26 @@ export default function DesignPortal() {
                                 </div>
                               </div>
 
+                              {STAGE_EXPECTED_DELIVERABLE[stage.stage_name] && (
+                                <p className="text-xs italic" style={{ color: "#666666" }}>
+                                  Expected: {STAGE_EXPECTED_DELIVERABLE[stage.stage_name]}
+                                </p>
+                              )}
+
                               {stage.deliverable_url && (
                                 <div className="flex items-center gap-2 text-xs">
                                   <FileText className="h-3.5 w-3.5" style={{ color: "#006039" }} />
                                   <a href={stage.deliverable_url} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#006039" }}>
                                     View deliverable
+                                  </a>
+                                </div>
+                              )}
+
+                              {stage.approval_proof_url && (
+                                <div className="flex items-center gap-2 text-xs">
+                                  <CheckCircle2 className="h-3.5 w-3.5" style={{ color: "#006039" }} />
+                                  <a href={stage.approval_proof_url} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#006039" }}>
+                                    View client approval proof ({stage.approval_method === "whatsapp" ? "WhatsApp" : "Email"})
                                   </a>
                                 </div>
                               )}
@@ -1488,6 +1540,27 @@ export default function DesignPortal() {
                                       </Button>
                                     </>
                                   )}
+                                  {!noClientApproval && (
+                                    <>
+                                      <input
+                                        type="file"
+                                        accept="image/*,.pdf,.eml,.msg"
+                                        id={`stage-approval-${stage.id}`}
+                                        className="hidden"
+                                        onChange={(e) => {
+                                          const f = e.target.files?.[0];
+                                          if (f) uploadApprovalProof(stage, f);
+                                          e.target.value = "";
+                                        }}
+                                      />
+                                      <Button size="sm" variant="outline" className="text-xs" onClick={() => document.getElementById(`stage-approval-${stage.id}`)?.click()}>
+                                        <Upload className="h-3 w-3 mr-1" />
+                                        {grp === "pre_deal"
+                                          ? (stage.approval_proof_url ? "Replace WhatsApp screenshot" : "Upload WhatsApp screenshot as proof")
+                                          : (stage.approval_proof_url ? "Replace email confirmation" : "Upload email confirmation as proof")}
+                                      </Button>
+                                    </>
+                                  )}
                                   {stage.status !== "submitted_to_client" && !isApproved && !noClientApproval && (
                                     <Button size="sm" variant="outline" className="text-xs"
                                       onClick={() => updateStage(stage.id, { status: "submitted_to_client" })}>
@@ -1502,7 +1575,13 @@ export default function DesignPortal() {
                                   )}
                                   {!isApproved && canMarkComplete && (
                                     <Button size="sm" className="text-xs" style={{ backgroundColor: "#006039", color: "#FFFFFF" }}
-                                      onClick={() => updateStage(stage.id, { status: "client_approved" })}>
+                                      onClick={() => {
+                                        if (stage.deliverable_required && !stage.deliverable_url) {
+                                          toast.error("Upload the required deliverable before marking this stage complete.");
+                                          return;
+                                        }
+                                        updateStage(stage.id, { status: "client_approved" });
+                                      }}>
                                       <CheckCircle2 className="h-3 w-3 mr-1" /> Mark Complete
                                     </Button>
                                   )}
