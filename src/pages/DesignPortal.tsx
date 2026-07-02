@@ -51,6 +51,21 @@ const DESIGN_STAGES_13: Array<{ order: number; name: string; group: "pre_deal" |
   { order: 13, name: "Variation Stage",            group: "post_deal", small: 1, medium: 1, large: 1 },
 ];
 const NO_CLIENT_APPROVAL_STAGES = new Set(["Initial Meeting", "Site Visit"]);
+const STAGE_EXPECTED_DELIVERABLE: Record<string, string> = {
+  "Initial Meeting":            "Call notes or meeting record",
+  "Site Visit":                 "Site visit report",
+  "Design Brief":               "Design brief presentation",
+  "Concept Design":             "Floor plan + moodboard",
+  "Schematic Design":           "Floor plan + 3D renders + tentative budget",
+  "Estimation & Quotation":     "Tender BOQ / formatted quotation",
+  "S1 — Site Level Design":     "Site plan + MEP site level services drawings",
+  "S2 — Site Level Execution":  "Detailed construction + MEP drawings",
+  "H1 — Fabrication Stage":     "Detailed drawings + schedule of openings",
+  "H2 — MEP & Finishing":       "Detailed MEP drawings + schedule of finishes",
+  "H3 — Interior Stage":        "Detailed interior drawings + schedule of finishes",
+  "GFC Budget Submission":      "GFC Budget Excel file",
+  "Variation Stage":            "Variation Excel file",
+};
 const STAGE_STATUSES = ["not_started", "in_progress", "submitted_to_client", "revision_requested", "client_approved"];
 const DQ_QUERY_TYPES = ["Missing Dimension", "Vendor Detail", "Design Detail", "Material Change", "Coordination Issue", "Structural Query", "MEP Query", "Other"];
 const DQ_URGENCY = ["Critical", "High", "Normal", "Low"];
