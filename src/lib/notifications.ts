@@ -33,28 +33,35 @@ export async function insertNotifications(items: NotificationInput | Notificatio
 }
 
 export async function notifyDispatchParties(projectId: string, projectName: string, daysUntilDispatch: number) {
-  const { data: awaiz } = await supabase.from("profiles").select("auth_user_id").eq("display_name", "Awaiz").maybeSingle();
-  const { data: nazim } = await supabase.from("profiles").select("auth_user_id").eq("display_name", "Nazim").maybeSingle();
+  const { data: siteManagers } = await supabase.from("profiles").select("auth_user_id").eq("role", "delivery_rm_lead");
   const items: Parameters<typeof insertNotifications>[0][] = [];
-  if (daysUntilDispatch === 14 && awaiz?.auth_user_id) {
-    items.push({ recipient_id: awaiz.auth_user_id, title: `T-14: ${projectName} Dispatch`, body: `Dispatch for ${projectName} is in 14 days. Initiate pre-dispatch checklist.`, category: "production", navigate_to: "/procurement" });
+  if (daysUntilDispatch === 14) {
+    for (const u of siteManagers ?? []) {
+      if (u.auth_user_id) items.push({ recipient_id: u.auth_user_id, title: `T-14: ${projectName} Dispatch`, body: `Dispatch for ${projectName} is in 14 days. Initiate pre-dispatch checklist.`, category: "production", navigate_to: "/procurement" });
+    }
   }
-  if (daysUntilDispatch === 12 && nazim?.auth_user_id) {
-    items.push({ recipient_id: nazim.auth_user_id, title: `T-12: ${projectName} Logistics`, body: `Dispatch for ${projectName} is in 12 days. Confirm transport arrangements.`, category: "production", navigate_to: "/site-hub" });
+  if (daysUntilDispatch === 12) {
+    for (const u of siteManagers ?? []) {
+      if (u.auth_user_id) items.push({ recipient_id: u.auth_user_id, title: `T-12: ${projectName} Logistics`, body: `Dispatch for ${projectName} is in 12 days. Confirm transport arrangements.`, category: "production", navigate_to: "/site-hub" });
+    }
   }
   if (items.length) await insertNotifications(items);
 }
 
 export async function notifyMeasurementMiss(projectId: string, projectName: string, missedDays: number) {
-  const { data: azad } = await supabase.from("profiles").select("auth_user_id").eq("display_name", "Azad").maybeSingle();
-  const { data: suraj } = await supabase.from("profiles").select("auth_user_id").eq("display_name", "Suraj").maybeSingle();
+  const { data: prodHeads } = await supabase.from("profiles").select("auth_user_id").eq("role", "production_head");
+  const { data: planningHeads } = await supabase.from("profiles").select("auth_user_id").eq("role", "planning_head");
   const { data: md } = await (supabase.from("profiles") as any).select("auth_user_id").eq("role", "managing_director").eq("is_active", true).limit(1).maybeSingle();
   const items: Parameters<typeof insertNotifications>[0][] = [];
-  if (missedDays >= 1 && azad?.auth_user_id) {
-    items.push({ recipient_id: azad.auth_user_id, title: "Measurement Entry Missing", body: `No measurement entry recorded for ${projectName} today. Please update the daily sheet.`, category: "production" });
+  if (missedDays >= 1) {
+    for (const u of prodHeads ?? []) {
+      if (u.auth_user_id) items.push({ recipient_id: u.auth_user_id, title: "Measurement Entry Missing", body: `No measurement entry recorded for ${projectName} today. Please update the daily sheet.`, category: "production" });
+    }
   }
   if (missedDays >= 2) {
-    if (suraj?.auth_user_id) items.push({ recipient_id: suraj.auth_user_id, title: "Measurement 2+ Days Missing", body: `${projectName} has missed measurement entries for ${missedDays} consecutive days.`, category: "production" });
+    for (const u of planningHeads ?? []) {
+      if (u.auth_user_id) items.push({ recipient_id: u.auth_user_id, title: "Measurement 2+ Days Missing", body: `${projectName} has missed measurement entries for ${missedDays} consecutive days.`, category: "production" });
+    }
     if (md?.auth_user_id) items.push({ recipient_id: md.auth_user_id, title: "Measurement Alert", body: `${projectName} has missed measurement entries for ${missedDays} consecutive days.`, category: "production" });
   }
   if (items.length) await insertNotifications(items);
