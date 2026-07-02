@@ -708,6 +708,28 @@ export default function DesignPortal() {
     }
   };
 
+  // ──── Upload client approval proof (WhatsApp screenshot / email confirmation) ────
+  const uploadApprovalProof = async (stage: any, file: File) => {
+    try {
+      const isPre = (stage.stage_group ?? (stage.stage_order <= 6 ? "pre_deal" : "post_deal")) === "pre_deal";
+      const method = isPre ? "whatsapp" : "email";
+      const ext = file.name.split(".").pop();
+      const path = `design-stage-approvals/${stage.project_id}/${stage.id}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from("design-files").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("design-files").getPublicUrl(path);
+      await updateStage(stage.id, {
+        approval_proof_url: pub.publicUrl,
+        approval_method: method,
+        approval_date: new Date().toISOString().slice(0, 10),
+        status: "client_approved",
+      });
+      toast.success("Client approval recorded");
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
+    }
+  };
+
   // ──── Change project size and recalculate planned dates ────
   const changeProjectSize = async (projId: string, size: "small" | "medium" | "large") => {
     const { client } = await getAuthedClient();
