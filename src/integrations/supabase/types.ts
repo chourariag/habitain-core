@@ -2161,9 +2161,11 @@ export type Database = {
           duration_small_days: number | null
           evidence_uploaded_at: string | null
           evidence_url: string | null
+          expected_deliverable: string | null
           id: string
           overdue_alerted_day1: boolean
           overdue_alerted_day2: boolean
+          phase: string | null
           planned_end_date: string | null
           planned_start_date: string | null
           project_id: string
@@ -2191,9 +2193,11 @@ export type Database = {
           duration_small_days?: number | null
           evidence_uploaded_at?: string | null
           evidence_url?: string | null
+          expected_deliverable?: string | null
           id?: string
           overdue_alerted_day1?: boolean
           overdue_alerted_day2?: boolean
+          phase?: string | null
           planned_end_date?: string | null
           planned_start_date?: string | null
           project_id: string
@@ -2221,9 +2225,11 @@ export type Database = {
           duration_small_days?: number | null
           evidence_uploaded_at?: string | null
           evidence_url?: string | null
+          expected_deliverable?: string | null
           id?: string
           overdue_alerted_day1?: boolean
           overdue_alerted_day2?: boolean
+          phase?: string | null
           planned_end_date?: string | null
           planned_start_date?: string | null
           project_id?: string
