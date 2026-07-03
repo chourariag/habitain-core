@@ -1486,7 +1486,7 @@ export default function DesignPortal() {
                                 <div className="flex items-center gap-2 text-xs">
                                   <CheckCircle2 className="h-3.5 w-3.5" style={{ color: "#006039" }} />
                                   <a href={stage.approval_proof_url} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: "#006039" }}>
-                                    View client approval proof ({stage.approval_method === "whatsapp" ? "WhatsApp" : "Email"})
+                                    View client approval proof ({stage.approval_method === "whatsapp_screenshot" ? "WhatsApp" : "Email"})
                                   </a>
                                 </div>
                               )}
