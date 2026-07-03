@@ -1444,7 +1444,7 @@ export default function DesignPortal() {
                           const diffDays = endDate ? Math.round((endDate.getTime() - today.getTime()) / 86400000) : null;
                           const isApproved = stage.status === "client_approved";
                           const overdue = !isApproved && diffDays !== null && diffDays < 0;
-                          const noClientApproval = NO_CLIENT_APPROVAL_STAGES.has(stage.stage_name);
+                          const noClientApproval = stage.deliverable_required === false;
                           const canMarkComplete = isApproved || noClientApproval;
                           return (
                             <div key={stage.id} className="rounded-lg p-4 space-y-3 bg-card" style={{ borderLeft: `4px solid ${borderColor}`, border: "1px solid hsl(var(--border))", borderLeftWidth: 4, borderLeftColor: borderColor }}>
@@ -1466,11 +1466,12 @@ export default function DesignPortal() {
                                 </div>
                               </div>
 
-                              {STAGE_EXPECTED_DELIVERABLE[stage.stage_name] && (
+                              {stage.expected_deliverable && (
                                 <p className="text-xs italic" style={{ color: "#666666" }}>
-                                  Expected: {STAGE_EXPECTED_DELIVERABLE[stage.stage_name]}
+                                  Expected: {stage.expected_deliverable}
                                 </p>
                               )}
+
 
                               {stage.deliverable_url && (
                                 <div className="flex items-center gap-2 text-xs">
