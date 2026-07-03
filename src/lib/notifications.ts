@@ -33,7 +33,7 @@ export async function insertNotifications(items: NotificationInput | Notificatio
 }
 
 export async function notifyDispatchParties(projectId: string, projectName: string, daysUntilDispatch: number) {
-  const { data: siteManagers } = await supabase.from("profiles").select("auth_user_id").eq("role", "delivery_rm_lead");
+  const { data: siteManagers } = await supabase.from("profiles").select("auth_user_id").eq("role", "delivery_rm_lead").eq("is_active", true);
   const items: Parameters<typeof insertNotifications>[0][] = [];
   if (daysUntilDispatch === 14) {
     for (const u of siteManagers ?? []) {
@@ -49,8 +49,8 @@ export async function notifyDispatchParties(projectId: string, projectName: stri
 }
 
 export async function notifyMeasurementMiss(projectId: string, projectName: string, missedDays: number) {
-  const { data: prodHeads } = await supabase.from("profiles").select("auth_user_id").eq("role", "production_head");
-  const { data: planningHeads } = await supabase.from("profiles").select("auth_user_id").eq("role", "planning_head");
+  const { data: prodHeads } = await supabase.from("profiles").select("auth_user_id").eq("role", "production_head").eq("is_active", true);
+  const { data: planningHeads } = await supabase.from("profiles").select("auth_user_id").eq("role", "planning_head").eq("is_active", true);
   const { data: md } = await (supabase.from("profiles") as any).select("auth_user_id").eq("role", "managing_director").eq("is_active", true).limit(1).maybeSingle();
   const items: Parameters<typeof insertNotifications>[0][] = [];
   if (missedDays >= 1) {
