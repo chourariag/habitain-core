@@ -636,7 +636,7 @@ export default function DesignPortal() {
       try {
         const projName = projectMap[stage.project_id]?.name ?? "Project";
         const baseRoles = ["operations_architect", "principal_architect", "planning_head", "planning_engineer"];
-        const isHGfc = ["H1 — Fabrication Stage", "H2 — MEP & Finishing", "H3 — Interior Stage", "GFC Budget Submission"].includes(stage.stage_name);
+        const isHGfc = [9, 10, 11, 12].includes(stage.stage_order);
         const isPreDeal = stage.stage_group === "pre_deal";
         const roles = new Set<string>(baseRoles);
         if (isHGfc) { roles.add("production_head"); roles.add("managing_director"); }
