@@ -635,12 +635,13 @@ export default function DesignPortal() {
     if (updates.status === "client_approved" && stage) {
       try {
         const projName = projectMap[stage.project_id]?.name ?? "Project";
-        const baseRoles = ["operations_architect", "principal_architect", "planning_head", "planning_engineer"];
-        const isHGfc = [9, 10, 11, 12].includes(stage.stage_order);
-        const isPreDeal = stage.stage_group === "pre_deal";
-        const roles = new Set<string>(baseRoles);
-        if (isHGfc) { roles.add("production_head"); roles.add("managing_director"); }
-        if (isPreDeal) { roles.add("sales_director"); }
+        // Awareness recipients per spec: ops architect, planning head, sales director for every stage.
+        // H1/H2/H3/GFC Budget (stage_order 9–12) additionally notify production head + MD.
+        const roles = new Set<string>(["operations_architect", "planning_head", "sales_director"]);
+        if ([9, 10, 11, 12].includes(stage.stage_order)) {
+          roles.add("production_head");
+          roles.add("managing_director");
+        }
         const { data: recipients } = await supabase.from("profiles")
           .select("auth_user_id").in("role", Array.from(roles) as any[]).eq("is_active", true);
         if (recipients?.length) {
