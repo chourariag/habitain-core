@@ -57,6 +57,7 @@ import EmployeeManagement from "@/pages/EmployeeManagement";
 import AuthCallback from "@/pages/AuthCallback";
 import ResetPassword from "@/pages/ResetPassword";
 import Trust from "@/pages/Trust";
+import ScopeSignoff from "@/pages/ScopeSignoff";
 import { ModuleGuard } from "@/components/ModuleGuard";
 
 const queryClient = new QueryClient();
