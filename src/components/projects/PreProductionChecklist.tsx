@@ -6,16 +6,16 @@ import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Loader2 } from "luci
 import { Link } from "react-router-dom";
 import { isAdsDivision, ADS_REQUIRED_GATES } from "@/lib/project-type";
 
+// C-3 (Sale Agreement) + C-4 (Scope of Work) are combined into one row: "sale_scope"
 export const REQUIRED_GATES = [
-  { code: "C-3", label: "Sale Agreement" },
-  { code: "C-4", label: "Scope of Work" },
+  { code: "sale_scope", label: "Sale Agreement + Scope of Work" },
   { code: "E-3", label: "S1 Sign-off" },
   { code: "E-5", label: "H1 Issued — Advance GFC" },
   { code: "E-8", label: "GFC Budget" },
   { code: "P-1", label: "Handover to Planning" },
 ] as const;
 
-export const SETUP_GATE_CODES = ["C-3", "C-4", "E-3", "E-5", "E-8"];
+export const SETUP_GATE_CODES = ["sale_scope", "E-3", "E-5", "E-8"];
 
 type Status = "Not Started" | "In Progress" | "Completed" | "Blocked" | "Skipped";
 type GateInfo = { code: string; label: string; status: Status; notes: string | null };
