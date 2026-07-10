@@ -22,23 +22,39 @@ type GateInfo = { code: string; label: string; status: Status; notes: string | n
 
 export async function fetchPreProdGates(projectId: string, pipeline: "habitainer" | "ads" = "habitainer"): Promise<GateInfo[]> {
   const gateList = pipeline === "ads" ? ADS_REQUIRED_GATES : REQUIRED_GATES;
-  const { data } = await supabase
-    .from("project_design_stages")
-    .select("status, notes, design_stage_definitions!inner(stage_code, pipeline_type)")
-    .eq("project_id", projectId)
-    .eq("design_stage_definitions.pipeline_type", pipeline)
-    .in("design_stage_definitions.stage_code", gateList.map(g => g.code));
+  const codeSet = gateList.map(g => g.code).filter(c => c !== "sale_scope");
+  const [stagesRes, scopeRes, saleRes] = await Promise.all([
+    supabase.from("project_design_stages")
+      .select("status, notes, design_stage_definitions!inner(stage_code, pipeline_type)")
+      .eq("project_id", projectId)
+      .eq("design_stage_definitions.pipeline_type", pipeline)
+      .in("design_stage_definitions.stage_code", codeSet),
+    (supabase as any).from("project_scope_of_work").select("status").eq("project_id", projectId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    (supabase as any).from("contracts_register").select("id, contract_file_url").eq("project_id", projectId).eq("contract_type", "Sale Agreement").eq("is_archived", false).limit(1).maybeSingle(),
+  ]);
 
   const byCode = new Map<string, { status: Status; notes: string | null }>();
-  for (const r of (data ?? []) as any[]) {
+  for (const r of (stagesRes.data ?? []) as any[]) {
     byCode.set(r.design_stage_definitions.stage_code, { status: r.status, notes: r.notes });
   }
-  return gateList.map(g => ({
-    code: g.code,
-    label: g.label,
-    status: (byCode.get(g.code)?.status ?? "Not Started") as Status,
-    notes: byCode.get(g.code)?.notes ?? null,
-  }));
+  const scopeSigned = scopeRes.data?.status === "signed";
+  const saleUploaded = !!saleRes.data?.contract_file_url;
+  const combinedStatus: Status = scopeSigned && saleUploaded ? "Completed" : "Not Started";
+  const combinedNote = scopeSigned && saleUploaded
+    ? null
+    : `${scopeSigned ? "✓" : "✗"} Scope signed · ${saleUploaded ? "✓" : "✗"} Sale Agreement uploaded`;
+
+  return gateList.map(g => {
+    if (g.code === "sale_scope") {
+      return { code: g.code, label: g.label, status: combinedStatus, notes: combinedNote };
+    }
+    return {
+      code: g.code,
+      label: g.label,
+      status: (byCode.get(g.code)?.status ?? "Not Started") as Status,
+      notes: byCode.get(g.code)?.notes ?? null,
+    };
+  });
 }
 
 export function usePreProdGates(projectId: string, pipeline: "habitainer" | "ads" = "habitainer") {
