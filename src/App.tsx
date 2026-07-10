@@ -125,6 +125,7 @@ const App = () => (
                 <Route path="/announcements" element={<ModuleGuard module="announcements"><Announcements /></ModuleGuard>} />
               </Route>
               <Route path="/client/:projectToken" element={<ClientPortal />} />
+              <Route path="/scope-signoff/:token" element={<ScopeSignoff />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
