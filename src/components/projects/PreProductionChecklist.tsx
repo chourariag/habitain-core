@@ -131,10 +131,10 @@ export function PreProductionChecklist({ projectId, division }: { projectId: str
                 <XCircle className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#F40009" }} />
               )}
               <span className="text-foreground">
-                <span className="font-mono text-xs text-muted-foreground mr-1.5">{g.code}</span>
+                <span className="font-mono text-xs text-muted-foreground mr-1.5">{g.code === "sale_scope" ? "C-3+C-4" : g.code}</span>
                 {g.label}
                 {g.status !== "Completed" && (
-                  <span className="text-muted-foreground"> — {g.status === "Not Started" ? "Not completed" : g.status}</span>
+                  <span className="text-muted-foreground"> — {g.notes ?? (g.status === "Not Started" ? "Not completed" : g.status)}</span>
                 )}
               </span>
             </li>
