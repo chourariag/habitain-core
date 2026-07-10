@@ -6,39 +6,55 @@ import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Loader2 } from "luci
 import { Link } from "react-router-dom";
 import { isAdsDivision, ADS_REQUIRED_GATES } from "@/lib/project-type";
 
+// C-3 (Sale Agreement) + C-4 (Scope of Work) are combined into one row: "sale_scope"
 export const REQUIRED_GATES = [
-  { code: "C-3", label: "Sale Agreement" },
-  { code: "C-4", label: "Scope of Work" },
+  { code: "sale_scope", label: "Sale Agreement + Scope of Work" },
   { code: "E-3", label: "S1 Sign-off" },
   { code: "E-5", label: "H1 Issued — Advance GFC" },
   { code: "E-8", label: "GFC Budget" },
   { code: "P-1", label: "Handover to Planning" },
 ] as const;
 
-export const SETUP_GATE_CODES = ["C-3", "C-4", "E-3", "E-5", "E-8"];
+export const SETUP_GATE_CODES = ["sale_scope", "E-3", "E-5", "E-8"];
 
 type Status = "Not Started" | "In Progress" | "Completed" | "Blocked" | "Skipped";
 type GateInfo = { code: string; label: string; status: Status; notes: string | null };
 
 export async function fetchPreProdGates(projectId: string, pipeline: "habitainer" | "ads" = "habitainer"): Promise<GateInfo[]> {
   const gateList = pipeline === "ads" ? ADS_REQUIRED_GATES : REQUIRED_GATES;
-  const { data } = await supabase
-    .from("project_design_stages")
-    .select("status, notes, design_stage_definitions!inner(stage_code, pipeline_type)")
-    .eq("project_id", projectId)
-    .eq("design_stage_definitions.pipeline_type", pipeline)
-    .in("design_stage_definitions.stage_code", gateList.map(g => g.code));
+  const codeSet = gateList.map(g => g.code).filter(c => c !== "sale_scope");
+  const [stagesRes, scopeRes, saleRes] = await Promise.all([
+    supabase.from("project_design_stages")
+      .select("status, notes, design_stage_definitions!inner(stage_code, pipeline_type)")
+      .eq("project_id", projectId)
+      .eq("design_stage_definitions.pipeline_type", pipeline)
+      .in("design_stage_definitions.stage_code", codeSet),
+    (supabase as any).from("project_scope_of_work").select("status").eq("project_id", projectId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    (supabase as any).from("contracts_register").select("id, contract_file_url").eq("project_id", projectId).eq("contract_type", "Sale Agreement").eq("is_archived", false).limit(1).maybeSingle(),
+  ]);
 
   const byCode = new Map<string, { status: Status; notes: string | null }>();
-  for (const r of (data ?? []) as any[]) {
+  for (const r of (stagesRes.data ?? []) as any[]) {
     byCode.set(r.design_stage_definitions.stage_code, { status: r.status, notes: r.notes });
   }
-  return gateList.map(g => ({
-    code: g.code,
-    label: g.label,
-    status: (byCode.get(g.code)?.status ?? "Not Started") as Status,
-    notes: byCode.get(g.code)?.notes ?? null,
-  }));
+  const scopeSigned = scopeRes.data?.status === "signed";
+  const saleUploaded = !!saleRes.data?.contract_file_url;
+  const combinedStatus: Status = scopeSigned && saleUploaded ? "Completed" : "Not Started";
+  const combinedNote = scopeSigned && saleUploaded
+    ? null
+    : `${scopeSigned ? "✓" : "✗"} Scope signed · ${saleUploaded ? "✓" : "✗"} Sale Agreement uploaded`;
+
+  return gateList.map(g => {
+    if (g.code === "sale_scope") {
+      return { code: g.code, label: g.label, status: combinedStatus, notes: combinedNote };
+    }
+    return {
+      code: g.code,
+      label: g.label,
+      status: (byCode.get(g.code)?.status ?? "Not Started") as Status,
+      notes: byCode.get(g.code)?.notes ?? null,
+    };
+  });
 }
 
 export function usePreProdGates(projectId: string, pipeline: "habitainer" | "ads" = "habitainer") {
@@ -115,10 +131,10 @@ export function PreProductionChecklist({ projectId, division }: { projectId: str
                 <XCircle className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#F40009" }} />
               )}
               <span className="text-foreground">
-                <span className="font-mono text-xs text-muted-foreground mr-1.5">{g.code}</span>
+                <span className="font-mono text-xs text-muted-foreground mr-1.5">{g.code === "sale_scope" ? "C-3+C-4" : g.code}</span>
                 {g.label}
                 {g.status !== "Completed" && (
-                  <span className="text-muted-foreground"> — {g.status === "Not Started" ? "Not completed" : g.status}</span>
+                  <span className="text-muted-foreground"> — {g.notes ?? (g.status === "Not Started" ? "Not completed" : g.status)}</span>
                 )}
               </span>
             </li>

@@ -1224,6 +1224,7 @@ export type Database = {
       }
       contracts_register: {
         Row: {
+          contract_file_url: string | null
           contract_number: string | null
           contract_type: string | null
           contract_value_excl_gst: number | null
@@ -1240,12 +1241,14 @@ export type Database = {
           retention_amount: number | null
           retention_percent: number | null
           scope_of_work: string | null
+          scope_of_work_id: string | null
           start_date: string | null
           status: string
           updated_at: string
           vendor_name: string
         }
         Insert: {
+          contract_file_url?: string | null
           contract_number?: string | null
           contract_type?: string | null
           contract_value_excl_gst?: number | null
@@ -1262,12 +1265,14 @@ export type Database = {
           retention_amount?: number | null
           retention_percent?: number | null
           scope_of_work?: string | null
+          scope_of_work_id?: string | null
           start_date?: string | null
           status?: string
           updated_at?: string
           vendor_name: string
         }
         Update: {
+          contract_file_url?: string | null
           contract_number?: string | null
           contract_type?: string | null
           contract_value_excl_gst?: number | null
@@ -1284,6 +1289,7 @@ export type Database = {
           retention_amount?: number | null
           retention_percent?: number | null
           scope_of_work?: string | null
+          scope_of_work_id?: string | null
           start_date?: string | null
           status?: string
           updated_at?: string
@@ -1295,6 +1301,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_register_scope_of_work_id_fkey"
+            columns: ["scope_of_work_id"]
+            isOneToOne: false
+            referencedRelation: "project_scope_of_work"
             referencedColumns: ["id"]
           },
         ]
@@ -8085,16 +8098,22 @@ export type Database = {
           built_up_area: number | null
           category: string | null
           client_name: string | null
+          client_signed_at: string | null
+          client_signed_by: string | null
           created_at: string
           created_by: string
           deck_area: number | null
           division: string | null
           id: string
           location: string | null
+          locked: boolean
           module_count: number | null
           notes: string | null
           pdf_url: string | null
           project_id: string
+          sales_director_signed_at: string | null
+          sales_director_signed_by: string | null
+          scope_pdf_url: string | null
           status: string
           updated_at: string
         }
@@ -8102,16 +8121,22 @@ export type Database = {
           built_up_area?: number | null
           category?: string | null
           client_name?: string | null
+          client_signed_at?: string | null
+          client_signed_by?: string | null
           created_at?: string
           created_by: string
           deck_area?: number | null
           division?: string | null
           id?: string
           location?: string | null
+          locked?: boolean
           module_count?: number | null
           notes?: string | null
           pdf_url?: string | null
           project_id: string
+          sales_director_signed_at?: string | null
+          sales_director_signed_by?: string | null
+          scope_pdf_url?: string | null
           status?: string
           updated_at?: string
         }
@@ -8119,16 +8144,22 @@ export type Database = {
           built_up_area?: number | null
           category?: string | null
           client_name?: string | null
+          client_signed_at?: string | null
+          client_signed_by?: string | null
           created_at?: string
           created_by?: string
           deck_area?: number | null
           division?: string | null
           id?: string
           location?: string | null
+          locked?: boolean
           module_count?: number | null
           notes?: string | null
           pdf_url?: string | null
           project_id?: string
+          sales_director_signed_at?: string | null
+          sales_director_signed_by?: string | null
+          scope_pdf_url?: string | null
           status?: string
           updated_at?: string
         }
@@ -8138,6 +8169,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_scope_of_work_sales_director_signed_by_fkey"
+            columns: ["sales_director_signed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -10688,6 +10726,79 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scope_signoff_tokens: {
+        Row: {
+          client_name: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          scope_of_work_id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          scope_of_work_id: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          scope_of_work_id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scope_signoff_tokens_scope_of_work_id_fkey"
+            columns: ["scope_of_work_id"]
+            isOneToOne: false
+            referencedRelation: "project_scope_of_work"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scope_unlock_audit: {
+        Row: {
+          id: string
+          reason: string
+          scope_of_work_id: string
+          unlocked_at: string
+          unlocked_by: string
+        }
+        Insert: {
+          id?: string
+          reason: string
+          scope_of_work_id: string
+          unlocked_at?: string
+          unlocked_by: string
+        }
+        Update: {
+          id?: string
+          reason?: string
+          scope_of_work_id?: string
+          unlocked_at?: string
+          unlocked_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scope_unlock_audit_scope_of_work_id_fkey"
+            columns: ["scope_of_work_id"]
+            isOneToOne: false
+            referencedRelation: "project_scope_of_work"
             referencedColumns: ["id"]
           },
         ]

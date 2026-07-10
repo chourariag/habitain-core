@@ -32,21 +32,28 @@ export function FactoryFloorPreProdBanner() {
       if (projMap.size === 0) { setProjects([]); return; }
 
       const projectIds = Array.from(projMap.keys());
-      const { data: gates } = await supabase
-        .from("project_design_stages")
-        .select("project_id, status, design_stage_definitions!inner(stage_code, pipeline_type)")
-        .in("project_id", projectIds)
-        .eq("design_stage_definitions.pipeline_type", "habitainer")
-        .in("design_stage_definitions.stage_code", REQUIRED_GATES.map(g => g.code));
+      const stageCodes = REQUIRED_GATES.map(g => g.code).filter(c => c !== "sale_scope");
+      const [{ data: gates }, { data: scopes }, { data: sales }] = await Promise.all([
+        supabase.from("project_design_stages")
+          .select("project_id, status, design_stage_definitions!inner(stage_code, pipeline_type)")
+          .in("project_id", projectIds)
+          .eq("design_stage_definitions.pipeline_type", "habitainer")
+          .in("design_stage_definitions.stage_code", stageCodes),
+        (supabase as any).from("project_scope_of_work").select("project_id, status").in("project_id", projectIds),
+        (supabase as any).from("contracts_register").select("project_id, contract_file_url").in("project_id", projectIds).eq("contract_type", "Sale Agreement").eq("is_archived", false),
+      ]);
 
       const completed = new Map<string, number>();
       for (const r of (gates ?? []) as any[]) {
         if (r.status === "Completed") completed.set(r.project_id, (completed.get(r.project_id) ?? 0) + 1);
       }
+      const scopeSignedSet = new Set<string>((scopes ?? []).filter((s: any) => s.status === "signed").map((s: any) => s.project_id));
+      const saleUploadedSet = new Set<string>((sales ?? []).filter((s: any) => !!s.contract_file_url).map((s: any) => s.project_id));
 
       const blocked: BlockedProj[] = [];
       for (const [id, info] of projMap) {
-        const done = completed.get(id) ?? 0;
+        let done = completed.get(id) ?? 0;
+        if (scopeSignedSet.has(id) && saleUploadedSet.has(id)) done += 1;
         if (done < REQUIRED_GATES.length) blocked.push({ id, name: info.name, missing: REQUIRED_GATES.length - done });
       }
       setProjects(blocked.slice(0, 8));
