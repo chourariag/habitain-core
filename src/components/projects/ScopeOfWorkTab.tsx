@@ -93,7 +93,7 @@ export function ScopeOfWorkTab({ projectId, userRole }: Props) {
   const loadScope = useCallback(async () => {
     setLoading(true);
     const [projRes, scopeRes] = await Promise.all([
-      supabase.from("projects").select("client_name, location, built_up_area, module_count, division, type").eq("id", projectId).single(),
+      (supabase as any).from("projects").select("client_name, location, module_count, division, type").eq("id", projectId).single(),
       (supabase as any).from("project_scope_of_work").select("*").eq("project_id", projectId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     ]);
     setProject(projRes.data);
