@@ -52,36 +52,31 @@ export default function ScopeSignoff() {
   useEffect(() => {
     (async () => {
       if (!token) { setLoading(false); return; }
-      const { data: tok } = await (supabase as any).from("scope_signoff_tokens").select("*").eq("token", token).maybeSingle();
-      if (!tok) { setLoading(false); return; }
-      setTokenRow(tok);
+      const { data, error } = await (supabase as any).rpc("get_scope_signoff_by_token", { p_token: token });
+      if (error || !data) { setLoading(false); return; }
+      setTokenRow({ id: data.token_id });
       setTokenValid(true);
-      const { data: sc } = await (supabase as any).from("project_scope_of_work").select("*").eq("id", tok.scope_of_work_id).single();
-      setScope(sc);
-      setSignerName(sc?.client_name ?? "");
-      const [itRes, exRes] = await Promise.all([
-        (supabase as any).from("project_scope_items").select("section,item_name,responsibility,area_sqft,remarks").eq("scope_id", tok.scope_of_work_id).order("sort_order"),
-        (supabase as any).from("project_scope_exclusions").select("exclusion_text").eq("scope_id", tok.scope_of_work_id).order("sort_order"),
-      ]);
-      setItems((itRes.data ?? []) as Item[]);
-      setExclusions((exRes.data ?? []) as Excl[]);
+      setScope(data.scope as Scope);
+      setSignerName((data.scope?.client_name as string) ?? "");
+      setItems((data.items ?? []) as Item[]);
+      setExclusions((data.exclusions ?? []) as Excl[]);
       setLoading(false);
     })();
   }, [token]);
 
   const sign = async () => {
     if (!signerName.trim()) { toast.error("Please enter your name"); return; }
-    if (!scope || !tokenRow) return;
+    if (!scope || !token) return;
     setSubmitting(true);
-    const now = new Date().toISOString();
-    // Update scope with client signature
-    const { error: e1 } = await (supabase as any)
-      .from("project_scope_of_work")
-      .update({ client_signed_by: signerName.trim(), client_signed_at: now })
-      .eq("id", scope.id);
-    if (e1) { toast.error(e1.message); setSubmitting(false); return; }
-    // Consume the token
-    await (supabase as any).from("scope_signoff_tokens").update({ used_at: now, client_name: signerName.trim() }).eq("id", tokenRow.id);
+    const { data, error } = await (supabase as any).rpc("consume_scope_signoff_token", {
+      p_token: token,
+      p_signer_name: signerName.trim(),
+    });
+    if (error || data !== true) {
+      toast.error(error?.message ?? "Link is no longer valid");
+      setSubmitting(false);
+      return;
+    }
     setDone(true);
     setSubmitting(false);
     toast.success("Signature captured. Thank you!");
