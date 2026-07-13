@@ -13396,6 +13396,10 @@ export type Database = {
         }
         Returns: Json
       }
+      consume_scope_signoff_token: {
+        Args: { p_signer_name: string; p_token: string }
+        Returns: boolean
+      }
       cv_alert_overdue_commitments: { Args: never; Returns: number }
       fire_billing_milestone_event: {
         Args: { _event: string; _event_label?: string; _project_id: string }
@@ -13690,6 +13694,7 @@ export type Database = {
           wip_yday: number
         }[]
       }
+      get_scope_signoff_by_token: { Args: { p_token: string }; Returns: Json }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
