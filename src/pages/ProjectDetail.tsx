@@ -189,6 +189,16 @@ export default function ProjectDetail() {
         <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} projectType={proj.division ?? null} onImported={fetchData} />
       )}
 
+      {!isAds && (
+        <ProjectSetupApprovalSection
+          projectId={id!}
+          projectName={project.name}
+          userRole={userRole}
+          setupUploadedAt={(proj as any).setup_uploaded_at ?? null}
+          onApproved={fetchData}
+        />
+      )}
+
       <Tabs defaultValue="schedule">
         <ScrollableTabsWrapper>
           <TabsList>
