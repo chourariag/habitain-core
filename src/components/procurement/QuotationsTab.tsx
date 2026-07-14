@@ -10,16 +10,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Upload, Star, CheckCircle2, XCircle, Download, FileText, ChevronDown, ChevronRight, AlertTriangle, Loader2 } from "lucide-react";
+import { Plus, Upload, Star, CheckCircle2, XCircle, Download, FileText, ChevronDown, ChevronRight, AlertTriangle, Loader2, ShieldAlert, RotateCcw } from "lucide-react";
 
 type Project = { id: string; project_name: string; project_code?: string | null };
+type QRStatus =
+  | "indent_pending"
+  | "indent_approved"
+  | "indent_rejected"
+  | "open"
+  | "under_review"
+  | "approved"
+  | "rejected"
+  | "escalated";
 type QR = {
   id: string; project_id: string; material_category: string | null;
   line_item_description: string; unit: string | null;
   boq_quantity: number; boq_unit_rate: number;
   minimum_quotes_required: number; quotes_received_count: number;
-  remarks: string | null; status: "open" | "under_review" | "approved" | "rejected";
+  remarks: string | null; status: QRStatus;
   rejection_reason: string | null; created_by: string | null; created_at: string;
+  indent_approved_by: string | null; indent_approved_at: string | null;
+  indent_rejection_reason: string | null;
+  requote_round: number;
+  escalated_to_planning_head: boolean;
+  escalated_at: string | null;
 };
 type VQ = {
   id: string; quotation_request_id: string; vendor_name: string;
@@ -29,21 +43,22 @@ type VQ = {
   is_preferred: boolean; is_approved: boolean; sayeed_notes: string | null;
 };
 
-const MANAGE_ROLES = ["procurement", "managing_director", "super_admin"];
+const MANAGE_ROLES = ["procurement", "purchase_assistant", "managing_director", "super_admin"];
 const APPROVE_ROLES = ["costing_engineer", "managing_director", "super_admin"];
 const PLANNING_ROLE = "planning_head";
 const VIEW_ROLES = [
-  "procurement", "costing_engineer", "planning_head", "planning_engineer",
+  "procurement", "purchase_assistant", "costing_engineer", "planning_head", "planning_engineer",
   "managing_director", "super_admin", "finance_director", "head_operations",
 ];
+
+const MAX_REQUOTE_ROUNDS = 2;
 
 const fmtINR = (n: number) =>
   new Intl.NumberFormat("en-IN", { maximumFractionDigits: 2 }).format(n || 0);
 
 function minRequired(total: number) {
-  if (total < 3000) return 0;
-  if (total <= 7000) return 1;
-  return 3;
+  // Below ₹50,000 → 1 quote; ≥ ₹50,000 → 3 quotes.
+  return total < 50000 ? 1 : 3;
 }
 
 function downloadHabitainerTemplate() {
@@ -81,7 +96,7 @@ export function QuotationsTab({ userRole, projects }: { userRole: string | null;
     setLoading(true);
     const { data: qrs } = await supabase
       .from("quotation_requests").select("*").order("created_at", { ascending: false });
-    const list = (qrs as QR[]) ?? [];
+    const list = ((qrs as unknown) as QR[]) ?? [];
     setRequests(list);
     if (list.length) {
       const { data: vqs } = await supabase
@@ -124,11 +139,15 @@ export function QuotationsTab({ userRole, projects }: { userRole: string | null;
             </SelectContent>
           </Select>
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-[160px]"><SelectValue placeholder="All statuses" /></SelectTrigger>
+            <SelectTrigger className="w-[180px]"><SelectValue placeholder="All statuses" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="open">Open</SelectItem>
-              <SelectItem value="under_review">Under review</SelectItem>
+              <SelectItem value="indent_pending">Indent Pending</SelectItem>
+              <SelectItem value="indent_approved">Indent Approved</SelectItem>
+              <SelectItem value="indent_rejected">Indent Rejected</SelectItem>
+              <SelectItem value="open">Collecting Quotes</SelectItem>
+              <SelectItem value="under_review">Under Review</SelectItem>
+              <SelectItem value="escalated">Escalated</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
@@ -138,7 +157,7 @@ export function QuotationsTab({ userRole, projects }: { userRole: string | null;
           </Button>
           {canManage && (
             <Button size="sm" onClick={() => setNewOpen(true)} style={{ backgroundColor: "#006039", color: "white" }}>
-              <Plus className="h-4 w-4 mr-1" /> New Quotation
+              <Plus className="h-4 w-4 mr-1" /> Raise Indent
             </Button>
           )}
         </div>
@@ -147,7 +166,7 @@ export function QuotationsTab({ userRole, projects }: { userRole: string | null;
       {loading ? (
         <div className="flex items-center justify-center p-8"><Loader2 className="h-5 w-5 animate-spin" /></div>
       ) : filtered.length === 0 ? (
-        <Card><CardContent className="p-6 text-sm text-muted-foreground">No quotation requests yet.</CardContent></Card>
+        <Card><CardContent className="p-6 text-sm text-muted-foreground">No indents raised yet.</CardContent></Card>
       ) : (
         <div className="space-y-3">
           {filtered.map((r) => (
@@ -177,12 +196,16 @@ export function QuotationsTab({ userRole, projects }: { userRole: string | null;
   );
 }
 
-function statusBadge(s: QR["status"]) {
-  const map: Record<string, { bg: string; fg: string; label: string }> = {
-    open:          { bg: "#EEF6FF", fg: "#1D4ED8", label: "Open" },
-    under_review:  { bg: "#FFF8E8", fg: "#D4860A", label: "Under Review" },
-    approved:      { bg: "#E8F6EF", fg: "#006039", label: "Approved" },
-    rejected:      { bg: "#FFF0F0", fg: "#F40009", label: "Rejected" },
+function statusBadge(s: QRStatus) {
+  const map: Record<QRStatus, { bg: string; fg: string; label: string }> = {
+    indent_pending:  { bg: "#EEF2FF", fg: "#4338CA", label: "Indent Pending" },
+    indent_approved: { bg: "#E8F6EF", fg: "#006039", label: "Indent Approved" },
+    indent_rejected: { bg: "#FFF0F0", fg: "#F40009", label: "Indent Rejected" },
+    open:            { bg: "#EEF6FF", fg: "#1D4ED8", label: "Collecting Quotes" },
+    under_review:    { bg: "#FFF8E8", fg: "#D4860A", label: "Under Review" },
+    approved:        { bg: "#E8F6EF", fg: "#006039", label: "Approved" },
+    rejected:        { bg: "#FFF0F0", fg: "#F40009", label: "Rejected" },
+    escalated:       { bg: "#FEE2E2", fg: "#B91C1C", label: "Escalated → Planning Head" },
   };
   const v = map[s];
   return <Badge style={{ backgroundColor: v.bg, color: v.fg }} className="border-0">{v.label}</Badge>;
@@ -199,6 +222,7 @@ function RequestCard({
 }) {
   const belowMin = req.quotes_received_count < req.minimum_quotes_required;
   const preferred = quotes.find((q) => q.is_preferred);
+  const canCollectQuotes = req.status === "indent_approved" || req.status === "open";
 
   return (
     <Card>
@@ -209,15 +233,18 @@ function RequestCard({
             <CardTitle className="text-base">{req.line_item_description}</CardTitle>
             <p className="text-xs text-muted-foreground mt-1">
               {projectName} · {req.material_category || "—"} · BOQ: {fmtINR(req.boq_quantity)} {req.unit || ""} @ ₹{fmtINR(req.boq_unit_rate)} = ₹{fmtINR(req.boq_quantity * req.boq_unit_rate)}
+              {req.requote_round > 0 && (
+                <> · <span className="font-medium text-amber-700">Re-quote round {req.requote_round}/{MAX_REQUOTE_ROUNDS}</span></>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            {belowMin && req.status !== "approved" && (
+            {canCollectQuotes && belowMin && (
               <Badge variant="outline" className="border-amber-500 text-amber-700">
                 <AlertTriangle className="h-3 w-3 mr-1" /> {req.quotes_received_count}/{req.minimum_quotes_required} quotes
               </Badge>
             )}
-            {!belowMin && (
+            {canCollectQuotes && !belowMin && (
               <Badge variant="outline">{req.quotes_received_count} quotes</Badge>
             )}
             {statusBadge(req.status)}
@@ -226,31 +253,65 @@ function RequestCard({
       </CardHeader>
       {expanded && (
         <CardContent className="space-y-4">
-          <QuotesTable
-            req={req} quotes={quotes}
-            canManage={canManage} canApprove={canApprove}
-            onChanged={onChanged}
-          />
+          {req.status === "indent_pending" && (
+            <Card style={{ backgroundColor: "#EEF2FF" }}>
+              <CardContent className="p-3 text-sm">
+                <p className="font-medium" style={{ color: "#4338CA" }}>Awaiting Costing Engineer approval</p>
+                <p className="text-muted-foreground text-xs mt-1">
+                  Vendor quotes cannot be collected until the indent is approved against the BOQ rate.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
-          {canManage && req.status === "open" && (
+          {req.status === "indent_pending" && canApprove && (
+            <IndentApprovalActions req={req} onActioned={onChanged} />
+          )}
+
+          {req.status === "indent_rejected" && (
+            <Card style={{ backgroundColor: "#FFF0F0" }}>
+              <CardContent className="p-3 text-sm" style={{ color: "#F40009" }}>
+                Indent rejected — {req.indent_rejection_reason || "no reason provided"}. Procurement must revise the indent.
+              </CardContent>
+            </Card>
+          )}
+
+          {(canCollectQuotes || req.status === "under_review" || req.status === "approved" || req.status === "rejected" || req.status === "escalated") && (
+            <QuotesTable
+              req={req} quotes={quotes}
+              canManage={canManage} canApprove={canApprove}
+              isPlanningHead={isPlanningHead}
+              onChanged={onChanged}
+            />
+          )}
+
+          {canManage && canCollectQuotes && (
             <AddVendorQuote req={req} onAdded={onChanged} />
           )}
 
-          {req.status === "open" && canManage && (
+          {canCollectQuotes && canManage && (
             <SubmitForReview req={req} preferred={preferred} onSubmitted={onChanged} />
           )}
 
           {req.status === "under_review" && canApprove && (
-            <ReviewActions req={req} quotes={quotes} onActioned={onChanged} />
+            <ReviewActions req={req} onActioned={onChanged} />
           )}
 
-          {req.status === "under_review" && isPlanningHead && belowMin && (
-            <Card className="border-amber-200" style={{ backgroundColor: "#FFFBEB" }}>
-              <CardContent className="p-3 text-sm">
-                <p className="font-medium mb-1">Below minimum quotes — Planning Head review</p>
-                <p className="text-muted-foreground">Vijay's reason: {req.remarks || "(no remarks)"}</p>
+          {req.status === "escalated" && (
+            <Card style={{ backgroundColor: "#FEF2F2" }} className="border-red-200">
+              <CardContent className="p-3 text-sm space-y-1">
+                <p className="font-medium flex items-center gap-1" style={{ color: "#B91C1C" }}>
+                  <ShieldAlert className="h-4 w-4" /> Escalated to Planning Head
+                </p>
+                <p className="text-muted-foreground text-xs">
+                  Completed {MAX_REQUOTE_ROUNDS} re-quote rounds with no acceptable vendor. Awaiting Planning Head's final decision.
+                </p>
               </CardContent>
             </Card>
+          )}
+
+          {req.status === "escalated" && isPlanningHead && (
+            <PlanningHeadActions req={req} onActioned={onChanged} />
           )}
 
           {req.status === "approved" && (
@@ -274,14 +335,76 @@ function RequestCard({
   );
 }
 
+function IndentApprovalActions({ req, onActioned }: { req: QR; onActioned: () => void }) {
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const approve = async () => {
+    setBusy(true);
+    const { data: u } = await supabase.auth.getUser();
+    const { error } = await supabase.from("quotation_requests").update({
+      status: "open",
+      indent_approved_by: u.user?.id ?? null,
+      indent_approved_at: new Date().toISOString(),
+      indent_rejection_reason: null,
+    } as any).eq("id", req.id);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Indent approved — Procurement can now collect vendor quotes");
+    onActioned();
+  };
+
+  const reject = async () => {
+    if (!reason.trim()) { toast.error("Reason required"); return; }
+    setBusy(true);
+    const { error } = await supabase.from("quotation_requests").update({
+      status: "indent_rejected",
+      indent_rejection_reason: reason,
+    } as any).eq("id", req.id);
+    setBusy(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Indent rejected — sent back to Procurement");
+    setRejectOpen(false); setReason(""); onActioned();
+  };
+
+  return (
+    <div className="flex justify-end gap-2">
+      <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" disabled={busy}>
+            <XCircle className="h-3.5 w-3.5 mr-1" /> Reject Indent
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Reject indent</DialogTitle></DialogHeader>
+          <Label>Reason *</Label>
+          <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectOpen(false)}>Cancel</Button>
+            <Button onClick={reject} disabled={busy} style={{ backgroundColor: "#F40009", color: "white" }}>
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Reject"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Button size="sm" onClick={approve} disabled={busy} style={{ backgroundColor: "#006039", color: "white" }}>
+        {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
+        Approve Indent
+      </Button>
+    </div>
+  );
+}
+
 function QuotesTable({
-  req, quotes, canManage, canApprove, onChanged,
+  req, quotes, canManage, canApprove, isPlanningHead, onChanged,
 }: {
   req: QR; quotes: VQ[];
-  canManage: boolean; canApprove: boolean;
+  canManage: boolean; canApprove: boolean; isPlanningHead: boolean;
   onChanged: () => void;
 }) {
   const boqRate = Number(req.boq_unit_rate) || 0;
+  const canCollectQuotes = req.status === "indent_approved" || req.status === "open";
 
   const variance = (rate: number) => boqRate > 0 ? ((rate - boqRate) / boqRate) * 100 : 0;
   const varianceFlag = (v: number) => {
@@ -292,15 +415,14 @@ function QuotesTable({
   };
 
   const togglePreferred = async (q: VQ) => {
-    if (!canManage || req.status !== "open") return;
-    // Clear other preferred first
+    if (!canManage || !canCollectQuotes) return;
     await supabase.from("vendor_quotes").update({ is_preferred: false }).eq("quotation_request_id", req.id);
     await supabase.from("vendor_quotes").update({ is_preferred: !q.is_preferred }).eq("id", q.id);
     onChanged();
   };
 
   const deleteQuote = async (q: VQ) => {
-    if (!canManage || req.status !== "open") return;
+    if (!canManage || !canCollectQuotes) return;
     if (!confirm(`Remove quote from ${q.vendor_name}?`)) return;
     await supabase.from("vendor_quotes").delete().eq("id", q.id);
     onChanged();
@@ -370,7 +492,7 @@ function QuotesTable({
                     : <span className="text-xs text-muted-foreground">—</span>}
                 </TableCell>
                 <TableCell className="text-right">
-                  {canManage && req.status === "open" && (
+                  {canManage && canCollectQuotes && (
                     <div className="flex justify-end gap-1">
                       <Button size="sm" variant="ghost" onClick={() => togglePreferred(q)}>
                         {q.is_preferred ? "Unprefer" : "Prefer"}
@@ -383,6 +505,9 @@ function QuotesTable({
                   {canApprove && req.status === "under_review" && !q.is_approved && (
                     <ApproveVendorButton req={req} quote={q} variancePct={v} onDone={onChanged} />
                   )}
+                  {isPlanningHead && req.status === "escalated" && !q.is_approved && (
+                    <ApproveVendorButton req={req} quote={q} variancePct={v} onDone={onChanged} label="Planning Head Approve" />
+                  )}
                 </TableCell>
               </TableRow>
             );
@@ -393,7 +518,7 @@ function QuotesTable({
   );
 }
 
-function ApproveVendorButton({ req, quote, variancePct, onDone }: { req: QR; quote: VQ; variancePct: number; onDone: () => void }) {
+function ApproveVendorButton({ req, quote, variancePct, onDone, label }: { req: QR; quote: VQ; variancePct: number; onDone: () => void; label?: string }) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
@@ -406,7 +531,6 @@ function ApproveVendorButton({ req, quote, variancePct, onDone }: { req: QR; quo
     }
     setBusy(true);
     const { data: u } = await supabase.auth.getUser();
-    // Mark this quote approved, others unapproved
     await supabase.from("vendor_quotes").update({ is_approved: false }).eq("quotation_request_id", req.id);
     const { error: e1 } = await supabase.from("vendor_quotes")
       .update({ is_approved: true, sayeed_notes: notes || null })
@@ -430,7 +554,7 @@ function ApproveVendorButton({ req, quote, variancePct, onDone }: { req: QR; quo
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm" style={{ backgroundColor: "#006039", color: "white" }}>
-          <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve
+          <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> {label ?? "Approve"}
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -493,6 +617,10 @@ function AddVendorQuote({ req, onAdded }: { req: QR; onAdded: () => void }) {
       quote_filename: fileName,
       created_by: u.user?.id ?? null,
     });
+    // Flip from indent_approved → open on first quote so downstream filters treat it as "collecting"
+    if (!error && req.status === "indent_approved") {
+      await supabase.from("quotation_requests").update({ status: "open" }).eq("id", req.id);
+    }
     setBusy(false);
     if (error) { toast.error(error.message); return; }
     toast.success("Quote added");
@@ -543,14 +671,14 @@ function SubmitForReview({ req, preferred, onSubmitted }: { req: QR; preferred: 
       .eq("id", req.id);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Sent to Sayeed for review");
+    toast.success("Sent to Costing Engineer for review");
     onSubmitted();
   };
 
   return (
     <Card style={{ backgroundColor: "#FFFBEB" }}>
       <CardContent className="p-3 space-y-2">
-        <p className="text-sm font-medium">Submit for Sayeed's Review</p>
+        <p className="text-sm font-medium">Submit for Costing Engineer Review</p>
         {belowMin && (
           <div className="text-xs" style={{ color: "#D4860A" }}>
             Only {req.quotes_received_count} of minimum {req.minimum_quotes_required} quotes — remarks mandatory.
@@ -572,7 +700,87 @@ function SubmitForReview({ req, preferred, onSubmitted }: { req: QR; preferred: 
   );
 }
 
-function ReviewActions({ req, quotes, onActioned }: { req: QR; quotes: VQ[]; onActioned: () => void }) {
+function ReviewActions({ req, onActioned }: { req: QR; onActioned: () => void }) {
+  const [requoteOpen, setRequoteOpen] = useState(false);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const willEscalate = req.requote_round >= MAX_REQUOTE_ROUNDS;
+
+  const requote = async () => {
+    if (!reason.trim()) { toast.error("Reason required"); return; }
+    setBusy(true);
+    // Clear preferred / approved flags on quotes so Procurement starts fresh
+    await supabase.from("vendor_quotes")
+      .update({ is_preferred: false, is_approved: false })
+      .eq("quotation_request_id", req.id);
+
+    if (willEscalate) {
+      const { error } = await supabase.from("quotation_requests").update({
+        status: "escalated",
+        escalated_to_planning_head: true,
+        escalated_at: new Date().toISOString(),
+        rejection_reason: reason,
+      } as any).eq("id", req.id);
+      setBusy(false);
+      if (error) { toast.error(error.message); return; }
+      toast.success("Escalated to Planning Head — 2 re-quote rounds completed");
+    } else {
+      const { error } = await supabase.from("quotation_requests").update({
+        status: "open",
+        requote_round: (req.requote_round || 0) + 1,
+        remarks: reason,
+      } as any).eq("id", req.id);
+      setBusy(false);
+      if (error) { toast.error(error.message); return; }
+      toast.success(`Sent back to Procurement — re-quote round ${(req.requote_round || 0) + 1}/${MAX_REQUOTE_ROUNDS}`);
+    }
+    setRequoteOpen(false); setReason(""); onActioned();
+  };
+
+  return (
+    <div className="flex flex-wrap justify-end items-center gap-2">
+      <p className="text-xs text-muted-foreground mr-auto">
+        Use per-row <strong>Approve</strong> to select a vendor, or request a re-quote if none is acceptable.
+      </p>
+      <Dialog open={requoteOpen} onOpenChange={setRequoteOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm">
+            {willEscalate
+              ? <><ShieldAlert className="h-3.5 w-3.5 mr-1" /> Escalate to Planning Head</>
+              : <><RotateCcw className="h-3.5 w-3.5 mr-1" /> Request Re-quote ({(req.requote_round || 0) + 1}/{MAX_REQUOTE_ROUNDS})</>}
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {willEscalate ? "Escalate to Planning Head" : `Request re-quote (round ${(req.requote_round || 0) + 1}/${MAX_REQUOTE_ROUNDS})`}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            {willEscalate
+              ? `${MAX_REQUOTE_ROUNDS} re-quote rounds have already been completed. This will escalate the quotation to Planning Head for a final decision.`
+              : "Procurement will be asked to collect fresh vendor quotes. All preferred / approved flags on current quotes will be cleared."}
+          </p>
+          <Label>Reason *</Label>
+          <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRequoteOpen(false)}>Cancel</Button>
+            <Button
+              onClick={requote}
+              disabled={busy}
+              style={{ backgroundColor: willEscalate ? "#B91C1C" : "#D4860A", color: "white" }}
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : (willEscalate ? "Escalate" : "Send Re-quote")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function PlanningHeadActions({ req, onActioned }: { req: QR; onActioned: () => void }) {
   const [rejectOpen, setRejectOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
@@ -581,11 +789,12 @@ function ReviewActions({ req, quotes, onActioned }: { req: QR; quotes: VQ[]; onA
     if (!reason.trim()) { toast.error("Reason required"); return; }
     setBusy(true);
     const { error } = await supabase.from("quotation_requests")
-      .update({ status: "rejected", rejection_reason: reason }).eq("id", req.id);
+      .update({ status: "rejected", rejection_reason: reason })
+      .eq("id", req.id);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Rejected — back to Vijay");
-    setRejectOpen(false); onActioned();
+    toast.success("Quotation rejected");
+    setRejectOpen(false); setReason(""); onActioned();
   };
 
   return (
@@ -593,11 +802,11 @@ function ReviewActions({ req, quotes, onActioned }: { req: QR; quotes: VQ[]; onA
       <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm">
-            <XCircle className="h-3.5 w-3.5 mr-1" /> Reject All
+            <XCircle className="h-3.5 w-3.5 mr-1" /> Reject Quotation
           </Button>
         </DialogTrigger>
         <DialogContent>
-          <DialogHeader><DialogTitle>Reject all quotes</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Planning Head — reject quotation</DialogTitle></DialogHeader>
           <Label>Reason *</Label>
           <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} />
           <DialogFooter>
@@ -608,7 +817,7 @@ function ReviewActions({ req, quotes, onActioned }: { req: QR; quotes: VQ[]; onA
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <p className="text-xs text-muted-foreground self-center">Use the per-row Approve button to select a vendor.</p>
+      <p className="text-xs text-muted-foreground self-center">Use the per-row <strong>Planning Head Approve</strong> to select a final vendor.</p>
     </div>
   );
 }
@@ -643,18 +852,22 @@ function NewQuotationDialog({
       unit: unit || null,
       boq_quantity: Number(qty) || 0,
       boq_unit_rate: Number(rate) || 0,
+      status: "indent_pending",
       created_by: u.user?.id ?? null,
-    });
+    } as any);
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("Quotation request created");
+    toast.success("Indent raised — awaiting Costing Engineer approval");
     reset(); onOpenChange(false); onCreated();
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
-        <DialogHeader><DialogTitle>New Quotation Request</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Raise Indent</DialogTitle></DialogHeader>
+        <p className="text-xs text-muted-foreground -mt-2">
+          Costing Engineer will approve this indent against the BOQ rate before you collect vendor quotes.
+        </p>
         <div className="space-y-3">
           <div>
             <Label>Project *</Label>
@@ -680,14 +893,14 @@ function NewQuotationDialog({
           <Card style={{ backgroundColor: "#F7F7F7" }}>
             <CardContent className="p-3 text-sm flex justify-between">
               <span>BOQ Total: <strong>₹{fmtINR(total)}</strong></span>
-              <span>Minimum quotes required: <strong>{minReq}</strong></span>
+              <span>Minimum quotes required: <strong>{minReq}</strong> {total < 50000 ? "(below ₹50,000)" : "(≥ ₹50,000)"}</span>
             </CardContent>
           </Card>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={save} disabled={busy} style={{ backgroundColor: "#006039", color: "white" }}>
-            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create Request"}
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Raise Indent"}
           </Button>
         </DialogFooter>
       </DialogContent>
