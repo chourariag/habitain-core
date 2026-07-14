@@ -137,6 +137,8 @@ export const ROLE_ACCESS_MATRIX: Partial<Record<AppRole, ModuleAccess>> = {
 
   procurement:
     m("VIEW","VIEW","NONE","NONE","FULL","VIEW","VIEW","NONE","NONE","NONE","VIEW","FULL","VIEW","NONE","VIEW"),
+  purchase_assistant:
+    m("VIEW","VIEW","NONE","NONE","FULL","VIEW","VIEW","NONE","NONE","NONE","VIEW","FULL","VIEW","NONE","VIEW"),
   stores_executive:
     m("VIEW","NONE","NONE","NONE","FULL","NONE","VIEW","NONE","NONE","NONE","VIEW","FULL","VIEW","NONE","VIEW"),
   procurement_assistant:
