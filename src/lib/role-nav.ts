@@ -25,7 +25,7 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
     "elec_plumbing_installer",
   ],
   procurement: [
-    ...DIRECTORS, "head_operations", "procurement", "stores_executive",
+    ...DIRECTORS, "head_operations", "procurement", "purchase_assistant" as AppRole, "stores_executive",
     "costing_engineer", "finance_manager", "planning_head" as AppRole,
   ],
   design: [
