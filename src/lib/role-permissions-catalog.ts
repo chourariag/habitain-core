@@ -21,7 +21,7 @@ export const PERMISSION_ROLES = [
   "costing_engineer","head_of_projects","operations_architect","project_architect",
   "production_head","factory_supervisor","electrical_installer","plumbing_installer",
   "site_installation_manager","site_engineer","logistics_manager","procurement",
-  "stores_manager","procurement_assistant","qc_inspector","finance_manager",
+  "stores_manager","procurement_assistant","purchase_assistant","qc_inspector","finance_manager",
   "hr_admin","super_admin","marketing","sales_executive",
 ] as const;
 export type PermissionRole = typeof PERMISSION_ROLES[number];
