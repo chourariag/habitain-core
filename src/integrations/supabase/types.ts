@@ -9613,7 +9613,12 @@ export type Database = {
           boq_unit_rate: number
           created_at: string
           created_by: string | null
+          escalated_at: string | null
+          escalated_to_planning_head: boolean
           id: string
+          indent_approved_at: string | null
+          indent_approved_by: string | null
+          indent_rejection_reason: string | null
           line_item_description: string
           material_category: string | null
           minimum_quotes_required: number
@@ -9621,6 +9626,7 @@ export type Database = {
           quotes_received_count: number
           rejection_reason: string | null
           remarks: string | null
+          requote_round: number
           status: string
           unit: string | null
           updated_at: string
@@ -9631,7 +9637,12 @@ export type Database = {
           boq_unit_rate?: number
           created_at?: string
           created_by?: string | null
+          escalated_at?: string | null
+          escalated_to_planning_head?: boolean
           id?: string
+          indent_approved_at?: string | null
+          indent_approved_by?: string | null
+          indent_rejection_reason?: string | null
           line_item_description: string
           material_category?: string | null
           minimum_quotes_required?: number
@@ -9639,6 +9650,7 @@ export type Database = {
           quotes_received_count?: number
           rejection_reason?: string | null
           remarks?: string | null
+          requote_round?: number
           status?: string
           unit?: string | null
           updated_at?: string
@@ -9649,7 +9661,12 @@ export type Database = {
           boq_unit_rate?: number
           created_at?: string
           created_by?: string | null
+          escalated_at?: string | null
+          escalated_to_planning_head?: boolean
           id?: string
+          indent_approved_at?: string | null
+          indent_approved_by?: string | null
+          indent_rejection_reason?: string | null
           line_item_description?: string
           material_category?: string | null
           minimum_quotes_required?: number
@@ -9657,6 +9674,7 @@ export type Database = {
           quotes_received_count?: number
           rejection_reason?: string | null
           remarks?: string | null
+          requote_round?: number
           status?: string
           unit?: string | null
           updated_at?: string
