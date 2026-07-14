@@ -25,6 +25,7 @@ import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
 import { ProjectPLTab } from "@/components/projects/ProjectPLTab";
 import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
+import { ProjectSetupApprovalSection } from "@/components/projects/ProjectSetupApprovalSection";
 import { ProjectDesignScheduleTab } from "@/components/projects/ProjectDesignScheduleTab";
 import { PreProductionChecklist } from "@/components/projects/PreProductionChecklist";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
