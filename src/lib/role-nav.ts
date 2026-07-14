@@ -59,7 +59,7 @@ export const PROJECT_SELECTOR_ROLES: AppRole[] = [
   "fabrication_foreman", "qc_inspector", "planning_engineer", "electrical_installer",
   "elec_plumbing_installer", "site_installation_mgr", "site_engineer",
   "delivery_rm_lead", "costing_engineer", "quantity_surveyor", "procurement",
-  "stores_executive",
+  "purchase_assistant" as AppRole, "stores_executive",
 ];
 
 // Tier classification for dashboard
