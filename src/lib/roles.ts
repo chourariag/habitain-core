@@ -26,6 +26,7 @@ export const ROLE_LABELS: Record<string, string> = {
   electrical_installer: "Electrical Installer",
   elec_plumbing_installer: "Elec/Plumbing Installer",
   procurement_assistant: "Procurement Assistant",
+  purchase_assistant: "Purchase Assistant",
   stores_executive: "Stores Manager",
   accounts_executive: "Accounts Executive",
   hr_executive: "HR Executive",
