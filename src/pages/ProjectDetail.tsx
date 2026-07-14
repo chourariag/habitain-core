@@ -25,6 +25,7 @@ import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
 import { ProjectPLTab } from "@/components/projects/ProjectPLTab";
 import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
+import { ProjectSetupApprovalSection } from "@/components/projects/ProjectSetupApprovalSection";
 import { ProjectDesignScheduleTab } from "@/components/projects/ProjectDesignScheduleTab";
 import { PreProductionChecklist } from "@/components/projects/PreProductionChecklist";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
@@ -186,6 +187,16 @@ export default function ProjectDetail() {
 
       {!isAds && (
         <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} projectType={proj.division ?? null} onImported={fetchData} />
+      )}
+
+      {!isAds && (
+        <ProjectSetupApprovalSection
+          projectId={id!}
+          projectName={project.name}
+          userRole={userRole}
+          setupUploadedAt={(proj as any).setup_uploaded_at ?? null}
+          onApproved={fetchData}
+        />
       )}
 
       <Tabs defaultValue="schedule">
