@@ -2082,6 +2082,7 @@ export type Database = {
       design_stage_definitions: {
         Row: {
           created_at: string
+          deliverable_required: boolean
           id: string
           is_mandatory: boolean
           is_production_gate: boolean
@@ -2094,6 +2095,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deliverable_required?: boolean
           id?: string
           is_mandatory?: boolean
           is_production_gate?: boolean
@@ -2106,6 +2108,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deliverable_required?: boolean
           id?: string
           is_mandatory?: boolean
           is_production_gate?: boolean
@@ -2166,7 +2169,9 @@ export type Database = {
           approval_method: string | null
           approval_proof_url: string | null
           created_at: string
+          deliverable_filename: string | null
           deliverable_required: boolean
+          deliverable_uploaded_at: string | null
           deliverable_url: string | null
           drawing_urls: string[]
           duration_large_days: number | null
@@ -2198,7 +2203,9 @@ export type Database = {
           approval_method?: string | null
           approval_proof_url?: string | null
           created_at?: string
+          deliverable_filename?: string | null
           deliverable_required?: boolean
+          deliverable_uploaded_at?: string | null
           deliverable_url?: string | null
           drawing_urls?: string[]
           duration_large_days?: number | null
@@ -2230,7 +2237,9 @@ export type Database = {
           approval_method?: string | null
           approval_proof_url?: string | null
           created_at?: string
+          deliverable_filename?: string | null
           deliverable_required?: boolean
+          deliverable_uploaded_at?: string | null
           deliverable_url?: string | null
           drawing_urls?: string[]
           duration_large_days?: number | null
@@ -7513,6 +7522,9 @@ export type Database = {
         Row: {
           actual_date: string | null
           created_at: string
+          deliverable_filename: string | null
+          deliverable_uploaded_at: string | null
+          deliverable_url: string | null
           id: string
           notes: string | null
           owner_id: string | null
@@ -7526,6 +7538,9 @@ export type Database = {
         Insert: {
           actual_date?: string | null
           created_at?: string
+          deliverable_filename?: string | null
+          deliverable_uploaded_at?: string | null
+          deliverable_url?: string | null
           id?: string
           notes?: string | null
           owner_id?: string | null
@@ -7539,6 +7554,9 @@ export type Database = {
         Update: {
           actual_date?: string | null
           created_at?: string
+          deliverable_filename?: string | null
+          deliverable_uploaded_at?: string | null
+          deliverable_url?: string | null
           id?: string
           notes?: string | null
           owner_id?: string | null
