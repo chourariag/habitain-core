@@ -265,6 +265,7 @@ export function defaultPermission(role: PermissionRole, pageKey: string): Permis
       return "hidden";
 
     case "procurement":
+    case "purchase_assistant":
       if (startsWith(pageKey, "procurement")) return "full";
       if (pageKey === "projects.materials") return "view";
       if (startsWith(pageKey, "altree.hr", "finance.gen.payments")) return "hidden";
