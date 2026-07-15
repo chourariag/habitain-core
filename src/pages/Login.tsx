@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,14 @@ import { toast } from "sonner";
 import { Logo } from "@/components/Logo";
 import { Eye, EyeOff } from "lucide-react";
 
+function safeNext(next: string | null): string {
+  if (!next) return "/dashboard";
+  // Only allow same-origin relative paths — never absolute URLs — so OAuth
+  // consent flows return to the original consent URL and nothing else.
+  if (!next.startsWith("/") || next.startsWith("//")) return "/dashboard";
+  return next;
+}
+
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,6 +23,8 @@ export default function Login() {
   const [mode, setMode] = useState<"password" | "magic">("password");
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const nextPath = safeNext(searchParams.get("next"));
 
   const cleanEmail = () => email.trim().toLowerCase();
 
@@ -27,7 +37,7 @@ export default function Login() {
         password,
       });
       if (error) throw error;
-      navigate("/dashboard");
+      navigate(nextPath);
     } catch (err: any) {
       toast.error(err.message || "Login failed");
     } finally {
