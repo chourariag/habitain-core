@@ -137,15 +137,15 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
 
       // Notify managing_director
       const { data: mdRoles } = await supabase
-        .from("user_roles")
-        .select("user_id, profiles!inner(is_active)")
+        .from("profiles")
+        .select("auth_user_id")
         .eq("role", "managing_director" as any)
-        .eq("profiles.is_active", true);
+        .eq("is_active", true);
       if (mdRoles?.length) {
         const projName = project?.name || "Project";
         await supabase.from("notifications").insert(
           mdRoles.map((r: any) => ({
-            recipient_id: r.user_id,
+            recipient_id: r.auth_user_id,
             title: `${projName} — Handover Pack complete`,
             body: "Your approval required to close the project.",
             content: "Your approval required to close the project.",
