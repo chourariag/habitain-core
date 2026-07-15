@@ -118,6 +118,8 @@ export function ProjectPLTab() {
       const actualConsumption = materialsPurchased * 0.85;
       const labourCost = labourMap[p.id] || 0;
       const plannedLabour = p.planned_labour_cost || budgetMap[p.id]?.labour || 0;
+      // PROVISIONAL: 10% overhead is a placeholder pending Finance sign-off.
+      // Note: projects/ProjectPLTab.tsx and WIPStatement use 5% for the same figure — the two components disagree.
       const overhead = (materialsPurchased + labourCost) * 0.1;
       const totalCost = materialsPurchased + labourCost + overhead;
       const grossMargin = contractValue - totalCost;

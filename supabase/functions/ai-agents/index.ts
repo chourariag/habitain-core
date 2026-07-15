@@ -711,7 +711,7 @@ async function runPOAnomalyDetector(supabase: any, payload?: any): Promise<strin
 
     if (flags.length) {
       const body = `PO Anomaly — ${po.po_number} [${po.vendor_name}]: ${flags.join(". ")}. Please verify before GRN is accepted.`;
-      const recipients = [...vijayIds];
+      const recipients = [...procurementIds];
       // Escalate new vendor >50K or large anomaly to MD
       if (flags.some(f => f.includes("New vendor") || f.includes("higher than average"))) {
         recipients.push(...mdIds);
