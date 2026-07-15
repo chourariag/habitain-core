@@ -59,6 +59,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import Trust from "@/pages/Trust";
 import ScopeSignoff from "@/pages/ScopeSignoff";
 import { ModuleGuard } from "@/components/ModuleGuard";
+import OAuthConsent from "@/pages/OAuthConsent";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,7 @@ const App = () => (
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/trust" element={<Trust />} />
               <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/.lovable/oauth/consent" element={<OAuthConsent />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
