@@ -13777,6 +13777,7 @@ export type Database = {
         Args: { _project_id: string; _start?: string }
         Returns: undefined
       }
+      required_gfc_for_stage: { Args: { _stage: string }; Returns: string }
       site_schedule_dispatch_reminders: { Args: never; Returns: number }
       user_has_any_role: {
         Args: {
