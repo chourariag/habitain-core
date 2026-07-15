@@ -136,7 +136,11 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
       await supabase.from("projects").update({ status: "handover_pending" }).eq("id", projectId);
 
       // Notify managing_director
-      const { data: mdRoles } = await supabase.from("user_roles").select("user_id").eq("role", "managing_director" as any);
+      const { data: mdRoles } = await supabase
+        .from("user_roles")
+        .select("user_id, profiles!inner(is_active)")
+        .eq("role", "managing_director" as any)
+        .eq("profiles.is_active", true);
       if (mdRoles?.length) {
         const projName = project?.name || "Project";
         await supabase.from("notifications").insert(

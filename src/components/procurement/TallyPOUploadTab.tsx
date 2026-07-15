@@ -188,8 +188,8 @@ export function TallyPOUploadTab() {
   // FIX 1 + 3 — Notify approvers based on PO threshold and any vendor mismatches
   const notifyApprovers = async (inserted: any[], mismatches: { poNumber: string; vendorOnPo: string; approvedVendor: string; lineItem: string }[]) => {
     try {
-      const lowPos = inserted.filter((p) => p.po_type === "purchase_order" && (p.total_amount ?? 0) <= 100000 && (p.total_amount ?? 0) > 0);
-      const highPos = inserted.filter((p) => p.po_type === "purchase_order" && (p.total_amount ?? 0) > 100000);
+      const lowPos = inserted.filter((p) => p.po_type === "purchase_order" && (p.total_amount ?? 0) <= 500000 && (p.total_amount ?? 0) > 0);
+      const highPos = inserted.filter((p) => p.po_type === "purchase_order" && (p.total_amount ?? 0) > 500000);
       const rolesToNotify = new Set<string>();
       if (lowPos.length) { rolesToNotify.add("planning_head"); rolesToNotify.add("head_of_projects"); }
       if (highPos.length) { rolesToNotify.add("managing_director"); rolesToNotify.add("finance_director"); rolesToNotify.add("principal_architect"); }
@@ -348,7 +348,7 @@ export function TallyPOUploadTab() {
         }
 
         const totalAmt = orderAmount;
-        const APPROVAL_THRESHOLD = 100000;
+        const APPROVAL_THRESHOLD = 500000;
         const status = poType === "purchase_order" && totalAmt > APPROVAL_THRESHOLD ? "pending_approval" : "approved";
 
         if (status === "pending_approval") result.pendingApproval++;
@@ -512,7 +512,7 @@ export function TallyPOUploadTab() {
         if (!parsedDate) { result.failed++; continue; }
 
         const poType = isWorkOrder(poNum) ? "work_order" : "purchase_order";
-        const status = poType === "purchase_order" && totalAmt > 100000 ? "pending_approval" : "approved";
+        const status = poType === "purchase_order" && totalAmt > 500000 ? "pending_approval" : "approved";
 
         if (status === "pending_approval") result.pendingApproval++;
         if (poType === "work_order") { result.totalWOs++; result.totalWOValue += totalAmt; }
@@ -800,7 +800,7 @@ export function TallyPOUploadTab() {
           style={filterAbove50k ? { backgroundColor: "#D4860A" } : {}}
           onClick={() => setFilterAbove50k(!filterAbove50k)}
         >
-          Above ₹50K
+          Above ₹5L
         </Button>
       </div>
 
