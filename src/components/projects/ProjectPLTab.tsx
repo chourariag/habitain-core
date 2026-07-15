@@ -114,6 +114,8 @@ export function ProjectPLTab({ projectId, contractValue }: Props) {
 
     const materialCost = grns.reduce((s, g) => s + (Number(g.basic_amount_excl_gst) || 0), 0);
     const labourCost = labour.cost;
+    // PROVISIONAL: 5% overhead is a placeholder pending Finance sign-off.
+    // Note: finance/ProjectPLTab.tsx uses 10% for the same figure — the two components disagree.
     const overhead = (materialCost + labourCost) * 0.05;
     const totalCost = materialCost + labourCost + overhead;
 

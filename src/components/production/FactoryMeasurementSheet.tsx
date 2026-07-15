@@ -9,6 +9,8 @@ import { Camera, Loader2, Plus, Trash2, Send, AlertTriangle, BellRing } from "lu
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+// PROVISIONAL: 5% overhead is a placeholder pending Finance sign-off.
+// Note: finance/ProjectPLTab.tsx currently uses 10% for the same figure — needs reconciliation.
 const OVERHEAD_PCT = 0.05;
 
 interface Props {

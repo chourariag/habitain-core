@@ -673,10 +673,10 @@ async function runPOAnomalyDetector(supabase: any, payload?: any): Promise<strin
   const { data: notifyUsers } = await supabase
     .from("profiles")
     .select("auth_user_id, role")
-    .in("role", ["procurement_manager", "stores_manager", "managing_director"])
+    .in("role", ["procurement", "stores_executive", "managing_director"])
     .eq("is_active", true);
 
-  const vijayIds = (notifyUsers || []).filter((u: any) => ["procurement_manager", "stores_manager"].includes(u.role)).map((u: any) => u.auth_user_id);
+  const procurementIds = (notifyUsers || []).filter((u: any) => ["procurement", "stores_executive"].includes(u.role)).map((u: any) => u.auth_user_id);
   const mdIds = (notifyUsers || []).filter((u: any) => u.role === "managing_director").map((u: any) => u.auth_user_id);
 
   for (const po of newPOs) {
@@ -711,7 +711,7 @@ async function runPOAnomalyDetector(supabase: any, payload?: any): Promise<strin
 
     if (flags.length) {
       const body = `PO Anomaly — ${po.po_number} [${po.vendor_name}]: ${flags.join(". ")}. Please verify before GRN is accepted.`;
-      const recipients = [...vijayIds];
+      const recipients = [...procurementIds];
       // Escalate new vendor >50K or large anomaly to MD
       if (flags.some(f => f.includes("New vendor") || f.includes("higher than average"))) {
         recipients.push(...mdIds);

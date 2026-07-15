@@ -361,7 +361,7 @@ export default function UserManagement() {
                         {r.status === "pending" && (
                           <Badge style={{ background: "#FEF3C7", color: "#92400E" }}>
                             {r.request_type === "create_project"
-                              ? `Pending ${((r.payload as any)?.division || "Habitainer") === "ADS" ? "Karan" : "John"}`
+                              ? `Pending ${((r.payload as any)?.division || "Habitainer") === "ADS" ? "Principal Architect" : "Sales Director"}`
                               : "Pending MD"}
                           </Badge>
                         )}
