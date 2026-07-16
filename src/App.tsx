@@ -136,6 +136,7 @@ const App = () => (
         </BrowserRouter>
       </OfflineProvider>
     </TooltipProvider>
+    </ErrorBoundary>
   </QueryClientProvider>
 );
 
