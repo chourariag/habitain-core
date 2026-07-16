@@ -58,10 +58,10 @@ export function LabourRegisterTab() {
     setLoading(true);
     const [c, w] = await Promise.all([
       supabase.from("labour_contractors").select("*").order("company_name"),
-      supabase.from("labour_workers").select("*").order("name"),
+      (supabase as any).rpc("get_labour_workers_full"),
     ]);
     setContractors((c.data ?? []) as Contractor[]);
-    setWorkers((w.data ?? []) as Worker[]);
+    setWorkers(((w as any).data ?? []) as Worker[]);
     setLoading(false);
   }, []);
 
@@ -74,10 +74,10 @@ export function LabourRegisterTab() {
 
   const loadHistory = async (w: Worker) => {
     setHistoryOpen(w);
-    const { data } = await supabase.from("labour_worker_rate_history")
-      .select("*").eq("worker_id", w.id).order("effective_from", { ascending: false });
-    setHistory(data ?? []);
+    const { data } = await (supabase as any).rpc("get_labour_worker_rate_history", { _worker_id: w.id });
+    setHistory((data as any[]) ?? []);
   };
+
 
   if (!canView) {
     return (
