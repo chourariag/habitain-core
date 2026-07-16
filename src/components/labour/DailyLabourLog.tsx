@@ -79,7 +79,7 @@ export function DailyLabourLog({ mode, projectId, projectName, userRole }: Props
   const stageList = useMemo(() => (mode === "site" ? SITE_STAGES : MODULAR_STAGES), [mode]);
 
   const [logs, setLogs] = useState<any[]>([]);
-  const [workers, setWorkers] = useState<any[]>([]);
+  const [rateBySkill, setRateBySkill] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
@@ -94,20 +94,18 @@ export function DailyLabourLog({ mode, projectId, projectName, userRole }: Props
 
   useEffect(() => { setStageList2(stageList); setStage(stageList[0]); }, [stageList]);
 
-  // Compute average daily rate per trade group from labour_workers
+  // Aggregated daily rate per trade group (no individual salary exposure)
   const ratesByTrade = useMemo(() => {
     const out: Record<string, number> = {};
     for (const tg of TRADE_GROUPS) {
       const skills = TRADE_TO_SKILLS[tg] ?? [];
-      const matched = workers.filter((w: any) =>
-        skills.some((s) => (w.skill_type ?? "").toLowerCase() === s.toLowerCase())
-      );
-      if (matched.length === 0) { out[tg] = 0; continue; }
-      const avgMonthly = matched.reduce((s, w) => s + Number(w.monthly_salary || 0), 0) / matched.length;
-      out[tg] = avgMonthly / DAYS_PER_MONTH;
+      const vals = skills
+        .map((s) => rateBySkill[s.toLowerCase()])
+        .filter((v): v is number => typeof v === "number" && v > 0);
+      out[tg] = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
     }
     return out;
-  }, [workers]);
+  }, [rateBySkill]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -115,14 +113,17 @@ export function DailyLabourLog({ mode, projectId, projectName, userRole }: Props
     const filtered = mode === "site"
       ? baseLogs.eq("location_type", "site").eq("project_id", projectId ?? "")
       : baseLogs.eq("location_type", "factory_bay");
-    const [{ data: l }, { data: w }] = await Promise.all([
+    const [{ data: l }, { data: rates }] = await Promise.all([
       filtered.order("log_date", { ascending: false }).limit(50),
-      (supabase as any).from("labour_workers").select("id,name,skill_type,monthly_salary,department,status").eq("status", "active"),
+      (supabase as any).rpc("get_labour_avg_daily_rate_by_skill"),
     ]);
     setLogs((l as any[]) ?? []);
-    setWorkers((w as any[]) ?? []);
+    const map: Record<string, number> = {};
+    (rates as any[] | null)?.forEach((r) => { map[String(r.skill_type).toLowerCase()] = Number(r.avg_daily_rate) || 0; });
+    setRateBySkill(map);
     setLoading(false);
   }, [mode, projectId]);
+
 
   useEffect(() => { load(); }, [load]);
 
