@@ -20,8 +20,9 @@ const SKILL_TYPES = [
   "Electrician","Plumber","HVAC Installer","Fabricator","False Ceiling","Waterproofing","Driver","Other",
 ];
 
-const MANAGE_ROLES = ["super_admin","managing_director","finance_director","production_head","site_installation_mgr","finance_manager"];
+const MANAGE_ROLES = ["super_admin","managing_director","finance_director","finance_manager"];
 const VIEW_ROLES = [...MANAGE_ROLES,"sales_director","architecture_director","hr_executive"];
+
 
 type Contractor = {
   id: string; company_name: string; contact_person: string | null; phone: string | null;
