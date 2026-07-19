@@ -161,10 +161,17 @@ function startsWith(key: string, ...prefixes: string[]) {
 }
 
 export function defaultPermission(role: PermissionRole, pageKey: string): PermissionLevel {
-  // Always-full roles (principal_architect is MD-equivalent per org policy)
-  if (role === "md" || role === "super_admin" || role === "director" || role === "principal_architect") return "full";
+  // Always-full roles
+  if (role === "md" || role === "super_admin" || role === "director") return "full";
 
   switch (role) {
+    case "principal_architect":
+      if (startsWith(pageKey, "design")) return "full";
+      if (startsWith(pageKey, "projects")) return "view";
+      if (startsWith(pageKey, "finance", "altree.hr.mgmt.payroll", "altree.hr.mgmt.payroll_settings")) return "hidden";
+      if (startsWith(pageKey, "production", "site")) return "hidden";
+      if (pageKey === "dashboard" || pageKey === "approvals.hub") return "view";
+      return "hidden";
 
     case "planning_head":
       if (startsWith(pageKey, "projects", "production", "procurement")) return "full";

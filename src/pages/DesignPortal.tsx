@@ -739,9 +739,7 @@ export default function DesignPortal() {
             })));
             await (supabase.from("design_stages") as any).update({ overdue_alerted_day2: true, overdue_alerted_day1: true }).eq("id", s.id);
           } else if (daysOverdue >= 1 && !s.overdue_alerted_day1) {
-            const { data: projArch } = await supabase.from("profiles").select("auth_user_id").eq("role", "project_architect" as any).eq("is_active", true);
-            const day1 = [...(opsArch ?? []), ...(projArch ?? [])];
-            if (day1.length) await insertNotifications(day1.map((p: any) => ({
+            if (opsArch?.length) await insertNotifications(opsArch.map((p: any) => ({
               recipient_id: p.auth_user_id,
               title: `Design stage overdue`,
               body: `"${s.stage_name}" on ${projName} is overdue.`,

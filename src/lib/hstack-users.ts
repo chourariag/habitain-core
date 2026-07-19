@@ -39,17 +39,17 @@ export const HSTACK_USERS: HStackUser[] = [
 
   // Factory Production
   { name: "Azad Ali", role: "production_head" as AppRole, group: "Factory Production" },
-  { name: "Vijay", role: "factory_floor_supervisor" as AppRole, group: "Factory Production" },
+  { name: "Rakesh", role: "factory_floor_supervisor" as AppRole, group: "Factory Production" },
   { name: "Mohan", role: "electrical_installer" as AppRole, group: "Factory Production" },
   { name: "Venugopal", role: "elec_plumbing_installer" as AppRole, group: "Factory Production" },
 
   // Site
   { name: "Awaiz Ahmed", role: "site_installation_mgr" as AppRole, group: "Site" },
   { name: "Nazim Raja", role: "site_engineer" as AppRole, group: "Site" },
-  { name: "Rakesh", role: "site_engineer" as AppRole, group: "Site" },
   { name: "Bala", role: "logistics_manager" as AppRole, group: "Site" },
 
   // Procurement & Stores
+  { name: "Vijay", role: "procurement" as AppRole, group: "Procurement & Stores" },
   { name: "Sandeep", role: "stores_executive" as AppRole, group: "Procurement & Stores" },
   { name: "Gangadhar", role: "procurement_assistant" as AppRole, group: "Procurement & Stores" },
 

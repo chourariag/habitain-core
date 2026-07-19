@@ -103,7 +103,7 @@ export const ROLE_ACCESS_MATRIX: Partial<Record<AppRole, ModuleAccess>> = {
   structural_architect:
     m("VIEW","VIEW","VIEW","VIEW","NONE","NONE","VIEW","NONE","FULL","VIEW","NONE","FULL","NONE","NONE","NONE"),
   principal_architect:
-    m("FULL","FULL","FULL","FULL","FULL","FULL","FULL","FULL","FULL","FULL","FULL","FULL","FULL","FULL","FULL"),
+    m("VIEW","VIEW","VIEW","VIEW","NONE","NONE","VIEW","NONE","FULL","VIEW","NONE","FULL","NONE","NONE","NONE"),
 
   accounts_executive:
     m("VIEW","NONE","NONE","NONE","VIEW","FULL","VIEW","NONE","NONE","NONE","NONE","FULL","NONE","NONE","VIEW"),

@@ -85,10 +85,6 @@ export function evaluateStageGate(targetStage: string, ctx: GateContext): GateRe
   return { allowed: true };
 }
 
-// PROVISIONAL THRESHOLDS: 5%/10% wastage bands are placeholders pending Finance sign-off.
-// Also disagrees with ProjectPLTab (finance/) which uses 10% overhead vs
-// ProjectPLTab (projects/), WIPStatement and FactoryMeasurementSheet at 5%.
-// TODO(finance): confirm and move to a single central config.
 export function flagLevelForWastage(pct: number): "green" | "amber" | "red" {
   if (pct > 10) return "red";
   if (pct >= 5) return "amber";

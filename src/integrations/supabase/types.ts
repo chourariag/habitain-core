@@ -13333,7 +13333,6 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
-      can_access_labour_salary: { Args: { _user_id: string }; Returns: boolean }
       can_access_subcontractors: {
         Args: { _user_id: string }
         Returns: boolean
@@ -13523,58 +13522,7 @@ export type Database = {
         }[]
       }
       get_handover_readiness: { Args: { _project_id: string }; Returns: Json }
-      get_labour_avg_daily_rate_by_skill: {
-        Args: never
-        Returns: {
-          avg_daily_rate: number
-          skill_type: string
-        }[]
-      }
       get_labour_rate_for_trade: { Args: { _trade: string }; Returns: number }
-      get_labour_worker_rate_history: {
-        Args: { _worker_id: string }
-        Returns: {
-          changed_by: string | null
-          created_at: string
-          effective_from: string
-          effective_to: string | null
-          id: string
-          monthly_salary: number
-          worker_id: string
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "labour_worker_rate_history"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
-      get_labour_workers_full: {
-        Args: never
-        Returns: {
-          contractor_id: string | null
-          created_at: string
-          date_joined: string
-          deactivated_at: string | null
-          deactivated_reason: string | null
-          department: string
-          id: string
-          monthly_salary: number
-          name: string
-          notes: string | null
-          on_leave_return_date: string | null
-          salary_review_due: string
-          skill_type: string
-          status: string
-          updated_at: string
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "labour_workers"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
       get_my_profile_email: {
         Args: never
         Returns: {
@@ -13829,7 +13777,6 @@ export type Database = {
         Args: { _project_id: string; _start?: string }
         Returns: undefined
       }
-      required_gfc_for_stage: { Args: { _stage: string }; Returns: string }
       site_schedule_dispatch_reminders: { Args: never; Returns: number }
       user_has_any_role: {
         Args: {

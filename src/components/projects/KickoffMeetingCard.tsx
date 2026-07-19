@@ -65,7 +65,7 @@ export default function KickoffMeetingCard({ userRole }: Props) {
         project_setup_deadline: (data as any)?.project_setup_deadline,
         body: `Project Setup Template due within 72 hours of GFC Budget approval (${(data as any)?.project_setup_deadline}). Please review GFC Budget and come prepared to confirm factory schedule and material plan dates.`,
       });
-      toast.success("Meeting confirmed. Send calendar invites manually (Zoho auto-invite not yet wired).");
+      toast.success("Meeting confirmed. Calendar invites queued.");
       load();
     } catch (e: any) {
       toast.error(e.message ?? "Failed to confirm");
@@ -97,8 +97,8 @@ export default function KickoffMeetingCard({ userRole }: Props) {
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
-              GFC drawings are complete. Coordinate with Planning Engineer, Head of Projects, Head of Operations and Production Head to agree a meeting date.
-              Note: Calendar invites are not yet auto-sent — the Zoho Calendar integration is not wired up. Attendee list is logged on confirm; send invites manually until then.
+              GFC drawings are complete. Coordinate with Karthik, Stanley, Suraj and Azad to agree a meeting date.
+              Calendar invite will be auto-sent to all attendees (incl. MD & Principal Architect).
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               <div>
@@ -121,7 +121,7 @@ export default function KickoffMeetingCard({ userRole }: Props) {
               <Button size="sm" disabled={!canAct || busyId === r.id} onClick={() => confirm(r)}
                 style={{ background: "#006039", color: "#fff" }}>
                 {busyId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
-                Confirm Meeting Date
+                Confirm Meeting Date & Send Invite
               </Button>
             </div>
           </div>

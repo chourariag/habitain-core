@@ -291,7 +291,7 @@ async function buildHeadOfProjectsBrief(): Promise<BriefLine[]> {
 async function buildSuperAdminBrief(): Promise<BriefLine[]> {
   const [pendingRes, auditRes] = await Promise.all([
     supabase.from("approval_requests" as any).select("id").eq("status", "pending"),
-    supabase.from("super_admin_audit_log" as any).select("id").gte("changed_at", new Date(Date.now() - 86400000).toISOString()),
+    supabase.from("super_admin_audit_log" as any).select("id").gte("created_at", new Date(Date.now() - 86400000).toISOString()),
   ]);
   return [
     { kind: "info", text: "System health — all services operational", to: "/super-admin" },

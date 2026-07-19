@@ -234,10 +234,10 @@ export function VariationsTab({ projectId, userRole, contractValue = 0 }: Props)
       if (error) throw error;
 
       // Notify scope approvers
-      const { data: approvers } = await supabase.from("profiles").select("auth_user_id").in("role", ["sales_director"]).eq("is_active", true);
+      const { data: approvers } = await supabase.from("profiles").select("id").in("role", ["sales_director"]).eq("is_active", true);
       if (approvers?.length) {
         await insertNotifications(approvers.map((a: any) => ({
-          recipient_id: a.auth_user_id,
+          recipient_id: a.id,
           title: "Variation Scope Review",
           body: `New variation ${nextNum} raised for review: ${form.description.trim().slice(0, 80)}`,
           category: "variation_approval",
