@@ -25,7 +25,7 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
     "elec_plumbing_installer",
   ],
   procurement: [
-    ...DIRECTORS, "head_operations", "procurement", "purchase_assistant" as AppRole, "stores_executive",
+    ...DIRECTORS, "head_operations", "procurement", "purchase_assistant" as AppRole, "assistant_manager" as AppRole, "stores_executive",
     "costing_engineer", "finance_manager", "planning_head" as AppRole,
   ],
   design: [
@@ -59,7 +59,7 @@ export const PROJECT_SELECTOR_ROLES: AppRole[] = [
   "fabrication_foreman", "qc_inspector", "planning_engineer", "electrical_installer",
   "elec_plumbing_installer", "site_installation_mgr", "site_engineer",
   "delivery_rm_lead", "costing_engineer", "quantity_surveyor", "procurement",
-  "purchase_assistant" as AppRole, "stores_executive",
+  "purchase_assistant" as AppRole, "assistant_manager" as AppRole, "stores_executive",
 ];
 
 // Tier classification for dashboard
