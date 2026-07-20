@@ -40,6 +40,7 @@ export const ROLE_LABELS: Record<string, string> = {
   project_architect: "Project Architect",
   structural_architect: "Structural Architect",
   site_engineer: "Site Engineer",
+  assistant_manager: "Assistant Manager",
 };
 
 export const ROLE_TIERS: Record<string, AppRole[]> = {
