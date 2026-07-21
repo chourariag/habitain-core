@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    return new Response(JSON.stringify({ ok: true, workers_due: workers?.length ?? 0, notifications_queued: queued }), {
+    return new Response(JSON.stringify({ ok: true, workers_due: comps?.length ?? 0, notifications_queued: queued }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
