@@ -12030,6 +12030,579 @@ export type Database = {
         }
         Relationships: []
       }
+      tally_api_keys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          notes: string | null
+          revoked_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          notes?: string | null
+          revoked_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          notes?: string | null
+          revoked_at?: string | null
+        }
+        Relationships: []
+      }
+      tally_bank_book: {
+        Row: {
+          bank_ledger_name: string | null
+          batch_id: string
+          company_name: string | null
+          credit: number | null
+          debit: number | null
+          id: string
+          narration: string | null
+          received_at: string
+          running_balance: number | null
+          sync_timestamp: string | null
+          transaction_date: string | null
+          voucher_type: string | null
+        }
+        Insert: {
+          bank_ledger_name?: string | null
+          batch_id: string
+          company_name?: string | null
+          credit?: number | null
+          debit?: number | null
+          id?: string
+          narration?: string | null
+          received_at?: string
+          running_balance?: number | null
+          sync_timestamp?: string | null
+          transaction_date?: string | null
+          voucher_type?: string | null
+        }
+        Update: {
+          bank_ledger_name?: string | null
+          batch_id?: string
+          company_name?: string | null
+          credit?: number | null
+          debit?: number | null
+          id?: string
+          narration?: string | null
+          received_at?: string
+          running_balance?: number | null
+          sync_timestamp?: string | null
+          transaction_date?: string | null
+          voucher_type?: string | null
+        }
+        Relationships: []
+      }
+      tally_cash_book: {
+        Row: {
+          batch_id: string
+          company_name: string | null
+          credit: number | null
+          debit: number | null
+          id: string
+          narration: string | null
+          received_at: string
+          running_balance: number | null
+          sync_timestamp: string | null
+          transaction_date: string | null
+          voucher_type: string | null
+        }
+        Insert: {
+          batch_id: string
+          company_name?: string | null
+          credit?: number | null
+          debit?: number | null
+          id?: string
+          narration?: string | null
+          received_at?: string
+          running_balance?: number | null
+          sync_timestamp?: string | null
+          transaction_date?: string | null
+          voucher_type?: string | null
+        }
+        Update: {
+          batch_id?: string
+          company_name?: string | null
+          credit?: number | null
+          debit?: number | null
+          id?: string
+          narration?: string | null
+          received_at?: string
+          running_balance?: number | null
+          sync_timestamp?: string | null
+          transaction_date?: string | null
+          voucher_type?: string | null
+        }
+        Relationships: []
+      }
+      tally_cost_centre_data: {
+        Row: {
+          amount: number | null
+          batch_id: string
+          company_name: string | null
+          cost_centre_name: string | null
+          id: string
+          ledger_name: string | null
+          period: string | null
+          received_at: string
+          sync_timestamp: string | null
+          transaction_date: string | null
+          voucher_type: string | null
+        }
+        Insert: {
+          amount?: number | null
+          batch_id: string
+          company_name?: string | null
+          cost_centre_name?: string | null
+          id?: string
+          ledger_name?: string | null
+          period?: string | null
+          received_at?: string
+          sync_timestamp?: string | null
+          transaction_date?: string | null
+          voucher_type?: string | null
+        }
+        Update: {
+          amount?: number | null
+          batch_id?: string
+          company_name?: string | null
+          cost_centre_name?: string | null
+          id?: string
+          ledger_name?: string | null
+          period?: string | null
+          received_at?: string
+          sync_timestamp?: string | null
+          transaction_date?: string | null
+          voucher_type?: string | null
+        }
+        Relationships: []
+      }
+      tally_customer_ledgers: {
+        Row: {
+          ageing_bucket: string | null
+          batch_id: string
+          company_name: string | null
+          customer_name: string | null
+          id: string
+          ledger_group: string | null
+          opening_balance: number | null
+          outstanding_balance: number | null
+          received_at: string
+          sync_timestamp: string | null
+          total_invoiced: number | null
+          total_received: number | null
+        }
+        Insert: {
+          ageing_bucket?: string | null
+          batch_id: string
+          company_name?: string | null
+          customer_name?: string | null
+          id?: string
+          ledger_group?: string | null
+          opening_balance?: number | null
+          outstanding_balance?: number | null
+          received_at?: string
+          sync_timestamp?: string | null
+          total_invoiced?: number | null
+          total_received?: number | null
+        }
+        Update: {
+          ageing_bucket?: string | null
+          batch_id?: string
+          company_name?: string | null
+          customer_name?: string | null
+          id?: string
+          ledger_group?: string | null
+          opening_balance?: number | null
+          outstanding_balance?: number | null
+          received_at?: string
+          sync_timestamp?: string | null
+          total_invoiced?: number | null
+          total_received?: number | null
+        }
+        Relationships: []
+      }
+      tally_grn: {
+        Row: {
+          batch_id: string
+          company_name: string | null
+          grn_date: string | null
+          grn_number: string | null
+          id: string
+          item_name: string | null
+          po_number: string | null
+          quantity_ordered: number | null
+          quantity_received: number | null
+          received_at: string
+          remarks: string | null
+          sync_timestamp: string | null
+          vendor_name: string | null
+        }
+        Insert: {
+          batch_id: string
+          company_name?: string | null
+          grn_date?: string | null
+          grn_number?: string | null
+          id?: string
+          item_name?: string | null
+          po_number?: string | null
+          quantity_ordered?: number | null
+          quantity_received?: number | null
+          received_at?: string
+          remarks?: string | null
+          sync_timestamp?: string | null
+          vendor_name?: string | null
+        }
+        Update: {
+          batch_id?: string
+          company_name?: string | null
+          grn_date?: string | null
+          grn_number?: string | null
+          id?: string
+          item_name?: string | null
+          po_number?: string | null
+          quantity_ordered?: number | null
+          quantity_received?: number | null
+          received_at?: string
+          remarks?: string | null
+          sync_timestamp?: string | null
+          vendor_name?: string | null
+        }
+        Relationships: []
+      }
+      tally_ingest_log: {
+        Row: {
+          batch_id: string
+          company_name: string | null
+          data_type: string
+          error_message: string | null
+          id: string
+          received_at: string
+          record_count: number
+          source_ip: string | null
+          status: string
+          sync_timestamp: string | null
+        }
+        Insert: {
+          batch_id: string
+          company_name?: string | null
+          data_type: string
+          error_message?: string | null
+          id?: string
+          received_at?: string
+          record_count?: number
+          source_ip?: string | null
+          status: string
+          sync_timestamp?: string | null
+        }
+        Update: {
+          batch_id?: string
+          company_name?: string | null
+          data_type?: string
+          error_message?: string | null
+          id?: string
+          received_at?: string
+          record_count?: number
+          source_ip?: string | null
+          status?: string
+          sync_timestamp?: string | null
+        }
+        Relationships: []
+      }
+      tally_purchase_invoices: {
+        Row: {
+          amount: number | null
+          batch_id: string
+          bill_date: string | null
+          bill_number: string | null
+          company_name: string | null
+          due_date: string | null
+          id: string
+          outstanding_amount: number | null
+          po_number: string | null
+          received_at: string
+          sync_timestamp: string | null
+          vendor_name: string | null
+        }
+        Insert: {
+          amount?: number | null
+          batch_id: string
+          bill_date?: string | null
+          bill_number?: string | null
+          company_name?: string | null
+          due_date?: string | null
+          id?: string
+          outstanding_amount?: number | null
+          po_number?: string | null
+          received_at?: string
+          sync_timestamp?: string | null
+          vendor_name?: string | null
+        }
+        Update: {
+          amount?: number | null
+          batch_id?: string
+          bill_date?: string | null
+          bill_number?: string | null
+          company_name?: string | null
+          due_date?: string | null
+          id?: string
+          outstanding_amount?: number | null
+          po_number?: string | null
+          received_at?: string
+          sync_timestamp?: string | null
+          vendor_name?: string | null
+        }
+        Relationships: []
+      }
+      tally_purchase_order_register: {
+        Row: {
+          batch_id: string
+          company_name: string | null
+          id: string
+          last_updated: string | null
+          po_date: string | null
+          po_number: string | null
+          received_at: string
+          status: string | null
+          sync_timestamp: string | null
+          total_amount: number | null
+          vendor_name: string | null
+        }
+        Insert: {
+          batch_id: string
+          company_name?: string | null
+          id?: string
+          last_updated?: string | null
+          po_date?: string | null
+          po_number?: string | null
+          received_at?: string
+          status?: string | null
+          sync_timestamp?: string | null
+          total_amount?: number | null
+          vendor_name?: string | null
+        }
+        Update: {
+          batch_id?: string
+          company_name?: string | null
+          id?: string
+          last_updated?: string | null
+          po_date?: string | null
+          po_number?: string | null
+          received_at?: string
+          status?: string | null
+          sync_timestamp?: string | null
+          total_amount?: number | null
+          vendor_name?: string | null
+        }
+        Relationships: []
+      }
+      tally_purchase_orders: {
+        Row: {
+          amount: number | null
+          batch_id: string
+          company_name: string | null
+          due_date: string | null
+          id: string
+          item_name: string | null
+          po_date: string | null
+          po_number: string | null
+          quantity: number | null
+          rate: number | null
+          received_at: string
+          status: string | null
+          sync_timestamp: string | null
+          vendor_name: string | null
+        }
+        Insert: {
+          amount?: number | null
+          batch_id: string
+          company_name?: string | null
+          due_date?: string | null
+          id?: string
+          item_name?: string | null
+          po_date?: string | null
+          po_number?: string | null
+          quantity?: number | null
+          rate?: number | null
+          received_at?: string
+          status?: string | null
+          sync_timestamp?: string | null
+          vendor_name?: string | null
+        }
+        Update: {
+          amount?: number | null
+          batch_id?: string
+          company_name?: string | null
+          due_date?: string | null
+          id?: string
+          item_name?: string | null
+          po_date?: string | null
+          po_number?: string | null
+          quantity?: number | null
+          rate?: number | null
+          received_at?: string
+          status?: string | null
+          sync_timestamp?: string | null
+          vendor_name?: string | null
+        }
+        Relationships: []
+      }
+      tally_sales_vouchers: {
+        Row: {
+          amount: number | null
+          batch_id: string
+          company_name: string | null
+          customer_name: string | null
+          id: string
+          invoice_date: string | null
+          invoice_number: string | null
+          item_name: string | null
+          quantity: number | null
+          rate: number | null
+          received_at: string
+          status: string | null
+          sync_timestamp: string | null
+          total_amount: number | null
+        }
+        Insert: {
+          amount?: number | null
+          batch_id: string
+          company_name?: string | null
+          customer_name?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          item_name?: string | null
+          quantity?: number | null
+          rate?: number | null
+          received_at?: string
+          status?: string | null
+          sync_timestamp?: string | null
+          total_amount?: number | null
+        }
+        Update: {
+          amount?: number | null
+          batch_id?: string
+          company_name?: string | null
+          customer_name?: string | null
+          id?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
+          item_name?: string | null
+          quantity?: number | null
+          rate?: number | null
+          received_at?: string
+          status?: string | null
+          sync_timestamp?: string | null
+          total_amount?: number | null
+        }
+        Relationships: []
+      }
+      tally_trial_balance: {
+        Row: {
+          as_of_date: string | null
+          batch_id: string
+          closing_balance: number | null
+          company_name: string | null
+          credit: number | null
+          debit: number | null
+          group_name: string | null
+          id: string
+          ledger_name: string | null
+          opening_balance: number | null
+          received_at: string
+          sync_timestamp: string | null
+        }
+        Insert: {
+          as_of_date?: string | null
+          batch_id: string
+          closing_balance?: number | null
+          company_name?: string | null
+          credit?: number | null
+          debit?: number | null
+          group_name?: string | null
+          id?: string
+          ledger_name?: string | null
+          opening_balance?: number | null
+          received_at?: string
+          sync_timestamp?: string | null
+        }
+        Update: {
+          as_of_date?: string | null
+          batch_id?: string
+          closing_balance?: number | null
+          company_name?: string | null
+          credit?: number | null
+          debit?: number | null
+          group_name?: string | null
+          id?: string
+          ledger_name?: string | null
+          opening_balance?: number | null
+          received_at?: string
+          sync_timestamp?: string | null
+        }
+        Relationships: []
+      }
+      tally_vendor_ledgers: {
+        Row: {
+          ageing_bucket: string | null
+          batch_id: string
+          company_name: string | null
+          id: string
+          ledger_group: string | null
+          opening_balance: number | null
+          outstanding_balance: number | null
+          received_at: string
+          sync_timestamp: string | null
+          total_billed: number | null
+          total_paid: number | null
+          vendor_name: string | null
+        }
+        Insert: {
+          ageing_bucket?: string | null
+          batch_id: string
+          company_name?: string | null
+          id?: string
+          ledger_group?: string | null
+          opening_balance?: number | null
+          outstanding_balance?: number | null
+          received_at?: string
+          sync_timestamp?: string | null
+          total_billed?: number | null
+          total_paid?: number | null
+          vendor_name?: string | null
+        }
+        Update: {
+          ageing_bucket?: string | null
+          batch_id?: string
+          company_name?: string | null
+          id?: string
+          ledger_group?: string | null
+          opening_balance?: number | null
+          outstanding_balance?: number | null
+          received_at?: string
+          sync_timestamp?: string | null
+          total_billed?: number | null
+          total_paid?: number | null
+          vendor_name?: string | null
+        }
+        Relationships: []
+      }
       task_benchmarks: {
         Row: {
           actual_duration_days: number
@@ -13805,6 +14378,8 @@ export type Database = {
         Args: { _employee_auth_id: string; _manager_auth_id: string }
         Returns: boolean
       }
+      is_tally_ingest_admin: { Args: { _uid: string }; Returns: boolean }
+      is_tally_ingest_viewer: { Args: { _uid: string }; Returns: boolean }
       kickoff_meeting_daily_reminders: { Args: never; Returns: undefined }
       project_archive_upload_reminders: { Args: never; Returns: undefined }
       recalc_running_bill: {

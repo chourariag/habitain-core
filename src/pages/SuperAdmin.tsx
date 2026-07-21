@@ -11,6 +11,7 @@ import { DataBankTab } from "@/components/super-admin/DataBankTab";
 import { UsersTab } from "@/components/super-admin/UsersTab";
 import { AuditTrailTab } from "@/components/super-admin/AuditTrailTab";
 import { CreateAccountsTab } from "@/components/super-admin/CreateAccountsTab";
+import { TallyIngestionKeySection } from "@/components/super-admin/TallyIngestionKeySection";
 
 const MD_ROLES = ["managing_director", "super_admin"];
 
@@ -53,6 +54,11 @@ export default function SuperAdmin() {
         <TabsContent value="create-accounts" className="mt-4"><CreateAccountsTab /></TabsContent>
         <TabsContent value="audit" className="mt-4"><AuditTrailTab /></TabsContent>
       </Tabs>
+
+      <div className="pt-4">
+        <h2 className="font-display text-lg font-bold mb-3">App Settings — Tally Integration</h2>
+        <TallyIngestionKeySection />
+      </div>
     </div>
   );
 }
