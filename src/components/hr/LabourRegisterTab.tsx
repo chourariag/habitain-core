@@ -389,11 +389,15 @@ function EditWorkerDialog({ worker, contractors, onOpenChange, onSaved }: any) {
     try {
       const { error } = await supabase.from("labour_workers").update({
         name: form.name.trim(), skill_type: form.skill_type, contractor_id: form.contractor_id || null,
-        department: form.department, monthly_salary: monthly,
-        date_joined: form.date_joined, salary_review_due: form.salary_review_due,
+        department: form.department,
+        date_joined: form.date_joined,
         notes: form.notes.trim() || null,
       }).eq("id", worker.id);
       if (error) throw error;
+      const { error: compErr } = await (supabase as any).from("labour_worker_compensation").upsert({
+        worker_id: worker.id, monthly_salary: monthly, salary_review_due: form.salary_review_due || null,
+      }, { onConflict: "worker_id" });
+      if (compErr) throw compErr;
       toast.success("Worker updated");
       onSaved();
     } catch (e: any) { toast.error(e.message); } finally { setSaving(false); }
