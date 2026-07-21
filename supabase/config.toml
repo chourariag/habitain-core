@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.ai-agents]
 verify_jwt = false
+
+[functions.tally-ingest]
+verify_jwt = false
