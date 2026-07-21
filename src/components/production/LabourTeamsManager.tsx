@@ -15,7 +15,6 @@ interface Worker {
   id: string;
   name: string;
   skill_type: string;
-  monthly_salary: number;
   status: string;
 }
 
