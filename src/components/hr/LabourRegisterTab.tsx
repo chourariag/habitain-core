@@ -199,13 +199,16 @@ export function LabourRegisterTab() {
 }
 
 function WorkerCard({ w, canManage, onStatus, onEdit, onHistory }: { w: Worker; canManage: boolean; onStatus: () => void; onEdit: () => void; onHistory: () => void }) {
-  const daily = w.monthly_salary / 26;
+  const hasSalary = w.monthly_salary > 0;
+  const daily = hasSalary ? w.monthly_salary / 26 : 0;
   const ot = daily / 8;
-  const reviewDate = parseISO(w.salary_review_due);
-  const days = differenceInDays(reviewDate, new Date());
+  const reviewDate = w.salary_review_due ? parseISO(w.salary_review_due) : null;
+  const days = reviewDate ? differenceInDays(reviewDate, new Date()) : null;
   let reviewColor = "#006039", showAlert = false;
-  if (days < 0) { reviewColor = "#F40009"; showAlert = true; }
-  else if (days <= 30) { reviewColor = "#D4860A"; showAlert = true; }
+  if (days !== null) {
+    if (days < 0) { reviewColor = "#F40009"; showAlert = true; }
+    else if (days <= 30) { reviewColor = "#D4860A"; showAlert = true; }
+  }
 
   const statusStyle = w.status === "active" ? { bg: "#E8F2ED", fg: "#006039", label: "Active" }
     : w.status === "on_leave" ? { bg: "#FFF8E8", fg: "#D4860A", label: "On Leave" }
@@ -222,18 +225,20 @@ function WorkerCard({ w, canManage, onStatus, onEdit, onHistory }: { w: Worker; 
           <Badge style={{ background: statusStyle.bg, color: statusStyle.fg }} className="border-0">{statusStyle.label}</Badge>
         </div>
         <div className="grid grid-cols-3 gap-2 text-xs">
-          <div><div className="text-muted-foreground">Monthly</div><div className="font-semibold">₹{w.monthly_salary.toLocaleString()}</div></div>
-          <div><div className="text-muted-foreground">Daily</div><div>₹{Math.round(daily).toLocaleString()}</div></div>
-          <div><div className="text-muted-foreground">OT/hr</div><div>₹{Math.round(ot).toLocaleString()}</div></div>
+          <div><div className="text-muted-foreground">Monthly</div><div className="font-semibold">{hasSalary ? `₹${w.monthly_salary.toLocaleString()}` : "—"}</div></div>
+          <div><div className="text-muted-foreground">Daily</div><div>{hasSalary ? `₹${Math.round(daily).toLocaleString()}` : "—"}</div></div>
+          <div><div className="text-muted-foreground">OT/hr</div><div>{hasSalary ? `₹${Math.round(ot).toLocaleString()}` : "—"}</div></div>
         </div>
         <div className="flex items-center justify-between text-xs">
           <div>
             <span className="text-muted-foreground">Joined: </span>{format(parseISO(w.date_joined), "dd/MM/yyyy")}
           </div>
-          <div className="flex items-center gap-1" style={{ color: reviewColor }}>
-            {showAlert && (days < 0 ? <AlertCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />)}
-            Review: {format(reviewDate, "dd/MM/yyyy")}
-          </div>
+          {reviewDate && (
+            <div className="flex items-center gap-1" style={{ color: reviewColor }}>
+              {showAlert && (days! < 0 ? <AlertCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />)}
+              Review: {format(reviewDate, "dd/MM/yyyy")}
+            </div>
+          )}
         </div>
         {canManage && (
           <div className="flex gap-2 pt-1">
