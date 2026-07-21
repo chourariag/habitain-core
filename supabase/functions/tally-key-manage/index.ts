@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     if (!isAdmin) return jsonResp({ error: "Only Super Admin or Managing Director can rotate" }, 403);
     const plain = randomKey();
     const hash = await sha256Hex(plain);
-    const prefix = plain.slice(0, 16) + "…";
+    const prefix = "••••••••••••" + plain.slice(-4);
     // Revoke old
     await admin.from("tally_api_keys").update({ revoked_at: new Date().toISOString() }).is("revoked_at", null);
     const { error } = await admin.from("tally_api_keys").insert({

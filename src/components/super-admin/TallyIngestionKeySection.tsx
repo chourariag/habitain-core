@@ -29,6 +29,9 @@ export function TallyIngestionKeySection() {
   const [newKey, setNewKey] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
+
+  const endpointUrl = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/tally-ingest`;
 
   const load = async () => {
     setLoading(true);
@@ -65,6 +68,13 @@ export function TallyIngestionKeySection() {
     toast.success("Copied to clipboard");
   };
 
+  const copyUrl = async () => {
+    await navigator.clipboard.writeText(endpointUrl);
+    setUrlCopied(true);
+    toast.success("Endpoint URL copied");
+    setTimeout(() => setUrlCopied(false), 2000);
+  };
+
   if (!canView) return null;
 
   return (
@@ -72,22 +82,35 @@ export function TallyIngestionKeySection() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2" style={{ color: "#1A1A1A" }}>
           <KeyRound className="h-4 w-4" style={{ color: "#006039" }} />
-          Tally Integration — Incoming API Key
+          Tally Data Sync — Incoming API
         </CardTitle>
         <p className="text-xs mt-1" style={{ color: "#666" }}>
-          Used by Tally to push data into HStack via <code>POST /functions/v1/tally-ingest</code>
-          with header <code>X-API-Key</code>. The key value is only shown once at generation.
+          This API key allows Tally to securely push financial data into HStack.
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-1">
+          <div className="text-xs font-medium" style={{ color: "#1A1A1A" }}>Ingestion Endpoint URL</div>
+          <div className="flex items-center gap-2 rounded border bg-muted/40 p-2">
+            <code className="text-xs break-all flex-1">{endpointUrl}</code>
+            <Button size="sm" variant="outline" onClick={copyUrl} className="gap-1 shrink-0">
+              {urlCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {urlCopied ? "Copied" : "Copy"}
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Tally must POST JSON to this URL with header <code>X-API-Key</code>.
+          </p>
+        </div>
+
         <div className="flex items-center gap-3 flex-wrap">
-          <span className="text-sm">Status:</span>
+          <span className="text-sm">API Key:</span>
           {loading ? (
             <Badge variant="outline">Checking…</Badge>
           ) : status?.configured ? (
             <>
               <Badge style={{ backgroundColor: "#006039", color: "#fff" }}>Configured</Badge>
-              <code className="text-xs bg-muted px-2 py-1 rounded">{status.key?.key_prefix}</code>
+              <code className="text-xs bg-muted px-2 py-1 rounded font-mono">{status.key?.key_prefix}</code>
               <span className="text-xs text-muted-foreground">
                 Created {status.key ? new Date(status.key.created_at).toLocaleString("en-IN") : ""}
                 {status.key?.last_used_at && ` · Last used ${new Date(status.key.last_used_at).toLocaleString("en-IN")}`}
