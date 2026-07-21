@@ -33,7 +33,6 @@ const SETS: DataSet[] = [
       { excel: "Worker Name", db: "name" },
       { excel: "Skill Type", db: "skill_type" },
       { excel: "Department", db: "department" },
-      { excel: "Monthly Salary (₹)", db: "monthly_salary" },
       { excel: "Date Joined (YYYY-MM-DD)", db: "date_joined" },
     ] },
   { key: "subcon", name: "Subcontractor Register", table: "subcontractors",

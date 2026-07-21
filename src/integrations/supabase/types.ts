@@ -4758,6 +4758,38 @@ export type Database = {
           },
         ]
       }
+      labour_worker_compensation: {
+        Row: {
+          created_at: string
+          monthly_salary: number
+          salary_review_due: string | null
+          updated_at: string
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string
+          monthly_salary?: number
+          salary_review_due?: string | null
+          updated_at?: string
+          worker_id: string
+        }
+        Update: {
+          created_at?: string
+          monthly_salary?: number
+          salary_review_due?: string | null
+          updated_at?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_worker_compensation_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: true
+            referencedRelation: "labour_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       labour_worker_rate_history: {
         Row: {
           changed_by: string | null
@@ -4805,11 +4837,9 @@ export type Database = {
           deactivated_reason: string | null
           department: string
           id: string
-          monthly_salary: number
           name: string
           notes: string | null
           on_leave_return_date: string | null
-          salary_review_due: string
           skill_type: string
           status: string
           updated_at: string
@@ -4822,11 +4852,9 @@ export type Database = {
           deactivated_reason?: string | null
           department: string
           id?: string
-          monthly_salary?: number
           name: string
           notes?: string | null
           on_leave_return_date?: string | null
-          salary_review_due?: string
           skill_type: string
           status?: string
           updated_at?: string
@@ -4839,11 +4867,9 @@ export type Database = {
           deactivated_reason?: string | null
           department?: string
           id?: string
-          monthly_salary?: number
           name?: string
           notes?: string | null
           on_leave_return_date?: string | null
-          salary_review_due?: string
           skill_type?: string
           status?: string
           updated_at?: string
@@ -13905,6 +13931,10 @@ export type Database = {
         Returns: undefined
       }
       boq_cumulative_qty: { Args: { _boq_item_id: string }; Returns: number }
+      can_access_labour_compensation: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       can_access_labour_register: {
         Args: { _user_id: string }
         Returns: boolean
@@ -14135,11 +14165,9 @@ export type Database = {
           deactivated_reason: string | null
           department: string
           id: string
-          monthly_salary: number
           name: string
           notes: string | null
           on_leave_return_date: string | null
-          salary_review_due: string
           skill_type: string
           status: string
           updated_at: string

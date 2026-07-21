@@ -15,7 +15,6 @@ interface Worker {
   id: string;
   name: string;
   skill_type: string;
-  monthly_salary: number;
   status: string;
 }
 
@@ -54,7 +53,7 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
     setLoading(true);
     const [{ data: teamData }, { data: workerData }, { data: memberData }] = await Promise.all([
       supabase.from("labour_teams").select("*").order("created_at", { ascending: false }),
-      supabase.from("labour_workers").select("id,name,skill_type,monthly_salary,status").eq("status", "active").order("name"),
+      supabase.from("labour_workers").select("id,name,skill_type,status").eq("status", "active").order("name"),
       supabase.from("labour_team_members").select("id,team_id,worker_id,left_date"),
     ]);
     const workersList = (workerData ?? []) as Worker[];
