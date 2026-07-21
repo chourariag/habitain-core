@@ -115,12 +115,15 @@ export function DailyLabourLog({ mode, projectId, projectName, userRole }: Props
     const filtered = mode === "site"
       ? baseLogs.eq("location_type", "site").eq("project_id", projectId ?? "")
       : baseLogs.eq("location_type", "factory_bay");
-    const [{ data: l }, { data: w }] = await Promise.all([
+    const [{ data: l }, { data: w }, { data: comp }] = await Promise.all([
       filtered.order("log_date", { ascending: false }).limit(50),
-      (supabase as any).from("labour_workers").select("id,name,skill_type,monthly_salary,department,status").eq("status", "active"),
+      (supabase as any).from("labour_workers").select("id,name,skill_type,department,status").eq("status", "active"),
+      (supabase as any).from("labour_worker_compensation").select("worker_id, monthly_salary"),
     ]);
+    const compMap = new Map<string, number>();
+    for (const c of (comp as any[]) ?? []) compMap.set(c.worker_id, Number(c.monthly_salary) || 0);
     setLogs((l as any[]) ?? []);
-    setWorkers((w as any[]) ?? []);
+    setWorkers(((w as any[]) ?? []).map((row) => ({ ...row, monthly_salary: compMap.get(row.id) ?? 0 })));
     setLoading(false);
   }, [mode, projectId]);
 
