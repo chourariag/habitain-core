@@ -2546,6 +2546,7 @@ export type Database = {
           revision: number
           revision_reason: string | null
           status: string
+          storage_path: string | null
           updated_at: string
           uploaded_by: string
           uploaded_by_name: string | null
@@ -2580,6 +2581,7 @@ export type Database = {
           revision?: number
           revision_reason?: string | null
           status?: string
+          storage_path?: string | null
           updated_at?: string
           uploaded_by: string
           uploaded_by_name?: string | null
@@ -2614,6 +2616,7 @@ export type Database = {
           revision?: number
           revision_reason?: string | null
           status?: string
+          storage_path?: string | null
           updated_at?: string
           uploaded_by?: string
           uploaded_by_name?: string | null
