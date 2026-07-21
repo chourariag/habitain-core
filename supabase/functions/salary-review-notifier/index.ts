@@ -23,11 +23,11 @@ Deno.serve(async (req) => {
     const todayStr = today.toISOString().slice(0, 10);
 
     // Workers due within 30 days (or overdue) and still active
-    const { data: workers, error } = await supabase
-      .from("labour_workers")
-      .select("id, name, skill_type, monthly_salary, date_joined, salary_review_due, department, contractor_id, labour_contractors(company_name)")
-      .eq("status", "active")
-      .lte("salary_review_due", in30Str);
+    const { data: comps, error } = await supabase
+      .from("labour_worker_compensation")
+      .select("worker_id, monthly_salary, salary_review_due, labour_workers!inner(id, name, skill_type, date_joined, department, contractor_id, status, labour_contractors(company_name))")
+      .lte("salary_review_due", in30Str)
+      .eq("labour_workers.status", "active");
 
     if (error) throw error;
 
@@ -39,14 +39,15 @@ Deno.serve(async (req) => {
       .eq("is_active", true);
 
     let queued = 0;
-    for (const w of workers ?? []) {
-      const company = (w as any).labour_contractors?.company_name ?? "—";
-      const dueStr = (w as any).salary_review_due;
+    for (const c of comps ?? []) {
+      const w: any = (c as any).labour_workers;
+      const company = w?.labour_contractors?.company_name ?? "—";
+      const dueStr = (c as any).salary_review_due;
       const overdue = dueStr < todayStr;
       const title = overdue
-        ? `Overdue: salary review for ${w.name}`
-        : `Salary review due in 30 days — ${w.name}`;
-      const body = `${w.name} (${w.skill_type}, ${company}). Current salary: ₹${Number(w.monthly_salary).toLocaleString("en-IN")}/month. Joined: ${w.date_joined}. Review by ${dueStr}.`;
+        ? `Overdue: salary review for ${w?.name}`
+        : `Salary review due in 30 days — ${w?.name}`;
+      const body = `${w?.name} (${w?.skill_type}, ${company}). Current salary: ₹${Number((c as any).monthly_salary).toLocaleString("en-IN")}/month. Joined: ${w?.date_joined}. Review by ${dueStr}.`;
 
       // Filter by department: production_head -> Factory, site_installation_mgr -> Site
       const dept = (w as any).department as string;
