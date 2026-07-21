@@ -29,6 +29,9 @@ export function TallyIngestionKeySection() {
   const [newKey, setNewKey] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
+
+  const endpointUrl = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/tally-ingest`;
 
   const load = async () => {
     setLoading(true);
@@ -63,6 +66,13 @@ export function TallyIngestionKeySection() {
     await navigator.clipboard.writeText(newKey);
     setCopied(true);
     toast.success("Copied to clipboard");
+  };
+
+  const copyUrl = async () => {
+    await navigator.clipboard.writeText(endpointUrl);
+    setUrlCopied(true);
+    toast.success("Endpoint URL copied");
+    setTimeout(() => setUrlCopied(false), 2000);
   };
 
   if (!canView) return null;
