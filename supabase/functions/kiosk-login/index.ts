@@ -89,7 +89,6 @@ Deno.serve(async (req) => {
           auth_user_id: profile.auth_user_id,
           display_name: profile.display_name,
           role: profile.role,
-          phone: profile.phone,
           email: profile.email,
         },
       }),
