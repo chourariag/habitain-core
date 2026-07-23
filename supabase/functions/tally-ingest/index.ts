@@ -23,19 +23,110 @@ const DATA_TYPE_TABLE: Record<string, string> = {
   cost_centre_data: "tally_cost_centre_data",
 };
 
-// Allowed columns per data type (snake_case fields sent by Tally client).
-const ALLOWED_FIELDS: Record<string, string[]> = {
-  trial_balance: ["ledger_name","group_name","opening_balance","debit","credit","closing_balance","as_of_date"],
-  purchase_orders: ["po_number","po_date","vendor_name","item_name","quantity","rate","amount","due_date","status"],
-  purchase_order_register: ["po_number","po_date","vendor_name","total_amount","status","last_updated"],
-  grn: ["grn_number","grn_date","po_number","vendor_name","item_name","quantity_received","quantity_ordered","remarks"],
-  sales_vouchers: ["invoice_number","invoice_date","customer_name","item_name","quantity","rate","amount","total_amount","status"],
-  purchase_invoices: ["bill_number","bill_date","vendor_name","po_number","amount","outstanding_amount","due_date"],
-  vendor_ledgers: ["vendor_name","ledger_group","opening_balance","total_billed","total_paid","outstanding_balance","ageing_bucket"],
-  customer_ledgers: ["customer_name","ledger_group","opening_balance","total_invoiced","total_received","outstanding_balance","ageing_bucket"],
-  bank_book: ["bank_ledger_name","transaction_date","voucher_type","narration","debit","credit","running_balance"],
-  cash_book: ["transaction_date","voucher_type","narration","debit","credit","running_balance"],
-  cost_centre_data: ["cost_centre_name","ledger_name","voucher_type","amount","transaction_date","period"],
+// Allowed columns per data type. Keys are snake_case DB columns; values list
+// accepted incoming field aliases so both snake_case and camelCase payloads map.
+const ALLOWED_FIELDS: Record<string, Record<string, string[]>> = {
+  trial_balance: {
+    ledger_name: ["ledger_name", "ledgerName"],
+    group_name: ["group_name", "groupName"],
+    opening_balance: ["opening_balance", "openingBalance"],
+    debit: ["debit"],
+    credit: ["credit"],
+    closing_balance: ["closing_balance", "closingBalance"],
+    as_of_date: ["as_of_date", "asOfDate"],
+  },
+  purchase_orders: {
+    po_number: ["po_number", "poNumber"],
+    po_date: ["po_date", "poDate"],
+    vendor_name: ["vendor_name", "vendorName"],
+    item_name: ["item_name", "itemName"],
+    quantity: ["quantity"],
+    rate: ["rate"],
+    amount: ["amount"],
+    due_date: ["due_date", "dueDate"],
+    status: ["status"],
+  },
+  purchase_order_register: {
+    po_number: ["po_number", "poNumber"],
+    po_date: ["po_date", "poDate"],
+    vendor_name: ["vendor_name", "vendorName"],
+    total_amount: ["total_amount", "totalAmount"],
+    status: ["status"],
+    last_updated: ["last_updated", "lastUpdated"],
+  },
+  grn: {
+    grn_number: ["grn_number", "grnNumber"],
+    grn_date: ["grn_date", "grnDate"],
+    po_number: ["po_number", "poNumber"],
+    vendor_name: ["vendor_name", "vendorName"],
+    item_name: ["item_name", "itemName"],
+    quantity_received: ["quantity_received", "quantityReceived"],
+    quantity_ordered: ["quantity_ordered", "quantityOrdered"],
+    remarks: ["remarks"],
+  },
+  sales_vouchers: {
+    invoice_number: ["invoice_number", "invoiceNumber"],
+    invoice_date: ["invoice_date", "invoiceDate"],
+    customer_name: ["customer_name", "customerName"],
+    item_name: ["item_name", "itemName"],
+    quantity: ["quantity"],
+    rate: ["rate"],
+    amount: ["amount"],
+    total_amount: ["total_amount", "totalAmount"],
+    status: ["status"],
+  },
+  purchase_invoices: {
+    bill_number: ["bill_number", "billNumber"],
+    bill_date: ["bill_date", "billDate"],
+    vendor_name: ["vendor_name", "vendorName"],
+    po_number: ["po_number", "poNumber"],
+    amount: ["amount"],
+    outstanding_amount: ["outstanding_amount", "outstandingAmount"],
+    due_date: ["due_date", "dueDate"],
+  },
+  vendor_ledgers: {
+    vendor_name: ["vendor_name", "vendorName"],
+    ledger_group: ["ledger_group", "ledgerGroup"],
+    opening_balance: ["opening_balance", "openingBalance"],
+    total_billed: ["total_billed", "totalBilled"],
+    total_paid: ["total_paid", "totalPaid"],
+    outstanding_balance: ["outstanding_balance", "outstandingBalance"],
+    ageing_bucket: ["ageing_bucket", "ageingBucket"],
+  },
+  customer_ledgers: {
+    customer_name: ["customer_name", "customerName"],
+    ledger_group: ["ledger_group", "ledgerGroup"],
+    opening_balance: ["opening_balance", "openingBalance"],
+    total_invoiced: ["total_invoiced", "totalInvoiced"],
+    total_received: ["total_received", "totalReceived"],
+    outstanding_balance: ["outstanding_balance", "outstandingBalance"],
+    ageing_bucket: ["ageing_bucket", "ageingBucket"],
+  },
+  bank_book: {
+    bank_ledger_name: ["bank_ledger_name", "bankLedgerName"],
+    transaction_date: ["transaction_date", "transactionDate"],
+    voucher_type: ["voucher_type", "voucherType"],
+    narration: ["narration"],
+    debit: ["debit"],
+    credit: ["credit"],
+    running_balance: ["running_balance", "runningBalance"],
+  },
+  cash_book: {
+    transaction_date: ["transaction_date", "transactionDate"],
+    voucher_type: ["voucher_type", "voucherType"],
+    narration: ["narration"],
+    debit: ["debit"],
+    credit: ["credit"],
+    running_balance: ["running_balance", "runningBalance"],
+  },
+  cost_centre_data: {
+    cost_centre_name: ["cost_centre_name", "costCentreName"],
+    ledger_name: ["ledger_name", "ledgerName"],
+    voucher_type: ["voucher_type", "voucherType"],
+    amount: ["amount"],
+    transaction_date: ["transaction_date", "transactionDate"],
+    period: ["period"],
+  },
 };
 
 async function sha256Hex(s: string): Promise<string> {
@@ -127,8 +218,13 @@ Deno.serve(async (req) => {
       batch_id: batchId,
       sync_timestamp: syncTimestamp ?? null,
     };
-    for (const f of allowed) {
-      if (rec[f] !== undefined) row[f] = rec[f] === "" ? null : rec[f];
+    for (const [dbCol, aliases] of Object.entries(allowed)) {
+      for (const alias of aliases) {
+        if (rec[alias] !== undefined) {
+          row[dbCol] = rec[alias] === "" ? null : rec[alias];
+          break;
+        }
+      }
     }
     rows.push(row);
   }
