@@ -123,14 +123,15 @@ Deno.serve(async (req) => {
         email: normalizedEmail,
         role,
         login_type: effectiveLoginType,
-        phone: normalizedPhone ? `+91${normalizedPhone}` : null,
         is_active: true,
         is_archived: false,
       };
 
-      const { error: profileError } = await supabaseAdmin
+      const { data: upsertedProfile, error: profileError } = await supabaseAdmin
         .from("profiles")
-        .upsert(profilePayload, { onConflict: "auth_user_id" });
+        .upsert(profilePayload, { onConflict: "auth_user_id" })
+        .select("id")
+        .single();
 
       if (profileError) {
         await supabaseAdmin.auth.admin.deleteUser(userId);
@@ -138,6 +139,13 @@ Deno.serve(async (req) => {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+
+      if (normalizedPhone && upsertedProfile?.id) {
+        await supabaseAdmin.from("profile_private_info").upsert({
+          profile_id: upsertedProfile.id,
+          phone: `+91${normalizedPhone}`,
+        }, { onConflict: "profile_id" });
       }
 
       if (normalizedPin) {
