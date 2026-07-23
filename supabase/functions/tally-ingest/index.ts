@@ -218,8 +218,13 @@ Deno.serve(async (req) => {
       batch_id: batchId,
       sync_timestamp: syncTimestamp ?? null,
     };
-    for (const f of allowed) {
-      if (rec[f] !== undefined) row[f] = rec[f] === "" ? null : rec[f];
+    for (const [dbCol, aliases] of Object.entries(allowed)) {
+      for (const alias of aliases) {
+        if (rec[alias] !== undefined) {
+          row[dbCol] = rec[alias] === "" ? null : rec[alias];
+          break;
+        }
+      }
     }
     rows.push(row);
   }
