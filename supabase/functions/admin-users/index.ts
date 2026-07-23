@@ -123,14 +123,15 @@ Deno.serve(async (req) => {
         email: normalizedEmail,
         role,
         login_type: effectiveLoginType,
-        phone: normalizedPhone ? `+91${normalizedPhone}` : null,
         is_active: true,
         is_archived: false,
       };
 
-      const { error: profileError } = await supabaseAdmin
+      const { data: upsertedProfile, error: profileError } = await supabaseAdmin
         .from("profiles")
-        .upsert(profilePayload, { onConflict: "auth_user_id" });
+        .upsert(profilePayload, { onConflict: "auth_user_id" })
+        .select("id")
+        .single();
 
       if (profileError) {
         await supabaseAdmin.auth.admin.deleteUser(userId);
@@ -138,6 +139,13 @@ Deno.serve(async (req) => {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+
+      if (normalizedPhone && upsertedProfile?.id) {
+        await supabaseAdmin.from("profile_private_info").upsert({
+          profile_id: upsertedProfile.id,
+          phone: `+91${normalizedPhone}`,
+        }, { onConflict: "profile_id" });
       }
 
       if (normalizedPin) {
@@ -166,7 +174,7 @@ Deno.serve(async (req) => {
           email: normalizedEmail,
           role,
           login_type: effectiveLoginType,
-          phone: profilePayload.phone,
+          phone_provided: Boolean(normalizedPhone),
           kiosk_pin_set: Boolean(normalizedPin),
         },
       });
@@ -202,17 +210,21 @@ Deno.serve(async (req) => {
         });
       }
       const userId = newUser.user.id;
-      await supabaseAdmin.from("profiles").upsert({
+      const { data: pRow } = await supabaseAdmin.from("profiles").upsert({
         auth_user_id: userId,
         email: normalizedEmail,
         display_name: display_name || null,
-        phone: phone || null,
         role,
         login_type: "email",
         reporting_manager_id: reporting_manager_id || null,
         is_active: true,
         is_archived: false,
-      }, { onConflict: "auth_user_id" });
+      }, { onConflict: "auth_user_id" }).select("id").single();
+      if (phone && pRow?.id) {
+        await supabaseAdmin.from("profile_private_info").upsert({
+          profile_id: pRow.id, phone,
+        }, { onConflict: "profile_id" });
+      }
       await supabaseAdmin.from("user_roles").insert({ user_id: userId, role });
       await supabaseAdmin.from("admin_audit_log").insert({
         action: "create_user_with_password",
@@ -473,13 +485,17 @@ Deno.serve(async (req) => {
       if (secondary_manager_id !== undefined) patch.secondary_manager_id = secondary_manager_id || null;
       if (is_active !== undefined) { patch.is_active = is_active; patch.is_archived = !is_active; }
       if (display_name !== undefined) patch.display_name = display_name;
-      if (phone !== undefined) patch.phone = phone;
 
       const { error: updErr } = await supabaseAdmin.from("profiles").update(patch).eq("auth_user_id", user_id);
       if (updErr) {
         return new Response(JSON.stringify({ error: updErr.message }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+      if (phone !== undefined && oldProfile?.id) {
+        await supabaseAdmin.from("profile_private_info").upsert({
+          profile_id: oldProfile.id, phone: phone || null,
+        }, { onConflict: "profile_id" });
       }
       if (role) {
         await supabaseAdmin.from("user_roles").upsert({ user_id, role }, { onConflict: "user_id,role" });

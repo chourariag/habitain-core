@@ -76,15 +76,25 @@ export default function Profile() {
     if (!user) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      const { data: prof, error } = await supabase
         .from("profiles")
         .update({
           display_name: displayName.trim() || null,
-          phone: phone.trim() || null,
-          home_base: homeBase.trim() || null,
         } as any)
-        .eq("auth_user_id", user.id);
+        .eq("auth_user_id", user.id)
+        .select("id")
+        .single();
       if (error) throw error;
+      if (prof?.id) {
+        const { error: piiErr } = await (supabase as any)
+          .from("profile_private_info")
+          .upsert({
+            profile_id: prof.id,
+            phone: phone.trim() || null,
+            home_base: homeBase.trim() || null,
+          }, { onConflict: "profile_id" });
+        if (piiErr) throw piiErr;
+      }
       toast.success("Profile updated");
       await fetchProfile();
     } catch (err: any) {

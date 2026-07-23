@@ -72,9 +72,6 @@ export function UserRow({ profile, onUpdate }: UserRowProps) {
           )}
         </div>
         <p className="text-sm text-muted-foreground truncate">{profile.email}</p>
-        {profile.phone && (
-          <p className="text-xs text-muted-foreground">{profile.phone}</p>
-        )}
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
