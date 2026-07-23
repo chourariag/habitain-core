@@ -485,13 +485,17 @@ Deno.serve(async (req) => {
       if (secondary_manager_id !== undefined) patch.secondary_manager_id = secondary_manager_id || null;
       if (is_active !== undefined) { patch.is_active = is_active; patch.is_archived = !is_active; }
       if (display_name !== undefined) patch.display_name = display_name;
-      if (phone !== undefined) patch.phone = phone;
 
       const { error: updErr } = await supabaseAdmin.from("profiles").update(patch).eq("auth_user_id", user_id);
       if (updErr) {
         return new Response(JSON.stringify({ error: updErr.message }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
+      }
+      if (phone !== undefined && oldProfile?.id) {
+        await supabaseAdmin.from("profile_private_info").upsert({
+          profile_id: oldProfile.id, phone: phone || null,
+        }, { onConflict: "profile_id" });
       }
       if (role) {
         await supabaseAdmin.from("user_roles").upsert({ user_id, role }, { onConflict: "user_id,role" });
