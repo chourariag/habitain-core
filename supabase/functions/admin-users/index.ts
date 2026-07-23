@@ -210,17 +210,21 @@ Deno.serve(async (req) => {
         });
       }
       const userId = newUser.user.id;
-      await supabaseAdmin.from("profiles").upsert({
+      const { data: pRow } = await supabaseAdmin.from("profiles").upsert({
         auth_user_id: userId,
         email: normalizedEmail,
         display_name: display_name || null,
-        phone: phone || null,
         role,
         login_type: "email",
         reporting_manager_id: reporting_manager_id || null,
         is_active: true,
         is_archived: false,
-      }, { onConflict: "auth_user_id" });
+      }, { onConflict: "auth_user_id" }).select("id").single();
+      if (phone && pRow?.id) {
+        await supabaseAdmin.from("profile_private_info").upsert({
+          profile_id: pRow.id, phone,
+        }, { onConflict: "profile_id" });
+      }
       await supabaseAdmin.from("user_roles").insert({ user_id: userId, role });
       await supabaseAdmin.from("admin_audit_log").insert({
         action: "create_user_with_password",
