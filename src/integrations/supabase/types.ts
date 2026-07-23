@@ -6914,17 +6914,52 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_private_info: {
+        Row: {
+          children: Json | null
+          date_of_birth: string | null
+          home_base: string | null
+          phone: string | null
+          profile_id: string
+          updated_at: string
+          wedding_anniversary: string | null
+        }
+        Insert: {
+          children?: Json | null
+          date_of_birth?: string | null
+          home_base?: string | null
+          phone?: string | null
+          profile_id: string
+          updated_at?: string
+          wedding_anniversary?: string | null
+        }
+        Update: {
+          children?: Json | null
+          date_of_birth?: string | null
+          home_base?: string | null
+          phone?: string | null
+          profile_id?: string
+          updated_at?: string
+          wedding_anniversary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_private_info_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           auth_user_id: string
           avatar_url: string | null
-          children: Json | null
           created_at: string | null
-          date_of_birth: string | null
           department: string | null
           display_name: string | null
           email: string | null
-          home_base: string | null
           id: string
           is_active: boolean | null
           is_archived: boolean | null
@@ -6933,23 +6968,18 @@ export type Database = {
           onboarding_completed: boolean
           onboarding_completed_at: string | null
           onboarding_quiz_scores: Json | null
-          phone: string | null
           reporting_manager_id: string | null
           role: Database["public"]["Enums"]["app_role"]
           secondary_manager_id: string | null
           updated_at: string | null
-          wedding_anniversary: string | null
         }
         Insert: {
           auth_user_id: string
           avatar_url?: string | null
-          children?: Json | null
           created_at?: string | null
-          date_of_birth?: string | null
           department?: string | null
           display_name?: string | null
           email?: string | null
-          home_base?: string | null
           id?: string
           is_active?: boolean | null
           is_archived?: boolean | null
@@ -6958,23 +6988,18 @@ export type Database = {
           onboarding_completed?: boolean
           onboarding_completed_at?: string | null
           onboarding_quiz_scores?: Json | null
-          phone?: string | null
           reporting_manager_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           secondary_manager_id?: string | null
           updated_at?: string | null
-          wedding_anniversary?: string | null
         }
         Update: {
           auth_user_id?: string
           avatar_url?: string | null
-          children?: Json | null
           created_at?: string | null
-          date_of_birth?: string | null
           department?: string | null
           display_name?: string | null
           email?: string | null
-          home_base?: string | null
           id?: string
           is_active?: boolean | null
           is_archived?: boolean | null
@@ -6983,12 +7008,10 @@ export type Database = {
           onboarding_completed?: boolean
           onboarding_completed_at?: string | null
           onboarding_quiz_scores?: Json | null
-          phone?: string | null
           reporting_manager_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           secondary_manager_id?: string | null
           updated_at?: string | null
-          wedding_anniversary?: string | null
         }
         Relationships: [
           {
