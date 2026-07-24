@@ -14410,6 +14410,14 @@ export type Database = {
         }[]
       }
       get_scope_signoff_by_token: { Args: { p_token: string }; Returns: Json }
+      get_storage_usage_by_bucket: {
+        Args: never
+        Returns: {
+          bucket_id: string
+          file_count: number
+          total_bytes: number
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
