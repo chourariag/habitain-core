@@ -148,6 +148,9 @@ export default function Admin() {
 
       </Tabs>
 
+      {showSuperAdmin && <StorageUsageCard />}
+
+
       {showSuperAdmin && (
         <div className="pt-8 mt-8" style={{ borderTop: "2px solid #F40009" }}>
           <div className="flex items-center gap-2 mb-1">
