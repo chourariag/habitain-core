@@ -10,6 +10,7 @@ import { UserRow } from "@/components/admin/UserRow";
 import { ROLE_LABELS, AppRole } from "@/lib/roles";
 import { BenchmarksView } from "@/components/kpi/BenchmarksView";
 import { BoardPaperGenerator } from "@/components/admin/BoardPaperGenerator";
+import { StorageUsageCard } from "@/components/admin/StorageUsageCard";
 import { useUserRole } from "@/hooks/useUserRole";
 
 const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
