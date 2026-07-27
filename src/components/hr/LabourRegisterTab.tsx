@@ -260,7 +260,7 @@ function AddWorkerDialog({ open, onOpenChange, contractors, defaultDepartment, o
 
   const save = async () => {
     const skill = form.skill_type === "Other" ? form.skill_other.trim() : form.skill_type;
-    if (!form.name.trim() || !skill || !form.department || !monthly || !form.date_joined) {
+    if (!form.name.trim() || !skill || !form.department || !form.date_joined) {
       toast.error("Please fill required fields"); return;
     }
     setSaving(true);
