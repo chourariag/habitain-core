@@ -364,8 +364,8 @@ export function OrderBookTab({ projects }: { projects: { id: string; name: strin
                       return (
                         <div key={i} className="h-6 relative">
                           {inRange && isStart && (
-                            <div className="absolute inset-y-1 rounded text-[10px] text-white flex items-center justify-center font-semibold px-1"
-                              style={{ backgroundColor: color, left: 2, right: `calc(${(last - first) * -100}% - 4px)`, width: `calc(${(last - first + 1) * 100}% - 4px)` }}>
+                            <div className="absolute inset-y-1 rounded text-[10px] flex items-center justify-center font-semibold px-1"
+                              style={{ backgroundColor: color, color: readableTextColor(color), left: 2, right: `calc(${(last - first) * -100}% - 4px)`, width: `calc(${(last - first + 1) * 100}% - 4px)` }}>
                               {r.status}
                             </div>
                           )}
