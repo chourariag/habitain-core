@@ -8,6 +8,7 @@ import {
   Compass, Calendar,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { readableTextColor } from "@/lib/contrast";
 
 interface KPI {
   label: string;
