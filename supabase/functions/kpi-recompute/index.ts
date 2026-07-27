@@ -136,13 +136,10 @@ async function maryInvoiceTimeliness(target: number): Promise<CalcResult> {
 }
 
 async function maryPayslipBy5th(target: number): Promise<CalcResult> {
-  const since = new Date(Date.now() - 90 * 86400_000).toISOString();
-  const { data } = await sb.from("payslips").select("created_at, pay_period_start").gte("created_at", since);
-  if (!data || data.length === 0) return noData(target);
-  const onTime = data.filter((r: any) => new Date(r.created_at).getDate() <= 5).length;
-  const pct = (onTime / data.length) * 100;
-  return { ...ok(pct, target), payload: { on_time: onTime, total: data.length } };
+  // Payroll/payslip data is no longer stored in this application (data policy).
+  return noData(target);
 }
+
 
 async function balaRmResponse(target: number): Promise<CalcResult> {
   const { data, error } = await sb.from("rm_tickets")
