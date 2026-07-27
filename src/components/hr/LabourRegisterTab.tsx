@@ -56,20 +56,15 @@ export function LabourRegisterTab() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [c, w, comp] = await Promise.all([
+    const [c, w] = await Promise.all([
       supabase.from("labour_contractors").select("*").order("company_name"),
       supabase.from("labour_workers").select("*").order("name"),
-      (supabase as any).from("labour_worker_compensation").select("worker_id, monthly_salary, salary_review_due"),
     ]);
     setContractors((c.data ?? []) as Contractor[]);
-    const compMap = new Map<string, { monthly_salary: number; salary_review_due: string | null }>();
-    for (const row of (comp.data as any[]) ?? []) {
-      compMap.set(row.worker_id, { monthly_salary: Number(row.monthly_salary) || 0, salary_review_due: row.salary_review_due });
-    }
     const merged: Worker[] = ((w.data as any[]) ?? []).map((row) => ({
       ...row,
-      monthly_salary: compMap.get(row.id)?.monthly_salary ?? 0,
-      salary_review_due: compMap.get(row.id)?.salary_review_due ?? "",
+      monthly_salary: 0,
+      salary_review_due: "",
     }));
     setWorkers(merged);
     setLoading(false);
@@ -77,17 +72,13 @@ export function LabourRegisterTab() {
 
   useEffect(() => { if (canView) fetchAll(); }, [fetchAll, canView]);
 
-  const reviewsDueSoon = useMemo(
-    () => workers.filter(w => w.status === "active" && w.salary_review_due && differenceInDays(parseISO(w.salary_review_due), new Date()) <= 30 && differenceInDays(parseISO(w.salary_review_due), new Date()) >= 0).length,
-    [workers]
-  );
+  const reviewsDueSoon = 0;
 
   const loadHistory = async (w: Worker) => {
     setHistoryOpen(w);
-    const { data } = await supabase.from("labour_worker_rate_history")
-      .select("*").eq("worker_id", w.id).order("effective_from", { ascending: false });
-    setHistory(data ?? []);
+    setHistory([]);
   };
+
 
   if (!canView) {
     return (
