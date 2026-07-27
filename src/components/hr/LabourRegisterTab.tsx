@@ -284,10 +284,6 @@ function AddWorkerDialog({ open, onOpenChange, contractors, defaultDepartment, o
         notes: form.notes.trim() || null,
       }).select("id").single();
       if (error) throw error;
-      const { error: compErr } = await (supabase as any).from("labour_worker_compensation").insert({
-        worker_id: inserted.id, monthly_salary: monthly, salary_review_due: reviewDue,
-      });
-      if (compErr) throw compErr;
       toast.success("Worker added");
       onOpenChange(false); onSaved();
       setForm({ name: "", skill_type: "", skill_other: "", department: defaultDepartment, contractor_id: "", new_contractor_name: "", new_contractor_contact: "", new_contractor_phone: "", monthly_salary: "", date_joined: format(new Date(), "yyyy-MM-dd"), notes: "" });
