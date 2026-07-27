@@ -20,7 +20,7 @@ export default function Attendance() {
           My HR
         </h1>
         <p className="text-sm mt-1" style={{ color: "#666" }}>
-          Your personal attendance, leave, expenses, payslips and documents.
+          Your personal attendance, leave, expenses and documents.
         </p>
       </div>
 
@@ -30,7 +30,6 @@ export default function Attendance() {
             <TabsTrigger value="attendance" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Attendance</TabsTrigger>
             <TabsTrigger value="leave" className="gap-1.5"><Plane className="h-4 w-4" /> Leave</TabsTrigger>
             <TabsTrigger value="expenses" className="gap-1.5"><Receipt className="h-4 w-4" /> Expenses</TabsTrigger>
-            <TabsTrigger value="payslips" className="gap-1.5"><Wallet className="h-4 w-4" /> Payslips</TabsTrigger>
             <TabsTrigger value="documents" className="gap-1.5"><FileBadge className="h-4 w-4" /> Documents</TabsTrigger>
             <TabsTrigger value="kpis" className="gap-1.5"><BarChart3 className="h-4 w-4" /> My KPIs</TabsTrigger>
           </TabsList>
@@ -39,7 +38,6 @@ export default function Attendance() {
         <TabsContent value="attendance" className="mt-4"><MyAttendanceTab userRole={role} /></TabsContent>
         <TabsContent value="leave" className="mt-4"><MyLeaveTab /></TabsContent>
         <TabsContent value="expenses" className="mt-4"><MyExpenses /></TabsContent>
-        <TabsContent value="payslips" className="mt-4"><MyPayslipsTab /></TabsContent>
         <TabsContent value="documents" className="mt-4"><MyDocumentsTab /></TabsContent>
         <TabsContent value="kpis" className="mt-4"><MyKpisTab /></TabsContent>
       </Tabs>
