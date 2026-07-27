@@ -8,6 +8,7 @@ import {
   Compass, Calendar,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { readableTextColor } from "@/lib/contrast";
 
 interface KPI {
   label: string;
@@ -260,8 +261,8 @@ export function Tier1Dashboard({ today, firstName }: { today: string; firstName?
                         const pct = (count / total) * 100;
                         return (
                           <div key={stage} title={`${stage}: ${count}`}
-                            className="flex items-center justify-center text-[9px] font-semibold text-white"
-                            style={{ width: `${pct}%`, backgroundColor: stageColors[si], minWidth: count > 0 ? 16 : 0 }}
+                            className="flex items-center justify-center text-[9px] font-semibold"
+                            style={{ width: `${pct}%`, backgroundColor: stageColors[si], color: readableTextColor(stageColors[si]), minWidth: count > 0 ? 16 : 0 }}
                           >{pct > 8 ? count : ""}</div>
                         );
                       })}
