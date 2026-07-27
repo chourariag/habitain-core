@@ -139,12 +139,8 @@ function EmployeeDocuments() {
   const { user } = useAuth();
   const [profiles, setProfiles] = useState<any[]>([]);
   const [employee, setEmployee] = useState("");
-  const [docType, setDocType] = useState("payslip");
+  const [docType, setDocType] = useState("pf_statement");
   const [title, setTitle] = useState("");
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [gross, setGross] = useState("");
-  const [deductions, setDeductions] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -162,30 +158,18 @@ function EmployeeDocuments() {
       const { error: upErr } = await supabase.storage.from("hr-docs").upload(path, file);
       if (upErr) throw upErr;
 
-      if (docType === "payslip") {
-        const net = (Number(gross) || 0) - (Number(deductions) || 0);
-        const { error } = await supabase.from("payslips").insert({
-          user_id: employee, month, year,
-          gross_amount: Number(gross) || 0,
-          deductions: Number(deductions) || 0,
-          net_pay: net,
-          pdf_url: path,
-          uploaded_by: user?.id,
-        });
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("hr_documents").insert({
-          user_id: employee,
-          doc_type: docType,
-          title: title || file.name,
-          pdf_url: path,
-          issued_on: format(new Date(), "yyyy-MM-dd"),
-          uploaded_by: user?.id,
-        });
-        if (error) throw error;
-      }
+      const { error } = await supabase.from("hr_documents").insert({
+        user_id: employee,
+        doc_type: docType,
+        title: title || file.name,
+        pdf_url: path,
+        issued_on: format(new Date(), "yyyy-MM-dd"),
+        uploaded_by: user?.id,
+      });
+      if (error) throw error;
+
       toast.success("Uploaded ✓");
-      setTitle(""); setGross(""); setDeductions("");
+      setTitle("");
       if (fileRef.current) fileRef.current.value = "";
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
@@ -203,7 +187,6 @@ function EmployeeDocuments() {
         <Select value={docType} onValueChange={setDocType}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="payslip">Payslip</SelectItem>
             <SelectItem value="pf_statement">PF Statement</SelectItem>
             <SelectItem value="form_16">Form 16</SelectItem>
             <SelectItem value="offer_letter">Offer Letter</SelectItem>
@@ -211,20 +194,7 @@ function EmployeeDocuments() {
             <SelectItem value="other">Other</SelectItem>
           </SelectContent>
         </Select>
-        {docType === "payslip" ? (
-          <>
-            <div className="flex gap-2">
-              <Input type="number" placeholder="Month (1-12)" value={month} onChange={e => setMonth(Number(e.target.value))} />
-              <Input type="number" placeholder="Year" value={year} onChange={e => setYear(Number(e.target.value))} />
-            </div>
-            <div className="flex gap-2">
-              <Input type="number" placeholder="Gross ₹" value={gross} onChange={e => setGross(e.target.value)} />
-              <Input type="number" placeholder="Deductions ₹" value={deductions} onChange={e => setDeductions(e.target.value)} />
-            </div>
-          </>
-        ) : (
-          <Input placeholder="Document title" value={title} onChange={e => setTitle(e.target.value)} className="md:col-span-2" />
-        )}
+        <Input placeholder="Document title" value={title} onChange={e => setTitle(e.target.value)} className="md:col-span-2" />
       </div>
       <input ref={fileRef} type="file" accept=".pdf,.jpg,.png" className="hidden" onChange={handleUpload} />
       <Button disabled={uploading || !employee} onClick={() => fileRef.current?.click()} className="text-white gap-2" style={{ backgroundColor: "#006039" }}>
@@ -233,6 +203,7 @@ function EmployeeDocuments() {
     </div>
   );
 }
+
 
 export default function AdminHR() {
   const [tab, setTab] = useState("attendance");
