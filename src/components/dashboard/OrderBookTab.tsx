@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight, Plus, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
+import { readableTextColor } from "@/lib/contrast";
 
 const EDIT_ROLES = ["super_admin","managing_director","finance_director","sales_director","architecture_director","planning_head"];
 
