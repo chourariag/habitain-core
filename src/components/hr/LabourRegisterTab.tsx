@@ -337,17 +337,8 @@ function AddWorkerDialog({ open, onOpenChange, contractors, defaultDepartment, o
             </div>
           )}
           <div>
-            <Label>Monthly Salary ₹ *</Label>
-            <Input type="number" value={form.monthly_salary} onChange={(e) => setForm({ ...form, monthly_salary: e.target.value })} />
-            {monthly > 0 && (
-              <div className="text-xs text-muted-foreground mt-1">
-                Daily: ₹{Math.round(daily).toLocaleString()} · OT/hr: ₹{Math.round(ot).toLocaleString()}
-              </div>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div><Label>Date Joined *</Label><Input type="date" value={form.date_joined} onChange={(e) => setForm({ ...form, date_joined: e.target.value })} /></div>
-            <div><Label>Salary Review Due</Label><Input type="date" value={reviewDue} disabled /></div>
+            <Label>Date Joined *</Label>
+            <Input type="date" value={form.date_joined} onChange={(e) => setForm({ ...form, date_joined: e.target.value })} />
           </div>
           <div><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
         </div>
