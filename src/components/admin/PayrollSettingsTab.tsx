@@ -55,7 +55,7 @@ export function PayrollSettingsTab() {
     setLoading(true);
     const [empRes, cfgRes] = await Promise.all([
       (supabase.rpc as any)("get_active_profiles_directory"),
-      (supabase.from("payroll_config") as any).select("*").eq("is_archived", false),
+      (supabase as any).from("payroll_config").select("*").eq("is_archived", false),
     ]);
     setEmployees((empRes.data ?? []) as Employee[]);
     const map: Record<string, Cfg> = {};
@@ -92,7 +92,7 @@ export function PayrollSettingsTab() {
       doj: cfg.doj || null,
       effective_from: new Date().toISOString().slice(0, 10),
     };
-    const { error } = await (supabase.from("payroll_config") as any)
+    const { error } = await (supabase as any).from("payroll_config")
       .upsert(payload, { onConflict: "user_id" });
     setSavingId(null);
     if (error) { toast.error(error.message); return; }
