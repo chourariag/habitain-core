@@ -14194,6 +14194,14 @@ export type Database = {
       }
       required_gfc_for_stage: { Args: { _stage: string }; Returns: string }
       site_schedule_dispatch_reminders: { Args: never; Returns: number }
+      storage_object_project_allowed: {
+        Args: { _object_name: string; _uid: string }
+        Returns: boolean
+      }
+      user_can_access_project: {
+        Args: { _project_id: string; _uid: string }
+        Returns: boolean
+      }
       user_has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
