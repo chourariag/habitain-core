@@ -4758,76 +4758,6 @@ export type Database = {
           },
         ]
       }
-      labour_worker_compensation: {
-        Row: {
-          created_at: string
-          monthly_salary: number
-          salary_review_due: string | null
-          updated_at: string
-          worker_id: string
-        }
-        Insert: {
-          created_at?: string
-          monthly_salary?: number
-          salary_review_due?: string | null
-          updated_at?: string
-          worker_id: string
-        }
-        Update: {
-          created_at?: string
-          monthly_salary?: number
-          salary_review_due?: string | null
-          updated_at?: string
-          worker_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "labour_worker_compensation_worker_id_fkey"
-            columns: ["worker_id"]
-            isOneToOne: true
-            referencedRelation: "labour_workers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      labour_worker_rate_history: {
-        Row: {
-          changed_by: string | null
-          created_at: string
-          effective_from: string
-          effective_to: string | null
-          id: string
-          monthly_salary: number
-          worker_id: string
-        }
-        Insert: {
-          changed_by?: string | null
-          created_at?: string
-          effective_from: string
-          effective_to?: string | null
-          id?: string
-          monthly_salary: number
-          worker_id: string
-        }
-        Update: {
-          changed_by?: string | null
-          created_at?: string
-          effective_from?: string
-          effective_to?: string | null
-          id?: string
-          monthly_salary?: number
-          worker_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "labour_worker_rate_history_worker_id_fkey"
-            columns: ["worker_id"]
-            isOneToOne: false
-            referencedRelation: "labour_workers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       labour_workers: {
         Row: {
           contractor_id: string | null
@@ -6517,180 +6447,6 @@ export type Database = {
           submitted_at?: string | null
           submitted_by?: string
           updated_at?: string | null
-        }
-        Relationships: []
-      }
-      payroll_config: {
-        Row: {
-          bank_account: string | null
-          bank_name: string | null
-          basic_pct: number
-          conveyance_allowance: number
-          created_at: string
-          created_by: string | null
-          department: string | null
-          designation: string | null
-          doj: string | null
-          effective_from: string
-          hra_pct: number
-          id: string
-          ifsc: string | null
-          is_archived: boolean
-          monthly_ctc: number
-          pan: string | null
-          pf_number: string | null
-          pt_amount: number
-          tds_monthly: number
-          updated_at: string
-          updated_by: string | null
-          user_id: string
-        }
-        Insert: {
-          bank_account?: string | null
-          bank_name?: string | null
-          basic_pct?: number
-          conveyance_allowance?: number
-          created_at?: string
-          created_by?: string | null
-          department?: string | null
-          designation?: string | null
-          doj?: string | null
-          effective_from?: string
-          hra_pct?: number
-          id?: string
-          ifsc?: string | null
-          is_archived?: boolean
-          monthly_ctc?: number
-          pan?: string | null
-          pf_number?: string | null
-          pt_amount?: number
-          tds_monthly?: number
-          updated_at?: string
-          updated_by?: string | null
-          user_id: string
-        }
-        Update: {
-          bank_account?: string | null
-          bank_name?: string | null
-          basic_pct?: number
-          conveyance_allowance?: number
-          created_at?: string
-          created_by?: string | null
-          department?: string | null
-          designation?: string | null
-          doj?: string | null
-          effective_from?: string
-          hra_pct?: number
-          id?: string
-          ifsc?: string | null
-          is_archived?: boolean
-          monthly_ctc?: number
-          pan?: string | null
-          pf_number?: string | null
-          pt_amount?: number
-          tds_monthly?: number
-          updated_at?: string
-          updated_by?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      payslips: {
-        Row: {
-          basic: number
-          conveyance_allowance: number
-          created_at: string
-          days_absent: number | null
-          days_in_month: number | null
-          days_present: number | null
-          days_worked: number | null
-          deductions: number
-          generated_at: string | null
-          generated_by: string | null
-          gross_amount: number
-          hra: number
-          id: string
-          leave_taken: number | null
-          lop_days: number | null
-          month: number
-          net_pay: number
-          notes: string | null
-          pdf_url: string | null
-          pf_deduction: number
-          pt_deduction: number
-          revision: number
-          special_allowance: number
-          superseded_at: string | null
-          superseded_by: string | null
-          tds_deduction: number
-          updated_at: string
-          uploaded_by: string | null
-          user_id: string
-          year: number
-        }
-        Insert: {
-          basic?: number
-          conveyance_allowance?: number
-          created_at?: string
-          days_absent?: number | null
-          days_in_month?: number | null
-          days_present?: number | null
-          days_worked?: number | null
-          deductions?: number
-          generated_at?: string | null
-          generated_by?: string | null
-          gross_amount?: number
-          hra?: number
-          id?: string
-          leave_taken?: number | null
-          lop_days?: number | null
-          month: number
-          net_pay?: number
-          notes?: string | null
-          pdf_url?: string | null
-          pf_deduction?: number
-          pt_deduction?: number
-          revision?: number
-          special_allowance?: number
-          superseded_at?: string | null
-          superseded_by?: string | null
-          tds_deduction?: number
-          updated_at?: string
-          uploaded_by?: string | null
-          user_id: string
-          year: number
-        }
-        Update: {
-          basic?: number
-          conveyance_allowance?: number
-          created_at?: string
-          days_absent?: number | null
-          days_in_month?: number | null
-          days_present?: number | null
-          days_worked?: number | null
-          deductions?: number
-          generated_at?: string | null
-          generated_by?: string | null
-          gross_amount?: number
-          hra?: number
-          id?: string
-          leave_taken?: number | null
-          lop_days?: number | null
-          month?: number
-          net_pay?: number
-          notes?: string | null
-          pdf_url?: string | null
-          pf_deduction?: number
-          pt_deduction?: number
-          revision?: number
-          special_allowance?: number
-          superseded_at?: string | null
-          superseded_by?: string | null
-          tds_deduction?: number
-          updated_at?: string
-          uploaded_by?: string | null
-          user_id?: string
-          year?: number
         }
         Relationships: []
       }
@@ -13954,15 +13710,10 @@ export type Database = {
         Returns: undefined
       }
       boq_cumulative_qty: { Args: { _boq_item_id: string }; Returns: number }
-      can_access_labour_compensation: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
       can_access_labour_register: {
         Args: { _user_id: string }
         Returns: boolean
       }
-      can_access_labour_salary: { Args: { _user_id: string }; Returns: boolean }
       can_access_subcontractors: {
         Args: { _user_id: string }
         Returns: boolean
@@ -14152,32 +13903,7 @@ export type Database = {
         }[]
       }
       get_handover_readiness: { Args: { _project_id: string }; Returns: Json }
-      get_labour_avg_daily_rate_by_skill: {
-        Args: never
-        Returns: {
-          avg_daily_rate: number
-          skill_type: string
-        }[]
-      }
       get_labour_rate_for_trade: { Args: { _trade: string }; Returns: number }
-      get_labour_worker_rate_history: {
-        Args: { _worker_id: string }
-        Returns: {
-          changed_by: string | null
-          created_at: string
-          effective_from: string
-          effective_to: string | null
-          id: string
-          monthly_salary: number
-          worker_id: string
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "labour_worker_rate_history"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
       get_labour_workers_full: {
         Args: never
         Returns: {
@@ -14468,6 +14194,14 @@ export type Database = {
       }
       required_gfc_for_stage: { Args: { _stage: string }; Returns: string }
       site_schedule_dispatch_reminders: { Args: never; Returns: number }
+      storage_object_project_allowed: {
+        Args: { _object_name: string; _uid: string }
+        Returns: boolean
+      }
+      user_can_access_project: {
+        Args: { _project_id: string; _uid: string }
+        Returns: boolean
+      }
       user_has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
