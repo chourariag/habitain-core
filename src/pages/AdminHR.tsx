@@ -166,7 +166,7 @@ function EmployeeDocuments() {
 
       if (docType === "payslip") {
         const net = (Number(gross) || 0) - (Number(deductions) || 0);
-        const { error } = await supabase.from("payslips").insert({
+        const { error } = await (supabase as any).from("payslips").insert({
           user_id: employee, month, year,
           gross_amount: Number(gross) || 0,
           deductions: Number(deductions) || 0,

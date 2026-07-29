@@ -16,7 +16,7 @@ export function MyPayslipsTab() {
     if (!user) return;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("payslips")
         .select("*")
         .eq("user_id", user.id)

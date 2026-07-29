@@ -91,9 +91,9 @@ export function PayrollGenerateTab() {
   async function load() {
     setLoading(true);
     const [psRes, profRes, cfgRes] = await Promise.all([
-      supabase.from("payslips").select("*").eq("month", month).eq("year", year).order("revision", { ascending: false }),
+      (supabase as any).from("payslips").select("*").eq("month", month).eq("year", year).order("revision", { ascending: false }),
       (supabase.rpc as any)("get_active_profiles_directory"),
-      (supabase.from("payroll_config") as any).select("*").eq("is_archived", false),
+      (supabase as any).from("payroll_config").select("*").eq("is_archived", false),
     ]);
     setSlips(psRes.data ?? []);
     setConfigs(cfgRes.data ?? []);
@@ -114,7 +114,7 @@ export function PayrollGenerateTab() {
     const att = await fetchAttendance(cfg.user_id, month, year);
 
     // Check existing active payslip — if exists, archive & bump revision
-    const { data: existing } = await supabase.from("payslips")
+    const { data: existing } = await (supabase as any).from("payslips")
       .select("id, revision")
       .eq("user_id", cfg.user_id).eq("month", month).eq("year", year)
       .is("superseded_at", null).maybeSingle();
@@ -149,12 +149,12 @@ export function PayrollGenerateTab() {
 
     // Archive prior active version
     if (existing) {
-      await supabase.from("payslips")
+      await (supabase as any).from("payslips")
         .update({ superseded_at: new Date().toISOString(), superseded_by: currentUser?.id ?? null } as any)
         .eq("id", existing.id);
     }
 
-    const { error } = await supabase.from("payslips").insert({
+    const { error } = await (supabase as any).from("payslips").insert({
       user_id: cfg.user_id,
       month, year,
       basic: b.basic, hra: b.hra,

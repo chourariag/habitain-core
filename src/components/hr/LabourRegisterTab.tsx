@@ -84,7 +84,7 @@ export function LabourRegisterTab() {
 
   const loadHistory = async (w: Worker) => {
     setHistoryOpen(w);
-    const { data } = await supabase.from("labour_worker_rate_history")
+    const { data } = await (supabase as any).from("labour_worker_rate_history")
       .select("*").eq("worker_id", w.id).order("effective_from", { ascending: false });
     setHistory(data ?? []);
   };
