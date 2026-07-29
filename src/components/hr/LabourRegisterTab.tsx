@@ -56,15 +56,20 @@ export function LabourRegisterTab() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [c, w] = await Promise.all([
+    const [c, w, comp] = await Promise.all([
       supabase.from("labour_contractors").select("*").order("company_name"),
       supabase.from("labour_workers").select("*").order("name"),
+      (supabase as any).from("labour_worker_compensation").select("worker_id, monthly_salary, salary_review_due"),
     ]);
     setContractors((c.data ?? []) as Contractor[]);
+    const compMap = new Map<string, { monthly_salary: number; salary_review_due: string | null }>();
+    for (const row of (comp.data as any[]) ?? []) {
+      compMap.set(row.worker_id, { monthly_salary: Number(row.monthly_salary) || 0, salary_review_due: row.salary_review_due });
+    }
     const merged: Worker[] = ((w.data as any[]) ?? []).map((row) => ({
       ...row,
-      monthly_salary: 0,
-      salary_review_due: "",
+      monthly_salary: compMap.get(row.id)?.monthly_salary ?? 0,
+      salary_review_due: compMap.get(row.id)?.salary_review_due ?? "",
     }));
     setWorkers(merged);
     setLoading(false);
@@ -72,13 +77,17 @@ export function LabourRegisterTab() {
 
   useEffect(() => { if (canView) fetchAll(); }, [fetchAll, canView]);
 
-  const reviewsDueSoon = 0;
+  const reviewsDueSoon = useMemo(
+    () => workers.filter(w => w.status === "active" && w.salary_review_due && differenceInDays(parseISO(w.salary_review_due), new Date()) <= 30 && differenceInDays(parseISO(w.salary_review_due), new Date()) >= 0).length,
+    [workers]
+  );
 
   const loadHistory = async (w: Worker) => {
     setHistoryOpen(w);
-    setHistory([]);
+    const { data } = await supabase.from("labour_worker_rate_history")
+      .select("*").eq("worker_id", w.id).order("effective_from", { ascending: false });
+    setHistory(data ?? []);
   };
-
 
   if (!canView) {
     return (
@@ -260,7 +269,7 @@ function AddWorkerDialog({ open, onOpenChange, contractors, defaultDepartment, o
 
   const save = async () => {
     const skill = form.skill_type === "Other" ? form.skill_other.trim() : form.skill_type;
-    if (!form.name.trim() || !skill || !form.department || !form.date_joined) {
+    if (!form.name.trim() || !skill || !form.department || !monthly || !form.date_joined) {
       toast.error("Please fill required fields"); return;
     }
     setSaving(true);
@@ -284,6 +293,10 @@ function AddWorkerDialog({ open, onOpenChange, contractors, defaultDepartment, o
         notes: form.notes.trim() || null,
       }).select("id").single();
       if (error) throw error;
+      const { error: compErr } = await (supabase as any).from("labour_worker_compensation").insert({
+        worker_id: inserted.id, monthly_salary: monthly, salary_review_due: reviewDue,
+      });
+      if (compErr) throw compErr;
       toast.success("Worker added");
       onOpenChange(false); onSaved();
       setForm({ name: "", skill_type: "", skill_other: "", department: defaultDepartment, contractor_id: "", new_contractor_name: "", new_contractor_contact: "", new_contractor_phone: "", monthly_salary: "", date_joined: format(new Date(), "yyyy-MM-dd"), notes: "" });
@@ -337,8 +350,17 @@ function AddWorkerDialog({ open, onOpenChange, contractors, defaultDepartment, o
             </div>
           )}
           <div>
-            <Label>Date Joined *</Label>
-            <Input type="date" value={form.date_joined} onChange={(e) => setForm({ ...form, date_joined: e.target.value })} />
+            <Label>Monthly Salary ₹ *</Label>
+            <Input type="number" value={form.monthly_salary} onChange={(e) => setForm({ ...form, monthly_salary: e.target.value })} />
+            {monthly > 0 && (
+              <div className="text-xs text-muted-foreground mt-1">
+                Daily: ₹{Math.round(daily).toLocaleString()} · OT/hr: ₹{Math.round(ot).toLocaleString()}
+              </div>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><Label>Date Joined *</Label><Input type="date" value={form.date_joined} onChange={(e) => setForm({ ...form, date_joined: e.target.value })} /></div>
+            <div><Label>Salary Review Due</Label><Input type="date" value={reviewDue} disabled /></div>
           </div>
           <div><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
         </div>
@@ -372,6 +394,10 @@ function EditWorkerDialog({ worker, contractors, onOpenChange, onSaved }: any) {
         notes: form.notes.trim() || null,
       }).eq("id", worker.id);
       if (error) throw error;
+      const { error: compErr } = await (supabase as any).from("labour_worker_compensation").upsert({
+        worker_id: worker.id, monthly_salary: monthly, salary_review_due: form.salary_review_due || null,
+      }, { onConflict: "worker_id" });
+      if (compErr) throw compErr;
       toast.success("Worker updated");
       onSaved();
     } catch (e: any) { toast.error(e.message); } finally { setSaving(false); }
@@ -411,8 +437,16 @@ function EditWorkerDialog({ worker, contractors, onOpenChange, onSaved }: any) {
             </Select>
           </div>
           <div>
-            <Label>Date Joined</Label>
-            <Input type="date" value={form.date_joined} onChange={(e) => setForm({ ...form, date_joined: e.target.value })} />
+            <Label>Monthly Salary ₹</Label>
+            <Input type="number" value={form.monthly_salary} onChange={(e) => setForm({ ...form, monthly_salary: e.target.value })} />
+            <div className="text-xs text-muted-foreground mt-1">
+              Daily: ₹{Math.round(daily).toLocaleString()} · OT/hr: ₹{Math.round(ot).toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">Changing salary will reset Salary Review Due to 12 months from today and snapshot a new rate history entry.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><Label>Date Joined</Label><Input type="date" value={form.date_joined} onChange={(e) => setForm({ ...form, date_joined: e.target.value })} /></div>
+            <div><Label>Salary Review Due</Label><Input type="date" value={form.salary_review_due} onChange={(e) => setForm({ ...form, salary_review_due: e.target.value })} /></div>
           </div>
           <div><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
         </div>

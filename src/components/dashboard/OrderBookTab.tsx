@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight, Plus, Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
-import { readableTextColor } from "@/lib/contrast";
 
 const EDIT_ROLES = ["super_admin","managing_director","finance_director","sales_director","architecture_director","planning_head"];
 
@@ -364,8 +363,8 @@ export function OrderBookTab({ projects }: { projects: { id: string; name: strin
                       return (
                         <div key={i} className="h-6 relative">
                           {inRange && isStart && (
-                            <div className="absolute inset-y-1 rounded text-[10px] flex items-center justify-center font-semibold px-1"
-                              style={{ backgroundColor: color, color: readableTextColor(color), left: 2, right: `calc(${(last - first) * -100}% - 4px)`, width: `calc(${(last - first + 1) * 100}% - 4px)` }}>
+                            <div className="absolute inset-y-1 rounded text-[10px] text-white flex items-center justify-center font-semibold px-1"
+                              style={{ backgroundColor: color, left: 2, right: `calc(${(last - first) * -100}% - 4px)`, width: `calc(${(last - first + 1) * 100}% - 4px)` }}>
                               {r.status}
                             </div>
                           )}

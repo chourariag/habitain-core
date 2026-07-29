@@ -1,0 +1,97 @@
+// Daily cron: notify Azad/Awaiz + HR (Mary) about workers whose salary review
+// is due within 30 days. Fires once per worker per cycle (uses notifications table).
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+  );
+
+  try {
+    const today = new Date();
+    const in30 = new Date(today);
+    in30.setDate(in30.getDate() + 30);
+    const in30Str = in30.toISOString().slice(0, 10);
+    const todayStr = today.toISOString().slice(0, 10);
+
+    // Workers due within 30 days (or overdue) and still active
+    const { data: comps, error } = await supabase
+      .from("labour_worker_compensation")
+      .select("worker_id, monthly_salary, salary_review_due, labour_workers!inner(id, name, skill_type, date_joined, department, contractor_id, status, labour_contractors(company_name))")
+      .lte("salary_review_due", in30Str)
+      .eq("labour_workers.status", "active");
+
+    if (error) throw error;
+
+    // Recipients
+    const { data: recipients } = await supabase
+      .from("profiles")
+      .select("auth_user_id, role")
+      .in("role", ["production_head", "site_installation_mgr", "hr_executive", "managing_director", "super_admin"])
+      .eq("is_active", true);
+
+    let queued = 0;
+    for (const c of comps ?? []) {
+      const w: any = (c as any).labour_workers;
+      const company = w?.labour_contractors?.company_name ?? "—";
+      const dueStr = (c as any).salary_review_due;
+      const overdue = dueStr < todayStr;
+      const title = overdue
+        ? `Overdue: salary review for ${w?.name}`
+        : `Salary review due in 30 days — ${w?.name}`;
+      const body = `${w?.name} (${w?.skill_type}, ${company}). Current salary: ₹${Number((c as any).monthly_salary).toLocaleString("en-IN")}/month. Joined: ${w?.date_joined}. Review by ${dueStr}.`;
+
+      // Filter by department: production_head -> Factory, site_installation_mgr -> Site
+      const dept = (w as any).department as string;
+      const targets = (recipients ?? []).filter((r) => {
+        if (r.role === "hr_executive" || r.role === "managing_director" || r.role === "super_admin") return true;
+        if (r.role === "production_head") return dept === "Factory" || dept === "Both";
+        if (r.role === "site_installation_mgr") return dept === "Site" || dept === "Both";
+        return false;
+      });
+
+      for (const t of targets) {
+        const { data: existing } = await supabase
+          .from("notifications")
+          .select("id")
+          .eq("recipient_id", t.auth_user_id)
+          .eq("related_table", "labour_workers")
+          .eq("related_id", w.id)
+          .gte("created_at", todayStr)
+          .maybeSingle();
+        if (existing) continue;
+
+        const { error: insErr } = await supabase.from("notifications").insert({
+          recipient_id: t.auth_user_id,
+          title,
+          body,
+          content: body,
+          type: overdue ? "warning" : "info",
+          category: "hr",
+          related_table: "labour_workers",
+          related_id: w.id,
+          navigate_to: "/attendance?tab=labour-register",
+        });
+        if (!insErr) queued++;
+      }
+    }
+
+    return new Response(JSON.stringify({ ok: true, workers_due: comps?.length ?? 0, notifications_queued: queued }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return new Response(JSON.stringify({ error: msg }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+});
