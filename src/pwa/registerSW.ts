@@ -5,6 +5,12 @@
 
 const SW_URL = "/sw.js";
 
+let registration: ServiceWorkerRegistration | null = null;
+
+export function getRegistration() {
+  return registration;
+}
+
 function isRefusedContext(): boolean {
   if (typeof window === "undefined") return true;
   if (!import.meta.env.PROD) return true;
@@ -46,8 +52,13 @@ export function registerServiceWorker() {
   }
 
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register(SW_URL).catch(() => {
-      /* swallow */
-    });
+    navigator.serviceWorker
+      .register(SW_URL)
+      .then((reg) => {
+        registration = reg;
+      })
+      .catch(() => {
+        /* swallow */
+      });
   });
 }
