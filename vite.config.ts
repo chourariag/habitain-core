@@ -1,11 +1,34 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
+const APP_VERSION = new Date().toISOString();
+
+// Emits /version.json at build time and serves it in dev.
+function versionFilePlugin(): Plugin {
+  const body = JSON.stringify({ version: APP_VERSION });
+  return {
+    name: "hstack-version-file",
+    configureServer(server) {
+      server.middlewares.use("/version.json", (_req, res) => {
+        res.setHeader("Content-Type", "application/json");
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.end(body);
+      });
+    },
+    generateBundle() {
+      this.emitFile({ type: "asset", fileName: "version.json", source: body });
+    },
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  define: {
+    __APP_VERSION__: JSON.stringify(APP_VERSION),
+  },
   server: {
     host: "::",
     port: 8080,
@@ -16,8 +39,9 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
+    versionFilePlugin(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       injectRegister: null,
       filename: "sw.js",
       devOptions: { enabled: false },
