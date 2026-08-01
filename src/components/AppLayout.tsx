@@ -9,11 +9,13 @@ import { ConnectionIndicator } from "./ConnectionIndicator";
 import { NotificationBell } from "./notifications/NotificationBell";
 import { TestingModeBanner } from "./TestingModeBanner";
 import { InstallAppBanner } from "./InstallAppBanner";
+import { UpdateBanner } from "./UpdateBanner";
 
 export function AppLayout() {
   return (
     <ProjectProvider>
       <div className="flex flex-col h-screen bg-background overflow-x-hidden max-w-[100vw]">
+        <UpdateBanner />
         <InstallAppBanner />
         <OfflineBanner />
         <TestingModeBanner />

@@ -193,6 +193,10 @@ export default function AppSettings() {
           <p className="text-sm" style={{ color: "#999" }}>Settings are managed by administrators.</p>
         </div>
       )}
+
+      <p className="pt-2 text-center text-xs" style={{ color: "#999" }}>
+        HStack build {APP_VERSION}
+      </p>
     </div>
   );
 }

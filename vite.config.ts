@@ -63,9 +63,12 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
+        clientsClaim: true,
+        skipWaiting: false,
         navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/~oauth/, /^\/auth\/callback/],
+        navigateFallbackDenylist: [/^\/~oauth/, /^\/auth\/callback/, /^\/version\.json/],
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        globIgnores: ["**/version.json"],
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         runtimeCaching: [
           {
