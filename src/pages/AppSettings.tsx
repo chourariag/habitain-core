@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { MapPin, Loader2, Save, Factory, Building2, HardHat } from "lucide-react";
 import { toast } from "sonner";
+import { APP_VERSION } from "@/pwa/version";
 
 const ADMIN_ROLES = ["super_admin", "managing_director"];
 
