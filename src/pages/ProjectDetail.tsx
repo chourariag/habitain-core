@@ -31,6 +31,8 @@ import { PreProductionChecklist } from "@/components/projects/PreProductionCheck
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { isAdsProject } from "@/lib/project-type";
 import { useProjectContext } from "@/contexts/ProjectContext";
+import { useUserRole } from "@/hooks/useUserRole";
+
 
 const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admin", "managing_director"];
