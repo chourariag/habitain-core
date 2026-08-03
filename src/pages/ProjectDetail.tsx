@@ -213,7 +213,7 @@ export default function ProjectDetail() {
         />
       )}
 
-      <Tabs defaultValue="schedule">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="schedule" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Schedule</TabsTrigger>
