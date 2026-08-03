@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,8 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
   const [stages, setStages] = useState<ProjectStage[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [editing, setEditing] = useState<{ def: StageDef; stage: ProjectStage | null } | null>(null);
+  const [searchParams] = useSearchParams();
+  const focusStage = searchParams.get("stage");
 
   const load = async () => {
     setLoading(true);
@@ -80,6 +83,13 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
     for (const p of profiles) m.set(p.id, p);
     return m;
   }, [profiles]);
+
+  // Deep-link: scroll to and highlight the requested stage row
+  useEffect(() => {
+    if (loading || !focusStage) return;
+    const el = document.getElementById(`stage-row-${focusStage}`);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [loading, focusStage, defs.length]);
 
   const editable = defs.filter(d => !d.is_read_only);
   const completed = editable.filter(d => stageByDef.get(d.id)?.status === "Completed").length;
@@ -135,7 +145,12 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
                     const owner = s?.owner_id ? ownerMap.get(s.owner_id) : null;
                     const skipped = status === "Skipped";
                     return (
-                      <tr key={d.id} className="border-t border-border">
+                      <tr
+                        key={d.id}
+                        id={`stage-row-${d.stage_code}`}
+                        className="border-t border-border"
+                        style={focusStage === d.stage_code ? { backgroundColor: "#E8F2ED", boxShadow: "inset 3px 0 0 #006039" } : undefined}
+                      >
                         <td className={`px-3 py-2 font-mono text-xs ${skipped ? "line-through text-muted-foreground" : ""}`}>
                           {d.stage_code}{d.is_production_gate && <Badge className="ml-1" style={{ backgroundColor: "#006039", color: "#fff", border: "none" }}>Gate</Badge>}
                         </td>
