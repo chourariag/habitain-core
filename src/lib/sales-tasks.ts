@@ -25,8 +25,12 @@ const ACTIVE_PROJECT_EXCLUDE = ["closed", "archived", "cancelled"];
 
 const PORTAL_TOKEN_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "planning_head"];
 
+// Roles that can actually sign / approve on behalf of the sales function.
+const SALES_APPROVER_ROLES = ["sales_director", "managing_director", "super_admin"];
+
 export async function fetchSalesTasks(authUserId: string | null, role?: string | null): Promise<SalesTask[]> {
   const canSeePortalTokens = PORTAL_TOKEN_ROLES.includes(role ?? "");
+  const isApprover = SALES_APPROVER_ROLES.includes(role ?? "");
   const tasks: SalesTask[] = [];
   const today = new Date().toISOString().slice(0, 10);
 
@@ -48,11 +52,16 @@ export async function fetchSalesTasks(authUserId: string | null, role?: string |
       ? db.from("client_portal_tokens").select("id, project_id, is_active, expires_at")
       : Promise.resolve({ data: [] }),
     db.from("project_variations").select("id, project_id, variation_number, status, description"),
-    meIds.length
-      ? db.from("sales_deals").select("id, client_name, stage, assigned_to, next_followup_date, updated_at, is_archived")
-          .in("assigned_to", meIds).eq("is_archived", false)
-      : Promise.resolve({ data: [] }),
+    // A Sales Director owns the whole pipeline, not just deals assigned to them.
+    isApprover
+      ? db.from("sales_deals").select("id, client_name, stage, assigned_to, next_followup_date, updated_at, is_archived, adjustment_type, discount_approved_at")
+          .eq("is_archived", false)
+      : meIds.length
+        ? db.from("sales_deals").select("id, client_name, stage, assigned_to, next_followup_date, updated_at, is_archived, adjustment_type, discount_approved_at")
+            .in("assigned_to", meIds).eq("is_archived", false)
+        : Promise.resolve({ data: [] }),
   ]);
+
 
   const projects = (projRes.data ?? []).filter(
     (p: any) => !ACTIVE_PROJECT_EXCLUDE.includes(String(p.status ?? "").toLowerCase())
