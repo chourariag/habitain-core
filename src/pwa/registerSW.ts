@@ -3,12 +3,25 @@
 // - Supports `?sw=off` kill switch.
 // - Unregisters any matching stale registration in refused contexts.
 
-const SW_URL = "/sw.js";
+export const SW_URL = "/sw.js";
 
 let registration: ServiceWorkerRegistration | null = null;
 
 export function getRegistration() {
   return registration;
+}
+
+// Safari can hand back a stale in-memory handle; always re-resolve from the
+// browser when possible so we act on the live registration.
+export async function resolveRegistration(): Promise<ServiceWorkerRegistration | null> {
+  if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return null;
+  try {
+    const reg = (await navigator.serviceWorker.getRegistration(SW_URL)) ?? registration;
+    if (reg) registration = reg;
+    return reg ?? null;
+  } catch {
+    return registration;
+  }
 }
 
 function isRefusedContext(): boolean {
