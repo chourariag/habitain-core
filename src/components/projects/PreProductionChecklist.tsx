@@ -150,6 +150,9 @@ export function PreProductionChecklist({ projectId, division }: { projectId: str
                 {g.status !== "Completed" && (
                   <span className="text-muted-foreground"> — {g.notes ?? (g.status === "Not Started" ? "Not completed" : g.status)}</span>
                 )}
+                {g.status !== "Completed" && (
+                  <ResponsiblePerson roles={GATE_OWNER_ROLES[g.code]} className="ml-1.5" prefix="· Owner:" />
+                )}
               </span>
             </li>
           ))}
