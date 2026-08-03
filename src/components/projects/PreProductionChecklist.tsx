@@ -34,7 +34,7 @@ export const GATE_OWNER_ROLES: Record<string, string[]> = {
 export const SETUP_GATE_CODES = ["sale_scope", "E-3", "E-5", "E-8"];
 
 type Status = "Not Started" | "In Progress" | "Completed" | "Blocked" | "Skipped";
-type GateInfo = { code: string; label: string; status: Status; notes: string | null; ownerName?: string | null };
+type GateInfo = { code: string; label: string; status: Status; notes: string | null; ownerName?: string | null; ownerId?: string | null };
 
 export async function fetchPreProdGates(projectId: string, pipeline: "habitainer" | "ads" = "habitainer"): Promise<GateInfo[]> {
   const gateList = pipeline === "ads" ? ADS_REQUIRED_GATES : REQUIRED_GATES;
