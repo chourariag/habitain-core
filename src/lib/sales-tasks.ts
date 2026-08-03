@@ -123,13 +123,17 @@ export async function fetchSalesTasks(authUserId: string | null, role?: string |
         urgency: "action", actionable: true });
     }
 
-    // 4 — Variations routed to sales
+    // 4 — Variations routed to sales (approval sits with the Sales Director)
     for (const v of variations.filter((v: any) => v.project_id === p.id && v.status === "Pending Scope Review")) {
-      tasks.push({ ...g, id: `var-${v.id}`, title: `Variation ${v.variation_number} — pending scope review`,
+      tasks.push({ ...g, id: `var-${v.id}`,
+        title: isApprover
+          ? `Approve variation ${v.variation_number} — scope review`
+          : `Variation ${v.variation_number} — pending scope review`,
         detail: v.description ?? undefined, to: `/projects/${p.id}?tab=variations`,
-        urgency: "action", actionable: true, ownerLabel: "Sales Director" });
+        urgency: isApprover ? "action" : "waiting", actionable: isApprover, ownerLabel: "Sales Director" });
     }
   }
+
 
   // 5 — Pipeline tasks (deals assigned to me)
   const wonDealIds = deals.filter((d: any) => d.stage === "Won").map((d: any) => d.id);
