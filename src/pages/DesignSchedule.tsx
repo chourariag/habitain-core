@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useUserRole } from "@/hooks/useUserRole";
 import { format, parseISO, isBefore, startOfToday } from "date-fns";
 import { projectCode } from "@/lib/code-generators";
+import { StageAttachments } from "@/components/projects/StageAttachments";
 import {
   EDIT_ROLES, STAGE_STATUSES, STATUS_STYLES, QUOTATION_STATUSES,
   type DesignStageStatus, type QuotationStatus,
@@ -465,6 +466,7 @@ function EditStageDialog({
             <Label>Notes</Label>
             <Textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} disabled={!canEdit} />
           </div>
+          <StageAttachments projectId={project.id} stageId={stage?.id ?? null} canUpload={canEdit} />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>

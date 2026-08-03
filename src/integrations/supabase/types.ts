@@ -13792,6 +13792,10 @@ export type Database = {
         Args: { _location: string; _user_id: string }
         Returns: boolean
       }
+      can_upload_stage_files: {
+        Args: { _object_name: string; _uid: string }
+        Returns: boolean
+      }
       can_view_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_view_profile_pii: { Args: { _user_id: string }; Returns: boolean }
       can_view_quotations: { Args: { _user_id: string }; Returns: boolean }

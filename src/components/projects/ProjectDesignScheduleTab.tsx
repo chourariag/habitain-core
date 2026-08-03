@@ -16,6 +16,7 @@ import { format, parseISO } from "date-fns";
 import {
   EDIT_ROLES, STAGE_STATUSES, STATUS_STYLES, type DesignStageStatus,
 } from "@/lib/design-schedule";
+import { StageAttachments } from "@/components/projects/StageAttachments";
 
 type StageDef = {
   id: string; stage_code: string; stage_name: string; stage_order: number;
@@ -260,6 +261,7 @@ function EditDialog({ def, stage, projectId, profiles, onClose, onSaved }: {
             </Select>
           </div>
           <div><Label>Notes</Label><Textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} /></div>
+          <StageAttachments projectId={projectId} stageId={stage?.id ?? null} canUpload />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
