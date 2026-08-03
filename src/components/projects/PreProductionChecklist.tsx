@@ -71,7 +71,7 @@ export async function fetchPreProdGates(projectId: string, pipeline: "habitainer
 
   return gateList.map(g => {
     if (g.code === "sale_scope") {
-      return { code: g.code, label: g.label, status: combinedStatus, notes: combinedNote, ownerName: null };
+      return { code: g.code, label: g.label, status: combinedStatus, notes: combinedNote, ownerName: null, ownerId: null };
     }
     const row = byCode.get(g.code);
     return {
@@ -80,6 +80,7 @@ export async function fetchPreProdGates(projectId: string, pipeline: "habitainer
       status: (row?.status ?? "Not Started") as Status,
       notes: row?.notes ?? null,
       ownerName: row?.owner_id ? (ownerNames.get(row.owner_id) || null) : null,
+      ownerId: row?.owner_id ?? null,
     };
   });
 }
