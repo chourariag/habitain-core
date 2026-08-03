@@ -31,6 +31,8 @@ import { PreProductionChecklist } from "@/components/projects/PreProductionCheck
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { isAdsProject } from "@/lib/project-type";
 import { useProjectContext } from "@/contexts/ProjectContext";
+import { useUserRole } from "@/hooks/useUserRole";
+
 
 const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admin", "managing_director"];
@@ -47,10 +49,15 @@ export default function ProjectDetail() {
   const [loading, setLoading] = useState(true);
   const [addModuleOpen, setAddModuleOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [dbRole, setDbRole] = useState<string | null>(null);
   const [hasHandover, setHasHandover] = useState(false);
+  // Honour the MD/Super Admin "View as User" persona so gating matches what that user sees.
+  const { role: effectiveRole } = useUserRole();
+  const userRole = effectiveRole ?? dbRole;
+  const setUserRole = setDbRole;
 
   const canEdit = EDIT_ROLES.includes(userRole ?? "");
+
   const canAdvanceStage = STAGE_ADVANCE_ROLES.includes(userRole ?? "");
   const canRequestArchive = ARCHIVE_REQUEST_ROLES.includes(userRole ?? "");
 

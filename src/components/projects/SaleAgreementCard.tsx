@@ -64,7 +64,6 @@ export function SaleAgreementCard({
       const path = `sale-agreements/${projectId}/${Date.now()}-${file.name}`;
       const { error: upErr } = await supabase.storage.from("design-files").upload(path, file);
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from("design-files").getPublicUrl(path);
       const { data: { user } } = await supabase.auth.getUser();
 
       const payload: any = {
@@ -76,9 +75,11 @@ export function SaleAgreementCard({
         start_date: startDate || null,
         status: "Active",
         scope_of_work_id: scopeId,
-        contract_file_url: pub.publicUrl,
+        // design-files is a private bucket — store the path and open via a signed URL.
+        contract_file_url: path,
         created_by: user?.id ?? null,
       };
+
       const res = contract
         ? await (supabase as any).from("contracts_register").update(payload).eq("id", contract.id)
         : await (supabase as any).from("contracts_register").insert(payload);
@@ -108,7 +109,18 @@ export function SaleAgreementCard({
     setSaving(false);
   };
 
+  const openAgreement = async () => {
+    const ref = contract?.contract_file_url;
+    if (!ref) return;
+    // Legacy rows stored a full URL; new rows store the storage path.
+    if (/^https?:\/\//.test(ref)) { window.open(ref, "_blank", "noopener"); return; }
+    const { data, error } = await supabase.storage.from("design-files").createSignedUrl(ref, 300);
+    if (error || !data?.signedUrl) { toast.error(error?.message || "Could not open the agreement"); return; }
+    window.open(data.signedUrl, "_blank", "noopener");
+  };
+
   if (loading) return <Card><CardContent className="p-4"><Loader2 className="h-4 w-4 animate-spin" /></CardContent></Card>;
+
 
   return (
     <Card style={{ borderColor: contract?.contract_file_url ? "#006039" : (scopeSigned ? "#D4860A" : "#F40009"), borderWidth: 2 }}>
@@ -133,7 +145,7 @@ export function SaleAgreementCard({
         {contract?.contract_file_url ? (
           <div className="text-sm space-y-1">
             <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" style={{ color: "#006039" }} /> Contract <span className="font-mono text-xs">{contract.contract_number}</span> on file.</p>
-            <a href={contract.contract_file_url} target="_blank" rel="noreferrer" className="text-sm underline">View signed agreement</a>
+            <button type="button" onClick={openAgreement} className="text-sm underline text-left">View signed agreement</button>
           </div>
         ) : (
           canEdit && (
