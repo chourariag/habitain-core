@@ -10,7 +10,7 @@ import { AlertTriangle, CheckCircle2, FileText, Loader2, Upload } from "lucide-r
 import { toast } from "sonner";
 import { insertNotifications } from "@/lib/notifications";
 
-const EDIT_ROLES = ["super_admin", "managing_director", "sales_director", "architecture_director", "planning_head", "finance_director"];
+const EDIT_ROLES = ["super_admin", "managing_director", "sales_director", "architecture_director", "planning_head", "finance_director", "sales_executive", "sales_associate"];
 
 export function SaleAgreementCard({
   projectId,

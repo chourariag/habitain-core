@@ -42,7 +42,7 @@ const DEFAULT_EXCLUSIONS = [
   "Labour accommodation", "Water & Electricity on site", "18% GST", "MEP Consultancy (CCTV, Plumbing, Electricals, DG)",
 ];
 
-const DRAFT_EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director", "sales_director", "architecture_director", "sales_executive"];
+const DRAFT_EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director", "sales_director", "architecture_director", "sales_executive", "sales_associate"];
 const SALES_DIRECTOR_ROLES = ["sales_director", "managing_director", "super_admin"];
 const UNLOCK_ROLES = ["managing_director", "super_admin"];
 

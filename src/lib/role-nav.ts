@@ -17,7 +17,7 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
   projects: [
     ...DIRECTORS, "head_operations", "production_head", "site_installation_mgr",
     "finance_manager", "planning_engineer", "costing_engineer", "quantity_surveyor",
-    "planning_head" as AppRole,
+    "planning_head" as AppRole, "sales_executive" as AppRole, "sales_associate" as AppRole,
   ],
   production: [
     ...DIRECTORS, "head_operations", "production_head", "factory_floor_supervisor",
@@ -49,7 +49,7 @@ const SECTION_ROLES: Record<string, AppRole[]> = {
     "delivery_rm_lead", "production_head", "planning_head" as AppRole,
   ],
   finance: [...DIRECTORS, "finance_manager", "accounts_executive"],
-  sales: [...DIRECTORS, "sales_director", "marketing" as AppRole, "sales_executive" as AppRole],
+  sales: [...DIRECTORS, "sales_director", "marketing" as AppRole, "sales_executive" as AppRole, "sales_associate" as AppRole],
   altree: [], // everyone — group header; child items have their own gates
 };
 
@@ -60,6 +60,7 @@ export const PROJECT_SELECTOR_ROLES: AppRole[] = [
   "elec_plumbing_installer", "site_installation_mgr", "site_engineer",
   "delivery_rm_lead", "costing_engineer", "quantity_surveyor", "procurement",
   "purchase_assistant" as AppRole, "assistant_manager" as AppRole, "stores_executive",
+  "sales_executive" as AppRole, "sales_associate" as AppRole,
 ];
 
 // Tier classification for dashboard
