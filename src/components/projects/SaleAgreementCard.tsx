@@ -109,15 +109,33 @@ export function SaleAgreementCard({
     setSaving(false);
   };
 
+  const [opening, setOpening] = useState(false);
+
   const openAgreement = async () => {
     const ref = contract?.contract_file_url;
-    if (!ref) return;
+    if (!ref) { toast.error("No agreement file is linked to this contract."); return; }
     // Legacy rows stored a full URL; new rows store the storage path.
     if (/^https?:\/\//.test(ref)) { window.open(ref, "_blank", "noopener"); return; }
-    const { data, error } = await supabase.storage.from("design-files").createSignedUrl(ref, 300);
-    if (error || !data?.signedUrl) { toast.error(error?.message || "Could not open the agreement"); return; }
-    window.open(data.signedUrl, "_blank", "noopener");
+    // Open the tab synchronously so browsers don't block it after the async signed-URL call.
+    const tab = window.open("", "_blank", "noopener");
+    setOpening(true);
+    try {
+      const { data, error } = await supabase.storage.from("design-files").createSignedUrl(ref, 300);
+      if (error || !data?.signedUrl) {
+        tab?.close();
+        toast.error(error?.message || "You don't have permission to open this agreement.");
+        return;
+      }
+      if (tab) tab.location.href = data.signedUrl;
+      else window.location.href = data.signedUrl; // popup blocked → navigate current tab
+    } catch (e: any) {
+      tab?.close();
+      toast.error(e?.message || "Could not open the agreement");
+    } finally {
+      setOpening(false);
+    }
   };
+
 
   if (loading) return <Card><CardContent className="p-4"><Loader2 className="h-4 w-4 animate-spin" /></CardContent></Card>;
 
