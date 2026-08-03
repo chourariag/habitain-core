@@ -13772,6 +13772,10 @@ export type Database = {
       }
       can_raise_work_order: { Args: { _user_id: string }; Returns: boolean }
       can_read_measurements: { Args: { _user_id: string }; Returns: boolean }
+      can_sales_edit_scope: {
+        Args: { _scope_id: string; _user_id: string }
+        Returns: boolean
+      }
       can_submit_factory_measurement: {
         Args: { _user_id: string }
         Returns: boolean
@@ -14166,6 +14170,7 @@ export type Database = {
         Args: { _employee_auth_id: string; _manager_auth_id: string }
         Returns: boolean
       }
+      is_sales_writer: { Args: { _user_id: string }; Returns: boolean }
       is_tally_ingest_admin: { Args: { _uid: string }; Returns: boolean }
       is_tally_ingest_viewer: { Args: { _uid: string }; Returns: boolean }
       kickoff_meeting_daily_reminders: { Args: never; Returns: undefined }
