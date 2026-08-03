@@ -102,10 +102,22 @@ export function usePreProdGates(projectId: string, pipeline: "habitainer" | "ads
   return { gates, completedCount, total, setupReady, allComplete, loading: gates === null };
 }
 
+const LEADERSHIP_ROLES = ["super_admin", "managing_director"];
+const SCOPE_ROLES = ["sales_director", "sales_executive", "sales_associate"];
+
+// Deep-link for each gate to the exact screen where the work is completed.
+export function gateLink(projectId: string, code: string) {
+  if (code === "sale_scope") return `/projects/${projectId}?tab=scope`;
+  return `/projects/${projectId}?tab=design-schedule&stage=${encodeURIComponent(code)}`;
+}
+
 export function PreProductionChecklist({ projectId, division }: { projectId: string; division?: string | null }) {
   const isAds = isAdsDivision(division);
   const pipeline: "habitainer" | "ads" = isAds ? "ads" : "habitainer";
   const { gates, completedCount, total, allComplete, loading } = usePreProdGates(projectId, pipeline);
+  const { role, userId } = useUserRole();
+  const isLeadership = LEADERSHIP_ROLES.includes(role ?? "");
+  const canActOnScope = isLeadership || SCOPE_ROLES.includes(role ?? "");
   if (loading) {
     return (
       <Card><CardContent className="p-4 flex items-center gap-2 text-sm text-muted-foreground">
