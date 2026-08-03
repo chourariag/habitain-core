@@ -1,3 +1,4 @@
+import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -256,7 +257,9 @@ function RequestCard({
           {req.status === "indent_pending" && (
             <Card style={{ backgroundColor: "#EEF2FF" }}>
               <CardContent className="p-3 text-sm">
-                <p className="font-medium" style={{ color: "#4338CA" }}>Awaiting Costing Engineer approval</p>
+                <p className="font-medium" style={{ color: "#4338CA" }}>
+                  Awaiting Costing Engineer approval <ResponsiblePerson roles={["costing_engineer"]} />
+                </p>
                 <p className="text-muted-foreground text-xs mt-1">
                   Vendor quotes cannot be collected until the indent is approved against the BOQ rate.
                 </p>
@@ -304,7 +307,8 @@ function RequestCard({
                   <ShieldAlert className="h-4 w-4" /> Escalated to Planning Head
                 </p>
                 <p className="text-muted-foreground text-xs">
-                  Completed {MAX_REQUOTE_ROUNDS} re-quote rounds with no acceptable vendor. Awaiting Planning Head's final decision.
+                  Completed {MAX_REQUOTE_ROUNDS} re-quote rounds with no acceptable vendor. Awaiting Planning Head's final decision.{" "}
+                  <ResponsiblePerson roles={["planning_head"]} />
                 </p>
               </CardContent>
             </Card>

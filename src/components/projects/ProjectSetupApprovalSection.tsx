@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, XCircle, Loader2, ShieldCheck } from "lucide-react";
+import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 
 interface Props {
   projectId: string;
@@ -235,7 +236,10 @@ export function ProjectSetupApprovalSection({ projectId, projectName, userRole, 
                 return (
                   <div key={r.key} className="rounded border p-3 space-y-1">
                     <div className="flex items-center justify-between">
-                      <div className="font-medium">{r.label}</div>
+                      <div className="font-medium flex items-center gap-1.5 flex-wrap">
+                        {r.label}
+                        <ResponsiblePerson roles={r.key} />
+                      </div>
                       {a ? statusBadge(a.status) : statusBadge("awaiting")}
                     </div>
                     {a?.approved_at && (

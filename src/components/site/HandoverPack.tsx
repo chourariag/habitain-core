@@ -1,3 +1,4 @@
+import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -202,6 +203,7 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
           <CardTitle className="text-sm flex items-center gap-2 text-primary">
             {isClosed ? <PartyPopper className="h-4 w-4" /> : <Check className="h-4 w-4" />}
             {isClosed ? "Project Closed" : isPending ? "Handover Pack Submitted — Awaiting MD Approval" : "Handed Over"}
+            {isPending && <ResponsiblePerson roles={["managing_director"]} />}
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-3 space-y-2">

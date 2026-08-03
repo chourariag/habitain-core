@@ -1,3 +1,4 @@
+import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -154,7 +155,22 @@ export function WorkOrdersTab({ userRole, projects }: Props) {
                       <TableCell>{r.subcontractor_name}</TableCell>
                       <TableCell className="text-right">{Number(r.estimated_value).toLocaleString("en-IN")}</TableCell>
                       <TableCell>{r.required_start_date ? format(new Date(r.required_start_date), "dd/MM/yyyy") : "—"}</TableCell>
-                      <TableCell><Badge className={STATUS_COLORS[r.status] || ""}>{STATUS_LABELS[r.status] || r.status}</Badge></TableCell>
+                      <TableCell>
+                        <Badge className={STATUS_COLORS[r.status] || ""}>{STATUS_LABELS[r.status] || r.status}</Badge>
+                        {r.status === "pending_costing" && (
+                          <div><ResponsiblePerson roles={["costing_engineer"]} prefix="Owner:" /></div>
+                        )}
+                        {r.status === "pending_approval" && (
+                          <div>
+                            <ResponsiblePerson
+                              roles={Number(r.estimated_value) <= 100000
+                                ? ["planning_head", "head_of_projects"]
+                                : ["managing_director", "finance_director", "principal_architect"]}
+                              prefix="Owner:"
+                            />
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {r.status === "pending_costing" && canCost && (
                           <Button size="sm" variant="outline" onClick={() => { setActionRequest(r); setActionMode("costing"); }}>Review</Button>
