@@ -42,6 +42,13 @@ const PL_VIEW_ROLES = ["super_admin", "managing_director", "finance_director", "
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "schedule";
+  const setActiveTab = (v: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", v);
+    setSearchParams(next, { replace: true });
+  };
   const { setSelectedProjectId } = useProjectContext();
   const [project, setProject] = useState<Tables<"projects"> | null>(null);
   const [modules, setModules] = useState<any[]>([]);
