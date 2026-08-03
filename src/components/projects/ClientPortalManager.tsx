@@ -15,7 +15,7 @@ interface Props {
 
 const MANAGE_ROLES = [
   "super_admin", "managing_director", "finance_director",
-  "sales_director", "planning_head", "site_installation_mgr", "sales_executive", "sales_associate",
+  "sales_director", "planning_head", "site_installation_mgr",
 ];
 
 export function ClientPortalManager({ projectId, userRole }: Props) {

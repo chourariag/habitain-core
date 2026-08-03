@@ -114,7 +114,7 @@ export default function Dashboard() {
         <PlaceholderDashboard title={`My Workspace — ${roleName}`} today={today} tier={3} role={userRole} firstName={firstName} hideTiles={isSalesTaskRole} />
       )}
 
-      {isSalesTaskRole && <SalesTasksCard userId={userId} />}
+      {isSalesTaskRole && <SalesTasksCard userId={userId} userRole={userRole} />}
 
       <SharedDashboardBottom userRole={userRole} hideMyTasks={isSalesTaskRole} />
     </div>

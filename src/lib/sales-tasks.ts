@@ -23,7 +23,10 @@ const db = supabase as any;
 
 const ACTIVE_PROJECT_EXCLUDE = ["closed", "archived", "cancelled"];
 
-export async function fetchSalesTasks(authUserId: string | null): Promise<SalesTask[]> {
+const PORTAL_TOKEN_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "planning_head"];
+
+export async function fetchSalesTasks(authUserId: string | null, role?: string | null): Promise<SalesTask[]> {
+  const canSeePortalTokens = PORTAL_TOKEN_ROLES.includes(role ?? "");
   const tasks: SalesTask[] = [];
   const today = new Date().toISOString().slice(0, 10);
 
@@ -41,7 +44,9 @@ export async function fetchSalesTasks(authUserId: string | null): Promise<SalesT
     db.from("project_scope_of_work").select("id, project_id, status, client_signed_at, sales_director_signed_at"),
     db.from("contracts_register").select("id, project_id, contract_type, contract_file_url, is_archived")
       .eq("contract_type", "Sale Agreement"),
-    db.from("client_portal_tokens").select("id, project_id, is_active, expires_at"),
+    canSeePortalTokens
+      ? db.from("client_portal_tokens").select("id, project_id, is_active, expires_at")
+      : Promise.resolve({ data: [] }),
     db.from("project_variations").select("id, project_id, variation_number, status, description"),
     meIds.length
       ? db.from("sales_deals").select("id, client_name, stage, assigned_to, next_followup_date, updated_at, is_archived")
@@ -99,7 +104,7 @@ export async function fetchSalesTasks(authUserId: string | null): Promise<SalesT
       (t: any) => t.project_id === p.id && t.is_active !== false &&
         (!t.expires_at || new Date(t.expires_at) > new Date())
     );
-    if (!activeToken) {
+    if (canSeePortalTokens && !activeToken) {
       tasks.push({ ...g, id: `portal-${p.id}`, title: "Generate client portal access link",
         detail: "Client has no active portal link", to: `/projects/${p.id}`,
         urgency: "action", actionable: true });

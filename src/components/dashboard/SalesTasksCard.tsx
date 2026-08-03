@@ -10,18 +10,18 @@ const URGENCY_STYLE: Record<SalesTask["urgency"], { color: string; bg: string; I
   waiting: { color: "#666666", bg: "#F0F0F0", Icon: Hourglass, label: "Waiting" },
 };
 
-export function SalesTasksCard({ userId }: { userId: string | null }) {
+export function SalesTasksCard({ userId, userRole }: { userId: string | null; userRole: string | null }) {
   const [tasks, setTasks] = useState<SalesTask[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setTasks(await fetchSalesTasks(userId));
+      setTasks(await fetchSalesTasks(userId, userRole));
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, [userId, userRole]);
 
   useEffect(() => { load(); }, [load]);
 
