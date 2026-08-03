@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { isAdsDivision, ADS_REQUIRED_GATES } from "@/lib/project-type";
+import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 
 // C-3 (Sale Agreement) + C-4 (Scope of Work) are combined into one row: "sale_scope"
 export const REQUIRED_GATES = [
@@ -14,6 +15,19 @@ export const REQUIRED_GATES = [
   { code: "E-8", label: "GFC Budget" },
   { code: "P-1", label: "Handover to Planning" },
 ] as const;
+
+// Role(s) accountable for closing each gate (used for Super Admin / MD visibility only).
+export const GATE_OWNER_ROLES: Record<string, string[]> = {
+  sale_scope: ["sales_director", "sales_executive"],
+  "E-3": ["principal_architect"],
+  "E-5": ["principal_architect"],
+  "E-8": ["costing_engineer"],
+  "P-1": ["planning_head"],
+  "A-1": ["sales_director"],
+  "A-3": ["principal_architect"],
+  "A-10": ["principal_architect"],
+  "A-11": ["principal_architect"],
+};
 
 export const SETUP_GATE_CODES = ["sale_scope", "E-3", "E-5", "E-8"];
 
