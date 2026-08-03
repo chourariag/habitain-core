@@ -137,7 +137,7 @@ export function StageAttachments({
                   <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => openFile(f)} title="View / download">
                     <Download className="h-3.5 w-3.5" />
                   </Button>
-                  {canUpload && (f.uploaded_by === profileId || true) && (
+                  {canUpload && (
                     <Button size="icon" variant="ghost" className="h-6 w-6" disabled={busy} onClick={() => removeFile(f)} title="Remove">
                       <Trash2 className="h-3.5 w-3.5" style={{ color: "#F40009" }} />
                     </Button>
