@@ -465,6 +465,7 @@ function EditStageDialog({
             <Label>Notes</Label>
             <Textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} disabled={!canEdit} />
           </div>
+          <StageAttachments projectId={project.id} stageId={stage?.id ?? null} canUpload={canEdit} />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
