@@ -152,27 +152,47 @@ export function PreProductionChecklist({ projectId, division }: { projectId: str
         </div>
         <Progress value={pct} />
         <ul className="space-y-1.5">
-          {gates!.map(g => (
-            <li key={g.code} className="flex items-start gap-2 text-sm">
-              {g.status === "Completed" ? (
-                <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#006039" }} />
-              ) : (
-                <XCircle className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#F40009" }} />
-              )}
-              <span className="text-foreground">
-                <span className="font-mono text-xs text-muted-foreground mr-1.5">{g.code === "sale_scope" ? "C-3+C-4" : g.code}</span>
-                {g.label}
-                {g.status !== "Completed" && (
-                  <span className="text-muted-foreground"> — {g.notes ?? (g.status === "Not Started" ? "Not completed" : g.status)}</span>
+          {gates!.map(g => {
+            const isOwner = !!g.ownerId && g.ownerId === userId;
+            const canAct = isLeadership || isOwner;
+            const href = gateLink(projectId, g.code);
+            return (
+              <li key={g.code} className="flex items-start gap-2 text-sm">
+                {g.status === "Completed" ? (
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#006039" }} />
+                ) : (
+                  <XCircle className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#F40009" }} />
                 )}
-                {g.status !== "Completed" && (
-                  g.ownerName
-                    ? <span className="ml-1.5 text-xs text-muted-foreground">· Owner: {g.ownerName}</span>
-                    : <ResponsiblePerson roles={GATE_OWNER_ROLES[g.code]} className="ml-1.5" prefix="· Owner:" />
-                )}
-              </span>
-            </li>
-          ))}
+                <span className="text-foreground flex-1">
+                  <span className="font-mono text-xs text-muted-foreground mr-1.5">{g.code === "sale_scope" ? "C-3+C-4" : g.code}</span>
+                  {g.label}
+                  {g.status !== "Completed" && (
+                    <span className="text-muted-foreground"> — {g.notes ?? (g.status === "Not Started" ? "Not completed" : g.status)}</span>
+                  )}
+                  {g.status !== "Completed" && (
+                    g.ownerName
+                      ? <span className="ml-1.5 text-xs text-muted-foreground">· Owner: {g.ownerName}</span>
+                      : <ResponsiblePerson roles={GATE_OWNER_ROLES[g.code]} className="ml-1.5" prefix="· Owner:" />
+                  )}
+                </span>
+                {g.status === "Completed" ? (
+                  <Button asChild size="sm" variant="ghost" className="h-7 shrink-0 text-xs">
+                    <Link to={href}><Eye className="h-3.5 w-3.5 mr-1" />View</Link>
+                  </Button>
+                ) : g.code !== "sale_scope" && !g.ownerId ? (
+                  isLeadership && (
+                    <Button asChild size="sm" variant="outline" className="h-7 shrink-0 text-xs">
+                      <Link to={href}><UserPlus className="h-3.5 w-3.5 mr-1" />Assign owner</Link>
+                    </Button>
+                  )
+                ) : canAct || (g.code === "sale_scope" && canActOnScope) ? (
+                  <Button asChild size="sm" className="h-7 shrink-0 text-xs">
+                    <Link to={href}>Go to task<ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
+                  </Button>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
         <div className="flex items-start gap-2 rounded-md p-2.5" style={{ backgroundColor: "#FFF8E8" }}>
           <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#D4860A" }} />
