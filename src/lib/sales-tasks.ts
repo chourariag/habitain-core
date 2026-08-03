@@ -135,7 +135,7 @@ export async function fetchSalesTasks(authUserId: string | null, role?: string |
   }
 
 
-  // 5 — Pipeline tasks (deals assigned to me)
+  // 5 — Pipeline tasks (own deals; a Sales Director oversees the whole pipeline)
   const wonDealIds = deals.filter((d: any) => d.stage === "Won").map((d: any) => d.id);
   let checklists: any[] = [];
   if (wonDealIds.length) {
@@ -145,27 +145,59 @@ export async function fetchSalesTasks(authUserId: string | null, role?: string |
   }
   const stagnantCutoff = new Date(Date.now() - 14 * 86400000);
 
+  // Resolve rep names so an approver can see who is blocking a pipeline item.
+  let repNames: Record<string, string> = {};
+  if (isApprover && deals.length) {
+    const ids = Array.from(new Set(deals.map((d: any) => d.assigned_to).filter(Boolean)));
+    if (ids.length) {
+      const { data } = await db.from("profiles").select("id, auth_user_id, display_name").or(
+        `id.in.(${ids.join(",")}),auth_user_id.in.(${ids.join(",")})`
+      );
+      for (const p of (data ?? []) as any[]) {
+        if (p.id) repNames[p.id] = p.display_name;
+        if (p.auth_user_id) repNames[p.auth_user_id] = p.display_name;
+      }
+    }
+  }
+
   for (const d of deals) {
     const g = { groupKey: "pipeline", groupLabel: "Sales Pipeline" };
+    const mine = !d.assigned_to || meIds.includes(d.assigned_to);
+    const owner = !mine ? (repNames[d.assigned_to] ?? "assigned rep") : undefined;
+
     if (d.next_followup_date && d.next_followup_date <= today && !["Won", "Lost"].includes(d.stage)) {
       tasks.push({ ...g, id: `fu-${d.id}`,
         title: `Follow up ${d.client_name}`,
         detail: d.next_followup_date < today ? "Follow-up overdue" : "Follow-up due today",
-        to: "/sales", urgency: d.next_followup_date < today ? "overdue" : "action", actionable: true });
+        to: "/sales",
+        urgency: mine ? (d.next_followup_date < today ? "overdue" : "action") : "waiting",
+        actionable: mine, ownerLabel: owner });
     }
     if (!["Won", "Lost"].includes(d.stage) && new Date(d.updated_at) < stagnantCutoff) {
       tasks.push({ ...g, id: `stag-${d.id}`, title: `${d.client_name} — no movement in 14+ days`,
-        detail: `Stage: ${d.stage}`, to: "/sales", urgency: "action", actionable: true });
+        detail: `Stage: ${d.stage}`, to: "/sales",
+        urgency: mine ? "action" : "waiting", actionable: mine, ownerLabel: owner });
     }
     if (d.stage === "Won") {
       const cl = checklists.find((c: any) => c.deal_id === d.id);
       if (!cl?.completed) {
         tasks.push({ ...g, id: `hoc-${d.id}`, title: `Complete handover checklist — ${d.client_name}`,
           detail: "Required before project handover to operations", to: "/sales",
-          urgency: "overdue", actionable: true });
+          urgency: mine ? "overdue" : "waiting", actionable: mine, ownerLabel: owner });
       }
     }
+    // Discount / price adjustment approval sits with the Sales Director
+    if (d.adjustment_type && !d.discount_approved_at) {
+      tasks.push({ ...g, id: `disc-${d.id}`,
+        title: isApprover
+          ? `Approve price adjustment — ${d.client_name}`
+          : `${d.client_name} — price adjustment awaiting approval`,
+        detail: `Adjustment: ${d.adjustment_type}`, to: "/sales",
+        urgency: isApprover ? "action" : "waiting", actionable: isApprover,
+        ownerLabel: isApprover ? undefined : "Sales Director" });
+    }
   }
+
 
   const rank: Record<SalesTaskUrgency, number> = { overdue: 0, action: 1, waiting: 2 };
   return tasks.sort((a, b) => rank[a.urgency] - rank[b.urgency]);
