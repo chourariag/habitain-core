@@ -64,7 +64,6 @@ export function SaleAgreementCard({
       const path = `sale-agreements/${projectId}/${Date.now()}-${file.name}`;
       const { error: upErr } = await supabase.storage.from("design-files").upload(path, file);
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from("design-files").getPublicUrl(path);
       const { data: { user } } = await supabase.auth.getUser();
 
       const payload: any = {
@@ -76,9 +75,11 @@ export function SaleAgreementCard({
         start_date: startDate || null,
         status: "Active",
         scope_of_work_id: scopeId,
-        contract_file_url: pub.publicUrl,
+        // design-files is a private bucket — store the path and open via a signed URL.
+        contract_file_url: path,
         created_by: user?.id ?? null,
       };
+
       const res = contract
         ? await (supabase as any).from("contracts_register").update(payload).eq("id", contract.id)
         : await (supabase as any).from("contracts_register").insert(payload);
