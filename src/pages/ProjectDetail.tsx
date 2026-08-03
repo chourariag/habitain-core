@@ -47,10 +47,15 @@ export default function ProjectDetail() {
   const [loading, setLoading] = useState(true);
   const [addModuleOpen, setAddModuleOpen] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [dbRole, setDbRole] = useState<string | null>(null);
   const [hasHandover, setHasHandover] = useState(false);
+  // Honour the MD/Super Admin "View as User" persona so gating matches what that user sees.
+  const { role: effectiveRole } = useUserRole();
+  const userRole = effectiveRole ?? dbRole;
+  const setUserRole = setDbRole;
 
   const canEdit = EDIT_ROLES.includes(userRole ?? "");
+
   const canAdvanceStage = STAGE_ADVANCE_ROLES.includes(userRole ?? "");
   const canRequestArchive = ARCHIVE_REQUEST_ROLES.includes(userRole ?? "");
 
