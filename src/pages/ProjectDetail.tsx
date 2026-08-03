@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +42,13 @@ const PL_VIEW_ROLES = ["super_admin", "managing_director", "finance_director", "
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "schedule";
+  const setActiveTab = (v: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", v);
+    setSearchParams(next, { replace: true });
+  };
   const { setSelectedProjectId } = useProjectContext();
   const [project, setProject] = useState<Tables<"projects"> | null>(null);
   const [modules, setModules] = useState<any[]>([]);
@@ -206,7 +213,7 @@ export default function ProjectDetail() {
         />
       )}
 
-      <Tabs defaultValue="schedule">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="schedule" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Schedule</TabsTrigger>

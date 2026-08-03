@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle2, XCircle, AlertTriangle, ShieldCheck, Loader2, ArrowRight, UserPlus, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { isAdsDivision, ADS_REQUIRED_GATES } from "@/lib/project-type";
 import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
+import { useUserRole } from "@/hooks/useUserRole";
 
 // C-3 (Sale Agreement) + C-4 (Scope of Work) are combined into one row: "sale_scope"
 export const REQUIRED_GATES = [
@@ -32,7 +34,7 @@ export const GATE_OWNER_ROLES: Record<string, string[]> = {
 export const SETUP_GATE_CODES = ["sale_scope", "E-3", "E-5", "E-8"];
 
 type Status = "Not Started" | "In Progress" | "Completed" | "Blocked" | "Skipped";
-type GateInfo = { code: string; label: string; status: Status; notes: string | null; ownerName?: string | null };
+type GateInfo = { code: string; label: string; status: Status; notes: string | null; ownerName?: string | null; ownerId?: string | null };
 
 export async function fetchPreProdGates(projectId: string, pipeline: "habitainer" | "ads" = "habitainer"): Promise<GateInfo[]> {
   const gateList = pipeline === "ads" ? ADS_REQUIRED_GATES : REQUIRED_GATES;
@@ -69,7 +71,7 @@ export async function fetchPreProdGates(projectId: string, pipeline: "habitainer
 
   return gateList.map(g => {
     if (g.code === "sale_scope") {
-      return { code: g.code, label: g.label, status: combinedStatus, notes: combinedNote, ownerName: null };
+      return { code: g.code, label: g.label, status: combinedStatus, notes: combinedNote, ownerName: null, ownerId: null };
     }
     const row = byCode.get(g.code);
     return {
@@ -78,6 +80,7 @@ export async function fetchPreProdGates(projectId: string, pipeline: "habitainer
       status: (row?.status ?? "Not Started") as Status,
       notes: row?.notes ?? null,
       ownerName: row?.owner_id ? (ownerNames.get(row.owner_id) || null) : null,
+      ownerId: row?.owner_id ?? null,
     };
   });
 }
@@ -99,10 +102,22 @@ export function usePreProdGates(projectId: string, pipeline: "habitainer" | "ads
   return { gates, completedCount, total, setupReady, allComplete, loading: gates === null };
 }
 
+const LEADERSHIP_ROLES = ["super_admin", "managing_director"];
+const SCOPE_ROLES = ["sales_director", "sales_executive", "sales_associate"];
+
+// Deep-link for each gate to the exact screen where the work is completed.
+export function gateLink(projectId: string, code: string) {
+  if (code === "sale_scope") return `/projects/${projectId}?tab=scope`;
+  return `/projects/${projectId}?tab=design-schedule&stage=${encodeURIComponent(code)}`;
+}
+
 export function PreProductionChecklist({ projectId, division }: { projectId: string; division?: string | null }) {
   const isAds = isAdsDivision(division);
   const pipeline: "habitainer" | "ads" = isAds ? "ads" : "habitainer";
   const { gates, completedCount, total, allComplete, loading } = usePreProdGates(projectId, pipeline);
+  const { role, userId } = useUserRole();
+  const isLeadership = LEADERSHIP_ROLES.includes(role ?? "");
+  const canActOnScope = isLeadership || SCOPE_ROLES.includes(role ?? "");
   if (loading) {
     return (
       <Card><CardContent className="p-4 flex items-center gap-2 text-sm text-muted-foreground">
@@ -149,27 +164,47 @@ export function PreProductionChecklist({ projectId, division }: { projectId: str
         </div>
         <Progress value={pct} />
         <ul className="space-y-1.5">
-          {gates!.map(g => (
-            <li key={g.code} className="flex items-start gap-2 text-sm">
-              {g.status === "Completed" ? (
-                <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#006039" }} />
-              ) : (
-                <XCircle className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#F40009" }} />
-              )}
-              <span className="text-foreground">
-                <span className="font-mono text-xs text-muted-foreground mr-1.5">{g.code === "sale_scope" ? "C-3+C-4" : g.code}</span>
-                {g.label}
-                {g.status !== "Completed" && (
-                  <span className="text-muted-foreground"> — {g.notes ?? (g.status === "Not Started" ? "Not completed" : g.status)}</span>
+          {gates!.map(g => {
+            const isOwner = !!g.ownerId && g.ownerId === userId;
+            const canAct = isLeadership || isOwner;
+            const href = gateLink(projectId, g.code);
+            return (
+              <li key={g.code} className="flex items-start gap-2 text-sm">
+                {g.status === "Completed" ? (
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#006039" }} />
+                ) : (
+                  <XCircle className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#F40009" }} />
                 )}
-                {g.status !== "Completed" && (
-                  g.ownerName
-                    ? <span className="ml-1.5 text-xs text-muted-foreground">· Owner: {g.ownerName}</span>
-                    : <ResponsiblePerson roles={GATE_OWNER_ROLES[g.code]} className="ml-1.5" prefix="· Owner:" />
-                )}
-              </span>
-            </li>
-          ))}
+                <span className="text-foreground flex-1">
+                  <span className="font-mono text-xs text-muted-foreground mr-1.5">{g.code === "sale_scope" ? "C-3+C-4" : g.code}</span>
+                  {g.label}
+                  {g.status !== "Completed" && (
+                    <span className="text-muted-foreground"> — {g.notes ?? (g.status === "Not Started" ? "Not completed" : g.status)}</span>
+                  )}
+                  {g.status !== "Completed" && (
+                    g.ownerName
+                      ? <span className="ml-1.5 text-xs text-muted-foreground">· Owner: {g.ownerName}</span>
+                      : <ResponsiblePerson roles={GATE_OWNER_ROLES[g.code]} className="ml-1.5" prefix="· Owner:" />
+                  )}
+                </span>
+                {g.status === "Completed" ? (
+                  <Button asChild size="sm" variant="ghost" className="h-7 shrink-0 text-xs">
+                    <Link to={href}><Eye className="h-3.5 w-3.5 mr-1" />View</Link>
+                  </Button>
+                ) : g.code !== "sale_scope" && !g.ownerId ? (
+                  isLeadership && (
+                    <Button asChild size="sm" variant="outline" className="h-7 shrink-0 text-xs">
+                      <Link to={href}><UserPlus className="h-3.5 w-3.5 mr-1" />Assign owner</Link>
+                    </Button>
+                  )
+                ) : canAct || (g.code === "sale_scope" && canActOnScope) ? (
+                  <Button asChild size="sm" className="h-7 shrink-0 text-xs">
+                    <Link to={href}>Go to task<ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
+                  </Button>
+                ) : null}
+              </li>
+            );
+          })}
         </ul>
         <div className="flex items-start gap-2 rounded-md p-2.5" style={{ backgroundColor: "#FFF8E8" }}>
           <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" style={{ color: "#D4860A" }} />
