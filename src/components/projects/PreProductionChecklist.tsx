@@ -39,15 +39,17 @@ type GateInfo = { code: string; label: string; status: Status; notes: string | n
 export async function fetchPreProdGates(projectId: string, pipeline: "habitainer" | "ads" = "habitainer"): Promise<GateInfo[]> {
   const gateList = pipeline === "ads" ? ADS_REQUIRED_GATES : REQUIRED_GATES;
   const codeSet = gateList.map(g => g.code).filter(c => c !== "sale_scope");
-  const [stagesRes, scopeRes, saleRes] = await Promise.all([
+  const [stagesRes, flagsRes] = await Promise.all([
     supabase.from("project_design_stages")
       .select("status, notes, owner_id, design_stage_definitions!inner(stage_code, pipeline_type)")
       .eq("project_id", projectId)
       .eq("design_stage_definitions.pipeline_type", pipeline)
       .in("design_stage_definitions.stage_code", codeSet),
-    (supabase as any).from("project_scope_of_work").select("status").eq("project_id", projectId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-    (supabase as any).from("contracts_register").select("id, contract_file_url").eq("project_id", projectId).eq("contract_type", "Sale Agreement").eq("is_archived", false).limit(1).maybeSingle(),
+    // Security-definer RPC: every authorised viewer gets the same gate status,
+    // without needing direct read access to commercially sensitive contract rows.
+    (supabase as any).rpc("get_preprod_gate_flags", { _project_id: projectId }),
   ]);
+  const flags = Array.isArray(flagsRes.data) ? flagsRes.data[0] : flagsRes.data;
 
   const byCode = new Map<string, { status: Status; notes: string | null; owner_id: string | null }>();
   for (const r of (stagesRes.data ?? []) as any[]) {
@@ -62,8 +64,8 @@ export async function fetchPreProdGates(projectId: string, pipeline: "habitainer
     for (const p of (profs ?? []) as any[]) ownerNames.set(p.id, p.display_name ?? "");
   }
 
-  const scopeSigned = scopeRes.data?.status === "signed";
-  const saleUploaded = !!saleRes.data?.contract_file_url;
+  const scopeSigned = !!flags?.scope_signed;
+  const saleUploaded = !!flags?.sale_uploaded;
   const combinedStatus: Status = scopeSigned && saleUploaded ? "Completed" : "Not Started";
   const combinedNote = scopeSigned && saleUploaded
     ? null
@@ -90,8 +92,17 @@ export function usePreProdGates(projectId: string, pipeline: "habitainer" | "ads
   const [gates, setGates] = useState<GateInfo[] | null>(null);
   useEffect(() => {
     let cancelled = false;
-    fetchPreProdGates(projectId, pipeline).then(g => { if (!cancelled) setGates(g); });
-    return () => { cancelled = true; };
+    const load = () => fetchPreProdGates(projectId, pipeline).then(g => { if (!cancelled) setGates(g); });
+    load();
+    // Refetch when the tab regains focus so the checklist never shows a stale snapshot.
+    const onFocus = () => { if (document.visibilityState === "visible") load(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
   }, [projectId, pipeline]);
   const total = pipeline === "ads" ? ADS_REQUIRED_GATES.length : REQUIRED_GATES.length;
   const completedCount = (gates ?? []).filter(g => g.status === "Completed").length;
