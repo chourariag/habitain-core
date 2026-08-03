@@ -16,6 +16,7 @@ import { format, parseISO } from "date-fns";
 import {
   EDIT_ROLES, STAGE_STATUSES, STATUS_STYLES, type DesignStageStatus,
 } from "@/lib/design-schedule";
+import { StageAttachments } from "@/components/projects/StageAttachments";
 
 type StageDef = {
   id: string; stage_code: string; stage_name: string; stage_order: number;
