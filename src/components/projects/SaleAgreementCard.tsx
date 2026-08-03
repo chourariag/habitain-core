@@ -109,7 +109,18 @@ export function SaleAgreementCard({
     setSaving(false);
   };
 
+  const openAgreement = async () => {
+    const ref = contract?.contract_file_url;
+    if (!ref) return;
+    // Legacy rows stored a full URL; new rows store the storage path.
+    if (/^https?:\/\//.test(ref)) { window.open(ref, "_blank", "noopener"); return; }
+    const { data, error } = await supabase.storage.from("design-files").createSignedUrl(ref, 300);
+    if (error || !data?.signedUrl) { toast.error(error?.message || "Could not open the agreement"); return; }
+    window.open(data.signedUrl, "_blank", "noopener");
+  };
+
   if (loading) return <Card><CardContent className="p-4"><Loader2 className="h-4 w-4 animate-spin" /></CardContent></Card>;
+
 
   return (
     <Card style={{ borderColor: contract?.contract_file_url ? "#006039" : (scopeSigned ? "#D4860A" : "#F40009"), borderWidth: 2 }}>
