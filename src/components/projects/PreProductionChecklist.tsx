@@ -32,14 +32,14 @@ export const GATE_OWNER_ROLES: Record<string, string[]> = {
 export const SETUP_GATE_CODES = ["sale_scope", "E-3", "E-5", "E-8"];
 
 type Status = "Not Started" | "In Progress" | "Completed" | "Blocked" | "Skipped";
-type GateInfo = { code: string; label: string; status: Status; notes: string | null };
+type GateInfo = { code: string; label: string; status: Status; notes: string | null; ownerName?: string | null };
 
 export async function fetchPreProdGates(projectId: string, pipeline: "habitainer" | "ads" = "habitainer"): Promise<GateInfo[]> {
   const gateList = pipeline === "ads" ? ADS_REQUIRED_GATES : REQUIRED_GATES;
   const codeSet = gateList.map(g => g.code).filter(c => c !== "sale_scope");
   const [stagesRes, scopeRes, saleRes] = await Promise.all([
     supabase.from("project_design_stages")
-      .select("status, notes, design_stage_definitions!inner(stage_code, pipeline_type)")
+      .select("status, notes, owner_id, design_stage_definitions!inner(stage_code, pipeline_type)")
       .eq("project_id", projectId)
       .eq("design_stage_definitions.pipeline_type", pipeline)
       .in("design_stage_definitions.stage_code", codeSet),
@@ -47,10 +47,19 @@ export async function fetchPreProdGates(projectId: string, pipeline: "habitainer
     (supabase as any).from("contracts_register").select("id, contract_file_url").eq("project_id", projectId).eq("contract_type", "Sale Agreement").eq("is_archived", false).limit(1).maybeSingle(),
   ]);
 
-  const byCode = new Map<string, { status: Status; notes: string | null }>();
+  const byCode = new Map<string, { status: Status; notes: string | null; owner_id: string | null }>();
   for (const r of (stagesRes.data ?? []) as any[]) {
-    byCode.set(r.design_stage_definitions.stage_code, { status: r.status, notes: r.notes });
+    byCode.set(r.design_stage_definitions.stage_code, { status: r.status, notes: r.notes, owner_id: r.owner_id ?? null });
   }
+
+  // Resolve assigned owners to names
+  const ownerIds = [...new Set([...byCode.values()].map(v => v.owner_id).filter(Boolean))] as string[];
+  const ownerNames = new Map<string, string>();
+  if (ownerIds.length > 0) {
+    const { data: profs } = await supabase.from("profiles").select("id, display_name").in("id", ownerIds);
+    for (const p of (profs ?? []) as any[]) ownerNames.set(p.id, p.display_name ?? "");
+  }
+
   const scopeSigned = scopeRes.data?.status === "signed";
   const saleUploaded = !!saleRes.data?.contract_file_url;
   const combinedStatus: Status = scopeSigned && saleUploaded ? "Completed" : "Not Started";
@@ -60,16 +69,19 @@ export async function fetchPreProdGates(projectId: string, pipeline: "habitainer
 
   return gateList.map(g => {
     if (g.code === "sale_scope") {
-      return { code: g.code, label: g.label, status: combinedStatus, notes: combinedNote };
+      return { code: g.code, label: g.label, status: combinedStatus, notes: combinedNote, ownerName: null };
     }
+    const row = byCode.get(g.code);
     return {
       code: g.code,
       label: g.label,
-      status: (byCode.get(g.code)?.status ?? "Not Started") as Status,
-      notes: byCode.get(g.code)?.notes ?? null,
+      status: (row?.status ?? "Not Started") as Status,
+      notes: row?.notes ?? null,
+      ownerName: row?.owner_id ? (ownerNames.get(row.owner_id) || null) : null,
     };
   });
 }
+
 
 export function usePreProdGates(projectId: string, pipeline: "habitainer" | "ads" = "habitainer") {
   const [gates, setGates] = useState<GateInfo[] | null>(null);
@@ -151,7 +163,9 @@ export function PreProductionChecklist({ projectId, division }: { projectId: str
                   <span className="text-muted-foreground"> — {g.notes ?? (g.status === "Not Started" ? "Not completed" : g.status)}</span>
                 )}
                 {g.status !== "Completed" && (
-                  <ResponsiblePerson roles={GATE_OWNER_ROLES[g.code]} className="ml-1.5" prefix="· Owner:" />
+                  g.ownerName
+                    ? <span className="ml-1.5 text-xs text-muted-foreground">· Owner: {g.ownerName}</span>
+                    : <ResponsiblePerson roles={GATE_OWNER_ROLES[g.code]} className="ml-1.5" prefix="· Owner:" />
                 )}
               </span>
             </li>
