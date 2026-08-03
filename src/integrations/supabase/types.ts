@@ -13949,6 +13949,13 @@ export type Database = {
           wedding_anniversary: string
         }[]
       }
+      get_preprod_gate_flags: {
+        Args: { _project_id: string }
+        Returns: {
+          sale_uploaded: boolean
+          scope_signed: boolean
+        }[]
+      }
       get_profile_pii: {
         Args: { _profile_id: string }
         Returns: {
