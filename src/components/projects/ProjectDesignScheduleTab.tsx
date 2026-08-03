@@ -260,6 +260,7 @@ function EditDialog({ def, stage, projectId, profiles, onClose, onSaved }: {
             </Select>
           </div>
           <div><Label>Notes</Label><Textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} /></div>
+          <StageAttachments projectId={projectId} stageId={stage?.id ?? null} canUpload />
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
