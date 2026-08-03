@@ -15,9 +15,10 @@ const CAN_POST: AppRole[] = ["super_admin", "managing_director", "finance_direct
 
 interface Props {
   userRole: AppRole | null;
+  hideMyTasks?: boolean;
 }
 
-export function SharedDashboardBottom({ userRole }: Props) {
+export function SharedDashboardBottom({ userRole, hideMyTasks }: Props) {
   const { user } = useAuth();
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,12 +118,14 @@ export function SharedDashboardBottom({ userRole }: Props) {
 
       {/* My Tasks placeholder */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-lg border border-border bg-card p-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-          <h2 className="font-display text-base font-semibold flex items-center gap-2 mb-3" style={{ color: "#1A1A1A" }}>
-            <CheckSquare className="h-4 w-4" style={{ color: "#006039" }} /> My Tasks
-          </h2>
-          <p className="text-sm" style={{ color: "#999999" }}>Task integration coming in Phase 5.</p>
-        </div>
+        {!hideMyTasks && (
+          <div className="rounded-lg border border-border bg-card p-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
+            <h2 className="font-display text-base font-semibold flex items-center gap-2 mb-3" style={{ color: "#1A1A1A" }}>
+              <CheckSquare className="h-4 w-4" style={{ color: "#006039" }} /> My Tasks
+            </h2>
+            <p className="text-sm" style={{ color: "#999999" }}>Task integration coming in Phase 5.</p>
+          </div>
+        )}
 
         {/* Weekly KPI placeholder — hidden for architects and hr */}
         {userRole && !["principal_architect", "project_architect", "structural_architect", "hr_executive"].includes(userRole) && (

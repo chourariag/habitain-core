@@ -27,9 +27,10 @@ interface Props {
   tier: 2 | 3 | 4;
   role: AppRole | null;
   firstName?: string;
+  hideTiles?: boolean;
 }
 
-export function PlaceholderDashboard({ title, today, tier, role, firstName }: Props) {
+export function PlaceholderDashboard({ title, today, tier, role, firstName, hideTiles }: Props) {
   let tiles: string[] = [];
   if (tier === 4) {
     tiles = TIER4_TILES;
@@ -49,6 +50,7 @@ export function PlaceholderDashboard({ title, today, tier, role, firstName }: Pr
         <p className="text-sm mt-1" style={{ color: "#666666" }}>{today}</p>
       </div>
 
+      {!hideTiles && (
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         {tiles.map((label) => (
           <div
@@ -63,6 +65,7 @@ export function PlaceholderDashboard({ title, today, tier, role, firstName }: Pr
           </div>
         ))}
       </div>
+      )}
     </>
   );
 }

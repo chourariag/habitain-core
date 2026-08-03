@@ -39,7 +39,7 @@ const SCOPE_APPROVE_ROLES = ["sales_director", "super_admin", "managing_director
 const FINANCE_APPROVE_ROLES = ["finance_director", "finance_manager", "super_admin", "managing_director"];
 const MD_APPROVE_ROLES = ["managing_director", "super_admin"];
 const DELETE_ROLES = ["managing_director", "super_admin", "finance_director", "sales_director", "architecture_director"];
-const VIEW_ROLES = [...CREATE_ROLES, ...SCOPE_APPROVE_ROLES, ...FINANCE_APPROVE_ROLES, "sales_executive"];
+const VIEW_ROLES = [...CREATE_ROLES, ...SCOPE_APPROVE_ROLES, ...FINANCE_APPROVE_ROLES, "sales_executive", "sales_associate"];
 
 interface Variation {
   id: string;
