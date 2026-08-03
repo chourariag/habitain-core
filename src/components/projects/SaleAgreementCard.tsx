@@ -134,7 +134,7 @@ export function SaleAgreementCard({
         {contract?.contract_file_url ? (
           <div className="text-sm space-y-1">
             <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" style={{ color: "#006039" }} /> Contract <span className="font-mono text-xs">{contract.contract_number}</span> on file.</p>
-            <a href={contract.contract_file_url} target="_blank" rel="noreferrer" className="text-sm underline">View signed agreement</a>
+            <button type="button" onClick={openAgreement} className="text-sm underline text-left">View signed agreement</button>
           </div>
         ) : (
           canEdit && (
