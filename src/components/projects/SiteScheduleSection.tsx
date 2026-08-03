@@ -274,7 +274,10 @@ export function SiteScheduleSection({ projectId, projectName, userRole }: Props)
                       const a = approvals.find(x => x.role === r);
                       return (
                         <div key={r} className="flex items-center justify-between rounded border p-2">
-                          <div className="capitalize">{r.replace("_", " ")}</div>
+                          <div className="capitalize flex items-center gap-1.5 flex-wrap">
+                            {r.replace("_", " ")}
+                            <ResponsiblePerson roles={r} />
+                          </div>
                           <div>{a ? statusBadge(a.status) : <Badge variant="outline">awaiting</Badge>}</div>
                         </div>
                       );

@@ -598,7 +598,7 @@ export function ScopeOfWorkTab({ projectId, userRole }: Props) {
                 ) : canSdSign ? (
                   <Button size="sm" onClick={salesDirectorSign} style={{ backgroundColor: "#006039" }}><CheckCircle2 className="h-4 w-4 mr-1" /> Approve as Sales Director</Button>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Awaiting Sales Director approval.</p>
+                  <p className="text-xs text-muted-foreground">Awaiting Sales Director approval. <ResponsiblePerson roles={["sales_director"]} /></p>
                 )}
               </div>
             </div>
