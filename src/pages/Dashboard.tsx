@@ -20,6 +20,9 @@ import { MyTasksSummaryStrip } from "@/components/tasks/MyTasksSummaryStrip";
 import { DailyReadinessBrief } from "@/components/dashboard/DailyReadinessBrief";
 import { MyReportsSection } from "@/components/reports/MyReportsSection";
 import { ReportsToReviewSection } from "@/components/reports/ReportsToReviewSection";
+import { SalesTasksCard } from "@/components/dashboard/SalesTasksCard";
+
+const SALES_TASK_ROLES = ["sales_executive", "sales_associate", "sales_director"];
 
 const FLOOR_ROLES = ["factory_floor_supervisor", "fabrication_foreman", "electrical_installer", "elec_plumbing_installer", "site_engineer", "delivery_rm_lead"];
 
@@ -56,6 +59,7 @@ export default function Dashboard() {
   }
 
   const tier = getDashboardTier(userRole);
+  const isSalesTaskRole = !!userRole && SALES_TASK_ROLES.includes(userRole);
   const roleName = userRole ? ROLE_LABELS[userRole] ?? userRole : "User";
   const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
 
@@ -107,10 +111,12 @@ export default function Dashboard() {
       ) : tier === 4 ? (
         <PlaceholderDashboard title="Design Workspace" today={today} tier={4} role={userRole} firstName={firstName} />
       ) : (
-        <PlaceholderDashboard title={`My Workspace — ${roleName}`} today={today} tier={3} role={userRole} firstName={firstName} />
+        <PlaceholderDashboard title={`My Workspace — ${roleName}`} today={today} tier={3} role={userRole} firstName={firstName} hideTiles={isSalesTaskRole} />
       )}
 
-      <SharedDashboardBottom userRole={userRole} />
+      {isSalesTaskRole && <SalesTasksCard userId={userId} />}
+
+      <SharedDashboardBottom userRole={userRole} hideMyTasks={isSalesTaskRole} />
     </div>
   );
 }
