@@ -94,9 +94,13 @@ export async function fetchSalesTasks(authUserId: string | null, role?: string |
             urgency: "action", actionable: true });
         }
         if (!scope.sales_director_signed_at) {
-          tasks.push({ ...g, id: `sow-sd-${p.id}`, title: "Scope awaiting Sales Director signature",
-            to: scopeUrl, urgency: "waiting", actionable: false, ownerLabel: "Sales Director" });
+          tasks.push({ ...g, id: `sow-sd-${p.id}`,
+            title: isApprover ? "Sign off Scope of Work (Sales Director)" : "Scope awaiting Sales Director signature",
+            detail: isApprover ? "Your signature is required to complete the scope" : undefined,
+            to: scopeUrl, urgency: isApprover ? "action" : "waiting",
+            actionable: isApprover, ownerLabel: "Sales Director" });
         }
+
       }
 
       // 2 — Sale Agreement (gated on signed scope)
