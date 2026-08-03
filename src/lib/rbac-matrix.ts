@@ -118,7 +118,9 @@ export const ROLE_ACCESS_MATRIX: Partial<Record<AppRole, ModuleAccess>> = {
   marketing:
     m("VIEW","NONE","NONE","NONE","NONE","NONE","VIEW","FULL","NONE","NONE","NONE","FULL","NONE","NONE","NONE"),
   sales_executive:
-    m("VIEW","NONE","NONE","NONE","NONE","NONE","VIEW","FULL","NONE","NONE","NONE","FULL","NONE","NONE","NONE"),
+    m("VIEW","VIEW","NONE","NONE","NONE","NONE","VIEW","FULL","NONE","NONE","NONE","FULL","NONE","NONE","NONE"),
+  sales_associate:
+    m("VIEW","VIEW","NONE","NONE","NONE","NONE","VIEW","FULL","NONE","NONE","NONE","FULL","NONE","NONE","NONE"),
 
   qc_inspector:
     m("VIEW","NONE","VIEW","VIEW","NONE","NONE","VIEW","NONE","VIEW","FULL","VIEW","FULL","NONE","NONE","NONE"),
