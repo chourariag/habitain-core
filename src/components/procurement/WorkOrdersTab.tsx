@@ -1,3 +1,4 @@
+import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

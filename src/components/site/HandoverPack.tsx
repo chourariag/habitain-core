@@ -1,3 +1,4 @@
+import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";

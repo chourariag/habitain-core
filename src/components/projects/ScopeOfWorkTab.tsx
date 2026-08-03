@@ -1,3 +1,4 @@
+import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useState, useEffect, useCallback } from "react";
 import { useProjectImportListener } from "@/lib/use-project-import";
 import { SetupTemplateBanner } from "./SetupTemplateBanner";
