@@ -66,7 +66,9 @@ export function registerServiceWorker() {
 
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register(SW_URL)
+      // updateViaCache: "none" stops Safari serving sw.js from HTTP cache,
+      // which otherwise hides new versions indefinitely.
+      .register(SW_URL, { updateViaCache: "none" })
       .then((reg) => {
         registration = reg;
       })
