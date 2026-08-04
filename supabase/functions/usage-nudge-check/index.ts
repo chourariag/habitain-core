@@ -17,7 +17,7 @@ const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SLACK_BOT_TOKEN = Deno.env.get("SLACK_BOT_TOKEN")!;
 
 // Slack's chat.postMessage API requires a channel ID, not a "#name".
-const ALERTS_CHANNEL = "C0123ABC456";
+const ALERTS_CHANNEL = "C0BND0SSMAL";
 
 type Profile = {
   id: string;
