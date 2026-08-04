@@ -1,9 +1,10 @@
 // Usage nudge check.
-// Flags every active profile whose auth last_sign_in_at is NULL or before
-// today (IST). Each flagged person gets a Slack DM (best-effort, isolated
-// per person), and an aggregate summary is always posted to the alerts
-// channel — even when nobody is flagged. No cron/scheduling is configured
-// here; this function is invoked externally.
+// Flags profiles that are explicitly mapped to a Slack user (slack_user_id
+// IS NOT NULL) whose auth last_sign_in_at is NULL or before today (IST).
+// Each flagged person gets a Slack DM (best-effort, isolated per person),
+// and an aggregate summary is always posted to the alerts channel — even
+// when nobody is flagged. No cron/scheduling is configured here; this
+// function is invoked externally.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
@@ -23,6 +24,7 @@ type Profile = {
   auth_user_id: string;
   display_name: string | null;
   email: string | null;
+  slack_user_id: string;
 };
 
 type FlaggedUser = { id: string; display_name: string | null; email: string | null };
@@ -51,9 +53,8 @@ async function slackApi(method: string, body: Record<string, unknown>) {
   return json;
 }
 
-async function dmProfile(email: string, text: string) {
-  const lookup = await slackApi("users.lookupByEmail", { email });
-  const opened = await slackApi("conversations.open", { users: lookup.user.id });
+async function dmViaSlackUserId(slackUserId: string, text: string) {
+  const opened = await slackApi("conversations.open", { users: slackUserId });
   await slackApi("chat.postMessage", { channel: opened.channel.id, text });
 }
 
@@ -65,9 +66,8 @@ Deno.serve(async (req) => {
 
     const { data: profiles, error: profilesErr } = await sb
       .from("profiles")
-      .select("id, auth_user_id, display_name, email")
-      .eq("is_active", true)
-      .eq("is_archived", false);
+      .select("id, auth_user_id, display_name, email, slack_user_id")
+      .not("slack_user_id", "is", null);
     if (profilesErr) throw profilesErr;
 
     const flagged: FlaggedUser[] = [];
@@ -91,9 +91,8 @@ Deno.serve(async (req) => {
       flagged.push({ id: p.id, display_name: p.display_name, email: p.email });
 
       try {
-        if (!p.email) throw new Error("profile has no email on file");
-        await dmProfile(
-          p.email,
+        await dmViaSlackUserId(
+          p.slack_user_id,
           `Hi${p.display_name ? ` ${p.display_name}` : ""}, we noticed you haven't signed in today. Please log in when you get a chance.`
         );
       } catch (e: any) {
@@ -108,13 +107,24 @@ Deno.serve(async (req) => {
       ? `\n\n_Errors (${errors.length}):_\n` + errors.map((e) => `• ${e.profile}: ${e.error}`).join("\n")
       : "";
 
-    await slackApi("chat.postMessage", {
-      channel: ALERTS_CHANNEL,
-      text: `*Usage Nudge Check* — ${flagged.length} user(s) flagged for not signing in today.\n${summaryLines}${errorLines}`,
-    });
+    let aggregatePostError: string | null = null;
+    try {
+      await slackApi("chat.postMessage", {
+        channel: ALERTS_CHANNEL,
+        text: `*Usage Nudge Check* — ${flagged.length} user(s) flagged for not signing in today.\n${summaryLines}${errorLines}`,
+      });
+    } catch (e: any) {
+      aggregatePostError = e.message || String(e);
+    }
 
     return new Response(
-      JSON.stringify({ ok: true, flaggedCount: flagged.length, errorCount: errors.length, errors }),
+      JSON.stringify({
+        ok: true,
+        flaggedCount: flagged.length,
+        errorCount: errors.length,
+        errors,
+        aggregatePostError,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e: any) {
