@@ -6727,6 +6727,7 @@ export type Database = {
           reporting_manager_id: string | null
           role: Database["public"]["Enums"]["app_role"]
           secondary_manager_id: string | null
+          slack_user_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -6747,6 +6748,7 @@ export type Database = {
           reporting_manager_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           secondary_manager_id?: string | null
+          slack_user_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -6767,6 +6769,7 @@ export type Database = {
           reporting_manager_id?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           secondary_manager_id?: string | null
+          slack_user_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
