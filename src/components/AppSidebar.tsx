@@ -22,8 +22,8 @@ import { useTranslation } from "react-i18next";
 import type { AppRole } from "@/lib/roles";
 import { RoleSwitcher } from "./RoleSwitcher";
 
-type NavItem = { to: string; label: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean; module?: ModuleKey; requireAdminPanel?: boolean };
-type NavSection = { key: string; label?: string; items: NavItem[]; group?: "altree" };
+type NavItem = { to: string; labelKey: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean; module?: ModuleKey; requireAdminPanel?: boolean };
+type NavSection = { key: string; labelKey?: string; items: NavItem[]; group?: "altree" };
 
 const CAPACITY_ROLES = ["super_admin", "managing_director", "head_operations", "planning_head", "production_head"];
 const SETTINGS_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
@@ -32,65 +32,65 @@ const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
 // Strict spec-defined sidebar. Each item declares the RBAC `module` it maps to;
 // items with no `module` fall back to legacy canSeeSection/role checks.
 const sectionConfig: NavSection[] = [
-  { key: "dashboard", items: [{ section: "dashboard", to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, module: "dashboard" }] },
-  { key: "approvals", items: [{ section: "approvals", to: "/approvals", label: "Approvals", icon: ShieldCheck, module: "approvals" }] },
-  { key: "announcements", items: [{ section: "dashboard", to: "/announcements", label: "Announcements", icon: MessageSquare, module: "announcements" }] },
-  { key: "projects", items: [{ section: "projects", to: "/projects", label: "Projects", icon: FolderKanban, module: "projects" }] },
-  { key: "management", items: [{ section: "management", to: "/management", label: "Management", icon: BarChart3, module: "reports" }] },
+  { key: "dashboard", items: [{ section: "dashboard", to: "/dashboard", labelKey: "nav.dashboard", icon: LayoutDashboard, module: "dashboard" }] },
+  { key: "approvals", items: [{ section: "approvals", to: "/approvals", labelKey: "nav.approvals", icon: ShieldCheck, module: "approvals" }] },
+  { key: "announcements", items: [{ section: "dashboard", to: "/announcements", labelKey: "nav.announcements", icon: MessageSquare, module: "announcements" }] },
+  { key: "projects", items: [{ section: "projects", to: "/projects", labelKey: "nav.projects", icon: FolderKanban, module: "projects" }] },
+  { key: "management", items: [{ section: "management", to: "/management", labelKey: "nav.management", icon: BarChart3, module: "reports" }] },
   {
-    key: "production", label: "Production",
+    key: "production", labelKey: "nav.production",
     items: [
-      { section: "production", to: "/capacity", label: "Capacity Planning", icon: BarChart3, roles: CAPACITY_ROLES, module: "factory" },
-      { section: "production", to: "/production?tab=modules", label: "Factory Floor", icon: Factory, module: "factory" },
-      { section: "production", to: "/factory/floor-map", label: "Floor Map", icon: Map, module: "factory" },
-      { section: "production", to: "/qc", label: "QC & NCR", icon: ClipboardCheck, module: "qc" },
-      { section: "production", to: "/dispatch-delivery", label: "Despatch & Delivery", icon: Truck, module: "dispatch" },
-      { section: "production", to: "/safety", label: "Safety", icon: ShieldAlert, module: "factory" },
+      { section: "production", to: "/capacity", labelKey: "nav.capacityPlanning", icon: BarChart3, roles: CAPACITY_ROLES, module: "factory" },
+      { section: "production", to: "/production?tab=modules", labelKey: "nav.factoryFloor", icon: Factory, module: "factory" },
+      { section: "production", to: "/factory/floor-map", labelKey: "nav.floorMap", icon: Map, module: "factory" },
+      { section: "production", to: "/qc", labelKey: "nav.qcNcr", icon: ClipboardCheck, module: "qc" },
+      { section: "production", to: "/dispatch-delivery", labelKey: "nav.dispatchDelivery", icon: Truck, module: "dispatch" },
+      { section: "production", to: "/safety", labelKey: "nav.safety", icon: ShieldAlert, module: "factory" },
     ],
   },
   {
-    key: "site", label: "On Site Works",
+    key: "site", labelKey: "nav.onSiteWorks",
     items: [
-      { section: "site", to: "/site-hub", label: "Site Hub", icon: Truck, module: "site" },
+      { section: "site", to: "/site-hub", labelKey: "nav.siteHub", icon: Truck, module: "site" },
     ],
   },
-  { key: "rm", items: [{ section: "site", to: "/rm", label: "Repairs & AMC", icon: Wrench, module: "site" }] },
+  { key: "rm", items: [{ section: "site", to: "/rm", labelKey: "nav.repairsAmc", icon: Wrench, module: "site" }] },
   {
-    key: "procurement", label: "Procurement",
+    key: "procurement", labelKey: "nav.procurement",
     items: [
-      { section: "procurement", to: "/procurement", label: "Procurement", icon: Package, module: "procurement" },
-    ],
-  },
-  {
-    key: "finance", label: "Finance",
-    items: [
-      { section: "finance", to: "/finance", label: "Finance", icon: DollarSign, module: "finance" },
+      { section: "procurement", to: "/procurement", labelKey: "nav.procurement", icon: Package, module: "procurement" },
     ],
   },
   {
-    key: "design", label: "Design",
+    key: "finance", labelKey: "nav.finance",
     items: [
-      { section: "design", to: "/design", label: "Projects", icon: Compass, module: "design" },
-      { section: "design", to: "/design/schedule", label: "Design Schedule", icon: ClipboardList, module: "design" },
-      { section: "design", to: "/design?tab=dq-register", label: "Design Queries", icon: MessageSquare, module: "design" },
+      { section: "finance", to: "/finance", labelKey: "nav.finance", icon: DollarSign, module: "finance" },
     ],
   },
   {
-    key: "sales", label: "Sales",
-    items: [{ section: "sales", to: "/sales", label: "Sales", icon: BarChart3, module: "sales" }],
+    key: "design", labelKey: "nav.design",
+    items: [
+      { section: "design", to: "/design", labelKey: "nav.projects", icon: Compass, module: "design" },
+      { section: "design", to: "/design/schedule", labelKey: "nav.designSchedule", icon: ClipboardList, module: "design" },
+      { section: "design", to: "/design?tab=dq-register", labelKey: "nav.designQueries", icon: MessageSquare, module: "design" },
+    ],
+  },
+  {
+    key: "sales", labelKey: "nav.sales",
+    items: [{ section: "sales", to: "/sales", labelKey: "nav.sales", icon: BarChart3, module: "sales" }],
   },
   // ALTREE group — HR is gated by module access; My HR (own attendance) is visible to anyone with at least VIEW.
   {
-    key: "altree-hr", label: "HR", group: "altree",
+    key: "altree-hr", labelKey: "nav.hr", group: "altree",
     items: [
-      { section: "altree", to: "/attendance", label: "My HR", icon: UserCog, module: "hr" },
-      { section: "altree", to: "/admin/hr", label: "HR Management", icon: Users, module: "hr" },
+      { section: "altree", to: "/attendance", labelKey: "nav.myHr", icon: UserCog, module: "hr" },
+      { section: "altree", to: "/admin/hr", labelKey: "nav.hrManagement", icon: Users, module: "hr" },
     ],
   },
-  { key: "altree-admin", group: "altree", items: [{ section: "altree", to: "/admin", label: "Admin", icon: Briefcase, requireAdminPanel: true }] },
-  { key: "altree-employees", group: "altree", items: [{ section: "altree", to: "/admin/employees", label: "Employees", icon: Users, requireAdminPanel: true }] },
-  { key: "altree-super", group: "altree", items: [{ section: "altree", to: "/admin/super-admin", label: "Super Admin", icon: ShieldAlert, roles: SUPER_ADMIN_ROLES }] },
-  { key: "altree-settings", group: "altree", items: [{ section: "altree", to: "/settings", label: "Settings", icon: Settings, roles: SETTINGS_ROLES }] },
+  { key: "altree-admin", group: "altree", items: [{ section: "altree", to: "/admin", labelKey: "nav.admin", icon: Briefcase, requireAdminPanel: true }] },
+  { key: "altree-employees", group: "altree", items: [{ section: "altree", to: "/admin/employees", labelKey: "nav.employees", icon: Users, requireAdminPanel: true }] },
+  { key: "altree-super", group: "altree", items: [{ section: "altree", to: "/admin/super-admin", labelKey: "nav.superAdmin", icon: ShieldAlert, roles: SUPER_ADMIN_ROLES }] },
+  { key: "altree-settings", group: "altree", items: [{ section: "altree", to: "/settings", labelKey: "nav.settings", icon: Settings, roles: SETTINGS_ROLES }] },
 ];
 
 const ALTREE_OPEN_KEY = "hstack_nav_altree_open";
@@ -126,7 +126,7 @@ export function AppSidebar() {
   const userRole = role as AppRole | null;
   const { canView, canAccessAdminPanel } = usePermissions();
   const { projects, selectedProjectId, setSelectedProjectId } = useProjectContext();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const location = useLocation();
 
   const showProjectSelector = canSeeProjectSelector(userRole);
@@ -182,7 +182,7 @@ export function AppSidebar() {
         style={baseStyle}
       >
         <item.icon className="h-4 w-4 shrink-0" />
-        {!collapsed && <span className="flex-1">{item.label}</span>}
+        {!collapsed && <span className="flex-1">{t(item.labelKey)}</span>}
         {!collapsed && isApprovals && pendingApprovals > 0 && (
           <span className="rounded-full text-white text-[10px] font-bold flex items-center justify-center px-1.5 h-5 min-w-[20px]"
             style={{ background: "#F40009" }}>
@@ -195,10 +195,10 @@ export function AppSidebar() {
 
   const renderSection = (section: NavSection & { items: NavItem[] }) => (
     <div key={section.key}>
-      {section.label && !collapsed && (
+      {section.labelKey && !collapsed && (
         <div className="px-2 pt-2 pb-1">
           <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "#999999" }}>
-            {section.label}
+            {t(section.labelKey)}
           </span>
         </div>
       )}
@@ -226,11 +226,11 @@ export function AppSidebar() {
       {!collapsed && showProjectSelector && (
         <div className="px-3 pt-3 pb-2">
           <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "#999999" }}>
-            Active Project
+            {t("nav.activeProject")}
           </span>
           <Select value={selectedProjectId ?? ""} onValueChange={(v) => setSelectedProjectId(v || null)}>
             <SelectTrigger className="w-full text-sm h-9 mt-1" style={{ borderColor: "#E0E0E0", color: "#1A1A1A" }}>
-              <SelectValue placeholder="— Select Project —" />
+              <SelectValue placeholder={t("nav.selectProjectPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {projects.map((p) => (
@@ -295,7 +295,7 @@ export function AppSidebar() {
           onMouseLeave={(e) => (e.currentTarget.style.color = "#666666")}
         >
           <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed && <span>Sign Out</span>}
+          {!collapsed && <span>{t("nav.signOut")}</span>}
         </button>
         <button
           onClick={() => setCollapsed(!collapsed)}
