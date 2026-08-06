@@ -36,7 +36,12 @@
     "activeProject": "செயலில் உள்ள திட்டம்",
     "selectProjectPlaceholder": "— திட்டத்தைத் தேர்ந்தெடுக்கவும் —",
     "signOut": "வெளியேறு",
-    "more": "மேலும்"
+    "more": "மேலும்",
+    "designPortal": "வடிவமைப்பு போர்டல்",
+    "hrAttendance": "எச்ஆர் & வருகை",
+    "materialPlan": "பொருள் திட்டம்",
+    "purchaseOrders": "கொள்முதல் ஆணைகள்",
+    "settingsAdmin": "அமைப்புகள் / நிர்வாகம்"
   },
   "common": {
     "save": "சேமி",
@@ -48,7 +53,14 @@
     "comingSoon": "விரைவில் வரும்",
     "back": "பின்",
     "user": "பயனர்",
-    "unknown": "தெரியவில்லை"
+    "unknown": "தெரியவில்லை",
+    "close": "மூடு",
+    "delete": "நீக்கு",
+    "edit": "திருத்து",
+    "filter": "வடிகட்டி",
+    "noData": "தரவு இல்லை",
+    "search": "தேடு",
+    "viewAll": "அனைத்தையும் காண்க"
   },
   "status": {
     "pending": "நிலுவையில்",
@@ -59,7 +71,11 @@
     "inProgress": "நடப்பில்",
     "dispatched": "அனுப்பப்பட்டது",
     "onTrack": "சரியான பாதையில்",
-    "scheduled": "திட்டமிடப்பட்டது"
+    "scheduled": "திட்டமிடப்பட்டது",
+    "active": "செயலில்",
+    "closed": "மூடப்பட்டது",
+    "notStarted": "தொடங்கவில்லை",
+    "open": "திறந்திருக்கிறது"
   },
   "profile": {
     "language": "மொழி",
@@ -95,7 +111,11 @@
     "enterCurrentPassword": "உங்கள் தற்போதைய கடவுச்சொல்லை உள்ளிடவும்",
     "currentPasswordIncorrect": "தற்போதைய கடவுச்சொல் தவறு",
     "passwordUpdated": "கடவுச்சொல் வெற்றிகரமாக புதுப்பிக்கப்பட்டது",
-    "passwordChangeFailed": "கடவுச்சொல்லை மாற்ற முடியவில்லை"
+    "passwordChangeFailed": "கடவுச்சொல்லை மாற்ற முடியவில்லை",
+    "changePassword": "கடவுச்சொல்லை மாற்று",
+    "personalDetails": "தனிப்பட்ட விவரங்கள்",
+    "saveChanges": "மாற்றங்களைச் சேமி",
+    "title": "சுயவிவரம்"
   },
   "dashboard": {
     "greeting": "வணக்கம் {{name}}",
@@ -147,5 +167,28 @@
       "completedThisWeek": "இந்த வாரம் முடிந்தவை",
       "alerts": "எச்சரிக்கைகள்"
     }
+  },
+  "language": {
+    "english": "English",
+    "hindi": "हिंदी",
+    "kannada": "ಕನ್ನಡ",
+    "tamil": "தமிழ்",
+    "telugu": "తెలుగు"
+  },
+  "production": {
+    "board": "போர்டு",
+    "schedule": "அட்டவணை",
+    "supervisorLog": "மேற்பார்வையாளர் பதிவு",
+    "table": "அட்டவணை"
+  },
+  "project": {
+    "clientName": "வாடிக்கையாளர் பெயர்",
+    "drawings": "வரைபடங்கள்",
+    "location": "இடம்",
+    "materialRequests": "பொருள் கோரிக்கைகள்",
+    "newProject": "புதிய திட்டம்",
+    "overview": "மேலோட்டம்",
+    "production": "உற்பத்தி",
+    "projectName": "திட்டப் பெயர்"
   }
 }

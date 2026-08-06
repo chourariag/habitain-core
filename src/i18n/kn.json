@@ -36,7 +36,12 @@
     "activeProject": "ಸಕ್ರಿಯ ಯೋಜನೆ",
     "selectProjectPlaceholder": "— ಯೋಜನೆ ಆರಿಸಿ —",
     "signOut": "ಸೈನ್ ಔಟ್",
-    "more": "ಇನ್ನಷ್ಟು"
+    "more": "ಇನ್ನಷ್ಟು",
+    "designPortal": "ವಿನ್ಯಾಸ ಪೋರ್ಟಲ್",
+    "hrAttendance": "ಎಚ್‌ಆರ್ ಮತ್ತು ಹಾಜರಾತಿ",
+    "materialPlan": "ಸಾಮಗ್ರಿ ಯೋಜನೆ",
+    "purchaseOrders": "ಖರೀದಿ ಆದೇಶಗಳು",
+    "settingsAdmin": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು / ಆಡ್ಮಿನ್"
   },
   "common": {
     "save": "ಉಳಿಸಿ",
@@ -48,7 +53,14 @@
     "comingSoon": "ಶೀಘ್ರದಲ್ಲಿ ಬರಲಿದೆ",
     "back": "ಹಿಂದೆ",
     "user": "ಬಳಕೆದಾರ",
-    "unknown": "ಅಜ್ಞಾತ"
+    "unknown": "ಅಜ್ಞಾತ",
+    "close": "ಮುಚ್ಚಿ",
+    "delete": "ಅಳಿಸಿ",
+    "edit": "ಸಂಪಾದಿಸಿ",
+    "filter": "ಫಿಲ್ಟರ್",
+    "noData": "ಡೇಟಾ ಲಭ್ಯವಿಲ್ಲ",
+    "search": "ಹುಡುಕಿ",
+    "viewAll": "ಎಲ್ಲವನ್ನೂ ನೋಡಿ"
   },
   "status": {
     "pending": "ಬಾಕಿ",
@@ -59,7 +71,11 @@
     "inProgress": "ಪ್ರಗತಿಯಲ್ಲಿ",
     "dispatched": "ರವಾನಿಸಲಾಗಿದೆ",
     "onTrack": "ಸರಿದಾರಿಯಲ್ಲಿ",
-    "scheduled": "ನಿಗದಿತ"
+    "scheduled": "ನಿಗದಿತ",
+    "active": "ಸಕ್ರಿಯ",
+    "closed": "ಮುಚ್ಚಲಾಗಿದೆ",
+    "notStarted": "ಪ್ರಾರಂಭವಾಗಿಲ್ಲ",
+    "open": "ತೆರೆದಿದೆ"
   },
   "profile": {
     "language": "ಭಾಷೆ",
@@ -95,7 +111,11 @@
     "enterCurrentPassword": "ನಿಮ್ಮ ಪ್ರಸ್ತುತ ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ",
     "currentPasswordIncorrect": "ಪ್ರಸ್ತುತ ಪಾಸ್‌ವರ್ಡ್ ತಪ್ಪಾಗಿದೆ",
     "passwordUpdated": "ಪಾಸ್‌ವರ್ಡ್ ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ",
-    "passwordChangeFailed": "ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾಯಿಸಲು ವಿಫಲವಾಗಿದೆ"
+    "passwordChangeFailed": "ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾಯಿಸಲು ವಿಫಲವಾಗಿದೆ",
+    "changePassword": "ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾಯಿಸಿ",
+    "personalDetails": "ವೈಯಕ್ತಿಕ ವಿವರಗಳು",
+    "saveChanges": "ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ",
+    "title": "ಪ್ರೊಫೈಲ್"
   },
   "dashboard": {
     "greeting": "ನಮಸ್ಕಾರ {{name}}",
@@ -147,5 +167,28 @@
       "completedThisWeek": "ಈ ವಾರ ಪೂರ್ಣಗೊಂಡವು",
       "alerts": "ಎಚ್ಚರಿಕೆಗಳು"
     }
+  },
+  "language": {
+    "english": "English",
+    "hindi": "हिंदी",
+    "kannada": "ಕನ್ನಡ",
+    "tamil": "தமிழ்",
+    "telugu": "తెలుగు"
+  },
+  "production": {
+    "board": "ಬೋರ್ಡ್",
+    "schedule": "ವೇಳಾಪಟ್ಟಿ",
+    "supervisorLog": "ಮೇಲ್ವಿಚಾರಕ ಲಾಗ್",
+    "table": "ಕೋಷ್ಟಕ"
+  },
+  "project": {
+    "clientName": "ಗ್ರಾಹಕ ಹೆಸರು",
+    "drawings": "ಚಿತ್ರಗಳು",
+    "location": "ಸ್ಥಳ",
+    "materialRequests": "ಸಾಮಗ್ರಿ ವಿನಂತಿಗಳು",
+    "newProject": "ಹೊಸ ಯೋಜನೆ",
+    "overview": "ಅವಲೋಕನ",
+    "production": "ಉತ್ಪಾದನೆ",
+    "projectName": "ಯೋಜನೆ ಹೆಸರು"
   }
 }
