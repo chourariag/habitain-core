@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("is_active")
+          .select("is_active, language")
           .eq("auth_user_id", session.user.id)
           .maybeSingle();
 
@@ -88,6 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (profile && profile.is_active === false) {
           await supabase.auth.signOut();
+          return;
+        }
+
+        const lang = (profile as any)?.language;
+        if (lang && i18n.language !== lang) {
+          i18n.changeLanguage(lang);
         }
       } catch {
         // Keep session if profile validation fails temporarily
