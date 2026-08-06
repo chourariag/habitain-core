@@ -28,7 +28,7 @@ const LANG_OPTIONS = [
 export default function Profile() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -95,10 +95,10 @@ export default function Profile() {
           }, { onConflict: "profile_id" });
         if (piiErr) throw piiErr;
       }
-      toast.success("Profile updated");
+      toast.success(t("profile.profileUpdated"));
       await fetchProfile();
     } catch (err: any) {
-      toast.error(err.message || "Failed to save");
+      toast.error(err.message || t("profile.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -117,9 +117,9 @@ export default function Profile() {
         .update({ avatar_url: urlData.publicUrl } as any)
         .eq("auth_user_id", user.id);
       setAvatarUrl(urlData.publicUrl);
-      toast.success("Profile photo updated");
+      toast.success(t("profile.photoUpdated"));
     } catch (err: any) {
-      toast.error(err.message || "Upload failed");
+      toast.error(err.message || t("profile.uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -140,15 +140,15 @@ export default function Profile() {
 
   const handleChangePassword = async () => {
     if (newPassword.length < 6) {
-      toast.error("New password must be at least 6 characters");
+      toast.error(t("profile.passwordTooShort"));
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error(t("profile.passwordsDoNotMatch"));
       return;
     }
     if (!currentPassword) {
-      toast.error("Enter your current password");
+      toast.error(t("profile.enterCurrentPassword"));
       return;
     }
 
@@ -160,7 +160,7 @@ export default function Profile() {
         password: currentPassword,
       });
       if (signInError) {
-        toast.error("Current password is incorrect");
+        toast.error(t("profile.currentPasswordIncorrect"));
         return;
       }
 
@@ -168,11 +168,11 @@ export default function Profile() {
       const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
       if (updateError) throw updateError;
 
-      toast.success("Password updated successfully");
+      toast.success(t("profile.passwordUpdated"));
       // Log out so user re-authenticates with new password
       await signOut();
     } catch (err: any) {
-      toast.error(err.message || "Failed to change password");
+      toast.error(err.message || t("profile.passwordChangeFailed"));
     } finally {
       setChangingPassword(false);
     }
@@ -198,7 +198,7 @@ export default function Profile() {
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">Profile</h1>
+        <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{t("profile.title")}</h1>
       </div>
 
       {/* Avatar + Name */}
@@ -218,16 +218,16 @@ export default function Profile() {
                 onClick={() => setPhotoSheetOpen(true)}
                 disabled={uploading}
                 className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-card border border-border flex items-center justify-center cursor-pointer hover:bg-accent/50 transition-colors"
-                aria-label="Change profile photo"
+                aria-label={t("profile.changePhoto")}
               >
                 {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5 text-muted-foreground" />}
               </button>
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-foreground">{displayName || "No name set"}</h2>
+              <h2 className="text-xl font-semibold text-foreground">{displayName || t("profile.noNameSet")}</h2>
               <p className="text-sm text-muted-foreground">{user?.email}</p>
               <Badge variant="outline" className="mt-2 bg-accent/10 text-accent-foreground border-border">
-                {ROLE_LABELS[(profile?.role as AppRole)] || profile?.role || "Unknown"}
+                {ROLE_LABELS[(profile?.role as AppRole)] || profile?.role || t("common.unknown")}
               </Badge>
             </div>
           </div>
@@ -238,31 +238,31 @@ export default function Profile() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <User className="h-4 w-4" /> Personal Details
+            <User className="h-4 w-4" /> {t("profile.personalDetails")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Display Name</Label>
-            <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Your full name" />
+            <Label>{t("profile.displayName")}</Label>
+            <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={t("profile.displayNamePlaceholder")} />
           </div>
           <div className="space-y-2">
-            <Label>Phone Number</Label>
+            <Label>{t("profile.phoneNumber")}</Label>
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91XXXXXXXXXX" />
           </div>
           <div className="space-y-2">
-            <Label>Home / Start Location</Label>
-            <Input value={homeBase} onChange={(e) => setHomeBase(e.target.value)} placeholder="Default 'From' for conveyance claims" />
-            <p className="text-xs text-muted-foreground">Used as default start location in conveyance claims.</p>
+            <Label>{t("profile.homeLocation")}</Label>
+            <Input value={homeBase} onChange={(e) => setHomeBase(e.target.value)} placeholder={t("profile.homeLocationPlaceholder")} />
+            <p className="text-xs text-muted-foreground">{t("profile.homeLocationHint")}</p>
           </div>
           <div className="space-y-2">
-            <Label>Role</Label>
+            <Label>{t("profile.role")}</Label>
             <Input value={ROLE_LABELS[(profile?.role as AppRole)] || profile?.role || ""} disabled className="bg-muted/30" />
-            <p className="text-xs text-muted-foreground">Roles can only be changed by an administrator.</p>
+            <p className="text-xs text-muted-foreground">{t("profile.roleHint")}</p>
           </div>
           <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
             {saving && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-            Save Changes
+            {t("profile.saveChanges")}
           </Button>
         </CardContent>
       </Card>
@@ -271,7 +271,7 @@ export default function Profile() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Globe className="h-4 w-4" /> Language
+            <Globe className="h-4 w-4" /> {t("profile.language")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -287,9 +287,9 @@ export default function Profile() {
                 .eq("auth_user_id", user.id);
               if (error) {
                 await i18n.changeLanguage(previous);
-                toast.error(error.message || "Could not save language preference");
+                toast.error(error.message || t("profile.languageSaveFailed"));
               } else {
-                toast.success("Language preference saved");
+                toast.success(t("profile.languageSaved"));
               }
             }}
           >
@@ -302,7 +302,7 @@ export default function Profile() {
               ))}
             </SelectContent>
           </Select>
-          <p className="text-xs text-muted-foreground">UI labels will update immediately. Data is always shown as entered.</p>
+          <p className="text-xs text-muted-foreground">{t("profile.languageHint")}</p>
         </CardContent>
       </Card>
 
@@ -316,34 +316,34 @@ export default function Profile() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Lock className="h-4 w-4" /> Change Password
+            <Lock className="h-4 w-4" /> {t("profile.changePassword")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>Current Password</Label>
-            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder="Enter current password" />
+            <Label>{t("profile.currentPassword")}</Label>
+            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} placeholder={t("profile.currentPasswordPlaceholder")} />
           </div>
           <div className="space-y-2">
-            <Label>New Password</Label>
-            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Min 6 characters" />
+            <Label>{t("profile.newPassword")}</Label>
+            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t("profile.newPasswordPlaceholder")} />
           </div>
           <div className="space-y-2">
-            <Label>Confirm New Password</Label>
-            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter new password" />
+            <Label>{t("profile.confirmNewPassword")}</Label>
+            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder={t("profile.confirmNewPasswordPlaceholder")} />
           </div>
           <Button variant="outline" onClick={handleChangePassword} disabled={changingPassword} className="w-full">
             {changingPassword && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
-            Change Password
+            {t("profile.changePassword")}
           </Button>
-          <p className="text-xs text-muted-foreground text-center">You will be logged out after changing your password.</p>
+          <p className="text-xs text-muted-foreground text-center">{t("profile.logoutWarning")}</p>
         </CardContent>
       </Card>
 
       <Dialog open={photoSheetOpen} onOpenChange={setPhotoSheetOpen}>
         <DialogContent className="sm:max-w-sm p-0 gap-0 sm:rounded-lg max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:bottom-0 max-sm:top-auto max-sm:translate-y-0 max-sm:data-[state=open]:slide-in-from-bottom max-sm:data-[state=closed]:slide-out-to-bottom">
           <DialogHeader className="p-4 border-b">
-            <DialogTitle className="text-base">Update Profile Photo</DialogTitle>
+            <DialogTitle className="text-base">{t("profile.updatePhoto")}</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col">
             <button
@@ -352,7 +352,7 @@ export default function Profile() {
               className="flex items-center gap-3 px-5 py-4 hover:bg-accent/30 transition-colors text-left border-b"
             >
               <Camera className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium">Take Photo</span>
+              <span className="text-sm font-medium">{t("profile.takePhoto")}</span>
             </button>
             <button
               type="button"
@@ -360,14 +360,14 @@ export default function Profile() {
               className="flex items-center gap-3 px-5 py-4 hover:bg-accent/30 transition-colors text-left border-b"
             >
               <User className="h-5 w-5 text-primary" />
-              <span className="text-sm font-medium">Choose from Gallery</span>
+              <span className="text-sm font-medium">{t("profile.chooseFromGallery")}</span>
             </button>
             <button
               type="button"
               onClick={() => setPhotoSheetOpen(false)}
               className="px-5 py-4 text-sm text-muted-foreground hover:bg-accent/30 transition-colors text-center"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </DialogContent>
