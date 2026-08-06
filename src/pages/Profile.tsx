@@ -277,10 +277,19 @@ export default function Profile() {
         <CardContent className="space-y-3">
           <Select
             value={i18n.language}
-            onValueChange={(lang) => {
-              i18n.changeLanguage(lang);
-              if (user) {
-                supabase.from("profiles").update({ language: lang } as any).eq("auth_user_id", user.id);
+            onValueChange={async (lang) => {
+              const previous = i18n.language;
+              await i18n.changeLanguage(lang);
+              if (!user) return;
+              const { error } = await supabase
+                .from("profiles")
+                .update({ language: lang } as any)
+                .eq("auth_user_id", user.id);
+              if (error) {
+                await i18n.changeLanguage(previous);
+                toast.error(error.message || "Could not save language preference");
+              } else {
+                toast.success("Language preference saved");
               }
             }}
           >

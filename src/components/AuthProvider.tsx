@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import i18n from "@/i18n";
 import type { AuthSession as Session, AuthUser as User } from "@supabase/supabase-js";
 
 interface AuthContextType {
@@ -80,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("is_active")
+          .select("is_active, language")
           .eq("auth_user_id", session.user.id)
           .maybeSingle();
 
@@ -88,6 +89,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (profile && profile.is_active === false) {
           await supabase.auth.signOut();
+          return;
+        }
+
+        const lang = (profile as any)?.language;
+        if (lang && i18n.language !== lang) {
+          i18n.changeLanguage(lang);
         }
       } catch {
         // Keep session if profile validation fails temporarily
