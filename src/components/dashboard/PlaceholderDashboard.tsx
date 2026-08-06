@@ -1,5 +1,7 @@
 import type { AppRole } from "@/lib/roles";
 import { ROLE_LABELS } from "@/lib/roles";
+import { useTranslation } from "react-i18next";
+import { tileKey } from "@/lib/i18n-utils";
 
 // PHASE 5: populate all placeholder tiles with real KPI data from Supabase
 const TIER2_TILES: Record<string, string[]> = {
@@ -31,6 +33,7 @@ interface Props {
 }
 
 export function PlaceholderDashboard({ title, today, tier, role, firstName, hideTiles }: Props) {
+  const { t } = useTranslation();
   let tiles: string[] = [];
   if (tier === 4) {
     tiles = TIER4_TILES;
@@ -45,7 +48,7 @@ export function PlaceholderDashboard({ title, today, tier, role, firstName, hide
   return (
     <>
       <div>
-        <p className="font-display text-[32px] leading-tight font-bold text-primary/90 mb-5">Hi {firstName || "User"}</p>
+        <p className="font-display text-[32px] leading-tight font-bold text-primary/90 mb-5">{t("dashboard.greeting", { name: firstName || t("common.user") })}</p>
         <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "#1A1A1A" }}>{title}</h1>
         <p className="text-sm mt-1" style={{ color: "#666666" }}>{today}</p>
       </div>
@@ -58,10 +61,10 @@ export function PlaceholderDashboard({ title, today, tier, role, firstName, hide
             className="rounded-lg border p-4"
             style={{ backgroundColor: "#FFFFFF", borderColor: "#E0E0E0", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", borderLeftWidth: 3, borderLeftColor: "#006039" }}
           >
-            <p className="text-[10px] uppercase tracking-wider font-medium mb-2" style={{ color: "#666666" }}>{label}</p>
+            <p className="text-[10px] uppercase tracking-wider font-medium mb-2" style={{ color: "#666666" }}>{t(`dashboard.tiles.${tileKey(label)}`, { defaultValue: label })}</p>
             <p className="text-2xl font-bold" style={{ color: "#1A1A1A" }}>0</p>
             {/* PHASE 5: populate with real KPI targets for {role} */}
-            <p className="text-[10px] mt-1" style={{ color: "#999999" }}>Data loads in Phase 5</p>
+            <p className="text-[10px] mt-1" style={{ color: "#999999" }}>{t("dashboard.dataComingSoon")}</p>
           </div>
         ))}
       </div>

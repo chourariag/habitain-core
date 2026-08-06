@@ -150,10 +150,10 @@ export function MobileNav() {
                   color: moreActive ? "#006039" : "#999999",
                   scrollSnapAlign: "center",
                 }}
-                aria-label="More navigation options"
+                aria-label={t("nav.moreOptions")}
               >
                 <MoreHorizontal className="h-[20px] w-[20px]" />
-                <span className="whitespace-nowrap">More</span>
+                <span className="whitespace-nowrap">{t("nav.more")}</span>
               </button>
             )}
           </div>
