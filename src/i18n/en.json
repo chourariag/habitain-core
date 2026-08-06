@@ -41,7 +41,8 @@
     "activeProject": "Active Project",
     "selectProjectPlaceholder": "— Select Project —",
     "signOut": "Sign Out",
-    "more": "More"
+    "more": "More",
+    "moreOptions": "More navigation options"
   },
   "common": {
     "save": "Save",
@@ -166,7 +167,9 @@
     "passwordUpdated": "Password updated successfully",
     "passwordChangeFailed": "Failed to change password",
     "languageSaved": "Language preference saved",
-    "languageSaveFailed": "Could not save language preference"
+    "languageSaveFailed": "Could not save language preference",
+    "avatarAlt": "Avatar",
+    "phonePlaceholder": "+91XXXXXXXXXX"
   },
   "project": {
     "newProject": "New Project",

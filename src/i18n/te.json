@@ -41,7 +41,8 @@
     "hrAttendance": "హెచ్‌ఆర్ & హాజరు",
     "materialPlan": "సామగ్రి ప్రణాళిక",
     "purchaseOrders": "కొనుగోలు ఆర్డర్లు",
-    "settingsAdmin": "సెట్టింగ్‌లు / అడ్మిన్"
+    "settingsAdmin": "సెట్టింగ్‌లు / అడ్మిన్",
+    "moreOptions": "మరిన్ని నావిగేషన్ ఎంపికలు"
   },
   "common": {
     "save": "సేవ్",
@@ -115,7 +116,9 @@
     "changePassword": "పాస్‌వర్డ్ మార్చండి",
     "personalDetails": "వ్యక్తిగత వివరాలు",
     "saveChanges": "మార్పులను సేవ్ చేయండి",
-    "title": "ప్రొఫైల్"
+    "title": "ప్రొఫైల్",
+    "avatarAlt": "అవతార్",
+    "phonePlaceholder": "+91XXXXXXXXXX"
   },
   "dashboard": {
     "greeting": "నమస్కారం {{name}}",

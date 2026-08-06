@@ -61,7 +61,7 @@ for (const rel of ENFORCED) {
     if (trimmed.startsWith("//") || trimmed.startsWith("*") || trimmed.startsWith("/*")) return;
 
     // bare JSX text node: >Some words<
-    for (const m of line.matchAll(/>([^<>{}\n]+)</g)) {
+    for (const m of line.matchAll(/(?<![=!<>-])>([^<>{}\n]+)<(?=[/A-Za-z])/g)) {
       const text = m[1].trim();
       if (!text || IGNORE_TEXT.test(text) || !hasLetters(text)) continue;
       errors.push(`${rel}:${ln} hardcoded JSX text "${text}" — wrap in t()`);

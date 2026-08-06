@@ -41,7 +41,8 @@
     "hrAttendance": "எச்ஆர் & வருகை",
     "materialPlan": "பொருள் திட்டம்",
     "purchaseOrders": "கொள்முதல் ஆணைகள்",
-    "settingsAdmin": "அமைப்புகள் / நிர்வாகம்"
+    "settingsAdmin": "அமைப்புகள் / நிர்வாகம்",
+    "moreOptions": "மேலும் வழிசெலுத்தல் விருப்பங்கள்"
   },
   "common": {
     "save": "சேமி",
@@ -115,7 +116,9 @@
     "changePassword": "கடவுச்சொல்லை மாற்று",
     "personalDetails": "தனிப்பட்ட விவரங்கள்",
     "saveChanges": "மாற்றங்களைச் சேமி",
-    "title": "சுயவிவரம்"
+    "title": "சுயவிவரம்",
+    "avatarAlt": "அவதாரம்",
+    "phonePlaceholder": "+91XXXXXXXXXX"
   },
   "dashboard": {
     "greeting": "வணக்கம் {{name}}",

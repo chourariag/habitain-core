@@ -41,7 +41,8 @@
     "hrAttendance": "ಎಚ್‌ಆರ್ ಮತ್ತು ಹಾಜರಾತಿ",
     "materialPlan": "ಸಾಮಗ್ರಿ ಯೋಜನೆ",
     "purchaseOrders": "ಖರೀದಿ ಆದೇಶಗಳು",
-    "settingsAdmin": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು / ಆಡ್ಮಿನ್"
+    "settingsAdmin": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು / ಆಡ್ಮಿನ್",
+    "moreOptions": "ಇನ್ನಷ್ಟು ನ್ಯಾವಿಗೇಷನ್ ಆಯ್ಕೆಗಳು"
   },
   "common": {
     "save": "ಉಳಿಸಿ",
@@ -115,7 +116,9 @@
     "changePassword": "ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾಯಿಸಿ",
     "personalDetails": "ವೈಯಕ್ತಿಕ ವಿವರಗಳು",
     "saveChanges": "ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ",
-    "title": "ಪ್ರೊಫೈಲ್"
+    "title": "ಪ್ರೊಫೈಲ್",
+    "avatarAlt": "ಅವತಾರ್",
+    "phonePlaceholder": "+91XXXXXXXXXX"
   },
   "dashboard": {
     "greeting": "ನಮಸ್ಕಾರ {{name}}",

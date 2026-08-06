@@ -207,7 +207,7 @@ export default function Profile() {
           <div className="flex items-center gap-5">
             <div className="relative">
               {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="h-20 w-20 rounded-full object-cover border-2 border-border" />
+                <img src={avatarUrl} alt={t("profile.avatarAlt")} className="h-20 w-20 rounded-full object-cover border-2 border-border" />
               ) : (
                 <div className="h-20 w-20 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-2xl">
                   {initials}
@@ -248,7 +248,7 @@ export default function Profile() {
           </div>
           <div className="space-y-2">
             <Label>{t("profile.phoneNumber")}</Label>
-            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+91XXXXXXXXXX" />
+            <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t("profile.phonePlaceholder")} />
           </div>
           <div className="space-y-2">
             <Label>{t("profile.homeLocation")}</Label>
