@@ -14,6 +14,7 @@ export const EDIT_ROLES = [
   "super_admin", "managing_director", "finance_director", "sales_director",
   "architecture_director", "principal_architect", "project_architect",
   "planning_head", "planning_engineer", "head_operations", "operations_architect",
+  "costing_engineer",
 ];
 
 export const QUOTATION_STATUSES = ["Pending", "Released", "Won", "Lost", "On Hold"] as const;
