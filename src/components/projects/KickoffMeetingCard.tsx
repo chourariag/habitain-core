@@ -68,7 +68,15 @@ export default function KickoffMeetingCard({ userRole }: Props) {
       toast.success("Meeting confirmed. Calendar invites queued.");
       load();
     } catch (e: any) {
-      toast.error(e.message ?? "Failed to confirm");
+      const raw = String(e?.message ?? "");
+      const friendly = /operations architect/i.test(raw)
+        ? "You don't have permission to confirm this kickoff meeting."
+        : /not found/i.test(raw)
+        ? "This kickoff meeting no longer exists. Refresh and try again."
+        : /violates|constraint|relation|column/i.test(raw)
+        ? "Couldn't confirm the meeting — some project details are incomplete. Please contact an admin."
+        : raw || "Failed to confirm";
+      toast.error(friendly);
     } finally {
       setBusyId(null);
     }
