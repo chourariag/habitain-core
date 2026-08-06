@@ -12,11 +12,12 @@ import { canSeeSection } from "@/lib/role-nav";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { ModuleKey } from "@/lib/rbac-matrix";
 import type { AppRole } from "@/lib/roles";
+import { useTranslation } from "react-i18next";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 type Tab = {
   to: string;
-  label: string;
+  labelKey: string;
   icon: any;
   section: string;
   alwaysVisible?: boolean;
@@ -28,21 +29,21 @@ const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
 const SETTINGS_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
 
 const allTabs: Tab[] = [
-  { to: "/dashboard", label: "Home", icon: LayoutDashboard, section: "dashboard", module: "dashboard" },
-  { to: "/approvals", label: "Approvals", icon: ShieldCheck, section: "approvals", module: "approvals" },
-  { to: "/projects", label: "Projects", icon: FolderKanban, section: "projects", module: "projects" },
-  { to: "/production?tab=modules", label: "Factory", icon: Factory, section: "production", module: "factory" },
-  { to: "/site-hub?tab=pipeline", label: "Site", icon: Truck, section: "site", module: "site" },
-  { to: "/procurement?tab=dashboard", label: "Procurement", icon: ShoppingCart, section: "procurement", module: "procurement" },
-  { to: "/finance?tab=mis-invoices", label: "Finance", icon: DollarSign, section: "finance", module: "finance" },
-  { to: "/design", label: "Design", icon: Compass, section: "design", module: "design" },
-  { to: "/sales", label: "Sales", icon: BarChart3, section: "sales", module: "sales" },
-  { to: "/attendance", label: "HR", icon: UserCog, section: "altree", module: "hr" },
+  { to: "/dashboard", labelKey: "nav.home", icon: LayoutDashboard, section: "dashboard", module: "dashboard" },
+  { to: "/approvals", labelKey: "nav.approvals", icon: ShieldCheck, section: "approvals", module: "approvals" },
+  { to: "/projects", labelKey: "nav.projects", icon: FolderKanban, section: "projects", module: "projects" },
+  { to: "/production?tab=modules", labelKey: "nav.factory", icon: Factory, section: "production", module: "factory" },
+  { to: "/site-hub?tab=pipeline", labelKey: "nav.site", icon: Truck, section: "site", module: "site" },
+  { to: "/procurement?tab=dashboard", labelKey: "nav.procurement", icon: ShoppingCart, section: "procurement", module: "procurement" },
+  { to: "/finance?tab=mis-invoices", labelKey: "nav.finance", icon: DollarSign, section: "finance", module: "finance" },
+  { to: "/design", labelKey: "nav.design", icon: Compass, section: "design", module: "design" },
+  { to: "/sales", labelKey: "nav.sales", icon: BarChart3, section: "sales", module: "sales" },
+  { to: "/attendance", labelKey: "nav.hr", icon: UserCog, section: "altree", module: "hr" },
 ];
 
 type MoreItem = {
   to: string;
-  label: string;
+  labelKey: string;
   icon: any;
   desc: string;
   critical?: boolean;
@@ -51,14 +52,15 @@ type MoreItem = {
 };
 
 const moreItems: MoreItem[] = [
-  { to: "/admin", label: "Admin", icon: Briefcase, desc: "User directory & benchmarks", requireAdminPanel: true },
-  { to: "/admin/employees", label: "Employee Management", icon: Users, desc: "Manage employee profiles & roles", requireAdminPanel: true },
-  { to: "/settings", label: "App Settings", icon: Settings, desc: "Application preferences", roles: SETTINGS_ROLES },
-  { to: "/admin/super-admin", label: "Super Admin", icon: ShieldAlert, desc: "System configuration & audit log", critical: true, roles: SUPER_ADMIN_ROLES },
+  { to: "/admin", labelKey: "nav.admin", icon: Briefcase, desc: "User directory & benchmarks", requireAdminPanel: true },
+  { to: "/admin/employees", labelKey: "nav.employees", icon: Users, desc: "Manage employee profiles & roles", requireAdminPanel: true },
+  { to: "/settings", labelKey: "nav.settings", icon: Settings, desc: "Application preferences", roles: SETTINGS_ROLES },
+  { to: "/admin/super-admin", labelKey: "nav.superAdmin", icon: ShieldAlert, desc: "System configuration & audit log", critical: true, roles: SUPER_ADMIN_ROLES },
 ];
 
 export function MobileNav() {
   const { role } = useUserRole();
+  const { t } = useTranslation();
   const userRole = role as AppRole | null;
   const { canView, canAccessAdminPanel } = usePermissions();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -132,7 +134,7 @@ export function MobileNav() {
                     className="flex flex-col items-center gap-[2px]"
                   >
                     <tab.icon className="h-[20px] w-[20px]" />
-                    <span className="whitespace-nowrap">{tab.label}</span>
+                    <span className="whitespace-nowrap">{t(tab.labelKey)}</span>
                   </span>
                 )}
               </NavLink>
@@ -199,7 +201,7 @@ export function MobileNav() {
                       className="text-sm font-semibold"
                       style={{ color: item.critical ? "#F40009" : undefined }}
                     >
-                      {item.label}
+                      {t(item.labelKey)}
                     </div>
                     <div className="text-xs text-muted-foreground truncate">{item.desc}</div>
                   </div>
