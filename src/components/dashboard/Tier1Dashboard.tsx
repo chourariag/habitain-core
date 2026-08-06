@@ -8,6 +8,8 @@ import {
   Compass, Calendar,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { useTranslation } from "react-i18next";
+import { tileKey } from "@/lib/i18n-utils";
 
 interface KPI {
   label: string;
@@ -34,6 +36,7 @@ const HEALTH_BORDER: Record<string, string> = {
 };
 
 export function Tier1Dashboard({ today, firstName }: { today: string; firstName?: string }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [strips, setStrips] = useState<{ label: string; tiles: KPI[] }[]>([]);
@@ -95,7 +98,7 @@ export function Tier1Dashboard({ today, firstName }: { today: string; firstName?
 
       setStrips([
         {
-          label: "PRODUCTION",
+          label: "dashboard.strips.production",
           tiles: [
             { label: "Active Projects", value: activeNow, delta: activeNow - activeThen, icon: FolderKanban, href: "/projects", health: "good" },
             { label: "Panels In Production", value: modNow, delta: modNow - modThen, icon: Factory, href: "/production", health: "good" },
@@ -104,7 +107,7 @@ export function Tier1Dashboard({ today, firstName }: { today: string; firstName?
           ],
         },
         {
-          label: "SITE & DISPATCH",
+          label: "dashboard.strips.siteDispatch",
           tiles: [
             { label: "Dispatches This Week", value: dispNow, delta: 0, icon: Truck, href: "/site-hub", health: "good" },
             { label: "Active Site Installations", value: 0, delta: 0, icon: Wrench, href: "/site-hub", health: "good" },
@@ -112,7 +115,7 @@ export function Tier1Dashboard({ today, firstName }: { today: string; firstName?
           ],
         },
         {
-          label: "SALES",
+          label: "dashboard.strips.sales",
           tiles: [
             // PHASE 5: populate with real sales pipeline data
             { label: "Total Pipeline Value", value: 0, delta: 0, icon: BarChart3, href: "/sales", health: "good" },
@@ -122,7 +125,7 @@ export function Tier1Dashboard({ today, firstName }: { today: string; firstName?
           ],
         },
         {
-          label: "FINANCE",
+          label: "dashboard.strips.finance",
           tiles: [
             // PHASE 5: populate with real finance data
             { label: "Revenue MTD", value: 0, delta: 0, icon: DollarSign, href: "/finance", health: "good" },
@@ -131,7 +134,7 @@ export function Tier1Dashboard({ today, firstName }: { today: string; firstName?
           ],
         },
         {
-          label: "DESIGN & AMC",
+          label: "dashboard.strips.designAmc",
           tiles: [
             { label: "Design Delays", value: 0, delta: 0, icon: Compass, href: "/design", health: "good" },
             { label: "GFC Issued This Month", value: 0, delta: 0, icon: FileText, href: "/design", health: "good" },
@@ -194,8 +197,8 @@ export function Tier1Dashboard({ today, firstName }: { today: string; firstName?
   return (
     <>
       <div>
-        <p className="font-display text-[32px] leading-tight font-bold text-primary/90 mb-5">Hi {firstName || "User"}</p>
-        <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "#1A1A1A" }}>Command Centre</h1>
+        <p className="font-display text-[32px] leading-tight font-bold text-primary/90 mb-5">{t("dashboard.greeting", { name: firstName || t("common.user") })}</p>
+        <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "#1A1A1A" }}>{t("dashboard.commandCentre")}</h1>
         <p className="text-sm mt-1" style={{ color: "#666666" }}>{today}</p>
       </div>
 
@@ -203,7 +206,7 @@ export function Tier1Dashboard({ today, firstName }: { today: string; firstName?
       {/* 5 strips */}
       {strips.map((strip) => (
         <div key={strip.label}>
-          <p className="text-[10px] uppercase tracking-wider font-semibold mb-2" style={{ color: "#999999" }}>{strip.label}</p>
+          <p className="text-[10px] uppercase tracking-wider font-semibold mb-2" style={{ color: "#999999" }}>{t(strip.label)}</p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {strip.tiles.map((tile) => {
               const Icon = tile.icon;
@@ -216,7 +219,7 @@ export function Tier1Dashboard({ today, firstName }: { today: string; firstName?
                   style={{ backgroundColor: "#FFFFFF", boxShadow: "0 1px 3px rgba(0,0,0,0.08)", borderColor: "#E0E0E0", borderLeftWidth: 3, borderLeftColor: borderColor }}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: "#666666" }}>{tile.label}</span>
+                    <span className="text-[10px] uppercase tracking-wider font-medium" style={{ color: "#666666" }}>{t(`dashboard.tiles.${tileKey(tile.label)}`, { defaultValue: tile.label })}</span>
                     <Icon className="h-4 w-4" style={{ color: "#006039" }} />
                   </div>
                   <div className="flex items-end gap-2">
@@ -240,11 +243,11 @@ export function Tier1Dashboard({ today, firstName }: { today: string; firstName?
       {/* Production Health + Upcoming Dispatches */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-lg border border-border bg-card p-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-          <h2 className="font-display text-base font-semibold mb-4" style={{ color: "#1A1A1A" }}>Production Stage Distribution</h2>
+          <h2 className="font-display text-base font-semibold mb-4" style={{ color: "#1A1A1A" }}>{t("dashboard.stageDistribution")}</h2>
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
           ) : healthData.length === 0 ? (
-            <p className="text-sm text-center py-6" style={{ color: "#666666" }}>No modules in production yet.</p>
+            <p className="text-sm text-center py-6" style={{ color: "#666666" }}>{t("dashboard.noModules")}</p>
           ) : (
             <div className="space-y-3">
               {healthData.map((row) => {
@@ -282,11 +285,11 @@ export function Tier1Dashboard({ today, firstName }: { today: string; firstName?
         </div>
 
         <div className="rounded-lg border border-border bg-card p-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-          <h2 className="font-display text-base font-semibold mb-4" style={{ color: "#1A1A1A" }}>Recent Activity</h2>
+          <h2 className="font-display text-base font-semibold mb-4" style={{ color: "#1A1A1A" }}>{t("dashboard.recentActivity")}</h2>
           {loading ? (
             <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
           ) : activity.length === 0 ? (
-            <p className="text-sm py-6 text-center" style={{ color: "#666666" }}>No activity yet.</p>
+            <p className="text-sm py-6 text-center" style={{ color: "#666666" }}>{t("dashboard.noActivity")}</p>
           ) : (
             <div className="space-y-1">
               {activity.map((a: any) => (

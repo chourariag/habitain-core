@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getDashboardTier } from "@/lib/role-nav";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
@@ -27,6 +28,7 @@ const SALES_TASK_ROLES = ["sales_executive", "sales_associate", "sales_director"
 const FLOOR_ROLES = ["factory_floor_supervisor", "fabrication_foreman", "electrical_installer", "elec_plumbing_installer", "site_engineer", "delivery_rm_lead"];
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const { role, userId, loading } = useUserRole();
   const { user } = useAuth();
   const userRole = role as AppRole | null;
@@ -78,7 +80,7 @@ export default function Dashboard() {
       {userRole && FLOOR_ROLES.includes(userRole) && (
         <Link to="/production?tab=people">
           <Button className="w-full gap-2 text-white font-display font-bold h-14 text-base" style={{ backgroundColor: "#D4860A" }}>
-            <HardHat className="h-5 w-5" /> Log Today's Work
+            <HardHat className="h-5 w-5" /> {t("dashboard.logTodaysWork")}
           </Button>
         </Link>
       )}
@@ -96,8 +98,8 @@ export default function Dashboard() {
       {tier === 1 ? (
         <Tabs defaultValue="command-centre" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="command-centre">Command Centre</TabsTrigger>
-            <TabsTrigger value="order-book">Order Book</TabsTrigger>
+            <TabsTrigger value="command-centre">{t("dashboard.commandCentre")}</TabsTrigger>
+            <TabsTrigger value="order-book">{t("dashboard.orderBook")}</TabsTrigger>
           </TabsList>
           <TabsContent value="command-centre" className="space-y-6">
             <Tier1Dashboard today={today} firstName={firstName} />
@@ -107,11 +109,11 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
       ) : tier === 2 ? (
-        <PlaceholderDashboard title={`My Dashboard — ${roleName}`} today={today} tier={2} role={userRole} firstName={firstName} />
+        <PlaceholderDashboard title={t("dashboard.myDashboardRole", { role: roleName })} today={today} tier={2} role={userRole} firstName={firstName} />
       ) : tier === 4 ? (
-        <PlaceholderDashboard title="Design Workspace" today={today} tier={4} role={userRole} firstName={firstName} />
+        <PlaceholderDashboard title={t("dashboard.designWorkspace")} today={today} tier={4} role={userRole} firstName={firstName} />
       ) : (
-        <PlaceholderDashboard title={`My Workspace — ${roleName}`} today={today} tier={3} role={userRole} firstName={firstName} hideTiles={isSalesTaskRole} />
+        <PlaceholderDashboard title={t("dashboard.myWorkspaceRole", { role: roleName })} today={today} tier={3} role={userRole} firstName={firstName} hideTiles={isSalesTaskRole} />
       )}
 
       {isSalesTaskRole && <SalesTasksCard userId={userId} userRole={userRole} />}
