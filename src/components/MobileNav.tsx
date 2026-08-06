@@ -173,7 +173,7 @@ export function MobileNav() {
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
         <SheetContent side="bottom" className="md:hidden rounded-t-2xl p-0 max-h-[80vh]">
           <SheetHeader className="px-5 pt-5 pb-3 text-left">
-            <SheetTitle className="font-display text-lg">More</SheetTitle>
+            <SheetTitle className="font-display text-lg">{t("nav.more")}</SheetTitle>
           </SheetHeader>
           <div className="px-3 pb-6 space-y-1">
             {visibleMoreItems.map((item) => {
