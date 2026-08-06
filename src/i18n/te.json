@@ -1,11 +1,42 @@
 {
   "nav": {
     "dashboard": "డాష్‌బోర్డ్",
+    "home": "హోమ్",
+    "approvals": "ఆమోదాలు",
+    "announcements": "ప్రకటనలు",
     "projects": "ప్రాజెక్టులు",
+    "management": "నిర్వహణ",
+    "production": "ఉత్పత్తి",
+    "capacityPlanning": "సామర్థ్య ప్రణాళిక",
     "factoryFloor": "ఫ్యాక్టరీ",
+    "factory": "ఫ్యాక్టరీ",
+    "floorMap": "ఫ్లోర్ మ్యాప్",
+    "qcNcr": "QC & NCR",
+    "dispatchDelivery": "డిస్పాచ్ & డెలివరీ",
+    "safety": "భద్రత",
+    "onSiteWorks": "సైట్ పనులు",
     "siteHub": "సైట్ హబ్",
+    "site": "సైట్",
+    "repairsAmc": "మరమ్మతులు & AMC",
+    "procurement": "సేకరణ",
     "inventory": "ఇన్వెంటరీ",
-    "selectProject": "ప్రాజెక్ట్ ఎంచుకోండి"
+    "finance": "ఆర్థిక",
+    "design": "డిజైన్",
+    "designSchedule": "డిజైన్ షెడ్యూల్",
+    "designQueries": "డిజైన్ ప్రశ్నలు",
+    "sales": "అమ్మకాలు",
+    "hr": "హెచ్‌ఆర్",
+    "myHr": "నా హెచ్‌ఆర్",
+    "hrManagement": "హెచ్‌ఆర్ నిర్వహణ",
+    "admin": "అడ్మిన్",
+    "employees": "ఉద్యోగులు",
+    "superAdmin": "సూపర్ అడ్మిన్",
+    "settings": "సెట్టింగ్‌లు",
+    "selectProject": "ప్రాజెక్ట్ ఎంచుకోండి",
+    "activeProject": "క్రియాశీల ప్రాజెక్ట్",
+    "selectProjectPlaceholder": "— ప్రాజెక్ట్ ఎంచుకోండి —",
+    "signOut": "సైన్ అవుట్",
+    "more": "మరిన్ని"
   },
   "common": {
     "save": "సేవ్",
@@ -23,5 +54,10 @@
     "delayed": "ఆలస్యం",
     "completed": "పూర్తయింది",
     "inProgress": "ప్రగతిలో"
+  },
+  "profile": {
+    "language": "భాష",
+    "languageSaved": "భాషా ప్రాధాన్యత సేవ్ చేయబడింది",
+    "languageSaveFailed": "భాషా ప్రాధాన్యతను సేవ్ చేయలేకపోయాము"
   }
 }

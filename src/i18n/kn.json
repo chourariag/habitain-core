@@ -1,11 +1,42 @@
 {
   "nav": {
     "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+    "home": "ಮುಖಪುಟ",
+    "approvals": "ಅನುಮೋದನೆಗಳು",
+    "announcements": "ಪ್ರಕಟಣೆಗಳು",
     "projects": "ಯೋಜನೆಗಳು",
+    "management": "ನಿರ್ವಹಣೆ",
+    "production": "ಉತ್ಪಾದನೆ",
+    "capacityPlanning": "ಸಾಮರ್ಥ್ಯ ಯೋಜನೆ",
     "factoryFloor": "ಕಾರ್ಖಾನೆ",
+    "factory": "ಕಾರ್ಖಾನೆ",
+    "floorMap": "ಫ್ಲೋರ್ ನಕ್ಷೆ",
+    "qcNcr": "QC ಮತ್ತು NCR",
+    "dispatchDelivery": "ರವಾನೆ ಮತ್ತು ವಿತರಣೆ",
+    "safety": "ಸುರಕ್ಷತೆ",
+    "onSiteWorks": "ಸೈಟ್ ಕೆಲಸಗಳು",
     "siteHub": "ಸೈಟ್ ಹಬ್",
+    "site": "ಸೈಟ್",
+    "repairsAmc": "ದುರಸ್ತಿ ಮತ್ತು AMC",
+    "procurement": "ಖರೀದಿ",
     "inventory": "ಸಂಗ್ರಹ",
-    "selectProject": "ಯೋಜನೆ ಆರಿಸಿ"
+    "finance": "ಹಣಕಾಸು",
+    "design": "ವಿನ್ಯಾಸ",
+    "designSchedule": "ವಿನ್ಯಾಸ ವೇಳಾಪಟ್ಟಿ",
+    "designQueries": "ವಿನ್ಯಾಸ ಪ್ರಶ್ನೆಗಳು",
+    "sales": "ಮಾರಾಟ",
+    "hr": "ಎಚ್‌ಆರ್",
+    "myHr": "ನನ್ನ ಎಚ್‌ಆರ್",
+    "hrManagement": "ಎಚ್‌ಆರ್ ನಿರ್ವಹಣೆ",
+    "admin": "ಆಡಳಿತ",
+    "employees": "ಉದ್ಯೋಗಿಗಳು",
+    "superAdmin": "ಸೂಪರ್ ಅಡ್ಮಿನ್",
+    "settings": "ಸೆಟ್ಟಿಂಗ್‌ಗಳು",
+    "selectProject": "ಯೋಜನೆ ಆರಿಸಿ",
+    "activeProject": "ಸಕ್ರಿಯ ಯೋಜನೆ",
+    "selectProjectPlaceholder": "— ಯೋಜನೆ ಆರಿಸಿ —",
+    "signOut": "ಸೈನ್ ಔಟ್",
+    "more": "ಇನ್ನಷ್ಟು"
   },
   "common": {
     "save": "ಉಳಿಸಿ",
@@ -23,5 +54,10 @@
     "delayed": "ವಿಳಂಬ",
     "completed": "ಪೂರ್ಣ",
     "inProgress": "ಪ್ರಗತಿಯಲ್ಲಿ"
+  },
+  "profile": {
+    "language": "ಭಾಷೆ",
+    "languageSaved": "ಭಾಷಾ ಆದ್ಯತೆ ಉಳಿಸಲಾಗಿದೆ",
+    "languageSaveFailed": "ಭಾಷಾ ಆದ್ಯತೆ ಉಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ"
   }
 }
