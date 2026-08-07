@@ -13,6 +13,8 @@ import { DocumentUnlockButton } from "@/components/shared/DocumentUnlockButton";
 import { canUnlockLockedDocument, isUnlockWindowOpen } from "@/lib/unlock-authority";
 
 const EDIT_ROLES = ["super_admin", "managing_director", "sales_director", "architecture_director", "planning_head", "finance_director", "sales_executive", "sales_associate"];
+// Externally-executed combined docs are Sales Director and above only — same tier as the magic-link flow.
+const EXTERNAL_ROLES = ["super_admin", "managing_director", "chairman", "sales_director"];
 
 export function SaleAgreementCard({
   projectId,
@@ -22,6 +24,7 @@ export function SaleAgreementCard({
   clientName,
   contractValue,
   userRole,
+  onScopeSigned,
 }: {
   projectId: string;
   scopeId: string | null;
@@ -30,13 +33,22 @@ export function SaleAgreementCard({
   clientName: string | null;
   contractValue: number;
   userRole: string | null;
+  onScopeSigned?: () => void;
 }) {
   const canEdit = EDIT_ROLES.includes(userRole ?? "");
+  const canExternal = EXTERNAL_ROLES.includes(userRole ?? "");
   const [loading, setLoading] = useState(true);
   const [contract, setContract] = useState<any>(null);
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [startDate, setStartDate] = useState("");
+  const [extOpen, setExtOpen] = useState(false);
+  const [extPlatform, setExtPlatform] = useState("");
+  const [extDocId, setExtDocId] = useState("");
+  const [extDate, setExtDate] = useState("");
+  const [extFile, setExtFile] = useState<File | null>(null);
+  const [extSaving, setExtSaving] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
@@ -113,7 +125,57 @@ export function SaleAgreementCard({
     setSaving(false);
   };
 
+  const submitExternal = async () => {
+    if (!scopeId) return;
+    if (!extPlatform.trim() || !extDocId.trim() || !extDate || !extFile) {
+      toast.error("Platform, Document ID, execution date and the signed PDF are all required");
+      return;
+    }
+    setExtSaving(true);
+    try {
+      const path = `sale-agreements/${projectId}/${Date.now()}-combined-${extFile.name}`;
+      const { error: upErr } = await supabase.storage.from("design-files").upload(path, extFile);
+      if (upErr) throw upErr;
+
+      const { error } = await (supabase as any).rpc("submit_external_combined_contract", {
+        p_project_id: projectId,
+        p_scope_id: scopeId,
+        p_platform: extPlatform.trim(),
+        p_document_id: extDocId.trim(),
+        p_execution_date: extDate,
+        p_file_path: path,
+        p_vendor_name: clientName || projectName,
+        p_contract_value: contractValue || 0,
+      });
+      if (error) throw error;
+
+      const { data: planning } = await supabase.from("profiles").select("auth_user_id").in("role", ["planning_head", "sales_director", "head_operations"] as any).eq("is_active", true);
+      if (planning?.length) {
+        await insertNotifications(planning.map((p: any) => ({
+          recipient_id: p.auth_user_id,
+          title: "Combined Scope + Sale Agreement executed externally",
+          body: `${projectName}: signed on ${extPlatform.trim()} (Doc ID ${extDocId.trim()}). Gates C-3 and C-4 complete.`,
+          category: "milestone",
+          related_table: "contracts_register",
+          related_id: projectId,
+          navigate_to: `/projects/${projectId}`,
+          priority: "normal",
+        })));
+      }
+
+      toast.success("Externally-signed combined document recorded — Scope of Work signed and Sale Agreement complete");
+      setExtOpen(false);
+      setExtFile(null);
+      load();
+      onScopeSigned?.();
+    } catch (e: any) {
+      toast.error(e.message || "Submission failed");
+    }
+    setExtSaving(false);
+  };
+
   const [opening, setOpening] = useState(false);
+
 
   const openAgreement = async () => {
     const ref = contract?.contract_file_url;
@@ -201,6 +263,57 @@ export function SaleAgreementCard({
               {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
               <Upload className="h-4 w-4 mr-1" /> {unlocked ? "Replace Sale Agreement" : "Submit Sale Agreement"}
             </Button>
+          </div>
+        )}
+
+        {contract?.is_combined_scope_agreement && (
+          <div className="rounded-md border p-2 text-xs space-y-0.5" style={{ borderColor: "#006039" }}>
+            <p className="font-medium">Executed externally (combined Scope + Sale Agreement)</p>
+            <p>Platform: {contract.external_signature_platform}</p>
+            <p>Document ID: <span className="font-mono">{contract.external_document_id}</span></p>
+            {contract.external_execution_date && (
+              <p>Executed on: {new Date(contract.external_execution_date).toLocaleDateString("en-GB")}</p>
+            )}
+          </div>
+        )}
+
+        {canExternal && (!contract?.contract_file_url || unlocked) && (
+          <div className="pt-1 border-t">
+            {!extOpen ? (
+              <Button variant="outline" size="sm" className="mt-2" onClick={() => setExtOpen(true)}>
+                <Upload className="h-4 w-4 mr-1" /> Upload externally-signed combined document
+              </Button>
+            ) : (
+              <div className="space-y-2 mt-2">
+                <p className="text-xs text-muted-foreground">
+                  For contracts where Scope of Work and Sale Agreement were combined into one document and signed on an
+                  external e-signature platform. Submitting marks both the Scope of Work as signed and the Sale Agreement gate complete.
+                </p>
+                <div>
+                  <Label className="text-xs">E-signature platform *</Label>
+                  <Input value={extPlatform} onChange={(e) => setExtPlatform(e.target.value)} placeholder="e.g. Zoho Sign" />
+                </div>
+                <div>
+                  <Label className="text-xs">Platform Document ID *</Label>
+                  <Input value={extDocId} onChange={(e) => setExtDocId(e.target.value)} placeholder="Verbatim ID from the platform" />
+                </div>
+                <div>
+                  <Label className="text-xs">Execution date *</Label>
+                  <Input type="date" value={extDate} onChange={(e) => setExtDate(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Signed combined PDF *</Label>
+                  <Input type="file" accept="application/pdf" onChange={(e) => setExtFile(e.target.files?.[0] ?? null)} />
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={submitExternal} disabled={extSaving}>
+                    {extSaving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    Submit combined document
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setExtOpen(false)} disabled={extSaving}>Cancel</Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </CardContent>
