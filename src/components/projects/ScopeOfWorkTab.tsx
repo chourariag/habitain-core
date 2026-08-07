@@ -44,7 +44,8 @@ const DEFAULT_EXCLUSIONS = [
 
 const DRAFT_EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director", "sales_director", "architecture_director", "sales_executive", "sales_associate"];
 const SALES_DIRECTOR_ROLES = ["sales_director", "managing_director", "super_admin"];
-const UNLOCK_ROLES = ["managing_director", "super_admin"];
+// Equal-tier unlock group — see src/lib/unlock-authority.ts (mirrors the DB check)
+const UNLOCK_ROLES = UNLOCK_TIER_ROLES as readonly string[];
 
 const RESP_LABEL: Record<Responsibility, string> = {
   not_in_scope: "Not in Scope",
