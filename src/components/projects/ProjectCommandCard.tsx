@@ -23,7 +23,7 @@ interface ProjectCommandCardProps {
 }
 
 export function ProjectCommandCard({
-  project, modules, hasHandover, delays, openNCRs, siteReady, pendingDQs, pendingApprovals,
+  project, modules, hasHandover, delays, openNCRs, siteReady, pendingDQs, pendingApprovals, woNumber,
 }: ProjectCommandCardProps) {
   const navigate = useNavigate();
   const status = computeProjectStatus(modules, hasHandover);
