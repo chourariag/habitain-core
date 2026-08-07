@@ -125,7 +125,57 @@ export function SaleAgreementCard({
     setSaving(false);
   };
 
+  const submitExternal = async () => {
+    if (!scopeId) return;
+    if (!extPlatform.trim() || !extDocId.trim() || !extDate || !extFile) {
+      toast.error("Platform, Document ID, execution date and the signed PDF are all required");
+      return;
+    }
+    setExtSaving(true);
+    try {
+      const path = `sale-agreements/${projectId}/${Date.now()}-combined-${extFile.name}`;
+      const { error: upErr } = await supabase.storage.from("design-files").upload(path, extFile);
+      if (upErr) throw upErr;
+
+      const { error } = await (supabase as any).rpc("submit_external_combined_contract", {
+        p_project_id: projectId,
+        p_scope_id: scopeId,
+        p_platform: extPlatform.trim(),
+        p_document_id: extDocId.trim(),
+        p_execution_date: extDate,
+        p_file_path: path,
+        p_vendor_name: clientName || projectName,
+        p_contract_value: contractValue || 0,
+      });
+      if (error) throw error;
+
+      const { data: planning } = await supabase.from("profiles").select("auth_user_id").in("role", ["planning_head", "sales_director", "head_operations"] as any).eq("is_active", true);
+      if (planning?.length) {
+        await insertNotifications(planning.map((p: any) => ({
+          recipient_id: p.auth_user_id,
+          title: "Combined Scope + Sale Agreement executed externally",
+          body: `${projectName}: signed on ${extPlatform.trim()} (Doc ID ${extDocId.trim()}). Gates C-3 and C-4 complete.`,
+          category: "milestone",
+          related_table: "contracts_register",
+          related_id: projectId,
+          navigate_to: `/projects/${projectId}`,
+          priority: "normal",
+        })));
+      }
+
+      toast.success("Externally-signed combined document recorded — Scope of Work signed and Sale Agreement complete");
+      setExtOpen(false);
+      setExtFile(null);
+      load();
+      onScopeSigned?.();
+    } catch (e: any) {
+      toast.error(e.message || "Submission failed");
+    }
+    setExtSaving(false);
+  };
+
   const [opening, setOpening] = useState(false);
+
 
   const openAgreement = async () => {
     const ref = contract?.contract_file_url;
