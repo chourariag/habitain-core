@@ -25,8 +25,10 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
   const [loading, setLoading] = useState(false);
   const [materialName, setMaterialName] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [asPerIndent, setAsPerIndent] = useState(false);
   const [unit, setUnit] = useState("units");
   const [urgency, setUrgency] = useState("standard");
+  const [daysRequired, setDaysRequired] = useState("");
   const [projectId, setProjectId] = useState("");
   const [moduleId, setModuleId] = useState("");
   const [notes, setNotes] = useState("");
@@ -54,7 +56,7 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!materialName.trim() || !quantity || !projectId) {
+    if (!materialName.trim() || (!asPerIndent && !quantity) || !projectId) {
       toast.error("Material name, quantity, and project are required");
       return;
     }
@@ -63,11 +65,14 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
       const { client, session } = await getAuthedClient();
       const { error } = await client.from("material_requests" as any).insert({
         material_name: materialName.trim(),
-        quantity: Number(quantity),
+        quantity: asPerIndent ? 0 : Number(quantity),
+        quantity_note: asPerIndent ? "As per indent" : null,
         unit,
         urgency,
+        days_required: urgency === "immediate" || !daysRequired ? null : Number(daysRequired),
         project_id: projectId,
-        module_id: moduleId || null,
+        module_id: moduleId && moduleId !== ALL_MODULES ? moduleId : null,
+        applies_to_all_modules: moduleId === ALL_MODULES,
         notes: notes.trim() || null,
         requested_by: session.user.id,
       });
@@ -75,8 +80,10 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
       toast.success("Material request submitted");
       setMaterialName("");
       setQuantity("");
+      setAsPerIndent(false);
       setUnit("units");
       setUrgency("standard");
+      setDaysRequired("");
       setProjectId("");
       setModuleId("");
       setNotes("");
@@ -88,6 +95,7 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
       setLoading(false);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
