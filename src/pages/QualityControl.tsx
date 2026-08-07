@@ -442,10 +442,33 @@ export default function QualityControl() {
                           {(insp.modules as any)?.projects?.name || "Project"} · {insp.submitted_at ? format(new Date(insp.submitted_at), "dd MMM yyyy HH:mm") : "Draft"}
                         </p>
                       </div>
-                      <Badge className={decisionBadgeClass(insp.dispatch_decision)}>
-                        {insp.dispatch_decision || insp.status}
-                      </Badge>
-                    </div>
+                      <div className="flex items-center gap-2">
+                        <EditedIndicator table="qc_inspections" recordId={insp.id} />
+                        <EditRecordButton
+                          table="qc_inspections"
+                          recordId={insp.id}
+                          record={insp}
+                          title="Edit QC inspection"
+                          fields={[
+                            { name: "status", label: "Status", type: "select", options: [
+                              { value: "draft", label: "Draft" },
+                              { value: "submitted", label: "Submitted" },
+                              { value: "passed", label: "Passed" },
+                              { value: "failed", label: "Failed" },
+                            ] },
+                            { name: "dispatch_decision", label: "Dispatch decision", type: "select", options: [
+                              { value: "approved", label: "Approved" },
+                              { value: "conditional", label: "Conditional" },
+                              { value: "rejected", label: "Rejected" },
+                            ] },
+                          ]}
+                          onSaved={loadData}
+                        />
+                        <Badge className={decisionBadgeClass(insp.dispatch_decision)}>
+                          {insp.dispatch_decision || insp.status}
+                        </Badge>
+                      </div>
+
                   </CardContent>
                 </Card>
               ))
