@@ -20,6 +20,7 @@ const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
 };
 
 const URGENCY_CLASS: Record<string, string> = {
+  immediate: "bg-destructive text-destructive-foreground border-destructive",
   urgent: "bg-destructive/20 text-destructive",
   standard: "bg-muted text-muted-foreground",
 };
