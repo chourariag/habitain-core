@@ -163,13 +163,19 @@ export default function MaterialRequests() {
                         <div className="font-medium text-card-foreground">{r.material_name}</div>
                         {r.notes && <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[200px]">{r.notes}</p>}
                       </td>
-                      <td className="p-3 text-card-foreground">{r.quantity} {r.unit}</td>
-                      <td className="p-3 text-muted-foreground">{projects[r.project_id] ?? "—"}</td>
+                      <td className="p-3 text-card-foreground">
+                        {r.quantity_note ? <span className="italic text-muted-foreground">{r.quantity_note}</span> : <>{r.quantity} {r.unit}</>}
+                      </td>
+                      <td className="p-3 text-muted-foreground">
+                        {r.applies_to_all_modules ? "All modules" : (projects[r.project_id] ?? "—")}
+                      </td>
                       <td className="p-3">
                         <Badge variant="outline" className={URGENCY_CLASS[r.urgency] ?? ""}>
-                          {r.urgency === "urgent" && <AlertTriangle className="h-3 w-3 mr-1" />}{r.urgency}
+                          {(r.urgency === "urgent" || r.urgency === "immediate") && <AlertTriangle className="h-3 w-3 mr-1" />}{r.urgency}
                         </Badge>
+                        {r.days_required != null && <div className="text-[11px] text-muted-foreground mt-0.5">{r.days_required} day{r.days_required === 1 ? "" : "s"}</div>}
                       </td>
+
                       <td className="p-3">
                         <Badge variant="outline" className={statusCfg.class}>{statusCfg.label}</Badge>
                         {r.is_over_budget && <Badge variant="outline" className="ml-1 bg-destructive/10 text-destructive text-[10px]">Over Budget</Badge>}
