@@ -103,6 +103,22 @@ export default function Projects() {
     (stageRes.data ?? []).forEach((s: any) => { appMap[s.project_id] = (appMap[s.project_id] ?? 0) + 1; });
     setApprovalsByProject(appMap);
 
+    // Contractor Work Order badges
+    const woIds = Array.from(new Set(allProjects.map((p: any) => p.client_work_order_id).filter(Boolean)));
+    if (woIds.length > 0) {
+      const { data: wos } = await (supabase.from("client_work_orders" as any) as any)
+        .select("id, wo_number").in("id", woIds);
+      const numById: Record<string, string> = {};
+      (wos ?? []).forEach((w: any) => { numById[w.id] = w.wo_number; });
+      const map: Record<string, string> = {};
+      allProjects.forEach((p: any) => {
+        if (p.client_work_order_id && numById[p.client_work_order_id]) map[p.id] = numById[p.client_work_order_id];
+      });
+      setWoByProject(map);
+    } else {
+      setWoByProject({});
+    }
+
     setLoading(false);
   }, []);
 
