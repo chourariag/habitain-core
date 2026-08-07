@@ -9242,6 +9242,7 @@ export type Database = {
       }
       projects: {
         Row: {
+          actual_completion_date: string | null
           actually_spent: number | null
           archive_reason: string | null
           archived_at: string | null
@@ -9302,6 +9303,7 @@ export type Database = {
           wo_line_item_ref: string | null
         }
         Insert: {
+          actual_completion_date?: string | null
           actually_spent?: number | null
           archive_reason?: string | null
           archived_at?: string | null
@@ -9362,6 +9364,7 @@ export type Database = {
           wo_line_item_ref?: string | null
         }
         Update: {
+          actual_completion_date?: string | null
           actually_spent?: number | null
           archive_reason?: string | null
           archived_at?: string | null
@@ -14589,6 +14592,7 @@ export type Database = {
       get_project_by_any_portal_token: {
         Args: { _token: string }
         Returns: {
+          actual_completion_date: string | null
           actually_spent: number | null
           archive_reason: string | null
           archived_at: string | null
@@ -14668,6 +14672,7 @@ export type Database = {
       get_project_by_portal_token: {
         Args: { _token: string }
         Returns: {
+          actual_completion_date: string | null
           actually_spent: number | null
           archive_reason: string | null
           archived_at: string | null
