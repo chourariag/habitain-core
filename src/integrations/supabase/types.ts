@@ -1232,9 +1232,13 @@ export type Database = {
           created_at: string
           created_by: string | null
           end_date: string | null
+          external_document_id: string | null
+          external_execution_date: string | null
+          external_signature_platform: string | null
           gst_percent: number | null
           id: string
           is_archived: boolean
+          is_combined_scope_agreement: boolean
           payment_terms: string | null
           project_id: string | null
           remarks: string | null
@@ -1258,9 +1262,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           end_date?: string | null
+          external_document_id?: string | null
+          external_execution_date?: string | null
+          external_signature_platform?: string | null
           gst_percent?: number | null
           id?: string
           is_archived?: boolean
+          is_combined_scope_agreement?: boolean
           payment_terms?: string | null
           project_id?: string | null
           remarks?: string | null
@@ -1284,9 +1292,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           end_date?: string | null
+          external_document_id?: string | null
+          external_execution_date?: string | null
+          external_signature_platform?: string | null
           gst_percent?: number | null
           id?: string
           is_archived?: boolean
+          is_combined_scope_agreement?: boolean
           payment_terms?: string | null
           project_id?: string | null
           remarks?: string | null
@@ -8139,6 +8151,12 @@ export type Database = {
           created_by: string
           deck_area: number | null
           division: string | null
+          external_document_id: string | null
+          external_execution_date: string | null
+          external_signature_platform: string | null
+          external_signed_pdf_url: string | null
+          externally_signed_at: string | null
+          externally_signed_by: string | null
           id: string
           location: string | null
           locked: boolean
@@ -8162,6 +8180,12 @@ export type Database = {
           created_by: string
           deck_area?: number | null
           division?: string | null
+          external_document_id?: string | null
+          external_execution_date?: string | null
+          external_signature_platform?: string | null
+          external_signed_pdf_url?: string | null
+          externally_signed_at?: string | null
+          externally_signed_by?: string | null
           id?: string
           location?: string | null
           locked?: boolean
@@ -8185,6 +8209,12 @@ export type Database = {
           created_by?: string
           deck_area?: number | null
           division?: string | null
+          external_document_id?: string | null
+          external_execution_date?: string | null
+          external_signature_platform?: string | null
+          external_signed_pdf_url?: string | null
+          externally_signed_at?: string | null
+          externally_signed_by?: string | null
           id?: string
           location?: string | null
           locked?: boolean
@@ -14468,6 +14498,19 @@ export type Database = {
       storage_object_project_allowed: {
         Args: { _object_name: string; _uid: string }
         Returns: boolean
+      }
+      submit_external_combined_contract: {
+        Args: {
+          p_contract_value?: number
+          p_document_id: string
+          p_execution_date: string
+          p_file_path: string
+          p_platform: string
+          p_project_id: string
+          p_scope_id: string
+          p_vendor_name: string
+        }
+        Returns: string
       }
       unlock_locked_document: {
         Args: { p_reason: string; p_record_id: string; p_record_table: string }
