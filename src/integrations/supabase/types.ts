@@ -2168,6 +2168,10 @@ export type Database = {
           approval_date: string | null
           approval_method: string | null
           approval_proof_url: string | null
+          backfill_note: string | null
+          backfilled_at: string | null
+          backfilled_by: string | null
+          completion_type: string
           created_at: string
           deliverable_filename: string | null
           deliverable_required: boolean
@@ -2181,6 +2185,7 @@ export type Database = {
           evidence_url: string | null
           expected_deliverable: string | null
           id: string
+          original_doc_unavailable: boolean
           overdue_alerted_day1: boolean
           overdue_alerted_day2: boolean
           phase: string | null
@@ -2202,6 +2207,10 @@ export type Database = {
           approval_date?: string | null
           approval_method?: string | null
           approval_proof_url?: string | null
+          backfill_note?: string | null
+          backfilled_at?: string | null
+          backfilled_by?: string | null
+          completion_type?: string
           created_at?: string
           deliverable_filename?: string | null
           deliverable_required?: boolean
@@ -2215,6 +2224,7 @@ export type Database = {
           evidence_url?: string | null
           expected_deliverable?: string | null
           id?: string
+          original_doc_unavailable?: boolean
           overdue_alerted_day1?: boolean
           overdue_alerted_day2?: boolean
           phase?: string | null
@@ -2236,6 +2246,10 @@ export type Database = {
           approval_date?: string | null
           approval_method?: string | null
           approval_proof_url?: string | null
+          backfill_note?: string | null
+          backfilled_at?: string | null
+          backfilled_by?: string | null
+          completion_type?: string
           created_at?: string
           deliverable_filename?: string | null
           deliverable_required?: boolean
@@ -2249,6 +2263,7 @@ export type Database = {
           evidence_url?: string | null
           expected_deliverable?: string | null
           id?: string
+          original_doc_unavailable?: boolean
           overdue_alerted_day1?: boolean
           overdue_alerted_day2?: boolean
           phase?: string | null
@@ -6971,6 +6986,62 @@ export type Database = {
           },
         ]
       }
+      project_backfills: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          id: string
+          note: string
+          original_doc_unavailable: boolean
+          phase: string
+          pipeline_type: string | null
+          project_id: string
+          stages_affected: number
+          starting_stage_code: string | null
+          starting_stage_label: string | null
+          starting_stage_order: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          note: string
+          original_doc_unavailable?: boolean
+          phase: string
+          pipeline_type?: string | null
+          project_id: string
+          stages_affected?: number
+          starting_stage_code?: string | null
+          starting_stage_label?: string | null
+          starting_stage_order?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          id?: string
+          note?: string
+          original_doc_unavailable?: boolean
+          phase?: string
+          pipeline_type?: string | null
+          project_id?: string
+          stages_affected?: number
+          starting_stage_code?: string | null
+          starting_stage_label?: string | null
+          starting_stage_order?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_backfills_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_billing_milestones: {
         Row: {
           amount_excl_gst: number
@@ -7332,12 +7403,17 @@ export type Database = {
       project_design_stages: {
         Row: {
           actual_date: string | null
+          backfill_note: string | null
+          backfilled_at: string | null
+          backfilled_by: string | null
+          completion_type: string
           created_at: string
           deliverable_filename: string | null
           deliverable_uploaded_at: string | null
           deliverable_url: string | null
           id: string
           notes: string | null
+          original_doc_unavailable: boolean
           owner_id: string | null
           planned_date: string | null
           project_id: string
@@ -7348,12 +7424,17 @@ export type Database = {
         }
         Insert: {
           actual_date?: string | null
+          backfill_note?: string | null
+          backfilled_at?: string | null
+          backfilled_by?: string | null
+          completion_type?: string
           created_at?: string
           deliverable_filename?: string | null
           deliverable_uploaded_at?: string | null
           deliverable_url?: string | null
           id?: string
           notes?: string | null
+          original_doc_unavailable?: boolean
           owner_id?: string | null
           planned_date?: string | null
           project_id: string
@@ -7364,12 +7445,17 @@ export type Database = {
         }
         Update: {
           actual_date?: string | null
+          backfill_note?: string | null
+          backfilled_at?: string | null
+          backfilled_by?: string | null
+          completion_type?: string
           created_at?: string
           deliverable_filename?: string | null
           deliverable_uploaded_at?: string | null
           deliverable_url?: string | null
           id?: string
           notes?: string | null
+          original_doc_unavailable?: boolean
           owner_id?: string | null
           planned_date?: string | null
           project_id?: string
@@ -8060,12 +8146,17 @@ export type Database = {
         Row: {
           actual_end: string | null
           actual_start: string | null
+          backfill_note: string | null
+          backfilled_at: string | null
+          backfilled_by: string | null
+          completion_type: string
           created_at: string
           created_by: string | null
           escalated_at: string | null
           id: string
           is_na: boolean
           module_id: string | null
+          original_doc_unavailable: boolean
           planned_end: string | null
           planned_start: string | null
           project_id: string
@@ -8079,12 +8170,17 @@ export type Database = {
         Insert: {
           actual_end?: string | null
           actual_start?: string | null
+          backfill_note?: string | null
+          backfilled_at?: string | null
+          backfilled_by?: string | null
+          completion_type?: string
           created_at?: string
           created_by?: string | null
           escalated_at?: string | null
           id?: string
           is_na?: boolean
           module_id?: string | null
+          original_doc_unavailable?: boolean
           planned_end?: string | null
           planned_start?: string | null
           project_id: string
@@ -8098,12 +8194,17 @@ export type Database = {
         Update: {
           actual_end?: string | null
           actual_start?: string | null
+          backfill_note?: string | null
+          backfilled_at?: string | null
+          backfilled_by?: string | null
+          completion_type?: string
           created_at?: string
           created_by?: string | null
           escalated_at?: string | null
           id?: string
           is_na?: boolean
           module_id?: string | null
+          original_doc_unavailable?: boolean
           planned_end?: string | null
           planned_start?: string | null
           project_id?: string
@@ -13711,6 +13812,16 @@ export type Database = {
       approve_handover_and_close: {
         Args: { _handover_id: string }
         Returns: undefined
+      }
+      backfill_project_starting_stage: {
+        Args: {
+          _doc_unavailable?: boolean
+          _note: string
+          _phase: string
+          _project_id: string
+          _starting_stage_id: string
+        }
+        Returns: Json
       }
       boq_cumulative_qty: { Args: { _boq_item_id: string }; Returns: number }
       can_access_labour_register: {
