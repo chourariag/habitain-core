@@ -13,6 +13,8 @@ import { DocumentUnlockButton } from "@/components/shared/DocumentUnlockButton";
 import { canUnlockLockedDocument, isUnlockWindowOpen } from "@/lib/unlock-authority";
 
 const EDIT_ROLES = ["super_admin", "managing_director", "sales_director", "architecture_director", "planning_head", "finance_director", "sales_executive", "sales_associate"];
+// Externally-executed combined docs are Sales Director and above only — same tier as the magic-link flow.
+const EXTERNAL_ROLES = ["super_admin", "managing_director", "chairman", "sales_director"];
 
 export function SaleAgreementCard({
   projectId,
