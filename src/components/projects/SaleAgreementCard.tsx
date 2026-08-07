@@ -57,6 +57,7 @@ export function SaleAgreementCard({
   useEffect(() => { load(); /* eslint-disable-next-line */ }, [projectId, scopeStatus]);
 
   const scopeSigned = scopeStatus === "signed";
+  const unlocked = isUnlockWindowOpen(contract?.unlocked_until);
 
   const upload = async () => {
     if (!file || !scopeId) return;
