@@ -1492,6 +1492,8 @@ export type Database = {
           unlocked_by: string | null
           updated_at: string
           updated_by: string | null
+          wip_needs_review: boolean
+          wip_review_reason: string | null
         }
         Insert: {
           anomaly_flags?: Json
@@ -1517,6 +1519,8 @@ export type Database = {
           unlocked_by?: string | null
           updated_at?: string
           updated_by?: string | null
+          wip_needs_review?: boolean
+          wip_review_reason?: string | null
         }
         Update: {
           anomaly_flags?: Json
@@ -1542,6 +1546,8 @@ export type Database = {
           unlocked_by?: string | null
           updated_at?: string
           updated_by?: string | null
+          wip_needs_review?: boolean
+          wip_review_reason?: string | null
         }
         Relationships: [
           {
@@ -2708,6 +2714,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      edit_history: {
+        Row: {
+          downstream_flagged: boolean
+          edit_action_id: string
+          edited_at: string
+          edited_by: string
+          field_name: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          project_id: string | null
+          reason_category: string
+          reason_detail: string | null
+          record_id: string
+          record_table: string
+        }
+        Insert: {
+          downstream_flagged?: boolean
+          edit_action_id: string
+          edited_at?: string
+          edited_by: string
+          field_name: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          project_id?: string | null
+          reason_category: string
+          reason_detail?: string | null
+          record_id: string
+          record_table: string
+        }
+        Update: {
+          downstream_flagged?: boolean
+          edit_action_id?: string
+          edited_at?: string
+          edited_by?: string
+          field_name?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          project_id?: string | null
+          reason_category?: string
+          reason_detail?: string | null
+          record_id?: string
+          record_table?: string
+        }
+        Relationships: []
       }
       escalation_rules: {
         Row: {
@@ -7057,9 +7111,12 @@ export type Database = {
           invoice_number: string | null
           invoice_url: string | null
           milestone_number: number
+          needs_manual_review: boolean
           percentage: number
           project_id: string
           received_date: string | null
+          review_flagged_at: string | null
+          review_reason: string | null
           status: string
           trigger_event: string
           triggered_at: string | null
@@ -7080,9 +7137,12 @@ export type Database = {
           invoice_number?: string | null
           invoice_url?: string | null
           milestone_number: number
+          needs_manual_review?: boolean
           percentage?: number
           project_id: string
           received_date?: string | null
+          review_flagged_at?: string | null
+          review_reason?: string | null
           status?: string
           trigger_event?: string
           triggered_at?: string | null
@@ -7103,9 +7163,12 @@ export type Database = {
           invoice_number?: string | null
           invoice_url?: string | null
           milestone_number?: number
+          needs_manual_review?: boolean
           percentage?: number
           project_id?: string
           received_date?: string | null
+          review_flagged_at?: string | null
+          review_reason?: string | null
           status?: string
           trigger_event?: string
           triggered_at?: string | null
@@ -10779,6 +10842,7 @@ export type Database = {
           share_with_client: boolean | null
           subcontractor_attendance: Json | null
           submitted_by: string
+          submitted_by_user_id: string | null
           updated_at: string | null
           weather_condition: string | null
         }
@@ -10809,6 +10873,7 @@ export type Database = {
           share_with_client?: boolean | null
           subcontractor_attendance?: Json | null
           submitted_by: string
+          submitted_by_user_id?: string | null
           updated_at?: string | null
           weather_condition?: string | null
         }
@@ -10839,6 +10904,7 @@ export type Database = {
           share_with_client?: boolean | null
           subcontractor_attendance?: Json | null
           submitted_by?: string
+          submitted_by_user_id?: string | null
           updated_at?: string | null
           weather_condition?: string | null
         }
@@ -13809,6 +13875,16 @@ export type Database = {
     Functions: {
       _cpt_validate: { Args: { _token: string }; Returns: string }
       amc_followup_daily_reminders: { Args: never; Returns: undefined }
+      apply_record_edit: {
+        Args: {
+          _changes: Json
+          _reason_category: string
+          _reason_detail?: string
+          _record_id: string
+          _table: string
+        }
+        Returns: Json
+      }
       approve_handover_and_close: {
         Args: { _handover_id: string }
         Returns: undefined
@@ -13855,6 +13931,10 @@ export type Database = {
       can_edit_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_edit_sop_dept: {
         Args: { _department: string; _user_id: string }
+        Returns: boolean
+      }
+      can_edit_with_reason: {
+        Args: { _record_id: string; _table: string; _user_id: string }
         Returns: boolean
       }
       can_issue_work_order: { Args: { _user_id: string }; Returns: boolean }
