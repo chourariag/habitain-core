@@ -440,7 +440,7 @@ export function ScopeOfWorkTab({ projectId, userRole }: Props) {
           <Lock className="h-4 w-4" />
           <AlertDescription>
             {status === "signed"
-              ? "This Scope of Work is signed and locked. Only Managing Director / Super Admin can unlock it."
+              ? `This Scope of Work is signed and locked. It can be unlocked by ${UNLOCK_TIER_LABEL}.`
               : "This Scope of Work is pending sign-off. Content is read-only until fully signed."}
           </AlertDescription>
         </Alert>
