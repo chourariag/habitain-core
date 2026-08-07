@@ -34,8 +34,8 @@ export function ClientWorkOrderSummary({ workOrder, onEdit, onChanged }: Props) 
     const [s, st, pr, dl] = await Promise.all([
       getWoSummary(workOrder.id),
       getPaymentStages(workOrder.id),
-      supabase.from("projects").select("id, name, status, est_completion, actual_completion_date, wo_line_item_ref")
-        .eq("client_work_order_id" as any, workOrder.id as any),
+      (supabase.from("projects") as any).select("id, name, status, est_completion, actual_completion_date, wo_line_item_ref")
+        .eq("client_work_order_id", workOrder.id),
       (supabase.from("client_wo_dlp" as any) as any).select("*").eq("work_order_id", workOrder.id),
     ]);
     setSummary(s); setStages(st);
