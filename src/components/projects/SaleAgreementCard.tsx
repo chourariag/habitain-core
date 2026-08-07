@@ -265,6 +265,59 @@ export function SaleAgreementCard({
             </Button>
           </div>
         )}
+
+        {contract?.is_combined_scope_agreement && (
+          <div className="rounded-md border p-2 text-xs space-y-0.5" style={{ borderColor: "#006039" }}>
+            <p className="font-medium">Executed externally (combined Scope + Sale Agreement)</p>
+            <p>Platform: {contract.external_signature_platform}</p>
+            <p>Document ID: <span className="font-mono">{contract.external_document_id}</span></p>
+            {contract.external_execution_date && (
+              <p>Executed on: {new Date(contract.external_execution_date).toLocaleDateString("en-GB")}</p>
+            )}
+          </div>
+        )}
+
+        {canExternal && (!contract?.contract_file_url || unlocked) && (
+          <div className="pt-1 border-t">
+            {!extOpen ? (
+              <Button variant="outline" size="sm" className="mt-2" onClick={() => setExtOpen(true)}>
+                <Upload className="h-4 w-4 mr-1" /> Upload externally-signed combined document
+              </Button>
+            ) : (
+              <div className="space-y-2 mt-2">
+                <p className="text-xs text-muted-foreground">
+                  For contracts where Scope of Work and Sale Agreement were combined into one document and signed on an
+                  external e-signature platform. Submitting marks both the Scope of Work as signed and the Sale Agreement gate complete.
+                </p>
+                <div>
+                  <Label className="text-xs">E-signature platform *</Label>
+                  <Input value={extPlatform} onChange={(e) => setExtPlatform(e.target.value)} placeholder="e.g. Zoho Sign" />
+                </div>
+                <div>
+                  <Label className="text-xs">Platform Document ID *</Label>
+                  <Input value={extDocId} onChange={(e) => setExtDocId(e.target.value)} placeholder="Verbatim ID from the platform" />
+                </div>
+                <div>
+                  <Label className="text-xs">Execution date *</Label>
+                  <Input type="date" value={extDate} onChange={(e) => setExtDate(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Signed combined PDF *</Label>
+                  <Input type="file" accept="application/pdf" onChange={(e) => setExtFile(e.target.files?.[0] ?? null)} />
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={submitExternal} disabled={extSaving}>
+                    {extSaving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                    Submit combined document
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => setExtOpen(false)} disabled={extSaving}>Cancel</Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        )}
       </CardContent>
     </Card>
   );
