@@ -21,6 +21,8 @@ interface Props {
 
 const UNITS = ["units", "kg", "tonnes", "litres", "sqm", "sqft", "metres", "nos", "bags", "sheets", "rolls"];
 
+const ALL_MODULES = "__all__";
+
 export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Props) {
   const [loading, setLoading] = useState(false);
   const [materialName, setMaterialName] = useState("");
