@@ -316,8 +316,6 @@ export function SaleAgreementCard({
             )}
           </div>
         )}
-
-        )}
       </CardContent>
     </Card>
   );
