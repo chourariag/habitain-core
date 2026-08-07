@@ -321,9 +321,28 @@ export function FactoryMeasurementSheet({ projectId, projectName, userRole }: Pr
             {existingLines.map((l) => (
               <div key={l.id} className="border rounded p-2 text-xs space-y-1">
                 <div className="flex justify-between font-medium">
-                  <span>{l.stage_name ?? "—"}</span>
-                  <span>{l.today_qty} {l.unit ?? ""} · {Number(l.pct_complete_snapshot).toFixed(1)}%</span>
+                  <span className="flex items-center gap-2">
+                    {l.stage_name ?? "—"}
+                    <EditedIndicator table="measurement_line_items" recordId={l.id} />
+                  </span>
+                  <span className="flex items-center gap-2">
+                    {l.today_qty} {l.unit ?? ""} · {Number(l.pct_complete_snapshot).toFixed(1)}%
+                    <EditRecordButton
+                      table="measurement_line_items"
+                      parentRecordId={existingHeaderId || undefined}
+                      recordId={l.id}
+                      record={l}
+                      title="Edit measurement line"
+                      fields={[
+                        { name: "today_qty", label: `Today's qty ${l.unit ? `(${l.unit})` : ""}`, type: "number" },
+                        { name: "labour_cost_today", label: "Labour cost today (₹)", type: "number" },
+                        { name: "material_cost_today", label: "Material cost today (₹)", type: "number" },
+                      ]}
+                      onSaved={loadAll}
+                    />
+                  </span>
                 </div>
+
                 <div className="flex gap-3 text-muted-foreground">
                   <span>Labour {fmt(Number(l.labour_cost_today))}</span>
                   <span>Material {fmt(Number(l.material_cost_today))}</span>
