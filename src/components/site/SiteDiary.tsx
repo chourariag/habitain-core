@@ -133,6 +133,8 @@ export function SiteDiary({ projectId, userRole }: Props) {
         gps_location: gpsLocation || null,
         photo_urls: urls,
         submitted_by: user.id,
+        submitted_by_user_id: user.id,
+
         weather_condition: weather || null,
         manpower_count: manpower ? parseInt(manpower) : null,
         blockers: blockers.trim() || null,
