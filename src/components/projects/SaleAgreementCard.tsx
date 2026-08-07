@@ -9,6 +9,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, CheckCircle2, FileText, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { insertNotifications } from "@/lib/notifications";
+import { DocumentUnlockButton } from "@/components/shared/DocumentUnlockButton";
+import { canUnlockLockedDocument, isUnlockWindowOpen } from "@/lib/unlock-authority";
 
 const EDIT_ROLES = ["super_admin", "managing_director", "sales_director", "architecture_director", "planning_head", "finance_director", "sales_executive", "sales_associate"];
 
