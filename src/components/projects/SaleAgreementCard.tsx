@@ -81,6 +81,7 @@ export function SaleAgreementCard({
         // design-files is a private bucket — store the path and open via a signed URL.
         contract_file_url: path,
         created_by: user?.id ?? null,
+        unlocked_until: null,
       };
 
       const res = contract
