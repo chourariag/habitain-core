@@ -16,6 +16,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Trash2, Loader2, Save, Send, CheckCircle2, Lock, Copy, Unlock, AlertTriangle, PenLine } from "lucide-react";
 import { toast } from "sonner";
+import { UNLOCK_TIER_ROLES, UNLOCK_TIER_LABEL } from "@/lib/unlock-authority";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
 import { SaleAgreementCard } from "./SaleAgreementCard";
@@ -44,7 +45,8 @@ const DEFAULT_EXCLUSIONS = [
 
 const DRAFT_EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director", "sales_director", "architecture_director", "sales_executive", "sales_associate"];
 const SALES_DIRECTOR_ROLES = ["sales_director", "managing_director", "super_admin"];
-const UNLOCK_ROLES = ["managing_director", "super_admin"];
+// Equal-tier unlock group — see src/lib/unlock-authority.ts (mirrors the DB check)
+const UNLOCK_ROLES = UNLOCK_TIER_ROLES as readonly string[];
 
 const RESP_LABEL: Record<Responsibility, string> = {
   not_in_scope: "Not in Scope",
@@ -438,7 +440,7 @@ export function ScopeOfWorkTab({ projectId, userRole }: Props) {
           <Lock className="h-4 w-4" />
           <AlertDescription>
             {status === "signed"
-              ? "This Scope of Work is signed and locked. Only Managing Director / Super Admin can unlock it."
+              ? `This Scope of Work is signed and locked. It can be unlocked by ${UNLOCK_TIER_LABEL}.`
               : "This Scope of Work is pending sign-off. Content is read-only until fully signed."}
           </AlertDescription>
         </Alert>

@@ -10,6 +10,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Loader2, Lock, ArrowRight, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useUserRole } from "@/hooks/useUserRole";
+import { DocumentUnlockButton } from "@/components/shared/DocumentUnlockButton";
+import { canUnlockLockedDocument, isUnlockWindowOpen } from "@/lib/unlock-authority";
 
 interface Props {
   projectId: string;
@@ -32,6 +35,7 @@ type GfcRecord = {
   sections_complete: number;
   sections_total: number;
   notes: string | null;
+  unlocked_until: string | null;
 };
 
 export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, userName, modules, designFile, qcStats, onRefresh }: Props) {
@@ -40,6 +44,13 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
   const [issueDialog, setIssueDialog] = useState<{ open: boolean; stage: "advance_h1" | "final_h2" | "interior_h3" } | null>(null);
   const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const [issuing, setIssuing] = useState(false);
+  const { role } = useUserRole();
+  const canUnlock = canUnlockLockedDocument(role);
+
+  const reload = async () => {
+    const { data } = await supabase.from("gfc_records").select("*").eq("project_id", projectId);
+    setRecords((data as GfcRecord[] | null) ?? []);
+  };
 
   useEffect(() => {
     (async () => {
@@ -66,7 +77,8 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
     setIssuing(true);
     try {
       const { client } = await getAuthedClient();
-      const { error } = await (client.from("gfc_records") as any).insert({
+      const existing = records.find((r) => r.gfc_stage === issueDialog.stage);
+      const payload = {
         project_id: projectId,
         gfc_stage: issueDialog.stage,
         module_group: selectedModules,
@@ -74,7 +86,11 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
         issued_at: new Date().toISOString(),
         sections_complete: 0,
         sections_total: 0,
-      });
+        unlocked_until: null,
+      };
+      const { error } = existing
+        ? await (client.from("gfc_records") as any).update(payload).eq("id", existing.id)
+        : await (client.from("gfc_records") as any).insert(payload);
       if (error) throw error;
 
       // Fix 1: Record design stage transition in audit history
@@ -204,10 +220,32 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
                 Architectural, Structural, Site Layout drawings
               </p>
               {h1 ? (
-                <p className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#006039" }}>
-                  Issued on {format(new Date(h1.issued_at), "dd MMM yyyy")}
-                  {h1.module_group?.length > 0 && ` · ${h1.module_group.length} modules`}
-                </p>
+                <>
+                  <p className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#006039" }}>
+                    Issued on {format(new Date(h1.issued_at), "dd MMM yyyy")}
+                    {h1.module_group?.length > 0 && ` · ${h1.module_group.length} modules`}
+                  </p>
+                  {isUnlockWindowOpen(h1.unlocked_until) ? (
+                    <div className="space-y-1">
+                      <p className="text-[10px]" style={{ color: "#D4860A" }}>
+                        Unlocked until {format(new Date(h1.unlocked_until as string), "dd MMM yyyy HH:mm")}
+                      </p>
+                      <Button size="sm" variant="outline" className="text-xs w-full" onClick={() => openIssueDialog("advance_h1")}>
+                        Re-issue H1 Sign-off
+                      </Button>
+                    </div>
+                  ) : (
+                    canUnlock && (
+                      <DocumentUnlockButton
+                        recordTable="gfc_records"
+                        recordId={h1.id}
+                        documentLabel="H1 Sign-off"
+                        className="w-full text-xs"
+                        onUnlocked={reload}
+                      />
+                    )
+                  )}
+                </>
               ) : (
                 isPrincipal && (() => {
                   const qcReady = qcStats?.allChecked ?? false;
@@ -249,10 +287,32 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
                 MEP, HVAC, Material specs, Client final sign-off
               </p>
               {h2 ? (
-                <p className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#006039" }}>
-                  Issued on {format(new Date(h2.issued_at), "dd MMM yyyy")}
-                  {h2.module_group?.length > 0 && ` · ${h2.module_group.length} modules`}
-                </p>
+                <>
+                  <p className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#006039" }}>
+                    Issued on {format(new Date(h2.issued_at), "dd MMM yyyy")}
+                    {h2.module_group?.length > 0 && ` · ${h2.module_group.length} modules`}
+                  </p>
+                  {isUnlockWindowOpen(h2.unlocked_until) ? (
+                    <div className="space-y-1">
+                      <p className="text-[10px]" style={{ color: "#D4860A" }}>
+                        Unlocked until {format(new Date(h2.unlocked_until as string), "dd MMM yyyy HH:mm")}
+                      </p>
+                      <Button size="sm" variant="outline" className="text-xs w-full" onClick={() => openIssueDialog("final_h2")}>
+                        Re-issue H2 Sign-off
+                      </Button>
+                    </div>
+                  ) : (
+                    canUnlock && (
+                      <DocumentUnlockButton
+                        recordTable="gfc_records"
+                        recordId={h2.id}
+                        documentLabel="H2 Sign-off"
+                        className="w-full text-xs"
+                        onUnlocked={reload}
+                      />
+                    )
+                  )}
+                </>
               ) : h1 ? (
                 isPrincipal && (
                   <Button
@@ -279,10 +339,32 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
                 Detailed interior drawings and schedule of finishes approved by Karan Nadig (Principal Architect) before interior fitout works begin on site.
               </p>
               {h3 ? (
-                <p className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#006039" }}>
-                  Issued on {format(new Date(h3.issued_at), "dd MMM yyyy")}
-                  {h3.module_group?.length > 0 && ` · ${h3.module_group.length} modules`}
-                </p>
+                <>
+                  <p className="text-[11px]" style={{ fontFamily: "var(--font-input)", color: "#006039" }}>
+                    Issued on {format(new Date(h3.issued_at), "dd MMM yyyy")}
+                    {h3.module_group?.length > 0 && ` · ${h3.module_group.length} modules`}
+                  </p>
+                  {isUnlockWindowOpen(h3.unlocked_until) ? (
+                    <div className="space-y-1">
+                      <p className="text-[10px]" style={{ color: "#D4860A" }}>
+                        Unlocked until {format(new Date(h3.unlocked_until as string), "dd MMM yyyy HH:mm")}
+                      </p>
+                      <Button size="sm" variant="outline" className="text-xs w-full" onClick={() => openIssueDialog("interior_h3")}>
+                        Re-issue H3 Sign-off
+                      </Button>
+                    </div>
+                  ) : (
+                    canUnlock && (
+                      <DocumentUnlockButton
+                        recordTable="gfc_records"
+                        recordId={h3.id}
+                        documentLabel="H3 Sign-off"
+                        className="w-full text-xs"
+                        onUnlocked={reload}
+                      />
+                    )
+                  )}
+                </>
               ) : h2 ? (
                 isPrincipal && (
                   <Button

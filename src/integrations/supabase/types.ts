@@ -1244,6 +1244,8 @@ export type Database = {
           scope_of_work_id: string | null
           start_date: string | null
           status: string
+          unlocked_by: string | null
+          unlocked_until: string | null
           updated_at: string
           vendor_name: string
         }
@@ -1268,6 +1270,8 @@ export type Database = {
           scope_of_work_id?: string | null
           start_date?: string | null
           status?: string
+          unlocked_by?: string | null
+          unlocked_until?: string | null
           updated_at?: string
           vendor_name: string
         }
@@ -1292,6 +1296,8 @@ export type Database = {
           scope_of_work_id?: string | null
           start_date?: string | null
           status?: string
+          unlocked_by?: string | null
+          unlocked_until?: string | null
           updated_at?: string
           vendor_name?: string
         }
@@ -2536,6 +2542,51 @@ export type Database = {
           },
         ]
       }
+      document_unlock_audit: {
+        Row: {
+          created_at: string
+          document_label: string | null
+          id: string
+          project_id: string | null
+          reason: string
+          record_id: string
+          record_table: string
+          unlocked_at: string
+          unlocked_by: string
+          unlocked_by_name: string | null
+          unlocked_by_role: string | null
+          unlocked_until: string
+        }
+        Insert: {
+          created_at?: string
+          document_label?: string | null
+          id?: string
+          project_id?: string | null
+          reason: string
+          record_id: string
+          record_table: string
+          unlocked_at?: string
+          unlocked_by: string
+          unlocked_by_name?: string | null
+          unlocked_by_role?: string | null
+          unlocked_until: string
+        }
+        Update: {
+          created_at?: string
+          document_label?: string | null
+          id?: string
+          project_id?: string | null
+          reason?: string
+          record_id?: string
+          record_table?: string
+          unlocked_at?: string
+          unlocked_by?: string
+          unlocked_by_name?: string | null
+          unlocked_by_role?: string | null
+          unlocked_until?: string
+        }
+        Relationships: []
+      }
       drawings: {
         Row: {
           approval_date: string | null
@@ -3772,6 +3823,8 @@ export type Database = {
           project_id: string
           sections_complete: number | null
           sections_total: number | null
+          unlocked_by: string | null
+          unlocked_until: string | null
           updated_at: string | null
         }
         Insert: {
@@ -3786,6 +3839,8 @@ export type Database = {
           project_id: string
           sections_complete?: number | null
           sections_total?: number | null
+          unlocked_by?: string | null
+          unlocked_until?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -3800,6 +3855,8 @@ export type Database = {
           project_id?: string
           sections_complete?: number | null
           sections_total?: number | null
+          unlocked_by?: string | null
+          unlocked_until?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -13982,6 +14039,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      can_unlock_locked_document: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       can_unlock_measurement: {
         Args: { _location: string; _user_id: string }
         Returns: boolean
@@ -14407,6 +14468,10 @@ export type Database = {
       storage_object_project_allowed: {
         Args: { _object_name: string; _uid: string }
         Returns: boolean
+      }
+      unlock_locked_document: {
+        Args: { p_reason: string; p_record_id: string; p_record_table: string }
+        Returns: string
       }
       user_can_access_project: {
         Args: { _project_id: string; _uid: string }
