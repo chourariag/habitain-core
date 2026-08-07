@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { PhotoGuidanceCard, PhotoFeedback, PhotoQualitySummary, usePhotoWithAI } from "@/components/photos/PhotoGuidance";
 import { DailyProgressSection, validatePlannedActivities, type PlannedActivity } from "@/components/site/DailyProgressSection";
+import { EditRecordButton, EditedIndicator } from "@/components/shared/EditWithReason";
+
 
 interface Props {
   projectId: string;
