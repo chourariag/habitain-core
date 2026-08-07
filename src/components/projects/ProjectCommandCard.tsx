@@ -19,6 +19,7 @@ interface ProjectCommandCardProps {
   siteReady: boolean;
   pendingDQs: number;
   pendingApprovals: number;
+  woNumber?: string | null;
 }
 
 export function ProjectCommandCard({
