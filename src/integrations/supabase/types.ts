@@ -1127,6 +1127,305 @@ export type Database = {
           },
         ]
       }
+      client_wo_dlp: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          dlp_end_date: string | null
+          dlp_months: number
+          dlp_start_date: string
+          finance_decision: string | null
+          flagged_at: string | null
+          flagged_for_review: boolean
+          id: string
+          notes: string | null
+          project_id: string
+          updated_at: string
+          work_order_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          dlp_end_date?: string | null
+          dlp_months?: number
+          dlp_start_date: string
+          finance_decision?: string | null
+          flagged_at?: string | null
+          flagged_for_review?: boolean
+          id?: string
+          notes?: string | null
+          project_id: string
+          updated_at?: string
+          work_order_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          dlp_end_date?: string | null
+          dlp_months?: number
+          dlp_start_date?: string
+          finance_decision?: string | null
+          flagged_at?: string | null
+          flagged_for_review?: boolean
+          id?: string
+          notes?: string | null
+          project_id?: string
+          updated_at?: string
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_wo_dlp_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_wo_dlp_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "client_work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_wo_payment_stages: {
+        Row: {
+          created_at: string
+          id: string
+          percentage: number
+          stage_name: string
+          stage_order: number
+          trigger_description: string | null
+          updated_at: string
+          work_order_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          percentage?: number
+          stage_name: string
+          stage_order: number
+          trigger_description?: string | null
+          updated_at?: string
+          work_order_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          percentage?: number
+          stage_name?: string
+          stage_order?: number
+          trigger_description?: string | null
+          updated_at?: string
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_wo_payment_stages_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "client_work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_wo_retention_entries: {
+        Row: {
+          advance_recovery_flagged: number
+          bill_amount: number
+          bill_reference: string | null
+          created_at: string
+          id: string
+          milestone_id: string | null
+          project_id: string
+          release_notes: string | null
+          released: boolean
+          released_at: string | null
+          released_by: string | null
+          retention_amount: number
+          retention_pct: number
+          updated_at: string
+          work_order_id: string
+        }
+        Insert: {
+          advance_recovery_flagged?: number
+          bill_amount?: number
+          bill_reference?: string | null
+          created_at?: string
+          id?: string
+          milestone_id?: string | null
+          project_id: string
+          release_notes?: string | null
+          released?: boolean
+          released_at?: string | null
+          released_by?: string | null
+          retention_amount?: number
+          retention_pct?: number
+          updated_at?: string
+          work_order_id: string
+        }
+        Update: {
+          advance_recovery_flagged?: number
+          bill_amount?: number
+          bill_reference?: string | null
+          created_at?: string
+          id?: string
+          milestone_id?: string | null
+          project_id?: string
+          release_notes?: string | null
+          released?: boolean
+          released_at?: string | null
+          released_by?: string | null
+          retention_amount?: number
+          retention_pct?: number
+          updated_at?: string
+          work_order_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_wo_retention_entries_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_wo_retention_entries_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "client_work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_work_orders: {
+        Row: {
+          acceptance_date: string | null
+          acceptance_document_id: string | null
+          acceptance_pdf_url: string | null
+          acceptance_platform: string | null
+          acceptance_signed: boolean
+          advance_disbursed: number
+          advance_recovered_to_date: number
+          advance_recovery_threshold_pct: number
+          amendment_date: string | null
+          amendment_number: string | null
+          client_company_name: string
+          client_contact_email: string | null
+          client_contact_name: string | null
+          client_contact_phone: string | null
+          commencement_date: string | null
+          completion_days: number | null
+          created_at: string
+          created_by: string | null
+          delay_damages_cap_pct: number
+          delay_damages_pct_per_week: number
+          discount: number
+          dlp_months: number
+          grand_total: number
+          gst_pct: number
+          id: string
+          is_archived: boolean
+          issue_date: string | null
+          material_advance_pct_1: number
+          material_advance_pct_2: number
+          notes: string | null
+          our_signatory: string | null
+          our_signatory_id: string | null
+          retention_pct: number
+          sub_total: number
+          updated_at: string
+          updated_by: string | null
+          witness_name: string | null
+          wo_number: string
+        }
+        Insert: {
+          acceptance_date?: string | null
+          acceptance_document_id?: string | null
+          acceptance_pdf_url?: string | null
+          acceptance_platform?: string | null
+          acceptance_signed?: boolean
+          advance_disbursed?: number
+          advance_recovered_to_date?: number
+          advance_recovery_threshold_pct?: number
+          amendment_date?: string | null
+          amendment_number?: string | null
+          client_company_name: string
+          client_contact_email?: string | null
+          client_contact_name?: string | null
+          client_contact_phone?: string | null
+          commencement_date?: string | null
+          completion_days?: number | null
+          created_at?: string
+          created_by?: string | null
+          delay_damages_cap_pct?: number
+          delay_damages_pct_per_week?: number
+          discount?: number
+          dlp_months?: number
+          grand_total?: number
+          gst_pct?: number
+          id?: string
+          is_archived?: boolean
+          issue_date?: string | null
+          material_advance_pct_1?: number
+          material_advance_pct_2?: number
+          notes?: string | null
+          our_signatory?: string | null
+          our_signatory_id?: string | null
+          retention_pct?: number
+          sub_total?: number
+          updated_at?: string
+          updated_by?: string | null
+          witness_name?: string | null
+          wo_number: string
+        }
+        Update: {
+          acceptance_date?: string | null
+          acceptance_document_id?: string | null
+          acceptance_pdf_url?: string | null
+          acceptance_platform?: string | null
+          acceptance_signed?: boolean
+          advance_disbursed?: number
+          advance_recovered_to_date?: number
+          advance_recovery_threshold_pct?: number
+          amendment_date?: string | null
+          amendment_number?: string | null
+          client_company_name?: string
+          client_contact_email?: string | null
+          client_contact_name?: string | null
+          client_contact_phone?: string | null
+          commencement_date?: string | null
+          completion_days?: number | null
+          created_at?: string
+          created_by?: string | null
+          delay_damages_cap_pct?: number
+          delay_damages_pct_per_week?: number
+          discount?: number
+          dlp_months?: number
+          grand_total?: number
+          gst_pct?: number
+          id?: string
+          is_archived?: boolean
+          issue_date?: string | null
+          material_advance_pct_1?: number
+          material_advance_pct_2?: number
+          notes?: string | null
+          our_signatory?: string | null
+          our_signatory_id?: string | null
+          retention_pct?: number
+          sub_total?: number
+          updated_at?: string
+          updated_by?: string | null
+          witness_name?: string | null
+          wo_number?: string
+        }
+        Relationships: []
+      }
       clients_master: {
         Row: {
           address: string | null
@@ -8953,6 +9252,7 @@ export type Database = {
           client_portal_expires_at: string | null
           client_portal_status_message: string | null
           client_portal_token: string | null
+          client_work_order_id: string | null
           closed_at: string | null
           closed_by: string | null
           construction_type: string | null
@@ -8999,6 +9299,7 @@ export type Database = {
           wip_close_date: string | null
           wip_start_date: string | null
           wip_status: string
+          wo_line_item_ref: string | null
         }
         Insert: {
           actually_spent?: number | null
@@ -9011,6 +9312,7 @@ export type Database = {
           client_portal_expires_at?: string | null
           client_portal_status_message?: string | null
           client_portal_token?: string | null
+          client_work_order_id?: string | null
           closed_at?: string | null
           closed_by?: string | null
           construction_type?: string | null
@@ -9057,6 +9359,7 @@ export type Database = {
           wip_close_date?: string | null
           wip_start_date?: string | null
           wip_status?: string
+          wo_line_item_ref?: string | null
         }
         Update: {
           actually_spent?: number | null
@@ -9069,6 +9372,7 @@ export type Database = {
           client_portal_expires_at?: string | null
           client_portal_status_message?: string | null
           client_portal_token?: string | null
+          client_work_order_id?: string | null
           closed_at?: string | null
           closed_by?: string | null
           construction_type?: string | null
@@ -9115,8 +9419,16 @@ export type Database = {
           wip_close_date?: string | null
           wip_start_date?: string | null
           wip_status?: string
+          wo_line_item_ref?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "projects_client_work_order_id_fkey"
+            columns: ["client_work_order_id"]
+            isOneToOne: false
+            referencedRelation: "client_work_orders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "projects_closed_by_fkey"
             columns: ["closed_by"]
@@ -14168,6 +14480,24 @@ export type Database = {
           unit: string
         }[]
       }
+      get_client_wo_summary: {
+        Args: { _wo_id: string }
+        Returns: {
+          advance_disbursed: number
+          advance_outstanding: number
+          advance_recovered: number
+          advance_recovery_active: boolean
+          billed_pct: number
+          billed_to_date: number
+          delay_exposure: number
+          delay_weeks: number
+          grand_total: number
+          linked_projects: number
+          retention_held: number
+          retention_released: number
+          work_order_id: string
+        }[]
+      }
       get_design_stages_by_portal_token: {
         Args: { _token: string }
         Returns: {
@@ -14269,6 +14599,7 @@ export type Database = {
           client_portal_expires_at: string | null
           client_portal_status_message: string | null
           client_portal_token: string | null
+          client_work_order_id: string | null
           closed_at: string | null
           closed_by: string | null
           construction_type: string | null
@@ -14315,6 +14646,7 @@ export type Database = {
           wip_close_date: string | null
           wip_start_date: string | null
           wip_status: string
+          wo_line_item_ref: string | null
         }[]
         SetofOptions: {
           from: "*"
@@ -14346,6 +14678,7 @@ export type Database = {
           client_portal_expires_at: string | null
           client_portal_status_message: string | null
           client_portal_token: string | null
+          client_work_order_id: string | null
           closed_at: string | null
           closed_by: string | null
           construction_type: string | null
@@ -14392,6 +14725,7 @@ export type Database = {
           wip_close_date: string | null
           wip_start_date: string | null
           wip_status: string
+          wo_line_item_ref: string | null
         }[]
         SetofOptions: {
           from: "*"
