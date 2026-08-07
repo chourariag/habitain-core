@@ -619,6 +619,7 @@ export function ScopeOfWorkTab({ projectId, userRole }: Props) {
           clientName={clientName}
           contractValue={0}
           userRole={userRole}
+          onScopeSigned={loadScope}
         />
       )}
 
