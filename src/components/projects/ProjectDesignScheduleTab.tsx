@@ -117,6 +117,8 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
 
   return (
     <div className="space-y-4">
+      <HistoricalBackfillCard projectId={projectId} pipeline={pipeline} onDone={load} />
+
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
@@ -126,6 +128,7 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
           <Progress value={pct} />
         </CardContent>
       </Card>
+
 
       {groups.map(g => (
         <Card key={g.group}>
