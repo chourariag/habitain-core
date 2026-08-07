@@ -26,6 +26,7 @@ import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker"
 import { ReworkSummaryTab } from "@/components/qc/ReworkSummaryTab";
 import { ReworkLogSection } from "@/components/production/ReworkLogSection";
 import { QualityFlagsTab } from "@/components/quality/QualityFlagsTab";
+import { EditRecordButton, EditedIndicator } from "@/components/shared/EditWithReason";
 
 const FIX_TIMELINE_OPTIONS = [
   { value: "same_day", label: "Same day" },
@@ -442,10 +443,35 @@ export default function QualityControl() {
                           {(insp.modules as any)?.projects?.name || "Project"} · {insp.submitted_at ? format(new Date(insp.submitted_at), "dd MMM yyyy HH:mm") : "Draft"}
                         </p>
                       </div>
-                      <Badge className={decisionBadgeClass(insp.dispatch_decision)}>
-                        {insp.dispatch_decision || insp.status}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <EditedIndicator table="qc_inspections" recordId={insp.id} />
+                        <EditRecordButton
+                          table="qc_inspections"
+                          recordId={insp.id}
+                          record={insp}
+                          title="Edit QC inspection"
+                          fields={[
+                            { name: "status", label: "Status", type: "select", options: [
+                              { value: "draft", label: "Draft" },
+                              { value: "submitted", label: "Submitted" },
+                              { value: "passed", label: "Passed" },
+                              { value: "failed", label: "Failed" },
+                            ] },
+                            { name: "dispatch_decision", label: "Dispatch decision", type: "select", options: [
+                              { value: "approved", label: "Approved" },
+                              { value: "conditional", label: "Conditional" },
+                              { value: "rejected", label: "Rejected" },
+                            ] },
+                          ]}
+                          onSaved={fetchData}
+                        />
+                        <Badge className={decisionBadgeClass(insp.dispatch_decision)}>
+                          {insp.dispatch_decision || insp.status}
+                        </Badge>
+                      </div>
                     </div>
+
+
                   </CardContent>
                 </Card>
               ))

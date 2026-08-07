@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { PhotoGuidanceCard, PhotoFeedback, PhotoQualitySummary, usePhotoWithAI } from "@/components/photos/PhotoGuidance";
 import { DailyProgressSection, validatePlannedActivities, type PlannedActivity } from "@/components/site/DailyProgressSection";
+import { EditRecordButton, EditedIndicator } from "@/components/shared/EditWithReason";
+
 
 interface Props {
   projectId: string;
@@ -131,6 +133,8 @@ export function SiteDiary({ projectId, userRole }: Props) {
         gps_location: gpsLocation || null,
         photo_urls: urls,
         submitted_by: user.id,
+        submitted_by_user_id: user.id,
+
         weather_condition: weather || null,
         manpower_count: manpower ? parseInt(manpower) : null,
         blockers: blockers.trim() || null,
@@ -420,7 +424,22 @@ export function SiteDiary({ projectId, userRole }: Props) {
                     {entry.weather_condition && (
                       <span className="text-xs bg-accent/20 text-accent-foreground px-2 py-0.5 rounded-full">{weatherLabel(entry.weather_condition)}</span>
                     )}
+                    <EditedIndicator table="site_diary" recordId={entry.id} />
+                    <EditRecordButton
+                      table="site_diary"
+                      recordId={entry.id}
+                      record={entry}
+                      title="Edit site report"
+                      fields={[
+                        { name: "notes", label: "Work done today", type: "textarea" },
+                        { name: "blockers", label: "Blockers", type: "textarea" },
+                        { name: "manpower_count", label: "Manpower count", type: "number" },
+                        { name: "weather_condition", label: "Weather", type: "select", options: WEATHER_OPTIONS.map((w) => ({ value: w.value, label: w.label })) },
+                      ]}
+                      onSaved={loadEntries}
+                    />
                   </div>
+
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     {entry.manpower_count != null && <span>👷 {entry.manpower_count}</span>}
                     {entry.power_cuts && <span>⚡ Power cut {entry.power_cut_duration}h</span>}
