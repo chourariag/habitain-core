@@ -9,6 +9,7 @@ import { Camera, Loader2, Plus, Trash2, Send, AlertTriangle, BellRing } from "lu
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+import { EditRecordButton, EditedIndicator } from "@/components/shared/EditWithReason";
 const OVERHEAD_PCT = 0.05;
 
 interface Props {
