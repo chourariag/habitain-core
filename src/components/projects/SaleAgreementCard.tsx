@@ -24,6 +24,7 @@ export function SaleAgreementCard({
   clientName,
   contractValue,
   userRole,
+  onScopeSigned,
 }: {
   projectId: string;
   scopeId: string | null;
@@ -32,13 +33,22 @@ export function SaleAgreementCard({
   clientName: string | null;
   contractValue: number;
   userRole: string | null;
+  onScopeSigned?: () => void;
 }) {
   const canEdit = EDIT_ROLES.includes(userRole ?? "");
+  const canExternal = EXTERNAL_ROLES.includes(userRole ?? "");
   const [loading, setLoading] = useState(true);
   const [contract, setContract] = useState<any>(null);
   const [file, setFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [startDate, setStartDate] = useState("");
+  const [extOpen, setExtOpen] = useState(false);
+  const [extPlatform, setExtPlatform] = useState("");
+  const [extDocId, setExtDocId] = useState("");
+  const [extDate, setExtDate] = useState("");
+  const [extFile, setExtFile] = useState<File | null>(null);
+  const [extSaving, setExtSaving] = useState(false);
+
 
   const load = async () => {
     setLoading(true);
