@@ -5843,9 +5843,11 @@ export type Database = {
       }
       material_requests: {
         Row: {
+          applies_to_all_modules: boolean
           budget_approved_at: string | null
           budget_approved_by: string | null
           created_at: string | null
+          days_required: number | null
           director_approved_at: string | null
           director_approved_by: string | null
           id: string
@@ -5858,6 +5860,7 @@ export type Database = {
           po_raised_by: string | null
           project_id: string | null
           quantity: number
+          quantity_note: string | null
           received_at: string | null
           received_by: string | null
           rejection_reason: string | null
@@ -5868,9 +5871,11 @@ export type Database = {
           urgency: string
         }
         Insert: {
+          applies_to_all_modules?: boolean
           budget_approved_at?: string | null
           budget_approved_by?: string | null
           created_at?: string | null
+          days_required?: number | null
           director_approved_at?: string | null
           director_approved_by?: string | null
           id?: string
@@ -5883,6 +5888,7 @@ export type Database = {
           po_raised_by?: string | null
           project_id?: string | null
           quantity: number
+          quantity_note?: string | null
           received_at?: string | null
           received_by?: string | null
           rejection_reason?: string | null
@@ -5893,9 +5899,11 @@ export type Database = {
           urgency?: string
         }
         Update: {
+          applies_to_all_modules?: boolean
           budget_approved_at?: string | null
           budget_approved_by?: string | null
           created_at?: string | null
+          days_required?: number | null
           director_approved_at?: string | null
           director_approved_by?: string | null
           id?: string
@@ -5908,6 +5916,7 @@ export type Database = {
           po_raised_by?: string | null
           project_id?: string | null
           quantity?: number
+          quantity_note?: string | null
           received_at?: string | null
           received_by?: string | null
           rejection_reason?: string | null

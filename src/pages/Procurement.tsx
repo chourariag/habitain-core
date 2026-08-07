@@ -486,13 +486,18 @@ export default function Procurement() {
                       return (
                         <TableRow key={r.id}>
                           <TableCell className="font-medium" style={{ color: "#1A1A1A" }}>{r.material_name}</TableCell>
-                          <TableCell>{r.quantity} {r.unit}</TableCell>
+                          <TableCell>
+                            {r.quantity_note ? <span className="italic" style={{ color: "#666666" }}>{r.quantity_note}</span> : <>{r.quantity} {r.unit}</>}
+                            {r.applies_to_all_modules && <div className="text-[11px]" style={{ color: "#666666" }}>All modules</div>}
+                          </TableCell>
                           <TableCell style={{ color: "#666666" }}>{projectsMap[r.project_id] ?? "—"}</TableCell>
                           <TableCell>
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={r.urgency === "urgent" ? { backgroundColor: "#FFF0F0", color: "#F40009" } : { backgroundColor: "#F7F7F7", color: "#666666" }}>
+                            <span className="text-xs font-medium px-2 py-0.5 rounded-full" style={r.urgency === "immediate" ? { backgroundColor: "#F40009", color: "#FFFFFF" } : r.urgency === "urgent" ? { backgroundColor: "#FFF0F0", color: "#F40009" } : { backgroundColor: "#F7F7F7", color: "#666666" }}>
                               {r.urgency}
                             </span>
+                            {r.days_required != null && <div className="text-[11px] mt-0.5" style={{ color: "#666666" }}>{r.days_required} day{r.days_required === 1 ? "" : "s"}</div>}
                           </TableCell>
+
                           <TableCell><span className="text-xs font-medium px-2 py-0.5 rounded-full" style={cfg.style}>{cfg.label}</span></TableCell>
                           {canApprove && (
                             <TableCell>

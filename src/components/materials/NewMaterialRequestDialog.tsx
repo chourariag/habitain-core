@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -21,12 +22,16 @@ interface Props {
 
 const UNITS = ["units", "kg", "tonnes", "litres", "sqm", "sqft", "metres", "nos", "bags", "sheets", "rolls"];
 
+const ALL_MODULES = "__all__";
+
 export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Props) {
   const [loading, setLoading] = useState(false);
   const [materialName, setMaterialName] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [asPerIndent, setAsPerIndent] = useState(false);
   const [unit, setUnit] = useState("units");
   const [urgency, setUrgency] = useState("standard");
+  const [daysRequired, setDaysRequired] = useState("");
   const [projectId, setProjectId] = useState("");
   const [moduleId, setModuleId] = useState("");
   const [notes, setNotes] = useState("");
@@ -54,7 +59,7 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!materialName.trim() || !quantity || !projectId) {
+    if (!materialName.trim() || (!asPerIndent && !quantity) || !projectId) {
       toast.error("Material name, quantity, and project are required");
       return;
     }
@@ -63,11 +68,14 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
       const { client, session } = await getAuthedClient();
       const { error } = await client.from("material_requests" as any).insert({
         material_name: materialName.trim(),
-        quantity: Number(quantity),
+        quantity: asPerIndent ? 0 : Number(quantity),
+        quantity_note: asPerIndent ? "As per indent" : null,
         unit,
         urgency,
+        days_required: urgency === "immediate" || !daysRequired ? null : Number(daysRequired),
         project_id: projectId,
-        module_id: moduleId || null,
+        module_id: moduleId && moduleId !== ALL_MODULES ? moduleId : null,
+        applies_to_all_modules: moduleId === ALL_MODULES,
         notes: notes.trim() || null,
         requested_by: session.user.id,
       });
@@ -75,8 +83,10 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
       toast.success("Material request submitted");
       setMaterialName("");
       setQuantity("");
+      setAsPerIndent(false);
       setUnit("units");
       setUrgency("standard");
+      setDaysRequired("");
       setProjectId("");
       setModuleId("");
       setNotes("");
@@ -88,6 +98,7 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
       setLoading(false);
     }
   };
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -104,7 +115,11 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="qty">Quantity *</Label>
-              <Input id="qty" type="number" min={0.01} step="any" value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="e.g. 50" required />
+              <Input id="qty" type="number" min={0.01} step="any" value={asPerIndent ? "" : quantity} onChange={(e) => setQuantity(e.target.value)} placeholder={asPerIndent ? "As per indent" : "e.g. 50"} disabled={asPerIndent} required={!asPerIndent} />
+              <div className="flex items-center gap-2 pt-1">
+                <Checkbox id="asPerIndent" checked={asPerIndent} onCheckedChange={(c) => setAsPerIndent(c === true)} />
+                <Label htmlFor="asPerIndent" className="text-xs font-normal text-muted-foreground cursor-pointer">As per indent</Label>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Unit</Label>
@@ -131,30 +146,39 @@ export function NewMaterialRequestDialog({ open, onOpenChange, onCreated }: Prop
             </Select>
           </div>
 
-          {modules.length > 0 && (
-            <div className="space-y-2">
-              <Label>Linked Module (optional)</Label>
-              <Select value={moduleId} onValueChange={setModuleId}>
-                <SelectTrigger><SelectValue placeholder="Select module" /></SelectTrigger>
-                <SelectContent>
-                  {modules.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>{m.module_code ? `${m.module_code} — ` : ""}{m.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
           <div className="space-y-2">
-            <Label>Urgency</Label>
-            <Select value={urgency} onValueChange={setUrgency}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Label>Linked Module (optional)</Label>
+            <Select value={moduleId} onValueChange={setModuleId}>
+              <SelectTrigger><SelectValue placeholder="Select module" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="standard">Standard</SelectItem>
-                <SelectItem value="urgent">Urgent</SelectItem>
+                <SelectItem value={ALL_MODULES}>All modules</SelectItem>
+                {modules.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>{m.module_code ? `${m.module_code} — ` : ""}{m.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Urgency</Label>
+              <Select value={urgency} onValueChange={setUrgency}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                  <SelectItem value="immediate">Immediate</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {urgency !== "immediate" && (
+              <div className="space-y-2">
+                <Label htmlFor="daysReq">No. of days required</Label>
+                <Input id="daysReq" type="number" min={1} step={1} value={daysRequired} onChange={(e) => setDaysRequired(e.target.value)} placeholder="e.g. 7" />
+              </div>
+            )}
+          </div>
+
 
           <div className="space-y-2">
             <Label htmlFor="notes">Notes</Label>
