@@ -160,28 +160,44 @@ export function SaleAgreementCard({
           </Alert>
         )}
 
-        {contract?.contract_file_url ? (
+        {contract?.contract_file_url && (
           <div className="text-sm space-y-1">
             <p className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" style={{ color: "#006039" }} /> Contract <span className="font-mono text-xs">{contract.contract_number}</span> on file.</p>
             <button type="button" onClick={openAgreement} disabled={opening} className="text-sm underline text-left disabled:opacity-60">{opening ? "Opening…" : "View signed agreement"}</button>
-          </div>
-        ) : (
-          canEdit && (
-            <div className="space-y-2">
-              <div>
-                <Label className="text-xs">Sale Agreement Date</Label>
-                <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={!scopeSigned} />
-              </div>
-              <div>
-                <Label className="text-xs">Upload signed Sale Agreement (PDF)</Label>
-                <Input type="file" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} disabled={!scopeSigned} />
-              </div>
-              <Button onClick={upload} disabled={!file || !scopeSigned || saving} size="sm">
-                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                <Upload className="h-4 w-4 mr-1" /> Submit Sale Agreement
-              </Button>
+            <div className="flex items-center gap-2 pt-1">
+              {unlocked ? (
+                <span className="text-xs" style={{ color: "#D4860A" }}>
+                  Unlocked for editing until {new Date(contract.unlocked_until).toLocaleString("en-IN")}
+                </span>
+              ) : (
+                canUnlockLockedDocument(userRole) && (
+                  <DocumentUnlockButton
+                    recordTable="contracts_register"
+                    recordId={contract.id}
+                    documentLabel="Sale Agreement"
+                    onUnlocked={load}
+                  />
+                )
+              )}
             </div>
-          )
+          </div>
+        )}
+
+        {(!contract?.contract_file_url || unlocked) && canEdit && (
+          <div className="space-y-2">
+            <div>
+              <Label className="text-xs">Sale Agreement Date</Label>
+              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} disabled={!scopeSigned} />
+            </div>
+            <div>
+              <Label className="text-xs">{unlocked ? "Replace signed Sale Agreement (PDF)" : "Upload signed Sale Agreement (PDF)"}</Label>
+              <Input type="file" accept="application/pdf,image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} disabled={!scopeSigned} />
+            </div>
+            <Button onClick={upload} disabled={!file || !scopeSigned || saving} size="sm">
+              {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              <Upload className="h-4 w-4 mr-1" /> {unlocked ? "Replace Sale Agreement" : "Submit Sale Agreement"}
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>
