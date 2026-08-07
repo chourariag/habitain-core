@@ -171,7 +171,18 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
                         <td className="px-3 py-2">{s?.actual_date ? format(parseISO(s.actual_date), "dd/MM/yyyy") : "—"}</td>
                         <td className="px-3 py-2">
                           <Badge style={{ backgroundColor: style.bg, color: style.fg, border: "none" }}>{status}</Badge>
+                          {s?.completion_type === "completed_pre_hstack" && (
+                            <div
+                              className="mt-1 text-[10px] font-medium"
+                              style={{ color: "#D4860A" }}
+                              title={backfill?.note ?? "Historical backfill"}
+                            >
+                              Backfilled — Pre-HStack, set by {backfill?.created_by_name ?? "Admin"}
+                              {backfill?.created_at ? ` on ${format(parseISO(backfill.created_at), "dd/MM/yyyy")}` : ""}
+                            </div>
+                          )}
                         </td>
+
                         <td className="px-3 py-2 text-xs max-w-[260px] truncate" title={s?.notes ?? ""}>
                           {status === "Blocked" && s?.notes ? <span style={{ color: "#F40009" }}>{s.notes}</span> : (s?.notes ?? "—")}
                         </td>
