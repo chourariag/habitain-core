@@ -44,21 +44,25 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
   const [stages, setStages] = useState<ProjectStage[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [editing, setEditing] = useState<{ def: StageDef; stage: ProjectStage | null } | null>(null);
+  const [backfill, setBackfill] = useState<BackfillRecord | null>(null);
   const [searchParams] = useSearchParams();
   const focusStage = searchParams.get("stage");
 
   const load = async () => {
     setLoading(true);
-    const [defsRes, stagesRes, profRes] = await Promise.all([
+    const [defsRes, stagesRes, profRes, bfRes] = await Promise.all([
       supabase.from("design_stage_definitions").select("*").eq("pipeline_type", pipeline).order("stage_order"),
       supabase.from("project_design_stages").select("*").eq("project_id", projectId),
       supabase.from("profiles").select("id, display_name").eq("is_active", true).order("display_name"),
+      (supabase as any).from("project_backfills").select("*").eq("project_id", projectId).eq("phase", "design").maybeSingle(),
     ]);
     const defsData = (defsRes.data ?? []) as StageDef[];
     const stagesData = (stagesRes.data ?? []) as ProjectStage[];
     setDefs(defsData);
     setStages(stagesData);
+    setBackfill((bfRes.data ?? null) as BackfillRecord | null);
     setProfiles((profRes.data ?? []) as Profile[]);
+
     setLoading(false);
 
     // Lazy-seed missing rows
