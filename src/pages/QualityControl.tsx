@@ -26,6 +26,7 @@ import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker"
 import { ReworkSummaryTab } from "@/components/qc/ReworkSummaryTab";
 import { ReworkLogSection } from "@/components/production/ReworkLogSection";
 import { QualityFlagsTab } from "@/components/quality/QualityFlagsTab";
+import { EditRecordButton, EditedIndicator } from "@/components/shared/EditWithReason";
 
 const FIX_TIMELINE_OPTIONS = [
   { value: "same_day", label: "Same day" },
@@ -462,7 +463,7 @@ export default function QualityControl() {
                               { value: "rejected", label: "Rejected" },
                             ] },
                           ]}
-                          onSaved={loadData}
+                          onSaved={fetchData}
                         />
                         <Badge className={decisionBadgeClass(insp.dispatch_decision)}>
                           {insp.dispatch_decision || insp.status}
