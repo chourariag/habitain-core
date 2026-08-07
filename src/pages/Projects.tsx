@@ -20,6 +20,7 @@ export default function Projects() {
   const [siteReadyByProject, setSiteReadyByProject] = useState<Record<string, boolean>>({});
   const [dqsByProject, setDqsByProject] = useState<Record<string, number>>({});
   const [approvalsByProject, setApprovalsByProject] = useState<Record<string, number>>({});
+  const [woByProject, setWoByProject] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
 
