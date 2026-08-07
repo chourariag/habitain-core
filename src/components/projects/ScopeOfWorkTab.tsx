@@ -16,6 +16,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Trash2, Loader2, Save, Send, CheckCircle2, Lock, Copy, Unlock, AlertTriangle, PenLine } from "lucide-react";
 import { toast } from "sonner";
+import { UNLOCK_TIER_ROLES, UNLOCK_TIER_LABEL } from "@/lib/unlock-authority";
 import jsPDF from "jspdf";
 import { format } from "date-fns";
 import { SaleAgreementCard } from "./SaleAgreementCard";
