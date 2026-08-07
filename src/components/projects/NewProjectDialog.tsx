@@ -19,6 +19,8 @@ import { toast } from "sonner";
 import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
 import { useUserRole } from "@/hooks/useUserRole";
 import { raiseApprovalRequest } from "@/lib/approval-requests";
+import { listClientWorkOrders, type ClientWorkOrder } from "@/lib/contractor-wo";
+import { useEffect } from "react";
 
 interface NewProjectDialogProps {
   open: boolean;
@@ -48,12 +50,24 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
   const [contractValue, setContractValue] = useState("");
   const [startDate, setStartDate] = useState<Date>();
   const [estCompletion, setEstCompletion] = useState<Date>();
+  const [workOrders, setWorkOrders] = useState<ClientWorkOrder[]>([]);
+  const [workOrderId, setWorkOrderId] = useState<string>("");
+  const [woLineItemRef, setWoLineItemRef] = useState("");
+
+  const isContractorWo = division === "Contractor WO";
+
+  useEffect(() => {
+    if (open && isContractorWo && workOrders.length === 0) {
+      listClientWorkOrders().then(setWorkOrders);
+    }
+  }, [open, isContractorWo, workOrders.length]);
 
   const resetForm = () => {
     setName(""); setClientName("");
     setDivision("Habitainer"); setProductionSystem("modular");
     setModuleCount(""); setPanelCount(""); setContractValue("");
     setStartDate(undefined); setEstCompletion(undefined);
+    setWorkOrderId(""); setWoLineItemRef("");
   };
 
   const showModules = productionSystem === "modular" || productionSystem === "hybrid";
@@ -65,6 +79,14 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
     if (!clientName.trim()) { toast.error("Client name is required"); return; }
     if (!startDate || !estCompletion) { toast.error("Contract Start and Expected Delivery dates are required"); return; }
     if (!canRaise) { toast.error("Only the Planning Head can raise a project creation request."); return; }
+    if (isContractorWo) {
+      if (!workOrderId) { toast.error("Select the Contractor Work Order this project sits under"); return; }
+      const wo = workOrders.find((w) => w.id === workOrderId);
+      if (!wo?.acceptance_signed) {
+        toast.error("Acceptance Statement is not signed on this Work Order — projects cannot be submitted yet.");
+        return;
+      }
+    }
 
     setLoading(true);
     try {
@@ -80,6 +102,9 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
         contract_value: contractValue ? parseFloat(contractValue) : 0,
         start_date: format(startDate, "yyyy-MM-dd"),
         est_completion: format(estCompletion, "yyyy-MM-dd"),
+        ...(isContractorWo
+          ? { project_type: "contractor_wo", client_work_order_id: workOrderId, wo_line_item_ref: woLineItemRef.trim() || null }
+          : {}),
       };
 
       // Non-MD users → approval request
@@ -237,6 +262,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
                   <SelectContent>
                     <SelectItem value="Habitainer">Habitainer</SelectItem>
                     <SelectItem value="ADS">ADS</SelectItem>
+                    <SelectItem value="Contractor WO">Contractor WO</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -267,6 +293,31 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
                 </div>
               )}
             </div>
+
+            {isContractorWo && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>Work Order *</Label>
+                  <Select value={workOrderId} onValueChange={setWorkOrderId}>
+                    <SelectTrigger><SelectValue placeholder="Select Work Order" /></SelectTrigger>
+                    <SelectContent>
+                      {workOrders.map((w) => (
+                        <SelectItem key={w.id} value={w.id}>
+                          {w.wo_number} — {w.client_company_name}{w.acceptance_signed ? "" : " (acceptance pending)"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-[10px] text-muted-foreground">
+                    Commercial terms (payment stages, retention, DLP, delay damages) come from the Work Order.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="woLine">WO Line Item / Unit Ref</Label>
+                  <Input id="woLine" value={woLineItemRef} onChange={(e) => setWoLineItemRef(e.target.value)} placeholder="e.g. Unit 3" />
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="contractValue">Contract Value (₹) *</Label>

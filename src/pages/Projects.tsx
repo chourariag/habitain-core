@@ -20,6 +20,7 @@ export default function Projects() {
   const [siteReadyByProject, setSiteReadyByProject] = useState<Record<string, boolean>>({});
   const [dqsByProject, setDqsByProject] = useState<Record<string, number>>({});
   const [approvalsByProject, setApprovalsByProject] = useState<Record<string, number>>({});
+  const [woByProject, setWoByProject] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -102,6 +103,22 @@ export default function Projects() {
     (stageRes.data ?? []).forEach((s: any) => { appMap[s.project_id] = (appMap[s.project_id] ?? 0) + 1; });
     setApprovalsByProject(appMap);
 
+    // Contractor Work Order badges
+    const woIds = Array.from(new Set(allProjects.map((p: any) => p.client_work_order_id).filter(Boolean)));
+    if (woIds.length > 0) {
+      const { data: wos } = await (supabase.from("client_work_orders" as any) as any)
+        .select("id, wo_number").in("id", woIds);
+      const numById: Record<string, string> = {};
+      (wos ?? []).forEach((w: any) => { numById[w.id] = w.wo_number; });
+      const map: Record<string, string> = {};
+      allProjects.forEach((p: any) => {
+        if (p.client_work_order_id && numById[p.client_work_order_id]) map[p.id] = numById[p.client_work_order_id];
+      });
+      setWoByProject(map);
+    } else {
+      setWoByProject({});
+    }
+
     setLoading(false);
   }, []);
 
@@ -114,12 +131,15 @@ export default function Projects() {
           <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "#1A1A1A" }}>Projects</h1>
           <p className="text-sm mt-1" style={{ color: "#666666" }}>Command centre — all construction projects</p>
         </div>
+        <div className="flex items-center gap-2">
+        <Button variant="outline" onClick={() => (window.location.href = "/work-orders")}>Work Orders</Button>
         {canCreate && (
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             New Project
           </Button>
         )}
+        </div>
       </div>
 
       {loading ? (
@@ -143,6 +163,7 @@ export default function Projects() {
               siteReady={!!siteReadyByProject[project.id]}
               pendingDQs={dqsByProject[project.id] ?? 0}
               pendingApprovals={approvalsByProject[project.id] ?? 0}
+              woNumber={woByProject[project.id]}
             />
           ))}
         </div>

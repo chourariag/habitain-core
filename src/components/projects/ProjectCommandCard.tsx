@@ -19,10 +19,11 @@ interface ProjectCommandCardProps {
   siteReady: boolean;
   pendingDQs: number;
   pendingApprovals: number;
+  woNumber?: string | null;
 }
 
 export function ProjectCommandCard({
-  project, modules, hasHandover, delays, openNCRs, siteReady, pendingDQs, pendingApprovals,
+  project, modules, hasHandover, delays, openNCRs, siteReady, pendingDQs, pendingApprovals, woNumber,
 }: ProjectCommandCardProps) {
   const navigate = useNavigate();
   const status = computeProjectStatus(modules, hasHandover);
@@ -67,6 +68,14 @@ export function ProjectCommandCard({
                   backgroundColor: (project as any).division === "ADS" ? "#3B82F620" : "#00603920",
                   color: (project as any).division === "ADS" ? "#1D4ED8" : "#006039",
                 }}>{(project as any).division}</Badge>
+              )}
+              {woNumber && (
+                <Badge
+                  className="text-[9px] px-1.5 py-0 border-0 cursor-pointer"
+                  style={{ backgroundColor: "#D4860A20", color: "#D4860A" }}
+                  onClick={(e) => { e.stopPropagation(); navigate("/work-orders"); }}
+                  title="Shared Contractor Work Order"
+                >WO {woNumber}</Badge>
               )}
               {(project as any).is_design_only && (
                 <Badge variant="outline" className="text-[9px] px-1.5 py-0 text-muted-foreground">Design Only</Badge>
