@@ -468,6 +468,8 @@ export default function QualityControl() {
                           {insp.dispatch_decision || insp.status}
                         </Badge>
                       </div>
+                    </div>
+
 
                   </CardContent>
                 </Card>
