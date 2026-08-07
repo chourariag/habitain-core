@@ -167,8 +167,10 @@ export default function MaterialRequests() {
                         {r.quantity_note ? <span className="italic text-muted-foreground">{r.quantity_note}</span> : <>{r.quantity} {r.unit}</>}
                       </td>
                       <td className="p-3 text-muted-foreground">
-                        {r.applies_to_all_modules ? "All modules" : (projects[r.project_id] ?? "—")}
+                        {projects[r.project_id] ?? "—"}
+                        {r.applies_to_all_modules && <div className="text-[11px]">All modules</div>}
                       </td>
+
                       <td className="p-3">
                         <Badge variant="outline" className={URGENCY_CLASS[r.urgency] ?? ""}>
                           {(r.urgency === "urgent" || r.urgency === "immediate") && <AlertTriangle className="h-3 w-3 mr-1" />}{r.urgency}
