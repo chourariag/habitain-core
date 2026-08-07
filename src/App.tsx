@@ -35,6 +35,7 @@ import Profile from "@/pages/Profile";
 import Attendance from "@/pages/Attendance";
 import NotFound from "@/pages/NotFound";
 import Announcements from "@/pages/Announcements";
+import WorkOrders from "@/pages/WorkOrders";
 import Finance from "@/pages/Finance";
 import KPI from "@/pages/KPI";
 import KPISettings from "@/pages/KPISettings";
@@ -122,6 +123,7 @@ const App = () => (
                 <Route path="/admin/hr" element={<ModuleGuard module="hr"><AdminHR /></ModuleGuard>} />
                 <Route path="/safety" element={<ModuleGuard module="factory"><Safety /></ModuleGuard>} />
                 <Route path="/approvals" element={<ModuleGuard module="approvals"><Approvals /></ModuleGuard>} />
+                <Route path="/work-orders" element={<ModuleGuard module="projects"><WorkOrders /></ModuleGuard>} />
                 <Route path="/announcements" element={<ModuleGuard module="announcements"><Announcements /></ModuleGuard>} />
               </Route>
               <Route path="/client/:projectToken" element={<ClientPortal />} />
