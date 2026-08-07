@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Authenticated can view client work orders" ON public.client_work_orders;
