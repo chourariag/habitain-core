@@ -17,6 +17,7 @@ import {
   EDIT_ROLES, STAGE_STATUSES, STATUS_STYLES, type DesignStageStatus,
 } from "@/lib/design-schedule";
 import { StageAttachments } from "@/components/projects/StageAttachments";
+import { HistoricalBackfillCard, type BackfillRecord } from "@/components/projects/HistoricalBackfillCard";
 
 type StageDef = {
   id: string; stage_code: string; stage_name: string; stage_order: number;
@@ -27,8 +28,10 @@ type ProjectStage = {
   id: string; project_id: string; stage_definition_id: string;
   status: DesignStageStatus; planned_date: string | null; actual_date: string | null;
   owner_id: string | null; notes: string | null;
+  completion_type?: string | null;
 };
 type Profile = { id: string; display_name: string | null; email: string | null };
+
 
 export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
   projectId: string; projectType: string | null; userRole: string | null;
