@@ -74,7 +74,7 @@ export function StageChecklistDrawer({
     setLoading(true);
     const [{ data: t }, { data: ps }] = await Promise.all([
       (supabase.from("project_tasks") as any)
-        .select("id, task_name, task_id_in_schedule, stage_name, status, is_qc_gate, is_payment_milestone, task_type, special_note, display_order, responsible_role, escalation_role, qc_requested_at, completion_percentage")
+        .select("id, task_name, task_id_in_schedule, stage_name, status, is_qc_gate, is_payment_milestone, task_type, special_note, display_order, responsible_role, escalation_role, qc_requested_at, completion_percentage, completion_type, backfilled_at, backfill_note")
         .eq("project_id", projectId)
         .eq("stage_name", stageName)
         .order("display_order", { ascending: true }),
