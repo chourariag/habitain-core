@@ -64,7 +64,11 @@ interface TaskData {
   delay_cause?: string | null;
   delay_resolution?: string | null;
   project_id: string;
+  completion_type?: string | null;
+  backfilled_at?: string | null;
+  backfill_note?: string | null;
 }
+
 
 interface Props {
   task: TaskData | null;
