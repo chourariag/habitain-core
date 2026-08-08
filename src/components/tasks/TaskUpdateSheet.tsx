@@ -254,7 +254,11 @@ export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks 
       <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto md:max-w-2xl md:mx-auto rounded-t-xl">
         <SheetHeader className="pb-2">
           <SheetTitle className="text-left">{task.task_name}</SheetTitle>
+          {isBackfilledTask(task) && (
+            <div className="flex"><BackfilledTaskBadge task={task} /></div>
+          )}
         </SheetHeader>
+
 
         {/* Section A — Task Info */}
         <div className="space-y-3 pb-4">
