@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, ShieldCheck, AlertTriangle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { FACTORY_STAGES, type HStackStage } from "@/lib/hstack-stages";
+import { BackfilledTaskBadge, isBackfilledTask } from "@/components/tasks/BackfilledTaskBadge";
 
 type Task = {
   id: string;
@@ -24,7 +25,11 @@ type Task = {
   escalation_role: string | null;
   qc_requested_at: string | null;
   completion_percentage: number;
+  completion_type?: string | null;
+  backfilled_at?: string | null;
+  backfill_note?: string | null;
 };
+
 
 interface Props {
   open: boolean;
