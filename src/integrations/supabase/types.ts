@@ -8817,7 +8817,11 @@ export type Database = {
         Row: {
           actual_finish_date: string | null
           actual_start_date: string | null
+          backfill_note: string | null
+          backfilled_at: string | null
+          backfilled_by: string | null
           completion_percentage: number
+          completion_type: Database["public"]["Enums"]["task_completion_type"]
           created_at: string
           delay_cause: string | null
           delay_days: number | null
@@ -8859,7 +8863,11 @@ export type Database = {
         Insert: {
           actual_finish_date?: string | null
           actual_start_date?: string | null
+          backfill_note?: string | null
+          backfilled_at?: string | null
+          backfilled_by?: string | null
           completion_percentage?: number
+          completion_type?: Database["public"]["Enums"]["task_completion_type"]
           created_at?: string
           delay_cause?: string | null
           delay_days?: number | null
@@ -8901,7 +8909,11 @@ export type Database = {
         Update: {
           actual_finish_date?: string | null
           actual_start_date?: string | null
+          backfill_note?: string | null
+          backfilled_at?: string | null
+          backfilled_by?: string | null
           completion_percentage?: number
+          completion_type?: Database["public"]["Enums"]["task_completion_type"]
           created_at?: string
           delay_cause?: string | null
           delay_days?: number | null
@@ -14935,6 +14947,7 @@ export type Database = {
         | "disposed"
       login_type: "email" | "otp"
       production_system_type: "modular" | "panelised" | "hybrid"
+      task_completion_type: "live" | "completed_pre_hstack"
       task_template_type:
         | "task"
         | "sub-task"
@@ -15130,6 +15143,7 @@ export const Constants = {
       ],
       login_type: ["email", "otp"],
       production_system_type: ["modular", "panelised", "hybrid"],
+      task_completion_type: ["live", "completed_pre_hstack"],
       task_template_type: [
         "task",
         "sub-task",
