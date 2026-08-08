@@ -1,3 +1,4 @@
+import { BackfilledTaskBadge, isBackfilledTask } from "@/components/tasks/BackfilledTaskBadge";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
