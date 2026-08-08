@@ -1,3 +1,4 @@
+import { BackfilledTaskBadge, isBackfilledTask } from "@/components/tasks/BackfilledTaskBadge";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -64,7 +65,11 @@ interface TaskData {
   delay_cause?: string | null;
   delay_resolution?: string | null;
   project_id: string;
+  completion_type?: string | null;
+  backfilled_at?: string | null;
+  backfill_note?: string | null;
 }
+
 
 interface Props {
   task: TaskData | null;
@@ -76,7 +81,9 @@ interface Props {
   canAddSubtasks?: boolean;
 }
 
-export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks = [], canEdit = true, canAddSubtasks = false }: Props) {
+export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks = [], canEdit: canEditProp = true, canAddSubtasks = false }: Props) {
+  const canEdit = canEditProp && !isBackfilledTask(task);
+
   const [percentage, setPercentage] = useState(0);
   const [remarks, setRemarks] = useState("");
   const [delayCause, setDelayCause] = useState("");
@@ -250,7 +257,11 @@ export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks 
       <SheetContent side="bottom" className="max-h-[90vh] overflow-y-auto md:max-w-2xl md:mx-auto rounded-t-xl">
         <SheetHeader className="pb-2">
           <SheetTitle className="text-left">{task.task_name}</SheetTitle>
+          {isBackfilledTask(task) && (
+            <div className="flex"><BackfilledTaskBadge task={task} /></div>
+          )}
         </SheetHeader>
+
 
         {/* Section A — Task Info */}
         <div className="space-y-3 pb-4">
