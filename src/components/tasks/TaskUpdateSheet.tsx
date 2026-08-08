@@ -81,7 +81,9 @@ interface Props {
   canAddSubtasks?: boolean;
 }
 
-export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks = [], canEdit = true, canAddSubtasks = false }: Props) {
+export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks = [], canEdit: canEditProp = true, canAddSubtasks = false }: Props) {
+  const canEdit = canEditProp && !isBackfilledTask(task);
+
   const [percentage, setPercentage] = useState(0);
   const [remarks, setRemarks] = useState("");
   const [delayCause, setDelayCause] = useState("");
