@@ -206,19 +206,20 @@ export function StageChecklistDrawer({
                 const isQc = t.is_qc_gate || t.task_type === "qc_gate";
                 const isPayment = t.is_payment_milestone || t.task_type === "payment";
                 const done = t.status === "Completed";
+                const backfilled = isBackfilledTask(t);
                 return (
                   <div
                     key={t.id}
                     className="rounded-md p-3 border flex items-start gap-3"
                     style={{
-                      backgroundColor: isQc ? "hsl(0 80% 97%)" : isPayment ? "hsl(45 90% 96%)" : done ? "#F0F8F4" : "#FFFFFF",
-                      borderColor: isQc ? "hsl(0 80% 70%)" : isPayment ? "hsl(45 90% 60%)" : "#E0E0E0",
+                      backgroundColor: backfilled ? "#FAFAFA" : isQc ? "hsl(0 80% 97%)" : isPayment ? "hsl(45 90% 96%)" : done ? "#F0F8F4" : "#FFFFFF",
+                      borderColor: backfilled ? "#D4860A" : isQc ? "hsl(0 80% 70%)" : isPayment ? "hsl(45 90% 60%)" : "#E0E0E0",
                     }}
                   >
                     {!isQc && (
                       <Checkbox
                         checked={done}
-                        disabled={!canEdit || stageNa || saving === t.id}
+                        disabled={!canEdit || stageNa || backfilled || saving === t.id}
                         onCheckedChange={(v) => toggleComplete(t, !!v)}
                         className="mt-0.5"
                       />
@@ -232,9 +233,11 @@ export function StageChecklistDrawer({
                         <span className={`text-sm ${done ? "line-through text-muted-foreground" : ""}`} style={{ color: done ? undefined : "#1A1A1A" }}>
                           {t.task_name}
                         </span>
+                        {backfilled && <BackfilledTaskBadge task={t} />}
                         {isQc && <Badge variant="outline" className="text-[9px]" style={{ borderColor: "hsl(0 80% 45%)", color: "hsl(0 80% 35%)" }}>QC GATE</Badge>}
                         {isPayment && <Badge variant="outline" className="text-[9px]" style={{ borderColor: "hsl(45 90% 40%)", color: "hsl(45 90% 30%)" }}>PAYMENT</Badge>}
                       </div>
+
                       {t.special_note && (
                         <div className="mt-2 rounded p-2 flex items-start gap-1.5" style={{ backgroundColor: "hsl(45 95% 95%)", border: "1px solid hsl(45 90% 70%)" }}>
                           <AlertTriangle className="h-3 w-3 mt-0.5" style={{ color: "hsl(35 90% 35%)" }} />
