@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logTechnicalError } from "../_shared/error-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,9 +36,10 @@ const CHECK_CONTEXTS: Record<string, string> = {
 serve(async (req) => {
   if (req.method === "OPTIONS")
     return new Response(null, { headers: corsHeaders });
-
+  let actingUserId: string | null = null;
   try {
     const user = await requireUser(req);
+    actingUserId = user?.id ?? null;
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
