@@ -3166,6 +3166,48 @@ export type Database = {
         }
         Relationships: []
       }
+      error_log: {
+        Row: {
+          context: Json
+          created_at: string
+          error_message: string
+          error_stack: string | null
+          function_name: string
+          id: string
+          notified: boolean
+          notified_at: string | null
+          notify_error: string | null
+          request_path: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          error_message: string
+          error_stack?: string | null
+          function_name: string
+          id?: string
+          notified?: boolean
+          notified_at?: string | null
+          notify_error?: string | null
+          request_path?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          error_message?: string
+          error_stack?: string | null
+          function_name?: string
+          id?: string
+          notified?: boolean
+          notified_at?: string | null
+          notify_error?: string | null
+          request_path?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       escalation_rules: {
         Row: {
           active: boolean
