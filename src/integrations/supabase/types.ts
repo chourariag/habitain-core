@@ -348,6 +348,47 @@ export type Database = {
         }
         Relationships: []
       }
+      approval_rejection_dm_log: {
+        Row: {
+          approval_request_id: string
+          created_at: string
+          dm_sent: boolean
+          id: string
+          recipient_user_id: string | null
+          skip_reason: string | null
+          slack_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          approval_request_id: string
+          created_at?: string
+          dm_sent?: boolean
+          id?: string
+          recipient_user_id?: string | null
+          skip_reason?: string | null
+          slack_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approval_request_id?: string
+          created_at?: string
+          dm_sent?: boolean
+          id?: string
+          recipient_user_id?: string | null
+          skip_reason?: string | null
+          slack_user_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_rejection_dm_log_approval_request_id_fkey"
+            columns: ["approval_request_id"]
+            isOneToOne: true
+            referencedRelation: "approval_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       approval_requests: {
         Row: {
           approved_at: string | null
