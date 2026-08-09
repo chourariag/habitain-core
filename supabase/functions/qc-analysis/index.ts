@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logTechnicalError } from "../_shared/error-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,7 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  let actingUserId: string | null = null;
   try {
     // Verify auth
     const authHeader = req.headers.get("authorization");
@@ -31,6 +33,7 @@ serve(async (req) => {
     const {
       data: { user },
     } = await client.auth.getUser();
+    actingUserId = user?.id ?? null;
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -175,6 +178,7 @@ Respond in JSON format:
     });
   } catch (err) {
     console.error("QC analysis error:", err);
+    await logTechnicalError({ functionName: "qc-analysis", error: err, userId: actingUserId, req });
     return new Response(
       JSON.stringify({ error: (err as Error).message || "Internal error" }),
       {

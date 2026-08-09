@@ -137,6 +137,7 @@ Only respond with valid JSON, no markdown fences or extra text.`;
     });
   } catch (e) {
     console.error("rm-analysis error:", e);
+    await logTechnicalError({ functionName: "rm-analysis", error: e, userId: actingUserId, req });
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -160,6 +160,7 @@ Context of this photo: ${checkContext}`;
     });
   } catch (e) {
     console.error("photo-check error:", e);
+    await logTechnicalError({ functionName: "photo-check", error: e, userId: actingUserId, req });
     return new Response(
       JSON.stringify({
         error: e instanceof Error ? e.message : "Unknown error",

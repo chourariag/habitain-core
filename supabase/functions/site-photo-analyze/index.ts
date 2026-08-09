@@ -138,6 +138,8 @@ Return:
 
     return new Response(JSON.stringify({ ok: true, result }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
+    console.error("site-photo-analyze error:", e);
+    await logTechnicalError({ functionName: "site-photo-analyze", error: e, userId: actingUserId, req });
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });

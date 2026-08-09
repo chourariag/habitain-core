@@ -117,6 +117,7 @@ If any field cannot be read, return null for that field. Return ONLY the JSON ob
     });
   } catch (e) {
     console.error("scan-invoice error:", e);
+    await logTechnicalError({ functionName: "scan-invoice", error: e, userId: actingUserId, req });
     const msg = e instanceof Error ? e.message : "Unknown error";
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
