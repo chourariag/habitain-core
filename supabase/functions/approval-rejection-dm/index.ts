@@ -1,6 +1,7 @@
 // Approval Rejection DM — polls approval_requests for newly rejected rows and
 // sends a personal Slack DM to the submitter. No channel fallback, no retries.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { logTechnicalError } from "../_shared/error-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -133,6 +134,7 @@ Deno.serve(async (req) => {
     });
   } catch (e) {
     console.error("[approval-rejection-dm] run failed:", e);
+    await logTechnicalError({ functionName: "approval-rejection-dm", error: e, userId: null, req });
     return new Response(
       JSON.stringify({ success: false, error: e instanceof Error ? e.message : String(e) }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },

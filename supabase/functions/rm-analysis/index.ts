@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logTechnicalError } from "../_shared/error-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,9 +22,10 @@ async function requireUser(req: Request) {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
+  let actingUserId: string | null = null;
   try {
     const user = await requireUser(req);
+    actingUserId = user?.id ?? null;
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -135,6 +137,7 @@ Only respond with valid JSON, no markdown fences or extra text.`;
     });
   } catch (e) {
     console.error("rm-analysis error:", e);
+    await logTechnicalError({ functionName: "rm-analysis", error: e, userId: actingUserId, req });
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

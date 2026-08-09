@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logTechnicalError } from "../_shared/error-log.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,9 +22,10 @@ async function requireUser(req: Request) {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
+  let actingUserId: string | null = null;
   try {
     const user = await requireUser(req);
+    actingUserId = user?.id ?? null;
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -115,6 +117,7 @@ If any field cannot be read, return null for that field. Return ONLY the JSON ob
     });
   } catch (e) {
     console.error("scan-invoice error:", e);
+    await logTechnicalError({ functionName: "scan-invoice", error: e, userId: actingUserId, req });
     const msg = e instanceof Error ? e.message : "Unknown error";
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
