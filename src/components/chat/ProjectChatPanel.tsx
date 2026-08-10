@@ -237,8 +237,8 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
       {/* Panel */}
       <div
         className="fixed z-50 flex flex-col bg-background shadow-2xl overflow-hidden
-          bottom-0 left-0 right-0 h-[70vh] rounded-t-2xl
-          md:bottom-auto md:top-0 md:left-auto md:right-0 md:h-full md:w-[380px] md:rounded-none md:border-l border-border"
+          bottom-0 left-0 right-0 h-[70dvh] max-h-[100dvh] rounded-t-2xl
+          md:bottom-0 md:top-0 md:left-auto md:right-0 md:h-[100dvh] md:w-[380px] md:rounded-none md:border-l border-border"
         onClick={(e) => e.stopPropagation()}
         style={{ animation: "slideIn 0.2s ease-out" }}
       >
