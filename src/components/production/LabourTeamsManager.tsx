@@ -48,6 +48,7 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
   const [status, setStatus] = useState<"active" | "inactive">("active");
   const [reassignReason, setReassignReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [memberSearch, setMemberSearch] = useState("");
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -78,7 +79,7 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
   const openCreate = () => {
     setEditing(null);
     setTeamName(""); setHeadId(""); setMemberIds([]);
-    setSpecialisation(""); setStatus("active"); setReassignReason("");
+    setSpecialisation(""); setStatus("active"); setReassignReason(""); setMemberSearch("");
     setDialogOpen(true);
   };
 
@@ -89,7 +90,7 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
     setMemberIds((t.members ?? []).filter((m) => !m.left_date).map((m) => m.worker_id));
     setSpecialisation(t.specialisation ?? "");
     setStatus(t.status as "active" | "inactive");
-    setReassignReason("");
+    setReassignReason(""); setMemberSearch("");
     setDialogOpen(true);
   };
 
@@ -185,8 +186,11 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
 
       {teams.length === 0 ? (
         <div className="bg-card border border-border rounded-lg p-6 text-center text-sm text-muted-foreground">
-          No teams yet.
+          {workers.length === 0
+            ? "No workers yet — add workers in Production → People → Labour Registers before creating teams."
+            : "No teams yet."}
         </div>
+
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
           {teams.map((t) => {
@@ -229,6 +233,15 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
               <Label>Team Name</Label>
               <Input value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="e.g. Team Alpha" />
             </div>
+            {workers.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border p-4 text-center space-y-1">
+                <p className="text-sm font-medium">No workers yet</p>
+                <p className="text-xs text-muted-foreground">
+                  Add workers in Production → People → Labour Registers, then create the team.
+                </p>
+              </div>
+            ) : (
+              <>
             <div>
               <Label>Team Head</Label>
               <Select value={headId} onValueChange={setHeadId}>
@@ -244,9 +257,27 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
             </div>
             <div>
               <Label>Members (incl. head: {allMemberIds.length}/4)</Label>
+              <Input
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+                placeholder="Search workers by name or skill…"
+                className="mb-2"
+              />
               <ScrollArea className="h-48 border border-border rounded-md p-2">
                 <div className="space-y-1.5">
-                  {workers.filter((w) => w.id !== headId).map((w) => {
+                  {(() => {
+                    const q = memberSearch.trim().toLowerCase();
+                    const list = workers
+                      .filter((w) => w.id !== headId)
+                      .filter((w) => !q || w.name.toLowerCase().includes(q) || (w.skill_type ?? "").toLowerCase().includes(q));
+                    if (list.length === 0) {
+                      return (
+                        <p className="text-xs text-muted-foreground py-3 text-center">
+                          {q ? "No workers match your search." : "No selectable workers available."}
+                        </p>
+                      );
+                    }
+                    return list.map((w) => {
                     const checked = memberIds.includes(w.id);
                     const locked = lockedWorkerIds.has(w.id) && !checked;
                     return (
@@ -268,10 +299,14 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
                         {locked && <span className="text-xs text-warning ml-auto">In another team</span>}
                       </label>
                     );
-                  })}
+                    });
+                  })()}
                 </div>
               </ScrollArea>
             </div>
+              </>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Specialisation</Label>
@@ -297,7 +332,7 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}><X className="h-4 w-4 mr-1" />Cancel</Button>
-            <Button onClick={save} disabled={saving} className="bg-primary text-primary-foreground">
+            <Button onClick={save} disabled={saving || workers.length === 0} className="bg-primary text-primary-foreground">
               {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Save
             </Button>
           </DialogFooter>
