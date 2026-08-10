@@ -591,7 +591,7 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
             <Field label="Location" value={wo.location_area} />
             <Field label="Measurement" value={`${wo.measurement_basis} (${wo.unit ?? ""})`} />
             <Field label="Quantity × Rate" value={`${wo.quantity} × ₹${wo.rate}`} />
-            <Field label="Total Value" value={fmtINR(Number(wo.total_value))} />
+            <Field label="Total Value" value={Number(wo.quantity) === 0 && wo.status === "pending_costing_approval" ? "Pending Costing" : fmtINR(Number(wo.total_value))} />
             <Field label="Planned Start" value={format(new Date(wo.planned_start_date), "dd/MM/yyyy")} />
             <Field label="Planned Completion" value={format(new Date(wo.planned_completion_date), "dd/MM/yyyy")} />
           </div>
