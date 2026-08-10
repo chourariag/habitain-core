@@ -186,8 +186,11 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
 
       {teams.length === 0 ? (
         <div className="bg-card border border-border rounded-lg p-6 text-center text-sm text-muted-foreground">
-          No teams yet.
+          {workers.length === 0
+            ? "No workers yet — add workers in Production → People → Labour Registers before creating teams."
+            : "No teams yet."}
         </div>
+
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
           {teams.map((t) => {
