@@ -237,8 +237,8 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
       {/* Panel */}
       <div
         className="fixed z-50 flex flex-col bg-background shadow-2xl overflow-hidden
-          bottom-0 left-0 right-0 h-[70vh] rounded-t-2xl
-          md:bottom-auto md:top-0 md:left-auto md:right-0 md:h-full md:w-[380px] md:rounded-none md:border-l border-border"
+          bottom-0 left-0 right-0 h-[70dvh] max-h-[100dvh] rounded-t-2xl
+          md:bottom-0 md:top-0 md:left-auto md:right-0 md:h-[100dvh] md:w-[380px] md:rounded-none md:border-l border-border"
         onClick={(e) => e.stopPropagation()}
         style={{ animation: "slideIn 0.2s ease-out" }}
       >
@@ -254,7 +254,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
         </div>
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-1" style={{ backgroundColor: "hsl(var(--background))" }}>
+        <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-1" style={{ backgroundColor: "hsl(var(--background))" }}>
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <MessageSquareIcon />
@@ -331,7 +331,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
         )}
 
         {/* Input */}
-        <div className="flex items-end gap-2 px-3 py-3 border-t border-border" style={{ backgroundColor: "hsl(var(--background))" }}>
+        <div className="shrink-0 flex items-end gap-2 px-3 py-3 border-t border-border" style={{ backgroundColor: "hsl(var(--background))", paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
           <input
             ref={fileInputRef}
             type="file"
