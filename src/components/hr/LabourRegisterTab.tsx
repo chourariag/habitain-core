@@ -256,7 +256,7 @@ function AddWorkerDialog({ open, onOpenChange, contractors, defaultDepartment, o
   const [form, setForm] = useState({
     name: "", skill_type: "", skill_other: "", department: defaultDepartment,
     contractor_id: "", new_contractor_name: "", new_contractor_contact: "", new_contractor_phone: "",
-    monthly_salary: "", date_joined: format(new Date(), "yyyy-MM-dd"), notes: "",
+    monthly_salary: "", hourly_rate: "", date_joined: format(new Date(), "yyyy-MM-dd"), notes: "",
   });
   const [saving, setSaving] = useState(false);
 
