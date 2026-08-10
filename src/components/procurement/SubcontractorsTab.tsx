@@ -152,7 +152,7 @@ export function SubcontractorsTab({ readOnly = false }: { readOnly?: boolean }) 
       </div>
 
       {canManage && (
-        <Button onClick={() => setAddOpen(true)} className="fixed bottom-[152px] right-4 rounded-full shadow-lg h-10 px-4 gap-1.5 text-xs font-semibold z-40" style={{ background: "#006039" }}>
+        <Button onClick={() => setAddOpen(true)} className="fixed bottom-[152px] right-4 rounded-lg shadow-lg h-10 px-4 gap-1.5 text-xs font-semibold z-40" style={{ background: "#006039" }}>
           <Plus className="w-4 h-4" /> Add Subcontractor
         </Button>
       )}
