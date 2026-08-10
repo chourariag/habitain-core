@@ -14398,6 +14398,10 @@ export type Database = {
         Args: { _handover_id: string }
         Returns: undefined
       }
+      attachment_entity_project: {
+        Args: { _entity_id: string; _entity_type: string }
+        Returns: string
+      }
       backfill_project_starting_stage: {
         Args: {
           _doc_unavailable?: boolean
