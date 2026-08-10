@@ -4763,6 +4763,7 @@ export type Database = {
           id: string
           kickoff_deadline: string
           meeting_date: string | null
+          meeting_link: string | null
           meeting_notes: string | null
           meeting_time: string | null
           project_id: string
@@ -4780,6 +4781,7 @@ export type Database = {
           id?: string
           kickoff_deadline: string
           meeting_date?: string | null
+          meeting_link?: string | null
           meeting_notes?: string | null
           meeting_time?: string | null
           project_id: string
@@ -4797,6 +4799,7 @@ export type Database = {
           id?: string
           kickoff_deadline?: string
           meeting_date?: string | null
+          meeting_link?: string | null
           meeting_notes?: string | null
           meeting_time?: string | null
           project_id?: string
@@ -14520,6 +14523,7 @@ export type Database = {
         Args: {
           _kickoff_id: string
           _meeting_date: string
+          _meeting_link?: string
           _meeting_time: string
           _notes?: string
         }
