@@ -79,7 +79,7 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
   const openCreate = () => {
     setEditing(null);
     setTeamName(""); setHeadId(""); setMemberIds([]);
-    setSpecialisation(""); setStatus("active"); setReassignReason("");
+    setSpecialisation(""); setStatus("active"); setReassignReason(""); setMemberSearch("");
     setDialogOpen(true);
   };
 
