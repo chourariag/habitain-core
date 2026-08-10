@@ -574,15 +574,15 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle className="flex items-center gap-2 flex-wrap">
             <span className="font-mono text-sm">{wo.wo_number}</span>
             <Badge className="border-0 text-[10px]" style={{ background: sl.bg, color: sl.color }}>{sl.label}</Badge>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-sm overflow-y-auto px-6 flex-1 max-h-[65vh]">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Project" value={project?.name ?? "—"} />
             <Field label="Subcontractor" value={sub ? `${sub.company_name ?? sub.contact_person}` : "—"} />
