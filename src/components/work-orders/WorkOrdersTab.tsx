@@ -386,8 +386,17 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
           <div className="rounded-md p-3" style={{ backgroundColor: "#F7F7F7" }}>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Total WO Value</span>
-              <span className="font-display font-bold text-lg" style={{ color: "#006039" }}>{fmtINR(total)}</span>
+              {Number(form.quantity || 0) === 0 ? (
+                <span className="font-display font-bold text-sm" style={{ color: "#D4860A" }}>Pending Costing</span>
+              ) : (
+                <span className="font-display font-bold text-lg" style={{ color: "#006039" }}>{fmtINR(total)}</span>
+              )}
             </div>
+            {Number(form.quantity || 0) === 0 && (
+              <p className="text-[11px] mt-1" style={{ color: "#666" }}>
+                Value will be set once the Costing Engineer confirms quantity and rate.
+              </p>
+            )}
             {total > 50000 && (
               <p className="text-[11px] mt-1" style={{ color: "#D4860A" }}>
                 ⚠ Above ₹50,000 — Director approval required after costing approval.
@@ -395,7 +404,8 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
             )}
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="sticky bottom-0 bg-background pt-3 pb-4 px-6 border-t">
+
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button variant="outline" onClick={() => save(false)} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save as Draft"}
