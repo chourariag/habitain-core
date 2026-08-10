@@ -10,7 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Plus, Loader2, AlertCircle, Clock, ChevronDown, ChevronRight, Lock } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus, Loader2, AlertCircle, Clock, ChevronDown, ChevronRight, Lock, MoreVertical, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format, addMonths, differenceInDays, parseISO } from "date-fns";
 
@@ -50,6 +51,19 @@ export function LabourRegisterTab() {
   const [editOpen, setEditOpen] = useState<Worker | null>(null);
   const [historyOpen, setHistoryOpen] = useState<Worker | null>(null);
   const [history, setHistory] = useState<any[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<{ contractor: Contractor; workerCount: number } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const confirmDeleteContractor = async () => {
+    if (!deleteTarget || deleteTarget.workerCount > 0) return;
+    setDeleting(true);
+    const { error } = await supabase.from("labour_contractors").delete().eq("id", deleteTarget.contractor.id);
+    setDeleting(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${deleteTarget.contractor.company_name} deleted`);
+    setDeleteTarget(null);
+    await fetchAll();
+  };
 
   const canView = VIEW_ROLES.includes(role ?? "");
   const canManage = MANAGE_ROLES.includes(role ?? "");
@@ -123,17 +137,37 @@ export function LabourRegisterTab() {
           const active = list.filter(w => w.status === "active").length;
           return (
             <AccordionItem key={c.id} value={c.id}>
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex-1 flex items-center justify-between pr-2">
-                  <div className="text-left">
-                    <div className="font-semibold">{c.company_name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {c.contact_person ?? "—"} {c.phone ? `· ${c.phone}` : ""} · {c.department}
+              <div className="flex items-center gap-1">
+                <AccordionTrigger className="hover:no-underline flex-1">
+                  <div className="flex-1 flex items-center justify-between pr-2">
+                    <div className="text-left">
+                      <div className="font-semibold">{c.company_name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {c.contact_person ?? "—"} {c.phone ? `· ${c.phone}` : ""} · {c.department}
+                      </div>
                     </div>
+                    <Badge variant="outline">{active}/{list.length} active</Badge>
                   </div>
-                  <Badge variant="outline">{active}/{list.length} active</Badge>
-                </div>
-              </AccordionTrigger>
+                </AccordionTrigger>
+                {canManage && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={`Actions for ${c.company_name}`}>
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onSelect={(e) => { e.preventDefault(); setDeleteTarget({ contractor: c, workerCount: list.length }); }}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" /> Delete contractor
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+
               <AccordionContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {list.map(w => <WorkerCard key={w.id} w={w} canManage={canManage} onStatus={() => setStatusOpen(w)} onEdit={() => setEditOpen(w)} onHistory={() => loadHistory(w)} />)}
@@ -153,6 +187,33 @@ export function LabourRegisterTab() {
         >
           <Plus className="w-6 h-6" />
         </Button>
+      )}
+
+      {deleteTarget && (
+        <Dialog open onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Delete {deleteTarget.contractor.company_name}?</DialogTitle></DialogHeader>
+            {deleteTarget.workerCount > 0 ? (
+              <p className="text-sm text-muted-foreground">
+                This contractor still has {deleteTarget.workerCount} worker{deleteTarget.workerCount > 1 ? "s" : ""} attached.
+                Reassign them to another contractor or remove them from the register first — deleting now would orphan the
+                worker-to-contractor link.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                This contractor has no workers attached. This permanently removes the entry from the Labour Register.
+              </p>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+              {deleteTarget.workerCount === 0 && (
+                <Button variant="destructive" onClick={confirmDeleteContractor} disabled={deleting}>
+                  {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Delete
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
 
       <AddWorkerDialog
