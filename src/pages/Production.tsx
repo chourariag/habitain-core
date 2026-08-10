@@ -219,7 +219,7 @@ function ProductionContent() {
             </TabsContent>
 
             <TabsContent value="people">
-              <Tabs defaultValue="manpower-plan" className="space-y-3">
+              <Tabs value={peopleTab} onValueChange={setPeopleTab} className="space-y-3">
                 <TabsList>
                   <TabsTrigger value="manpower-plan" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Manpower Plan</TabsTrigger>
                   <TabsTrigger value="daily" className="gap-1.5"><HardHat className="h-4 w-4" /> Daily Labour Log</TabsTrigger>
