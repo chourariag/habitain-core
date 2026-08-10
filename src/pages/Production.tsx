@@ -50,7 +50,9 @@ function ProductionContent() {
   const [modules, setModules] = useState<ModuleWithProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
-  const [projectTab, setProjectTab] = useState("modules");
+  const initialParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const [projectTab, setProjectTab] = useState(initialParams.get("tab") ?? "modules");
+  const [peopleTab, setPeopleTab] = useState(initialParams.get("people") ?? "manpower-plan");
   const [viewMode, setViewMode] = useState<"table" | "board" | "gantt">(() => {
     try { return (sessionStorage.getItem("prodViewMode") as "table" | "board" | "gantt") ?? "table"; } catch { return "table"; }
   });
