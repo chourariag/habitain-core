@@ -123,17 +123,37 @@ export function LabourRegisterTab() {
           const active = list.filter(w => w.status === "active").length;
           return (
             <AccordionItem key={c.id} value={c.id}>
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex-1 flex items-center justify-between pr-2">
-                  <div className="text-left">
-                    <div className="font-semibold">{c.company_name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {c.contact_person ?? "—"} {c.phone ? `· ${c.phone}` : ""} · {c.department}
+              <div className="flex items-center gap-1">
+                <AccordionTrigger className="hover:no-underline flex-1">
+                  <div className="flex-1 flex items-center justify-between pr-2">
+                    <div className="text-left">
+                      <div className="font-semibold">{c.company_name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {c.contact_person ?? "—"} {c.phone ? `· ${c.phone}` : ""} · {c.department}
+                      </div>
                     </div>
+                    <Badge variant="outline">{active}/{list.length} active</Badge>
                   </div>
-                  <Badge variant="outline">{active}/{list.length} active</Badge>
-                </div>
-              </AccordionTrigger>
+                </AccordionTrigger>
+                {canManage && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={`Actions for ${c.company_name}`}>
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onSelect={(e) => { e.preventDefault(); setDeleteTarget({ contractor: c, workerCount: list.length }); }}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" /> Delete contractor
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+
               <AccordionContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {list.map(w => <WorkerCard key={w.id} w={w} canManage={canManage} onStatus={() => setStatusOpen(w)} onEdit={() => setEditOpen(w)} onHistory={() => loadHistory(w)} />)}
