@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Calendar, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
+import { FunctionsHttpError } from "@supabase/supabase-js";
 
 type Row = {
   id: string;
@@ -16,6 +17,7 @@ type Row = {
   meeting_date: string | null;
   meeting_time: string | null;
   meeting_notes: string | null;
+  meeting_link: string | null;
   projects?: { name: string | null } | null;
 };
 
@@ -30,15 +32,15 @@ function hoursLeft(iso: string) {
 export default function KickoffMeetingCard({ userRole }: Props) {
   const [rows, setRows] = useState<Row[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [drafts, setDrafts] = useState<Record<string, { date: string; time: string; notes: string }>>({});
+  const [drafts, setDrafts] = useState<Record<string, { date: string; time: string; notes: string; link: string }>>({});
 
   const canAct = userRole === "operations_architect" || userRole === "managing_director"
-    || userRole === "principal_architect" || userRole === "super_admin";
+    || userRole === "principal_architect" || userRole === "head_operations" || userRole === "super_admin";
 
   async function load() {
     const { data } = await supabase
       .from("kickoff_meetings" as any)
-      .select("id, project_id, kickoff_deadline, project_setup_deadline, status, meeting_date, meeting_time, meeting_notes, projects:project_id(name)")
+      .select("id, project_id, kickoff_deadline, project_setup_deadline, status, meeting_date, meeting_time, meeting_notes, meeting_link, projects:project_id(name)")
       .in("status", ["pending_initiation"])
       .order("kickoff_deadline", { ascending: true });
     setRows((data as any) || []);
@@ -52,20 +54,42 @@ export default function KickoffMeetingCard({ userRole }: Props) {
     setBusyId(row.id);
     try {
       const { data, error } = await supabase.rpc("confirm_kickoff_meeting" as any, {
-        _kickoff_id: row.id, _meeting_date: d.date, _meeting_time: d.time, _notes: d.notes || null,
+        _kickoff_id: row.id, _meeting_date: d.date, _meeting_time: d.time,
+        _notes: d.notes || null, _meeting_link: d.link?.trim() || null,
       });
       if (error) throw error;
-      // TODO: Send via Zoho Calendar API once ZOHO_CLIENT_ID is configured
-      // eslint-disable-next-line no-console
-      console.log("KICKOFF INVITE TO SEND:", {
-        attendees: (data as any)?.attendees ?? [],
-        meeting_date: d.date,
-        meeting_time: d.time,
-        project: (data as any)?.project_name,
-        project_setup_deadline: (data as any)?.project_setup_deadline,
-        body: `Project Setup Template due within 72 hours of GFC Budget approval (${(data as any)?.project_setup_deadline}). Please review GFC Budget and come prepared to confirm factory schedule and material plan dates.`,
+
+      const attendees = ((data as any)?.attendees ?? []) as Array<{ email: string | null }>;
+      const emails = attendees.map((a) => a?.email).filter(Boolean) as string[];
+      const projectName = (data as any)?.project_name ?? "Project";
+      const setupDeadline = (data as any)?.project_setup_deadline;
+
+      const { data: sendData, error: sendError } = await supabase.functions.invoke("send-calendar-invite", {
+        body: {
+          attendee_emails: emails,
+          title: `GFC Kickoff Meeting — ${projectName}`,
+          date: d.date,
+          time: d.time,
+          duration_minutes: 60,
+          meeting_link: d.link?.trim() || null,
+          notes: [
+            d.notes,
+            `Project Setup Template due within 72 hours of GFC Budget approval${setupDeadline ? ` (${new Date(setupDeadline).toLocaleString("en-IN")})` : ""}.`,
+            "Please review the GFC Budget and come prepared to confirm factory schedule and material plan dates.",
+          ].filter(Boolean).join("\n\n"),
+        },
       });
-      toast.success("Meeting confirmed. Calendar invites queued.");
+
+      if (sendError || (sendData as any)?.success === false) {
+        const detail = sendError instanceof FunctionsHttpError
+          ? await sendError.context.text()
+          : (sendData as any)?.error ?? sendError?.message ?? "unknown error";
+        toast.error(`Meeting date saved, but the invite could not be sent: ${detail}`);
+        load();
+        return;
+      }
+
+      toast.success(`Meeting confirmed. Invite sent to ${((sendData as any)?.sent_to ?? emails).length} attendee(s).`);
       load();
     } catch (e: any) {
       const raw = String(e?.message ?? "");
@@ -93,7 +117,7 @@ export default function KickoffMeetingCard({ userRole }: Props) {
       {rows.map((r) => {
         const hrs = hoursLeft(r.kickoff_deadline);
         const red = hrs < 12;
-        const draft = drafts[r.id] ?? { date: "", time: "", notes: "" };
+        const draft = drafts[r.id] ?? { date: "", time: "", notes: "", link: "" };
         return (
           <div key={r.id} className="rounded-md border p-3 bg-white space-y-2">
             <div className="flex items-center justify-between">
@@ -123,6 +147,11 @@ export default function KickoffMeetingCard({ userRole }: Props) {
                 <Label className="text-xs">Notes</Label>
                 <Textarea rows={1} value={draft.notes}
                   onChange={(e) => setDrafts((p) => ({ ...p, [r.id]: { ...draft, notes: e.target.value } }))} />
+              </div>
+              <div className="md:col-span-3">
+                <Label className="text-xs">Meeting Link (Zoom / Google Meet — optional)</Label>
+                <Input type="url" placeholder="https://meet.google.com/..." value={draft.link}
+                  onChange={(e) => setDrafts((p) => ({ ...p, [r.id]: { ...draft, link: e.target.value } }))} />
               </div>
             </div>
             <div className="flex justify-end">
