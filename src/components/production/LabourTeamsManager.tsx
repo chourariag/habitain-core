@@ -329,7 +329,7 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}><X className="h-4 w-4 mr-1" />Cancel</Button>
-            <Button onClick={save} disabled={saving} className="bg-primary text-primary-foreground">
+            <Button onClick={save} disabled={saving || workers.length === 0} className="bg-primary text-primary-foreground">
               {saving && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}Save
             </Button>
           </DialogFooter>
