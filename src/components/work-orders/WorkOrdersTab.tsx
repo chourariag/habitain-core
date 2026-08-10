@@ -705,7 +705,7 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
           )}
         </div>
 
-        <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
+        <DialogFooter className="sticky bottom-0 bg-background pt-3 pb-4 px-6 border-t"><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
