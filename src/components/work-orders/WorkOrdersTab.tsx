@@ -176,6 +176,7 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
           userId={userId}
           onClose={() => setOpenNew(false)}
           onSaved={fetchAll}
+          onSubsChanged={fetchAll}
         />
       )}
       {openDetail && (
@@ -198,7 +199,7 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
 }
 
 // ---------------- New WO Dialog ----------------
-function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, onClose, onSaved }: any) {
+function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, onClose, onSaved, onSubsChanged }: any) {
   const [form, setForm] = useState({
     project_id: defaultProjectId ?? (projects[0]?.id ?? ""),
     subcontractor_id: "",
@@ -214,6 +215,7 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
     notes_to_costing: "",
   });
   const [saving, setSaving] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const navigate = useNavigate();
 
   const filteredSubs = useMemo(() => {
@@ -303,22 +305,37 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
               {filteredSubs.length === 0 ? (
                 <div className="rounded-md border border-dashed p-3 text-center space-y-2" style={{ backgroundColor: "#F7F7F7" }}>
                   <p className="text-xs" style={{ color: "#666" }}>No subcontractors found for this mode yet</p>
-                  <Button type="button" size="sm" variant="outline" className="text-xs"
-                    onClick={() => { onClose(); navigate("/production?tab=people&people=subs"); }}>
-                    <Users className="h-3.5 w-3.5 mr-1" /> Add subcontractor <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                  </Button>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <Button type="button" size="sm" className="text-xs" style={{ background: "#006039" }}
+                      onClick={() => setQuickAddOpen(true)}>
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Add subcontractor
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" className="text-xs"
+                      onClick={() => { onClose(); navigate("/production?tab=people&people=subs"); }}>
+                      <Users className="h-3.5 w-3.5 mr-1" /> Full register <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
-                <Select value={form.subcontractor_id} onValueChange={onPickSub}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
-                    {filteredSubs.map((s:any) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.company_name ?? s.contact_person} — {s.work_type}
+                <>
+                  <Select value={form.subcontractor_id} onValueChange={(v) => v === "__add__" ? setQuickAddOpen(true) : onPickSub(v)}>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      {filteredSubs.map((s:any) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.company_name ?? s.contact_person} — {s.work_type}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="__add__" className="font-medium" style={{ color: "#006039" }}>
+                        + Add subcontractor
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    </SelectContent>
+                  </Select>
+                  <button type="button" className="text-[10px] mt-1 underline" style={{ color: "#006039" }}
+                    onClick={() => setQuickAddOpen(true)}>
+                    + Add a new subcontractor
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -412,6 +429,116 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
           </Button>
           <Button onClick={() => save(true)} disabled={saving} style={{ background: "#006039" }}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit for Approval"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+      {quickAddOpen && (
+        <QuickAddSubcontractorDialog
+          mode={mode}
+          onClose={() => setQuickAddOpen(false)}
+          onCreated={(created: any) => {
+            setQuickAddOpen(false);
+            setForm(f => ({
+              ...f,
+              subcontractor_id: created.id,
+              work_type: created.work_type ?? f.work_type,
+              rate: created.typical_rate ? String(created.typical_rate) : f.rate,
+            }));
+            onSubsChanged?.();
+          }}
+        />
+      )}
+    </Dialog>
+  );
+}
+
+// ---------------- Quick Add Subcontractor (inline, from the WO form) ----------------
+function QuickAddSubcontractorDialog({ mode, onClose, onCreated }: any) {
+  const [f, setF] = useState({
+    company_name: "",
+    contact_person: "",
+    phone: "",
+    work_type: "",
+    factory_or_site: mode === "site" ? "site" : mode === "factory" ? "factory" : "both",
+    typical_rate: "",
+    rate_unit: "",
+  });
+  const [saving, setSaving] = useState(false);
+
+  const create = async () => {
+    if (!f.contact_person.trim() || !f.phone.trim() || !f.work_type) {
+      toast.error("Contact person, phone and work type are required"); return;
+    }
+    setSaving(true);
+    try {
+      const { data, error } = await supabase.from("subcontractors").insert({
+        company_name: f.company_name.trim() || null,
+        contact_person: f.contact_person.trim(),
+        phone: f.phone.trim(),
+        work_type: f.work_type,
+        factory_or_site: f.factory_or_site,
+        pricing_type: "Piece Rate",
+        typical_rate: f.typical_rate ? Number(f.typical_rate) : null,
+        rate_unit: f.rate_unit.trim() || null,
+        status: "active",
+      } as any).select("id,sub_id,company_name,contact_person,work_type,typical_rate,rate_unit,factory_or_site").single();
+      if (error) throw error;
+      toast.success(`Subcontractor added${data?.sub_id ? ` (${data.sub_id})` : ""}`);
+      onCreated(data);
+    } catch (e:any) {
+      toast.error(e.message?.includes("row-level security")
+        ? "You don't have permission to add subcontractors — ask Procurement to onboard this vendor."
+        : e.message);
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-md max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6">
+          <DialogTitle>Add Subcontractor</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 overflow-y-auto px-6 flex-1">
+          <p className="text-xs" style={{ color: "#666" }}>
+            Quick entry — Procurement can complete the full vendor record later in the Subcontractor Register.
+          </p>
+          <div><Label>Company Name (blank for individuals)</Label>
+            <Input value={f.company_name} onChange={(e) => setF({ ...f, company_name: e.target.value })} /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><Label>Contact Person *</Label>
+              <Input value={f.contact_person} onChange={(e) => setF({ ...f, contact_person: e.target.value })} /></div>
+            <div><Label>Phone *</Label>
+              <Input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><Label>Work Type *</Label>
+              <Select value={f.work_type} onValueChange={(v) => setF({ ...f, work_type: v })}>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent>{WORK_TYPES.map(w => <SelectItem key={w} value={w}>{w}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div><Label>Works At</Label>
+              <Select value={f.factory_or_site} onValueChange={(v) => setF({ ...f, factory_or_site: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="factory">Factory</SelectItem>
+                  <SelectItem value="site">Site</SelectItem>
+                  <SelectItem value="both">Both</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><Label>Typical Rate (₹)</Label>
+              <Input type="number" value={f.typical_rate} onChange={(e) => setF({ ...f, typical_rate: e.target.value })} /></div>
+            <div><Label>Rate Unit</Label>
+              <Input placeholder="per sft" value={f.rate_unit} onChange={(e) => setF({ ...f, rate_unit: e.target.value })} /></div>
+          </div>
+        </div>
+        <DialogFooter className="sticky bottom-0 bg-background pt-3 pb-4 px-6 border-t">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={create} disabled={saving} style={{ background: "#006039" }}>
+            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Add & Select"}
           </Button>
         </DialogFooter>
       </DialogContent>
