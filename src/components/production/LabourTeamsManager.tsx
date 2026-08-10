@@ -48,6 +48,7 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
   const [status, setStatus] = useState<"active" | "inactive">("active");
   const [reassignReason, setReassignReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [memberSearch, setMemberSearch] = useState("");
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
