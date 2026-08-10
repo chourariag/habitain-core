@@ -286,9 +286,9 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>New Work Order</DialogTitle></DialogHeader>
-        <div className="space-y-3">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6"><DialogTitle>New Work Order</DialogTitle></DialogHeader>
+        <div className="space-y-3 overflow-y-auto px-6 flex-1 max-h-[65vh]">
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>Project *</Label>
@@ -299,16 +299,26 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
             </div>
             <div>
               <Label>Subcontractor *</Label>
-              <Select value={form.subcontractor_id} onValueChange={onPickSub}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  {filteredSubs.map((s:any) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.company_name ?? s.contact_person} — {s.work_type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {filteredSubs.length === 0 ? (
+                <div className="rounded-md border border-dashed p-3 text-center space-y-2" style={{ backgroundColor: "#F7F7F7" }}>
+                  <p className="text-xs" style={{ color: "#666" }}>No subcontractors found for this mode yet</p>
+                  <Button type="button" size="sm" variant="outline" className="text-xs"
+                    onClick={() => { onClose(); navigate("/production?tab=people&people=subs"); }}>
+                    <Users className="h-3.5 w-3.5 mr-1" /> Add subcontractor <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                </div>
+              ) : (
+                <Select value={form.subcontractor_id} onValueChange={onPickSub}>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    {filteredSubs.map((s:any) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.company_name ?? s.contact_person} — {s.work_type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
