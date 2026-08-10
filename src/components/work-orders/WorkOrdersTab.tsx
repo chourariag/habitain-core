@@ -356,7 +356,13 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
                 <SelectContent>{MEASUREMENT.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><Label>Quantity *</Label><Input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} /></div>
+            <div>
+              <Label>Quantity</Label>
+              <Input type="number" placeholder="Optional" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
+              <p className="text-[10px] mt-1" style={{ color: "#666" }}>
+                Leave blank if unknown — Costing Engineer will confirm quantity and rate during approval
+              </p>
+            </div>
             <div>
               <Label>Rate (₹) *</Label>
               <Input type="number" value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value })} />
