@@ -87,16 +87,27 @@ export function ModuleTeamAssignment({ projectId, moduleId, currentStage, userRo
             </div>
             <div>
               <Label className="text-xs">Team</Label>
-              <Select value={teamId} onValueChange={setTeamId}>
-                <SelectTrigger><SelectValue placeholder="Select team" /></SelectTrigger>
+              <Select value={teamId} onValueChange={setTeamId} disabled={teams.length === 0}>
+                <SelectTrigger>
+                  <SelectValue placeholder={teams.length === 0 ? "No teams yet" : "Select team"} />
+                </SelectTrigger>
                 <SelectContent>
-                  {teams.map((t) => (
+                  {teams.length === 0 ? (
+                    <div className="px-2 py-3 text-xs text-muted-foreground">
+                      No teams yet — create one in Labour Teams
+                    </div>
+                  ) : teams.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       {t.team_name}{t.specialisation ? ` — ${t.specialisation}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {teams.length === 0 && (
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  No teams yet — create one in Production → People → Labour Teams.
+                </p>
+              )}
             </div>
             <div>
               <Label className="text-xs">Stage</Label>
