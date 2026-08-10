@@ -230,6 +230,15 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
               <Label>Team Name</Label>
               <Input value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="e.g. Team Alpha" />
             </div>
+            {workers.length === 0 ? (
+              <div className="rounded-md border border-dashed border-border p-4 text-center space-y-1">
+                <p className="text-sm font-medium">No workers yet</p>
+                <p className="text-xs text-muted-foreground">
+                  Add workers in Production → People → Labour Registers, then create the team.
+                </p>
+              </div>
+            ) : (
+              <>
             <div>
               <Label>Team Head</Label>
               <Select value={headId} onValueChange={setHeadId}>
@@ -245,9 +254,27 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
             </div>
             <div>
               <Label>Members (incl. head: {allMemberIds.length}/4)</Label>
+              <Input
+                value={memberSearch}
+                onChange={(e) => setMemberSearch(e.target.value)}
+                placeholder="Search workers by name or skill…"
+                className="mb-2"
+              />
               <ScrollArea className="h-48 border border-border rounded-md p-2">
                 <div className="space-y-1.5">
-                  {workers.filter((w) => w.id !== headId).map((w) => {
+                  {(() => {
+                    const q = memberSearch.trim().toLowerCase();
+                    const list = workers
+                      .filter((w) => w.id !== headId)
+                      .filter((w) => !q || w.name.toLowerCase().includes(q) || (w.skill_type ?? "").toLowerCase().includes(q));
+                    if (list.length === 0) {
+                      return (
+                        <p className="text-xs text-muted-foreground py-3 text-center">
+                          {q ? "No workers match your search." : "No selectable workers available."}
+                        </p>
+                      );
+                    }
+                    return list.map((w) => {
                     const checked = memberIds.includes(w.id);
                     const locked = lockedWorkerIds.has(w.id) && !checked;
                     return (
@@ -269,10 +296,14 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
                         {locked && <span className="text-xs text-warning ml-auto">In another team</span>}
                       </label>
                     );
-                  })}
+                    });
+                  })()}
                 </div>
               </ScrollArea>
             </div>
+              </>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Specialisation</Label>
