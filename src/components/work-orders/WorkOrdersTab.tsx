@@ -148,7 +148,11 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
                       {!projectId && <TableCell className="text-xs">{proj?.name ?? "—"}</TableCell>}
                       <TableCell className="text-xs">{sub?.company_name ?? sub?.contact_person ?? "—"}</TableCell>
                       <TableCell className="text-xs">{w.work_type}</TableCell>
-                      <TableCell className="text-right font-mono text-xs">{fmtINR(Number(w.total_value))}</TableCell>
+                      <TableCell className="text-right font-mono text-xs">
+                        {Number(w.quantity) === 0 && w.status === "pending_costing_approval"
+                          ? <span style={{ color: "#D4860A" }}>Pending Costing</span>
+                          : fmtINR(Number(w.total_value))}
+                      </TableCell>
                       <TableCell className="text-xs">{w.planned_start_date ? format(new Date(w.planned_start_date), "dd/MM/yyyy") : "—"}</TableCell>
                       <TableCell>
                         <Badge className="border-0 text-[10px]" style={{ background: sl.bg, color: sl.color }}>{sl.label}</Badge>
