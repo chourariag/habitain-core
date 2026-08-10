@@ -5281,6 +5281,82 @@ export type Database = {
           },
         ]
       }
+      labour_worker_compensation: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          hourly_rate: number | null
+          monthly_salary: number
+          salary_review_due: string | null
+          updated_at: string
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          hourly_rate?: number | null
+          monthly_salary?: number
+          salary_review_due?: string | null
+          updated_at?: string
+          worker_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          hourly_rate?: number | null
+          monthly_salary?: number
+          salary_review_due?: string | null
+          updated_at?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_worker_compensation_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: true
+            referencedRelation: "labour_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labour_worker_rate_history: {
+        Row: {
+          changed_by: string | null
+          created_at: string
+          effective_from: string
+          effective_to: string | null
+          id: string
+          monthly_salary: number
+          worker_id: string
+        }
+        Insert: {
+          changed_by?: string | null
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          monthly_salary?: number
+          worker_id: string
+        }
+        Update: {
+          changed_by?: string | null
+          created_at?: string
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          monthly_salary?: number
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_worker_rate_history_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       labour_workers: {
         Row: {
           contractor_id: string | null
@@ -14413,6 +14489,10 @@ export type Database = {
         Returns: Json
       }
       boq_cumulative_qty: { Args: { _boq_item_id: string }; Returns: number }
+      can_access_labour_compensation: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       can_access_labour_register: {
         Args: { _user_id: string }
         Returns: boolean
@@ -14536,6 +14616,20 @@ export type Database = {
       consume_scope_signoff_token: {
         Args: { p_signer_name: string; p_token: string }
         Returns: boolean
+      }
+      create_labour_worker_with_compensation: {
+        Args: {
+          _contractor_id?: string
+          _date_joined: string
+          _department: string
+          _hourly_rate?: number
+          _monthly_salary: number
+          _name: string
+          _notes?: string
+          _salary_review_due?: string
+          _skill_type: string
+        }
+        Returns: string
       }
       cv_alert_overdue_commitments: { Args: never; Returns: number }
       fire_billing_milestone_event: {
