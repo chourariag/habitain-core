@@ -351,14 +351,21 @@ function AddWorkerDialog({ open, onOpenChange, contractors, defaultDepartment, o
               <Input placeholder="Phone" value={form.new_contractor_phone} onChange={(e) => setForm({ ...form, new_contractor_phone: e.target.value })} />
             </div>
           )}
-          <div>
-            <Label>Monthly Salary ₹ *</Label>
-            <Input type="number" value={form.monthly_salary} onChange={(e) => setForm({ ...form, monthly_salary: e.target.value })} />
-            {monthly > 0 && (
-              <div className="text-xs text-muted-foreground mt-1">
-                Daily: ₹{Math.round(daily).toLocaleString()} · OT/hr: ₹{Math.round(ot).toLocaleString()}
-              </div>
-            )}
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label>Monthly Salary ₹ *</Label>
+              <Input type="number" value={form.monthly_salary} onChange={(e) => setForm({ ...form, monthly_salary: e.target.value })} />
+              {monthly > 0 && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Daily: ₹{Math.round(daily).toLocaleString()} · OT/hr: ₹{Math.round(ot).toLocaleString()}
+                </div>
+              )}
+            </div>
+            <div>
+              <Label>Hourly Rate ₹/hr</Label>
+              <Input type="number" value={form.hourly_rate} onChange={(e) => setForm({ ...form, hourly_rate: e.target.value })} placeholder={monthly > 0 ? String(Math.round(ot)) : ""} />
+              <p className="text-xs text-muted-foreground mt-1">Leave blank to auto-derive from salary.</p>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div><Label>Date Joined *</Label><Input type="date" value={form.date_joined} onChange={(e) => setForm({ ...form, date_joined: e.target.value })} /></div>
