@@ -214,6 +214,7 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
     notes_to_costing: "",
   });
   const [saving, setSaving] = useState(false);
+  const navigate = useNavigate();
 
   const filteredSubs = useMemo(() => {
     if (mode === "factory") return subs.filter((s:any) => s.factory_or_site === "factory" || s.factory_or_site === "both");
