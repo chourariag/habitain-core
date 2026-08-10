@@ -51,6 +51,19 @@ export function LabourRegisterTab() {
   const [editOpen, setEditOpen] = useState<Worker | null>(null);
   const [historyOpen, setHistoryOpen] = useState<Worker | null>(null);
   const [history, setHistory] = useState<any[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<{ contractor: Contractor; workerCount: number } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const confirmDeleteContractor = async () => {
+    if (!deleteTarget || deleteTarget.workerCount > 0) return;
+    setDeleting(true);
+    const { error } = await supabase.from("labour_contractors").delete().eq("id", deleteTarget.contractor.id);
+    setDeleting(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`${deleteTarget.contractor.company_name} deleted`);
+    setDeleteTarget(null);
+    await fetchAll();
+  };
 
   const canView = VIEW_ROLES.includes(role ?? "");
   const canManage = MANAGE_ROLES.includes(role ?? "");
