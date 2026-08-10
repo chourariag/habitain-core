@@ -90,7 +90,7 @@ export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
     setMemberIds((t.members ?? []).filter((m) => !m.left_date).map((m) => m.worker_id));
     setSpecialisation(t.specialisation ?? "");
     setStatus(t.status as "active" | "inactive");
-    setReassignReason("");
+    setReassignReason(""); setMemberSearch("");
     setDialogOpen(true);
   };
 
