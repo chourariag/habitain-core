@@ -286,20 +286,22 @@ function AddWorkerDialog({ open, onOpenChange, contractors, defaultDepartment, o
         if (error) throw error;
         contractorId = data.id;
       }
-      const { data: inserted, error } = await supabase.from("labour_workers").insert({
-        contractor_id: contractorId || null, name: form.name.trim(), skill_type: skill,
-        department: form.department,
-        date_joined: form.date_joined,
-        notes: form.notes.trim() || null,
-      }).select("id").single();
-      if (error) throw error;
-      const { error: compErr } = await (supabase as any).from("labour_worker_compensation").insert({
-        worker_id: inserted.id, monthly_salary: monthly, salary_review_due: reviewDue,
+      // Single transaction: worker + compensation are created together or not at all
+      const { error } = await (supabase as any).rpc("create_labour_worker_with_compensation", {
+        _name: form.name.trim(),
+        _skill_type: skill,
+        _department: form.department,
+        _date_joined: form.date_joined,
+        _monthly_salary: monthly,
+        _contractor_id: contractorId || null,
+        _notes: form.notes.trim() || null,
+        _hourly_rate: form.hourly_rate ? Number(form.hourly_rate) : (monthly ? Number((monthly / 26 / 8).toFixed(2)) : null),
+        _salary_review_due: reviewDue || null,
       });
-      if (compErr) throw compErr;
+      if (error) throw error;
       toast.success("Worker added");
       onOpenChange(false); onSaved();
-      setForm({ name: "", skill_type: "", skill_other: "", department: defaultDepartment, contractor_id: "", new_contractor_name: "", new_contractor_contact: "", new_contractor_phone: "", monthly_salary: "", date_joined: format(new Date(), "yyyy-MM-dd"), notes: "" });
+      setForm({ name: "", skill_type: "", skill_other: "", department: defaultDepartment, contractor_id: "", new_contractor_name: "", new_contractor_contact: "", new_contractor_phone: "", monthly_salary: "", hourly_rate: "", date_joined: format(new Date(), "yyyy-MM-dd"), notes: "" });
     } catch (e: any) { toast.error(e.message); } finally { setSaving(false); }
   };
 
