@@ -189,6 +189,33 @@ export function LabourRegisterTab() {
         </Button>
       )}
 
+      {deleteTarget && (
+        <Dialog open onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Delete {deleteTarget.contractor.company_name}?</DialogTitle></DialogHeader>
+            {deleteTarget.workerCount > 0 ? (
+              <p className="text-sm text-muted-foreground">
+                This contractor still has {deleteTarget.workerCount} worker{deleteTarget.workerCount > 1 ? "s" : ""} attached.
+                Reassign them to another contractor or remove them from the register first — deleting now would orphan the
+                worker-to-contractor link.
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                This contractor has no workers attached. This permanently removes the entry from the Labour Register.
+              </p>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+              {deleteTarget.workerCount === 0 && (
+                <Button variant="destructive" onClick={confirmDeleteContractor} disabled={deleting}>
+                  {deleting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Delete
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
       <AddWorkerDialog
         open={addOpen} onOpenChange={setAddOpen}
         contractors={contractors} defaultDepartment={defaultDeptForRole(role)}
