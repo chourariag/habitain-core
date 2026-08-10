@@ -331,7 +331,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
         )}
 
         {/* Input */}
-        <div className="flex items-end gap-2 px-3 py-3 border-t border-border" style={{ backgroundColor: "hsl(var(--background))" }}>
+        <div className="shrink-0 flex items-end gap-2 px-3 py-3 border-t border-border" style={{ backgroundColor: "hsl(var(--background))", paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
           <input
             ref={fileInputRef}
             type="file"
