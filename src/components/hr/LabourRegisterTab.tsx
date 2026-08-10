@@ -182,10 +182,10 @@ export function LabourRegisterTab() {
       {canManage && (
         <Button
           onClick={() => setAddOpen(true)}
-          className="fixed bottom-6 right-6 rounded-full shadow-lg h-14 w-14 p-0 z-40"
+          className="fixed bottom-[152px] right-4 rounded-lg shadow-lg h-10 px-4 gap-1.5 text-xs font-semibold z-40"
           style={{ background: "#006039" }}
         >
-          <Plus className="w-6 h-6" />
+          <Plus className="w-4 h-4" /> Add New Worker
         </Button>
       )}
 
