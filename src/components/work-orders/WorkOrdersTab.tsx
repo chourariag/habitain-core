@@ -10,7 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Loader2, FileDown, AlertTriangle, CheckCircle2, XCircle, Send } from "lucide-react";
+import { Plus, Loader2, FileDown, AlertTriangle, CheckCircle2, XCircle, Send, Users, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { insertNotifications } from "@/lib/notifications";
@@ -147,7 +148,11 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
                       {!projectId && <TableCell className="text-xs">{proj?.name ?? "—"}</TableCell>}
                       <TableCell className="text-xs">{sub?.company_name ?? sub?.contact_person ?? "—"}</TableCell>
                       <TableCell className="text-xs">{w.work_type}</TableCell>
-                      <TableCell className="text-right font-mono text-xs">{fmtINR(Number(w.total_value))}</TableCell>
+                      <TableCell className="text-right font-mono text-xs">
+                        {Number(w.quantity) === 0 && w.status === "pending_costing_approval"
+                          ? <span style={{ color: "#D4860A" }}>Pending Costing</span>
+                          : fmtINR(Number(w.total_value))}
+                      </TableCell>
                       <TableCell className="text-xs">{w.planned_start_date ? format(new Date(w.planned_start_date), "dd/MM/yyyy") : "—"}</TableCell>
                       <TableCell>
                         <Badge className="border-0 text-[10px]" style={{ background: sl.bg, color: sl.color }}>{sl.label}</Badge>
@@ -209,6 +214,7 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
     notes_to_costing: "",
   });
   const [saving, setSaving] = useState(false);
+  const navigate = useNavigate();
 
   const filteredSubs = useMemo(() => {
     if (mode === "factory") return subs.filter((s:any) => s.factory_or_site === "factory" || s.factory_or_site === "both");
@@ -281,9 +287,9 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>New Work Order</DialogTitle></DialogHeader>
-        <div className="space-y-3">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6"><DialogTitle>New Work Order</DialogTitle></DialogHeader>
+        <div className="space-y-3 overflow-y-auto px-6 flex-1 max-h-[65vh]">
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>Project *</Label>
@@ -294,16 +300,26 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
             </div>
             <div>
               <Label>Subcontractor *</Label>
-              <Select value={form.subcontractor_id} onValueChange={onPickSub}>
-                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                <SelectContent>
-                  {filteredSubs.map((s:any) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.company_name ?? s.contact_person} — {s.work_type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {filteredSubs.length === 0 ? (
+                <div className="rounded-md border border-dashed p-3 text-center space-y-2" style={{ backgroundColor: "#F7F7F7" }}>
+                  <p className="text-xs" style={{ color: "#666" }}>No subcontractors found for this mode yet</p>
+                  <Button type="button" size="sm" variant="outline" className="text-xs"
+                    onClick={() => { onClose(); navigate("/production?tab=people&people=subs"); }}>
+                    <Users className="h-3.5 w-3.5 mr-1" /> Add subcontractor <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                </div>
+              ) : (
+                <Select value={form.subcontractor_id} onValueChange={onPickSub}>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    {filteredSubs.map((s:any) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.company_name ?? s.contact_person} — {s.work_type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -340,7 +356,13 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
                 <SelectContent>{MEASUREMENT.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><Label>Quantity *</Label><Input type="number" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} /></div>
+            <div>
+              <Label>Quantity</Label>
+              <Input type="number" placeholder="Optional" value={form.quantity} onChange={(e) => setForm({ ...form, quantity: e.target.value })} />
+              <p className="text-[10px] mt-1" style={{ color: "#666" }}>
+                Leave blank if unknown — Costing Engineer will confirm quantity and rate during approval
+              </p>
+            </div>
             <div>
               <Label>Rate (₹) *</Label>
               <Input type="number" value={form.rate} onChange={(e) => setForm({ ...form, rate: e.target.value })} />
@@ -364,8 +386,17 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
           <div className="rounded-md p-3" style={{ backgroundColor: "#F7F7F7" }}>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Total WO Value</span>
-              <span className="font-display font-bold text-lg" style={{ color: "#006039" }}>{fmtINR(total)}</span>
+              {Number(form.quantity || 0) === 0 ? (
+                <span className="font-display font-bold text-sm" style={{ color: "#D4860A" }}>Pending Costing</span>
+              ) : (
+                <span className="font-display font-bold text-lg" style={{ color: "#006039" }}>{fmtINR(total)}</span>
+              )}
             </div>
+            {Number(form.quantity || 0) === 0 && (
+              <p className="text-[11px] mt-1" style={{ color: "#666" }}>
+                Value will be set once the Costing Engineer confirms quantity and rate.
+              </p>
+            )}
             {total > 50000 && (
               <p className="text-[11px] mt-1" style={{ color: "#D4860A" }}>
                 ⚠ Above ₹50,000 — Director approval required after costing approval.
@@ -373,7 +404,8 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
             )}
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="sticky bottom-0 bg-background pt-3 pb-4 px-6 border-t">
+
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button variant="outline" onClick={() => save(false)} disabled={saving}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save as Draft"}
@@ -542,15 +574,15 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6">
           <DialogTitle className="flex items-center gap-2 flex-wrap">
             <span className="font-mono text-sm">{wo.wo_number}</span>
             <Badge className="border-0 text-[10px]" style={{ background: sl.bg, color: sl.color }}>{sl.label}</Badge>
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-sm overflow-y-auto px-6 flex-1 max-h-[65vh]">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Project" value={project?.name ?? "—"} />
             <Field label="Subcontractor" value={sub ? `${sub.company_name ?? sub.contact_person}` : "—"} />
@@ -559,7 +591,7 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
             <Field label="Location" value={wo.location_area} />
             <Field label="Measurement" value={`${wo.measurement_basis} (${wo.unit ?? ""})`} />
             <Field label="Quantity × Rate" value={`${wo.quantity} × ₹${wo.rate}`} />
-            <Field label="Total Value" value={fmtINR(Number(wo.total_value))} />
+            <Field label="Total Value" value={Number(wo.quantity) === 0 && wo.status === "pending_costing_approval" ? "Pending Costing" : fmtINR(Number(wo.total_value))} />
             <Field label="Planned Start" value={format(new Date(wo.planned_start_date), "dd/MM/yyyy")} />
             <Field label="Planned Completion" value={format(new Date(wo.planned_completion_date), "dd/MM/yyyy")} />
           </div>
@@ -673,7 +705,7 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
           )}
         </div>
 
-        <DialogFooter><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
+        <DialogFooter className="sticky bottom-0 bg-background pt-3 pb-4 px-6 border-t"><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );

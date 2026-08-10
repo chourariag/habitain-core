@@ -50,7 +50,9 @@ function ProductionContent() {
   const [modules, setModules] = useState<ModuleWithProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
-  const [projectTab, setProjectTab] = useState("modules");
+  const initialParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const [projectTab, setProjectTab] = useState(initialParams.get("tab") ?? "modules");
+  const [peopleTab, setPeopleTab] = useState(initialParams.get("people") ?? "manpower-plan");
   const [viewMode, setViewMode] = useState<"table" | "board" | "gantt">(() => {
     try { return (sessionStorage.getItem("prodViewMode") as "table" | "board" | "gantt") ?? "table"; } catch { return "table"; }
   });
@@ -217,7 +219,7 @@ function ProductionContent() {
             </TabsContent>
 
             <TabsContent value="people">
-              <Tabs defaultValue="manpower-plan" className="space-y-3">
+              <Tabs value={peopleTab} onValueChange={setPeopleTab} className="space-y-3">
                 <TabsList>
                   <TabsTrigger value="manpower-plan" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Manpower Plan</TabsTrigger>
                   <TabsTrigger value="daily" className="gap-1.5"><HardHat className="h-4 w-4" /> Daily Labour Log</TabsTrigger>
