@@ -107,6 +107,17 @@ export async function parseTallyPL(file: File): Promise<ParsedPL> {
   }
   if (headerIdx === -1) throw new Error("Could not find 'Particulars' header row in Tally export.");
 
+  // Dual-block signature check: Tally P&L has a second "Particulars" header around column 3.
+  const headerRow = rows[headerIdx] || [];
+  const hasSecondParticulars = headerRow
+    .slice(2)
+    .some(c => c != null && /particulars/i.test(String(c)));
+  if (!hasSecondParticulars) {
+    throw new Error(
+      "This doesn't look like a Profit & Loss export — it has a single-column block (Trial Balance shape). If you're uploading a Trial Balance, use the Trial Balance upload on the MIS tab instead."
+    );
+  }
+
   // Walk data rows
   const items: ParsedLineItem[] = [];
   let leftSection = "";   // current expense section
@@ -136,7 +147,7 @@ export async function parseTallyPL(file: File): Promise<ParsedPL> {
       const isTotal = isTotalRow(aName);
       if (isTotal) {
         // Final left total or "Total" row
-        if (aSub != null && /^total$/i.test(aName)) {
+        if (aSub != null && /^(grand\s+)?total$/i.test(aName)) {
           leftTotal = aSub;
         }
         // Capture Nett Loss / Gross Profit balancing rows as line items for transparency
@@ -184,7 +195,7 @@ export async function parseTallyPL(file: File): Promise<ParsedPL> {
     if (dName) {
       const isTotal = isTotalRow(dName);
       if (isTotal) {
-        if (dSub != null && /^total$/i.test(dName)) {
+        if (dSub != null && /^(grand\s+)?total$/i.test(dName)) {
           rightTotal = dSub;
         }
         if (dAmt != null || dSub != null) {
@@ -247,6 +258,15 @@ export async function parseTallyPL(file: File): Promise<ParsedPL> {
   const grossProfitPct = totalRevenue ? (grossProfit / totalRevenue) * 100 : 0;
   const netPL = grossProfit - indirectExp + otherIncome;
   const netMarginPct = totalRevenue ? (netPL / totalRevenue) * 100 : 0;
+
+  const recognized = items.filter(
+    it => it.hstack_category != null || EXPENSE_SECTION_MAP[it.section_name] || INCOME_SECTION_MAP[it.section_name]
+  ).length;
+  if (recognized === 0) {
+    throw new Error(
+      "This doesn't look like a Profit & Loss export — got 0 recognized P&L line items. If you're uploading a Trial Balance, use the Trial Balance upload on the MIS tab instead."
+    );
+  }
 
   const balanceDiff = Math.abs(leftTotal - rightTotal);
 

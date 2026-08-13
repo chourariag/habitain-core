@@ -335,6 +335,10 @@ export function ProfitLossTab() {
         )}
       </div>
 
+      <p className="text-xs" style={{ color: "#666" }}>
+        Expects a Tally <strong>Profit &amp; Loss A/c</strong> export (dual-column format). Uploading a Trial Balance here won't work — use the Trial Balance upload on the <strong>MIS</strong> tab instead.
+      </p>
+
       {!activeUpload && (
         <Card className="py-12">
           <CardContent className="text-center">
