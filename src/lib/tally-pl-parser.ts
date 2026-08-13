@@ -107,6 +107,17 @@ export async function parseTallyPL(file: File): Promise<ParsedPL> {
   }
   if (headerIdx === -1) throw new Error("Could not find 'Particulars' header row in Tally export.");
 
+  // Dual-block signature check: Tally P&L has a second "Particulars" header around column 3.
+  const headerRow = rows[headerIdx] || [];
+  const hasSecondParticulars = headerRow
+    .slice(2)
+    .some(c => c != null && /particulars/i.test(String(c)));
+  if (!hasSecondParticulars) {
+    throw new Error(
+      "This doesn't look like a Profit & Loss export — it has a single-column block (Trial Balance shape). If you're uploading a Trial Balance, use the Trial Balance upload on the MIS tab instead."
+    );
+  }
+
   // Walk data rows
   const items: ParsedLineItem[] = [];
   let leftSection = "";   // current expense section
