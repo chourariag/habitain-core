@@ -99,12 +99,12 @@ const QC_INSPECTOR: RoleOnboarding = {
         "Choose the inspection type (Shell & Core, MEP, or Finishing)",
         "Check each item and submit the report",
       ],
-      practiceTask: "Open a module at Stage 9 and start an inspection. Select Shell and Core as the stage type.",
+      practiceTask: "Open a module at Stage 10 and start an inspection. Select Shell and Core as the stage type.",
       practiceRoute: "/qc",
       quiz: [
         {
           question: "At which production stage do you perform QC inspections?",
-          options: ["Stage 9 — QC Inspection", "Stage 1 — Sub-Frame", "Stage 5 — Paint"],
+          options: ["Stage 10 — QC Inspection", "Stage 1 — Main Frame", "Stage 6 — Paint"],
           correctIndex: 0,
         },
         {

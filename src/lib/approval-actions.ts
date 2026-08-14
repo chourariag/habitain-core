@@ -62,7 +62,7 @@ export async function approveRequest(req: ApprovalRequest, currentUserId?: strin
           project_id: newProjectId,
           name: `Module ${i + 1}`,
           module_type: "standard",
-          current_stage: "Sub-Frame",
+          current_stage: "Main Frame",
           production_status: "not_started",
           created_by: req.requested_by,
         }));
@@ -71,14 +71,14 @@ export async function approveRequest(req: ApprovalRequest, currentUserId?: strin
       if (newProjectId && (sys === "panelised" || sys === "hybrid") && pCount > 0) {
         const { data: parentMod } = await supabase.from("modules").insert({
           project_id: newProjectId, name: "Panel Production", module_type: "standard",
-          current_stage: "Sub-Frame", production_status: "not_started", created_by: req.requested_by,
+          current_stage: "Main Frame", production_status: "not_started", created_by: req.requested_by,
         } as never).select("id").single();
         if (parentMod) {
           const panelInserts = Array.from({ length: pCount }, (_, i) => ({
             module_id: (parentMod as any).id,
             panel_code: `Panel ${i + 1}`,
             panel_type: "wall",
-            current_stage: "Sub-Frame",
+            current_stage: "Main Frame",
             production_status: "not_started",
             created_by: req.requested_by,
           }));
