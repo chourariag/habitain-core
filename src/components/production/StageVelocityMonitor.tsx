@@ -8,7 +8,7 @@ import { format, parseISO, differenceInDays, addDays } from "date-fns";
 import { toast } from "sonner";
 
 const PRODUCTION_STAGES = [
-  "Sub-Frame", "MEP Rough-In", "Insulation",
+  "Main Frame", "Sub-Frame", "MEP Rough-In", "Insulation",
   "Drywall", "Paint", "MEP Final", "Windows & Doors",
   "Finishing", "QC Inspection", "Dispatch",
 ];

@@ -3,6 +3,7 @@
 export type ProductionSystem = "modular" | "panelised" | "hybrid";
 
 export const MODULAR_STAGES = [
+  "Main Frame",
   "Sub-Frame",
   "MEP Rough-In",
   "Insulation",
@@ -18,6 +19,7 @@ export const MODULAR_STAGES = [
 // Hybrid system stage list — replaces wall framing + concealed MEP with
 // a Panel Bay dependency stage and a panel-installation stage.
 export const HYBRID_STAGES = [
+  "Main Frame",
   "Sub-Frame",
   "Deck & Pour",
   "Awaiting Panels",       // BLOCKED until Panel Bay handover

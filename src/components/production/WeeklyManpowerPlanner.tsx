@@ -16,7 +16,7 @@ const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"
 const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const PRODUCTION_STAGES = [
-  "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
+  "Main Frame", "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
   "MEP Final", "Windows & Doors", "Finishing", "QC Inspection", "Dispatch",
 ];
 

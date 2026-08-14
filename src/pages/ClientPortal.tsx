@@ -25,7 +25,7 @@ import { ClientPostHandover } from "@/components/portal/ClientPostHandover";
 import { ClientApprovals } from "@/components/portal/ClientApprovals";
 
 const STAGES = [
-  "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
+  "Main Frame", "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
   "MEP Final", "Windows & Doors", "Finishing", "QC Inspection", "Dispatch",
 ];
 

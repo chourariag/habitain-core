@@ -28,7 +28,7 @@ const FACTORY_SUPERVISOR: RoleOnboarding = {
   features: [
     {
       name: "Production Gate",
-      whatItDoes: "Track each module through 10 production stages — from Sub-Frame to Dispatch. Move modules between stages as work completes.",
+      whatItDoes: "Track each module through 11 production stages — from Main Frame to Dispatch. Move modules between stages as work completes.",
       whyItMatters: "This is how Azad and Karthik know exactly where every module stands, without calling you.",
       howToUse: [
         "Go to Production and select a project",

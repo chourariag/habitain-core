@@ -20,7 +20,7 @@ interface KPI {
   health?: "good" | "warning" | "alert";
 }
 
-const STAGES = ["Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint", "MEP Final", "Windows & Doors", "Finishing", "QC Inspection", "Dispatch"];
+const STAGES = ["Main Frame", "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint", "MEP Final", "Windows & Doors", "Finishing", "QC Inspection", "Dispatch"];
 const stageColors = STAGES.map((_, i) => {
   const ratio = i / (STAGES.length - 1);
   const r = Math.round(232 - ratio * 232);

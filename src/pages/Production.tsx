@@ -87,7 +87,7 @@ function ProductionContent() {
 
   // Determine if all modules completed Stage 1 (Sub-Frame)
   const allStage1Complete = modules.length > 0 && modules.every(m => {
-    const stageIdx = m.current_stage ? ["Sub-Frame","MEP Rough-In","Insulation","Drywall","Paint","MEP Final","Windows & Doors","Finishing","QC Inspection","Dispatch"].indexOf(m.current_stage) : -1;
+    const stageIdx = m.current_stage ? ["Main Frame","Sub-Frame","MEP Rough-In","Insulation","Drywall","Paint","MEP Final","Windows & Doors","Finishing","QC Inspection","Dispatch"].indexOf(m.current_stage) : -1;
     return stageIdx > 0 || m.production_status === "completed";
   });
 
