@@ -14,7 +14,7 @@ import { Plus, Loader2, Lock, Search } from "lucide-react";
 import { toast } from "sonner";
 
 const WORK_TYPES = [
-  "Painting","Tiling","Wooden Flooring","Fabrication","Electrical Works","False Ceiling",
+  "Painters","Tiling","Wooden Flooring","Fabrication","Electrical Works","False Ceiling",
   "Wall Panelling","Waterproofing","Civil — Foundation","Civil — Flooring","Plastering",
   "Cladding — External","Glazing and Aluminium","MEP — Plumbing","HVAC Installation",
   "Carpentry","Landscaping","Crane and Lifting","Transport","Other",
