@@ -210,8 +210,8 @@ function ProductionContent() {
                   {expandedModule === m.id && (
                     <div className="border-t border-border p-4 space-y-4">
                       <SupervisorDailyLog moduleId={m.id} moduleName={m.name} moduleCode={m.module_code} currentStage={m.current_stage} userRole={userRole} productionSystem={(selectedProject as any)?.production_system ?? null} />
-                      <ModuleTeamAssignment projectId={selectedProjectId!} moduleId={m.id} currentStage={m.current_stage} userRole={userRole} productionSystem={(selectedProject as any)?.production_system ?? null} />
-                      <ModuleSchedule moduleId={m.id} currentStage={m.current_stage} userRole={userRole} productionSystem={(selectedProject as any)?.production_system ?? null} />
+                      <ModuleTeamAssignment projectId={selectedProjectId!} moduleId={m.id} currentStage={m.current_stage} userRole={userRole} />
+                      <ModuleSchedule moduleId={m.id} currentStage={m.current_stage} userRole={userRole} />
                     </div>
                   )}
                 </div>
