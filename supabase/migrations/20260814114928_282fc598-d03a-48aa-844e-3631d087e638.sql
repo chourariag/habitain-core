@@ -1,0 +1,1 @@
+ALTER TABLE public.modules ALTER COLUMN current_stage SET DEFAULT 'Main Frame'::text;
