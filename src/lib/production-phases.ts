@@ -53,7 +53,7 @@ export function getPhaseForStage(
 
   // MODULAR mapping
   if (sys === "modular") {
-    if (["Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
+    if (["Main Frame", "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
          "MEP Final", "Windows & Doors", "Finishing"].includes(stage)) {
       return "Factory Production";
     }
@@ -65,7 +65,7 @@ export function getPhaseForStage(
 
   // HYBRID mapping
   if (sys === "hybrid") {
-    if (["Sub-Frame", "Deck & Pour", "Awaiting Panels", "Panel Installation",
+    if (["Main Frame", "Sub-Frame", "Deck & Pour", "Awaiting Panels", "Panel Installation",
          "MEP Inter-Panel", "Waterproofing", "Tiling & Cladding", "Finishing"].includes(stage)) {
       return "Factory Production";
     }

@@ -28,7 +28,7 @@ const FACTORY_SUPERVISOR: RoleOnboarding = {
   features: [
     {
       name: "Production Gate",
-      whatItDoes: "Track each module through 10 production stages — from Sub-Frame to Dispatch. Move modules between stages as work completes.",
+      whatItDoes: "Track each module through 11 production stages — from Main Frame to Dispatch. Move modules between stages as work completes.",
       whyItMatters: "This is how Azad and Karthik know exactly where every module stands, without calling you.",
       howToUse: [
         "Go to Production and select a project",
@@ -99,12 +99,12 @@ const QC_INSPECTOR: RoleOnboarding = {
         "Choose the inspection type (Shell & Core, MEP, or Finishing)",
         "Check each item and submit the report",
       ],
-      practiceTask: "Open a module at Stage 9 and start an inspection. Select Shell and Core as the stage type.",
+      practiceTask: "Open a module at Stage 10 and start an inspection. Select Shell and Core as the stage type.",
       practiceRoute: "/qc",
       quiz: [
         {
           question: "At which production stage do you perform QC inspections?",
-          options: ["Stage 9 — QC Inspection", "Stage 1 — Sub-Frame", "Stage 5 — Paint"],
+          options: ["Stage 10 — QC Inspection", "Stage 1 — Main Frame", "Stage 6 — Paint"],
           correctIndex: 0,
         },
         {

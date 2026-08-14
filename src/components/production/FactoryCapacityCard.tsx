@@ -5,14 +5,14 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Factory, CircleCheck, CircleAlert, CircleX } from "lucide-react";
 
 const PRODUCTION_STAGES = [
-  "Sub-Frame", "MEP Rough-In", "Insulation",
+  "Main Frame", "Sub-Frame", "MEP Rough-In", "Insulation",
   "Drywall", "Paint", "MEP Final", "Windows & Doors",
   "Finishing", "QC Inspection", "Dispatch",
 ];
 
-const EARLY = PRODUCTION_STAGES.slice(0, 3);
-const MIDDLE = PRODUCTION_STAGES.slice(3, 7);
-const LATE = PRODUCTION_STAGES.slice(7, 10);
+const EARLY = PRODUCTION_STAGES.slice(0, 4);
+const MIDDLE = PRODUCTION_STAGES.slice(4, 8);
+const LATE = PRODUCTION_STAGES.slice(8, 11);
 
 const INDOOR_BAYS = 10;
 const OUTDOOR_BAYS = 8;

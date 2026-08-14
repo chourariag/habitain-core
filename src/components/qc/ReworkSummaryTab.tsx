@@ -22,7 +22,7 @@ interface ReworkEntry {
   status: string;
 }
 
-const STAGES = ["Sub-Frame","MEP Rough-In","Insulation","Drywall","Paint","MEP Final","Windows & Doors","Finishing","QC Inspection","Dispatch"];
+const STAGES = ["Main Frame","Sub-Frame","MEP Rough-In","Insulation","Drywall","Paint","MEP Final","Windows & Doors","Finishing","QC Inspection","Dispatch"];
 
 export function ReworkSummaryTab() {
   const [entries, setEntries] = useState<ReworkEntry[]>([]);

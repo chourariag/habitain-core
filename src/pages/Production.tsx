@@ -87,7 +87,7 @@ function ProductionContent() {
 
   // Determine if all modules completed Stage 1 (Sub-Frame)
   const allStage1Complete = modules.length > 0 && modules.every(m => {
-    const stageIdx = m.current_stage ? ["Sub-Frame","MEP Rough-In","Insulation","Drywall","Paint","MEP Final","Windows & Doors","Finishing","QC Inspection","Dispatch"].indexOf(m.current_stage) : -1;
+    const stageIdx = m.current_stage ? ["Main Frame","Sub-Frame","MEP Rough-In","Insulation","Drywall","Paint","MEP Final","Windows & Doors","Finishing","QC Inspection","Dispatch"].indexOf(m.current_stage) : -1;
     return stageIdx > 0 || m.production_status === "completed";
   });
 
@@ -210,8 +210,8 @@ function ProductionContent() {
                   {expandedModule === m.id && (
                     <div className="border-t border-border p-4 space-y-4">
                       <SupervisorDailyLog moduleId={m.id} moduleName={m.name} moduleCode={m.module_code} currentStage={m.current_stage} userRole={userRole} productionSystem={(selectedProject as any)?.production_system ?? null} />
-                      <ModuleTeamAssignment projectId={selectedProjectId!} moduleId={m.id} currentStage={m.current_stage} userRole={userRole} productionSystem={(selectedProject as any)?.production_system ?? null} />
-                      <ModuleSchedule moduleId={m.id} currentStage={m.current_stage} userRole={userRole} productionSystem={(selectedProject as any)?.production_system ?? null} />
+                      <ModuleTeamAssignment projectId={selectedProjectId!} moduleId={m.id} currentStage={m.current_stage} userRole={userRole} />
+                      <ModuleSchedule moduleId={m.id} currentStage={m.current_stage} userRole={userRole} />
                     </div>
                   )}
                 </div>

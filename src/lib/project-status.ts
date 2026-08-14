@@ -3,7 +3,7 @@ import type { Tables } from "@/integrations/supabase/types";
 export type DynamicProjectStatus = "not_started" | "in_production" | "dispatching" | "dispatched" | "handed_over";
 
 const PRODUCTION_STAGES = [
-  "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
+  "Main Frame", "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
   "MEP Final", "Windows & Doors", "Finishing", "QC Inspection",
 ];
 

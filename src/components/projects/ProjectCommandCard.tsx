@@ -5,10 +5,10 @@ import type { Tables } from "@/integrations/supabase/types";
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 
 const PRODUCTION_STAGES = [
-  "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
+  "Main Frame", "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
   "MEP Final", "Windows & Doors", "Finishing", "QC Inspection", "Dispatch",
 ];
-const PAST_DRYWALL = PRODUCTION_STAGES.slice(4); // Paint onwards
+const PAST_DRYWALL = PRODUCTION_STAGES.slice(5); // Paint onwards
 
 interface ProjectCommandCardProps {
   project: Tables<"projects">;

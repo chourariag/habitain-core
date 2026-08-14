@@ -47,7 +47,7 @@ const colourFor = (i: number) => STAGE_COLOURS[((i % STAGE_COLOURS.length) + STA
 
 // Used only as the legend fallback when no module data is loaded yet.
 const FALLBACK_STAGE_NAMES = [
-  "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
+  "Main Frame", "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
   "MEP Final", "Windows & Doors", "Finishing", "QC Inspection", "Dispatch Ready",
 ];
 

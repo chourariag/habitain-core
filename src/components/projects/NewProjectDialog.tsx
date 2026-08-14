@@ -168,7 +168,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
           project_id: projectId,
           name: `Module ${i + 1}`,
           module_type: "standard",
-          current_stage: "Sub-Frame",
+          current_stage: "Main Frame",
           production_status: "not_started",
           created_by: session.user.id,
         }));
@@ -186,14 +186,14 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
       if (pCount > 0 && projectId) {
         const { data: parentModule } = await client.from("modules").insert({
           project_id: projectId, name: "Panel Production", module_type: "standard",
-          current_stage: "Sub-Frame", production_status: "not_started", created_by: session.user.id,
+          current_stage: "Main Frame", production_status: "not_started", created_by: session.user.id,
         } as any).select("id").single();
         if (parentModule) {
           const panelInserts = Array.from({ length: pCount }, (_, i) => ({
             module_id: (parentModule as any).id,
             panel_code: `Panel ${i + 1}`,
             panel_type: "wall",
-            current_stage: "Sub-Frame",
+            current_stage: "Main Frame",
             production_status: "not_started",
             created_by: session.user.id,
           }));
