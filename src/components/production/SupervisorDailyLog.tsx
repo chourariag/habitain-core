@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Camera, Loader2, CheckCircle2, XCircle, Clock, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
+import { getStagesForSystem, type ProductionSystem } from "@/lib/production-systems";
 import { PhotoGuidanceCard, PhotoFeedback, PhotoQualitySummary, usePhotoWithAI } from "@/components/photos/PhotoGuidance";
 
 interface Props {
@@ -20,9 +20,11 @@ interface Props {
   moduleCode: string | null;
   currentStage: string | null;
   userRole: string | null;
+  productionSystem?: ProductionSystem | string | null;
 }
 
-export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentStage, userRole }: Props) {
+export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentStage, userRole, productionSystem }: Props) {
+  const stages = useMemo(() => getStagesForSystem(productionSystem ?? "modular"), [productionSystem]);
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -89,7 +91,7 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
 
       const { error } = await supabase.from("daily_production_logs").insert({
         module_id: moduleId,
-        stage_worked: stageWorked || currentStage || "Sub-Frame",
+        stage_worked: stageWorked || currentStage || stages[0],
         work_completed: workCompleted.trim(),
         stage_progress: stageProgress[0],
         materials_used: materialsUsed.trim() || null,
@@ -169,7 +171,7 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
               <Select value={stageWorked} onValueChange={setStageWorked}>
                 <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {PRODUCTION_STAGES.map((s) => (
+                  {stages.map((s) => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
                   ))}
                 </SelectContent>
