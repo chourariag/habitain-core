@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Calendar, Loader2, Send } from "lucide-react";
+import { Calendar, Loader2, Send, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { FunctionsHttpError } from "@supabase/supabase-js";
 
@@ -32,6 +32,8 @@ function hoursLeft(iso: string) {
 export default function KickoffMeetingCard({ userRole }: Props) {
   const [rows, setRows] = useState<Row[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [cancelOpen, setCancelOpen] = useState<Record<string, boolean>>({});
+  const [cancelDrafts, setCancelDrafts] = useState<Record<string, string>>({});
   const [drafts, setDrafts] = useState<Record<string, { date: string; time: string; notes: string; link: string }>>({});
 
   const canAct = userRole === "operations_architect" || userRole === "managing_director"
@@ -105,6 +107,31 @@ export default function KickoffMeetingCard({ userRole }: Props) {
       setBusyId(null);
     }
   }
+  async function cancelMeeting(row: Row) {
+    const remarks = (cancelDrafts[row.id] ?? "").trim();
+    if (!remarks) { toast.error("Cancellation remarks are required"); return; }
+    setBusyId(row.id);
+    try {
+      const { error } = await supabase.rpc("cancel_kickoff_meeting" as any, {
+        _kickoff_id: row.id, _remarks: remarks,
+      });
+      if (error) throw error;
+      toast.success("Kickoff meeting cancelled. The team has been notified.");
+      setCancelOpen((p) => ({ ...p, [row.id]: false }));
+      setCancelDrafts((p) => ({ ...p, [row.id]: "" }));
+      load();
+    } catch (e: any) {
+      const raw = String(e?.message ?? "");
+      toast.error(/remarks are required/i.test(raw)
+        ? "Cancellation remarks are required"
+        : /can cancel/i.test(raw)
+        ? "You don't have permission to cancel this kickoff meeting."
+        : raw || "Failed to cancel");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
 
   if (rows.length === 0) return null;
 
@@ -154,13 +181,39 @@ export default function KickoffMeetingCard({ userRole }: Props) {
                   onChange={(e) => setDrafts((p) => ({ ...p, [r.id]: { ...draft, link: e.target.value } }))} />
               </div>
             </div>
-            <div className="flex justify-end">
+            {cancelOpen[r.id] && (
+              <div>
+                <Label className="text-xs">Cancellation Remarks (required)</Label>
+                <Textarea rows={2} value={cancelDrafts[r.id] ?? ""} placeholder="Why is this kickoff meeting being cancelled?"
+                  onChange={(e) => setCancelDrafts((p) => ({ ...p, [r.id]: e.target.value }))} />
+              </div>
+            )}
+            <div className="flex flex-wrap justify-end gap-2">
+              {cancelOpen[r.id] ? (
+                <>
+                  <Button size="sm" variant="ghost" disabled={busyId === r.id}
+                    onClick={() => setCancelOpen((p) => ({ ...p, [r.id]: false }))}>
+                    Keep Meeting
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={!canAct || busyId === r.id || !(cancelDrafts[r.id] ?? "").trim()}
+                    className="text-destructive border-destructive/40" onClick={() => cancelMeeting(r)}>
+                    {busyId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <XCircle className="h-4 w-4 mr-1" />}
+                    Confirm Cancellation
+                  </Button>
+                </>
+              ) : (
+                <Button size="sm" variant="outline" disabled={!canAct || busyId === r.id}
+                  onClick={() => setCancelOpen((p) => ({ ...p, [r.id]: true }))}>
+                  <XCircle className="h-4 w-4 mr-1" /> Cancel Meeting
+                </Button>
+              )}
               <Button size="sm" disabled={!canAct || busyId === r.id} onClick={() => confirm(r)}
                 style={{ background: "#006039", color: "#fff" }}>
                 {busyId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
                 Confirm Meeting Date & Send Invite
               </Button>
             </div>
+
           </div>
         );
       })}
