@@ -107,6 +107,31 @@ export default function KickoffMeetingCard({ userRole }: Props) {
       setBusyId(null);
     }
   }
+  async function cancelMeeting(row: Row) {
+    const remarks = (cancelDrafts[row.id] ?? "").trim();
+    if (!remarks) { toast.error("Cancellation remarks are required"); return; }
+    setBusyId(row.id);
+    try {
+      const { error } = await supabase.rpc("cancel_kickoff_meeting" as any, {
+        _kickoff_id: row.id, _remarks: remarks,
+      });
+      if (error) throw error;
+      toast.success("Kickoff meeting cancelled. The team has been notified.");
+      setCancelOpen((p) => ({ ...p, [row.id]: false }));
+      setCancelDrafts((p) => ({ ...p, [row.id]: "" }));
+      load();
+    } catch (e: any) {
+      const raw = String(e?.message ?? "");
+      toast.error(/remarks are required/i.test(raw)
+        ? "Cancellation remarks are required"
+        : /can cancel/i.test(raw)
+        ? "You don't have permission to cancel this kickoff meeting."
+        : raw || "Failed to cancel");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
 
   if (rows.length === 0) return null;
 
