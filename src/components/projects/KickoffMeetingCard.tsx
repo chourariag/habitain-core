@@ -32,6 +32,8 @@ function hoursLeft(iso: string) {
 export default function KickoffMeetingCard({ userRole }: Props) {
   const [rows, setRows] = useState<Row[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [cancelOpen, setCancelOpen] = useState<Record<string, boolean>>({});
+  const [cancelDrafts, setCancelDrafts] = useState<Record<string, string>>({});
   const [drafts, setDrafts] = useState<Record<string, { date: string; time: string; notes: string; link: string }>>({});
 
   const canAct = userRole === "operations_architect" || userRole === "managing_director"
