@@ -839,7 +839,7 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
 
   async function processScope(ws: XLSX.WorkSheet | undefined, userId: string): Promise<SheetResult> {
     if (!ws) return { name: "Scope", ok: false, count: 0, message: "Sheet missing" };
-    const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+    const rows: any[] = objectRows(ws, "Item");
     if (rows.length === 0) return { name: "Scope", ok: true, count: 0, message: "Sheet empty" };
     const items = rows.filter(r => r["Item"]).map((r, i) => {
       const scopeVal = String(r["Scope"] || "").toLowerCase();
