@@ -4758,6 +4758,9 @@ export type Database = {
       kickoff_meetings: {
         Row: {
           calendar_invite_sent_at: string | null
+          cancellation_remarks: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           created_at: string
           escalated_at: string | null
           id: string
@@ -4776,6 +4779,9 @@ export type Database = {
         }
         Insert: {
           calendar_invite_sent_at?: string | null
+          cancellation_remarks?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           escalated_at?: string | null
           id?: string
@@ -4794,6 +4800,9 @@ export type Database = {
         }
         Update: {
           calendar_invite_sent_at?: string | null
+          cancellation_remarks?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           created_at?: string
           escalated_at?: string | null
           id?: string
@@ -14591,6 +14600,10 @@ export type Database = {
       can_view_profile_pii: { Args: { _user_id: string }; Returns: boolean }
       can_view_quotations: { Args: { _user_id: string }; Returns: boolean }
       can_view_work_orders: { Args: { _user_id: string }; Returns: boolean }
+      cancel_kickoff_meeting: {
+        Args: { _kickoff_id: string; _remarks: string }
+        Returns: Json
+      }
       client_approve_design_stage: {
         Args: { _stage_id: string; _token: string }
         Returns: boolean
