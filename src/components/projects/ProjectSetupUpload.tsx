@@ -535,10 +535,21 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
     }
   };
 
+  /** Rows as objects, tolerating title/info/legend rows above the real header row. */
+  function objectRows(ws: XLSX.WorkSheet, headerKey: string): any[] {
+    const grid: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+    const idx = grid.findIndex(r => (r || []).some(c => String(c ?? "").trim().toLowerCase() === headerKey.toLowerCase()));
+    if (idx <= 0) return XLSX.utils.sheet_to_json(ws, { defval: "" });
+    const ref = XLSX.utils.decode_range(ws["!ref"] || "A1");
+    ref.s.r = idx;
+    return XLSX.utils.sheet_to_json(ws, { defval: "", range: XLSX.utils.encode_range(ref) });
+  }
+
   async function processBilling(ws: XLSX.WorkSheet | undefined): Promise<SheetResult> {
     if (!ws) return { name: "Billing", ok: false, count: 0, message: "Sheet missing" };
-    const rows: any[] = XLSX.utils.sheet_to_json(ws, { defval: "" });
+    const rows: any[] = objectRows(ws, "Milestone Description");
     if (rows.length === 0) return { name: "Billing", ok: true, count: 0, message: "Sheet empty — skipped" };
+
     const milestones = rows
       .filter(r => r["Milestone Description"] || r["Description"])
       .map((r, i) => ({
