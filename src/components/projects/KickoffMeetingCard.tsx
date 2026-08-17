@@ -181,13 +181,39 @@ export default function KickoffMeetingCard({ userRole }: Props) {
                   onChange={(e) => setDrafts((p) => ({ ...p, [r.id]: { ...draft, link: e.target.value } }))} />
               </div>
             </div>
-            <div className="flex justify-end">
+            {cancelOpen[r.id] && (
+              <div>
+                <Label className="text-xs">Cancellation Remarks (required)</Label>
+                <Textarea rows={2} value={cancelDrafts[r.id] ?? ""} placeholder="Why is this kickoff meeting being cancelled?"
+                  onChange={(e) => setCancelDrafts((p) => ({ ...p, [r.id]: e.target.value }))} />
+              </div>
+            )}
+            <div className="flex flex-wrap justify-end gap-2">
+              {cancelOpen[r.id] ? (
+                <>
+                  <Button size="sm" variant="ghost" disabled={busyId === r.id}
+                    onClick={() => setCancelOpen((p) => ({ ...p, [r.id]: false }))}>
+                    Keep Meeting
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={!canAct || busyId === r.id || !(cancelDrafts[r.id] ?? "").trim()}
+                    className="text-destructive border-destructive/40" onClick={() => cancelMeeting(r)}>
+                    {busyId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <XCircle className="h-4 w-4 mr-1" />}
+                    Confirm Cancellation
+                  </Button>
+                </>
+              ) : (
+                <Button size="sm" variant="outline" disabled={!canAct || busyId === r.id}
+                  onClick={() => setCancelOpen((p) => ({ ...p, [r.id]: true }))}>
+                  <XCircle className="h-4 w-4 mr-1" /> Cancel Meeting
+                </Button>
+              )}
               <Button size="sm" disabled={!canAct || busyId === r.id} onClick={() => confirm(r)}
                 style={{ background: "#006039", color: "#fff" }}>
                 {busyId === r.id ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Send className="h-4 w-4 mr-1" />}
                 Confirm Meeting Date & Send Invite
               </Button>
             </div>
+
           </div>
         );
       })}
