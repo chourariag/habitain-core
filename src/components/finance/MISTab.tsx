@@ -432,20 +432,40 @@ export function MISTab() {
       {uploadSummary && (
         <Card>
           <CardContent className="pt-4 space-y-2">
-            <p className="text-sm font-semibold font-display" style={{ color: uploadSummary.reconciles ? "#006039" : "#D4860A" }}>
-              {uploadSummary.reconciles ? "✓ Uploaded Successfully" : "⚠ Uploaded — needs review"} — {uploadSummary.leaves} leaf ledgers imported
+            <p className="text-sm font-semibold font-display" style={{ color: uploadSummary.blocked ? "#F40009" : "#006039" }}>
+              {uploadSummary.blocked
+                ? `✕ Import stopped — trial balance does not reconcile`
+                : `✓ Uploaded Successfully — ${uploadSummary.leaves} leaf ledgers imported`}
             </p>
             <p className="text-xs" style={{ color: "#1A1A1A" }}>Period: {uploadSummary.period}</p>
             <p className="text-xs" style={{ color: "#666" }}>
-              {uploadSummary.groups} group / sub-total rows kept for drill-down only (never summed)
+              {uploadSummary.leaves} leaf ledgers · {uploadSummary.groups} group / sub-total rows kept for drill-down only (never summed)
               {uploadSummary.excluded > 0 ? ` · ${uploadSummary.excluded} reconciliation rows excluded (P&L A/c, opening-balance difference)` : ""}
             </p>
             <p className="text-xs font-mono p-2 rounded" style={{
-              color: uploadSummary.reconciles ? "#006039" : "#D4860A",
-              backgroundColor: uploadSummary.reconciles ? "#E8F2ED" : "#FDF6E7",
+              color: uploadSummary.blocked ? "#F40009" : "#006039",
+              backgroundColor: uploadSummary.blocked ? "#FFF0F0" : "#E8F2ED",
             }}>
               {uploadSummary.reconciliationMessage}
             </p>
+            {uploadSummary.blocked && (
+              <div className="text-xs space-y-1 p-2 rounded" style={{ backgroundColor: "#FDF6E7", color: "#1A1A1A" }}>
+                <p>Nothing was imported or categorised. Gap: <strong>₹{Math.round(Math.abs(uploadSummary.debitGap)).toLocaleString("en-IN")}</strong> debit / <strong>₹{Math.round(Math.abs(uploadSummary.creditGap)).toLocaleString("en-IN")}</strong> credit.</p>
+                {uploadSummary.suspects.length > 0 ? (
+                  <>
+                    <p className="font-semibold" style={{ color: "#D4860A" }}>Suspected misclassified rows ({uploadSummary.suspects.length}):</p>
+                    <div className="max-h-40 overflow-y-auto space-y-0.5">
+                      {uploadSummary.suspects.map(s => (
+                        <p key={s.row} className="text-[10px]" style={{ color: "#666" }}>Row {s.row} · {s.ledger_name} — {s.reason}</p>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-[11px]" style={{ color: "#666" }}>No indent/arithmetic conflicts found — check the file's own Grand Total row and any rows with missing Debit/Credit values.</p>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-3 text-xs">
               {Object.entries(uploadSummary.categories).map(([cat, count]) => (
                 <span key={cat} className="px-2 py-1 rounded" style={{
