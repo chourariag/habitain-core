@@ -28,7 +28,19 @@ interface LedgerEntry {
   is_excluded?: boolean;
   level?: number;
   parent_name?: string | null;
+  /** Root group → … → immediate parent. */
+  ancestors?: string[];
 }
+
+interface SuggestedLedger {
+  name: string;
+  chain: string[];
+  amount: number;
+  suggested: MISCategory | null;
+  confidence: "high" | "low";
+  reason: string;
+}
+
 
 /** Only leaf ledgers that are not reconciliation entries may be summed or mapped. */
 const isMappable = (e: LedgerEntry) => !e.is_group && !e.is_excluded;
