@@ -187,12 +187,36 @@ export function MISTab() {
         is_excluded: r.is_excluded,
         level: r.level,
         parent_name: r.parent_name,
+        ancestors: r.ancestors,
       }));
 
       if (entries.length === 0) { toast.error("No data rows found in file"); return; }
 
       // Use detected period or user-entered label
       const finalPeriod = periodLabel.trim() || parsed.detectedPeriod || "Unknown Period";
+
+      // ── HARD RECONCILIATION GATE ──
+      // Leaf debits must equal leaf credits AND the file's own Grand Total.
+      // If they don't, nothing is imported or categorised — the gap is shown instead.
+      if (!parsed.reconciles) {
+        setUploadSummary({
+          total: entries.length,
+          groups: parsed.groups.length,
+          leaves: parsed.leaves.length,
+          excluded: parsed.rows.filter(r => r.is_excluded).length,
+          categories: {},
+          skipped: parsed.skipped,
+          period: finalPeriod,
+          reconciles: false,
+          reconciliationMessage: parsed.reconciliationMessage,
+          debitGap: parsed.debitGap,
+          creditGap: parsed.creditGap,
+          suspects: parsed.suspects,
+          blocked: true,
+        });
+        toast.error("Import stopped — trial balance does not reconcile. Review the gap before importing.");
+        return;
+      }
 
       // Delete existing uploads for same period
       const existing = uploads.find(u => u.period_label === finalPeriod);
@@ -208,14 +232,28 @@ export function MISTab() {
       }).select().single();
       if (error) throw error;
 
-      // Only leaf ledgers (excluding reconciliation entries) need a category mapping
-      const unmapped = entries
-        .filter(e => isMappable(e))
-        .map(e => e.ledger_name)
-        .filter(name => !mappings[name]);
-      if (unmapped.length > 0) {
-        setUnmappedLedgers([...new Set(unmapped)]);
-        setNewMappings({});
+      // Only leaf ledgers (excluding reconciliation entries) need a category mapping.
+      // Each unmapped leaf gets a pre-filled suggestion from its name + group chain.
+      const seen = new Set<string>();
+      const suggestions: SuggestedLedger[] = [];
+      entries.filter(isMappable).forEach(e => {
+        if (mappings[e.ledger_name] || seen.has(e.ledger_name)) return;
+        seen.add(e.ledger_name);
+        const s = suggestMISCategory(e.ledger_name, e.ancestors || []);
+        suggestions.push({
+          name: e.ledger_name,
+          chain: e.ancestors || [],
+          amount: Math.abs(e.debit || e.credit),
+          suggested: s.category,
+          confidence: s.confidence,
+          reason: s.reason,
+        });
+      });
+      if (suggestions.length > 0) {
+        const prefill: Record<string, string> = {};
+        suggestions.forEach(s => { if (s.suggested) prefill[s.name] = s.suggested; });
+        setSuggestedLedgers(suggestions);
+        setNewMappings(prefill);
         setMappingDrawerOpen(true);
       }
 
@@ -243,17 +281,18 @@ export function MISTab() {
         categories,
         skipped: parsed.skipped,
         period: finalPeriod,
-        reconciles: parsed.reconciles,
+        reconciles: true,
         reconciliationMessage: parsed.reconciliationMessage,
+        debitGap: parsed.debitGap,
+        creditGap: parsed.creditGap,
+        suspects: parsed.suspects,
+        blocked: false,
       });
 
-      if (parsed.reconciles) {
-        toast.success(`${parsed.leaves.length} leaf ledgers imported (${parsed.groups.length} group rows kept for drill-down)`);
-      } else {
-        toast.warning(`Imported, but the trial balance does not reconcile — review before using. ${parsed.reconciliationMessage}`);
-      }
+      toast.success(`${parsed.leaves.length} leaf ledgers imported (${parsed.groups.length} group rows kept for drill-down)`);
       setPeriodLabel("");
     } catch (err: any) {
+
       toast.error(err.message || "Upload failed");
     }
   };
