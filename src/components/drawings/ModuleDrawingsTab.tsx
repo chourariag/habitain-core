@@ -14,8 +14,23 @@ import { formatDistanceToNow } from "date-fns";
 import { getAuthedClient } from "@/lib/auth-client";
 import { projectCode } from "@/lib/code-generators";
 
-const DQ_QUERY_TYPES = ["Dimension Clarification", "Material Specification", "Structural Query", "MEP Routing", "Opening Position", "Finishing Detail", "Other"];
-const DQ_URGENCY = ["Critical", "High", "Normal"];
+const DQ_QUERY_TYPES: { label: string; value: string }[] = [
+  { label: "Dimension Clarification", value: "other" },
+  { label: "Material Specification", value: "Material Specification" },
+  { label: "Structural Query", value: "structural" },
+  { label: "MEP Routing", value: "mep" },
+  { label: "Opening Position", value: "other" },
+  { label: "Finishing Detail", value: "other" },
+  { label: "Other", value: "Other" },
+];
+const DQ_URGENCY: { label: string; value: string }[] = [
+  { label: "Critical", value: "critical" },
+  { label: "High", value: "high" },
+  { label: "Normal", value: "normal" },
+];
+const DQ_URGENCY_LABELS: Record<string, string> = DQ_URGENCY.reduce((acc, u) => ({ ...acc, [u.value]: u.label }), {});
+const DQ_TYPE_LABELS: Record<string, string> = DQ_QUERY_TYPES.reduce((acc, t) => ({ ...acc, [t.value]: t.label }), {});
+
 
 interface Props {
   projectId: string;
@@ -29,10 +44,21 @@ export function ModuleDrawingsTab({ projectId, moduleId, projectName }: Props) {
   const [loading, setLoading] = useState(true);
   const [showArchived, setShowArchived] = useState(false);
   const [dqOpen, setDqOpen] = useState(false);
-  const [dqForm, setDqForm] = useState({ drawing_id: "", description: "", query_type: "Other", urgency: "Normal", affected_area: "" });
+  const [dqForm, setDqForm] = useState({ drawing_id: "", description: "", query_type: "Other", urgency: "normal", affected_area: "" });
   const [dqPhoto, setDqPhoto] = useState<File | null>(null);
   const [dqSubmitting, setDqSubmitting] = useState(false);
   const [userName, setUserName] = useState("");
+
+  const dqStatusBadge = (status: string) => {
+    switch (status) {
+      case "open": return { bg: "#FFF0F0", color: "#F40009", label: "Open" };
+      case "in_review": return { bg: "#FFF8E8", color: "#D4860A", label: "Under Review" };
+      case "responded": return { bg: "#E8F2ED", color: "#006039", label: "Responded" };
+      case "resolved": return { bg: "#E8F2ED", color: "#006039", label: "Resolved" };
+      case "closed": return { bg: "#F5F5F5", color: "#666666", label: "Closed" };
+      default: return { bg: "#F5F5F5", color: "#666666", label: status };
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -45,6 +71,12 @@ export function ModuleDrawingsTab({ projectId, moduleId, projectName }: Props) {
     let query = (supabase.from("drawings") as any).select("*").eq("project_id", projectId).eq("is_archived", false).order("created_at", { ascending: false });
     const { data } = await query;
     setDrawings(data ?? []);
+
+    let dqQuery = (supabase.from("design_queries") as any).select("*").eq("project_id", projectId).order("created_at", { ascending: false });
+    if (moduleId) dqQuery = dqQuery.eq("module_id", moduleId);
+    const { data: dqData } = await dqQuery;
+    setDqs(dqData ?? []);
+
     setLoading(false);
   }, [projectId, moduleId]);
 
@@ -103,6 +135,7 @@ export function ModuleDrawingsTab({ projectId, moduleId, projectName }: Props) {
       }
 
       toast.success(`DQ ${dqCode} raised`);
+      fetchData();
       setDqOpen(false);
       setDqForm({ drawing_id: "", description: "", query_type: "Other", urgency: "Normal", affected_area: "" });
       setDqPhoto(null);
@@ -130,9 +163,15 @@ export function ModuleDrawingsTab({ projectId, moduleId, projectName }: Props) {
                 <div>
                   <Label className="text-xs">Drawing Reference</Label>
                   <Select value={dqForm.drawing_id} onValueChange={(v) => setDqForm({ ...dqForm, drawing_id: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select drawing" /></SelectTrigger>
+                    <SelectTrigger>
+                      <SelectValue placeholder={activeDrawings.length === 0 ? "No drawings uploaded yet — you can still raise a query without one" : "Select drawing"} />
+                    </SelectTrigger>
                     <SelectContent>
-                      {activeDrawings.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.drawing_id_code} R{d.revision}</SelectItem>)}
+                      {activeDrawings.length === 0 ? (
+                        <SelectItem value="no-drawings" disabled>No drawings uploaded yet — you can still raise a query without one</SelectItem>
+                      ) : (
+                        activeDrawings.map((d: any) => <SelectItem key={d.id} value={d.id}>{d.drawing_id_code} R{d.revision}</SelectItem>)
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -140,15 +179,16 @@ export function ModuleDrawingsTab({ projectId, moduleId, projectName }: Props) {
                   <Label className="text-xs">Query Type</Label>
                   <Select value={dqForm.query_type} onValueChange={(v) => setDqForm({ ...dqForm, query_type: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{DQ_QUERY_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                    <SelectContent>{DQ_QUERY_TYPES.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label className="text-xs">Urgency</Label>
                   <Select value={dqForm.urgency} onValueChange={(v) => setDqForm({ ...dqForm, urgency: v })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{DQ_URGENCY.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                    <SelectContent>{DQ_URGENCY.map((u) => <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>)}</SelectContent>
                   </Select>
+
                 </div>
                 <div>
                   <Label className="text-xs">Description *</Label>
@@ -201,6 +241,49 @@ export function ModuleDrawingsTab({ projectId, moduleId, projectName }: Props) {
           </a>
         </div>
       ))}
+
+      <div className="pt-4 border-t border-border mt-4">
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <h3 className="text-sm font-semibold text-foreground">Design Queries</h3>
+          <span className="text-xs text-muted-foreground">{dqs.length} total</span>
+        </div>
+        {dqs.length === 0 ? (
+          <p className="text-xs text-muted-foreground py-4 text-center">No design queries raised yet.</p>
+        ) : (
+          <div className="space-y-2">
+            {dqs.map((dq: any) => {
+              const sb = dqStatusBadge(dq.status);
+              return (
+                <div key={dq.id} className="bg-card border border-border rounded-lg p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-xs font-semibold" style={{ color: "#1A1A1A" }}>{dq.dq_code}</span>
+                        <Badge variant="outline" style={{ backgroundColor: sb.bg, color: sb.color, border: "none" }}>{sb.label}</Badge>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#FFF8E8", color: "#D4860A" }}>{DQ_URGENCY_LABELS[dq.urgency] ?? dq.urgency}</span>
+                      </div>
+                      <p className="text-xs mt-1 line-clamp-2" style={{ color: "#666" }}>{dq.description}</p>
+                      <div className="flex flex-wrap gap-2 mt-1.5 text-[10px]" style={{ color: "#999" }}>
+                        <span>{DQ_TYPE_LABELS[dq.query_type] ?? dq.query_type}</span>
+                        <span>by {dq.raised_by_name ?? "—"}</span>
+                        <span>{formatDistanceToNow(new Date(dq.created_at), { addSuffix: true })}</span>
+                      </div>
+                      {dq.response_text && (
+                        <div className="mt-2 pt-2 border-t border-border/60">
+                          <p className="text-[10px] font-medium" style={{ color: "#006039" }}>Response</p>
+                          <p className="text-xs mt-0.5" style={{ color: "#666" }}>{dq.response_text}</p>
+                          <p className="text-[10px] mt-0.5" style={{ color: "#999" }}>by {dq.responded_by_name ?? "—"} {dq.responded_at ? formatDistanceToNow(new Date(dq.responded_at), { addSuffix: true }) : ""}</p>
+                        </div>
+                      )}
+                    </div>
+                    {dq.photo_url && <img src={dq.photo_url} alt="" className="h-10 w-10 rounded object-cover shrink-0" />}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
