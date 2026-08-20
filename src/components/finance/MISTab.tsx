@@ -403,10 +403,20 @@ export function MISTab() {
       {uploadSummary && (
         <Card>
           <CardContent className="pt-4 space-y-2">
-            <p className="text-sm font-semibold font-display" style={{ color: "#006039" }}>
-              ✓ Uploaded Successfully — {uploadSummary.total} ledger accounts imported
+            <p className="text-sm font-semibold font-display" style={{ color: uploadSummary.reconciles ? "#006039" : "#D4860A" }}>
+              {uploadSummary.reconciles ? "✓ Uploaded Successfully" : "⚠ Uploaded — needs review"} — {uploadSummary.leaves} leaf ledgers imported
             </p>
             <p className="text-xs" style={{ color: "#1A1A1A" }}>Period: {uploadSummary.period}</p>
+            <p className="text-xs" style={{ color: "#666" }}>
+              {uploadSummary.groups} group / sub-total rows kept for drill-down only (never summed)
+              {uploadSummary.excluded > 0 ? ` · ${uploadSummary.excluded} reconciliation rows excluded (P&L A/c, opening-balance difference)` : ""}
+            </p>
+            <p className="text-xs font-mono p-2 rounded" style={{
+              color: uploadSummary.reconciles ? "#006039" : "#D4860A",
+              backgroundColor: uploadSummary.reconciles ? "#E8F2ED" : "#FDF6E7",
+            }}>
+              {uploadSummary.reconciliationMessage}
+            </p>
             <div className="flex flex-wrap gap-3 text-xs">
               {Object.entries(uploadSummary.categories).map(([cat, count]) => (
                 <span key={cat} className="px-2 py-1 rounded" style={{
@@ -418,7 +428,7 @@ export function MISTab() {
               ))}
             </div>
             {(() => {
-              const invEntries = (currentUpload?.raw_data || []).filter((e: any) => e.category === "Inventory");
+              const invEntries = (currentUpload?.raw_data || []).filter((e: any) => e.category === "Inventory" && !e.is_group && !e.is_excluded);
               const invTotal = invEntries.reduce((s: number, e: any) => s + Math.abs(e.closing_balance || e.debit - e.credit), 0);
               return invEntries.length > 0 ? (
                 <p className="text-xs font-mono" style={{ color: "#006039" }}>Opening Stock Value: ₹{invTotal.toLocaleString("en-IN")}</p>
@@ -565,7 +575,7 @@ export function MISTab() {
               <CollapsibleContent>
                 <CardContent>
                   {Object.entries(MIS_CATEGORIES).map(([cat, label]) => {
-                    const catEntries = entries.filter(e => mappings[e.ledger_name] === cat);
+                    const catEntries = entries.filter(e => isMappable(e) && mappings[e.ledger_name] === cat);
                     if (catEntries.length === 0) return null;
                     return (
                       <Collapsible key={cat}>
@@ -591,13 +601,13 @@ export function MISTab() {
                       </Collapsible>
                     );
                   })}
-                  {entries.filter(e => !mappings[e.ledger_name]).length > 0 && (
+                  {entries.filter(e => isMappable(e) && !mappings[e.ledger_name]).length > 0 && (
                     <div className="mt-3">
                       <p className="text-xs font-semibold" style={{ color: "#D4860A" }}>
-                        Unmapped Ledgers ({entries.filter(e => !mappings[e.ledger_name]).length})
+                        Unmapped Ledgers ({entries.filter(e => isMappable(e) && !mappings[e.ledger_name]).length})
                       </p>
                       <div className="pl-5 space-y-0.5 pt-1">
-                        {entries.filter(e => !mappings[e.ledger_name]).map((e, i) => (
+                        {entries.filter(e => isMappable(e) && !mappings[e.ledger_name]).map((e, i) => (
                           <div key={i} className="flex justify-between text-xs py-0.5" style={{ color: "#999" }}>
                             <span>{e.ledger_name}</span>
                             <span className="font-mono">₹{(e.debit || e.credit).toLocaleString("en-IN")}</span>
