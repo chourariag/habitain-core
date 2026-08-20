@@ -56,7 +56,7 @@ export function SpecialMaterialRequests({ projectId, projectName, userRole }: Pr
     urgency: "normal" as "normal" | "urgent",
   });
 
-  const canCreate = userRole === "factory_floor_supervisor" || userRole === "super_admin" || userRole === "managing_director";
+  const canCreate = userRole === "factory_floor_supervisor" || userRole === "production_head" || userRole === "super_admin" || userRole === "managing_director";
   const canApprove = ["production_head", "head_operations", "managing_director", "super_admin"].includes(userRole ?? "");
   const canIssue = ["stores_executive", "managing_director", "super_admin"].includes(userRole ?? "");
 
