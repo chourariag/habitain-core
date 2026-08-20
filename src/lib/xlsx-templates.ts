@@ -61,12 +61,10 @@ export const TEMPLATES = {
   trialBalance: {
     filename: "Trial_Balance_Template.xlsx",
     sheet: "Trial Balance",
-    headers: ["Particulars", "Opening Balance", "Debit", "Credit", "Closing Balance"] as const,
-    sample: [
-      ["Sales — Modular Structures", 0, 0, 4973740, 4973740],
-      ["Purchase — Structural Steel", 0, 3200000, 0, 3200000],
-      ["HDFC Bank — Current A/c", 250000, 100000, 80000, 270000],
-    ] as const,
+    // Real Tally export shape: letterhead block, then Particulars / Debit / Credit
+    // (closing balance only — no separate Opening Balance column).
+    headers: ["Particulars", "Debit", "Credit"] as const,
+    sample: [] as const,
   },
   bankLedger: {
     filename: "Bank_Ledger_Template.xlsx",
@@ -405,4 +403,48 @@ export function downloadMaterialPlanTemplate(filename: string, clientName: strin
 
   XLSX.utils.book_append_sheet(wb, ws, "Material Plan");
   XLSX.writeFile(wb, filename);
+}
+
+
+/**
+ * Trial Balance template matching the real Tally export shape:
+ * a letterhead block (company / address / registration / period), a spanning
+ * "Particulars | Closing Balance (Debit / Credit)" header, then Group →
+ * Sub-group → Ledger rows where each parent carries the same total as the sum
+ * of its children, ending with a Grand Total row.
+ */
+export function downloadTrialBalanceTemplate() {
+  const aoa: (string | number | null)[][] = [
+    ["<Company Name>", null, null],
+    ["<Registered Address Line 1>", null, null],
+    ["<City, State — PIN>", null, null],
+    ["GSTIN: <GSTIN>   CIN: <CIN>", null, null],
+    ["Trial Balance", null, null],
+    ["1-Apr-25 to 31-Mar-26", null, null],
+    [null, null, null],
+    ["Particulars", "Closing Balance", null],
+    [null, "Debit", "Credit"],
+    [null, "₹", "₹"],
+    // Group → Sub-group → Ledger. Parent totals repeat the children's sum.
+    ["Loans (Liability)", 0, 5443265],
+    ["  Unsecured Loans", 0, 5443265],
+    ["    Director Loan — A", 0, 2000000],
+    ["    Director Loan — B", 0, 1443265],
+    ["    Term Loan — Bank C", 0, 1500000],
+    ["    Term Loan — Bank D", 0, 500000],
+    ["Current Liabilities", 0, 300000],
+    ["  Duties & Taxes", 0, 200000],
+    ["    GST Payable", 0, 120000],
+    ["    TDS Payable", 0, 80000],
+    ["  Provisions", 0, 100000],
+    ["    Audit Fees Payable", 0, 100000],
+    ["Sundry Debtors", 5743265, 0],
+    ["Grand Total", 5743265, 5743265],
+  ];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws["!cols"] = [{ wch: 46 }, { wch: 18 }, { wch: 18 }];
+  ws["!merges"] = [{ s: { r: 7, c: 1 }, e: { r: 7, c: 2 } }];
+  XLSX.utils.book_append_sheet(wb, ws, TEMPLATES.trialBalance.sheet);
+  XLSX.writeFile(wb, TEMPLATES.trialBalance.filename);
 }

@@ -5,12 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Download, ChevronDown, ChevronRight, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
+import { downloadTrialBalanceTemplate } from "@/lib/xlsx-templates";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { WIPStatement } from "@/components/finance/WIPStatement";
+import { parseTrialBalanceFile, type TBRow } from "@/lib/tally-tb-parser";
 
 const MIS_CATEGORIES = {
   revenue: "Sales Revenue",
@@ -25,6 +26,16 @@ const MIS_CATEGORIES = {
   depreciation: "Depreciation",
   interest: "Interest",
   tax: "Tax",
+  // Balance Sheet (leaf ledgers only)
+  bs_capital: "Capital & Reserves",
+  bs_loans: "Loans & Borrowings",
+  bs_debtors: "Sundry Debtors",
+  bs_creditors: "Sundry Creditors",
+  bs_fixed_assets: "Fixed Assets",
+  bs_bank_cash: "Bank & Cash",
+  bs_inventory: "Inventory",
+  bs_duties_taxes: "Duties & Taxes",
+  bs_other_bs: "Other Balance Sheet",
 } as const;
 
 type MISCategory = keyof typeof MIS_CATEGORIES;
@@ -36,7 +47,16 @@ interface LedgerEntry {
   opening_balance?: number;
   closing_balance?: number;
   category?: string;
+  /** Group / subtotal row — display & drill-down only, never summed. */
+  is_group?: boolean;
+  /** P&L A/c, Difference in opening balances — never mapped to a category. */
+  is_excluded?: boolean;
+  level?: number;
+  parent_name?: string | null;
 }
+
+/** Only leaf ledgers that are not reconciliation entries may be summed or mapped. */
+const isMappable = (e: LedgerEntry) => !e.is_group && !e.is_excluded;
 
 interface MISUpload {
   id: string;
@@ -50,7 +70,7 @@ function sumByCategory(entries: LedgerEntry[], mappings: Record<string, string>,
   // Costs/expenses: debit - credit (positive = expense)
   const isIncome = ["revenue", "other_income", "unbilled_revenue"].includes(category);
   return entries
-    .filter(e => mappings[e.ledger_name] === category)
+    .filter(e => isMappable(e) && mappings[e.ledger_name] === category)
     .reduce((sum, e) => sum + (isIncome ? (e.credit - e.debit) : (e.debit - e.credit)), 0);
 }
 
@@ -105,9 +125,14 @@ function categorizeLedger(name: string): string {
 
 interface UploadSummary {
   total: number;
+  groups: number;
+  leaves: number;
+  excluded: number;
   categories: Record<string, number>;
   skipped: { row: number; reason: string }[];
   period: string;
+  reconciles: boolean;
+  reconciliationMessage: string;
 }
 
 export function MISTab() {
@@ -156,82 +181,25 @@ export function MISTab() {
     }
   }, [fetchData]);
 
-  const parseTallyTB = async (file: File): Promise<{ entries: LedgerEntry[]; skipped: { row: number; reason: string }[]; detectedPeriod: string }> => {
-    const XLSX = await import("xlsx");
-    const data = await file.arrayBuffer();
-    const wb = XLSX.read(data);
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows: any[] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-
-    // Find header row: scan for row containing "Particulars" in column A
-    let headerRowIdx = -1;
-    let detectedPeriod = "";
-    for (let i = 0; i < Math.min(rows.length, 20); i++) {
-      const cellA = String(rows[i]?.[0] || "").trim().toLowerCase();
-      // Detect period from date range row (e.g. "1-Apr-25 to 31-Mar-26")
-      if (/\d{1,2}-[a-z]{3}-\d{2,4}\s+to\s+\d{1,2}-[a-z]{3}-\d{2,4}/i.test(String(rows[i]?.[0] || ""))) {
-        detectedPeriod = String(rows[i][0]).trim();
-      }
-      if (cellA === "particulars" || cellA.startsWith("particulars")) {
-        headerRowIdx = i;
-        break;
-      }
-    }
-
-    // Fallback: if no "Particulars" header found, try old format (row 0 = header)
-    const dataStartIdx = headerRowIdx >= 0 ? headerRowIdx + 2 : 1; // +2 to skip sub-header row
-
-    const entries: LedgerEntry[] = [];
-    const skipped: { row: number; reason: string }[] = [];
-
-    for (let i = dataStartIdx; i < rows.length; i++) {
-      const row = rows[i];
-      if (!row) { skipped.push({ row: i + 1, reason: "Empty row" }); continue; }
-
-      const particulars = row[0] != null ? String(row[0]).trim() : "";
-      if (!particulars) { continue; } // Skip blank particulars silently
-
-      const openingBal = Number(row[1]) || 0;
-      const debitAmt = Number(row[headerRowIdx >= 0 ? 2 : 1]) || 0;
-      const creditAmt = Number(row[headerRowIdx >= 0 ? 3 : 2]) || 0;
-      const closingRaw = row[headerRowIdx >= 0 ? 4 : undefined];
-
-      // Skip rows where all numeric columns are zero/null (formatting rows)
-      if (headerRowIdx >= 0 && openingBal === 0 && debitAmt === 0 && creditAmt === 0 && (closingRaw == null || Number(closingRaw) === 0)) {
-        skipped.push({ row: i + 1, reason: `All values zero: "${particulars}"` });
-        continue;
-      }
-
-      // For old format (no header detected), skip zero rows too
-      if (headerRowIdx < 0 && debitAmt === 0 && creditAmt === 0) {
-        skipped.push({ row: i + 1, reason: `All values zero: "${particulars}"` });
-        continue;
-      }
-
-      const closingBalance = closingRaw != null ? Number(closingRaw) : (openingBal + debitAmt - creditAmt);
-      const category = categorizeLedger(particulars);
-
-      entries.push({
-        ledger_name: particulars,
-        debit: debitAmt,
-        credit: creditAmt,
-        opening_balance: headerRowIdx >= 0 ? openingBal : undefined,
-        closing_balance: headerRowIdx >= 0 ? closingBalance : undefined,
-        category,
-      });
-    }
-
-    return { entries, skipped, detectedPeriod };
-  };
-
   const doUpload = async (file: File) => {
     try {
-      const { entries, skipped, detectedPeriod } = await parseTallyTB(file);
+      const parsed = await parseTrialBalanceFile(file);
+      const entries: LedgerEntry[] = parsed.rows.map((r: TBRow) => ({
+        ledger_name: r.ledger_name,
+        debit: r.debit,
+        credit: r.credit,
+        closing_balance: r.net,
+        category: r.category,
+        is_group: r.is_group,
+        is_excluded: r.is_excluded,
+        level: r.level,
+        parent_name: r.parent_name,
+      }));
 
       if (entries.length === 0) { toast.error("No data rows found in file"); return; }
 
       // Use detected period or user-entered label
-      const finalPeriod = periodLabel.trim() || detectedPeriod || "Unknown Period";
+      const finalPeriod = periodLabel.trim() || parsed.detectedPeriod || "Unknown Period";
 
       // Delete existing uploads for same period
       const existing = uploads.find(u => u.period_label === finalPeriod);
@@ -247,8 +215,9 @@ export function MISTab() {
       }).select().single();
       if (error) throw error;
 
-      // Check for unmapped ledgers
+      // Only leaf ledgers (excluding reconciliation entries) need a category mapping
       const unmapped = entries
+        .filter(e => isMappable(e))
         .map(e => e.ledger_name)
         .filter(name => !mappings[name]);
       if (unmapped.length > 0) {
@@ -266,20 +235,36 @@ export function MISTab() {
       setUploads(prev => [newUpload, ...prev.filter(u => u.id !== existing?.id)]);
       setCurrentUploadId(inserted.id);
 
-      // Build category summary
+      // Build category summary from leaf ledgers only
       const categories: Record<string, number> = {};
-      entries.forEach(e => {
+      entries.filter(isMappable).forEach(e => {
         const cat = e.category || "Other";
         categories[cat] = (categories[cat] || 0) + 1;
       });
 
-      setUploadSummary({ total: entries.length, categories, skipped, period: finalPeriod });
-      toast.success(`${entries.length} ledger accounts imported`);
+      setUploadSummary({
+        total: entries.length,
+        groups: parsed.groups.length,
+        leaves: parsed.leaves.length,
+        excluded: parsed.rows.filter(r => r.is_excluded).length,
+        categories,
+        skipped: parsed.skipped,
+        period: finalPeriod,
+        reconciles: parsed.reconciles,
+        reconciliationMessage: parsed.reconciliationMessage,
+      });
+
+      if (parsed.reconciles) {
+        toast.success(`${parsed.leaves.length} leaf ledgers imported (${parsed.groups.length} group rows kept for drill-down)`);
+      } else {
+        toast.warning(`Imported, but the trial balance does not reconcile — review before using. ${parsed.reconciliationMessage}`);
+      }
       setPeriodLabel("");
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
     }
   };
+
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -339,10 +324,7 @@ export function MISTab() {
     setAdsDrawerOpen(true);
   };
 
-  const downloadTemplate = () => {
-    const t = TEMPLATES.trialBalance;
-    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
-  };
+  const downloadTemplate = () => downloadTrialBalanceTemplate();
 
   const entries = currentUpload?.raw_data || [];
   const getMISValue = (category: string) => sumByCategory(entries, mappings, category);
@@ -418,10 +400,20 @@ export function MISTab() {
       {uploadSummary && (
         <Card>
           <CardContent className="pt-4 space-y-2">
-            <p className="text-sm font-semibold font-display" style={{ color: "#006039" }}>
-              ✓ Uploaded Successfully — {uploadSummary.total} ledger accounts imported
+            <p className="text-sm font-semibold font-display" style={{ color: uploadSummary.reconciles ? "#006039" : "#D4860A" }}>
+              {uploadSummary.reconciles ? "✓ Uploaded Successfully" : "⚠ Uploaded — needs review"} — {uploadSummary.leaves} leaf ledgers imported
             </p>
             <p className="text-xs" style={{ color: "#1A1A1A" }}>Period: {uploadSummary.period}</p>
+            <p className="text-xs" style={{ color: "#666" }}>
+              {uploadSummary.groups} group / sub-total rows kept for drill-down only (never summed)
+              {uploadSummary.excluded > 0 ? ` · ${uploadSummary.excluded} reconciliation rows excluded (P&L A/c, opening-balance difference)` : ""}
+            </p>
+            <p className="text-xs font-mono p-2 rounded" style={{
+              color: uploadSummary.reconciles ? "#006039" : "#D4860A",
+              backgroundColor: uploadSummary.reconciles ? "#E8F2ED" : "#FDF6E7",
+            }}>
+              {uploadSummary.reconciliationMessage}
+            </p>
             <div className="flex flex-wrap gap-3 text-xs">
               {Object.entries(uploadSummary.categories).map(([cat, count]) => (
                 <span key={cat} className="px-2 py-1 rounded" style={{
@@ -433,7 +425,7 @@ export function MISTab() {
               ))}
             </div>
             {(() => {
-              const invEntries = (currentUpload?.raw_data || []).filter((e: any) => e.category === "Inventory");
+              const invEntries = (currentUpload?.raw_data || []).filter((e: any) => e.category === "Inventory" && !e.is_group && !e.is_excluded);
               const invTotal = invEntries.reduce((s: number, e: any) => s + Math.abs(e.closing_balance || e.debit - e.credit), 0);
               return invEntries.length > 0 ? (
                 <p className="text-xs font-mono" style={{ color: "#006039" }}>Opening Stock Value: ₹{invTotal.toLocaleString("en-IN")}</p>
@@ -580,7 +572,7 @@ export function MISTab() {
               <CollapsibleContent>
                 <CardContent>
                   {Object.entries(MIS_CATEGORIES).map(([cat, label]) => {
-                    const catEntries = entries.filter(e => mappings[e.ledger_name] === cat);
+                    const catEntries = entries.filter(e => isMappable(e) && mappings[e.ledger_name] === cat);
                     if (catEntries.length === 0) return null;
                     return (
                       <Collapsible key={cat}>
@@ -606,13 +598,13 @@ export function MISTab() {
                       </Collapsible>
                     );
                   })}
-                  {entries.filter(e => !mappings[e.ledger_name]).length > 0 && (
+                  {entries.filter(e => isMappable(e) && !mappings[e.ledger_name]).length > 0 && (
                     <div className="mt-3">
                       <p className="text-xs font-semibold" style={{ color: "#D4860A" }}>
-                        Unmapped Ledgers ({entries.filter(e => !mappings[e.ledger_name]).length})
+                        Unmapped Ledgers ({entries.filter(e => isMappable(e) && !mappings[e.ledger_name]).length})
                       </p>
                       <div className="pl-5 space-y-0.5 pt-1">
-                        {entries.filter(e => !mappings[e.ledger_name]).map((e, i) => (
+                        {entries.filter(e => isMappable(e) && !mappings[e.ledger_name]).map((e, i) => (
                           <div key={i} className="flex justify-between text-xs py-0.5" style={{ color: "#999" }}>
                             <span>{e.ledger_name}</span>
                             <span className="font-mono">₹{(e.debit || e.credit).toLocaleString("en-IN")}</span>
