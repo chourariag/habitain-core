@@ -65,6 +65,8 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
   const [loading, setLoading] = useState(true);
   const [openNew, setOpenNew] = useState(false);
   const [openDetail, setOpenDetail] = useState<any | null>(null);
+  const [editWo, setEditWo] = useState<any | null>(null);
+
 
   const canRaise = ["super_admin","managing_director","production_head","site_installation_mgr"].includes(role ?? "");
   const canCostingApprove = ["super_admin","managing_director","planning_engineer","costing_engineer"].includes(role ?? "");
