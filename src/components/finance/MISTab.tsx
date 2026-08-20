@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Download, ChevronDown, ChevronRight, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
+import { downloadTrialBalanceTemplate } from "@/lib/xlsx-templates";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -324,10 +324,7 @@ export function MISTab() {
     setAdsDrawerOpen(true);
   };
 
-  const downloadTemplate = () => {
-    const t = TEMPLATES.trialBalance;
-    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
-  };
+  const downloadTemplate = () => downloadTrialBalanceTemplate();
 
   const entries = currentUpload?.raw_data || [];
   const getMISValue = (category: string) => sumByCategory(entries, mappings, category);
