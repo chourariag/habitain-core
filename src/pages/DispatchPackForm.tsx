@@ -143,14 +143,12 @@ export default function DispatchPackForm() {
 
       const status = markDispatched ? "dispatched" : computedStatus;
 
-      const { error } = await (supabase.from("dispatch_packs") as any).insert({
+      const { data: inserted, error } = await (supabase.from("dispatch_packs") as any).insert({
         dispatch_pack_id: packId,
         project_id: projectId,
         dispatch_date: dispatchDate,
         module_id: moduleId.trim(),
         vehicle_number: vehicleNumber.trim(),
-        driver_name: driverName.trim(),
-        driver_phone: driverPhone.trim(),
         pieces_count: Number(pieces),
         weight_kg: weightKg.trim() ? Number(weightKg) : null,
         destination: destination.trim() || null,
@@ -159,8 +157,17 @@ export default function DispatchPackForm() {
         loading_checklist_complete: allDocsComplete,
         created_by: user.id,
         status,
-      });
+      }).select("id").single();
       if (error) throw error;
+
+      // Driver contact is stored separately (restricted to logistics roles)
+      if (inserted?.id && (driverName.trim() || driverPhone.trim())) {
+        await (supabase.from("dispatch_pack_driver_contact") as any).upsert({
+          dispatch_pack_id: inserted.id,
+          driver_name: driverName.trim() || null,
+          driver_phone: driverPhone.trim() || null,
+        });
+      }
 
       // Notify SIMs of new pack
       const { data: sims } = await supabase
