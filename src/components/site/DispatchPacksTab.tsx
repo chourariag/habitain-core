@@ -17,8 +17,6 @@ interface DispatchPack {
   dispatch_date: string;
   vehicle_type: string | null;
   vehicle_number: string | null;
-  driver_name: string | null;
-  driver_phone: string | null;
   transporter_name: string | null;
   site_installation_manager_id: string | null;
   team_member_ids: string[];

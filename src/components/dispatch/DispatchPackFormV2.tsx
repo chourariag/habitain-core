@@ -65,8 +65,10 @@ export function DispatchPackFormV2({ projectId, projectName }: Props) {
       setPlannedDate(r.planned_dispatch_date ?? r.dispatch_date ?? format(new Date(), "yyyy-MM-dd"));
       setVehicleType(r.vehicle_type ?? "");
       setVehicleNumber(r.vehicle_number ?? "");
-      setDriverName(r.driver_name ?? "");
-      setDriverPhone(r.driver_phone ?? "");
+      const { data: dc } = await (supabase.from("dispatch_pack_driver_contact") as any)
+        .select("driver_name, driver_phone").eq("dispatch_pack_id", r.id).maybeSingle();
+      setDriverName(dc?.driver_name ?? "");
+      setDriverPhone(dc?.driver_phone ?? "");
       if (Array.isArray(r.items_table) && r.items_table.length) setItems(r.items_table);
       if (Array.isArray(r.factory_works_completed) && r.factory_works_completed.length) setFactoryStages(r.factory_works_completed);
       setSiteWorksPending(r.site_works_pending ?? "");
@@ -147,8 +149,6 @@ export function DispatchPackFormV2({ projectId, projectName }: Props) {
         planned_dispatch_date: plannedDate,
         vehicle_type: vehicleType,
         vehicle_number: vehicleNumber.trim().toUpperCase(),
-        driver_name: driverName.trim(),
-        driver_phone: driverPhone.trim(),
         items_table: items.filter((i) => i.description.trim()),
         factory_works_completed: factoryStages,
         site_works_pending: siteWorksPending.trim() || null,
@@ -176,6 +176,14 @@ export function DispatchPackFormV2({ projectId, projectName }: Props) {
         setPackId(data.id);
       }
       setStatus(newStatus);
+
+      if (savedId && (driverName.trim() || driverPhone.trim())) {
+        await (client.from("dispatch_pack_driver_contact") as any).upsert({
+          dispatch_pack_id: savedId,
+          driver_name: driverName.trim() || null,
+          driver_phone: driverPhone.trim() || null,
+        });
+      }
 
       if (markReady) {
         // Notify the 3 sign-off parties
