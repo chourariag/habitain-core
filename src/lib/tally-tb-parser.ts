@@ -146,7 +146,7 @@ export function buildHierarchy(raw: RawRow[], targetDebit?: number | null, targe
   if (!roots) roots = segment(0, n - 1, null, null) ?? raw.map((_, i) => ({ idx: i, children: [] }));
 
   const items: TBRow[] = [];
-  const walk = (nodes: Node[], level: number, parent: string | null) => {
+  const walk = (nodes: Node[], level: number, chain: string[]) => {
     for (const node of nodes) {
       const r = raw[node.idx];
       const isGroup = node.children.length > 0;
@@ -159,15 +159,18 @@ export function buildHierarchy(raw: RawRow[], targetDebit?: number | null, targe
         level,
         is_group: isGroup,
         is_excluded: isExcludedLedger(r.name),
-        parent_name: parent,
+        parent_name: chain.length ? chain[chain.length - 1] : null,
+        ancestors: [...chain],
+        indent: r.indent,
         category: isGroup ? undefined : categorizeLedger(r.name),
       });
-      if (isGroup) walk(node.children, level + 1, r.name);
+      if (isGroup) walk(node.children, level + 1, [...chain, r.name]);
     }
   };
-  walk(roots, 0, null);
+  walk(roots, 0, []);
   return items;
 }
+
 
 
 
