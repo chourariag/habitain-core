@@ -12,33 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { WIPStatement } from "@/components/finance/WIPStatement";
 import { parseTrialBalanceFile, type TBRow } from "@/lib/tally-tb-parser";
+import { MIS_CATEGORIES, suggestMISCategory, type MISCategory } from "@/lib/tally-mis-mapping";
 
-const MIS_CATEGORIES = {
-  revenue: "Sales Revenue",
-  other_income: "Other Income",
-  unbilled_revenue: "Unbilled Revenue",
-  raw_materials: "Raw Materials",
-  manufacturing: "Manufacturing Expenses",
-  rent_electricity: "Rent + Electricity",
-  salaries: "Salaries",
-  director_remuneration: "Director Remuneration",
-  other_fixed: "Other Fixed Expenses",
-  depreciation: "Depreciation",
-  interest: "Interest",
-  tax: "Tax",
-  // Balance Sheet (leaf ledgers only)
-  bs_capital: "Capital & Reserves",
-  bs_loans: "Loans & Borrowings",
-  bs_debtors: "Sundry Debtors",
-  bs_creditors: "Sundry Creditors",
-  bs_fixed_assets: "Fixed Assets",
-  bs_bank_cash: "Bank & Cash",
-  bs_inventory: "Inventory",
-  bs_duties_taxes: "Duties & Taxes",
-  bs_other_bs: "Other Balance Sheet",
-} as const;
-
-type MISCategory = keyof typeof MIS_CATEGORIES;
 
 interface LedgerEntry {
   ledger_name: string;
