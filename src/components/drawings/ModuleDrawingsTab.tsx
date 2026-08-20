@@ -52,8 +52,10 @@ export function ModuleDrawingsTab({ projectId, moduleId, projectName }: Props) {
   const dqStatusBadge = (status: string) => {
     switch (status) {
       case "open": return { bg: "#FFF0F0", color: "#F40009", label: "Open" };
-      case "under_review": return { bg: "#FFF8E8", color: "#D4860A", label: "Under Review" };
+      case "in_review": return { bg: "#FFF8E8", color: "#D4860A", label: "Under Review" };
+      case "responded": return { bg: "#E8F2ED", color: "#006039", label: "Responded" };
       case "resolved": return { bg: "#E8F2ED", color: "#006039", label: "Resolved" };
+      case "closed": return { bg: "#F5F5F5", color: "#666666", label: "Closed" };
       default: return { bg: "#F5F5F5", color: "#666666", label: status };
     }
   };
