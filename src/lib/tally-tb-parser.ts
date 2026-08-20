@@ -93,7 +93,7 @@ export function buildHierarchy(raw: RawRow[]): TBRow[] {
 
   const classify = (start: number, end: number, parent: string | null): { items: TBRow[]; topSum: number; lastTopNet: number } => {
     if (start > end) return { items: [], topSum: 0, lastTopNet: 0 };
-    const key = `${start}:${end}:${parent ?? ""}`;
+    const key = `${start}:${end}`;
     const hit = cache.get(key);
     if (hit) return hit;
 
@@ -107,17 +107,17 @@ export function buildHierarchy(raw: RawRow[]): TBRow[] {
       let childEnd = -1;
       if (Math.abs(net) > TOLERANCE) {
         for (let j = i + 1; j <= end; j++) {
-          if (Math.abs(classify(i + 1, j, r.name).topSum - net) <= TOLERANCE) { childEnd = j; break; }
+          if (Math.abs(classify(i + 1, j, null).topSum - net) <= TOLERANCE) { childEnd = j; break; }
         }
       }
       // Tail extension: the deepest repeated total may sit just outside the
       // matched block — absorb it so nested duplicates stay one branch.
       if (childEnd > i) {
         for (;;) {
-          const blk = classify(i + 1, childEnd, r.name);
+          const blk = classify(i + 1, childEnd, null);
           let extended = false;
           for (let k = childEnd + 1; k <= end; k++) {
-            if (Math.abs(classify(childEnd + 1, k, r.name).topSum - blk.lastTopNet) <= TOLERANCE) {
+            if (Math.abs(classify(childEnd + 1, k, null).topSum - blk.lastTopNet) <= TOLERANCE) {
               childEnd = k;
               extended = true;
               break;
@@ -142,7 +142,9 @@ export function buildHierarchy(raw: RawRow[]): TBRow[] {
       topSum += net;
       lastTopNet = net;
       if (isGroup) {
-        items.push(...classify(i + 1, childEnd, r.name).items);
+        items.push(
+          ...classify(i + 1, childEnd, null).items.map(it => (it.parent_name === null ? { ...it, parent_name: r.name } : it)),
+        );
         i = childEnd + 1;
       } else {
         i++;
