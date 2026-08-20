@@ -85,7 +85,7 @@ export function categorizeLedger(name: string): string {
   return "Other";
 }
 
-interface RawRow { row_number: number; name: string; debit: number; credit: number }
+interface RawRow { row_number: number; name: string; debit: number; credit: number; indent?: number }
 
 interface Node { idx: number; children: Node[] }
 
