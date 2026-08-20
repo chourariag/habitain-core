@@ -2731,6 +2731,38 @@ export type Database = {
         }
         Relationships: []
       }
+      dispatch_pack_driver_contact: {
+        Row: {
+          created_at: string
+          dispatch_pack_id: string
+          driver_name: string | null
+          driver_phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dispatch_pack_id: string
+          driver_name?: string | null
+          driver_phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dispatch_pack_id?: string
+          driver_name?: string | null
+          driver_phone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_pack_driver_contact_dispatch_pack_id_fkey"
+            columns: ["dispatch_pack_id"]
+            isOneToOne: true
+            referencedRelation: "dispatch_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dispatch_packs: {
         Row: {
           connection_photos: Json | null
@@ -2740,8 +2772,6 @@ export type Database = {
           dispatch_date: string
           dispatch_pack_id: string
           documents: Json
-          driver_name: string | null
-          driver_phone: string | null
           factory_works_completed: Json | null
           id: string
           items_table: Json | null
@@ -2771,8 +2801,6 @@ export type Database = {
           dispatch_date?: string
           dispatch_pack_id: string
           documents?: Json
-          driver_name?: string | null
-          driver_phone?: string | null
           factory_works_completed?: Json | null
           id?: string
           items_table?: Json | null
@@ -2802,8 +2830,6 @@ export type Database = {
           dispatch_date?: string
           dispatch_pack_id?: string
           documents?: Json
-          driver_name?: string | null
-          driver_phone?: string | null
           factory_works_completed?: Json | null
           id?: string
           items_table?: Json | null
@@ -14596,6 +14622,11 @@ export type Database = {
         Args: { _object_name: string; _uid: string }
         Returns: boolean
       }
+      can_view_commercial_rates: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_view_driver_contact: { Args: { _user_id: string }; Returns: boolean }
       can_view_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_view_profile_pii: { Args: { _user_id: string }; Returns: boolean }
       can_view_quotations: { Args: { _user_id: string }; Returns: boolean }
@@ -15017,6 +15048,7 @@ export type Database = {
         Args: { _project_id: string; _start?: string }
         Returns: number
       }
+      is_active_staff: { Args: { _user_id: string }; Returns: boolean }
       is_director: { Args: { _user_id: string }; Returns: boolean }
       is_full_admin: { Args: { _user_id: string }; Returns: boolean }
       is_md: { Args: { _user_id: string }; Returns: boolean }
