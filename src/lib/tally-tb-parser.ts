@@ -218,7 +218,7 @@ export function parseTrialBalanceRows(rows: any[][]): TBParseResult {
     raw.push({ row_number: i + 1, name, debit, credit });
   }
 
-  const tree = buildHierarchy(raw);
+  const tree = buildHierarchy(raw, fileGrandTotalDebit, fileGrandTotalCredit);
   const leaves = tree.filter(r => !r.is_group);
   const groups = tree.filter(r => r.is_group);
 
