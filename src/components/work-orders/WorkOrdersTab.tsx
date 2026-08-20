@@ -167,14 +167,16 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
         </Card>
       )}
 
-      {openNew && (
+      {(openNew || editWo) && (
         <NewWorkOrderDialog
+          key={editWo?.id ?? "new"}
+          wo={editWo}
           projects={projectId ? projects.filter(p => p.id === projectId) : projects}
           defaultProjectId={projectId}
           subs={subs}
           mode={mode}
           userId={userId}
-          onClose={() => setOpenNew(false)}
+          onClose={() => { setOpenNew(false); setEditWo(null); }}
           onSaved={fetchAll}
           onSubsChanged={fetchAll}
         />
@@ -190,10 +192,12 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
           canDirectorApprove={canDirectorApprove}
           canIssue={canIssue}
           canRaise={canRaise}
+          onEdit={() => { setEditWo(openDetail); setOpenDetail(null); }}
           onClose={() => setOpenDetail(null)}
           onChanged={() => { fetchAll(); setOpenDetail(null); }}
         />
       )}
+
     </div>
   );
 }
