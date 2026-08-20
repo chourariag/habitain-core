@@ -715,6 +715,12 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
       SUBMIT_ROLES.includes(role ?? "")
     );
 
+  const canEditWo =
+    ["draft", "pending_costing_approval", "clarification_needed"].includes(wo.status) &&
+    (wo.raised_by === userId || canRaise);
+
+
+
   const doSubmitForApproval = async () => {
     setBusy(true);
     try {
