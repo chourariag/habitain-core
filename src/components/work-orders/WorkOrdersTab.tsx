@@ -865,7 +865,15 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
           )}
         </div>
 
-        <DialogFooter className="sticky bottom-0 bg-background pt-3 pb-4 px-6 border-t"><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
+        <DialogFooter className="sticky bottom-0 bg-background pt-3 pb-4 px-6 border-t">
+          {canEditWo && onEdit && (
+            <Button variant="outline" onClick={onEdit} style={{ borderColor: "#006039", color: "#006039" }}>
+              <Pencil className="h-4 w-4 mr-1" /> Edit
+            </Button>
+          )}
+          <Button variant="outline" onClick={onClose}>Close</Button>
+        </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
