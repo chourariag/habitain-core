@@ -11,6 +11,7 @@ import { Check, Loader2, ClipboardCheck, Upload, Video, Eye } from "lucide-react
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { insertNotifications } from "@/lib/notifications";
+import { canSubmitSiteReadiness } from "@/lib/site-readiness-permissions";
 
 interface Props {
   projectId: string;
@@ -57,7 +58,7 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Site-present roles fill the readiness checklist on the ground; mirrors site_readiness RLS insert/update policy.
-  const canManage = ["site_engineer", "site_installation_mgr", "delivery_rm_lead", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canManage = canSubmitSiteReadiness(userRole);
 
   const section1Count = [state.foundation_ready, state.crane_booked, state.site_access_clear, state.team_briefed, state.safety_equipment].filter(Boolean).length;
   const section2Count = state.dry_run_video_url ? 1 : 0;
