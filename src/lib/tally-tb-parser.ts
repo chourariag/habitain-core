@@ -79,37 +79,51 @@ interface RawRow { row_number: number; name: string; debit: number; credit: numb
 
 /**
  * Detect group vs leaf rows.
- * A row is a group header if its value equals the sum of the top-level rows of
- * the contiguous block beneath it. Because Tally repeats the same total at each
- * nesting level (Loans → Unsecured Loans → four ledgers all = ₹54,43,265), the
- * WIDEST valid block is chosen so nested repeats collapse into one branch
- * instead of being mistaken for a single-child group.
+ *
+ * A row is a group header when its value equals the sum of the top-level rows
+ * of the contiguous block beneath it. The narrowest matching block is taken
+ * first, then the block is extended while its LAST top-level row is itself
+ * followed by rows summing to that row's own value — which is how Tally's
+ * repeated totals nest (Loans → Unsecured Loans → four ledgers, all
+ * ₹54,43,265; Current Liabilities → Provisions → Audit Fees Payable).
+ * Only leaf rows are ever summed.
  */
 export function buildHierarchy(raw: RawRow[]): TBRow[] {
-  const cache = new Map<string, { items: TBRow[]; topSum: number }>();
+  const cache = new Map<string, { items: TBRow[]; topSum: number; lastTopNet: number }>();
 
-  const classify = (start: number, end: number, parent: string | null): { items: TBRow[]; topSum: number } => {
-    if (start > end) return { items: [], topSum: 0 };
+  const classify = (start: number, end: number, parent: string | null): { items: TBRow[]; topSum: number; lastTopNet: number } => {
+    if (start > end) return { items: [], topSum: 0, lastTopNet: 0 };
     const key = `${start}:${end}:${parent ?? ""}`;
     const hit = cache.get(key);
     if (hit) return hit;
 
     const items: TBRow[] = [];
     let topSum = 0;
+    let lastTopNet = 0;
     let i = start;
     while (i <= end) {
       const r = raw[i];
       const net = r.debit - r.credit;
       let childEnd = -1;
-      let childItems: TBRow[] = [];
       if (Math.abs(net) > TOLERANCE) {
-        for (let j = end; j > i; j--) {
-          const block = classify(i + 1, j, r.name);
-          if (Math.abs(block.topSum - net) <= TOLERANCE) {
-            childEnd = j;
-            childItems = block.items;
-            break;
+        for (let j = i + 1; j <= end; j++) {
+          if (Math.abs(classify(i + 1, j, r.name).topSum - net) <= TOLERANCE) { childEnd = j; break; }
+        }
+      }
+      // Tail extension: the deepest repeated total may sit just outside the
+      // matched block — absorb it so nested duplicates stay one branch.
+      if (childEnd > i) {
+        for (;;) {
+          const blk = classify(i + 1, childEnd, r.name);
+          let extended = false;
+          for (let k = childEnd + 1; k <= end; k++) {
+            if (Math.abs(classify(childEnd + 1, k, r.name).topSum - blk.lastTopNet) <= TOLERANCE) {
+              childEnd = k;
+              extended = true;
+              break;
+            }
           }
+          if (!extended) break;
         }
       }
       const isGroup = childEnd > i;
@@ -126,14 +140,15 @@ export function buildHierarchy(raw: RawRow[]): TBRow[] {
         category: isGroup ? undefined : categorizeLedger(r.name),
       });
       topSum += net;
+      lastTopNet = net;
       if (isGroup) {
-        items.push(...childItems);
+        items.push(...classify(i + 1, childEnd, r.name).items);
         i = childEnd + 1;
       } else {
         i++;
       }
     }
-    const res = { items, topSum };
+    const res = { items, topSum, lastTopNet };
     cache.set(key, res);
     return res;
   };
@@ -148,6 +163,7 @@ export function buildHierarchy(raw: RawRow[]): TBRow[] {
   }
   return items;
 }
+
 
 
 export function parseTrialBalanceRows(rows: any[][]): TBParseResult {
