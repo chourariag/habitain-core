@@ -120,6 +120,11 @@ interface UploadSummary {
   period: string;
   reconciles: boolean;
   reconciliationMessage: string;
+  debitGap: number;
+  creditGap: number;
+  suspects: { row: number; ledger_name: string; reason: string }[];
+  /** True when the import was refused because the leaves do not reconcile. */
+  blocked: boolean;
 }
 
 export function MISTab() {
@@ -129,12 +134,13 @@ export function MISTab() {
   const [periodLabel, setPeriodLabel] = useState("");
   const [adsDrawerOpen, setAdsDrawerOpen] = useState(false);
   const [adsValues, setAdsValues] = useState<Record<string, number>>({});
-  const [unmappedLedgers, setUnmappedLedgers] = useState<string[]>([]);
+  const [suggestedLedgers, setSuggestedLedgers] = useState<SuggestedLedger[]>([]);
   const [mappingDrawerOpen, setMappingDrawerOpen] = useState(false);
   const [newMappings, setNewMappings] = useState<Record<string, string>>({});
   const [uploadSummary, setUploadSummary] = useState<UploadSummary | null>(null);
   const [confirmReplace, setConfirmReplace] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+
   const initialFetchDone = useRef(false);
 
   const currentUpload = uploads.find(u => u.id === currentUploadId) || null;
