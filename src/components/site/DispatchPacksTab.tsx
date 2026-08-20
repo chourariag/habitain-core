@@ -52,6 +52,7 @@ export function DispatchPacksTab({ projectId }: Props) {
   const [loading, setLoading] = useState(true);
   const [selectedPack, setSelectedPack] = useState<DispatchPack | null>(null);
   const [materialLog, setMaterialLog] = useState<MaterialLogItem[]>([]);
+  const [driverContact, setDriverContact] = useState<{ driver_name: string | null; driver_phone: string | null } | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [managerName, setManagerName] = useState<string | null>(null);
   const [teamNames, setTeamNames] = useState<string[]>([]);
@@ -80,7 +81,7 @@ export function DispatchPacksTab({ projectId }: Props) {
     setSelectedPack(pack);
     setLoadingDetail(true);
 
-    const [matRes, mgrRes, teamRes] = await Promise.all([
+    const [matRes, mgrRes, teamRes, dcRes] = await Promise.all([
       (supabase.from("dispatch_material_log") as any)
         .select("material_name,unit,qty_dispatched,note")
         .eq("dispatch_pack_id", pack.dispatch_pack_id),
@@ -90,11 +91,14 @@ export function DispatchPacksTab({ projectId }: Props) {
       (pack.team_member_ids?.length)
         ? supabase.from("profiles").select("auth_user_id,display_name").in("auth_user_id", pack.team_member_ids)
         : Promise.resolve({ data: [] }),
+      (supabase.from("dispatch_pack_driver_contact") as any)
+        .select("driver_name, driver_phone").eq("dispatch_pack_id", pack.id).maybeSingle(),
     ]);
 
     setMaterialLog(matRes.data ?? []);
     setManagerName((mgrRes.data as any)?.display_name ?? null);
     setTeamNames(((teamRes.data ?? []) as any[]).map((p) => p.display_name || "Unknown"));
+    setDriverContact((dcRes as any)?.data ?? null);
     setLoadingDetail(false);
   };
 
@@ -130,8 +134,16 @@ export function DispatchPacksTab({ projectId }: Props) {
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div><span style={{ color: "#666" }}>Type:</span> {selectedPack.vehicle_type}</div>
                   <div><span style={{ color: "#666" }}>Number:</span> {selectedPack.vehicle_number}</div>
-                  <div><span style={{ color: "#666" }}>Driver:</span> {selectedPack.driver_name}</div>
-                  <div><span style={{ color: "#666" }}>Phone:</span> {selectedPack.driver_phone}</div>
+                  {driverContact ? (
+                    <>
+                      <div><span style={{ color: "#666" }}>Driver:</span> {driverContact.driver_name ?? "—"}</div>
+                      <div><span style={{ color: "#666" }}>Phone:</span> {driverContact.driver_phone ?? "—"}</div>
+                    </>
+                  ) : (
+                    <div className="col-span-2 text-xs" style={{ color: "#666" }}>
+                      Driver contact details are restricted to dispatch &amp; logistics roles.
+                    </div>
+                  )}
                   {selectedPack.transporter_name && (
                     <div className="col-span-2"><span style={{ color: "#666" }}>Transporter:</span> {selectedPack.transporter_name}</div>
                   )}
