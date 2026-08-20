@@ -686,19 +686,29 @@ export function MISTab() {
         </SheetContent>
       </Sheet>
 
-      {/* Ledger Mapping Drawer */}
+      {/* Ledger Mapping Drawer — pre-filled auto-suggestions for bulk confirmation */}
       <Sheet open={mappingDrawerOpen} onOpenChange={setMappingDrawerOpen}>
-        <SheetContent className="overflow-y-auto">
-          <SheetHeader><SheetTitle className="font-display">Map Unmapped Ledgers</SheetTitle></SheetHeader>
-          <p className="text-xs py-2" style={{ color: "#666666" }}>Assign each ledger to an MIS category. This mapping is saved for future uploads.</p>
-          <div className="space-y-3 py-2">
-            {unmappedLedgers.map(name => (
-              <div key={name}>
-                <Label className="text-xs font-medium" style={{ color: "#1A1A1A" }}>{name}</Label>
+        <SheetContent className="overflow-y-auto sm:max-w-xl flex flex-col p-0">
+          <SheetHeader className="px-6 pt-6">
+            <SheetTitle className="font-display">Confirm Ledger Categories</SheetTitle>
+          </SheetHeader>
+          {(() => {
+            const high = suggestedLedgers.filter(s => s.confidence === "high");
+            const low = suggestedLedgers.filter(s => s.confidence !== "high");
+            const row = (s: SuggestedLedger) => (
+              <div key={s.name} className="rounded border p-2" style={{ borderColor: "#E5E7EB" }}>
+                <div className="flex justify-between gap-2 items-start">
+                  <Label className="text-xs font-medium" style={{ color: "#1A1A1A" }}>{s.name}</Label>
+                  <span className="text-[10px] font-mono" style={{ color: "#666" }}>₹{s.amount.toLocaleString("en-IN")}</span>
+                </div>
+                <p className="text-[10px] mt-0.5" style={{ color: "#999" }}>
+                  {s.chain.length ? s.chain.join(" › ") : "Top level"} · {s.reason}
+                </p>
                 <select
                   className="w-full mt-1 text-sm border rounded px-2 py-1.5"
-                  value={newMappings[name] || ""}
-                  onChange={e => setNewMappings(prev => ({ ...prev, [name]: e.target.value }))}
+                  style={{ borderColor: newMappings[s.name] ? "#006039" : "#D4860A" }}
+                  value={newMappings[s.name] || ""}
+                  onChange={e => setNewMappings(prev => ({ ...prev, [s.name]: e.target.value }))}
                 >
                   <option value="">— Select Category —</option>
                   {Object.entries(MIS_CATEGORIES).map(([k, v]) => (
@@ -706,13 +716,44 @@ export function MISTab() {
                   ))}
                 </select>
               </div>
-            ))}
-          </div>
-          <SheetFooter>
-            <Button onClick={saveMappings} className="w-full" style={{ backgroundColor: "#006039" }}>Save Mappings</Button>
+            );
+            return (
+              <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-4">
+                <p className="text-xs" style={{ color: "#666666" }}>
+                  Categories are auto-suggested from each ledger's name and its Tally group chain — nothing is applied until you save.
+                </p>
+                {low.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold" style={{ color: "#D4860A" }}>
+                      Needs your input ({low.length}) — no confident match
+                    </p>
+                    {low.map(row)}
+                  </div>
+                )}
+                {high.length > 0 && (
+                  <Collapsible defaultOpen>
+                    <CollapsibleTrigger className="text-xs font-semibold flex items-center gap-1 cursor-pointer" style={{ color: "#006039" }}>
+                      <ChevronDown className="h-3 w-3" /> Auto-suggested ({high.length}) — review &amp; confirm
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="space-y-2 pt-2">{high.map(row)}</div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+              </div>
+            );
+          })()}
+          <SheetFooter className="border-t px-6 py-3 flex-col gap-2 sm:flex-col" style={{ backgroundColor: "#F7F7F7" }}>
+            <p className="text-[11px] w-full" style={{ color: "#666" }}>
+              {Object.values(newMappings).filter(Boolean).length} of {suggestedLedgers.length} ledgers have a category
+            </p>
+            <Button onClick={saveMappings} className="w-full" style={{ backgroundColor: "#006039" }}>
+              Confirm &amp; Save {Object.values(newMappings).filter(Boolean).length} Mappings
+            </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
 
       {/* Replace Confirmation Dialog */}
       <Dialog open={confirmReplace} onOpenChange={setConfirmReplace}>
