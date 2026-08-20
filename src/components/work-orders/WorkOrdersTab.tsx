@@ -10,7 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Loader2, FileDown, AlertTriangle, CheckCircle2, XCircle, Send, Users, ArrowRight } from "lucide-react";
+import { Plus, Loader2, FileDown, AlertTriangle, CheckCircle2, XCircle, Send, Users, ArrowRight, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -65,6 +65,8 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
   const [loading, setLoading] = useState(true);
   const [openNew, setOpenNew] = useState(false);
   const [openDetail, setOpenDetail] = useState<any | null>(null);
+  const [editWo, setEditWo] = useState<any | null>(null);
+
 
   const canRaise = ["super_admin","managing_director","production_head","site_installation_mgr"].includes(role ?? "");
   const canCostingApprove = ["super_admin","managing_director","planning_engineer","costing_engineer"].includes(role ?? "");
@@ -167,14 +169,16 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
         </Card>
       )}
 
-      {openNew && (
+      {(openNew || editWo) && (
         <NewWorkOrderDialog
+          key={editWo?.id ?? "new"}
+          wo={editWo}
           projects={projectId ? projects.filter(p => p.id === projectId) : projects}
           defaultProjectId={projectId}
           subs={subs}
           mode={mode}
           userId={userId}
-          onClose={() => setOpenNew(false)}
+          onClose={() => { setOpenNew(false); setEditWo(null); }}
           onSaved={fetchAll}
           onSubsChanged={fetchAll}
         />
@@ -190,39 +194,44 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
           canDirectorApprove={canDirectorApprove}
           canIssue={canIssue}
           canRaise={canRaise}
+          onEdit={() => { setEditWo(openDetail); setOpenDetail(null); }}
           onClose={() => setOpenDetail(null)}
           onChanged={() => { fetchAll(); setOpenDetail(null); }}
         />
       )}
+
     </div>
   );
 }
 
-// ---------------- New WO Dialog ----------------
-function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, onClose, onSaved, onSubsChanged }: any) {
+// ---------------- New / Edit WO Dialog ----------------
+function NewWorkOrderDialog({ wo, projects, defaultProjectId, subs, mode, userId, onClose, onSaved, onSubsChanged }: any) {
+  const isEdit = !!wo;
   const [form, setForm] = useState({
-    project_id: defaultProjectId ?? (projects[0]?.id ?? ""),
-    subcontractor_id: "",
-    work_type: "",
-    scope_of_work: "",
-    location_area: "",
-    measurement_basis: "Per SFT",
-    quantity: "",
-    rate: "",
-    boq_category: "Miscellaneous",
-    planned_start_date: format(new Date(), "yyyy-MM-dd"),
-    planned_completion_date: "",
-    notes_to_costing: "",
+    project_id: wo?.project_id ?? defaultProjectId ?? (projects[0]?.id ?? ""),
+    subcontractor_id: wo?.subcontractor_id ?? "",
+    work_type: wo?.work_type ?? "",
+    scope_of_work: wo?.scope_of_work ?? "",
+    location_area: wo?.location_area ?? "",
+    measurement_basis: wo?.measurement_basis ?? "Per SFT",
+    quantity: wo?.quantity != null ? String(wo.quantity) : "",
+    rate: wo?.rate != null ? String(wo.rate) : "",
+    boq_category: wo?.boq_category ?? "Miscellaneous",
+    planned_start_date: wo?.planned_start_date ?? format(new Date(), "yyyy-MM-dd"),
+    planned_completion_date: wo?.planned_completion_date ?? "",
+    notes_to_costing: wo?.notes_to_costing ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const navigate = useNavigate();
 
   const filteredSubs = useMemo(() => {
-    if (mode === "factory") return subs.filter((s:any) => s.factory_or_site === "factory" || s.factory_or_site === "both");
-    if (mode === "site") return subs.filter((s:any) => s.factory_or_site === "site" || s.factory_or_site === "both");
+    const keep = (s:any) => isEdit && s.id === wo?.subcontractor_id;
+    if (mode === "factory") return subs.filter((s:any) => keep(s) || s.factory_or_site === "factory" || s.factory_or_site === "both");
+    if (mode === "site") return subs.filter((s:any) => keep(s) || s.factory_or_site === "site" || s.factory_or_site === "both");
     return subs;
-  }, [subs, mode]);
+  }, [subs, mode, isEdit, wo?.subcontractor_id]);
+
 
   const selectedSub = subs.find((s:any) => s.id === form.subcontractor_id);
   const total = Number(form.quantity || 0) * Number(form.rate || 0);
@@ -244,8 +253,7 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
     }
     setSaving(true);
     try {
-      const { data: profile } = await supabase.from("profiles").select("display_name").eq("auth_user_id", userId).maybeSingle();
-      const { error } = await supabase.from("work_orders").insert({
+      const payload: any = {
         project_id: form.project_id,
         subcontractor_id: form.subcontractor_id,
         work_type: form.work_type,
@@ -260,13 +268,28 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
         planned_start_date: form.planned_start_date,
         planned_completion_date: form.planned_completion_date,
         notes_to_costing: form.notes_to_costing.trim() || null,
-        raised_by: userId,
-        raised_by_name: profile?.display_name ?? null,
-        status: submitForApproval ? "pending_costing_approval" : "draft",
-      } as any);
-      if (error) throw error;
+      };
 
-      if (submitForApproval) {
+      // In edit mode status stays as-is, except a clarification_needed WO
+      // re-enters the costing queue on resubmit.
+      const resubmitting = isEdit && wo.status === "clarification_needed";
+      let notifyApprovers = submitForApproval;
+
+      if (isEdit) {
+        if (resubmitting) payload.status = "pending_costing_approval";
+        notifyApprovers = resubmitting;
+        const { error } = await supabase.from("work_orders").update(payload).eq("id", wo.id);
+        if (error) throw error;
+      } else {
+        const { data: profile } = await supabase.from("profiles").select("display_name").eq("auth_user_id", userId).maybeSingle();
+        payload.raised_by = userId;
+        payload.raised_by_name = profile?.display_name ?? null;
+        payload.status = submitForApproval ? "pending_costing_approval" : "draft";
+        const { error } = await supabase.from("work_orders").insert(payload);
+        if (error) throw error;
+      }
+
+      if (notifyApprovers) {
         // Notify costing engineers + finance director
         const { data: approvers } = await supabase
           .from("profiles").select("auth_user_id")
@@ -279,18 +302,19 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
             category: "work_order",
           })));
         }
-        toast.success("Work Order submitted for costing approval");
+        toast.success(resubmitting ? "Work Order updated and resubmitted for costing approval" : "Work Order submitted for costing approval");
       } else {
-        toast.success("Work Order saved as Draft");
+        toast.success(isEdit ? "Work Order updated" : "Work Order saved as Draft");
       }
       onSaved(); onClose();
     } catch (e:any) { toast.error(e.message); } finally { setSaving(false); }
   };
 
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6"><DialogTitle>New Work Order</DialogTitle></DialogHeader>
+        <DialogHeader className="px-6 pt-6"><DialogTitle>{isEdit ? "Edit Work Order" : "New Work Order"}</DialogTitle></DialogHeader>
         <div className="space-y-3 overflow-y-auto px-6 flex-1 max-h-[65vh]">
           <div className="grid grid-cols-2 gap-2">
             <div>
@@ -424,12 +448,21 @@ function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, on
         <DialogFooter className="sticky bottom-0 bg-background pt-3 pb-4 px-6 border-t">
 
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button variant="outline" onClick={() => save(false)} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save as Draft"}
-          </Button>
-          <Button onClick={() => save(true)} disabled={saving} style={{ background: "#006039" }}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit for Approval"}
-          </Button>
+          {isEdit ? (
+            <Button onClick={() => save(false)} disabled={saving} style={{ background: "#006039" }}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : wo.status === "clarification_needed" ? "Save & Resubmit" : "Save Changes"}
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => save(false)} disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save as Draft"}
+              </Button>
+              <Button onClick={() => save(true)} disabled={saving} style={{ background: "#006039" }}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit for Approval"}
+              </Button>
+            </>
+          )}
+
         </DialogFooter>
       </DialogContent>
       {quickAddOpen && (
@@ -547,7 +580,7 @@ function QuickAddSubcontractorDialog({ mode, onClose, onCreated }: any) {
 }
 
 // ---------------- Detail / Action Dialog ----------------
-function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingApprove, canDirectorApprove, canIssue, canRaise, onClose, onChanged }: any) {
+function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingApprove, canDirectorApprove, canIssue, canRaise, onEdit, onClose, onChanged }: any) {
   const [action, setAction] = useState<"approve"|"reject"|"clarify"|null>(null);
   const [note, setNote] = useState("");
   const [editRate, setEditRate] = useState(String(wo.rate));
@@ -681,6 +714,12 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
       wo.raised_by === userId ||
       SUBMIT_ROLES.includes(role ?? "")
     );
+
+  const canEditWo =
+    ["draft", "pending_costing_approval", "clarification_needed"].includes(wo.status) &&
+    (wo.raised_by === userId || canRaise);
+
+
 
   const doSubmitForApproval = async () => {
     setBusy(true);
@@ -832,7 +871,15 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
           )}
         </div>
 
-        <DialogFooter className="sticky bottom-0 bg-background pt-3 pb-4 px-6 border-t"><Button variant="outline" onClick={onClose}>Close</Button></DialogFooter>
+        <DialogFooter className="sticky bottom-0 bg-background pt-3 pb-4 px-6 border-t">
+          {canEditWo && onEdit && (
+            <Button variant="outline" onClick={onEdit} style={{ borderColor: "#006039", color: "#006039" }}>
+              <Pencil className="h-4 w-4 mr-1" /> Edit
+            </Button>
+          )}
+          <Button variant="outline" onClick={onClose}>Close</Button>
+        </DialogFooter>
+
       </DialogContent>
     </Dialog>
   );
