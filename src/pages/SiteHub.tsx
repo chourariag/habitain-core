@@ -170,7 +170,8 @@ function SiteHubContent() {
     }
   };
 
-  const canManageReadiness = ["site_installation_mgr", "super_admin", "managing_director"].includes(userRole ?? "");
+  // Site-present roles submit the readiness checklist — mirrors the site_readiness RLS insert/update policy.
+  const canManageReadiness = ["site_installation_mgr", "site_engineer", "delivery_rm_lead", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
   const canCreateDispatchPack = ["factory_floor_supervisor", "production_head", "super_admin", "managing_director"].includes(userRole ?? "");
   const canRequestAdvance = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
 
