@@ -314,7 +314,7 @@ function NewWorkOrderDialog({ wo, projects, defaultProjectId, subs, mode, userId
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="px-6 pt-6"><DialogTitle>New Work Order</DialogTitle></DialogHeader>
+        <DialogHeader className="px-6 pt-6"><DialogTitle>{isEdit ? "Edit Work Order" : "New Work Order"}</DialogTitle></DialogHeader>
         <div className="space-y-3 overflow-y-auto px-6 flex-1 max-h-[65vh]">
           <div className="grid grid-cols-2 gap-2">
             <div>
