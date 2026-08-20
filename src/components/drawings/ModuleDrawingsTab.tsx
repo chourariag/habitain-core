@@ -258,11 +258,11 @@ export function ModuleDrawingsTab({ projectId, moduleId, projectName }: Props) {
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-mono text-xs font-semibold" style={{ color: "#1A1A1A" }}>{dq.dq_code}</span>
                         <Badge variant="outline" style={{ backgroundColor: sb.bg, color: sb.color, border: "none" }}>{sb.label}</Badge>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#FFF8E8", color: "#D4860A" }}>{dq.urgency}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: "#FFF8E8", color: "#D4860A" }}>{DQ_URGENCY_LABELS[dq.urgency] ?? dq.urgency}</span>
                       </div>
                       <p className="text-xs mt-1 line-clamp-2" style={{ color: "#666" }}>{dq.description}</p>
                       <div className="flex flex-wrap gap-2 mt-1.5 text-[10px]" style={{ color: "#999" }}>
-                        <span>{dq.query_type}</span>
+                        <span>{DQ_TYPE_LABELS[dq.query_type] ?? dq.query_type}</span>
                         <span>by {dq.raised_by_name ?? "—"}</span>
                         <span>{formatDistanceToNow(new Date(dq.created_at), { addSuffix: true })}</span>
                       </div>
