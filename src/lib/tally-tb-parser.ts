@@ -15,6 +15,10 @@ export interface TBRow {
   is_group: boolean;        // group / subtotal row — never summed
   is_excluded: boolean;     // P&L A/c, Difference in opening balances, etc.
   parent_name: string | null;
+  /** Root group → … → immediate parent (excludes the row itself). */
+  ancestors: string[];
+  /** Raw Excel indent of the Particulars cell, when the file carries it. */
+  indent?: number;
   category?: string;
 }
 
@@ -30,8 +34,14 @@ export interface TBParseResult {
   fileGrandTotalCredit: number | null;
   reconciles: boolean;
   reconciliationMessage: string;
+  /** Leaf total − file Grand Total (0 when reconciled). */
+  debitGap: number;
+  creditGap: number;
+  /** Rows whose arithmetic classification disagrees with the file's indent metadata. */
+  suspects: { row: number; ledger_name: string; reason: string }[];
   skipped: { row: number; reason: string }[];
 }
+
 
 /** Rows never mapped to an operational MIS category (closing / reconciliation entries). */
 export const EXCLUDED_LEDGER_PATTERNS: RegExp[] = [
