@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.test_site_readiness_rls() TO anon;

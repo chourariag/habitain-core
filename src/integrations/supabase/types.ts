@@ -15102,6 +15102,14 @@ export type Database = {
         }
         Returns: string
       }
+      test_site_readiness_rls: {
+        Args: never
+        Returns: {
+          check_name: string
+          detail: string
+          passed: boolean
+        }[]
+      }
       unlock_locked_document: {
         Args: { p_reason: string; p_record_id: string; p_record_table: string }
         Returns: string
