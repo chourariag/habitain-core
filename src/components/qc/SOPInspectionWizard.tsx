@@ -77,10 +77,16 @@ export function SOPInspectionWizard({
     if (!open) return;
     supabase
       .from("projects")
-      .select("id, name, construction_type, project_code")
+      .select("id, name, construction_type")
       .eq("is_archived", false)
       .order("created_at", { ascending: false })
-      .then(({ data }) => setProjects(data ?? []));
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Failed to load projects:", error);
+          toast.error("Failed to load projects: " + error.message);
+        }
+        setProjects(data ?? []);
+      });
   }, [open]);
 
   // Load modules for project
@@ -256,7 +262,7 @@ export function SOPInspectionWizard({
                 <SelectContent>
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
-                      {p.project_code ? `${p.project_code} — ` : ""}{p.name}
+                      {p.name}
                       <Badge variant="outline" className="ml-2 text-[10px]">{p.construction_type || "modular"}</Badge>
                     </SelectItem>
                   ))}
