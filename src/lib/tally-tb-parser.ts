@@ -175,7 +175,7 @@ export function buildHierarchy(raw: RawRow[], targetDebit?: number | null, targe
 
 
 
-export function parseTrialBalanceRows(rows: any[][]): TBParseResult {
+export function parseTrialBalanceRows(rows: any[][], indentByRow?: Record<number, number>): TBParseResult {
   const skipped: { row: number; reason: string }[] = [];
   const headerBlock: string[] = [];
   let detectedPeriod = "";
@@ -228,7 +228,7 @@ export function parseTrialBalanceRows(rows: any[][]): TBParseResult {
       skipped.push({ row: i + 1, reason: `All values zero: "${name}"` });
       continue;
     }
-    raw.push({ row_number: i + 1, name, debit, credit });
+    raw.push({ row_number: i + 1, name, debit, credit, indent: indentByRow?.[i + 1] });
   }
 
   const tree = buildHierarchy(raw, fileGrandTotalDebit, fileGrandTotalCredit);
@@ -245,12 +245,34 @@ export function parseTrialBalanceRows(rows: any[][]): TBParseResult {
       Math.abs(leafCreditTotal - (fileGrandTotalCredit ?? 0)) <= TOLERANCE);
 
   const reconciles = sidesMatch && grandMatch;
-  const fmt = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
+  const debitGap = fileGrandTotalDebit == null ? 0 : leafDebitTotal - fileGrandTotalDebit;
+  const creditGap = fileGrandTotalCredit == null ? 0 : leafCreditTotal - fileGrandTotalCredit;
+
+  // Cross-check the arithmetic tree against the file's own indent metadata:
+  // a row followed by a more deeply indented row should be a group, and vice versa.
+  const suspects: { row: number; ledger_name: string; reason: string }[] = [];
+  if (indentByRow && !reconciles) {
+    const ordered = [...tree].sort((a, b) => a.row_number - b.row_number);
+    ordered.forEach((r, i) => {
+      const next = ordered[i + 1];
+      const ri = indentByRow[r.row_number];
+      const ni = next ? indentByRow[next.row_number] : undefined;
+      if (ri == null || ni == null) return;
+      const indentSaysGroup = ni > ri;
+      if (indentSaysGroup && !r.is_group) {
+        suspects.push({ row: r.row_number, ledger_name: r.ledger_name, reason: "Indent suggests a group header, but it was summed as a leaf" });
+      } else if (!indentSaysGroup && r.is_group) {
+        suspects.push({ row: r.row_number, ledger_name: r.ledger_name, reason: "Treated as a group, but the indent suggests a leaf ledger" });
+      }
+    });
+  }
+
+  const fmt = (n: number) => `₹${Math.round(Math.abs(n)).toLocaleString("en-IN")}`;
   const reconciliationMessage = reconciles
     ? `Reconciled — ${leaves.length} leaf ledgers, ${groups.length} group rows. Leaf Debit = Leaf Credit = ${fmt(leafDebitTotal)}${fileGrandTotalDebit != null ? " (matches file Grand Total)" : ""}.`
     : !sidesMatch
-      ? `Does not reconcile — leaf Debit ${fmt(leafDebitTotal)} ≠ leaf Credit ${fmt(leafCreditTotal)}.`
-      : `Does not reconcile — leaf totals ${fmt(leafDebitTotal)} / ${fmt(leafCreditTotal)} do not match the file's Grand Total ${fmt(fileGrandTotalDebit || 0)} / ${fmt(fileGrandTotalCredit || 0)}.`;
+      ? `Does not reconcile — leaf Debit ${fmt(leafDebitTotal)} ≠ leaf Credit ${fmt(leafCreditTotal)} (out by ${fmt(leafDebitTotal - leafCreditTotal)}).`
+      : `Does not reconcile — leaf totals ${fmt(leafDebitTotal)} / ${fmt(leafCreditTotal)} vs the file's Grand Total ${fmt(fileGrandTotalDebit || 0)} / ${fmt(fileGrandTotalCredit || 0)} (gap ${fmt(debitGap)} debit, ${fmt(creditGap)} credit).`;
 
   return {
     rows: tree,
@@ -264,14 +286,54 @@ export function parseTrialBalanceRows(rows: any[][]): TBParseResult {
     fileGrandTotalCredit,
     reconciles,
     reconciliationMessage,
+    debitGap,
+    creditGap,
+    suspects,
     skipped,
   };
 }
 
+/**
+ * Read the Excel indent level of every Particulars (column A) cell.
+ * Tally writes real indents (0 = top-level group, deeper = sub-group / ledger);
+ * SheetJS drops them, so the workbook zip is read directly.
+ * Returns a 1-indexed row → indent map, or null when unavailable (e.g. CSV).
+ */
+export async function extractIndentMap(buf: ArrayBuffer): Promise<Record<number, number> | null> {
+  try {
+    const { unzipSync, strFromU8 } = await import("fflate");
+    const zip = unzipSync(new Uint8Array(buf));
+    const stylesFile = zip["xl/styles.xml"];
+    const sheetKey = Object.keys(zip).find(k => /^xl\/worksheets\/sheet\d+\.xml$/.test(k));
+    if (!stylesFile || !sheetKey) return null;
+    const styles = strFromU8(stylesFile);
+    const cellXfs = styles.split("<cellXfs")[1]?.split("</cellXfs>")[0];
+    if (!cellXfs) return null;
+    const indents = [...cellXfs.matchAll(/<xf\b[\s\S]*?(?:\/>|<\/xf>)/g)].map(m => {
+      const a = m[0].match(/indent="(\d+)"/);
+      return a ? Number(a[1]) : 0;
+    });
+    const sheet = strFromU8(zip[sheetKey]);
+    const out: Record<number, number> = {};
+    for (const rm of sheet.matchAll(/<row[^>]*r="(\d+)"[^>]*>([\s\S]*?)<\/row>/g)) {
+      const rn = Number(rm[1]);
+      const cm = rm[2].match(new RegExp(`<c r="A${rn}"[^>]*>`));
+      const s = cm && cm[0].match(/s="(\d+)"/);
+      out[rn] = s ? indents[Number(s[1])] ?? 0 : 0;
+    }
+    return Object.keys(out).length ? out : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function parseTrialBalanceFile(file: File): Promise<TBParseResult> {
   const XLSX = await import("xlsx");
-  const wb = XLSX.read(await file.arrayBuffer());
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf);
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-  return parseTrialBalanceRows(rows);
+  const indentByRow = await extractIndentMap(buf);
+  return parseTrialBalanceRows(rows, indentByRow ?? undefined);
 }
+
