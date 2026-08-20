@@ -204,31 +204,34 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
   );
 }
 
-// ---------------- New WO Dialog ----------------
-function NewWorkOrderDialog({ projects, defaultProjectId, subs, mode, userId, onClose, onSaved, onSubsChanged }: any) {
+// ---------------- New / Edit WO Dialog ----------------
+function NewWorkOrderDialog({ wo, projects, defaultProjectId, subs, mode, userId, onClose, onSaved, onSubsChanged }: any) {
+  const isEdit = !!wo;
   const [form, setForm] = useState({
-    project_id: defaultProjectId ?? (projects[0]?.id ?? ""),
-    subcontractor_id: "",
-    work_type: "",
-    scope_of_work: "",
-    location_area: "",
-    measurement_basis: "Per SFT",
-    quantity: "",
-    rate: "",
-    boq_category: "Miscellaneous",
-    planned_start_date: format(new Date(), "yyyy-MM-dd"),
-    planned_completion_date: "",
-    notes_to_costing: "",
+    project_id: wo?.project_id ?? defaultProjectId ?? (projects[0]?.id ?? ""),
+    subcontractor_id: wo?.subcontractor_id ?? "",
+    work_type: wo?.work_type ?? "",
+    scope_of_work: wo?.scope_of_work ?? "",
+    location_area: wo?.location_area ?? "",
+    measurement_basis: wo?.measurement_basis ?? "Per SFT",
+    quantity: wo?.quantity != null ? String(wo.quantity) : "",
+    rate: wo?.rate != null ? String(wo.rate) : "",
+    boq_category: wo?.boq_category ?? "Miscellaneous",
+    planned_start_date: wo?.planned_start_date ?? format(new Date(), "yyyy-MM-dd"),
+    planned_completion_date: wo?.planned_completion_date ?? "",
+    notes_to_costing: wo?.notes_to_costing ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const navigate = useNavigate();
 
   const filteredSubs = useMemo(() => {
-    if (mode === "factory") return subs.filter((s:any) => s.factory_or_site === "factory" || s.factory_or_site === "both");
-    if (mode === "site") return subs.filter((s:any) => s.factory_or_site === "site" || s.factory_or_site === "both");
+    const keep = (s:any) => isEdit && s.id === wo?.subcontractor_id;
+    if (mode === "factory") return subs.filter((s:any) => keep(s) || s.factory_or_site === "factory" || s.factory_or_site === "both");
+    if (mode === "site") return subs.filter((s:any) => keep(s) || s.factory_or_site === "site" || s.factory_or_site === "both");
     return subs;
-  }, [subs, mode]);
+  }, [subs, mode, isEdit, wo?.subcontractor_id]);
+
 
   const selectedSub = subs.find((s:any) => s.id === form.subcontractor_id);
   const total = Number(form.quantity || 0) * Number(form.rate || 0);
