@@ -12,33 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { WIPStatement } from "@/components/finance/WIPStatement";
 import { parseTrialBalanceFile, type TBRow } from "@/lib/tally-tb-parser";
+import { MIS_CATEGORIES, suggestMISCategory, type MISCategory } from "@/lib/tally-mis-mapping";
 
-const MIS_CATEGORIES = {
-  revenue: "Sales Revenue",
-  other_income: "Other Income",
-  unbilled_revenue: "Unbilled Revenue",
-  raw_materials: "Raw Materials",
-  manufacturing: "Manufacturing Expenses",
-  rent_electricity: "Rent + Electricity",
-  salaries: "Salaries",
-  director_remuneration: "Director Remuneration",
-  other_fixed: "Other Fixed Expenses",
-  depreciation: "Depreciation",
-  interest: "Interest",
-  tax: "Tax",
-  // Balance Sheet (leaf ledgers only)
-  bs_capital: "Capital & Reserves",
-  bs_loans: "Loans & Borrowings",
-  bs_debtors: "Sundry Debtors",
-  bs_creditors: "Sundry Creditors",
-  bs_fixed_assets: "Fixed Assets",
-  bs_bank_cash: "Bank & Cash",
-  bs_inventory: "Inventory",
-  bs_duties_taxes: "Duties & Taxes",
-  bs_other_bs: "Other Balance Sheet",
-} as const;
-
-type MISCategory = keyof typeof MIS_CATEGORIES;
 
 interface LedgerEntry {
   ledger_name: string;
@@ -53,7 +28,19 @@ interface LedgerEntry {
   is_excluded?: boolean;
   level?: number;
   parent_name?: string | null;
+  /** Root group → … → immediate parent. */
+  ancestors?: string[];
 }
+
+interface SuggestedLedger {
+  name: string;
+  chain: string[];
+  amount: number;
+  suggested: MISCategory | null;
+  confidence: "high" | "low";
+  reason: string;
+}
+
 
 /** Only leaf ledgers that are not reconciliation entries may be summed or mapped. */
 const isMappable = (e: LedgerEntry) => !e.is_group && !e.is_excluded;
@@ -133,6 +120,11 @@ interface UploadSummary {
   period: string;
   reconciles: boolean;
   reconciliationMessage: string;
+  debitGap: number;
+  creditGap: number;
+  suspects: { row: number; ledger_name: string; reason: string }[];
+  /** True when the import was refused because the leaves do not reconcile. */
+  blocked: boolean;
 }
 
 export function MISTab() {
@@ -142,12 +134,13 @@ export function MISTab() {
   const [periodLabel, setPeriodLabel] = useState("");
   const [adsDrawerOpen, setAdsDrawerOpen] = useState(false);
   const [adsValues, setAdsValues] = useState<Record<string, number>>({});
-  const [unmappedLedgers, setUnmappedLedgers] = useState<string[]>([]);
+  const [suggestedLedgers, setSuggestedLedgers] = useState<SuggestedLedger[]>([]);
   const [mappingDrawerOpen, setMappingDrawerOpen] = useState(false);
   const [newMappings, setNewMappings] = useState<Record<string, string>>({});
   const [uploadSummary, setUploadSummary] = useState<UploadSummary | null>(null);
   const [confirmReplace, setConfirmReplace] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+
   const initialFetchDone = useRef(false);
 
   const currentUpload = uploads.find(u => u.id === currentUploadId) || null;
@@ -194,12 +187,36 @@ export function MISTab() {
         is_excluded: r.is_excluded,
         level: r.level,
         parent_name: r.parent_name,
+        ancestors: r.ancestors,
       }));
 
       if (entries.length === 0) { toast.error("No data rows found in file"); return; }
 
       // Use detected period or user-entered label
       const finalPeriod = periodLabel.trim() || parsed.detectedPeriod || "Unknown Period";
+
+      // ── HARD RECONCILIATION GATE ──
+      // Leaf debits must equal leaf credits AND the file's own Grand Total.
+      // If they don't, nothing is imported or categorised — the gap is shown instead.
+      if (!parsed.reconciles) {
+        setUploadSummary({
+          total: entries.length,
+          groups: parsed.groups.length,
+          leaves: parsed.leaves.length,
+          excluded: parsed.rows.filter(r => r.is_excluded).length,
+          categories: {},
+          skipped: parsed.skipped,
+          period: finalPeriod,
+          reconciles: false,
+          reconciliationMessage: parsed.reconciliationMessage,
+          debitGap: parsed.debitGap,
+          creditGap: parsed.creditGap,
+          suspects: parsed.suspects,
+          blocked: true,
+        });
+        toast.error("Import stopped — trial balance does not reconcile. Review the gap before importing.");
+        return;
+      }
 
       // Delete existing uploads for same period
       const existing = uploads.find(u => u.period_label === finalPeriod);
@@ -215,14 +232,28 @@ export function MISTab() {
       }).select().single();
       if (error) throw error;
 
-      // Only leaf ledgers (excluding reconciliation entries) need a category mapping
-      const unmapped = entries
-        .filter(e => isMappable(e))
-        .map(e => e.ledger_name)
-        .filter(name => !mappings[name]);
-      if (unmapped.length > 0) {
-        setUnmappedLedgers([...new Set(unmapped)]);
-        setNewMappings({});
+      // Only leaf ledgers (excluding reconciliation entries) need a category mapping.
+      // Each unmapped leaf gets a pre-filled suggestion from its name + group chain.
+      const seen = new Set<string>();
+      const suggestions: SuggestedLedger[] = [];
+      entries.filter(isMappable).forEach(e => {
+        if (mappings[e.ledger_name] || seen.has(e.ledger_name)) return;
+        seen.add(e.ledger_name);
+        const s = suggestMISCategory(e.ledger_name, e.ancestors || []);
+        suggestions.push({
+          name: e.ledger_name,
+          chain: e.ancestors || [],
+          amount: Math.abs(e.debit || e.credit),
+          suggested: s.category,
+          confidence: s.confidence,
+          reason: s.reason,
+        });
+      });
+      if (suggestions.length > 0) {
+        const prefill: Record<string, string> = {};
+        suggestions.forEach(s => { if (s.suggested) prefill[s.name] = s.suggested; });
+        setSuggestedLedgers(suggestions);
+        setNewMappings(prefill);
         setMappingDrawerOpen(true);
       }
 
@@ -250,17 +281,18 @@ export function MISTab() {
         categories,
         skipped: parsed.skipped,
         period: finalPeriod,
-        reconciles: parsed.reconciles,
+        reconciles: true,
         reconciliationMessage: parsed.reconciliationMessage,
+        debitGap: parsed.debitGap,
+        creditGap: parsed.creditGap,
+        suspects: parsed.suspects,
+        blocked: false,
       });
 
-      if (parsed.reconciles) {
-        toast.success(`${parsed.leaves.length} leaf ledgers imported (${parsed.groups.length} group rows kept for drill-down)`);
-      } else {
-        toast.warning(`Imported, but the trial balance does not reconcile — review before using. ${parsed.reconciliationMessage}`);
-      }
+      toast.success(`${parsed.leaves.length} leaf ledgers imported (${parsed.groups.length} group rows kept for drill-down)`);
       setPeriodLabel("");
     } catch (err: any) {
+
       toast.error(err.message || "Upload failed");
     }
   };
@@ -400,20 +432,40 @@ export function MISTab() {
       {uploadSummary && (
         <Card>
           <CardContent className="pt-4 space-y-2">
-            <p className="text-sm font-semibold font-display" style={{ color: uploadSummary.reconciles ? "#006039" : "#D4860A" }}>
-              {uploadSummary.reconciles ? "✓ Uploaded Successfully" : "⚠ Uploaded — needs review"} — {uploadSummary.leaves} leaf ledgers imported
+            <p className="text-sm font-semibold font-display" style={{ color: uploadSummary.blocked ? "#F40009" : "#006039" }}>
+              {uploadSummary.blocked
+                ? `✕ Import stopped — trial balance does not reconcile`
+                : `✓ Uploaded Successfully — ${uploadSummary.leaves} leaf ledgers imported`}
             </p>
             <p className="text-xs" style={{ color: "#1A1A1A" }}>Period: {uploadSummary.period}</p>
             <p className="text-xs" style={{ color: "#666" }}>
-              {uploadSummary.groups} group / sub-total rows kept for drill-down only (never summed)
+              {uploadSummary.leaves} leaf ledgers · {uploadSummary.groups} group / sub-total rows kept for drill-down only (never summed)
               {uploadSummary.excluded > 0 ? ` · ${uploadSummary.excluded} reconciliation rows excluded (P&L A/c, opening-balance difference)` : ""}
             </p>
             <p className="text-xs font-mono p-2 rounded" style={{
-              color: uploadSummary.reconciles ? "#006039" : "#D4860A",
-              backgroundColor: uploadSummary.reconciles ? "#E8F2ED" : "#FDF6E7",
+              color: uploadSummary.blocked ? "#F40009" : "#006039",
+              backgroundColor: uploadSummary.blocked ? "#FFF0F0" : "#E8F2ED",
             }}>
               {uploadSummary.reconciliationMessage}
             </p>
+            {uploadSummary.blocked && (
+              <div className="text-xs space-y-1 p-2 rounded" style={{ backgroundColor: "#FDF6E7", color: "#1A1A1A" }}>
+                <p>Nothing was imported or categorised. Gap: <strong>₹{Math.round(Math.abs(uploadSummary.debitGap)).toLocaleString("en-IN")}</strong> debit / <strong>₹{Math.round(Math.abs(uploadSummary.creditGap)).toLocaleString("en-IN")}</strong> credit.</p>
+                {uploadSummary.suspects.length > 0 ? (
+                  <>
+                    <p className="font-semibold" style={{ color: "#D4860A" }}>Suspected misclassified rows ({uploadSummary.suspects.length}):</p>
+                    <div className="max-h-40 overflow-y-auto space-y-0.5">
+                      {uploadSummary.suspects.map(s => (
+                        <p key={s.row} className="text-[10px]" style={{ color: "#666" }}>Row {s.row} · {s.ledger_name} — {s.reason}</p>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-[11px]" style={{ color: "#666" }}>No indent/arithmetic conflicts found — check the file's own Grand Total row and any rows with missing Debit/Credit values.</p>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-3 text-xs">
               {Object.entries(uploadSummary.categories).map(([cat, count]) => (
                 <span key={cat} className="px-2 py-1 rounded" style={{
@@ -654,19 +706,29 @@ export function MISTab() {
         </SheetContent>
       </Sheet>
 
-      {/* Ledger Mapping Drawer */}
+      {/* Ledger Mapping Drawer — pre-filled auto-suggestions for bulk confirmation */}
       <Sheet open={mappingDrawerOpen} onOpenChange={setMappingDrawerOpen}>
-        <SheetContent className="overflow-y-auto">
-          <SheetHeader><SheetTitle className="font-display">Map Unmapped Ledgers</SheetTitle></SheetHeader>
-          <p className="text-xs py-2" style={{ color: "#666666" }}>Assign each ledger to an MIS category. This mapping is saved for future uploads.</p>
-          <div className="space-y-3 py-2">
-            {unmappedLedgers.map(name => (
-              <div key={name}>
-                <Label className="text-xs font-medium" style={{ color: "#1A1A1A" }}>{name}</Label>
+        <SheetContent className="overflow-y-auto sm:max-w-xl flex flex-col p-0">
+          <SheetHeader className="px-6 pt-6">
+            <SheetTitle className="font-display">Confirm Ledger Categories</SheetTitle>
+          </SheetHeader>
+          {(() => {
+            const high = suggestedLedgers.filter(s => s.confidence === "high");
+            const low = suggestedLedgers.filter(s => s.confidence !== "high");
+            const row = (s: SuggestedLedger) => (
+              <div key={s.name} className="rounded border p-2" style={{ borderColor: "#E5E7EB" }}>
+                <div className="flex justify-between gap-2 items-start">
+                  <Label className="text-xs font-medium" style={{ color: "#1A1A1A" }}>{s.name}</Label>
+                  <span className="text-[10px] font-mono" style={{ color: "#666" }}>₹{s.amount.toLocaleString("en-IN")}</span>
+                </div>
+                <p className="text-[10px] mt-0.5" style={{ color: "#999" }}>
+                  {s.chain.length ? s.chain.join(" › ") : "Top level"} · {s.reason}
+                </p>
                 <select
                   className="w-full mt-1 text-sm border rounded px-2 py-1.5"
-                  value={newMappings[name] || ""}
-                  onChange={e => setNewMappings(prev => ({ ...prev, [name]: e.target.value }))}
+                  style={{ borderColor: newMappings[s.name] ? "#006039" : "#D4860A" }}
+                  value={newMappings[s.name] || ""}
+                  onChange={e => setNewMappings(prev => ({ ...prev, [s.name]: e.target.value }))}
                 >
                   <option value="">— Select Category —</option>
                   {Object.entries(MIS_CATEGORIES).map(([k, v]) => (
@@ -674,13 +736,44 @@ export function MISTab() {
                   ))}
                 </select>
               </div>
-            ))}
-          </div>
-          <SheetFooter>
-            <Button onClick={saveMappings} className="w-full" style={{ backgroundColor: "#006039" }}>Save Mappings</Button>
+            );
+            return (
+              <div className="flex-1 overflow-y-auto px-6 pb-4 space-y-4">
+                <p className="text-xs" style={{ color: "#666666" }}>
+                  Categories are auto-suggested from each ledger's name and its Tally group chain — nothing is applied until you save.
+                </p>
+                {low.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold" style={{ color: "#D4860A" }}>
+                      Needs your input ({low.length}) — no confident match
+                    </p>
+                    {low.map(row)}
+                  </div>
+                )}
+                {high.length > 0 && (
+                  <Collapsible defaultOpen>
+                    <CollapsibleTrigger className="text-xs font-semibold flex items-center gap-1 cursor-pointer" style={{ color: "#006039" }}>
+                      <ChevronDown className="h-3 w-3" /> Auto-suggested ({high.length}) — review &amp; confirm
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="space-y-2 pt-2">{high.map(row)}</div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                )}
+              </div>
+            );
+          })()}
+          <SheetFooter className="border-t px-6 py-3 flex-col gap-2 sm:flex-col" style={{ backgroundColor: "#F7F7F7" }}>
+            <p className="text-[11px] w-full" style={{ color: "#666" }}>
+              {Object.values(newMappings).filter(Boolean).length} of {suggestedLedgers.length} ledgers have a category
+            </p>
+            <Button onClick={saveMappings} className="w-full" style={{ backgroundColor: "#006039" }}>
+              Confirm &amp; Save {Object.values(newMappings).filter(Boolean).length} Mappings
+            </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
 
       {/* Replace Confirmation Dialog */}
       <Dialog open={confirmReplace} onOpenChange={setConfirmReplace}>
