@@ -448,12 +448,21 @@ function NewWorkOrderDialog({ wo, projects, defaultProjectId, subs, mode, userId
         <DialogFooter className="sticky bottom-0 bg-background pt-3 pb-4 px-6 border-t">
 
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button variant="outline" onClick={() => save(false)} disabled={saving}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save as Draft"}
-          </Button>
-          <Button onClick={() => save(true)} disabled={saving} style={{ background: "#006039" }}>
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit for Approval"}
-          </Button>
+          {isEdit ? (
+            <Button onClick={() => save(false)} disabled={saving} style={{ background: "#006039" }}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : wo.status === "clarification_needed" ? "Save & Resubmit" : "Save Changes"}
+            </Button>
+          ) : (
+            <>
+              <Button variant="outline" onClick={() => save(false)} disabled={saving}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save as Draft"}
+              </Button>
+              <Button onClick={() => save(true)} disabled={saving} style={{ background: "#006039" }}>
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Submit for Approval"}
+              </Button>
+            </>
+          )}
+
         </DialogFooter>
       </DialogContent>
       {quickAddOpen && (
