@@ -56,8 +56,8 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Nazim (site_engineer) fills the readiness checklist on the ground; Awaiz + admins can also edit.
-  const canManage = ["site_engineer", "site_installation_mgr", "super_admin", "managing_director"].includes(userRole ?? "");
+  // Site-present roles fill the readiness checklist on the ground; mirrors site_readiness RLS insert/update policy.
+  const canManage = ["site_engineer", "site_installation_mgr", "delivery_rm_lead", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
 
   const section1Count = [state.foundation_ready, state.crane_booked, state.site_access_clear, state.team_briefed, state.safety_equipment].filter(Boolean).length;
   const section2Count = state.dry_run_video_url ? 1 : 0;
