@@ -580,7 +580,7 @@ function QuickAddSubcontractorDialog({ mode, onClose, onCreated }: any) {
 }
 
 // ---------------- Detail / Action Dialog ----------------
-function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingApprove, canDirectorApprove, canIssue, canRaise, onClose, onChanged }: any) {
+function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingApprove, canDirectorApprove, canIssue, canRaise, onEdit, onClose, onChanged }: any) {
   const [action, setAction] = useState<"approve"|"reject"|"clarify"|null>(null);
   const [note, setNote] = useState("");
   const [editRate, setEditRate] = useState(String(wo.rate));
