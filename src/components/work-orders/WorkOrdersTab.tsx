@@ -253,8 +253,7 @@ function NewWorkOrderDialog({ wo, projects, defaultProjectId, subs, mode, userId
     }
     setSaving(true);
     try {
-      const { data: profile } = await supabase.from("profiles").select("display_name").eq("auth_user_id", userId).maybeSingle();
-      const { error } = await supabase.from("work_orders").insert({
+      const payload: any = {
         project_id: form.project_id,
         subcontractor_id: form.subcontractor_id,
         work_type: form.work_type,
@@ -269,13 +268,28 @@ function NewWorkOrderDialog({ wo, projects, defaultProjectId, subs, mode, userId
         planned_start_date: form.planned_start_date,
         planned_completion_date: form.planned_completion_date,
         notes_to_costing: form.notes_to_costing.trim() || null,
-        raised_by: userId,
-        raised_by_name: profile?.display_name ?? null,
-        status: submitForApproval ? "pending_costing_approval" : "draft",
-      } as any);
-      if (error) throw error;
+      };
 
-      if (submitForApproval) {
+      // In edit mode status stays as-is, except a clarification_needed WO
+      // re-enters the costing queue on resubmit.
+      const resubmitting = isEdit && wo.status === "clarification_needed";
+      let notifyApprovers = submitForApproval;
+
+      if (isEdit) {
+        if (resubmitting) payload.status = "pending_costing_approval";
+        notifyApprovers = resubmitting;
+        const { error } = await supabase.from("work_orders").update(payload).eq("id", wo.id);
+        if (error) throw error;
+      } else {
+        const { data: profile } = await supabase.from("profiles").select("display_name").eq("auth_user_id", userId).maybeSingle();
+        payload.raised_by = userId;
+        payload.raised_by_name = profile?.display_name ?? null;
+        payload.status = submitForApproval ? "pending_costing_approval" : "draft";
+        const { error } = await supabase.from("work_orders").insert(payload);
+        if (error) throw error;
+      }
+
+      if (notifyApprovers) {
         // Notify costing engineers + finance director
         const { data: approvers } = await supabase
           .from("profiles").select("auth_user_id")
@@ -288,13 +302,14 @@ function NewWorkOrderDialog({ wo, projects, defaultProjectId, subs, mode, userId
             category: "work_order",
           })));
         }
-        toast.success("Work Order submitted for costing approval");
+        toast.success(resubmitting ? "Work Order updated and resubmitted for costing approval" : "Work Order submitted for costing approval");
       } else {
-        toast.success("Work Order saved as Draft");
+        toast.success(isEdit ? "Work Order updated" : "Work Order saved as Draft");
       }
       onSaved(); onClose();
     } catch (e:any) { toast.error(e.message); } finally { setSaving(false); }
   };
+
 
   return (
     <Dialog open onOpenChange={onClose}>
