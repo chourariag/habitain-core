@@ -181,82 +181,25 @@ export function MISTab() {
     }
   }, [fetchData]);
 
-  const parseTallyTB = async (file: File): Promise<{ entries: LedgerEntry[]; skipped: { row: number; reason: string }[]; detectedPeriod: string }> => {
-    const XLSX = await import("xlsx");
-    const data = await file.arrayBuffer();
-    const wb = XLSX.read(data);
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows: any[] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-
-    // Find header row: scan for row containing "Particulars" in column A
-    let headerRowIdx = -1;
-    let detectedPeriod = "";
-    for (let i = 0; i < Math.min(rows.length, 20); i++) {
-      const cellA = String(rows[i]?.[0] || "").trim().toLowerCase();
-      // Detect period from date range row (e.g. "1-Apr-25 to 31-Mar-26")
-      if (/\d{1,2}-[a-z]{3}-\d{2,4}\s+to\s+\d{1,2}-[a-z]{3}-\d{2,4}/i.test(String(rows[i]?.[0] || ""))) {
-        detectedPeriod = String(rows[i][0]).trim();
-      }
-      if (cellA === "particulars" || cellA.startsWith("particulars")) {
-        headerRowIdx = i;
-        break;
-      }
-    }
-
-    // Fallback: if no "Particulars" header found, try old format (row 0 = header)
-    const dataStartIdx = headerRowIdx >= 0 ? headerRowIdx + 2 : 1; // +2 to skip sub-header row
-
-    const entries: LedgerEntry[] = [];
-    const skipped: { row: number; reason: string }[] = [];
-
-    for (let i = dataStartIdx; i < rows.length; i++) {
-      const row = rows[i];
-      if (!row) { skipped.push({ row: i + 1, reason: "Empty row" }); continue; }
-
-      const particulars = row[0] != null ? String(row[0]).trim() : "";
-      if (!particulars) { continue; } // Skip blank particulars silently
-
-      const openingBal = Number(row[1]) || 0;
-      const debitAmt = Number(row[headerRowIdx >= 0 ? 2 : 1]) || 0;
-      const creditAmt = Number(row[headerRowIdx >= 0 ? 3 : 2]) || 0;
-      const closingRaw = row[headerRowIdx >= 0 ? 4 : undefined];
-
-      // Skip rows where all numeric columns are zero/null (formatting rows)
-      if (headerRowIdx >= 0 && openingBal === 0 && debitAmt === 0 && creditAmt === 0 && (closingRaw == null || Number(closingRaw) === 0)) {
-        skipped.push({ row: i + 1, reason: `All values zero: "${particulars}"` });
-        continue;
-      }
-
-      // For old format (no header detected), skip zero rows too
-      if (headerRowIdx < 0 && debitAmt === 0 && creditAmt === 0) {
-        skipped.push({ row: i + 1, reason: `All values zero: "${particulars}"` });
-        continue;
-      }
-
-      const closingBalance = closingRaw != null ? Number(closingRaw) : (openingBal + debitAmt - creditAmt);
-      const category = categorizeLedger(particulars);
-
-      entries.push({
-        ledger_name: particulars,
-        debit: debitAmt,
-        credit: creditAmt,
-        opening_balance: headerRowIdx >= 0 ? openingBal : undefined,
-        closing_balance: headerRowIdx >= 0 ? closingBalance : undefined,
-        category,
-      });
-    }
-
-    return { entries, skipped, detectedPeriod };
-  };
-
   const doUpload = async (file: File) => {
     try {
-      const { entries, skipped, detectedPeriod } = await parseTallyTB(file);
+      const parsed = await parseTrialBalanceFile(file);
+      const entries: LedgerEntry[] = parsed.rows.map((r: TBRow) => ({
+        ledger_name: r.ledger_name,
+        debit: r.debit,
+        credit: r.credit,
+        closing_balance: r.net,
+        category: r.category,
+        is_group: r.is_group,
+        is_excluded: r.is_excluded,
+        level: r.level,
+        parent_name: r.parent_name,
+      }));
 
       if (entries.length === 0) { toast.error("No data rows found in file"); return; }
 
       // Use detected period or user-entered label
-      const finalPeriod = periodLabel.trim() || detectedPeriod || "Unknown Period";
+      const finalPeriod = periodLabel.trim() || parsed.detectedPeriod || "Unknown Period";
 
       // Delete existing uploads for same period
       const existing = uploads.find(u => u.period_label === finalPeriod);
@@ -272,8 +215,9 @@ export function MISTab() {
       }).select().single();
       if (error) throw error;
 
-      // Check for unmapped ledgers
+      // Only leaf ledgers (excluding reconciliation entries) need a category mapping
       const unmapped = entries
+        .filter(e => isMappable(e))
         .map(e => e.ledger_name)
         .filter(name => !mappings[name]);
       if (unmapped.length > 0) {
@@ -291,20 +235,36 @@ export function MISTab() {
       setUploads(prev => [newUpload, ...prev.filter(u => u.id !== existing?.id)]);
       setCurrentUploadId(inserted.id);
 
-      // Build category summary
+      // Build category summary from leaf ledgers only
       const categories: Record<string, number> = {};
-      entries.forEach(e => {
+      entries.filter(isMappable).forEach(e => {
         const cat = e.category || "Other";
         categories[cat] = (categories[cat] || 0) + 1;
       });
 
-      setUploadSummary({ total: entries.length, categories, skipped, period: finalPeriod });
-      toast.success(`${entries.length} ledger accounts imported`);
+      setUploadSummary({
+        total: entries.length,
+        groups: parsed.groups.length,
+        leaves: parsed.leaves.length,
+        excluded: parsed.rows.filter(r => r.is_excluded).length,
+        categories,
+        skipped: parsed.skipped,
+        period: finalPeriod,
+        reconciles: parsed.reconciles,
+        reconciliationMessage: parsed.reconciliationMessage,
+      });
+
+      if (parsed.reconciles) {
+        toast.success(`${parsed.leaves.length} leaf ledgers imported (${parsed.groups.length} group rows kept for drill-down)`);
+      } else {
+        toast.warning(`Imported, but the trial balance does not reconcile — review before using. ${parsed.reconciliationMessage}`);
+      }
       setPeriodLabel("");
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
     }
   };
+
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
