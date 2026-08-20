@@ -18,6 +18,7 @@ import { PhotoTimelineTab } from "@/components/site/PhotoTimelineTab";
 import { GuidedPhotoCapture } from "@/components/site/GuidedPhotoCapture";
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
+import { canSubmitSiteReadiness } from "@/lib/site-readiness-permissions";
 import { MeasurementSheet } from "@/components/measurements/MeasurementSheet";
 import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
@@ -171,7 +172,7 @@ function SiteHubContent() {
   };
 
   // Site-present roles submit the readiness checklist — mirrors the site_readiness RLS insert/update policy.
-  const canManageReadiness = ["site_installation_mgr", "site_engineer", "delivery_rm_lead", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canManageReadiness = canSubmitSiteReadiness(userRole);
   const canCreateDispatchPack = ["factory_floor_supervisor", "production_head", "super_admin", "managing_director"].includes(userRole ?? "");
   const canRequestAdvance = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
 
