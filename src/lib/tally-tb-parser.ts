@@ -77,94 +77,88 @@ export function categorizeLedger(name: string): string {
 
 interface RawRow { row_number: number; name: string; debit: number; credit: number }
 
+interface Node { idx: number; children: Node[] }
+
 /**
  * Detect group vs leaf rows.
  *
- * A row is a group header when its value equals the sum of the top-level rows
- * of the contiguous block beneath it. The narrowest matching block is taken
- * first, then the block is extended while its LAST top-level row is itself
- * followed by rows summing to that row's own value — which is how Tally's
- * repeated totals nest (Loans → Unsecured Loans → four ledgers, all
- * ₹54,43,265; Current Liabilities → Provisions → Audit Fees Payable).
+ * Tally exports carry no indentation metadata, so the tree is recovered purely
+ * from arithmetic: a row is a group when the top-level rows of the contiguous
+ * block beneath it sum to that row's Debit AND Credit independently.
+ *
+ * Equal-valued siblings (two ledgers with the same amount) are genuinely
+ * ambiguous locally, so the parse is a backtracking search anchored on the
+ * file's own Grand Total — the segmentation whose top-level rows reproduce the
+ * Grand Total on both sides is the correct one. Grouping is preferred over
+ * leaves, so real Group → Sub-group → Ledger chains collapse into one branch.
  * Only leaf rows are ever summed.
  */
-export function buildHierarchy(raw: RawRow[]): TBRow[] {
-  const cache = new Map<string, { items: TBRow[]; topSum: number; lastTopNet: number }>();
+export function buildHierarchy(raw: RawRow[], targetDebit?: number | null, targetCredit?: number | null): TBRow[] {
+  const n = raw.length;
+  const groupCache = new Map<string, Node[] | null>();
 
-  const classify = (start: number, end: number, parent: string | null): { items: TBRow[]; topSum: number; lastTopNet: number } => {
-    if (start > end) return { items: [], topSum: 0, lastTopNet: 0 };
-    const key = `${start}:${end}`;
-    const hit = cache.get(key);
-    if (hit) return hit;
-
-    const items: TBRow[] = [];
-    let topSum = 0;
-    let lastTopNet = 0;
-    let i = start;
-    while (i <= end) {
+  /** Segment rows [start..end] so that top-level Debit/Credit sums hit the targets (null = any). */
+  const segment = (start: number, end: number, tD: number | null, tC: number | null): Node[] | null => {
+    const key = `${start}:${end}:${tD ?? "*"}:${tC ?? "*"}`;
+    if (groupCache.has(key)) return groupCache.get(key)!;
+    groupCache.set(key, null); // guard against re-entrancy
+    const rec = (i: number, remD: number | null, remC: number | null): Node[] | null => {
+      if (i > end) {
+        if (remD == null) return [];
+        return Math.abs(remD) <= TOLERANCE && Math.abs(remC!) <= TOLERANCE ? [] : null;
+      }
       const r = raw[i];
-      const net = r.debit - r.credit;
-      let childEnd = -1;
-      if (Math.abs(net) > TOLERANCE) {
-        for (let j = i + 1; j <= end; j++) {
-          if (Math.abs(classify(i + 1, j, null).topSum - net) <= TOLERANCE) { childEnd = j; break; }
+      if (remD != null && (r.debit - remD > TOLERANCE || r.credit - remC! > TOLERANCE)) return null;
+      const nextD = remD == null ? null : remD - r.debit;
+      const nextC = remC == null ? null : remC! - r.credit;
+
+      // Prefer treating the row as a group header.
+      if (r.debit > TOLERANCE || r.credit > TOLERANCE) {
+        for (let k = i + 1; k <= end; k++) {
+          const kids = segment(i + 1, k, r.debit, r.credit);
+          if (!kids) continue;
+          const rest = rec(k + 1, nextD, nextC);
+          if (rest) return [{ idx: i, children: kids }, ...rest];
         }
       }
-      // Tail extension: the deepest repeated total may sit just outside the
-      // matched block — absorb it so nested duplicates stay one branch.
-      if (childEnd > i) {
-        for (;;) {
-          const blk = classify(i + 1, childEnd, null);
-          let extended = false;
-          for (let k = childEnd + 1; k <= end; k++) {
-            if (Math.abs(classify(childEnd + 1, k, null).topSum - blk.lastTopNet) <= TOLERANCE) {
-              childEnd = k;
-              extended = true;
-              break;
-            }
-          }
-          if (!extended) break;
-        }
-      }
-      const isGroup = childEnd > i;
+      const rest = rec(i + 1, nextD, nextC);
+      return rest ? [{ idx: i, children: [] }, ...rest] : null;
+    };
+    const out = rec(start, tD, tC);
+    groupCache.set(key, out);
+    return out;
+  };
+
+  let roots =
+    targetDebit != null && targetCredit != null
+      ? segment(0, n - 1, targetDebit, targetCredit)
+      : null;
+  if (!roots) roots = segment(0, n - 1, null, null) ?? raw.map((_, i) => ({ idx: i, children: [] }));
+
+  const items: TBRow[] = [];
+  const walk = (nodes: Node[], level: number, parent: string | null) => {
+    for (const node of nodes) {
+      const r = raw[node.idx];
+      const isGroup = node.children.length > 0;
       items.push({
         row_number: r.row_number,
         ledger_name: r.name,
         debit: r.debit,
         credit: r.credit,
-        net,
-        level: 0, // depth assigned after the tree is settled
+        net: r.debit - r.credit,
+        level,
         is_group: isGroup,
         is_excluded: isExcludedLedger(r.name),
         parent_name: parent,
         category: isGroup ? undefined : categorizeLedger(r.name),
       });
-      topSum += net;
-      lastTopNet = net;
-      if (isGroup) {
-        items.push(
-          ...classify(i + 1, childEnd, null).items.map(it => (it.parent_name === null ? { ...it, parent_name: r.name } : it)),
-        );
-        i = childEnd + 1;
-      } else {
-        i++;
-      }
+      if (isGroup) walk(node.children, level + 1, r.name);
     }
-    const res = { items, topSum, lastTopNet };
-    cache.set(key, res);
-    return res;
   };
-
-  const { items } = classify(0, raw.length - 1, null);
-  // Assign nesting depth from parent chain
-  const depth = new Map<string, number>();
-  for (const it of items) {
-    const lvl = it.parent_name ? (depth.get(it.parent_name) ?? 0) + 1 : 0;
-    it.level = lvl;
-    if (it.is_group) depth.set(it.ledger_name, lvl);
-  }
+  walk(roots, 0, null);
   return items;
 }
+
 
 
 
@@ -224,7 +218,7 @@ export function parseTrialBalanceRows(rows: any[][]): TBParseResult {
     raw.push({ row_number: i + 1, name, debit, credit });
   }
 
-  const tree = buildHierarchy(raw);
+  const tree = buildHierarchy(raw, fileGrandTotalDebit, fileGrandTotalCredit);
   const leaves = tree.filter(r => !r.is_group);
   const groups = tree.filter(r => r.is_group);
 
