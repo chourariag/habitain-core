@@ -79,51 +79,76 @@ interface RawRow { row_number: number; name: string; debit: number; credit: numb
 
 /**
  * Detect group vs leaf rows.
- * A row is a group header if its value exactly equals the sum of the
- * contiguous rows beneath it (before the next same-or-higher-level row).
- * Applied recursively so arbitrary nesting depth is handled.
+ * A row is a group header if its value equals the sum of the top-level rows of
+ * the contiguous block beneath it. Because Tally repeats the same total at each
+ * nesting level (Loans → Unsecured Loans → four ledgers all = ₹54,43,265), the
+ * WIDEST valid block is chosen so nested repeats collapse into one branch
+ * instead of being mistaken for a single-child group.
  */
 export function buildHierarchy(raw: RawRow[]): TBRow[] {
-  const out: TBRow[] = [];
+  const cache = new Map<string, { items: TBRow[]; topSum: number }>();
 
-  const walk = (start: number, end: number, level: number, parent: string | null) => {
+  const classify = (start: number, end: number, parent: string | null): { items: TBRow[]; topSum: number } => {
+    if (start > end) return { items: [], topSum: 0 };
+    const key = `${start}:${end}:${parent ?? ""}`;
+    const hit = cache.get(key);
+    if (hit) return hit;
+
+    const items: TBRow[] = [];
+    let topSum = 0;
     let i = start;
     while (i <= end) {
       const r = raw[i];
       const net = r.debit - r.credit;
       let childEnd = -1;
+      let childItems: TBRow[] = [];
       if (Math.abs(net) > TOLERANCE) {
-        let acc = 0;
-        for (let j = i + 1; j <= end; j++) {
-          acc += raw[j].debit - raw[j].credit;
-          if (Math.abs(acc - net) <= TOLERANCE) { childEnd = j; break; }
+        for (let j = end; j > i; j--) {
+          const block = classify(i + 1, j, r.name);
+          if (Math.abs(block.topSum - net) <= TOLERANCE) {
+            childEnd = j;
+            childItems = block.items;
+            break;
+          }
         }
       }
       const isGroup = childEnd > i;
-      out.push({
+      items.push({
         row_number: r.row_number,
         ledger_name: r.name,
         debit: r.debit,
         credit: r.credit,
         net,
-        level,
+        level: 0, // depth assigned after the tree is settled
         is_group: isGroup,
         is_excluded: isExcludedLedger(r.name),
         parent_name: parent,
         category: isGroup ? undefined : categorizeLedger(r.name),
       });
+      topSum += net;
       if (isGroup) {
-        walk(i + 1, childEnd, level + 1, r.name);
+        items.push(...childItems);
         i = childEnd + 1;
       } else {
         i++;
       }
     }
+    const res = { items, topSum };
+    cache.set(key, res);
+    return res;
   };
 
-  walk(0, raw.length - 1, 0, null);
-  return out;
+  const { items } = classify(0, raw.length - 1, null);
+  // Assign nesting depth from parent chain
+  const depth = new Map<string, number>();
+  for (const it of items) {
+    const lvl = it.parent_name ? (depth.get(it.parent_name) ?? 0) + 1 : 0;
+    it.level = lvl;
+    if (it.is_group) depth.set(it.ledger_name, lvl);
+  }
+  return items;
 }
+
 
 export function parseTrialBalanceRows(rows: any[][]): TBParseResult {
   const skipped: { row: number; reason: string }[] = [];
