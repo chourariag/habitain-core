@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { WIPStatement } from "@/components/finance/WIPStatement";
+import { parseTrialBalanceFile, type TBRow } from "@/lib/tally-tb-parser";
 
 const MIS_CATEGORIES = {
   revenue: "Sales Revenue",
@@ -25,6 +26,16 @@ const MIS_CATEGORIES = {
   depreciation: "Depreciation",
   interest: "Interest",
   tax: "Tax",
+  // Balance Sheet (leaf ledgers only)
+  bs_capital: "Capital & Reserves",
+  bs_loans: "Loans & Borrowings",
+  bs_debtors: "Sundry Debtors",
+  bs_creditors: "Sundry Creditors",
+  bs_fixed_assets: "Fixed Assets",
+  bs_bank_cash: "Bank & Cash",
+  bs_inventory: "Inventory",
+  bs_duties_taxes: "Duties & Taxes",
+  bs_other_bs: "Other Balance Sheet",
 } as const;
 
 type MISCategory = keyof typeof MIS_CATEGORIES;
@@ -36,7 +47,16 @@ interface LedgerEntry {
   opening_balance?: number;
   closing_balance?: number;
   category?: string;
+  /** Group / subtotal row — display & drill-down only, never summed. */
+  is_group?: boolean;
+  /** P&L A/c, Difference in opening balances — never mapped to a category. */
+  is_excluded?: boolean;
+  level?: number;
+  parent_name?: string | null;
 }
+
+/** Only leaf ledgers that are not reconciliation entries may be summed or mapped. */
+const isMappable = (e: LedgerEntry) => !e.is_group && !e.is_excluded;
 
 interface MISUpload {
   id: string;
@@ -50,7 +70,7 @@ function sumByCategory(entries: LedgerEntry[], mappings: Record<string, string>,
   // Costs/expenses: debit - credit (positive = expense)
   const isIncome = ["revenue", "other_income", "unbilled_revenue"].includes(category);
   return entries
-    .filter(e => mappings[e.ledger_name] === category)
+    .filter(e => isMappable(e) && mappings[e.ledger_name] === category)
     .reduce((sum, e) => sum + (isIncome ? (e.credit - e.debit) : (e.debit - e.credit)), 0);
 }
 
@@ -105,9 +125,14 @@ function categorizeLedger(name: string): string {
 
 interface UploadSummary {
   total: number;
+  groups: number;
+  leaves: number;
+  excluded: number;
   categories: Record<string, number>;
   skipped: { row: number; reason: string }[];
   period: string;
+  reconciles: boolean;
+  reconciliationMessage: string;
 }
 
 export function MISTab() {
