@@ -75,13 +75,13 @@ function fromChain(chain: string[], name: string): CategorySuggestion | null {
   if (has(root, /purchase accounts?/)) {
     return { category: "raw_materials", confidence: "high", reason: `Under "${chain[0]}"` };
   }
-  if (has(root, /direct incomes?|indirect incomes?/)) {
+  if (has(root, /^(direct|indirect) incomes?/)) {
     return { category: "other_income", confidence: "high", reason: `Under "${chain[0]}"` };
   }
-  if (has(root, /direct expenses?/)) {
+  if (has(root, /^direct expenses?/)) {
     return { category: "manufacturing", confidence: "high", reason: `Under "${chain[0]}"` };
   }
-  if (has(root, /indirect expenses?/)) {
+  if (has(root, /^indirect expenses?/)) {
     return { category: "other_fixed", confidence: "low", reason: `Under "${chain[0]}" — no specific name match` };
   }
   return null;
@@ -104,7 +104,7 @@ function fromName(name: string, chain: string[]): CategorySuggestion | null {
     return { category: "interest", confidence: "high", reason: "Interest cost" };
   if (has(n, /income tax|tds expense|deferred tax expense/) && isExpenseChain)
     return { category: "tax", confidence: "high", reason: "Tax" };
-  if (has(n, /^bank |bank account|cash-in-hand|cash in hand|petty cash/))
+  if (!isExpenseChain && has(n, /^bank |bank account|cash-in-hand|cash in hand|petty cash/))
     return { category: "bs_bank_cash", confidence: "high", reason: "Bank / cash ledger" };
   if (has(n, /opening stock|closing stock|inventory/))
     return { category: "bs_inventory", confidence: "high", reason: "Stock ledger" };
@@ -118,7 +118,7 @@ function fromName(name: string, chain: string[]): CategorySuggestion | null {
     has(n, /transport|travell?ing|freight|office expense|printing|professional charges|consultancy|conveyance|telephone|internet|subscription|business promotion|marketing|audit fee|bank charges|boarding|repair|maintenance|insurance|packing|loading|canteen|crane|fabrication|labour charges|civil work|erection|installation|scaffolding|generator|diesel|cleaning|waste|hiring charges|service charges/) &&
     isExpenseChain
   ) {
-    const variable = /direct expenses?/.test((chain[0] || "").toLowerCase());
+    const variable = /^direct expenses?/.test((chain[0] || "").toLowerCase());
     return {
       category: variable ? "manufacturing" : "other_fixed",
       confidence: "high",
