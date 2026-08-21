@@ -215,18 +215,33 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
         urls.push(path);
       }
 
+      const body = text.trim();
+      // Keep only mentions still present in the final text
+      const finalMentions = Array.from(new Set(
+        mentionedIds.filter((id) => {
+          const m = teamMembers.find((t) => t.authUserId === id);
+          return m ? body.includes(`@${m.name}`) : false;
+        })
+      ));
+
       await (supabase.from("project_messages") as any).insert({
         project_id: projectId,
         project_type: projectType,
         sender_id: userId,
         sender_name: getTestingPersonaName() || senderName || "User",
-        message_text: text.trim() || null,
+        message_text: body || null,
         attachment_urls: urls,
         read_by: [userId],
+        reply_to_id: replyTo?.id ?? null,
+        mentioned_ids: finalMentions,
       });
 
       setText("");
       setAttachments([]);
+      setReplyTo(null);
+      setMentionedIds([]);
+      setMentionQuery(null);
+
     } catch (err: any) {
       toast.error(err.message || "Failed to send message");
     } finally {
