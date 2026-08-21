@@ -5898,21 +5898,33 @@ export type Database = {
       ledger_mappings: {
         Row: {
           created_at: string
+          fallback_match_count: number
           id: string
+          last_fallback_at: string | null
+          last_fallback_variant: string | null
           ledger_name: string
           mis_category: string
+          normalized_name: string | null
         }
         Insert: {
           created_at?: string
+          fallback_match_count?: number
           id?: string
+          last_fallback_at?: string | null
+          last_fallback_variant?: string | null
           ledger_name: string
           mis_category: string
+          normalized_name?: string | null
         }
         Update: {
           created_at?: string
+          fallback_match_count?: number
           id?: string
+          last_fallback_at?: string | null
+          last_fallback_variant?: string | null
           ledger_name?: string
           mis_category?: string
+          normalized_name?: string | null
         }
         Relationships: []
       }
@@ -15723,6 +15735,7 @@ export type Database = {
       is_variation_approver: { Args: { _uid: string }; Returns: boolean }
       is_win_sync_approver: { Args: { _uid: string }; Returns: boolean }
       kickoff_meeting_daily_reminders: { Args: never; Returns: undefined }
+      normalize_ledger_name: { Args: { _name: string }; Returns: string }
       project_archive_upload_reminders: { Args: never; Returns: undefined }
       recalc_running_bill: {
         Args: { _project_id: string }

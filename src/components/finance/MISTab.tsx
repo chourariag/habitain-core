@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { WIPStatement } from "@/components/finance/WIPStatement";
 import { parseTrialBalanceFile, type TBRow } from "@/lib/tally-tb-parser";
 import { MIS_CATEGORIES, suggestMISCategory, type MISCategory } from "@/lib/tally-mis-mapping";
+import { buildMappingIndex, resolveLedgerCategory, type LedgerMappingRow } from "@/lib/ledger-normalize";
 
 
 interface LedgerEntry {
@@ -129,7 +130,8 @@ interface UploadSummary {
 
 export function MISTab() {
   const [uploads, setUploads] = useState<MISUpload[]>([]);
-  const [mappings, setMappings] = useState<Record<string, string>>({});
+  const [mappingRows, setMappingRows] = useState<LedgerMappingRow[]>([]);
+  const mapIndex = useMemo(() => buildMappingIndex(mappingRows), [mappingRows]);
   const [currentUploadId, setCurrentUploadId] = useState<string | null>(null);
   const [periodLabel, setPeriodLabel] = useState("");
   const [adsDrawerOpen, setAdsDrawerOpen] = useState(false);
@@ -150,9 +152,7 @@ export function MISTab() {
       supabase.from("finance_mis_uploads").select("*").order("created_at", { ascending: false }).limit(10),
       supabase.from("ledger_mappings").select("*"),
     ]);
-    const mappingMap: Record<string, string> = {};
-    (m || []).forEach((row: any) => { mappingMap[row.ledger_name] = row.mis_category; });
-    setMappings(mappingMap);
+    setMappingRows((m || []) as LedgerMappingRow[]);
     const parsed: MISUpload[] = (u || []).map((row: any) => ({
       id: row.id,
       period_label: row.period_label,
@@ -237,7 +237,7 @@ export function MISTab() {
       const seen = new Set<string>();
       const suggestions: SuggestedLedger[] = [];
       entries.filter(isMappable).forEach(e => {
-        if (mappings[e.ledger_name] || seen.has(e.ledger_name)) return;
+        if (resolveLedgerCategory(mapIndex, e.ledger_name).category || seen.has(e.ledger_name)) return;
         seen.add(e.ledger_name);
         const s = suggestMISCategory(e.ledger_name, e.ancestors || []);
         suggestions.push({
@@ -320,14 +320,9 @@ export function MISTab() {
     for (const [ledger_name, mis_category] of entries) {
       await supabase.from("ledger_mappings").upsert({ ledger_name, mis_category }, { onConflict: "ledger_name" });
     }
-    // Update mappings locally
-    setMappings(prev => {
-      const updated = { ...prev };
-      for (const [ledger_name, mis_category] of entries) {
-        updated[ledger_name] = mis_category;
-      }
-      return updated;
-    });
+    // Refresh mapping rows (need ids + normalized keys back from the DB)
+    const { data: refreshed } = await supabase.from("ledger_mappings").select("*");
+    setMappingRows((refreshed || []) as LedgerMappingRow[]);
     toast.success("Ledger mappings saved");
     setMappingDrawerOpen(false);
   };
@@ -359,7 +354,47 @@ export function MISTab() {
   const downloadTemplate = () => downloadTrialBalanceTemplate();
 
   const entries = currentUpload?.raw_data || [];
+
+  // Fallback resolution: an incoming ledger that doesn't match any stored name
+  // exactly may still match after normalization. Those hits are NEVER silent —
+  // they're flagged in the UI and recorded on the mapping row.
+  const fallbackHits = useMemo(() => {
+    const hits: { incoming: string; mapping: LedgerMappingRow }[] = [];
+    const seen = new Set<string>();
+    entries.forEach((e) => {
+      if (!isMappable(e) || seen.has(e.ledger_name)) return;
+      seen.add(e.ledger_name);
+      const r = resolveLedgerCategory(mapIndex, e.ledger_name);
+      if (r.viaFallback && r.mapping) hits.push({ incoming: e.ledger_name, mapping: r.mapping });
+    });
+    return hits;
+  }, [entries, mapIndex]);
+
+  // Effective map = exact matches + normalization fallbacks for this upload.
+  const mappings = useMemo(() => {
+    const m: Record<string, string> = { ...mapIndex.exact };
+    fallbackHits.forEach((h) => { m[h.incoming] = h.mapping.mis_category; });
+    return m;
+  }, [mapIndex, fallbackHits]);
+
+  // Record fallback matches so naming drift in Tally exports stays visible.
+  const loggedFallbacks = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    fallbackHits.forEach(async (h) => {
+      const key = `${h.mapping.id}:${h.incoming}`;
+      if (loggedFallbacks.current.has(key)) return;
+      loggedFallbacks.current.add(key);
+      if (h.mapping.last_fallback_variant === h.incoming) return;
+      await supabase.from("ledger_mappings").update({
+        last_fallback_variant: h.incoming,
+        last_fallback_at: new Date().toISOString(),
+        fallback_match_count: (h.mapping.fallback_match_count ?? 0) + 1,
+      } as any).eq("id", h.mapping.id);
+    });
+  }, [fallbackHits]);
+
   const getMISValue = (category: string) => sumByCategory(entries, mappings, category);
+
   const salesRevenue = getMISValue("revenue");
   const otherIncome = getMISValue("other_income");
   const unbilledRevenue = getMISValue("unbilled_revenue");
@@ -611,6 +646,31 @@ export function MISTab() {
               </div>
             </CardContent>
           </Card>
+
+          {fallbackHits.length > 0 && (
+            <Card style={{ borderColor: "#D4860A" }}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-display" style={{ color: "#D4860A" }}>
+                  Matched via normalization ({fallbackHits.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-1">
+                <p className="text-xs" style={{ color: "#666" }}>
+                  These ledgers did not match a saved mapping exactly — they matched only after
+                  normalizing spacing, case and punctuation. Review them: this is how Tally export
+                  naming drift shows up.
+                </p>
+                {fallbackHits.map((h) => (
+                  <div key={h.incoming} className="text-xs" style={{ color: "#1A1A1A" }}>
+                    <span className="font-mono">{h.incoming}</span>
+                    <span style={{ color: "#666" }}> → saved as </span>
+                    <span className="font-mono">{h.mapping.ledger_name}</span>
+                    <span style={{ color: "#666" }}> ({MIS_CATEGORIES[h.mapping.mis_category as MISCategory] || h.mapping.mis_category})</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Section C: Detailed Ledger View */}
           <Collapsible>

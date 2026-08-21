@@ -5,6 +5,9 @@
 // double/triple/quadruple counts. This parser detects group rows and marks
 // them display-only; ONLY leaf ledgers are summed or mapped to MIS categories.
 
+/** Display-safe cleanup: NFKC + collapse internal whitespace + trim. Casing/punctuation preserved. */
+export const cleanLedgerName = (n: string) => (n ?? "").normalize("NFKC").replace(/\s+/g, " ").trim();
+
 export interface TBRow {
   row_number: number;       // 1-indexed row in the source file
   ledger_name: string;
@@ -146,13 +149,16 @@ export function buildHierarchy(raw: RawRow[], targetDebit?: number | null, targe
   if (!roots) roots = segment(0, n - 1, null, null) ?? raw.map((_, i) => ({ idx: i, children: [] }));
 
   const items: TBRow[] = [];
+
   const walk = (nodes: Node[], level: number, chain: string[]) => {
     for (const node of nodes) {
       const r = raw[node.idx];
       const isGroup = node.children.length > 0;
       items.push({
         row_number: r.row_number,
-        ledger_name: r.name,
+        // Same NFKC + whitespace-collapse rule as public.normalize_ledger_name();
+        // fixes Tally's double-spaced exports (e.g. "Karan Nadig -  Share Capital") at source.
+        ledger_name: cleanLedgerName(r.name),
         debit: r.debit,
         credit: r.credit,
         net: r.debit - r.credit,
