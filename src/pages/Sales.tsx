@@ -58,6 +58,12 @@ export default function Sales() {
         </ScrollableTabsWrapper>
 
         <TabsContent value="pipeline" className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
+            <Label htmlFor="show-archived" className="text-xs" style={{ color: "#555" }}>
+              Show archived (2025 historical){showArchived && archivedCount > 0 ? ` — ${archivedCount}` : ""}
+            </Label>
+          </div>
           <SalesMetricsBar deals={deals} />
           {loading ? (
             <div className="text-center py-12" style={{ color: "#999" }}>Loading…</div>
