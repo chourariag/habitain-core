@@ -15,7 +15,7 @@ export const KPI_EMPLOYEES: { name: string; role: AppRole; subtitle: string }[] 
   { name: "Rakesh",          role: "factory_floor_supervisor", subtitle: "Factory Supervisor" },
   { name: "Sandeep",         role: "stores_executive",       subtitle: "Stores Manager" },
   { name: "Mary",            role: "finance_manager",        subtitle: "Finance Manager" },
-  { name: "Venkat",          role: "principal_architect",    subtitle: "Operations Architect" },
+  { name: "Venkat",          role: "head_operations",        subtitle: "Operations Architect" },
 ];
 
 export function ragColor(status: RagStatus): string {

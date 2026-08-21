@@ -24,7 +24,7 @@ export const HSTACK_USERS: HStackUser[] = [
   // Directors & MD
   { name: "Gaurav Chouraria", role: "managing_director" as AppRole, group: "Directors & MD" },
   { name: "John Kunnath", role: "sales_director" as AppRole, group: "Directors & MD" },
-  { name: "Karan Nadig", role: "principal_architect" as AppRole, group: "Directors & MD" },
+  { name: "Karan Nadig", role: "architecture_director" as AppRole, group: "Directors & MD" },
   { name: "Shiv Choudhari", role: "finance_director" as AppRole, group: "Directors & MD" },
 
   // Planning
