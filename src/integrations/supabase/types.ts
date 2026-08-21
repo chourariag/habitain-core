@@ -15554,8 +15554,11 @@ export type Database = {
         Returns: number
       }
       is_active_staff: { Args: { _user_id: string }; Returns: boolean }
+      is_approver_tier: { Args: { _user_id: string }; Returns: boolean }
       is_director: { Args: { _user_id: string }; Returns: boolean }
+      is_finance_full_tier: { Args: { _user_id: string }; Returns: boolean }
       is_full_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_hr_admin_tier: { Args: { _user_id: string }; Returns: boolean }
       is_md: { Args: { _user_id: string }; Returns: boolean }
       is_reporting_manager_of: {
         Args: { _employee_auth_id: string; _manager_auth_id: string }

@@ -62,11 +62,14 @@ export const ROLE_ACCESS_MATRIX: Partial<Record<AppRole, ModuleAccess>> = {
   chairman:
     m("FULL","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","FULL","VIEW","VIEW","VIEW"),
 
-  // Directors (matrix has separate values, but role enum only carries one per dept)
+  // Directors — sales_director and architecture_director share an explicit director-tier grant:
+  // projects FULL, finance FULL, hr FULL (Employee Management, not Admin Panel), reports FULL,
+  // design view+upload (MANAGE) for SD / FULL for AD (GFC authority), dispatch VIEW,
+  // approvals FULL. factory/site/procurement/qc stay VIEW. admin stays NONE for both.
   sales_director:
-    m("FULL","VIEW","VIEW","VIEW","VIEW","VIEW","FULL","FULL","VIEW","VIEW","VIEW","FULL","FULL","NONE","VIEW"),
+    m("FULL","FULL","VIEW","VIEW","VIEW","FULL","FULL","FULL","MANAGE","VIEW","VIEW","FULL","FULL","NONE","FULL"),
   architecture_director:
-    m("FULL","VIEW","VIEW","VIEW","VIEW","VIEW","FULL","VIEW","FULL","VIEW","VIEW","FULL","FULL","NONE","VIEW"),
+    m("FULL","FULL","VIEW","VIEW","VIEW","FULL","FULL","VIEW","FULL","VIEW","VIEW","FULL","FULL","NONE","FULL"),
   finance_director:
     m("FULL","VIEW","VIEW","VIEW","VIEW","FULL","FULL","VIEW","VIEW","VIEW","VIEW","FULL","FULL","NONE","FULL"),
 
