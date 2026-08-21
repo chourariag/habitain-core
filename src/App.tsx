@@ -19,7 +19,7 @@ import SiteHub from "@/pages/SiteHub";
 import DispatchPackForm from "@/pages/DispatchPackForm";
 import DesignPortal from "@/pages/DesignPortal";
 import DesignSchedule from "@/pages/DesignSchedule";
-import { DesignRouteGuard } from "@/components/DesignRouteGuard";
+
 import { ManagementRouteGuard } from "@/components/ManagementRouteGuard";
 import Management from "@/pages/Management";
 import QualityControl from "@/pages/QualityControl";
@@ -95,9 +95,9 @@ const App = () => (
                 <Route path="/site-hub/dispatch-pack" element={<ModuleGuard module="site"><DispatchPackForm /></ModuleGuard>} />
                 <Route path="/dispatch-pack-form" element={<ModuleGuard module="site"><DispatchPackForm /></ModuleGuard>} />
                 <Route path="/site-hub/advance-request" element={<ModuleGuard module="site"><AdvanceRequest /></ModuleGuard>} />
-                <Route path="/design" element={<ModuleGuard module="design"><DesignRouteGuard><DesignPortal /></DesignRouteGuard></ModuleGuard>} />
-                <Route path="/design/schedule" element={<ModuleGuard module="design"><DesignRouteGuard><DesignSchedule /></DesignRouteGuard></ModuleGuard>} />
-                <Route path="/drawings" element={<ModuleGuard module="design"><DesignRouteGuard><Drawings /></DesignRouteGuard></ModuleGuard>} />
+                <Route path="/design" element={<ModuleGuard module="design"><DesignPortal /></ModuleGuard>} />
+                <Route path="/design/schedule" element={<ModuleGuard module="design"><DesignSchedule /></ModuleGuard>} />
+                <Route path="/drawings" element={<ModuleGuard module="design"><Drawings /></ModuleGuard>} />
                 <Route path="/qc" element={<ModuleGuard module="qc"><QualityControl /></ModuleGuard>} />
                 <Route path="/procurement" element={<ModuleGuard module="procurement"><Procurement /></ModuleGuard>} />
                 <Route path="/inventory" element={<Navigate to="/procurement" replace />} />
