@@ -20,7 +20,7 @@ interface SeedUser {
 const SEED: { full_name: string; role: RoleCode; department: string }[] = [
   { full_name: "Gaurav Chouraria", role: "managing_director", department: "Leadership" },
   { full_name: "John Kunnath", role: "director", department: "Leadership" },
-  { full_name: "Karan Nadig", role: "principal_architect", department: "Design & Engineering" },
+  { full_name: "Karan Nadig", role: "architecture_director", department: "Design & Engineering" },
   { full_name: "Shiv Choudhari", role: "director", department: "Leadership" },
   { full_name: "Suraj Rao", role: "planning_head", department: "Planning" },
   { full_name: "Karthik", role: "planning_engineer", department: "Planning" },
