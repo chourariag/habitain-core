@@ -63,7 +63,7 @@ export function MobileNav() {
   const { role } = useUserRole();
   const { t } = useTranslation();
   const userRole = role as AppRole | null;
-  const { canView, canAccessAdminPanel } = usePermissions();
+  const { canView, canAccessAdminPanel, canAccessEmployeeManagement } = usePermissions();
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
