@@ -10,6 +10,7 @@ import { DealDrawer } from "@/components/sales/DealDrawer";
 import { SalesSettingsTab } from "@/components/sales/SalesSettingsTab";
 import { ClientDatabaseTab } from "@/components/sales/ClientDatabaseTab";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
+import { BoardReportingTab } from "@/components/sales/BoardReportingTab";
 
 export default function Sales() {
   const [deals, setDeals] = useState<any[]>([]);
@@ -47,6 +48,7 @@ export default function Sales() {
             <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
             <TabsTrigger value="clients">Clients</TabsTrigger>
             <TabsTrigger value="amc">AMC Upsell</TabsTrigger>
+            <TabsTrigger value="board">Board Reporting</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
@@ -67,6 +69,11 @@ export default function Sales() {
         <TabsContent value="amc">
           <AmcUpsellTab deals={deals.filter(d => d.stage === "Won")} />
         </TabsContent>
+
+        <TabsContent value="board">
+          <BoardReportingTab />
+        </TabsContent>
+
 
         <TabsContent value="settings">
           <SalesSettingsTab deals={deals} />

@@ -844,6 +844,105 @@ export type Database = {
         }
         Relationships: []
       }
+      board_period_plan: {
+        Row: {
+          contribution_pct: number | null
+          created_at: string
+          created_by: string | null
+          director_remuneration: number
+          ebitda: number | null
+          id: string
+          month: number
+          orders_closed: number
+          other_fixed_expenses: number
+          rent_electricity: number
+          revenue: number
+          salaries: number
+          scenario: string
+          sm_payroll: number
+          updated_at: string
+          updated_by: string | null
+          year: number
+        }
+        Insert: {
+          contribution_pct?: number | null
+          created_at?: string
+          created_by?: string | null
+          director_remuneration?: number
+          ebitda?: number | null
+          id?: string
+          month: number
+          orders_closed?: number
+          other_fixed_expenses?: number
+          rent_electricity?: number
+          revenue?: number
+          salaries?: number
+          scenario: string
+          sm_payroll?: number
+          updated_at?: string
+          updated_by?: string | null
+          year: number
+        }
+        Update: {
+          contribution_pct?: number | null
+          created_at?: string
+          created_by?: string | null
+          director_remuneration?: number
+          ebitda?: number | null
+          id?: string
+          month?: number
+          orders_closed?: number
+          other_fixed_expenses?: number
+          rent_electricity?: number
+          revenue?: number
+          salaries?: number
+          scenario?: string
+          sm_payroll?: number
+          updated_at?: string
+          updated_by?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
+      board_reported_totals: {
+        Row: {
+          as_of_date: string
+          created_at: string
+          created_by: string | null
+          dimension: string
+          id: string
+          label: string
+          scope_filter: string | null
+          source_note: string | null
+          stated_total: number
+          updated_at: string
+        }
+        Insert: {
+          as_of_date?: string
+          created_at?: string
+          created_by?: string | null
+          dimension: string
+          id?: string
+          label: string
+          scope_filter?: string | null
+          source_note?: string | null
+          stated_total: number
+          updated_at?: string
+        }
+        Update: {
+          as_of_date?: string
+          created_at?: string
+          created_by?: string | null
+          dimension?: string
+          id?: string
+          label?: string
+          scope_filter?: string | null
+          source_note?: string | null
+          stated_total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       boq_items: {
         Row: {
           boq_qty: number
@@ -902,6 +1001,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      call_funnel_monthly: {
+        Row: {
+          calls_answered: number
+          calls_made: number
+          calls_qualified: number
+          calls_rnr: number
+          created_at: string
+          created_by: string | null
+          data_quality_flag: boolean | null
+          id: string
+          leads_total: number
+          loss_reason: string | null
+          loss_reason_detail: string | null
+          month: string
+          updated_at: string
+          updated_by: string | null
+          visits_from_qualified: number
+        }
+        Insert: {
+          calls_answered?: number
+          calls_made?: number
+          calls_qualified?: number
+          calls_rnr?: number
+          created_at?: string
+          created_by?: string | null
+          data_quality_flag?: boolean | null
+          id?: string
+          leads_total?: number
+          loss_reason?: string | null
+          loss_reason_detail?: string | null
+          month: string
+          updated_at?: string
+          updated_by?: string | null
+          visits_from_qualified?: number
+        }
+        Update: {
+          calls_answered?: number
+          calls_made?: number
+          calls_qualified?: number
+          calls_rnr?: number
+          created_at?: string
+          created_by?: string | null
+          data_quality_flag?: boolean | null
+          id?: string
+          leads_total?: number
+          loss_reason?: string | null
+          loss_reason_detail?: string | null
+          month?: string
+          updated_at?: string
+          updated_by?: string | null
+          visits_from_qualified?: number
+        }
+        Relationships: []
       }
       capacity_forecast_settings: {
         Row: {
@@ -5856,6 +6009,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      marketing_funnel_monthly: {
+        Row: {
+          cost_per_qualified_lead: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          instagram_followers: number | null
+          instagram_reach: number | null
+          instagram_views: number | null
+          leads_direct: number
+          leads_instagram: number
+          leads_webinar: number
+          leads_website: number
+          leads_youtube: number
+          meta_ad_spend: number
+          model_home_visits: number
+          month: string
+          proposals_shared: number
+          qualified_leads: number
+          total_leads: number
+          updated_at: string
+          updated_by: string | null
+          webinar_attendees: number | null
+          webinar_spend: number
+          youtube_subscribers: number | null
+          youtube_views: number | null
+        }
+        Insert: {
+          cost_per_qualified_lead?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          instagram_followers?: number | null
+          instagram_reach?: number | null
+          instagram_views?: number | null
+          leads_direct?: number
+          leads_instagram?: number
+          leads_webinar?: number
+          leads_website?: number
+          leads_youtube?: number
+          meta_ad_spend?: number
+          model_home_visits?: number
+          month: string
+          proposals_shared?: number
+          qualified_leads?: number
+          total_leads?: number
+          updated_at?: string
+          updated_by?: string | null
+          webinar_attendees?: number | null
+          webinar_spend?: number
+          youtube_subscribers?: number | null
+          youtube_views?: number | null
+        }
+        Update: {
+          cost_per_qualified_lead?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          instagram_followers?: number | null
+          instagram_reach?: number | null
+          instagram_views?: number | null
+          leads_direct?: number
+          leads_instagram?: number
+          leads_webinar?: number
+          leads_website?: number
+          leads_youtube?: number
+          meta_ad_spend?: number
+          model_home_visits?: number
+          month?: string
+          proposals_shared?: number
+          qualified_leads?: number
+          total_leads?: number
+          updated_at?: string
+          updated_by?: string | null
+          webinar_attendees?: number | null
+          webinar_spend?: number
+          youtube_subscribers?: number | null
+          youtube_views?: number | null
+        }
+        Relationships: []
       }
       master_data_uploads: {
         Row: {
@@ -11368,6 +11602,99 @@ export type Database = {
           },
         ]
       }
+      sales_pipeline_leads: {
+        Row: {
+          client_name: string
+          contact: string | null
+          created_at: string
+          created_by: string | null
+          created_date: string
+          id: string
+          is_archived: boolean
+          last_activity_date: string
+          location: string | null
+          module_count: number | null
+          notes: string | null
+          project_id: string | null
+          sales_rep: string | null
+          sales_rep_name: string | null
+          segment: string
+          size_sqft: number | null
+          source: string | null
+          stage: string
+          status_reason: string | null
+          temperature: string | null
+          updated_at: string
+          updated_by: string | null
+          value: number
+        }
+        Insert: {
+          client_name: string
+          contact?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_date?: string
+          id?: string
+          is_archived?: boolean
+          last_activity_date?: string
+          location?: string | null
+          module_count?: number | null
+          notes?: string | null
+          project_id?: string | null
+          sales_rep?: string | null
+          sales_rep_name?: string | null
+          segment: string
+          size_sqft?: number | null
+          source?: string | null
+          stage?: string
+          status_reason?: string | null
+          temperature?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          value?: number
+        }
+        Update: {
+          client_name?: string
+          contact?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_date?: string
+          id?: string
+          is_archived?: boolean
+          last_activity_date?: string
+          location?: string | null
+          module_count?: number | null
+          notes?: string | null
+          project_id?: string | null
+          sales_rep?: string | null
+          sales_rep_name?: string | null
+          segment?: string
+          size_sqft?: number | null
+          source?: string | null
+          stage?: string
+          status_reason?: string | null
+          temperature?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_pipeline_leads_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_pipeline_leads_sales_rep_fkey"
+            columns: ["sales_rep"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales_stage_history: {
         Row: {
           changed_at: string
@@ -14640,6 +14967,31 @@ export type Database = {
           },
         ]
       }
+      v_sales_segment_reconciliation: {
+        Row: {
+          as_of_date: string | null
+          computed_total: number | null
+          dimension: string | null
+          gap: number | null
+          label: string | null
+          stated_total: number | null
+          total_id: string | null
+        }
+        Relationships: []
+      }
+      v_unit_economics_monthly: {
+        Row: {
+          cac: number | null
+          contribution_pct: number | null
+          contribution_per_rupee_cac: number | null
+          month: number | null
+          orders_closed: number | null
+          scenario: string | null
+          sm_plus_media: number | null
+          year: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       _cpt_validate: { Args: { _token: string }; Returns: string }
@@ -15212,6 +15564,7 @@ export type Database = {
       is_sales_writer: { Args: { _user_id: string }; Returns: boolean }
       is_tally_ingest_admin: { Args: { _uid: string }; Returns: boolean }
       is_tally_ingest_viewer: { Args: { _uid: string }; Returns: boolean }
+      is_variation_approver: { Args: { _uid: string }; Returns: boolean }
       kickoff_meeting_daily_reminders: { Args: never; Returns: undefined }
       project_archive_upload_reminders: { Args: never; Returns: undefined }
       recalc_running_bill: {
