@@ -405,7 +405,7 @@ export default function UserManagement() {
             isApprover ||
             (reviewing?.request_type === "create_project" && isProjectApprover &&
               ((((reviewing.payload as any)?.division || "Habitainer") === "Habitainer" && role === "sales_director") ||
-               ((reviewing.payload as any)?.division === "ADS" && role === "principal_architect")))
+               ((reviewing.payload as any)?.division === "ADS" && role === "architecture_director")))
           )
         }
         onClose={() => setReviewing(null)}

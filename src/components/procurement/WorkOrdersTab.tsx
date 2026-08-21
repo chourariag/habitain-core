@@ -165,7 +165,7 @@ export function WorkOrdersTab({ userRole, projects }: Props) {
                             <ResponsiblePerson
                               roles={Number(r.estimated_value) <= 100000
                                 ? ["planning_head", "head_of_projects"]
-                                : ["managing_director", "finance_director", "principal_architect"]}
+                                : ["managing_director", "finance_director", "sales_director", "architecture_director"]}
                               prefix="Owner:"
                             />
                           </div>
@@ -399,7 +399,7 @@ function ActionDialog({ request, mode, projectName, onClose, onDone }: any) {
     if (mode === "costing" && action === "approve") {
       const targets = value <= 100000
         ? ["planning_head", "head_of_projects"]
-        : ["managing_director", "finance_director", "principal_architect"];
+        : ["managing_director", "finance_director", "sales_director", "architecture_director"];
       await notifyByRoles(targets, "WO Request awaiting approval",
         `${projectName} — ${request.subcontractor_name} | ₹${value.toLocaleString("en-IN")}`, "high");
     } else if (mode === "costing" && action === "reject") {
