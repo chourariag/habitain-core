@@ -27,9 +27,10 @@ interface DealCardActionsProps {
   children: React.ReactNode;
   onRefresh: () => void;
   onEdit: () => void;
+  onRequestWin?: () => void;
 }
 
-export function DealCardActions({ deal, children, onRefresh, onEdit }: DealCardActionsProps) {
+export function DealCardActions({ deal, children, onRefresh, onEdit, onRequestWin }: DealCardActionsProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [lostConfirm, setLostConfirm] = useState(false);
   const [lostReason, setLostReason] = useState("");
@@ -42,6 +43,12 @@ export function DealCardActions({ deal, children, onRefresh, onEdit }: DealCardA
 
   const moveToStage = async (targetStage: string) => {
     if (targetStage === deal.stage) return;
+    // Won is bridged to the board pipeline — always goes through the confirmation dialog
+    if (targetStage === "Won" && onRequestWin) {
+      setMobileOpen(false);
+      onRequestWin();
+      return;
+    }
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("sales_stage_history").insert({
       deal_id: deal.id, from_stage: deal.stage, to_stage: targetStage, changed_by: user?.id,

@@ -11417,6 +11417,7 @@ export type Database = {
           next_followup_date: string | null
           notes: string | null
           persona_tag: string | null
+          pipeline_lead_id: string | null
           project_type: string
           re_engaged_at: string | null
           re_engaged_from_deal_id: string | null
@@ -11454,6 +11455,7 @@ export type Database = {
           next_followup_date?: string | null
           notes?: string | null
           persona_tag?: string | null
+          pipeline_lead_id?: string | null
           project_type?: string
           re_engaged_at?: string | null
           re_engaged_from_deal_id?: string | null
@@ -11491,6 +11493,7 @@ export type Database = {
           next_followup_date?: string | null
           notes?: string | null
           persona_tag?: string | null
+          pipeline_lead_id?: string | null
           project_type?: string
           re_engaged_at?: string | null
           re_engaged_from_deal_id?: string | null
@@ -11507,6 +11510,13 @@ export type Database = {
             columns: ["converted_from_ads_deal_id"]
             isOneToOne: false
             referencedRelation: "sales_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_deals_pipeline_lead_id_fkey"
+            columns: ["pipeline_lead_id"]
+            isOneToOne: false
+            referencedRelation: "sales_pipeline_leads"
             referencedColumns: ["id"]
           },
           {
@@ -11616,6 +11626,9 @@ export type Database = {
           module_count: number | null
           notes: string | null
           project_id: string | null
+          ready_to_win: boolean
+          ready_to_win_at: string | null
+          ready_to_win_deal_id: string | null
           sales_rep: string | null
           sales_rep_name: string | null
           segment: string | null
@@ -11641,6 +11654,9 @@ export type Database = {
           module_count?: number | null
           notes?: string | null
           project_id?: string | null
+          ready_to_win?: boolean
+          ready_to_win_at?: string | null
+          ready_to_win_deal_id?: string | null
           sales_rep?: string | null
           sales_rep_name?: string | null
           segment?: string | null
@@ -11666,6 +11682,9 @@ export type Database = {
           module_count?: number | null
           notes?: string | null
           project_id?: string | null
+          ready_to_win?: boolean
+          ready_to_win_at?: string | null
+          ready_to_win_deal_id?: string | null
           sales_rep?: string | null
           sales_rep_name?: string | null
           segment?: string | null
@@ -11684,6 +11703,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_pipeline_leads_ready_to_win_deal_id_fkey"
+            columns: ["ready_to_win_deal_id"]
+            isOneToOne: false
+            referencedRelation: "sales_deals"
             referencedColumns: ["id"]
           },
           {
@@ -11768,6 +11794,61 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      sales_win_sync_log: {
+        Row: {
+          action: string
+          created_at: string
+          deal_id: string | null
+          details: Json
+          id: string
+          lead_id: string | null
+          performed_by: string | null
+          project_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          deal_id?: string | null
+          details?: Json
+          id?: string
+          lead_id?: string | null
+          performed_by?: string | null
+          project_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          deal_id?: string | null
+          details?: Json
+          id?: string
+          lead_id?: string | null
+          performed_by?: string | null
+          project_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_win_sync_log_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "sales_deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_win_sync_log_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "sales_pipeline_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_win_sync_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       schedule_conflicts: {
         Row: {
@@ -15568,6 +15649,7 @@ export type Database = {
       is_tally_ingest_admin: { Args: { _uid: string }; Returns: boolean }
       is_tally_ingest_viewer: { Args: { _uid: string }; Returns: boolean }
       is_variation_approver: { Args: { _uid: string }; Returns: boolean }
+      is_win_sync_approver: { Args: { _uid: string }; Returns: boolean }
       kickoff_meeting_daily_reminders: { Args: never; Returns: undefined }
       project_archive_upload_reminders: { Args: never; Returns: undefined }
       recalc_running_bill: {
@@ -15610,6 +15692,16 @@ export type Database = {
           p_vendor_name: string
         }
         Returns: string
+      }
+      sync_deal_win: {
+        Args: {
+          p_create_lead?: boolean
+          p_deal_id: string
+          p_division_choice?: string
+          p_lead_id?: string
+          p_project_id?: string
+        }
+        Returns: Json
       }
       test_site_readiness_rls: {
         Args: never
