@@ -100,6 +100,7 @@ export const PAGE_GROUPS: PageGroup[] = [
     { key: "finance.projects.cashflow", label: "Projects → Cash Flow" },
     { key: "finance.gen.payments", label: "General → Payments" },
     { key: "finance.gen.invoices", label: "General → Invoices" },
+    { key: "finance.gen.labour_invoices", label: "General → Labour Invoices" },
     { key: "finance.gen.ledger", label: "General → Bank Ledger & Overdue" },
     { key: "finance.gen.statutory", label: "General → Statutory" },
     { key: "finance.costing.work_orders", label: "Costing & Estimation → Work Orders" },

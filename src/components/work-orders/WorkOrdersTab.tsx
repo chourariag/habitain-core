@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
+import { raiseLabourInvoice, LABOUR_INVOICE_RAISE_ROLES } from "@/lib/labour-invoices";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -861,6 +862,33 @@ function WorkOrderDetailDialog({ wo, sub, project, role, userId, canCostingAppro
               </div>
               <p className="text-xs">Final Amount: <span className="font-mono font-semibold">{fmtINR(Number(actualQty) * Number(wo.rate) - Number(deductions || 0))}</span></p>
               <Button size="sm" onClick={doMarkComplete} disabled={busy} style={{ background:"#006039" }}>Mark Complete & Send to Finance</Button>
+            </div>
+          )}
+
+          {/* Raise labour invoice once measured & signed off */}
+          {wo.status === "measured_signed_off" && (canRaise || LABOUR_INVOICE_RAISE_ROLES.includes(role ?? "")) && (
+            <div className="border-t pt-3 space-y-2">
+              <p className="text-xs font-semibold">Labour Billing</p>
+              <p className="text-[11px] text-muted-foreground">
+                Raise a labour invoice for this signed-off work order. It opens in Finance → MIS &amp; Invoices → Labour Invoices with a pre-billing checklist.
+              </p>
+              <Button
+                size="sm"
+                disabled={busy}
+                style={{ background: "#006039" }}
+                onClick={async () => {
+                  setBusy(true);
+                  try {
+                    const res = await raiseLabourInvoice(wo as any, userId);
+                    if (res.error) throw res.error;
+                    if (res.alreadyExists) toast.error(`Already invoiced as ${res.invoiceNumber}`);
+                    else toast.success(`Labour invoice ${res.invoiceNumber} created`);
+                    onChanged();
+                  } catch (e: any) { toast.error(e.message); } finally { setBusy(false); }
+                }}
+              >
+                <Send className="h-4 w-4 mr-1" /> Raise Labour Invoice
+              </Button>
             </div>
           )}
 
