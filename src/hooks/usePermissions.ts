@@ -4,6 +4,7 @@ import type { AppRole } from "@/lib/roles";
 import {
   getAccessLevel,
   canAccessAdminPanel,
+  canAccessEmployeeManagement,
   type ModuleKey,
   type AccessLevel,
 } from "@/lib/rbac-matrix";
@@ -45,6 +46,7 @@ export function usePermissions() {
       canManage,
       canAdmin,
       canAccessAdminPanel: () => canAccessAdminPanel(appRole),
+      canAccessEmployeeManagement: () => canAccessEmployeeManagement(appRole),
     };
   }, [appRole, loading]);
 }

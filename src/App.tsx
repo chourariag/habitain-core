@@ -110,7 +110,7 @@ const App = () => (
                 <Route path="/kpi/settings" element={<KPISettings />} />
                 <Route path="/admin" element={<ModuleGuard requireAdminPanel><Admin /></ModuleGuard>} />
                 <Route path="/admin/users" element={<ModuleGuard requireAdminPanel><UserManagement /></ModuleGuard>} />
-                <Route path="/admin/employees" element={<ModuleGuard requireAdminPanel><EmployeeManagement /></ModuleGuard>} />
+                <Route path="/admin/employees" element={<ModuleGuard requireEmployeeManagement><EmployeeManagement /></ModuleGuard>} />
                 <Route path="/settings" element={<AppSettings />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/attendance" element={<ModuleGuard module="hr"><Attendance /></ModuleGuard>} />
