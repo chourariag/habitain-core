@@ -64,12 +64,14 @@ export default function Finance() {
             <TabsList>
               <TabsTrigger value="mis">MIS</TabsTrigger>
               <TabsTrigger value="invoices">Invoices</TabsTrigger>
+              <TabsTrigger value="labour-invoices">Labour Invoices</TabsTrigger>
               <TabsTrigger value="billing-tracker">Billing Tracker</TabsTrigger>
               <TabsTrigger value="tally-ledger">Tally Ledger Classification</TabsTrigger>
               <TabsTrigger value="tally-incoming">Tally Incoming Sync Log</TabsTrigger>
             </TabsList>
             <TabsContent value="mis"><MISTab /></TabsContent>
             <TabsContent value="invoices"><InvoicesTab /></TabsContent>
+            <TabsContent value="labour-invoices"><LabourInvoicesTab /></TabsContent>
             <TabsContent value="billing-tracker"><BillingTrackerTab /></TabsContent>
             <TabsContent value="tally-ledger">
               <Card><CardContent className="p-6 flex items-start gap-3">
