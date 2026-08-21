@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.notify_call_funnel_anomaly() FROM PUBLIC, anon, authenticated;
