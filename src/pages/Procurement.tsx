@@ -38,7 +38,7 @@ import { ContractsRegisterTab } from "@/components/procurement/ContractsRegister
 import { QuotationsTab } from "@/components/procurement/QuotationsTab";
 import { WorkOrdersTab } from "@/components/procurement/WorkOrdersTab";
 
-const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin"];
+const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin", "production_head"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
 const PLANNER_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const REQUESTOR_ROLES = [
