@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import KickoffMeetingCard from "@/components/projects/KickoffMeetingCard";
 
-const APPROVER_ROLES = ["managing_director", "super_admin", "sales_director", "principal_architect"];
+const APPROVER_ROLES = ["managing_director", "super_admin", "sales_director", "architecture_director"];
 
 function daysSince(iso: string) {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);

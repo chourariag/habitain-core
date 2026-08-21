@@ -29,6 +29,7 @@ type Retention = {
 
 const FULL_ACCESS_ROLES = [
   "super_admin", "managing_director", "finance_director", "finance_manager",
+  "sales_director", "architecture_director",
 ];
 
 function formatDate(d: string | null) {

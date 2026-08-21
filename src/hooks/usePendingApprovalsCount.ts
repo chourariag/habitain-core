@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useUserRole } from "@/hooks/useUserRole";
 
-const APPROVER_ROLES = ["managing_director", "super_admin", "sales_director", "principal_architect"];
+const APPROVER_ROLES = ["managing_director", "super_admin", "sales_director", "architecture_director"];
 
 export function usePendingApprovalsCount() {
   const { session } = useAuth();
