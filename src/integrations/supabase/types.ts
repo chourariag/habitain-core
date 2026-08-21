@@ -11618,7 +11618,7 @@ export type Database = {
           project_id: string | null
           sales_rep: string | null
           sales_rep_name: string | null
-          segment: string
+          segment: string | null
           size_sqft: number | null
           source: string | null
           stage: string
@@ -11643,7 +11643,7 @@ export type Database = {
           project_id?: string | null
           sales_rep?: string | null
           sales_rep_name?: string | null
-          segment: string
+          segment?: string | null
           size_sqft?: number | null
           source?: string | null
           stage?: string
@@ -11668,7 +11668,7 @@ export type Database = {
           project_id?: string | null
           sales_rep?: string | null
           sales_rep_name?: string | null
-          segment?: string
+          segment?: string | null
           size_sqft?: number | null
           source?: string | null
           stage?: string
