@@ -118,6 +118,7 @@ export const PAGE_GROUPS: PageGroup[] = [
     { key: "sales.pipeline", label: "Pipeline" },
     { key: "sales.quotations", label: "Quotations" },
     { key: "sales.client_portal", label: "Client Portal" },
+    { key: "sales.board_reporting", label: "Board Reporting" },
   ]},
   { section: "Altree — HR", pages: [
     { key: "altree.hr.my.attendance", label: "My HR → Attendance" },
