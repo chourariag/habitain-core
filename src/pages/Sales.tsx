@@ -17,22 +17,24 @@ export default function Sales() {
   const [deals, setDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [newDrawerOpen, setNewDrawerOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
 
   const fetchDeals = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("sales_deals")
-      .select("*")
-      .eq("is_archived", false)
-      .order("updated_at", { ascending: false });
+    let query = supabase.from("sales_deals").select("*");
+    // Archived (pre-HStack / historical) deals never appear on the live board by default
+    if (!showArchived) query = query.eq("is_archived", false);
+    const { data, error } = await query.order("updated_at", { ascending: false });
     if (error) {
       const { toast } = await import("sonner");
       toast.error(`Failed to load deals: ${error.message}`);
     }
     setDeals(data || []);
     setLoading(false);
-  }, []);
+  }, [showArchived]);
 
   useEffect(() => { fetchDeals(); }, [fetchDeals]);
+
+  const archivedCount = deals.filter(d => d.is_archived).length;
 
   return (
     <div className="p-4 md:p-6 space-y-4" style={{ background: "#FFFFFF", minHeight: "100vh" }}>
