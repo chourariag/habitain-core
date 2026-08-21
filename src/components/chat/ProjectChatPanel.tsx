@@ -50,6 +50,10 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
   const [sending, setSending] = useState(false);
   const [senderName, setSenderName] = useState("");
   const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [mentionedIds, setMentionedIds] = useState<string[]>([]);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -59,6 +63,25 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
     supabase.from("profiles").select("display_name").eq("auth_user_id", userId).maybeSingle()
       .then(({ data }) => setSenderName(effectiveDisplayName((data as any)?.display_name, "User")));
   }, [userId]);
+
+  // Load active project team members for @-mentions
+  useEffect(() => {
+    (async () => {
+      const { data } = await (supabase.from("project_team_members") as any)
+        .select("profile_id, is_active, profiles!inner(auth_user_id, display_name)")
+        .eq("project_id", projectId)
+        .eq("is_active", true);
+      const list: TeamMember[] = ((data as any[]) ?? [])
+        .map((r) => ({
+          authUserId: r.profiles?.auth_user_id as string,
+          name: (r.profiles?.display_name as string) || "User",
+        }))
+        .filter((m) => !!m.authUserId);
+      const seen = new Set<string>();
+      setTeamMembers(list.filter((m) => (seen.has(m.authUserId) ? false : (seen.add(m.authUserId), true))));
+    })();
+  }, [projectId]);
+
 
 
   // Fetch messages
