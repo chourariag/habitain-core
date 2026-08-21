@@ -24,6 +24,7 @@ export function PipelineKanban({ deals, onRefresh }: { deals: Deal[]; onRefresh:
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dragDealId, setDragDealId] = useState<string | null>(null);
+  const [winDeal, setWinDeal] = useState<Deal | null>(null);
 
   const fmt = (v: number) => {
     if (v >= 10000000) return `₹${(v / 10000000).toFixed(1)}Cr`;
@@ -32,21 +33,29 @@ export function PipelineKanban({ deals, onRefresh }: { deals: Deal[]; onRefresh:
     return `₹${v}`;
   };
 
-  const handleDrop = async (targetStage: string) => {
-    if (!dragDealId) return;
-    const deal = deals.find(d => d.id === dragDealId);
-    if (!deal || deal.stage === targetStage) return;
-
-    // Block Won if large discount not approved
-    if (targetStage === "Won" && deal.final_agreed_price) {
+  const requestWin = (deal: Deal) => {
+    // Won is the only stage bridged into the board pipeline — needs explicit confirmation
+    if (deal.final_agreed_price) {
       const boq = deal.contract_value || 0;
       const final = Number(deal.final_agreed_price) || 0;
       const pct = boq > 0 ? ((final - boq) / boq) * 100 : 0;
       if (pct < -15 && !deal.discount_approved_by) {
         toast.error("Discount >15% requires director approval before marking Won");
-        setDragDealId(null);
         return;
       }
+    }
+    setWinDeal(deal);
+  };
+
+  const handleDrop = async (targetStage: string) => {
+    if (!dragDealId) return;
+    const deal = deals.find(d => d.id === dragDealId);
+    setDragDealId(null);
+    if (!deal || deal.stage === targetStage) return;
+
+    if (targetStage === "Won") {
+      requestWin(deal);
+      return;
     }
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -54,17 +63,11 @@ export function PipelineKanban({ deals, onRefresh }: { deals: Deal[]; onRefresh:
       deal_id: deal.id, from_stage: deal.stage, to_stage: targetStage, changed_by: user?.id,
     });
 
-    // When marking Won, use final_agreed_price as contract_value if set
-    const update: any = { stage: targetStage };
-    if (targetStage === "Won" && deal.final_agreed_price) {
-      update.contract_value = Number(deal.final_agreed_price);
-    }
-
-    const { error } = await supabase.from("sales_deals").update(update).eq("id", deal.id);
+    const { error } = await supabase.from("sales_deals").update({ stage: targetStage }).eq("id", deal.id);
     if (error) toast.error(error.message);
     else { toast.success(`Moved to ${targetStage}`); onRefresh(); }
-    setDragDealId(null);
   };
+
 
   return (
     <>
