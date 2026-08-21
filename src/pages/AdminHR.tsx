@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -65,22 +66,38 @@ function TeamAttendance() {
   );
 }
 
+// Roles genuinely entitled to org-wide leave visibility
+const LEAVE_ORG_WIDE_ROLES = ["super_admin", "managing_director", "hr_executive"];
+
 function LeaveApprovals() {
   const { user } = useAuth();
+  const { role } = useUserRole();
   const [requests, setRequests] = useState<any[]>([]);
   const [profiles, setProfiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     setLoading(true);
-    const [{ data: r }, { data: p }] = await Promise.all([
-      supabase.from("leave_requests").select("*").order("requested_at", { ascending: false }),
-      supabase.from("profiles").select("auth_user_id, display_name, role"),
-    ]);
-    setRequests(r ?? []); setProfiles(p ?? []); setLoading(false);
+    const orgWide = !!role && LEAVE_ORG_WIDE_ROLES.includes(role);
+    const { data: p } = await supabase.from("profiles").select("id, auth_user_id, display_name, role, reporting_manager_id");
+    const allProfiles = p ?? [];
+
+    let query = supabase.from("leave_requests").select("*").order("requested_at", { ascending: false });
+    if (!orgWide) {
+      // Manager-tier: only own rows + direct reports' rows
+      const me = allProfiles.find(x => x.auth_user_id === user?.id);
+      const reportIds = allProfiles
+        .filter(x => me && x.reporting_manager_id === me.id)
+        .map(x => x.auth_user_id)
+        .filter(Boolean);
+      const allowed = Array.from(new Set([user?.id, ...reportIds].filter(Boolean))) as string[];
+      query = query.in("user_id", allowed.length ? allowed : ["00000000-0000-0000-0000-000000000000"]);
+    }
+    const { data: r } = await query;
+    setRequests(r ?? []); setProfiles(allProfiles); setLoading(false);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { if (role !== null) fetchData(); /* eslint-disable-next-line */ }, [role]);
 
   const getName = (uid: string) => profiles.find(p => p.auth_user_id === uid)?.display_name || "—";
 
