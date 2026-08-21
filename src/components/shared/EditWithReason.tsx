@@ -19,7 +19,9 @@ export type EditableTable =
   | "daily_measurements"
   | "measurement_line_items"
   | "qc_inspections"
-  | "qc_inspection_items";
+  | "qc_inspection_items"
+  | "marketing_funnel_monthly"
+  | "call_funnel_monthly";
 
 export interface EditableField {
   name: string;
