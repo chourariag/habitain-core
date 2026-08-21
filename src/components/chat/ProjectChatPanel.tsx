@@ -261,6 +261,58 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
     setAttachments((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  // @-mention handling
+  const handleTextChange = (value: string) => {
+    setText(value);
+    const caret = textareaRef.current?.selectionStart ?? value.length;
+    const upto = value.slice(0, caret);
+    const match = upto.match(/(?:^|\s)@([\p{L}0-9 ]{0,20})$/u);
+    setMentionQuery(match ? match[1] : null);
+  };
+
+  const mentionOptions = mentionQuery === null
+    ? []
+    : teamMembers
+        .filter((m) => m.name.toLowerCase().includes(mentionQuery.trim().toLowerCase()))
+        .slice(0, 6);
+
+  const selectMention = (m: TeamMember) => {
+    const caret = textareaRef.current?.selectionStart ?? text.length;
+    const upto = text.slice(0, caret);
+    const rest = text.slice(caret);
+    const replaced = upto.replace(/@([\p{L}0-9 ]{0,20})$/u, `@${m.name} `);
+    setText(replaced + rest);
+    setMentionedIds((prev) => Array.from(new Set([...prev, m.authUserId])));
+    setMentionQuery(null);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      const pos = replaced.length;
+      textareaRef.current?.setSelectionRange(pos, pos);
+    });
+  };
+
+  // Render message text with highlighted mentions
+  const renderText = (body: string) => {
+    const names = teamMembers.map((t) => t.name).filter(Boolean).sort((a, b) => b.length - a.length);
+    if (names.length === 0) return body;
+    const escaped = names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const re = new RegExp(`@(${escaped.join("|")})`, "g");
+    const parts: (string | JSX.Element)[] = [];
+    let last = 0;
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(body))) {
+      if (match.index > last) parts.push(body.slice(last, match.index));
+      parts.push(
+        <span key={`${match.index}-${match[1]}`} className="font-semibold" style={{ color: "hsl(var(--primary))" }}>
+          {match[0]}
+        </span>
+      );
+      last = match.index + match[0].length;
+    }
+    if (last < body.length) parts.push(body.slice(last));
+    return parts;
+  };
+
   // Group messages by date
   const groupedMessages: { label: string; msgs: ChatMessage[] }[] = [];
   let lastLabel = "";
@@ -273,6 +325,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
       groupedMessages[groupedMessages.length - 1].msgs.push(m);
     }
   });
+
 
   return (
     <>
