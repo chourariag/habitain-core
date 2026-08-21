@@ -76,6 +76,10 @@ export default function Sales() {
           <BoardReportingTab />
         </TabsContent>
 
+        <TabsContent value="funnels">
+          <FunnelEntryTab />
+        </TabsContent>
+
 
         <TabsContent value="settings">
           <SalesSettingsTab deals={deals} />
