@@ -97,6 +97,7 @@ export function PipelineKanban({ deals, onRefresh }: { deals: Deal[]; onRefresh:
                     <DealCardActions
                       deal={deal}
                       onRefresh={onRefresh}
+                      onRequestWin={() => requestWin(deal)}
                       onEdit={() => { setSelectedDeal(deal); setDrawerOpen(true); }}
                     >
                       <DealCard deal={deal} onClick={() => { setSelectedDeal(deal); setDrawerOpen(true); }} />
