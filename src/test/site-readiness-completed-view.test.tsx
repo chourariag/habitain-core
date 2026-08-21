@@ -6,11 +6,11 @@ const mockFrom = vi.hoisted(() => vi.fn());
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
-    from: (...args: any[]) => mockFrom(...args),
+    from: (...args: string[]) => mockFrom(...args),
   },
 }));
 
-const completedRecord = {
+const completedRecord: Record<string, unknown> = {
   id: "sr-1",
   project_id: "proj-1",
   is_complete: true,
@@ -18,7 +18,7 @@ const completedRecord = {
   dry_run_video_url: "https://example.com/dry-run.mp4",
 };
 
-function buildSiteReadinessQuery(data: any[]) {
+function buildSiteReadinessQuery(data: Record<string, unknown>[]) {
   return {
     select: vi.fn(() => ({
       eq: vi.fn(() => ({
@@ -36,6 +36,7 @@ beforeEach(() => {
     return buildSiteReadinessQuery([]);
   });
 });
+
 
 describe("Site Hub completed Site Readiness view", () => {
   it("renders the confirmed checklist and dry-run video for a non-submit role", async () => {
