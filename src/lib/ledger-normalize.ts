@@ -16,6 +16,9 @@ export interface LedgerMappingRow {
   ledger_name: string;
   mis_category: string;
   normalized_name?: string | null;
+  last_fallback_variant?: string | null;
+  last_fallback_at?: string | null;
+  fallback_match_count?: number | null;
 }
 
 export interface MappingIndex {
