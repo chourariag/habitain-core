@@ -49,11 +49,12 @@ type MoreItem = {
   critical?: boolean;
   roles?: string[];
   requireAdminPanel?: boolean;
+  requireEmployeeManagement?: boolean;
 };
 
 const moreItems: MoreItem[] = [
   { to: "/admin", labelKey: "nav.admin", icon: Briefcase, desc: "User directory & benchmarks", requireAdminPanel: true },
-  { to: "/admin/employees", labelKey: "nav.employees", icon: Users, desc: "Manage employee profiles & roles", requireAdminPanel: true },
+  { to: "/admin/employees", labelKey: "nav.employees", icon: Users, desc: "Manage employee profiles & roles", requireEmployeeManagement: true },
   { to: "/settings", labelKey: "nav.settings", icon: Settings, desc: "Application preferences", roles: SETTINGS_ROLES },
   { to: "/admin/super-admin", labelKey: "nav.superAdmin", icon: ShieldAlert, desc: "System configuration & audit log", critical: true, roles: SUPER_ADMIN_ROLES },
 ];
@@ -62,7 +63,7 @@ export function MobileNav() {
   const { role } = useUserRole();
   const { t } = useTranslation();
   const userRole = role as AppRole | null;
-  const { canView, canAccessAdminPanel } = usePermissions();
+  const { canView, canAccessAdminPanel, canAccessEmployeeManagement } = usePermissions();
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -77,6 +78,7 @@ export function MobileNav() {
 
   const visibleMoreItems = moreItems.filter((i) => {
     if (i.requireAdminPanel) return canAccessAdminPanel();
+    if (i.requireEmployeeManagement) return canAccessEmployeeManagement();
     return i.roles ? (userRole ? i.roles.includes(userRole) : false) : false;
   });
 

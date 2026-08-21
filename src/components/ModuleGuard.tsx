@@ -10,17 +10,22 @@ import type { ModuleKey } from "@/lib/rbac-matrix";
 export function ModuleGuard({
   module,
   requireAdminPanel,
+  requireEmployeeManagement,
   children,
 }: {
   module?: ModuleKey;
   requireAdminPanel?: boolean;
+  requireEmployeeManagement?: boolean;
   children: ReactNode;
 }) {
-  const { loading, canView, canAccessAdminPanel } = usePermissions();
+  const { loading, canView, canAccessAdminPanel, canAccessEmployeeManagement } = usePermissions();
 
   if (loading) return <>{children}</>; // don't flicker before role resolves
 
   if (requireAdminPanel && !canAccessAdminPanel()) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  if (requireEmployeeManagement && !canAccessEmployeeManagement()) {
     return <Navigate to="/dashboard" replace />;
   }
   if (module && !canView(module)) {

@@ -171,3 +171,16 @@ const ADMIN_PANEL_ROLES: AppRole[] = [
 export function canAccessAdminPanel(role: AppRole | null | undefined): boolean {
   return !!role && ADMIN_PANEL_ROLES.includes(role);
 }
+
+// Employee Management (HR directory & profiles) — wider than the Admin Panel:
+// director-tier roles carry HR FULL, but never Admin Panel / impersonation.
+const EMPLOYEE_MANAGEMENT_ROLES: AppRole[] = [
+  "super_admin" as AppRole,
+  "managing_director" as AppRole,
+  "sales_director" as AppRole,
+  "architecture_director" as AppRole,
+];
+
+export function canAccessEmployeeManagement(role: AppRole | null | undefined): boolean {
+  return !!role && EMPLOYEE_MANAGEMENT_ROLES.includes(role);
+}

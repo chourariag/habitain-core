@@ -22,7 +22,7 @@ import { useTranslation } from "react-i18next";
 import type { AppRole } from "@/lib/roles";
 import { RoleSwitcher } from "./RoleSwitcher";
 
-type NavItem = { to: string; labelKey: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean; module?: ModuleKey; requireAdminPanel?: boolean };
+type NavItem = { to: string; labelKey: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean; module?: ModuleKey; requireAdminPanel?: boolean; requireEmployeeManagement?: boolean };
 type NavSection = { key: string; labelKey?: string; items: NavItem[]; group?: "altree" };
 
 const CAPACITY_ROLES = ["super_admin", "managing_director", "head_operations", "planning_head", "production_head"];
@@ -88,7 +88,7 @@ const sectionConfig: NavSection[] = [
     ],
   },
   { key: "altree-admin", group: "altree", items: [{ section: "altree", to: "/admin", labelKey: "nav.admin", icon: Briefcase, requireAdminPanel: true }] },
-  { key: "altree-employees", group: "altree", items: [{ section: "altree", to: "/admin/employees", labelKey: "nav.employees", icon: Users, requireAdminPanel: true }] },
+  { key: "altree-employees", group: "altree", items: [{ section: "altree", to: "/admin/employees", labelKey: "nav.employees", icon: Users, requireEmployeeManagement: true }] },
   { key: "altree-super", group: "altree", items: [{ section: "altree", to: "/admin/super-admin", labelKey: "nav.superAdmin", icon: ShieldAlert, roles: SUPER_ADMIN_ROLES }] },
   { key: "altree-settings", group: "altree", items: [{ section: "altree", to: "/settings", labelKey: "nav.settings", icon: Settings, roles: SETTINGS_ROLES }] },
 ];
@@ -124,7 +124,7 @@ export function AppSidebar() {
   const { signOut } = useAuth();
   const { role } = useUserRole();
   const userRole = role as AppRole | null;
-  const { canView, canAccessAdminPanel } = usePermissions();
+  const { canView, canAccessAdminPanel, canAccessEmployeeManagement } = usePermissions();
   const { projects, selectedProjectId, setSelectedProjectId } = useProjectContext();
   const { i18n, t } = useTranslation();
   const location = useLocation();
@@ -146,6 +146,7 @@ export function AppSidebar() {
       ...s,
       items: s.items.filter((it) => {
         if (it.requireAdminPanel) return canAccessAdminPanel();
+        if (it.requireEmployeeManagement) return canAccessEmployeeManagement();
         if (it.module) return canView(it.module);
         const sectionOk = it.alwaysVisible || canSeeSection(userRole, it.section);
         const roleOk = !it.roles || (userRole && it.roles.includes(userRole));
