@@ -647,6 +647,31 @@ export function MISTab() {
             </CardContent>
           </Card>
 
+          {fallbackHits.length > 0 && (
+            <Card style={{ borderColor: "#D4860A" }}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-display" style={{ color: "#D4860A" }}>
+                  Matched via normalization ({fallbackHits.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 space-y-1">
+                <p className="text-xs" style={{ color: "#666" }}>
+                  These ledgers did not match a saved mapping exactly — they matched only after
+                  normalizing spacing, case and punctuation. Review them: this is how Tally export
+                  naming drift shows up.
+                </p>
+                {fallbackHits.map((h) => (
+                  <div key={h.incoming} className="text-xs" style={{ color: "#1A1A1A" }}>
+                    <span className="font-mono">{h.incoming}</span>
+                    <span style={{ color: "#666" }}> → saved as </span>
+                    <span className="font-mono">{h.mapping.ledger_name}</span>
+                    <span style={{ color: "#666" }}> ({MIS_CATEGORIES[h.mapping.mis_category as MISCategory] || h.mapping.mis_category})</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Section C: Detailed Ledger View */}
           <Collapsible>
             <Card>
