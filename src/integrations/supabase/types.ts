@@ -2293,6 +2293,45 @@ export type Database = {
           },
         ]
       }
+      depreciation_block_reference: {
+        Row: {
+          block_name: string
+          created_at: string
+          created_by: string | null
+          default_method: Database["public"]["Enums"]["depreciation_method"]
+          id: string
+          is_archived: boolean
+          source: string
+          updated_at: string
+          updated_by: string | null
+          useful_life_years: number
+        }
+        Insert: {
+          block_name: string
+          created_at?: string
+          created_by?: string | null
+          default_method?: Database["public"]["Enums"]["depreciation_method"]
+          id?: string
+          is_archived?: boolean
+          source: string
+          updated_at?: string
+          updated_by?: string | null
+          useful_life_years: number
+        }
+        Update: {
+          block_name?: string
+          created_at?: string
+          created_by?: string | null
+          default_method?: Database["public"]["Enums"]["depreciation_method"]
+          id?: string
+          is_archived?: boolean
+          source?: string
+          updated_at?: string
+          updated_by?: string | null
+          useful_life_years?: number
+        }
+        Relationships: []
+      }
       design_consultants: {
         Row: {
           approved: boolean
@@ -4175,6 +4214,10 @@ export type Database = {
           created_at: string
           created_by: string | null
           current_location: string | null
+          depreciation_method:
+            | Database["public"]["Enums"]["depreciation_method"]
+            | null
+          depreciation_start_date: string | null
           disposal_approved_at: string | null
           disposal_approved_by: string | null
           disposal_reason: string | null
@@ -4183,17 +4226,24 @@ export type Database = {
           id: string
           insurance_expiry: string | null
           is_archived: boolean
+          is_pre_hstack_asset: boolean
           last_service_date: string | null
           make_model: string | null
           next_service_due: string | null
           notes: string | null
+          opening_accumulated_depreciation: number | null
+          opening_balance_as_at_date: string | null
+          opening_balance_source: string | null
+          opening_gross_block: number | null
           purchase_date: string | null
           purchase_value: number | null
+          residual_value: number | null
           serial_number: string | null
           service_interval_days: number | null
           status: Database["public"]["Enums"]["fixed_asset_status"]
           updated_at: string
           updated_by: string | null
+          useful_life_years: number | null
           warranty_expiry: string | null
         }
         Insert: {
@@ -4205,6 +4255,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           current_location?: string | null
+          depreciation_method?:
+            | Database["public"]["Enums"]["depreciation_method"]
+            | null
+          depreciation_start_date?: string | null
           disposal_approved_at?: string | null
           disposal_approved_by?: string | null
           disposal_reason?: string | null
@@ -4213,17 +4267,24 @@ export type Database = {
           id?: string
           insurance_expiry?: string | null
           is_archived?: boolean
+          is_pre_hstack_asset?: boolean
           last_service_date?: string | null
           make_model?: string | null
           next_service_due?: string | null
           notes?: string | null
+          opening_accumulated_depreciation?: number | null
+          opening_balance_as_at_date?: string | null
+          opening_balance_source?: string | null
+          opening_gross_block?: number | null
           purchase_date?: string | null
           purchase_value?: number | null
+          residual_value?: number | null
           serial_number?: string | null
           service_interval_days?: number | null
           status?: Database["public"]["Enums"]["fixed_asset_status"]
           updated_at?: string
           updated_by?: string | null
+          useful_life_years?: number | null
           warranty_expiry?: string | null
         }
         Update: {
@@ -4235,6 +4296,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           current_location?: string | null
+          depreciation_method?:
+            | Database["public"]["Enums"]["depreciation_method"]
+            | null
+          depreciation_start_date?: string | null
           disposal_approved_at?: string | null
           disposal_approved_by?: string | null
           disposal_reason?: string | null
@@ -4243,17 +4308,24 @@ export type Database = {
           id?: string
           insurance_expiry?: string | null
           is_archived?: boolean
+          is_pre_hstack_asset?: boolean
           last_service_date?: string | null
           make_model?: string | null
           next_service_due?: string | null
           notes?: string | null
+          opening_accumulated_depreciation?: number | null
+          opening_balance_as_at_date?: string | null
+          opening_balance_source?: string | null
+          opening_gross_block?: number | null
           purchase_date?: string | null
           purchase_value?: number | null
+          residual_value?: number | null
           serial_number?: string | null
           service_interval_days?: number | null
           status?: Database["public"]["Enums"]["fixed_asset_status"]
           updated_at?: string
           updated_by?: string | null
+          useful_life_years?: number | null
           warranty_expiry?: string | null
         }
         Relationships: [
@@ -15771,6 +15843,7 @@ export type Database = {
         | "senior_factory_supervisor"
         | "purchase_assistant"
         | "assistant_manager"
+      depreciation_method: "SLM" | "WDV"
       fixed_asset_category:
         | "machinery"
         | "vehicle"
@@ -15965,6 +16038,7 @@ export const Constants = {
         "purchase_assistant",
         "assistant_manager",
       ],
+      depreciation_method: ["SLM", "WDV"],
       fixed_asset_category: [
         "machinery",
         "vehicle",
