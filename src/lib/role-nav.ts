@@ -1,8 +1,9 @@
 import type { AppRole } from "@/lib/roles";
 
-// Roles that see everything
-// principal_architect has IDENTICAL access to managing_director per confirmed business rule
-const FULL_ACCESS: AppRole[] = ["super_admin", "managing_director", "principal_architect"];
+// Roles that see everything.
+// NOTE: principal_architect was previously granted MD parity here. That blanket rule was
+// removed — it was never a deliberate grant and contradicted the GFC-only scope.
+const FULL_ACCESS: AppRole[] = ["super_admin", "managing_director"];
 const DIRECTORS: AppRole[] = [...FULL_ACCESS, "finance_director", "sales_director", "architecture_director"];
 
 export type NavSection = {
