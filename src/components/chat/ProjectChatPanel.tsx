@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Send, Paperclip, Image as ImageIcon } from "lucide-react";
+import { X, Send, Paperclip, Image as ImageIcon, Reply } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format, isToday, isYesterday } from "date-fns";
