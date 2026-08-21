@@ -366,8 +366,18 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
                 </div>
                 {group.msgs.map((m) => {
                   const isOwn = m.sender_id === userId;
+                  const quoted = m.reply_to_id ? messages.find((x) => x.id === m.reply_to_id) : null;
                   return (
-                    <div key={m.id} className={`flex mb-2 ${isOwn ? "justify-end" : "justify-start"}`}>
+                    <div key={m.id} className={`group flex mb-2 items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                      {isOwn && (
+                        <button
+                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted-foreground p-1"
+                          aria-label="Reply"
+                          onClick={() => { setReplyTo(m); textareaRef.current?.focus(); }}
+                        >
+                          <Reply className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                       <div className="max-w-[75%]">
                         {!isOwn && (
                           <p className="text-[11px] font-bold mb-0.5 px-1" style={{ color: "#666666" }}>{senderNames[m.sender_id] || m.sender_name || "User"}</p>
@@ -380,6 +390,16 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
                             borderRadius: isOwn ? "12px 12px 4px 12px" : "12px 12px 12px 4px",
                           }}
                         >
+                          {quoted && (
+                            <div className="mb-1.5 px-2 py-1 rounded-md border-l-2 bg-muted/60" style={{ borderLeftColor: "hsl(var(--primary))" }}>
+                              <p className="text-[10px] font-bold text-muted-foreground">
+                                {senderNames[quoted.sender_id] || quoted.sender_name || "User"}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                {quoted.message_text || "Attachment"}
+                              </p>
+                            </div>
+                          )}
                           {(m.attachment_urls ?? []).length > 0 && (
                             <div className="flex gap-1.5 mb-1.5 flex-wrap">
                               {m.attachment_urls.map((url, i) => {
@@ -397,15 +417,25 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
                               })}
                             </div>
                           )}
-                          {m.message_text && <p className="whitespace-pre-wrap break-words">{m.message_text}</p>}
+                          {m.message_text && <p className="whitespace-pre-wrap break-words">{renderText(m.message_text)}</p>}
                           <p className="text-[10px] text-muted-foreground mt-1 text-right">
                             {format(new Date(m.created_at), "HH:mm")}
                           </p>
                         </div>
                       </div>
+                      {!isOwn && (
+                        <button
+                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted-foreground p-1"
+                          aria-label="Reply"
+                          onClick={() => { setReplyTo(m); textareaRef.current?.focus(); }}
+                        >
+                          <Reply className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                   );
                 })}
+
               </div>
             ))
           )}
