@@ -5224,6 +5224,141 @@ export type Database = {
         }
         Relationships: []
       }
+      labour_invoice_checklist_items: {
+        Row: {
+          created_at: string
+          evidence_url: string | null
+          id: string
+          is_auto: boolean
+          is_met: boolean
+          item_label: string
+          labour_invoice_id: string
+          ticked_at: string | null
+          ticked_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          evidence_url?: string | null
+          id?: string
+          is_auto?: boolean
+          is_met?: boolean
+          item_label: string
+          labour_invoice_id: string
+          ticked_at?: string | null
+          ticked_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          evidence_url?: string | null
+          id?: string
+          is_auto?: boolean
+          is_met?: boolean
+          item_label?: string
+          labour_invoice_id?: string
+          ticked_at?: string | null
+          ticked_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_invoice_checklist_items_labour_invoice_id_fkey"
+            columns: ["labour_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "labour_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labour_invoices: {
+        Row: {
+          amount_paid: number
+          amount_total: number
+          approved_at: string | null
+          approved_by: string | null
+          checklist_completed_at: string | null
+          checklist_completed_by: string | null
+          created_at: string
+          due_date: string | null
+          id: string
+          invoice_number: string | null
+          is_archived: boolean
+          notes: string | null
+          project_id: string | null
+          raised_by: string | null
+          raised_date: string
+          status: string
+          subcontractor_id: string | null
+          updated_at: string
+          work_order_id: string | null
+        }
+        Insert: {
+          amount_paid?: number
+          amount_total?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          checklist_completed_at?: string | null
+          checklist_completed_by?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          is_archived?: boolean
+          notes?: string | null
+          project_id?: string | null
+          raised_by?: string | null
+          raised_date?: string
+          status?: string
+          subcontractor_id?: string | null
+          updated_at?: string
+          work_order_id?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          amount_total?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          checklist_completed_at?: string | null
+          checklist_completed_by?: string | null
+          created_at?: string
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          is_archived?: boolean
+          notes?: string | null
+          project_id?: string | null
+          raised_by?: string | null
+          raised_date?: string
+          status?: string
+          subcontractor_id?: string | null
+          updated_at?: string
+          work_order_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labour_invoices_subcontractor_id_fkey"
+            columns: ["subcontractor_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labour_invoices_work_order_id_fkey"
+            columns: ["work_order_id"]
+            isOneToOne: false
+            referencedRelation: "work_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       labour_team_members: {
         Row: {
           created_at: string
@@ -14556,6 +14691,10 @@ export type Database = {
         Returns: boolean
       }
       can_approve_labour_claims: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_approve_labour_invoice: {
         Args: { _user_id: string }
         Returns: boolean
       }
