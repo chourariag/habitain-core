@@ -113,6 +113,7 @@ export function PipelineKanban({ deals, onRefresh }: { deals: Deal[]; onRefresh:
         })}
       </div>
       <DealDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} deal={selectedDeal} onSaved={onRefresh} />
+      <WinConfirmDialog open={!!winDeal} deal={winDeal} onClose={() => setWinDeal(null)} onDone={onRefresh} />
     </>
   );
 }
