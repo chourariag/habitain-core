@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { SalesMetricsBar } from "@/components/sales/SalesMetricsBar";
 import { PipelineKanban } from "@/components/sales/PipelineKanban";
