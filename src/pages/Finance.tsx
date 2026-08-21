@@ -8,6 +8,7 @@ import { CashFlowTab } from "@/components/finance/CashFlowTab";
 import { PaymentsTab } from "@/components/finance/PaymentsTab";
 import { StatutoryTab } from "@/components/finance/StatutoryTab";
 import { InvoicesTab } from "@/components/finance/InvoicesTab";
+import { LabourInvoicesTab } from "@/components/finance/LabourInvoicesTab";
 import { RevenueMarginTab } from "@/components/finance/RevenueMarginTab";
 import { WorkOrdersTab } from "@/components/work-orders/WorkOrdersTab";
 import { AdvanceApprovalsTab } from "@/components/finance/AdvanceApprovalsTab";
