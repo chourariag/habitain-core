@@ -19,7 +19,7 @@ import SiteHub from "@/pages/SiteHub";
 import DispatchPackForm from "@/pages/DispatchPackForm";
 import DesignPortal from "@/pages/DesignPortal";
 import DesignSchedule from "@/pages/DesignSchedule";
-import { DesignRouteGuard } from "@/components/DesignRouteGuard";
+
 import { ManagementRouteGuard } from "@/components/ManagementRouteGuard";
 import Management from "@/pages/Management";
 import QualityControl from "@/pages/QualityControl";
