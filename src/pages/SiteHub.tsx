@@ -252,7 +252,15 @@ function SiteHubContent() {
                 </div>
               </div>
               {siteReady ? (
-                <Badge variant="outline" className="shrink-0" style={{ backgroundColor: "#E8F2ED", color: "#006039", border: "none" }}>Completed ✅</Badge>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0 text-xs"
+                  style={{ backgroundColor: "#E8F2ED", color: "#006039", border: "none" }}
+                  onClick={() => setShowReadinessChecklist(!showReadinessChecklist)}
+                >
+                  {showReadinessChecklist ? "Hide Checklist" : "Completed ✅"}
+                </Button>
               ) : (
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   <Badge variant="outline" className="shrink-0" style={{ backgroundColor: "#FFF8E8", color: "#D4860A", border: "none" }}>Not Started</Badge>
@@ -265,7 +273,7 @@ function SiteHubContent() {
               )}
             </div>
 
-            {showReadinessChecklist && !siteReady && (
+            {showReadinessChecklist && (
               <SiteReadinessChecklist
                 projectId={selectedProjectId!}
                 userRole={userRole}
