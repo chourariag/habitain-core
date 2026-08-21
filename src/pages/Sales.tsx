@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { SalesMetricsBar } from "@/components/sales/SalesMetricsBar";
 import { PipelineKanban } from "@/components/sales/PipelineKanban";
@@ -17,22 +19,24 @@ export default function Sales() {
   const [deals, setDeals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [newDrawerOpen, setNewDrawerOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
 
   const fetchDeals = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("sales_deals")
-      .select("*")
-      .eq("is_archived", false)
-      .order("updated_at", { ascending: false });
+    let query = supabase.from("sales_deals").select("*");
+    // Archived (pre-HStack / historical) deals never appear on the live board by default
+    if (!showArchived) query = query.eq("is_archived", false);
+    const { data, error } = await query.order("updated_at", { ascending: false });
     if (error) {
       const { toast } = await import("sonner");
       toast.error(`Failed to load deals: ${error.message}`);
     }
     setDeals(data || []);
     setLoading(false);
-  }, []);
+  }, [showArchived]);
 
   useEffect(() => { fetchDeals(); }, [fetchDeals]);
+
+  const archivedCount = deals.filter(d => d.is_archived).length;
 
   return (
     <div className="p-4 md:p-6 space-y-4" style={{ background: "#FFFFFF", minHeight: "100vh" }}>
@@ -56,6 +60,12 @@ export default function Sales() {
         </ScrollableTabsWrapper>
 
         <TabsContent value="pipeline" className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Switch id="show-archived" checked={showArchived} onCheckedChange={setShowArchived} />
+            <Label htmlFor="show-archived" className="text-xs" style={{ color: "#555" }}>
+              Show archived (2025 historical){showArchived && archivedCount > 0 ? ` — ${archivedCount}` : ""}
+            </Label>
+          </div>
           <SalesMetricsBar deals={deals} />
           {loading ? (
             <div className="text-center py-12" style={{ color: "#999" }}>Loading…</div>
