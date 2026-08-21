@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Send, Paperclip, Image as ImageIcon } from "lucide-react";
+import { X, Send, Paperclip, Image as ImageIcon, Reply } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format, isToday, isYesterday } from "date-fns";
@@ -23,6 +23,13 @@ interface ChatMessage {
   attachment_urls: string[];
   created_at: string;
   read_by: string[];
+  reply_to_id: string | null;
+  mentioned_ids: string[];
+}
+
+interface TeamMember {
+  authUserId: string;
+  name: string;
 }
 
 function dateSeparatorLabel(dateStr: string) {
@@ -43,6 +50,10 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
   const [sending, setSending] = useState(false);
   const [senderName, setSenderName] = useState("");
   const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [mentionedIds, setMentionedIds] = useState<string[]>([]);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,6 +63,25 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
     supabase.from("profiles").select("display_name").eq("auth_user_id", userId).maybeSingle()
       .then(({ data }) => setSenderName(effectiveDisplayName((data as any)?.display_name, "User")));
   }, [userId]);
+
+  // Load active project team members for @-mentions
+  useEffect(() => {
+    (async () => {
+      const { data } = await (supabase.from("project_team_members") as any)
+        .select("profile_id, is_active, profiles!inner(auth_user_id, display_name)")
+        .eq("project_id", projectId)
+        .eq("is_active", true);
+      const list: TeamMember[] = ((data as any[]) ?? [])
+        .map((r) => ({
+          authUserId: r.profiles?.auth_user_id as string,
+          name: (r.profiles?.display_name as string) || "User",
+        }))
+        .filter((m) => !!m.authUserId);
+      const seen = new Set<string>();
+      setTeamMembers(list.filter((m) => (seen.has(m.authUserId) ? false : (seen.add(m.authUserId), true))));
+    })();
+  }, [projectId]);
+
 
 
   // Fetch messages
@@ -185,18 +215,33 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
         urls.push(path);
       }
 
+      const body = text.trim();
+      // Keep only mentions still present in the final text
+      const finalMentions = Array.from(new Set(
+        mentionedIds.filter((id) => {
+          const m = teamMembers.find((t) => t.authUserId === id);
+          return m ? body.includes(`@${m.name}`) : false;
+        })
+      ));
+
       await (supabase.from("project_messages") as any).insert({
         project_id: projectId,
         project_type: projectType,
         sender_id: userId,
         sender_name: getTestingPersonaName() || senderName || "User",
-        message_text: text.trim() || null,
+        message_text: body || null,
         attachment_urls: urls,
         read_by: [userId],
+        reply_to_id: replyTo?.id ?? null,
+        mentioned_ids: finalMentions,
       });
 
       setText("");
       setAttachments([]);
+      setReplyTo(null);
+      setMentionedIds([]);
+      setMentionQuery(null);
+
     } catch (err: any) {
       toast.error(err.message || "Failed to send message");
     } finally {
@@ -216,6 +261,58 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
     setAttachments((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  // @-mention handling
+  const handleTextChange = (value: string) => {
+    setText(value);
+    const caret = textareaRef.current?.selectionStart ?? value.length;
+    const upto = value.slice(0, caret);
+    const match = upto.match(/(?:^|\s)@([\p{L}0-9 ]{0,20})$/u);
+    setMentionQuery(match ? match[1] : null);
+  };
+
+  const mentionOptions = mentionQuery === null
+    ? []
+    : teamMembers
+        .filter((m) => m.name.toLowerCase().includes(mentionQuery.trim().toLowerCase()))
+        .slice(0, 6);
+
+  const selectMention = (m: TeamMember) => {
+    const caret = textareaRef.current?.selectionStart ?? text.length;
+    const upto = text.slice(0, caret);
+    const rest = text.slice(caret);
+    const replaced = upto.replace(/@([\p{L}0-9 ]{0,20})$/u, `@${m.name} `);
+    setText(replaced + rest);
+    setMentionedIds((prev) => Array.from(new Set([...prev, m.authUserId])));
+    setMentionQuery(null);
+    requestAnimationFrame(() => {
+      textareaRef.current?.focus();
+      const pos = replaced.length;
+      textareaRef.current?.setSelectionRange(pos, pos);
+    });
+  };
+
+  // Render message text with highlighted mentions
+  const renderText = (body: string) => {
+    const names = teamMembers.map((t) => t.name).filter(Boolean).sort((a, b) => b.length - a.length);
+    if (names.length === 0) return body;
+    const escaped = names.map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const re = new RegExp(`@(${escaped.join("|")})`, "g");
+    const parts: (string | JSX.Element)[] = [];
+    let last = 0;
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(body))) {
+      if (match.index > last) parts.push(body.slice(last, match.index));
+      parts.push(
+        <span key={`${match.index}-${match[1]}`} className="font-semibold" style={{ color: "hsl(var(--primary))" }}>
+          {match[0]}
+        </span>
+      );
+      last = match.index + match[0].length;
+    }
+    if (last < body.length) parts.push(body.slice(last));
+    return parts;
+  };
+
   // Group messages by date
   const groupedMessages: { label: string; msgs: ChatMessage[] }[] = [];
   let lastLabel = "";
@@ -228,6 +325,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
       groupedMessages[groupedMessages.length - 1].msgs.push(m);
     }
   });
+
 
   return (
     <>
@@ -268,8 +366,18 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
                 </div>
                 {group.msgs.map((m) => {
                   const isOwn = m.sender_id === userId;
+                  const quoted = m.reply_to_id ? messages.find((x) => x.id === m.reply_to_id) : null;
                   return (
-                    <div key={m.id} className={`flex mb-2 ${isOwn ? "justify-end" : "justify-start"}`}>
+                    <div key={m.id} className={`group flex mb-2 items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
+                      {isOwn && (
+                        <button
+                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted-foreground p-1"
+                          aria-label="Reply"
+                          onClick={() => { setReplyTo(m); textareaRef.current?.focus(); }}
+                        >
+                          <Reply className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                       <div className="max-w-[75%]">
                         {!isOwn && (
                           <p className="text-[11px] font-bold mb-0.5 px-1" style={{ color: "#666666" }}>{senderNames[m.sender_id] || m.sender_name || "User"}</p>
@@ -282,6 +390,16 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
                             borderRadius: isOwn ? "12px 12px 4px 12px" : "12px 12px 12px 4px",
                           }}
                         >
+                          {quoted && (
+                            <div className="mb-1.5 px-2 py-1 rounded-md border-l-2 bg-muted/60" style={{ borderLeftColor: "hsl(var(--primary))" }}>
+                              <p className="text-[10px] font-bold text-muted-foreground">
+                                {senderNames[quoted.sender_id] || quoted.sender_name || "User"}
+                              </p>
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                {quoted.message_text || "Attachment"}
+                              </p>
+                            </div>
+                          )}
                           {(m.attachment_urls ?? []).length > 0 && (
                             <div className="flex gap-1.5 mb-1.5 flex-wrap">
                               {m.attachment_urls.map((url, i) => {
@@ -299,15 +417,25 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
                               })}
                             </div>
                           )}
-                          {m.message_text && <p className="whitespace-pre-wrap break-words">{m.message_text}</p>}
+                          {m.message_text && <p className="whitespace-pre-wrap break-words">{renderText(m.message_text)}</p>}
                           <p className="text-[10px] text-muted-foreground mt-1 text-right">
                             {format(new Date(m.created_at), "HH:mm")}
                           </p>
                         </div>
                       </div>
+                      {!isOwn && (
+                        <button
+                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted-foreground p-1"
+                          aria-label="Reply"
+                          onClick={() => { setReplyTo(m); textareaRef.current?.focus(); }}
+                        >
+                          <Reply className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                   );
                 })}
+
               </div>
             ))
           )}
@@ -330,8 +458,38 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
           </div>
         )}
 
+        {/* Reply preview */}
+        {replyTo && (
+          <div className="flex items-start gap-2 px-3 py-2 border-t border-border bg-muted/40">
+            <div className="flex-1 min-w-0 border-l-2 pl-2" style={{ borderLeftColor: "hsl(var(--primary))" }}>
+              <p className="text-[11px] font-bold text-muted-foreground">
+                Replying to {senderNames[replyTo.sender_id] || replyTo.sender_name || "User"}
+              </p>
+              <p className="text-[12px] text-muted-foreground truncate">
+                {replyTo.message_text ? replyTo.message_text.slice(0, 120) : "Attachment"}
+              </p>
+            </div>
+            <button className="text-muted-foreground shrink-0" aria-label="Cancel reply" onClick={() => setReplyTo(null)}>
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {/* Input */}
-        <div className="shrink-0 flex items-end gap-2 px-3 py-3 border-t border-border" style={{ backgroundColor: "hsl(var(--background))", paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
+        <div className="relative shrink-0 flex items-end gap-2 px-3 py-3 border-t border-border" style={{ backgroundColor: "hsl(var(--background))", paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
+          {mentionOptions.length > 0 && (
+            <div className="absolute bottom-full left-3 right-3 mb-1 z-10 max-h-48 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg">
+              {mentionOptions.map((m) => (
+                <button
+                  key={m.authUserId}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-muted"
+                  onClick={() => selectMention(m)}
+                >
+                  {m.name}
+                </button>
+              ))}
+            </div>
+          )}
           <input
             ref={fileInputRef}
             type="file"
@@ -352,18 +510,25 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
           <textarea
             ref={textareaRef}
             value={text}
-            onChange={(e) => setText(e.target.value)}
+            onChange={(e) => handleTextChange(e.target.value)}
             onKeyDown={(e) => {
+              if (e.key === "Escape") { setMentionQuery(null); return; }
               if (e.key === "Enter" && !e.shiftKey) {
+                if (mentionOptions.length > 0) {
+                  e.preventDefault();
+                  selectMention(mentionOptions[0]);
+                  return;
+                }
                 e.preventDefault();
                 handleSend();
               }
             }}
-            placeholder="Type a message..."
+            placeholder="Type a message... use @ to mention"
             rows={1}
             className="flex-1 resize-none border border-input rounded-[20px] px-3 py-2 text-sm bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             style={{ maxHeight: 72 }}
           />
+
           <button
             onClick={handleSend}
             disabled={sending || (!text.trim() && attachments.length === 0)}

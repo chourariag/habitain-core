@@ -8399,10 +8399,12 @@ export type Database = {
           attachment_urls: string[] | null
           created_at: string
           id: string
+          mentioned_ids: string[] | null
           message_text: string | null
           project_id: string
           project_type: string
           read_by: string[] | null
+          reply_to_id: string | null
           sender_id: string
           sender_name: string
         }
@@ -8410,10 +8412,12 @@ export type Database = {
           attachment_urls?: string[] | null
           created_at?: string
           id?: string
+          mentioned_ids?: string[] | null
           message_text?: string | null
           project_id: string
           project_type?: string
           read_by?: string[] | null
+          reply_to_id?: string | null
           sender_id: string
           sender_name: string
         }
@@ -8421,14 +8425,24 @@ export type Database = {
           attachment_urls?: string[] | null
           created_at?: string
           id?: string
+          mentioned_ids?: string[] | null
           message_text?: string | null
           project_id?: string
           project_type?: string
           read_by?: string[] | null
+          reply_to_id?: string | null
           sender_id?: string
           sender_name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "project_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "project_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_progress_matrix: {
         Row: {
