@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { WIPStatement } from "@/components/finance/WIPStatement";
 import { parseTrialBalanceFile, type TBRow } from "@/lib/tally-tb-parser";
 import { MIS_CATEGORIES, suggestMISCategory, type MISCategory } from "@/lib/tally-mis-mapping";
+import { buildMappingIndex, resolveLedgerCategory, type LedgerMappingRow } from "@/lib/ledger-normalize";
 
 
 interface LedgerEntry {
@@ -129,7 +130,8 @@ interface UploadSummary {
 
 export function MISTab() {
   const [uploads, setUploads] = useState<MISUpload[]>([]);
-  const [mappings, setMappings] = useState<Record<string, string>>({});
+  const [mappingRows, setMappingRows] = useState<LedgerMappingRow[]>([]);
+  const mapIndex = useMemo(() => buildMappingIndex(mappingRows), [mappingRows]);
   const [currentUploadId, setCurrentUploadId] = useState<string | null>(null);
   const [periodLabel, setPeriodLabel] = useState("");
   const [adsDrawerOpen, setAdsDrawerOpen] = useState(false);
@@ -150,9 +152,7 @@ export function MISTab() {
       supabase.from("finance_mis_uploads").select("*").order("created_at", { ascending: false }).limit(10),
       supabase.from("ledger_mappings").select("*"),
     ]);
-    const mappingMap: Record<string, string> = {};
-    (m || []).forEach((row: any) => { mappingMap[row.ledger_name] = row.mis_category; });
-    setMappings(mappingMap);
+    setMappingRows((m || []) as LedgerMappingRow[]);
     const parsed: MISUpload[] = (u || []).map((row: any) => ({
       id: row.id,
       period_label: row.period_label,
@@ -237,7 +237,7 @@ export function MISTab() {
       const seen = new Set<string>();
       const suggestions: SuggestedLedger[] = [];
       entries.filter(isMappable).forEach(e => {
-        if (mappings[e.ledger_name] || seen.has(e.ledger_name)) return;
+        if (resolveLedgerCategory(mapIndex, e.ledger_name).category || seen.has(e.ledger_name)) return;
         seen.add(e.ledger_name);
         const s = suggestMISCategory(e.ledger_name, e.ancestors || []);
         suggestions.push({
@@ -320,14 +320,9 @@ export function MISTab() {
     for (const [ledger_name, mis_category] of entries) {
       await supabase.from("ledger_mappings").upsert({ ledger_name, mis_category }, { onConflict: "ledger_name" });
     }
-    // Update mappings locally
-    setMappings(prev => {
-      const updated = { ...prev };
-      for (const [ledger_name, mis_category] of entries) {
-        updated[ledger_name] = mis_category;
-      }
-      return updated;
-    });
+    // Refresh mapping rows (need ids + normalized keys back from the DB)
+    const { data: refreshed } = await supabase.from("ledger_mappings").select("*");
+    setMappingRows((refreshed || []) as LedgerMappingRow[]);
     toast.success("Ledger mappings saved");
     setMappingDrawerOpen(false);
   };
