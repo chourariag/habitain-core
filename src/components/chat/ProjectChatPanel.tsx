@@ -23,6 +23,13 @@ interface ChatMessage {
   attachment_urls: string[];
   created_at: string;
   read_by: string[];
+  reply_to_id: string | null;
+  mentioned_ids: string[];
+}
+
+interface TeamMember {
+  authUserId: string;
+  name: string;
 }
 
 function dateSeparatorLabel(dateStr: string) {
