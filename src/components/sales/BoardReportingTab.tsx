@@ -130,7 +130,13 @@ export function BoardReportingTab() {
                       borderColor: l.stage === "Lost" ? "#F40009" : l.stage === "Paused" ? "#D4860A" : "#006039",
                       color: l.stage === "Lost" ? "#F40009" : l.stage === "Paused" ? "#D4860A" : "#006039",
                     }}>{l.stage}</Badge>
+                    {l.ready_to_win && (
+                      <Badge variant="outline" className="ml-1" style={{ borderColor: "#D4860A", color: "#D4860A" }}>
+                        Ready to Win — awaiting project
+                      </Badge>
+                    )}
                   </td>
+
                   <td className="px-3 py-2">{l.temperature || "—"}</td>
                   <td className="px-3 py-2">
                     {l.project_id ? (
