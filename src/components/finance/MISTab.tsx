@@ -359,7 +359,47 @@ export function MISTab() {
   const downloadTemplate = () => downloadTrialBalanceTemplate();
 
   const entries = currentUpload?.raw_data || [];
+
+  // Fallback resolution: an incoming ledger that doesn't match any stored name
+  // exactly may still match after normalization. Those hits are NEVER silent —
+  // they're flagged in the UI and recorded on the mapping row.
+  const fallbackHits = useMemo(() => {
+    const hits: { incoming: string; mapping: LedgerMappingRow }[] = [];
+    const seen = new Set<string>();
+    entries.forEach((e) => {
+      if (!isMappable(e) || seen.has(e.ledger_name)) return;
+      seen.add(e.ledger_name);
+      const r = resolveLedgerCategory(mapIndex, e.ledger_name);
+      if (r.viaFallback && r.mapping) hits.push({ incoming: e.ledger_name, mapping: r.mapping });
+    });
+    return hits;
+  }, [entries, mapIndex]);
+
+  // Effective map = exact matches + normalization fallbacks for this upload.
+  const mappings = useMemo(() => {
+    const m: Record<string, string> = { ...mapIndex.exact };
+    fallbackHits.forEach((h) => { m[h.incoming] = h.mapping.mis_category; });
+    return m;
+  }, [mapIndex, fallbackHits]);
+
+  // Record fallback matches so naming drift in Tally exports stays visible.
+  const loggedFallbacks = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    fallbackHits.forEach(async (h) => {
+      const key = `${h.mapping.id}:${h.incoming}`;
+      if (loggedFallbacks.current.has(key)) return;
+      loggedFallbacks.current.add(key);
+      if (h.mapping.last_fallback_variant === h.incoming) return;
+      await supabase.from("ledger_mappings").update({
+        last_fallback_variant: h.incoming,
+        last_fallback_at: new Date().toISOString(),
+        fallback_match_count: (h.mapping.fallback_match_count ?? 0) + 1,
+      } as any).eq("id", h.mapping.id);
+    });
+  }, [fallbackHits]);
+
   const getMISValue = (category: string) => sumByCategory(entries, mappings, category);
+
   const salesRevenue = getMISValue("revenue");
   const otherIncome = getMISValue("other_income");
   const unbilledRevenue = getMISValue("unbilled_revenue");
