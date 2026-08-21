@@ -15,6 +15,7 @@ import { AdvanceApprovalsTab } from "@/components/finance/AdvanceApprovalsTab";
 import { ReceivablesTab } from "@/components/finance/ReceivablesTab";
 import { BillingTrackerTab } from "@/components/finance/BillingTrackerTab";
 import { TallyIncomingSyncLogTab } from "@/components/finance/TallyIncomingSyncLogTab";
+import { AuditedFinancialsTab } from "@/components/finance/AuditedFinancialsTab";
 import { Card, CardContent } from "@/components/ui/card";
 import { Info } from "lucide-react";
 
@@ -68,6 +69,7 @@ export default function Finance() {
               <TabsTrigger value="billing-tracker">Billing Tracker</TabsTrigger>
               <TabsTrigger value="tally-ledger">Tally Ledger Classification</TabsTrigger>
               <TabsTrigger value="tally-incoming">Tally Incoming Sync Log</TabsTrigger>
+              <TabsTrigger value="audited">Audited Financials</TabsTrigger>
             </TabsList>
             <TabsContent value="mis"><MISTab /></TabsContent>
             <TabsContent value="invoices"><InvoicesTab /></TabsContent>
@@ -84,6 +86,7 @@ export default function Finance() {
               </CardContent></Card>
             </TabsContent>
             <TabsContent value="tally-incoming"><TallyIncomingSyncLogTab /></TabsContent>
+            <TabsContent value="audited"><AuditedFinancialsTab /></TabsContent>
           </Tabs>
         </TabsContent>
 

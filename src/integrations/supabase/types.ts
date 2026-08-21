@@ -3806,6 +3806,84 @@ export type Database = {
           },
         ]
       }
+      finance_audited_financials: {
+        Row: {
+          amount_current: number | null
+          amount_previous: number | null
+          auditor_firm: string | null
+          confirmation_note: string | null
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          created_by: string | null
+          fy_label: string
+          id: string
+          is_archived: boolean
+          is_confirmed: boolean
+          is_total: boolean
+          line_label: string
+          note_no: string | null
+          section: string
+          signed_date: string | null
+          sort_order: number
+          source_file: string | null
+          statement: string
+          units_source: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amount_current?: number | null
+          amount_previous?: number | null
+          auditor_firm?: string | null
+          confirmation_note?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          fy_label: string
+          id?: string
+          is_archived?: boolean
+          is_confirmed?: boolean
+          is_total?: boolean
+          line_label: string
+          note_no?: string | null
+          section: string
+          signed_date?: string | null
+          sort_order?: number
+          source_file?: string | null
+          statement: string
+          units_source?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amount_current?: number | null
+          amount_previous?: number | null
+          auditor_firm?: string | null
+          confirmation_note?: string | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          fy_label?: string
+          id?: string
+          is_archived?: boolean
+          is_confirmed?: boolean
+          is_total?: boolean
+          line_label?: string
+          note_no?: string | null
+          section?: string
+          signed_date?: string | null
+          sort_order?: number
+          source_file?: string | null
+          statement?: string
+          units_source?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       finance_cashflow: {
         Row: {
           amount: number
