@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DealCard } from "./DealCard";
 import { DealCardActions } from "./DealCardActions";
 import { DealDrawer } from "./DealDrawer";
+import { WinConfirmDialog } from "./WinConfirmDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
