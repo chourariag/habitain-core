@@ -13053,10 +13053,14 @@ export type Database = {
         Row: {
           active: boolean | null
           applies_to: string | null
+          created_at: string
           due_day: number | null
           due_month: number | null
+          due_months: number[] | null
           filing_name: string
           id: string
+          last_day_of_month: boolean
+          needs_confirmation: boolean
           notes: string | null
           recurrence: string
           updated_at: string
@@ -13064,10 +13068,14 @@ export type Database = {
         Insert: {
           active?: boolean | null
           applies_to?: string | null
+          created_at?: string
           due_day?: number | null
           due_month?: number | null
+          due_months?: number[] | null
           filing_name: string
           id?: string
+          last_day_of_month?: boolean
+          needs_confirmation?: boolean
           notes?: string | null
           recurrence?: string
           updated_at?: string
@@ -13075,10 +13083,14 @@ export type Database = {
         Update: {
           active?: boolean | null
           applies_to?: string | null
+          created_at?: string
           due_day?: number | null
           due_month?: number | null
+          due_months?: number[] | null
           filing_name?: string
           id?: string
+          last_day_of_month?: boolean
+          needs_confirmation?: boolean
           notes?: string | null
           recurrence?: string
           updated_at?: string
