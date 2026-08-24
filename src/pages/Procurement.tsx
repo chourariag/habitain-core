@@ -160,6 +160,7 @@ export default function Procurement() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  const effectiveRole = hookRole ?? userRole;
   const canAddItem = STOCK_CREATOR_ROLES.includes(effectiveRole ?? "");
   const canAddPO = PO_CREATOR_ROLES.includes(userRole ?? "");
   const canRequest = REQUESTOR_ROLES.includes(userRole ?? "");
