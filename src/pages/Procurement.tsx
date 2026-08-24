@@ -37,6 +37,7 @@ import { DeliveryTrackerTab } from "@/components/procurement/DeliveryTrackerTab"
 import { ContractsRegisterTab } from "@/components/procurement/ContractsRegisterTab";
 import { QuotationsTab } from "@/components/procurement/QuotationsTab";
 import { WorkOrdersTab } from "@/components/procurement/WorkOrdersTab";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin", "production_head"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
@@ -93,6 +94,7 @@ function SoDButton({ label, onClick, sodReason }: { label: string; onClick: () =
 
 export default function Procurement() {
   const [searchParams] = useSearchParams();
+  const { role: hookRole } = useUserRole();
   const tabFromUrl = searchParams.get("tab");
   const projectFromUrl = searchParams.get("project");
   const [items, setItems] = useState<any[]>([]);
@@ -158,7 +160,8 @@ export default function Procurement() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const canAddItem = STOCK_CREATOR_ROLES.includes(userRole ?? "");
+  const effectiveRole = hookRole ?? userRole;
+  const canAddItem = STOCK_CREATOR_ROLES.includes(effectiveRole ?? "");
   const canAddPO = PO_CREATOR_ROLES.includes(userRole ?? "");
   const canRequest = REQUESTOR_ROLES.includes(userRole ?? "");
   const canApprove = APPROVER_ROLES.includes(userRole ?? "");
