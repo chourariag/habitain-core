@@ -12515,7 +12515,7 @@ export type Database = {
           labour_food_notes: string | null
           labour_stay: boolean
           labour_stay_notes: string | null
-          module_id: string
+          module_id: string | null
           nearest_hardware_shop: boolean
           project_id: string | null
           safety_equipment: boolean
@@ -12543,7 +12543,7 @@ export type Database = {
           labour_food_notes?: string | null
           labour_stay?: boolean
           labour_stay_notes?: string | null
-          module_id: string
+          module_id?: string | null
           nearest_hardware_shop?: boolean
           project_id?: string | null
           safety_equipment?: boolean
@@ -12571,7 +12571,7 @@ export type Database = {
           labour_food_notes?: string | null
           labour_stay?: boolean
           labour_stay_notes?: string | null
-          module_id?: string
+          module_id?: string | null
           nearest_hardware_shop?: boolean
           project_id?: string | null
           safety_equipment?: boolean
