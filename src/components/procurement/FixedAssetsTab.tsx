@@ -16,7 +16,7 @@ import { Plus, Wrench, AlertTriangle, Loader2, MoveRight, Trash2, ShieldCheck, H
 import { toast } from "sonner";
 import { format, differenceInDays, parseISO } from "date-fns";
 
-const EDIT_ROLES = ["super_admin", "managing_director", "procurement", "stores_executive"];
+const EDIT_ROLES = ["super_admin", "managing_director", "procurement", "stores_executive", "production_head"];
 const SERVICE_ROLES = ["super_admin", "managing_director", "procurement", "production_head"];
 const MD_ROLES = ["super_admin", "managing_director"];
 
