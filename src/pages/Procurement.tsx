@@ -37,6 +37,7 @@ import { DeliveryTrackerTab } from "@/components/procurement/DeliveryTrackerTab"
 import { ContractsRegisterTab } from "@/components/procurement/ContractsRegisterTab";
 import { QuotationsTab } from "@/components/procurement/QuotationsTab";
 import { WorkOrdersTab } from "@/components/procurement/WorkOrdersTab";
+import { useUserRole } from "@/hooks/useUserRole";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin", "production_head"];
 const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
