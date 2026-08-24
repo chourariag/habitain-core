@@ -94,6 +94,7 @@ function SoDButton({ label, onClick, sodReason }: { label: string; onClick: () =
 
 export default function Procurement() {
   const [searchParams] = useSearchParams();
+  const { role: hookRole } = useUserRole();
   const tabFromUrl = searchParams.get("tab");
   const projectFromUrl = searchParams.get("project");
   const [items, setItems] = useState<any[]>([]);
