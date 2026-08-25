@@ -306,6 +306,9 @@ function WorkerCard({ w, canManage, onStatus, onEdit, onHistory, onDelete }: { w
             <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={onEdit}>Edit</Button>
             <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={onStatus}>Status</Button>
             <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={onHistory}>History</Button>
+            <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive" onClick={onDelete} aria-label={`Delete ${w.name}`}>
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
           </div>
         )}
       </CardContent>
