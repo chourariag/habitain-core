@@ -23,6 +23,7 @@ type StageDef = {
   id: string; stage_code: string; stage_name: string; stage_order: number;
   pipeline_type: "habitainer" | "ads"; stage_group: string | null;
   is_mandatory: boolean; is_production_gate: boolean; is_read_only: boolean;
+  deliverable_required: boolean;
 };
 type ProjectStage = {
   id: string; project_id: string; stage_definition_id: string;
@@ -282,7 +283,9 @@ function EditDialog({ def, stage, projectId, profiles, onClose, onSaved }: {
             </Select>
           </div>
           <div><Label>Notes</Label><Textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} /></div>
-          <StageAttachments projectId={projectId} stageId={stage?.id ?? null} canUpload />
+          {def.deliverable_required && (
+            <StageAttachments projectId={projectId} stageId={stage?.id ?? null} canUpload />
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
