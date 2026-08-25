@@ -622,13 +622,14 @@ function DeleteWorkerDialog({ worker, onOpenChange, onDeleted, onDeactivate }: {
     let cancelled = false;
     (async () => {
       setChecking(true);
-      const head = (t: any) => t.select("id", { count: "exact", head: true });
+      const cnt = (table: string, col: string) =>
+        (supabase as any).from(table).select("id", { count: "exact", head: true }).eq(col, worker.id);
       const [claims, plans, members, teams, rates] = await Promise.all([
-        head((supabase as any).from("labour_claims").eq("worker_id", worker.id)),
-        head((supabase as any).from("manpower_plan_entries").eq("worker_id", worker.id)),
-        head((supabase as any).from("labour_team_members").eq("worker_id", worker.id)),
-        head((supabase as any).from("labour_teams").eq("team_head_id", worker.id)),
-        head((supabase as any).from("labour_worker_rate_history").eq("worker_id", worker.id)),
+        cnt("labour_claims", "worker_id"),
+        cnt("manpower_plan_entries", "worker_id"),
+        cnt("labour_team_members", "worker_id"),
+        cnt("labour_teams", "team_head_id"),
+        cnt("labour_worker_rate_history", "worker_id"),
       ]);
       if (cancelled) return;
       setDeps({
