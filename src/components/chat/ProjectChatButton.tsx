@@ -95,12 +95,12 @@ export function ProjectChatButton({ projectId, projectName, projectType }: Proje
         )}
       </button>
 
-      {open && (
+      {open && userId && (
         <ProjectChatPanel
           projectId={projectId}
           projectName={projectName}
           projectType={projectType}
-          userId={userId!}
+          userId={userId}
           onClose={() => setOpen(false)}
         />
       )}
