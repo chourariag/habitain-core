@@ -259,7 +259,7 @@ export function LabourRegisterTab() {
   );
 }
 
-function WorkerCard({ w, canManage, onStatus, onEdit, onHistory }: { w: Worker; canManage: boolean; onStatus: () => void; onEdit: () => void; onHistory: () => void }) {
+function WorkerCard({ w, canManage, onStatus, onEdit, onHistory, onDelete }: { w: Worker; canManage: boolean; onStatus: () => void; onEdit: () => void; onHistory: () => void; onDelete: () => void }) {
   const hasSalary = w.monthly_salary > 0;
   const daily = hasSalary ? w.monthly_salary / 26 : 0;
   const ot = daily / 8;
