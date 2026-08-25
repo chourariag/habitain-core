@@ -234,7 +234,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
         })
       ));
 
-      await (supabase.from("project_messages") as any).insert({
+      const { data: inserted } = await (supabase.from("project_messages") as any).insert({
         project_id: projectId,
         project_type: projectType,
         sender_id: userId,
@@ -244,7 +244,27 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
         read_by: [userId],
         reply_to_id: replyTo?.id ?? null,
         mentioned_ids: finalMentions,
-      });
+      }).select("id").maybeSingle();
+
+      // Distinct mention notification (separate from general new-message alerts)
+      const recipients = finalMentions.filter((id) => id !== userId);
+      if (recipients.length > 0) {
+        const from = getTestingPersonaName() || senderName || "Someone";
+        const snippet = body.length > 120 ? `${body.slice(0, 120)}…` : body || "sent an attachment";
+        await insertNotifications(
+          recipients.map((rid) => ({
+            recipient_id: rid,
+            title: `${from} mentioned you in ${projectName}`,
+            body: snippet,
+            category: "chat_mention",
+            related_table: "project_messages",
+            related_id: (inserted as any)?.id,
+            navigate_to: `/projects/${projectId}`,
+            priority: "high" as const,
+          }))
+        );
+      }
+
 
       setText("");
       setAttachments([]);
