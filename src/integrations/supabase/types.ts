@@ -15749,6 +15749,14 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_project_chat_participants: {
+        Args: { _project_id: string }
+        Returns: {
+          auth_user_id: string
+          display_name: string
+          role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       get_project_client_contact: {
         Args: { _project_id: string }
         Returns: {
@@ -15900,6 +15908,10 @@ export type Database = {
           _roles: Database["public"]["Enums"]["app_role"][]
           _user_id: string
         }
+        Returns: boolean
+      }
+      user_has_projects_module_access: {
+        Args: { _uid: string }
         Returns: boolean
       }
       user_is_project_participant: {

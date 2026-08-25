@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { X, Send, Paperclip, Image as ImageIcon, Reply } from "lucide-react";
+import { X, Send, Paperclip, Image as ImageIcon, Reply, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format, isToday, isYesterday } from "date-fns";
@@ -31,6 +31,7 @@ interface ChatMessage {
 interface TeamMember {
   authUserId: string;
   name: string;
+  role: string;
 }
 
 function dateSeparatorLabel(dateStr: string) {
@@ -53,6 +54,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [showParticipants, setShowParticipants] = useState(false);
   const [mentionedIds, setMentionedIds] = useState<string[]>([]);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -65,27 +67,23 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
       .then(({ data }) => setSenderName(effectiveDisplayName((data as any)?.display_name, "User")));
   }, [userId]);
 
-  // Load people with access to this project's chat for @-mentions
+  // Load the exact role-based audience for visibility and @-mentions.
   useEffect(() => {
     (async () => {
-      const { data } = await (supabase.from("project_team_members") as any)
-        .select("profile_id, is_active, profiles!inner(auth_user_id, display_name)")
-        .eq("project_id", projectId)
-        .eq("is_active", true);
-      let list: TeamMember[] = ((data as any[]) ?? [])
-        .map((r) => ({
-          authUserId: r.profiles?.auth_user_id as string,
-          name: (r.profiles?.display_name as string) || "User",
+      const { data, error } = await (supabase.rpc as any)("get_project_chat_participants", {
+        _project_id: projectId,
+      });
+      if (error) {
+        toast.error("Could not load chat participants");
+        return;
+      }
+      const list: TeamMember[] = ((data as any[]) ?? [])
+        .map((p) => ({
+          authUserId: p.auth_user_id as string,
+          name: (p.display_name as string) || "User",
+          role: p.role as string,
         }))
         .filter((m) => !!m.authUserId);
-
-      // Fallback: project team not populated -> allow mentioning any active colleague
-      if (list.length === 0) {
-        const { data: dir } = await (supabase.rpc as any)("get_active_profiles_directory");
-        list = ((dir as any[]) ?? [])
-          .map((p) => ({ authUserId: p.auth_user_id as string, name: (p.display_name as string) || "User" }))
-          .filter((m) => !!m.authUserId);
-      }
 
       const seen = new Set<string>();
       setTeamMembers(list.filter((m) => (seen.has(m.authUserId) ? false : (seen.add(m.authUserId), true))));
@@ -373,14 +371,40 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border" style={{ borderTopWidth: 3, borderTopColor: "hsl(var(--primary))" }}>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h3 className="font-display text-sm font-bold truncate" style={{ color: "hsl(var(--foreground))" }}>{projectName}</h3>
             <p className="text-xs text-muted-foreground">Project Chat</p>
           </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 shrink-0 gap-1.5 px-2 text-xs text-muted-foreground"
+            onClick={() => setShowParticipants((visible) => !visible)}
+            aria-expanded={showParticipants}
+            aria-label={`Show ${teamMembers.length} chat participants`}
+            title="Show who can see this chat"
+          >
+            <Users className="h-3.5 w-3.5" />
+            {teamMembers.length} can see
+          </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={onClose}>
             <X className="h-4 w-4" />
           </Button>
         </div>
+
+        {showParticipants && (
+          <div className="max-h-40 overflow-y-auto border-b border-border bg-muted/30 px-4 py-2" aria-label="Chat participants">
+            <p className="mb-1.5 text-xs font-semibold text-foreground">People who can see this chat</p>
+            <div className="space-y-1">
+              {teamMembers.map((member) => (
+                <div key={member.authUserId} className="flex items-center justify-between gap-3 text-xs">
+                  <span className="truncate text-foreground">{member.name}</span>
+                  <span className="shrink-0 text-muted-foreground">{member.role.replace(/_/g, " ")}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Messages */}
         <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-1" style={{ backgroundColor: "hsl(var(--background))" }}>
