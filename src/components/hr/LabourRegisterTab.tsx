@@ -605,3 +605,100 @@ function StatusDialog({ worker, onOpenChange, onSaved }: any) {
     </Dialog>
   );
 }
+
+type DepCounts = { claims: number; planEntries: number; teamMembers: number; teamHead: number; rateHistory: number };
+
+function DeleteWorkerDialog({ worker, onOpenChange, onDeleted, onDeactivate }: {
+  worker: Worker;
+  onOpenChange: (o: boolean) => void;
+  onDeleted: () => void;
+  onDeactivate: () => void;
+}) {
+  const [checking, setChecking] = useState(true);
+  const [deps, setDeps] = useState<DepCounts | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setChecking(true);
+      const head = (t: any) => t.select("id", { count: "exact", head: true });
+      const [claims, plans, members, teams, rates] = await Promise.all([
+        head((supabase as any).from("labour_claims").eq("worker_id", worker.id)),
+        head((supabase as any).from("manpower_plan_entries").eq("worker_id", worker.id)),
+        head((supabase as any).from("labour_team_members").eq("worker_id", worker.id)),
+        head((supabase as any).from("labour_teams").eq("team_head_id", worker.id)),
+        head((supabase as any).from("labour_worker_rate_history").eq("worker_id", worker.id)),
+      ]);
+      if (cancelled) return;
+      setDeps({
+        claims: claims.count ?? 0,
+        planEntries: plans.count ?? 0,
+        teamMembers: members.count ?? 0,
+        teamHead: teams.count ?? 0,
+        // A single auto-seeded opening rate row is created with every worker — it is not real history.
+        rateHistory: Math.max(0, (rates.count ?? 0) - 1),
+      });
+      setChecking(false);
+    })();
+    return () => { cancelled = true; };
+  }, [worker.id]);
+
+  const blockers: string[] = [];
+  if (deps) {
+    if (deps.teamHead > 0) blockers.push(`is the head of ${deps.teamHead} labour team${deps.teamHead > 1 ? "s" : ""} (the database blocks deleting a current team head)`);
+    if (deps.claims > 0) blockers.push(`${deps.claims} labour claim${deps.claims > 1 ? "s" : ""}`);
+    if (deps.planEntries > 0) blockers.push(`${deps.planEntries} manpower plan entr${deps.planEntries > 1 ? "ies" : "y"}`);
+    if (deps.teamMembers > 0) blockers.push(`${deps.teamMembers} team membership${deps.teamMembers > 1 ? "s" : ""}`);
+    if (deps.rateHistory > 0) blockers.push(`${deps.rateHistory} rate revision${deps.rateHistory > 1 ? "s" : ""}`);
+  }
+  const blocked = blockers.length > 0;
+
+  const confirm = async () => {
+    setBusy(true);
+    const { error } = await supabase.from("labour_workers").delete().eq("id", worker.id);
+    setBusy(false);
+    if (error) {
+      toast.error(
+        error.message?.includes("labour_teams")
+          ? "This worker is a current team head and cannot be deleted. Mark them Inactive instead."
+          : `Could not delete: ${error.message}`
+      );
+      return;
+    }
+    toast.success(`${worker.name} removed from the register`);
+    onDeleted();
+  };
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Delete {worker.name}?</DialogTitle></DialogHeader>
+        {checking ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+            <Loader2 className="w-4 h-4 animate-spin" /> Checking linked records…
+          </div>
+        ) : blocked ? (
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>This worker has real history and cannot be deleted:</p>
+            <ul className="list-disc pl-5">{blockers.map(b => <li key={b}>{b}</li>)}</ul>
+            <p>Deleting would strip the worker reference off payment claims or cascade-delete planning and rate records. Use <strong>Status</strong> to mark them Inactive instead.</p>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No claims, plan entries, team memberships or rate revisions are linked to this worker. This permanently removes the entry from the Labour Register.
+          </p>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          {!checking && blocked && <Button onClick={onDeactivate}>Mark Inactive instead</Button>}
+          {!checking && !blocked && (
+            <Button variant="destructive" onClick={confirm} disabled={busy}>
+              {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Delete
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
