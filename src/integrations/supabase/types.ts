@@ -15815,6 +15815,7 @@ export type Database = {
       is_full_admin: { Args: { _user_id: string }; Returns: boolean }
       is_hr_admin_tier: { Args: { _user_id: string }; Returns: boolean }
       is_md: { Args: { _user_id: string }; Returns: boolean }
+      is_operations_reader: { Args: { _uid: string }; Returns: boolean }
       is_reporting_manager_of: {
         Args: { _employee_auth_id: string; _manager_auth_id: string }
         Returns: boolean
@@ -15899,6 +15900,10 @@ export type Database = {
           _roles: Database["public"]["Enums"]["app_role"][]
           _user_id: string
         }
+        Returns: boolean
+      }
+      user_is_project_participant: {
+        Args: { _project_id: string; _uid: string }
         Returns: boolean
       }
     }
