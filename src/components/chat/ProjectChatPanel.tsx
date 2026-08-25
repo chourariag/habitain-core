@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { format, isToday, isYesterday } from "date-fns";
 import { effectiveDisplayName, getTestingPersonaName } from "@/lib/effective-user";
+import { insertNotifications } from "@/lib/notifications";
 
 
 interface ProjectChatPanelProps {
