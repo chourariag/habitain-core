@@ -53,6 +53,7 @@ export function LabourRegisterTab() {
   const [history, setHistory] = useState<any[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ contractor: Contractor; workerCount: number } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [workerDeleteTarget, setWorkerDeleteTarget] = useState<Worker | null>(null);
 
   const confirmDeleteContractor = async () => {
     if (!deleteTarget || deleteTarget.workerCount > 0) return;
