@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { format, isToday, isYesterday } from "date-fns";
 import { effectiveDisplayName, getTestingPersonaName } from "@/lib/effective-user";
 import { insertNotifications } from "@/lib/notifications";
+import { ROLE_LABELS } from "@/lib/roles";
 
 
 interface ProjectChatPanelProps {
@@ -399,7 +400,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
               {teamMembers.map((member) => (
                 <div key={member.authUserId} className="flex items-center justify-between gap-3 text-xs">
                   <span className="truncate text-foreground">{member.name}</span>
-                  <span className="shrink-0 text-muted-foreground">{member.role.replace(/_/g, " ")}</span>
+                  <span className="shrink-0 text-muted-foreground">{ROLE_LABELS[member.role] ?? member.role.replace(/_/g, " ")}</span>
                 </div>
               ))}
             </div>
