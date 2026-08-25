@@ -64,23 +64,33 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
       .then(({ data }) => setSenderName(effectiveDisplayName((data as any)?.display_name, "User")));
   }, [userId]);
 
-  // Load active project team members for @-mentions
+  // Load people with access to this project's chat for @-mentions
   useEffect(() => {
     (async () => {
       const { data } = await (supabase.from("project_team_members") as any)
         .select("profile_id, is_active, profiles!inner(auth_user_id, display_name)")
         .eq("project_id", projectId)
         .eq("is_active", true);
-      const list: TeamMember[] = ((data as any[]) ?? [])
+      let list: TeamMember[] = ((data as any[]) ?? [])
         .map((r) => ({
           authUserId: r.profiles?.auth_user_id as string,
           name: (r.profiles?.display_name as string) || "User",
         }))
         .filter((m) => !!m.authUserId);
+
+      // Fallback: project team not populated -> allow mentioning any active colleague
+      if (list.length === 0) {
+        const { data: dir } = await (supabase.rpc as any)("get_active_profiles_directory");
+        list = ((dir as any[]) ?? [])
+          .map((p) => ({ authUserId: p.auth_user_id as string, name: (p.display_name as string) || "User" }))
+          .filter((m) => !!m.authUserId);
+      }
+
       const seen = new Set<string>();
       setTeamMembers(list.filter((m) => (seen.has(m.authUserId) ? false : (seen.add(m.authUserId), true))));
     })();
   }, [projectId]);
+
 
 
 
