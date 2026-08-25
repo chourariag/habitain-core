@@ -217,6 +217,17 @@ export function LabourRegisterTab() {
         </Dialog>
       )}
 
+      {workerDeleteTarget && (
+        <DeleteWorkerDialog
+          worker={workerDeleteTarget}
+          onOpenChange={(o: boolean) => { if (!o) setWorkerDeleteTarget(null); }}
+          onDeleted={() => { setWorkerDeleteTarget(null); fetchAll(); }}
+          onDeactivate={() => { const w = workerDeleteTarget; setWorkerDeleteTarget(null); setStatusOpen(w); }}
+        />
+      )}
+
+
+
       <AddWorkerDialog
         open={addOpen} onOpenChange={setAddOpen}
         contractors={contractors} defaultDepartment={defaultDeptForRole(role)}
