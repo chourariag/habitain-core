@@ -170,7 +170,7 @@ export function LabourRegisterTab() {
 
               <AccordionContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {list.map(w => <WorkerCard key={w.id} w={w} canManage={canManage} onStatus={() => setStatusOpen(w)} onEdit={() => setEditOpen(w)} onHistory={() => loadHistory(w)} />)}
+                  {list.map(w => <WorkerCard key={w.id} w={w} canManage={canManage} onStatus={() => setStatusOpen(w)} onEdit={() => setEditOpen(w)} onHistory={() => loadHistory(w)} onDelete={() => setWorkerDeleteTarget(w)} />)}
                   {list.length === 0 && <div className="text-sm text-muted-foreground p-4">No workers yet.</div>}
                 </div>
               </AccordionContent>
