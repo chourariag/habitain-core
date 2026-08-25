@@ -23,6 +23,7 @@ type StageDef = {
   id: string; stage_code: string; stage_name: string; stage_order: number;
   pipeline_type: "habitainer" | "ads"; stage_group: string | null;
   is_mandatory: boolean; is_production_gate: boolean; is_read_only: boolean;
+  deliverable_required: boolean;
 };
 type ProjectStage = {
   id: string; project_id: string; stage_definition_id: string;
