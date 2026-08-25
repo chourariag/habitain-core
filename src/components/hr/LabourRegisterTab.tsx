@@ -53,6 +53,7 @@ export function LabourRegisterTab() {
   const [history, setHistory] = useState<any[]>([]);
   const [deleteTarget, setDeleteTarget] = useState<{ contractor: Contractor; workerCount: number } | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [workerDeleteTarget, setWorkerDeleteTarget] = useState<Worker | null>(null);
 
   const confirmDeleteContractor = async () => {
     if (!deleteTarget || deleteTarget.workerCount > 0) return;
@@ -170,7 +171,7 @@ export function LabourRegisterTab() {
 
               <AccordionContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {list.map(w => <WorkerCard key={w.id} w={w} canManage={canManage} onStatus={() => setStatusOpen(w)} onEdit={() => setEditOpen(w)} onHistory={() => loadHistory(w)} />)}
+                  {list.map(w => <WorkerCard key={w.id} w={w} canManage={canManage} onStatus={() => setStatusOpen(w)} onEdit={() => setEditOpen(w)} onHistory={() => loadHistory(w)} onDelete={() => setWorkerDeleteTarget(w)} />)}
                   {list.length === 0 && <div className="text-sm text-muted-foreground p-4">No workers yet.</div>}
                 </div>
               </AccordionContent>
@@ -216,6 +217,17 @@ export function LabourRegisterTab() {
         </Dialog>
       )}
 
+      {workerDeleteTarget && (
+        <DeleteWorkerDialog
+          worker={workerDeleteTarget}
+          onOpenChange={(o: boolean) => { if (!o) setWorkerDeleteTarget(null); }}
+          onDeleted={() => { setWorkerDeleteTarget(null); fetchAll(); }}
+          onDeactivate={() => { const w = workerDeleteTarget; setWorkerDeleteTarget(null); setStatusOpen(w); }}
+        />
+      )}
+
+
+
       <AddWorkerDialog
         open={addOpen} onOpenChange={setAddOpen}
         contractors={contractors} defaultDepartment={defaultDeptForRole(role)}
@@ -259,7 +271,7 @@ export function LabourRegisterTab() {
   );
 }
 
-function WorkerCard({ w, canManage, onStatus, onEdit, onHistory }: { w: Worker; canManage: boolean; onStatus: () => void; onEdit: () => void; onHistory: () => void }) {
+function WorkerCard({ w, canManage, onStatus, onEdit, onHistory, onDelete }: { w: Worker; canManage: boolean; onStatus: () => void; onEdit: () => void; onHistory: () => void; onDelete: () => void }) {
   const hasSalary = w.monthly_salary > 0;
   const daily = hasSalary ? w.monthly_salary / 26 : 0;
   const ot = daily / 8;
@@ -306,6 +318,9 @@ function WorkerCard({ w, canManage, onStatus, onEdit, onHistory }: { w: Worker; 
             <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={onEdit}>Edit</Button>
             <Button size="sm" variant="outline" className="h-7 text-xs flex-1" onClick={onStatus}>Status</Button>
             <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={onHistory}>History</Button>
+            <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive" onClick={onDelete} aria-label={`Delete ${w.name}`}>
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
           </div>
         )}
       </CardContent>
@@ -585,6 +600,104 @@ function StatusDialog({ worker, onOpenChange, onSaved }: any) {
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={save} disabled={saving} style={{ background: "#006039" }}>{saving ? "Saving..." : "Save"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type DepCounts = { claims: number; planEntries: number; teamMembers: number; teamHead: number; rateHistory: number };
+
+function DeleteWorkerDialog({ worker, onOpenChange, onDeleted, onDeactivate }: {
+  worker: Worker;
+  onOpenChange: (o: boolean) => void;
+  onDeleted: () => void;
+  onDeactivate: () => void;
+}) {
+  const [checking, setChecking] = useState(true);
+  const [deps, setDeps] = useState<DepCounts | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setChecking(true);
+      const cnt = (table: string, col: string) =>
+        (supabase as any).from(table).select("id", { count: "exact", head: true }).eq(col, worker.id);
+      const [claims, plans, members, teams, rates] = await Promise.all([
+        cnt("labour_claims", "worker_id"),
+        cnt("manpower_plan_entries", "worker_id"),
+        cnt("labour_team_members", "worker_id"),
+        cnt("labour_teams", "team_head_id"),
+        cnt("labour_worker_rate_history", "worker_id"),
+      ]);
+      if (cancelled) return;
+      setDeps({
+        claims: claims.count ?? 0,
+        planEntries: plans.count ?? 0,
+        teamMembers: members.count ?? 0,
+        teamHead: teams.count ?? 0,
+        // A single auto-seeded opening rate row is created with every worker — it is not real history.
+        rateHistory: Math.max(0, (rates.count ?? 0) - 1),
+      });
+      setChecking(false);
+    })();
+    return () => { cancelled = true; };
+  }, [worker.id]);
+
+  const blockers: string[] = [];
+  if (deps) {
+    if (deps.teamHead > 0) blockers.push(`is the head of ${deps.teamHead} labour team${deps.teamHead > 1 ? "s" : ""} (the database blocks deleting a current team head)`);
+    if (deps.claims > 0) blockers.push(`${deps.claims} labour claim${deps.claims > 1 ? "s" : ""}`);
+    if (deps.planEntries > 0) blockers.push(`${deps.planEntries} manpower plan entr${deps.planEntries > 1 ? "ies" : "y"}`);
+    if (deps.teamMembers > 0) blockers.push(`${deps.teamMembers} team membership${deps.teamMembers > 1 ? "s" : ""}`);
+    if (deps.rateHistory > 0) blockers.push(`${deps.rateHistory} rate revision${deps.rateHistory > 1 ? "s" : ""}`);
+  }
+  const blocked = blockers.length > 0;
+
+  const confirm = async () => {
+    setBusy(true);
+    const { error } = await supabase.from("labour_workers").delete().eq("id", worker.id);
+    setBusy(false);
+    if (error) {
+      toast.error(
+        error.message?.includes("labour_teams")
+          ? "This worker is a current team head and cannot be deleted. Mark them Inactive instead."
+          : `Could not delete: ${error.message}`
+      );
+      return;
+    }
+    toast.success(`${worker.name} removed from the register`);
+    onDeleted();
+  };
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Delete {worker.name}?</DialogTitle></DialogHeader>
+        {checking ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+            <Loader2 className="w-4 h-4 animate-spin" /> Checking linked records…
+          </div>
+        ) : blocked ? (
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>This worker has real history and cannot be deleted:</p>
+            <ul className="list-disc pl-5">{blockers.map(b => <li key={b}>{b}</li>)}</ul>
+            <p>Deleting would strip the worker reference off payment claims or cascade-delete planning and rate records. Use <strong>Status</strong> to mark them Inactive instead.</p>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No claims, plan entries, team memberships or rate revisions are linked to this worker. This permanently removes the entry from the Labour Register.
+          </p>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          {!checking && blocked && <Button onClick={onDeactivate}>Mark Inactive instead</Button>}
+          {!checking && !blocked && (
+            <Button variant="destructive" onClick={confirm} disabled={busy}>
+              {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Delete
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
