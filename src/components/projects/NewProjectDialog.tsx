@@ -20,7 +20,10 @@ import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker"
 import { useUserRole } from "@/hooks/useUserRole";
 import { raiseApprovalRequest } from "@/lib/approval-requests";
 import { listClientWorkOrders, type ClientWorkOrder } from "@/lib/contractor-wo";
+import { fetchArchitectCandidates, type ArchitectProfile } from "@/hooks/useProjectArchitect";
+import { ROLE_LABELS } from "@/lib/roles";
 import { useEffect } from "react";
+
 
 interface NewProjectDialogProps {
   open: boolean;
@@ -53,6 +56,9 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
   const [workOrders, setWorkOrders] = useState<ClientWorkOrder[]>([]);
   const [workOrderId, setWorkOrderId] = useState<string>("");
   const [woLineItemRef, setWoLineItemRef] = useState("");
+  const [architects, setArchitects] = useState<ArchitectProfile[]>([]);
+  const [architectId, setArchitectId] = useState("");
+
 
   const isContractorWo = division === "Contractor WO";
 
@@ -253,6 +259,23 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
               <Label htmlFor="clientName">Client Name *</Label>
               <Input id="clientName" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="e.g. Prestige Group" required />
             </div>
+
+            <div className="space-y-2">
+              <Label>Project Architect *</Label>
+              <Select value={architectId} onValueChange={setArchitectId}>
+                <SelectTrigger><SelectValue placeholder="Select the assigned architect" /></SelectTrigger>
+                <SelectContent>
+                  {architects.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.display_name || "—"}{a.role ? ` · ${ROLE_LABELS[a.role] ?? a.role.replace(/_/g, " ")}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Owns the S-1 (Sign-off) and E-5 (H1 Advance GFC) gates. Can be reassigned later from the project page.</p>
+            </div>
+
+
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
