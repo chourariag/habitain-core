@@ -25,8 +25,12 @@ export const ARCHITECT_ASSIGN_ROLES = [
   "head_of_projects",
 ];
 
-/** Gates whose ownership resolves dynamically from projects.project_architect_id. */
-export const ARCHITECT_OWNED_GATES = ["S-1", "E-5"];
+/**
+ * Gates whose ownership resolves dynamically from projects.project_architect_id.
+ * Note: the checklist row labelled "S1 Sign-off" is stage code E-3
+ * (S1 Structural Drawing Set 1); S-1 is the separate "Sign Up" stage.
+ */
+export const ARCHITECT_OWNED_GATES = ["S-1", "E-3", "E-5"];
 
 /**
  * Live-resolved Project Architect for a project.
