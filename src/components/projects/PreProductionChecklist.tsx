@@ -181,7 +181,12 @@ export function PreProductionChecklist({ projectId, division }: { projectId: str
         <Progress value={pct} />
         <ul className="space-y-1.5">
           {gates!.map(g => {
-            const isOwner = !!g.ownerId && g.ownerId === userId;
+            // Architect-owned gates (S-1, E-5) inherit the project's assigned architect
+            // when no explicit stage owner is set — resolved live, never frozen.
+            const architectOwned = ARCHITECT_OWNED_GATES.includes(g.code);
+            const effOwnerId = g.ownerId ?? (architectOwned ? architect?.id ?? null : null);
+            const effOwnerName = g.ownerName ?? (architectOwned ? architect?.display_name ?? null : null);
+            const isOwner = !!effOwnerId && effOwnerId === userId;
             const canAct = isLeadership || isOwner;
             const href = gateLink(projectId, g.code);
             return (
@@ -198,21 +203,33 @@ export function PreProductionChecklist({ projectId, division }: { projectId: str
                     <span className="text-muted-foreground"> — {g.notes ?? (g.status === "Not Started" ? "Not completed" : g.status)}</span>
                   )}
                   {g.status !== "Completed" && (
-                    g.ownerName
-                      ? <span className="ml-1.5 text-xs text-muted-foreground">· Owner: {g.ownerName}</span>
-                      : <ResponsiblePerson roles={GATE_OWNER_ROLES[g.code]} className="ml-1.5" prefix="· Owner:" />
+                    effOwnerName
+                      ? (
+                        <span className="ml-1.5 text-xs text-muted-foreground">
+                          · Owner: {effOwnerName}{!g.ownerId && architectOwned ? " (Project Architect)" : ""}
+                        </span>
+                      )
+                      : architectOwned
+                        ? <span className="ml-1.5 text-xs italic" style={{ color: "#F40009" }}>· Owner: unassigned — assign a Project Architect</span>
+                        : <ResponsiblePerson roles={GATE_OWNER_ROLES[g.code]} className="ml-1.5" prefix="· Owner:" />
                   )}
                 </span>
                 {g.status === "Completed" ? (
                   <Button asChild size="sm" variant="ghost" className="h-7 shrink-0 text-xs">
                     <Link to={href}><Eye className="h-3.5 w-3.5 mr-1" />View</Link>
                   </Button>
-                ) : g.code !== "sale_scope" && !g.ownerId ? (
+                ) : g.code !== "sale_scope" && !effOwnerId ? (
                   isLeadership && (
                     <Button asChild size="sm" variant="outline" className="h-7 shrink-0 text-xs">
                       <Link to={href}><UserPlus className="h-3.5 w-3.5 mr-1" />Assign owner</Link>
                     </Button>
                   )
+                ) : canAct || (g.code === "sale_scope" && canActOnScope) ? (
+                  <Button asChild size="sm" className="h-7 shrink-0 text-xs">
+                    <Link to={href}>Go to task<ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
+                  </Button>
+                ) : null}
+
                 ) : canAct || (g.code === "sale_scope" && canActOnScope) ? (
                   <Button asChild size="sm" className="h-7 shrink-0 text-xs">
                     <Link to={href}>Go to task<ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
