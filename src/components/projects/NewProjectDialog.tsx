@@ -20,7 +20,10 @@ import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker"
 import { useUserRole } from "@/hooks/useUserRole";
 import { raiseApprovalRequest } from "@/lib/approval-requests";
 import { listClientWorkOrders, type ClientWorkOrder } from "@/lib/contractor-wo";
+import { fetchArchitectCandidates, type ArchitectProfile } from "@/hooks/useProjectArchitect";
+import { ROLE_LABELS } from "@/lib/roles";
 import { useEffect } from "react";
+
 
 interface NewProjectDialogProps {
   open: boolean;
@@ -53,6 +56,9 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
   const [workOrders, setWorkOrders] = useState<ClientWorkOrder[]>([]);
   const [workOrderId, setWorkOrderId] = useState<string>("");
   const [woLineItemRef, setWoLineItemRef] = useState("");
+  const [architects, setArchitects] = useState<ArchitectProfile[]>([]);
+  const [architectId, setArchitectId] = useState("");
+
 
   const isContractorWo = division === "Contractor WO";
 
@@ -62,13 +68,18 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
     }
   }, [open, isContractorWo, workOrders.length]);
 
+  useEffect(() => {
+    if (open && architects.length === 0) fetchArchitectCandidates().then(setArchitects);
+  }, [open, architects.length]);
+
   const resetForm = () => {
     setName(""); setClientName("");
     setDivision("Habitainer"); setProductionSystem("modular");
     setModuleCount(""); setPanelCount(""); setContractValue("");
     setStartDate(undefined); setEstCompletion(undefined);
-    setWorkOrderId(""); setWoLineItemRef("");
+    setWorkOrderId(""); setWoLineItemRef(""); setArchitectId("");
   };
+
 
   const showModules = productionSystem === "modular" || productionSystem === "hybrid";
   const showPanels = productionSystem === "panelised" || productionSystem === "hybrid";
@@ -78,7 +89,9 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
     if (!name.trim()) { toast.error("Project name is required"); return; }
     if (!clientName.trim()) { toast.error("Client name is required"); return; }
     if (!startDate || !estCompletion) { toast.error("Contract Start and Expected Delivery dates are required"); return; }
+    if (!architectId) { toast.error("Assign a Project Architect — this owns the S-1 and E-5 gates"); return; }
     if (!canRaise) { toast.error("Only the Planning Head can raise a project creation request."); return; }
+
     if (isContractorWo) {
       if (!workOrderId) { toast.error("Select the Contractor Work Order this project sits under"); return; }
       const wo = workOrders.find((w) => w.id === workOrderId);
@@ -95,7 +108,10 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
       const corePayload = {
         name: name.trim(),
         client_name: clientName.trim(),
+        project_architect_id: architectId || null,
         division,
+
+
         production_system: productionSystem,
         module_count: parseInt(moduleCount) || 0,
         panel_count: parseInt(panelCount) || 0,
@@ -253,6 +269,23 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
               <Label htmlFor="clientName">Client Name *</Label>
               <Input id="clientName" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="e.g. Prestige Group" required />
             </div>
+
+            <div className="space-y-2">
+              <Label>Project Architect *</Label>
+              <Select value={architectId} onValueChange={setArchitectId}>
+                <SelectTrigger><SelectValue placeholder="Select the assigned architect" /></SelectTrigger>
+                <SelectContent>
+                  {architects.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {a.display_name || "—"}{a.role ? ` · ${ROLE_LABELS[a.role] ?? a.role.replace(/_/g, " ")}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Owns the S-1 (Sign-off) and E-5 (H1 Advance GFC) gates. Can be reassigned later from the project page.</p>
+            </div>
+
+
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">

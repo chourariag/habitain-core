@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.17"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -10038,6 +10038,7 @@ export type Database = {
           panel_count: number
           planned_labour_cost: number | null
           production_system: string
+          project_architect_id: string | null
           project_setup_approved: boolean
           project_setup_approved_at: string | null
           project_setup_status: string
@@ -10099,6 +10100,7 @@ export type Database = {
           panel_count?: number
           planned_labour_cost?: number | null
           production_system?: string
+          project_architect_id?: string | null
           project_setup_approved?: boolean
           project_setup_approved_at?: string | null
           project_setup_status?: string
@@ -10160,6 +10162,7 @@ export type Database = {
           panel_count?: number
           planned_labour_cost?: number | null
           production_system?: string
+          project_architect_id?: string | null
           project_setup_approved?: boolean
           project_setup_approved_at?: string | null
           project_setup_status?: string
@@ -10198,6 +10201,13 @@ export type Database = {
           {
             foreignKeyName: "projects_closed_by_fkey"
             columns: ["closed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projects_project_architect_id_fkey"
+            columns: ["project_architect_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -15635,6 +15645,7 @@ export type Database = {
           panel_count: number
           planned_labour_cost: number | null
           production_system: string
+          project_architect_id: string | null
           project_setup_approved: boolean
           project_setup_approved_at: string | null
           project_setup_status: string
@@ -15715,6 +15726,7 @@ export type Database = {
           panel_count: number
           planned_labour_cost: number | null
           production_system: string
+          project_architect_id: string | null
           project_setup_approved: boolean
           project_setup_approved_at: string | null
           project_setup_status: string

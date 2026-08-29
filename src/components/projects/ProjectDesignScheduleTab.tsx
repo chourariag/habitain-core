@@ -18,6 +18,8 @@ import {
 } from "@/lib/design-schedule";
 import { StageAttachments } from "@/components/projects/StageAttachments";
 import { HistoricalBackfillCard, type BackfillRecord } from "@/components/projects/HistoricalBackfillCard";
+import { useProjectArchitect, ARCHITECT_OWNED_GATES } from "@/hooks/useProjectArchitect";
+
 
 type StageDef = {
   id: string; stage_code: string; stage_name: string; stage_order: number;
@@ -39,6 +41,9 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
 }) {
   const canEdit = EDIT_ROLES.includes(userRole ?? "");
   const pipeline: "habitainer" | "ads" = (projectType ?? "").toLowerCase().startsWith("ads") ? "ads" : "habitainer";
+  // S-1 / E-5 ownership resolves live from the project's assigned architect.
+  const { architect } = useProjectArchitect(projectId);
+
 
   const [loading, setLoading] = useState(true);
   const [defs, setDefs] = useState<StageDef[]>([]);
@@ -167,7 +172,16 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
                           {d.stage_code}{d.is_production_gate && <Badge className="ml-1" style={{ backgroundColor: "#006039", color: "#fff", border: "none" }}>Gate</Badge>}
                         </td>
                         <td className={`px-3 py-2 ${skipped ? "line-through text-muted-foreground" : ""}`}>{d.stage_name}{!d.is_mandatory && <span className="text-xs text-muted-foreground ml-1">(optional)</span>}</td>
-                        <td className="px-3 py-2">{owner?.display_name ?? "—"}</td>
+                        <td className="px-3 py-2">
+                          {owner?.display_name ?? (
+                            ARCHITECT_OWNED_GATES.includes(d.stage_code)
+                              ? architect?.display_name
+                                ? <span title="Resolved live from the project's assigned Project Architect">{architect.display_name} <span className="text-xs text-muted-foreground">(Project Architect)</span></span>
+                                : <span className="text-xs italic" style={{ color: "#F40009" }}>Unassigned — set Project Architect</span>
+                              : "—"
+                          )}
+                        </td>
+
                         <td className="px-3 py-2">{s?.planned_date ? format(parseISO(s.planned_date), "dd/MM/yyyy") : "—"}</td>
                         <td className="px-3 py-2">{s?.actual_date ? format(parseISO(s.actual_date), "dd/MM/yyyy") : "—"}</td>
                         <td className="px-3 py-2">

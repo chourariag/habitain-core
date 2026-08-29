@@ -28,6 +28,8 @@ import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
 import { ProjectSetupApprovalSection } from "@/components/projects/ProjectSetupApprovalSection";
 import { ProjectDesignScheduleTab } from "@/components/projects/ProjectDesignScheduleTab";
 import { PreProductionChecklist } from "@/components/projects/PreProductionChecklist";
+import { ProjectArchitectCard } from "@/components/projects/ProjectArchitectCard";
+
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { isAdsProject } from "@/lib/project-type";
 import { useProjectContext } from "@/contexts/ProjectContext";
@@ -197,7 +199,10 @@ export default function ProjectDetail() {
 
       <ClientPortalManager projectId={id!} userRole={userRole} />
 
+      <ProjectArchitectCard projectId={id!} userRole={userRole} />
+
       <PreProductionChecklist projectId={id!} division={proj.division ?? null} />
+
 
       {!isAds && (
         <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} projectType={proj.division ?? null} onImported={fetchData} />

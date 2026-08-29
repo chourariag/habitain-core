@@ -8,6 +8,8 @@ import { Link } from "react-router-dom";
 import { isAdsDivision, ADS_REQUIRED_GATES } from "@/lib/project-type";
 import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useProjectArchitect, ARCHITECT_OWNED_GATES } from "@/hooks/useProjectArchitect";
+
 
 // C-3 (Sale Agreement) + C-4 (Scope of Work) are combined into one row: "sale_scope"
 export const REQUIRED_GATES = [
@@ -127,8 +129,11 @@ export function PreProductionChecklist({ projectId, division }: { projectId: str
   const pipeline: "habitainer" | "ads" = isAds ? "ads" : "habitainer";
   const { gates, completedCount, total, allComplete, loading } = usePreProdGates(projectId, pipeline);
   const { role, userId } = useUserRole();
+  // S-1 / E-5 ownership resolves live from the project's assigned architect.
+  const { architect } = useProjectArchitect(projectId);
   const isLeadership = LEADERSHIP_ROLES.includes(role ?? "");
   const canActOnScope = isLeadership || SCOPE_ROLES.includes(role ?? "");
+
   if (loading) {
     return (
       <Card><CardContent className="p-4 flex items-center gap-2 text-sm text-muted-foreground">
@@ -176,7 +181,12 @@ export function PreProductionChecklist({ projectId, division }: { projectId: str
         <Progress value={pct} />
         <ul className="space-y-1.5">
           {gates!.map(g => {
-            const isOwner = !!g.ownerId && g.ownerId === userId;
+            // Architect-owned gates (S-1, E-5) inherit the project's assigned architect
+            // when no explicit stage owner is set — resolved live, never frozen.
+            const architectOwned = ARCHITECT_OWNED_GATES.includes(g.code);
+            const effOwnerId = g.ownerId ?? (architectOwned ? architect?.id ?? null : null);
+            const effOwnerName = g.ownerName ?? (architectOwned ? architect?.display_name ?? null : null);
+            const isOwner = !!effOwnerId && effOwnerId === userId;
             const canAct = isLeadership || isOwner;
             const href = gateLink(projectId, g.code);
             return (
@@ -193,16 +203,22 @@ export function PreProductionChecklist({ projectId, division }: { projectId: str
                     <span className="text-muted-foreground"> — {g.notes ?? (g.status === "Not Started" ? "Not completed" : g.status)}</span>
                   )}
                   {g.status !== "Completed" && (
-                    g.ownerName
-                      ? <span className="ml-1.5 text-xs text-muted-foreground">· Owner: {g.ownerName}</span>
-                      : <ResponsiblePerson roles={GATE_OWNER_ROLES[g.code]} className="ml-1.5" prefix="· Owner:" />
+                    effOwnerName
+                      ? (
+                        <span className="ml-1.5 text-xs text-muted-foreground">
+                          · Owner: {effOwnerName}{!g.ownerId && architectOwned ? " (Project Architect)" : ""}
+                        </span>
+                      )
+                      : architectOwned
+                        ? <span className="ml-1.5 text-xs italic" style={{ color: "#F40009" }}>· Owner: unassigned — assign a Project Architect</span>
+                        : <ResponsiblePerson roles={GATE_OWNER_ROLES[g.code]} className="ml-1.5" prefix="· Owner:" />
                   )}
                 </span>
                 {g.status === "Completed" ? (
                   <Button asChild size="sm" variant="ghost" className="h-7 shrink-0 text-xs">
                     <Link to={href}><Eye className="h-3.5 w-3.5 mr-1" />View</Link>
                   </Button>
-                ) : g.code !== "sale_scope" && !g.ownerId ? (
+                ) : g.code !== "sale_scope" && !effOwnerId ? (
                   isLeadership && (
                     <Button asChild size="sm" variant="outline" className="h-7 shrink-0 text-xs">
                       <Link to={href}><UserPlus className="h-3.5 w-3.5 mr-1" />Assign owner</Link>
