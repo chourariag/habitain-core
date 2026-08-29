@@ -68,13 +68,18 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
     }
   }, [open, isContractorWo, workOrders.length]);
 
+  useEffect(() => {
+    if (open && architects.length === 0) fetchArchitectCandidates().then(setArchitects);
+  }, [open, architects.length]);
+
   const resetForm = () => {
     setName(""); setClientName("");
     setDivision("Habitainer"); setProductionSystem("modular");
     setModuleCount(""); setPanelCount(""); setContractValue("");
     setStartDate(undefined); setEstCompletion(undefined);
-    setWorkOrderId(""); setWoLineItemRef("");
+    setWorkOrderId(""); setWoLineItemRef(""); setArchitectId("");
   };
+
 
   const showModules = productionSystem === "modular" || productionSystem === "hybrid";
   const showPanels = productionSystem === "panelised" || productionSystem === "hybrid";
@@ -84,7 +89,9 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
     if (!name.trim()) { toast.error("Project name is required"); return; }
     if (!clientName.trim()) { toast.error("Client name is required"); return; }
     if (!startDate || !estCompletion) { toast.error("Contract Start and Expected Delivery dates are required"); return; }
+    if (!architectId) { toast.error("Assign a Project Architect — this owns the S-1 and E-5 gates"); return; }
     if (!canRaise) { toast.error("Only the Planning Head can raise a project creation request."); return; }
+
     if (isContractorWo) {
       if (!workOrderId) { toast.error("Select the Contractor Work Order this project sits under"); return; }
       const wo = workOrders.find((w) => w.id === workOrderId);
