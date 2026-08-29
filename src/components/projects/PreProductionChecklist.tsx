@@ -229,12 +229,6 @@ export function PreProductionChecklist({ projectId, division }: { projectId: str
                     <Link to={href}>Go to task<ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
                   </Button>
                 ) : null}
-
-                ) : canAct || (g.code === "sale_scope" && canActOnScope) ? (
-                  <Button asChild size="sm" className="h-7 shrink-0 text-xs">
-                    <Link to={href}>Go to task<ArrowRight className="h-3.5 w-3.5 ml-1" /></Link>
-                  </Button>
-                ) : null}
               </li>
             );
           })}
