@@ -108,7 +108,8 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
       const corePayload = {
         name: name.trim(),
         client_name: clientName.trim(),
-        division,
+        project_architect_id: architectId || null,
+
         production_system: productionSystem,
         module_count: parseInt(moduleCount) || 0,
         panel_count: parseInt(panelCount) || 0,
