@@ -8,6 +8,8 @@ import { Link } from "react-router-dom";
 import { isAdsDivision, ADS_REQUIRED_GATES } from "@/lib/project-type";
 import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useProjectArchitect, ARCHITECT_OWNED_GATES } from "@/hooks/useProjectArchitect";
+
 
 // C-3 (Sale Agreement) + C-4 (Scope of Work) are combined into one row: "sale_scope"
 export const REQUIRED_GATES = [
@@ -127,8 +129,11 @@ export function PreProductionChecklist({ projectId, division }: { projectId: str
   const pipeline: "habitainer" | "ads" = isAds ? "ads" : "habitainer";
   const { gates, completedCount, total, allComplete, loading } = usePreProdGates(projectId, pipeline);
   const { role, userId } = useUserRole();
+  // S-1 / E-5 ownership resolves live from the project's assigned architect.
+  const { architect } = useProjectArchitect(projectId);
   const isLeadership = LEADERSHIP_ROLES.includes(role ?? "");
   const canActOnScope = isLeadership || SCOPE_ROLES.includes(role ?? "");
+
   if (loading) {
     return (
       <Card><CardContent className="p-4 flex items-center gap-2 text-sm text-muted-foreground">
