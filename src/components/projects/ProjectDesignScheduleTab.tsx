@@ -41,6 +41,9 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
 }) {
   const canEdit = EDIT_ROLES.includes(userRole ?? "");
   const pipeline: "habitainer" | "ads" = (projectType ?? "").toLowerCase().startsWith("ads") ? "ads" : "habitainer";
+  // S-1 / E-5 ownership resolves live from the project's assigned architect.
+  const { architect } = useProjectArchitect(projectId);
+
 
   const [loading, setLoading] = useState(true);
   const [defs, setDefs] = useState<StageDef[]>([]);
