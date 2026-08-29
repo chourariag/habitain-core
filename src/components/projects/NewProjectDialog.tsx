@@ -109,6 +109,8 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
         name: name.trim(),
         client_name: clientName.trim(),
         project_architect_id: architectId || null,
+        division,
+
 
         production_system: productionSystem,
         module_count: parseInt(moduleCount) || 0,
