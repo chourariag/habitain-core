@@ -28,6 +28,7 @@ export function ReportsToReviewSection() {
     const { data: subs } = await supabase
       .from("weekly_report_submissions")
       .select("*, weekly_report_configs!inner(report_name, reviewer_user_id, reviewer_role)")
+      .is("reviewed_at", null)
       .order("submitted_at", { ascending: false })
       .limit(50);
 
