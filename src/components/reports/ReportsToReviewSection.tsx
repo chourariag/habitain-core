@@ -28,6 +28,7 @@ export function ReportsToReviewSection() {
     const { data: subs } = await supabase
       .from("weekly_report_submissions")
       .select("*, weekly_report_configs!inner(report_name, reviewer_user_id, reviewer_role)")
+      .is("reviewed_at", null)
       .order("submitted_at", { ascending: false })
       .limit(50);
 
@@ -72,7 +73,7 @@ export function ReportsToReviewSection() {
               <div className="text-xs text-muted-foreground">
                 {r._submitter} · {format(new Date(r.report_period_start), "dd/MM/yyyy")} – {format(new Date(r.report_period_end), "dd/MM/yyyy")}
                 {" · "}
-                <Badge style={{ backgroundColor: r.status === "on_time" ? "#006039" : r.status === "late" ? "#D4860A" : "#F40009", color: "white" }}>{r.status}</Badge>
+                <Badge style={{ backgroundColor: r.status === "on_time" ? "#006039" : r.status === "late" ? "#D4860A" : "#F40009", color: "white" }}>Submission: {r.status === "on_time" ? "on time" : r.status}</Badge>
               </div>
             </div>
             <Button size="sm" variant={r.reviewed_at ? "outline" : "default"} onClick={() => { setOpen(r); setComment(r.reviewer_comment || ""); }}
