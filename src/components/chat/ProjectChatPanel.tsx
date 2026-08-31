@@ -94,7 +94,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
           .select("auth_user_id, display_name")
           .eq("is_active", true);
         list = ((dir as any[]) ?? [])
-          .map((p) => ({ authUserId: p.auth_user_id as string, name: (p.display_name as string) || "User" }))
+          .map((p) => ({ authUserId: p.auth_user_id as string, name: (p.display_name as string) || "User", role: "" as string }))
           .filter((m) => !!m.authUserId);
       }
 
