@@ -130,9 +130,9 @@ export default function DesignPortal() {
   const [respondingDq, setRespondingDq] = useState(false);
 
   // Fix 6: Venkat (head_operations / project architect) can also issue H1/H2/GFC, alongside Karan (architecture_director)
-  const isPrincipal = ["principal_architect", "head_operations", "project_architect", "super_admin", "managing_director"].includes(userRole ?? "");
-  const canUpload = ["principal_architect", "project_architect", "structural_architect", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
-  const isArchitect = ["principal_architect", "project_architect", "structural_architect", "operations_architect", "head_operations", "super_admin", "managing_director", "architecture_director", "finance_director", "sales_director"].includes(userRole ?? "");
+  const isPrincipal = ["principal_architect", "senior_architect", "head_operations", "project_architect", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canUpload = ["principal_architect", "senior_architect", "project_architect", "structural_architect", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
+  const isArchitect = ["principal_architect", "senior_architect", "project_architect", "structural_architect", "operations_architect", "head_operations", "super_admin", "managing_director", "architecture_director", "finance_director", "sales_director"].includes(userRole ?? "");
 
   const dedupe = <T extends { id?: string }>(arr: T[]): T[] =>
     Array.from(new Map(arr.map((item) => [(item as any).id ?? JSON.stringify(item), item])).values());

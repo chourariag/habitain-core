@@ -57,7 +57,7 @@ export function BriefScopeSection({ designFile, projectId, canEdit, onSaved }: P
     setSaving(true);
     try {
       const { client } = await getAuthedClient();
-      await (client.from("project_design_files") as any).update({
+      const { data, error } = await (client.from("project_design_files") as any).update({
         site_visit_done: local.site_visit_done,
         measurements_confirmed: local.measurements_confirmed,
         survey_report_uploaded: local.survey_report_uploaded,
@@ -66,26 +66,43 @@ export function BriefScopeSection({ designFile, projectId, canEdit, onSaved }: P
         site_area_sqft: local.site_area_sqft ? parseFloat(String(local.site_area_sqft)) : null,
         num_floors: local.num_floors ? parseInt(String(local.num_floors)) : null,
         special_requirements: local.special_requirements || null,
-      }).eq("id", designFile.id);
+      }).eq("id", designFile.id).select("id");
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        toast.error("Save blocked: your role doesn't have permission to edit this design file.");
+        return;
+      }
       toast.success("Brief & Scope saved");
       setDirty(false);
       onSaved();
     } catch (err: any) {
-      toast.error(err.message);
+      toast.error(err?.message || "Failed to save Brief & Scope");
     } finally {
       setSaving(false);
     }
   };
 
   const handleBriefUpload = async (file: File) => {
-    const path = `briefs/${projectId}/${Date.now()}.pdf`;
-    await supabase.storage.from("design-files").upload(path, file);
-    const url = supabase.storage.from("design-files").getPublicUrl(path).data.publicUrl;
-    const { client } = await getAuthedClient();
-    await (client.from("project_design_files") as any).update({ client_brief_url: url }).eq("id", designFile.id);
-    toast.success("Brief PDF uploaded");
-    onSaved();
+    try {
+      const path = `briefs/${projectId}/${Date.now()}.pdf`;
+      const { error: upErr } = await supabase.storage.from("design-files").upload(path, file);
+      if (upErr) throw upErr;
+      const url = supabase.storage.from("design-files").getPublicUrl(path).data.publicUrl;
+      const { client } = await getAuthedClient();
+      const { data, error } = await (client.from("project_design_files") as any)
+        .update({ client_brief_url: url }).eq("id", designFile.id).select("id");
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        toast.error("Upload saved to storage but not linked: permission denied on the design file.");
+        return;
+      }
+      toast.success("Brief PDF uploaded");
+      onSaved();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to upload brief PDF");
+    }
   };
+
 
   return (
     <Card>
