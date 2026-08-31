@@ -78,13 +78,25 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
         toast.error("Could not load chat participants");
         return;
       }
-      const list: TeamMember[] = ((data as any[]) ?? [])
+      let list: TeamMember[] = ((data as any[]) ?? [])
         .map((p) => ({
           authUserId: p.auth_user_id as string,
           name: (p.display_name as string) || "User",
           role: p.role as string,
         }))
         .filter((m) => !!m.authUserId);
+
+      // Fallback: if the participant RPC returns nothing (leadership-only gate),
+      // use the open directory RLS policy on profiles so @-mentions work for all staff.
+      if (list.length === 0) {
+        const { data: dir } = await supabase
+          .from("profiles")
+          .select("auth_user_id, display_name")
+          .eq("is_active", true);
+        list = ((dir as any[]) ?? [])
+          .map((p) => ({ authUserId: p.auth_user_id as string, name: (p.display_name as string) || "User", role: "" as string }))
+          .filter((m) => !!m.authUserId);
+      }
 
       const seen = new Set<string>();
       setTeamMembers(list.filter((m) => (seen.has(m.authUserId) ? false : (seen.add(m.authUserId), true))));
@@ -427,7 +439,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
                     <div key={m.id} className={`group flex mb-2 items-center gap-1 ${isOwn ? "justify-end" : "justify-start"}`}>
                       {isOwn && (
                         <button
-                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted-foreground p-1"
+                          className="opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted-foreground p-1"
                           aria-label="Reply"
                           onClick={() => { setReplyTo(m); textareaRef.current?.focus(); }}
                         >
@@ -481,7 +493,7 @@ export function ProjectChatPanel({ projectId, projectName, projectType, userId, 
                       </div>
                       {!isOwn && (
                         <button
-                          className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted-foreground p-1"
+                          className="opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 transition-opacity text-muted-foreground p-1"
                           aria-label="Reply"
                           onClick={() => { setReplyTo(m); textareaRef.current?.focus(); }}
                         >
