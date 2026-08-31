@@ -7,11 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { Check, Loader2, ClipboardCheck, Upload, Video, Eye } from "lucide-react";
+import { Check, Loader2, ClipboardCheck, Upload, Video, Eye, ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { insertNotifications } from "@/lib/notifications";
 import { canSubmitSiteReadiness } from "@/lib/site-readiness-permissions";
+import { getSignedUrl, getSignedUrls } from "@/lib/storage-signed-url";
+
+const PHOTO_BUCKET = "site-photos";
+const VIDEO_BUCKET = "dry-run-videos";
 
 interface Props {
   projectId: string;
@@ -19,12 +23,37 @@ interface Props {
   onReadinessConfirmed: () => void;
 }
 
+const PREP_ITEMS = [
+  { key: "foundation_ready", label: "Foundation Ready" },
+  { key: "crane_booked", label: "Crane Booked" },
+  { key: "site_access_clear", label: "Site Access Clear" },
+  { key: "team_briefed", label: "Team Briefed" },
+  { key: "safety_equipment", label: "Safety Equipment on Site" },
+] as const;
+
+type PrepKey = (typeof PREP_ITEMS)[number]["key"];
+
 interface ChecklistState {
   foundation_ready: boolean;
   crane_booked: boolean;
   site_access_clear: boolean;
   team_briefed: boolean;
   safety_equipment: boolean;
+  foundation_ready_notes: string;
+  foundation_ready_photo_urls: string[];
+  foundation_ready_video_url: string;
+  crane_booked_notes: string;
+  crane_booked_photo_urls: string[];
+  crane_booked_video_url: string;
+  site_access_clear_notes: string;
+  site_access_clear_photo_urls: string[];
+  site_access_clear_video_url: string;
+  team_briefed_notes: string;
+  team_briefed_photo_urls: string[];
+  team_briefed_video_url: string;
+  safety_equipment_notes: string;
+  safety_equipment_photo_urls: string[];
+  safety_equipment_video_url: string;
   dry_run_video_url: string;
   labour_stay: boolean;
   labour_stay_notes: string;
@@ -43,10 +72,130 @@ interface ChecklistState {
 const INITIAL_STATE: ChecklistState = {
   foundation_ready: false, crane_booked: false, site_access_clear: false,
   team_briefed: false, safety_equipment: false, dry_run_video_url: "",
+  foundation_ready_notes: "", foundation_ready_photo_urls: [], foundation_ready_video_url: "",
+  crane_booked_notes: "", crane_booked_photo_urls: [], crane_booked_video_url: "",
+  site_access_clear_notes: "", site_access_clear_photo_urls: [], site_access_clear_video_url: "",
+  team_briefed_notes: "", team_briefed_photo_urls: [], team_briefed_video_url: "",
+  safety_equipment_notes: "", safety_equipment_photo_urls: [], safety_equipment_video_url: "",
   labour_stay: false, labour_stay_notes: "", labour_food: false, labour_food_notes: "",
   dg_generator: false, dg_generator_notes: "", nearest_hardware_shop: false,
   shop_name: "", shop_address: "", shop_phone: "",
   supervisor_stay: false, supervisor_stay_notes: "",
+};
+
+const CheckItem = ({ checked, onCheck, label }: { checked: boolean; onCheck: (v: boolean) => void; label: string }) => (
+  <label className="flex items-center gap-3 cursor-pointer py-1">
+    <Checkbox checked={checked} onCheckedChange={(v) => onCheck(!!v)} />
+    <span className="text-sm" style={{ color: "#1A1A1A" }}>{label}</span>
+    {checked && <Check className="h-3.5 w-3.5 ml-auto" style={{ color: "#006039" }} />}
+  </label>
+);
+
+interface PrepItemProps {
+  label: string;
+  checked: boolean;
+  onCheck: (v: boolean) => void;
+  notes: string;
+  onNotes: (v: string) => void;
+  photos: string[];
+  onAddPhotos: (files: FileList | null) => void;
+  onRemovePhoto: (idx: number) => void;
+  video: string;
+  onVideo: (file: File | null) => void;
+  onRemoveVideo: () => void;
+  signed: Record<string, string>;
+  busy: boolean;
+}
+
+/** Defined at module scope so typing in the textarea never remounts the input. */
+const PrepItem = ({
+  label, checked, onCheck, notes, onNotes, photos, onAddPhotos, onRemovePhoto,
+  video, onVideo, onRemoveVideo, signed, busy,
+}: PrepItemProps) => {
+  const photoRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="rounded-md border p-2.5" style={{ borderColor: "#EEEEEE" }}>
+      <CheckItem checked={checked} onCheck={onCheck} label={label} />
+
+      <Textarea
+        placeholder="Status / details, issues or pending work, site observations…"
+        value={notes}
+        onChange={(e) => onNotes(e.target.value)}
+        className="mt-1.5 text-sm"
+        rows={2}
+      />
+
+      <input
+        ref={photoRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => { onAddPhotos(e.target.files); e.target.value = ""; }}
+      />
+      <input
+        ref={videoRef}
+        type="file"
+        accept="video/*"
+        className="hidden"
+        onChange={(e) => { onVideo(e.target.files?.[0] ?? null); e.target.value = ""; }}
+      />
+
+      <div className="flex flex-wrap gap-2 mt-2">
+        <Button size="sm" variant="outline" className="gap-1.5 text-xs" disabled={busy} onClick={() => photoRef.current?.click()}>
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ImagePlus className="h-3.5 w-3.5" />}
+          Add Photos
+        </Button>
+        <Button size="sm" variant="outline" className="gap-1.5 text-xs" disabled={busy} onClick={() => videoRef.current?.click()}>
+          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Video className="h-3.5 w-3.5" />}
+          {video ? "Replace Video" : "Add Video"}
+        </Button>
+      </div>
+
+      {photos.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {photos.map((p, i) => (
+            <div key={`${p}-${i}`} className="relative">
+              <a href={signed[p] ?? "#"} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={signed[p]}
+                  alt={`${label} photo ${i + 1}`}
+                  loading="lazy"
+                  className="h-16 w-16 rounded object-cover border"
+                  style={{ borderColor: "#E5E5E5" }}
+                />
+              </a>
+              <button
+                type="button"
+                aria-label="Remove photo"
+                onClick={() => onRemovePhoto(i)}
+                className="absolute -top-1.5 -right-1.5 rounded-full p-0.5 border bg-background"
+                style={{ borderColor: "#E5E5E5" }}
+              >
+                <X className="h-3 w-3" style={{ color: "#F40009" }} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {video && (
+        <div className="flex items-center gap-2 mt-2 p-2 rounded-md" style={{ backgroundColor: "#F0FFF4" }}>
+          <Video className="h-4 w-4 shrink-0" style={{ color: "#006039" }} />
+          <span className="text-xs font-medium flex-1 truncate" style={{ color: "#006039" }}>Video uploaded</span>
+          <a href={signed[video] ?? "#"} target="_blank" rel="noopener noreferrer"
+            className="text-xs font-medium flex items-center gap-1 shrink-0" style={{ color: "#006039" }}>
+            <Eye className="h-3.5 w-3.5" /> View
+          </a>
+          <button type="button" aria-label="Remove video" onClick={onRemoveVideo}>
+            <X className="h-3.5 w-3.5" style={{ color: "#F40009" }} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirmed }: Props) {
@@ -55,18 +204,44 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [busyKey, setBusyKey] = useState<PrepKey | null>(null);
+  const [signed, setSigned] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Site-present roles fill the readiness checklist on the ground; mirrors site_readiness RLS insert/update policy.
   const canManage = canSubmitSiteReadiness(userRole);
 
-  const section1Count = [state.foundation_ready, state.crane_booked, state.site_access_clear, state.team_briefed, state.safety_equipment].filter(Boolean).length;
+  const section1Count = PREP_ITEMS.filter((it) => state[it.key]).length;
   const section2Count = state.dry_run_video_url ? 1 : 0;
   const section3Count = [state.labour_stay, state.labour_food, state.dg_generator, state.nearest_hardware_shop, state.supervisor_stay].filter(Boolean).length;
   const totalComplete = section1Count + section2Count + section3Count;
   const allComplete = totalComplete === 11;
 
   useEffect(() => { loadExisting(); }, [projectId]);
+
+  // Private buckets: mint short-lived signed URLs for every stored object path.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const photoValues = PREP_ITEMS.flatMap((it) => state[`${it.key}_photo_urls` as keyof ChecklistState] as string[]);
+      const videoValues = [
+        ...PREP_ITEMS.map((it) => state[`${it.key}_video_url` as keyof ChecklistState] as string),
+        state.dry_run_video_url,
+        existing?.dry_run_video_url ?? "",
+      ];
+      const [p, v] = await Promise.all([
+        getSignedUrls(PHOTO_BUCKET, photoValues),
+        getSignedUrls(VIDEO_BUCKET, videoValues),
+      ]);
+      if (!cancelled) setSigned({ ...p, ...v });
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    JSON.stringify(PREP_ITEMS.map((it) => [state[`${it.key}_photo_urls` as keyof ChecklistState], state[`${it.key}_video_url` as keyof ChecklistState]])),
+    state.dry_run_video_url,
+    existing?.dry_run_video_url,
+  ]);
 
   const loadExisting = async () => {
     setLoading(true);
@@ -84,6 +259,21 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
         site_access_clear: record.site_access_clear ?? false,
         team_briefed: record.team_briefed ?? false,
         safety_equipment: record.safety_equipment ?? false,
+        foundation_ready_notes: record.foundation_ready_notes ?? "",
+        foundation_ready_photo_urls: record.foundation_ready_photo_urls ?? [],
+        foundation_ready_video_url: record.foundation_ready_video_url ?? "",
+        crane_booked_notes: record.crane_booked_notes ?? "",
+        crane_booked_photo_urls: record.crane_booked_photo_urls ?? [],
+        crane_booked_video_url: record.crane_booked_video_url ?? "",
+        site_access_clear_notes: record.site_access_clear_notes ?? "",
+        site_access_clear_photo_urls: record.site_access_clear_photo_urls ?? [],
+        site_access_clear_video_url: record.site_access_clear_video_url ?? "",
+        team_briefed_notes: record.team_briefed_notes ?? "",
+        team_briefed_photo_urls: record.team_briefed_photo_urls ?? [],
+        team_briefed_video_url: record.team_briefed_video_url ?? "",
+        safety_equipment_notes: record.safety_equipment_notes ?? "",
+        safety_equipment_photo_urls: record.safety_equipment_photo_urls ?? [],
+        safety_equipment_video_url: record.safety_equipment_video_url ?? "",
         dry_run_video_url: record.dry_run_video_url ?? "",
         labour_stay: record.labour_stay ?? false,
         labour_stay_notes: record.labour_stay_notes ?? "",
@@ -110,15 +300,59 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
     try {
       const ext = file.name.split(".").pop();
       const path = `${projectId}/${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("dry-run-videos").upload(path, file);
+      const { error } = await supabase.storage.from(VIDEO_BUCKET).upload(path, file);
       if (error) throw error;
-      const { data: urlData } = supabase.storage.from("dry-run-videos").getPublicUrl(path);
-      setState((p) => ({ ...p, dry_run_video_url: urlData.publicUrl }));
+      // Private bucket — persist the object path, sign it at render time.
+      setState((p) => ({ ...p, dry_run_video_url: path }));
       toast.success("Video uploaded successfully");
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handlePrepPhotos = async (key: PrepKey, files: FileList | null) => {
+    if (!files?.length) return;
+    setBusyKey(key);
+    try {
+      const paths: string[] = [];
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith("image/")) { toast.error(`${file.name} is not an image`); continue; }
+        const path = `site-readiness/${projectId}/${key}/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage.from(PHOTO_BUCKET).upload(path, file);
+        if (error) throw error;
+        paths.push(path);
+      }
+      if (paths.length) {
+        setState((p) => ({
+          ...p,
+          [`${key}_photo_urls`]: [...(p[`${key}_photo_urls` as keyof ChecklistState] as string[]), ...paths],
+        }));
+        toast.success(`${paths.length} photo(s) uploaded`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Photo upload failed");
+    } finally {
+      setBusyKey(null);
+    }
+  };
+
+  const handlePrepVideo = async (key: PrepKey, file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("video/")) { toast.error("Please upload a video file"); return; }
+    setBusyKey(key);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${projectId}/${key}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from(VIDEO_BUCKET).upload(path, file);
+      if (error) throw error;
+      setState((p) => ({ ...p, [`${key}_video_url`]: path }));
+      toast.success("Video uploaded");
+    } catch (err: any) {
+      toast.error(err.message || "Video upload failed");
+    } finally {
+      setBusyKey(null);
     }
   };
 
@@ -243,10 +477,16 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
             Confirmed at {existing.submitted_at ? format(new Date(existing.submitted_at), "dd/MM/yyyy HH:mm") : "—"}
           </p>
           {existing.dry_run_video_url && (
-            <a href={existing.dry_run_video_url} target="_blank" rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={async () => {
+                const url = await getSignedUrl(VIDEO_BUCKET, existing.dry_run_video_url);
+                if (url) window.open(url, "_blank", "noopener,noreferrer");
+                else toast.error("You don't have access to this video");
+              }}
               className="text-xs font-medium flex items-center gap-1 mt-2" style={{ color: "#006039" }}>
               <Eye className="h-3.5 w-3.5" /> View Dry Run Video
-            </a>
+            </button>
           )}
         </CardContent>
       </Card>
@@ -263,14 +503,6 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
         {done} of {total} complete
       </span>
     </div>
-  );
-
-  const CheckItem = ({ checked, onCheck, label }: { checked: boolean; onCheck: (v: boolean) => void; label: string }) => (
-    <label className="flex items-center gap-3 cursor-pointer py-1">
-      <Checkbox checked={checked} onCheckedChange={(v) => onCheck(!!v)} />
-      <span className="text-sm" style={{ color: "#1A1A1A" }}>{label}</span>
-      {checked && <Check className="h-3.5 w-3.5 ml-auto" style={{ color: "#006039" }} />}
-    </label>
   );
 
   const progressPct = Math.round((totalComplete / 11) * 100);
@@ -294,12 +526,28 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
 
         <div className="border rounded-lg p-3" style={{ borderColor: "#E5E5E5" }}>
           <SectionHeader title="Section 1 — Site Preparation" done={section1Count} total={5} />
-          <div className="space-y-1">
-            <CheckItem checked={state.foundation_ready} onCheck={(v) => set("foundation_ready", v)} label="Foundation Ready" />
-            <CheckItem checked={state.crane_booked} onCheck={(v) => set("crane_booked", v)} label="Crane Booked" />
-            <CheckItem checked={state.site_access_clear} onCheck={(v) => set("site_access_clear", v)} label="Site Access Clear" />
-            <CheckItem checked={state.team_briefed} onCheck={(v) => set("team_briefed", v)} label="Team Briefed" />
-            <CheckItem checked={state.safety_equipment} onCheck={(v) => set("safety_equipment", v)} label="Safety Equipment on Site" />
+          <div className="space-y-2.5">
+            {PREP_ITEMS.map((it) => (
+              <PrepItem
+                key={it.key}
+                label={it.label}
+                checked={state[it.key]}
+                onCheck={(v) => set(it.key, v)}
+                notes={state[`${it.key}_notes` as keyof ChecklistState] as string}
+                onNotes={(v) => set(`${it.key}_notes` as keyof ChecklistState, v)}
+                photos={state[`${it.key}_photo_urls` as keyof ChecklistState] as string[]}
+                onAddPhotos={(files) => handlePrepPhotos(it.key, files)}
+                onRemovePhoto={(idx) => set(
+                  `${it.key}_photo_urls` as keyof ChecklistState,
+                  (state[`${it.key}_photo_urls` as keyof ChecklistState] as string[]).filter((_, i) => i !== idx),
+                )}
+                video={state[`${it.key}_video_url` as keyof ChecklistState] as string}
+                onVideo={(file) => handlePrepVideo(it.key, file)}
+                onRemoveVideo={() => set(`${it.key}_video_url` as keyof ChecklistState, "")}
+                signed={signed}
+                busy={busyKey === it.key}
+              />
+            ))}
           </div>
         </div>
 
@@ -316,7 +564,7 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium truncate" style={{ color: "#006039" }}>Video uploaded ✅</p>
                 </div>
-                <a href={state.dry_run_video_url} target="_blank" rel="noopener noreferrer"
+                <a href={signed[state.dry_run_video_url] ?? "#"} target="_blank" rel="noopener noreferrer"
                   className="text-xs font-medium flex items-center gap-1 shrink-0" style={{ color: "#006039" }}>
                   <Eye className="h-3.5 w-3.5" /> View
                 </a>
