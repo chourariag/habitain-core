@@ -2,23 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { differenceInDays, format } from "date-fns";
 
-const STAGES = [
-  { key: "brief", label: "Brief & Scope" },
-  { key: "concept", label: "Concept Design" },
-  { key: "schematic", label: "Schematic Design" },
-  { key: "design_development", label: "Design Development" },
-  { key: "working_drawings", label: "Working Drawings" },
-  { key: "gfc_issued", label: "GFC Issued" },
-];
-
-const STAGE_MAP: Record<string, string> = {
-  "Concept Design": "concept",
-  "Schematic Design": "schematic",
-  "Design Development": "design_development",
-  "Working Drawings": "working_drawings",
-  "GFC Issue": "gfc_issued",
-};
-
 interface Props {
   project: any;
   designFile: any;
@@ -26,33 +9,44 @@ interface Props {
   architects: any[];
 }
 
-export function ProjectHealthCard({ project, designFile, designStages, architects }: Props) {
-  const currentStageKey = (() => {
-    if (designFile?.design_stage === "gfc_issued") return "gfc_issued";
-    const projStages = designStages.filter((s: any) => s.project_id === project.id);
-    const approved = projStages.filter((s: any) => s.status === "client_approved");
-    if (approved.length > 0) {
-      const max = approved.reduce((a: any, b: any) => a.stage_order > b.stage_order ? a : b);
-      const next = projStages.find((s: any) => s.stage_order > max.stage_order && s.status !== "not_started");
-      return STAGE_MAP[next?.stage_name] || STAGE_MAP[max.stage_name] || "brief";
-    }
-    const active = projStages.filter((s: any) => s.status !== "not_started");
-    if (active.length > 0) {
-      const first = active.reduce((a: any, b: any) => a.stage_order < b.stage_order ? a : b);
-      return STAGE_MAP[first.stage_name] || "brief";
-    }
-    return "brief";
-  })();
+const DONE_STATUSES = ["completed", "client_approved", "completed_pre_hstack", "skipped"];
 
-  const currentIdx = STAGES.findIndex((s) => s.key === currentStageKey);
+function statusColor(status: string | null | undefined) {
+  if (status === "client_approved" || status === "completed" || status === "completed_pre_hstack") return "hsl(var(--primary))";
+  if (status === "submitted_to_client" || status === "in_progress") return "hsl(var(--warning))";
+  if (status === "changes_requested" || status === "blocked") return "hsl(var(--destructive))";
+  return "transparent";
+}
+
+export function ProjectHealthCard({ project, designFile, designStages, architects }: Props) {
+  // Real stages for this project, ordered — same source as the Design Schedule list below.
+  const stages = designStages
+    .filter((s: any) => s.project_id === project.id)
+    .sort((a: any, b: any) => (a.stage_order ?? 0) - (b.stage_order ?? 0));
+
+  const currentIdx = (() => {
+    const idx = stages.findIndex((s: any) => !DONE_STATUSES.includes(s.status));
+    return idx === -1 ? stages.length - 1 : idx;
+  })();
+  const currentStage = stages[currentIdx];
+
   const daysSinceStart = designFile?.created_at ? differenceInDays(new Date(), new Date(designFile.created_at)) : null;
   const targetGfc = designFile?.target_gfc_date ? new Date(designFile.target_gfc_date) : null;
   const daysToGfc = targetGfc ? differenceInDays(targetGfc, new Date()) : null;
-  const isDesignOnly = designFile?.is_design_only !== false;
+  // Design-only status is a property of the project record, not of the design file.
+  const isDesignOnly = project?.is_design_only === true;
 
   const gfcColor = daysToGfc !== null
     ? daysToGfc < 0 ? "hsl(var(--destructive))" : daysToGfc <= 14 ? "hsl(var(--warning))" : "hsl(var(--primary))"
     : "hsl(var(--muted-foreground))";
+
+  const goToStage = (stageId: string) => {
+    const el = document.getElementById(`design-stage-${stageId}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("ring-2", "ring-primary");
+    setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 2000);
+  };
 
   return (
     <Card className="border-border">
@@ -79,44 +73,55 @@ export function ProjectHealthCard({ project, designFile, designStages, architect
         <div>
           <p className="text-xs font-medium mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Current Stage</p>
           <p className="text-xl font-bold" style={{ color: "hsl(var(--primary))", fontFamily: "var(--font-heading)" }}>
-            {STAGES[currentIdx]?.label || "Brief & Scope"}
+            {currentStage ? `${currentStage.stage_order}. ${currentStage.stage_name}` : "No design stages yet"}
           </p>
         </div>
 
-        {/* Stage progress bar */}
-        <div className="flex items-center gap-0">
-          {STAGES.map((stage, i) => (
-            <div key={stage.key} className="flex items-center">
-              <div className="flex flex-col items-center">
-                <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                    i < currentIdx ? "border-transparent" : i === currentIdx ? "border-transparent" : "border-border"
-                  }`}
-                  style={{
-                    backgroundColor: i < currentIdx ? "hsl(var(--primary))" : i === currentIdx ? "hsl(var(--primary))" : "transparent",
-                    ...(i === currentIdx ? { boxShadow: "0 0 0 3px hsl(var(--accent))" } : {}),
-                  }}
-                >
-                  {i <= currentIdx && (
-                    <div className="w-2 h-2 rounded-full bg-white" />
+        {/* Stage progress bar — driven by real design_stages rows */}
+        {stages.length > 0 && (
+          <div className="flex items-start gap-0 overflow-x-auto pb-1">
+            {stages.map((stage: any, i: number) => {
+              const done = DONE_STATUSES.includes(stage.status);
+              const isCurrent = i === currentIdx;
+              const fill = done ? "hsl(var(--primary))" : statusColor(stage.status);
+              return (
+                <div key={stage.id} className="flex items-start shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => goToStage(stage.id)}
+                    title={`${stage.stage_name} — ${String(stage.status ?? "not_started").replace(/_/g, " ")}`}
+                    aria-label={`Go to stage ${stage.stage_name}`}
+                    className="flex flex-col items-center focus:outline-none group"
+                  >
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-transform group-hover:scale-110 ${
+                        fill === "transparent" ? "border-border" : "border-transparent"
+                      }`}
+                      style={{
+                        backgroundColor: fill,
+                        ...(isCurrent ? { boxShadow: "0 0 0 3px hsl(var(--accent))" } : {}),
+                      }}
+                    >
+                      {fill !== "transparent" && <div className="w-2 h-2 rounded-full bg-white" />}
+                    </div>
+                    <p className="text-[9px] mt-1 text-center w-16 leading-tight group-hover:underline" style={{
+                      color: done || isCurrent ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
+                      fontWeight: isCurrent ? 600 : 400,
+                    }}>
+                      {stage.stage_name}
+                    </p>
+                  </button>
+                  {i < stages.length - 1 && (
+                    <div
+                      className="h-0.5 w-3 md:w-5 mt-2.5"
+                      style={{ backgroundColor: done ? "hsl(var(--primary))" : "hsl(var(--border))" }}
+                    />
                   )}
                 </div>
-                <p className="text-[9px] mt-1 text-center w-14 leading-tight" style={{
-                  color: i <= currentIdx ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))",
-                  fontWeight: i === currentIdx ? 600 : 400,
-                }}>
-                  {stage.label}
-                </p>
-              </div>
-              {i < STAGES.length - 1 && (
-                <div
-                  className="h-0.5 w-4 md:w-8 -mt-4"
-                  style={{ backgroundColor: i < currentIdx ? "hsl(var(--primary))" : "hsl(var(--border))" }}
-                />
-              )}
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* Stats */}
         <div className="flex flex-wrap gap-4 pt-2 border-t border-border text-xs">

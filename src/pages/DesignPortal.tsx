@@ -1448,7 +1448,7 @@ export default function DesignPortal() {
                           const noClientApproval = stage.deliverable_required === false;
                           const canMarkComplete = isApproved || noClientApproval;
                           return (
-                            <div key={stage.id} className="rounded-lg p-4 space-y-3 bg-card" style={{ borderLeft: `4px solid ${borderColor}`, border: "1px solid hsl(var(--border))", borderLeftWidth: 4, borderLeftColor: borderColor }}>
+                            <div key={stage.id} id={`design-stage-${stage.id}`} className="rounded-lg p-4 space-y-3 bg-card scroll-mt-24 transition-shadow" style={{ borderLeft: `4px solid ${borderColor}`, border: "1px solid hsl(var(--border))", borderLeftWidth: 4, borderLeftColor: borderColor }}>
                               <div className="flex items-start justify-between gap-2 flex-wrap">
                                 <div className="min-w-0">
                                   <h4 className="font-semibold text-sm">{stage.stage_order}. {stage.stage_name}</h4>
