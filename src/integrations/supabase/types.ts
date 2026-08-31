@@ -12514,11 +12514,17 @@ export type Database = {
       site_readiness: {
         Row: {
           crane_booked: boolean
+          crane_booked_notes: string | null
+          crane_booked_photo_urls: string[]
+          crane_booked_video_url: string | null
           created_at: string | null
           dg_generator: boolean
           dg_generator_notes: string | null
           dry_run_video_url: string | null
           foundation_ready: boolean
+          foundation_ready_notes: string | null
+          foundation_ready_photo_urls: string[]
+          foundation_ready_video_url: string | null
           id: string
           is_complete: boolean
           labour_food: boolean
@@ -12529,24 +12535,39 @@ export type Database = {
           nearest_hardware_shop: boolean
           project_id: string | null
           safety_equipment: boolean
+          safety_equipment_notes: string | null
+          safety_equipment_photo_urls: string[]
+          safety_equipment_video_url: string | null
           shop_address: string | null
           shop_name: string | null
           shop_phone: string | null
           site_access_clear: boolean
+          site_access_clear_notes: string | null
+          site_access_clear_photo_urls: string[]
+          site_access_clear_video_url: string | null
           submitted_at: string | null
           submitted_by: string
           supervisor_stay: boolean
           supervisor_stay_notes: string | null
           team_briefed: boolean
+          team_briefed_notes: string | null
+          team_briefed_photo_urls: string[]
+          team_briefed_video_url: string | null
           updated_at: string | null
         }
         Insert: {
           crane_booked?: boolean
+          crane_booked_notes?: string | null
+          crane_booked_photo_urls?: string[]
+          crane_booked_video_url?: string | null
           created_at?: string | null
           dg_generator?: boolean
           dg_generator_notes?: string | null
           dry_run_video_url?: string | null
           foundation_ready?: boolean
+          foundation_ready_notes?: string | null
+          foundation_ready_photo_urls?: string[]
+          foundation_ready_video_url?: string | null
           id?: string
           is_complete?: boolean
           labour_food?: boolean
@@ -12557,24 +12578,39 @@ export type Database = {
           nearest_hardware_shop?: boolean
           project_id?: string | null
           safety_equipment?: boolean
+          safety_equipment_notes?: string | null
+          safety_equipment_photo_urls?: string[]
+          safety_equipment_video_url?: string | null
           shop_address?: string | null
           shop_name?: string | null
           shop_phone?: string | null
           site_access_clear?: boolean
+          site_access_clear_notes?: string | null
+          site_access_clear_photo_urls?: string[]
+          site_access_clear_video_url?: string | null
           submitted_at?: string | null
           submitted_by: string
           supervisor_stay?: boolean
           supervisor_stay_notes?: string | null
           team_briefed?: boolean
+          team_briefed_notes?: string | null
+          team_briefed_photo_urls?: string[]
+          team_briefed_video_url?: string | null
           updated_at?: string | null
         }
         Update: {
           crane_booked?: boolean
+          crane_booked_notes?: string | null
+          crane_booked_photo_urls?: string[]
+          crane_booked_video_url?: string | null
           created_at?: string | null
           dg_generator?: boolean
           dg_generator_notes?: string | null
           dry_run_video_url?: string | null
           foundation_ready?: boolean
+          foundation_ready_notes?: string | null
+          foundation_ready_photo_urls?: string[]
+          foundation_ready_video_url?: string | null
           id?: string
           is_complete?: boolean
           labour_food?: boolean
@@ -12585,15 +12621,24 @@ export type Database = {
           nearest_hardware_shop?: boolean
           project_id?: string | null
           safety_equipment?: boolean
+          safety_equipment_notes?: string | null
+          safety_equipment_photo_urls?: string[]
+          safety_equipment_video_url?: string | null
           shop_address?: string | null
           shop_name?: string | null
           shop_phone?: string | null
           site_access_clear?: boolean
+          site_access_clear_notes?: string | null
+          site_access_clear_photo_urls?: string[]
+          site_access_clear_video_url?: string | null
           submitted_at?: string | null
           submitted_by?: string
           supervisor_stay?: boolean
           supervisor_stay_notes?: string | null
           team_briefed?: boolean
+          team_briefed_notes?: string | null
+          team_briefed_photo_urls?: string[]
+          team_briefed_video_url?: string | null
           updated_at?: string | null
         }
         Relationships: [

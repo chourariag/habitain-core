@@ -1,0 +1,16 @@
+ALTER TABLE public.site_readiness
+  ADD COLUMN IF NOT EXISTS foundation_ready_notes text,
+  ADD COLUMN IF NOT EXISTS foundation_ready_photo_urls text[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS foundation_ready_video_url text,
+  ADD COLUMN IF NOT EXISTS crane_booked_notes text,
+  ADD COLUMN IF NOT EXISTS crane_booked_photo_urls text[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS crane_booked_video_url text,
+  ADD COLUMN IF NOT EXISTS site_access_clear_notes text,
+  ADD COLUMN IF NOT EXISTS site_access_clear_photo_urls text[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS site_access_clear_video_url text,
+  ADD COLUMN IF NOT EXISTS team_briefed_notes text,
+  ADD COLUMN IF NOT EXISTS team_briefed_photo_urls text[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS team_briefed_video_url text,
+  ADD COLUMN IF NOT EXISTS safety_equipment_notes text,
+  ADD COLUMN IF NOT EXISTS safety_equipment_photo_urls text[] NOT NULL DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS safety_equipment_video_url text;
