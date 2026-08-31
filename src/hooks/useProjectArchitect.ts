@@ -10,6 +10,7 @@ export const ARCHITECT_ROLES = [
   "principal_architect",
   "structural_architect",
   "operations_architect",
+  "head_operations",
   "architecture_director",
 ];
 
