@@ -15885,6 +15885,7 @@ export type Database = {
         Args: { _employee_auth_id: string; _manager_auth_id: string }
         Returns: boolean
       }
+      is_role_admin_tier: { Args: { _user_id: string }; Returns: boolean }
       is_sales_writer: { Args: { _user_id: string }; Returns: boolean }
       is_tally_ingest_admin: { Args: { _uid: string }; Returns: boolean }
       is_tally_ingest_viewer: { Args: { _uid: string }; Returns: boolean }
