@@ -238,38 +238,238 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ── REASSIGN AND DEACTIVATE (approval flow) ──────────────────
-    if (action === "reassign_and_deactivate") {
-      const { user_id, reassign_to } = payload;
-      if (!user_id) {
-        return new Response(JSON.stringify({ error: "user_id required" }), {
+    // ── OFFBOARDING: CREATE RECORD + IMPACT SCAN ─────────────────
+    if (action === "create_offboarding_record") {
+      const { profile_id, last_working_day, reason, exit_reason_category, exit_interview_notes } = payload;
+      if (!profile_id || !last_working_day || !reason) {
+        return new Response(JSON.stringify({ error: "profile_id, last_working_day, reason required" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      // Best-effort task reassignment (table may or may not exist)
-      if (reassign_to) {
-        try {
-          await supabaseAdmin.from("project_tasks")
-            .update({ assigned_to: reassign_to })
-            .eq("assigned_to", user_id)
-            .in("status", ["Upcoming", "In Progress", "Blocked"]);
-        } catch (_) { /* ignore */ }
+      const { data: profile } = await supabaseAdmin.from("profiles").select("id, auth_user_id, display_name, role, is_active").eq("id", profile_id).single();
+      if (!profile) {
+        return new Response(JSON.stringify({ error: "Profile not found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
-      const { data: oldProfile } = await supabaseAdmin.from("profiles").select("*").eq("auth_user_id", user_id).single();
-      await supabaseAdmin.from("profiles").update({ is_active: false, is_archived: true }).eq("auth_user_id", user_id);
-      await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "876600h" });
-      await supabaseAdmin.from("admin_audit_log").insert({
-        action: "reassign_and_deactivate",
-        performed_by: callerId,
-        entity_type: "profile",
-        entity_id: user_id,
-        old_value: oldProfile,
-        new_value: { is_active: false, reassign_to: reassign_to || null },
+      if (profile.is_active === false) {
+        return new Response(JSON.stringify({ error: "Profile is already inactive" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: record, error: recErr } = await supabaseAdmin.from("offboarding_records").insert({
+        profile_id,
+        last_working_day,
+        reason,
+        exit_reason_category: exit_reason_category || null,
+        exit_interview_notes: exit_interview_notes || null,
+        created_by: callerId,
+        status: "reassignment_pending",
+      }).select("id").single();
+      if (recErr || !record) {
+        return new Response(JSON.stringify({ error: recErr?.message || "Failed to create offboarding record" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: impact } = await supabaseAdmin.rpc("scan_offboarding_impact", { _profile_id: profile_id });
+      const impactRows = (impact || []).map((item: any) => ({
+        offboarding_record_id: record.id,
+        item_type: item.item_type,
+        entity_table: item.entity_table,
+        entity_id: item.entity_id,
+        field_name: item.field_name,
+        old_value: item.old_value,
+        new_value: item.suggested_reassign_profile_id ? item.suggested_reassign_profile_id : null,
+        resolution_status: "pending",
+      }));
+      if (impactRows.length) {
+        const { error: impactErr } = await supabaseAdmin.from("offboarding_impact_items").insert(impactRows);
+        if (impactErr) {
+          return new Response(JSON.stringify({ error: impactErr.message }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      }
+
+      const clearanceItems = [
+        "ID card / access badge returned",
+        "Laptop / phone / equipment returned",
+        "Email / system access revoked",
+        "Final settlement approved by Finance",
+        "Handover notes submitted",
+      ];
+      const { error: clearErr } = await supabaseAdmin.from("offboarding_clearance_items").insert(
+        clearanceItems.map((item) => ({ offboarding_record_id: record.id, checklist_item: item, status: "pending" }))
+      );
+      if (clearErr) {
+        return new Response(JSON.stringify({ error: clearErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await supabaseAdmin.rpc("log_offboarding_audit", {
+        _action: "create_offboarding_record",
+        _performed_by: callerId,
+        _entity_id: record.id,
+        _new_value: { profile_id, last_working_day, reason, impact_items: impactRows.length },
       });
+
+      return new Response(JSON.stringify({ success: true, record_id: record.id, impact_count: impactRows.length }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── OFFBOARDING: RESOLVE IMPACT ITEM ─────────────────────────
+    if (action === "resolve_offboarding_impact_item") {
+      const { impact_item_id, reassign_to_profile_id, resolution_status, notes } = payload;
+      if (!impact_item_id || !resolution_status) {
+        return new Response(JSON.stringify({ error: "impact_item_id and resolution_status required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!["resolved", "leave_vacant"].includes(resolution_status)) {
+        return new Response(JSON.stringify({ error: "resolution_status must be resolved or leave_vacant" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { data: item } = await supabaseAdmin.from("offboarding_impact_items")
+        .select("*, offboarding_records!inner(profile_id, status)")
+        .eq("id", impact_item_id)
+        .single();
+      if (!item) {
+        return new Response(JSON.stringify({ error: "Impact item not found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if ((item as any).offboarding_records.status !== "reassignment_pending") {
+        return new Response(JSON.stringify({ error: "Record is not in reassignment phase" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Perform actual reassignment in the target table when a profile is chosen
+      if (resolution_status === "resolved" && reassign_to_profile_id) {
+        const type = item.item_type;
+        const table = item.entity_table;
+        const entityId = item.entity_id;
+        const field = item.field_name;
+        const profileId = (item as any).offboarding_records.profile_id;
+
+        if (type === "role_holder") {
+          // Reassigning a sole-role holder means moving the role to someone else
+          // (typically done via update_employee; this path updates the role on the departing profile's record)
+          const { data: target } = await supabaseAdmin.from("profiles").select("auth_user_id").eq("id", reassign_to_profile_id).single();
+          if (target?.auth_user_id) {
+            await supabaseAdmin.from("user_roles").upsert({ user_id: target.auth_user_id, role: item.old_value }, { onConflict: "user_id,role" });
+          }
+        } else if (table === "projects" && field === "project_architect_id") {
+          await supabaseAdmin.from("projects").update({ project_architect_id: reassign_to_profile_id, updated_by: callerId }).eq("id", entityId);
+        } else if (table === "project_team_members" && field === "profile_id") {
+          await supabaseAdmin.from("project_team_members").update({ profile_id: reassign_to_profile_id }).eq("id", entityId);
+        } else if (table === "project_design_stages" && field === "owner_id") {
+          await supabaseAdmin.from("project_design_stages").update({ owner_id: reassign_to_profile_id }).eq("id", entityId);
+        } else if (table === "profiles" && field === "reporting_manager_id") {
+          await supabaseAdmin.from("profiles").update({ reporting_manager_id: reassign_to_profile_id }).eq("id", entityId);
+        }
+      }
+
+      const { error: updErr } = await supabaseAdmin.from("offboarding_impact_items").update({
+        resolution_status,
+        new_value: reassign_to_profile_id || (resolution_status === "leave_vacant" ? "leave_vacant" : null),
+        resolved_by: callerId,
+        resolved_at: new Date().toISOString(),
+        notes: notes || null,
+      }).eq("id", impact_item_id);
+      if (updErr) {
+        return new Response(JSON.stringify({ error: updErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      await supabaseAdmin.rpc("log_offboarding_audit", {
+        _action: "resolve_offboarding_impact_item",
+        _performed_by: callerId,
+        _entity_id: impact_item_id,
+        _new_value: { resolution_status, reassign_to_profile_id, notes },
+      });
+
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // ── OFFBOARDING: ADVANCE STATUS / COMPLETE ─────────────────
+    if (action === "advance_offboarding") {
+      const { record_id, new_status } = payload;
+      if (!record_id || !new_status) {
+        return new Response(JSON.stringify({ error: "record_id and new_status required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: record } = await supabaseAdmin.from("offboarding_records")
+        .select("*, profiles!inner(auth_user_id)")
+        .eq("id", record_id)
+        .single();
+      if (!record) {
+        return new Response(JSON.stringify({ error: "Offboarding record not found" }), {
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const { error: statusErr } = await supabaseAdmin.from("offboarding_records")
+        .update({ status: new_status })
+        .eq("id", record_id);
+      if (statusErr) {
+        return new Response(JSON.stringify({ error: statusErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (new_status === "completed") {
+        const authUserId = (record as any).profiles.auth_user_id;
+        const { data: oldProfile } = await supabaseAdmin.from("profiles").select("*").eq("id", record.profile_id).single();
+        await supabaseAdmin.from("profiles").update({ is_active: false, is_archived: true }).eq("id", record.profile_id);
+        if (authUserId) {
+          await supabaseAdmin.auth.admin.updateUserById(authUserId, { ban_duration: "876600h" });
+        }
+        await supabaseAdmin.from("admin_audit_log").insert({
+          action: "offboarding_completed_deactivation",
+          performed_by: callerId,
+          entity_type: "profile",
+          entity_id: authUserId || record.profile_id,
+          old_value: oldProfile,
+          new_value: { is_active: false, is_archived: true, offboarding_record_id: record_id },
+        });
+      }
+
+      await supabaseAdmin.rpc("log_offboarding_audit", {
+        _action: "advance_offboarding",
+        _performed_by: callerId,
+        _entity_id: record_id,
+        _new_value: { new_status },
+      });
+
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // ── SOLE ROLE HOLDERS (proactive visibility) ─────────────────
+    if (action === "get_sole_role_holders") {
+      const { data: holders, error: holdersErr } = await supabaseAdmin.rpc("get_sole_role_holders");
+      if (holdersErr) {
+        return new Response(JSON.stringify({ error: holdersErr.message }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ success: true, holders: holders || [] }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
 
     // ── DEACTIVATE USER ──────────────────────────────────────────
     if (action === "deactivate_user") {
