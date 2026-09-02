@@ -26,7 +26,7 @@ const SEED: { full_name: string; role: RoleCode; department: string }[] = [
   { full_name: "Karthik", role: "planning_engineer", department: "Planning" },
   { full_name: "Mohammed Nakeem", role: "costing_engineer", department: "Planning" },
   { full_name: "Stanley", role: "head_of_projects", department: "Operations" },
-  { full_name: "Venkat", role: "operations_architect", department: "Operations" },
+  { full_name: "Venkat", role: "head_operations", department: "Operations" },
   { full_name: "Ribunzad", role: "project_architect", department: "Design & Engineering" },
   { full_name: "Azad Ali", role: "production_head", department: "Production" },
   { full_name: "Rakesh", role: "factory_floor_supervisor", department: "Production" },
