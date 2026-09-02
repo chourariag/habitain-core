@@ -465,10 +465,10 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
           ["Expected Delivery Date", fmtDate(proj?.est_completion)],
           ["Number of Modules", moduleCount],
           ["Number of Panels", panelCount],
-          ["Production Head", "Azad Ali"],
+          ["Production Head", await fetchRoleHolderName("production_head")],
           ["Site Installation Manager", await fetchRoleHolderName("site_installation_mgr")],
-          ["Planning Engineer", "Karthik"],
-          ["Costing Engineer", "Mohammed Nakeem"],
+          ["Planning Engineer", await fetchRoleHolderName("planning_engineer")],
+          ["Costing Engineer", await fetchRoleHolderName("costing_engineer")],
           // Role-resolved, never a hardcoded name. Falls back to the Head of
           // Operations (Design) when nobody holds operations_architect.
           ["Operations Architect",
