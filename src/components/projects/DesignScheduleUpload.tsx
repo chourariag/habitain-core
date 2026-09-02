@@ -99,7 +99,7 @@ export function DesignScheduleUpload({
         const fills: Array<[string, any]> = [
           ["Project Code", code],
           ["Project Name", proj?.name || ""],
-          ["Division", proj?.division || (pipeline === "ads" ? "ADS" : "Habitainer")],
+          ["Division", proj?.division || "Habitainer"],
           ["Production System", proj?.production_system || ""],
           ["Client Name", proj?.client_name || ""],
           ["Operations Architect", await fetchRoleHolderName("operations_architect")],
