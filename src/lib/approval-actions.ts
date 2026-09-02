@@ -36,11 +36,23 @@ export async function approveRequest(req: ApprovalRequest, currentUserId?: strin
   }
   if (req.request_type === "deactivate_user") {
     const p = req.payload as Record<string, string>;
-    await reassignAndDeactivate(p.user_id, p.reassign_to);
-    await setApprovalDecision(req.id, "approved");
-    await logAudit({ section: "User Management", action: "approve_deactivate_user", entity: p.user_email, summary: `Deactivated ${p.user_name}` });
-    return {};
+    const { data: prof } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("auth_user_id", p.user_id)
+      .single();
+    if (!prof?.id) throw new Error("Profile not found for deactivation");
+    const { record_id } = await createOffboardingRecord({
+      profile_id: prof.id,
+      last_working_day: p.last_working_day || new Date().toISOString().slice(0, 10),
+      reason: p.reason || "Deactivation request approved",
+      exit_reason_category: p.exit_reason_category || null,
+    }) as { record_id: string };
+    await setApprovalDecision(req.id, "approved", undefined, `Offboarding record ${record_id} created. Complete impact reassignment and clearance before final deactivation.`);
+    await logAudit({ section: "User Management", action: "approve_deactivate_user", entity: p.user_email, summary: `Offboarding initiated for ${p.user_name}` });
+    return { offboardingRecordId: record_id };
   }
+
   if (req.request_type === "create_project") {
     const p = req.payload as Record<string, unknown>;
     const { module_count: _mc, panel_count: _pc, ...projectFields } = p as any;
