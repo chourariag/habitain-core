@@ -45,7 +45,9 @@ export default function SuperAdmin() {
           <TabsTrigger value="users" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Users</TabsTrigger>
           <TabsTrigger value="create-accounts" className="gap-1.5"><UserPlus className="h-3.5 w-3.5" /> Create Accounts</TabsTrigger>
           <TabsTrigger value="audit" className="gap-1.5"><History className="h-3.5 w-3.5" /> Audit</TabsTrigger>
+          <TabsTrigger value="sole-roles" className="gap-1.5"><UsersRound className="h-3.5 w-3.5" /> Sole Role Holders</TabsTrigger>
         </TabsList>
+
         <TabsContent value="tasks" className="mt-4"><TaskMasterTab /></TabsContent>
         <TabsContent value="roles" className="mt-4"><RolesAccessTab /></TabsContent>
         <TabsContent value="role-permissions" className="mt-4"><RolePermissionsTab /></TabsContent>
