@@ -10,6 +10,7 @@ import { Loader2, Check, Lock, ShieldCheck, AlertCircle, Truck } from "lucide-re
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useRoleHolderName } from "@/hooks/useRoleHolderName";
 import { insertNotifications } from "@/lib/notifications";
 
 interface Props { projectId: string; projectName: string; }
@@ -30,6 +31,7 @@ const AWAIZ_ITEMS = [
 
 export function DeliveryChecklistV2({ projectId, projectName }: Props) {
   const { role, userId } = useUserRole();
+  const simName = useRoleHolderName("site_installation_mgr", "Site Installation Manager");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<null | "rakesh" | "sandeep" | "awaiz" | "confirm">(null);
   const [pack, setPack] = useState<any>(null);
@@ -239,7 +241,7 @@ export function DeliveryChecklistV2({ projectId, projectName }: Props) {
           </div>
         )}
 
-        {renderCard("Party 3 — Site Ready", "Awaiz — Site Installation Manager", AWAIZ_ITEMS, awaizChecks, setAwaizChecks,
+        {renderCard("Party 3 — Site Ready", `${simName} — Site Installation Manager`, AWAIZ_ITEMS, awaizChecks, setAwaizChecks,
           checklist?.awaiz_signed_at ?? null, isAwaiz && !dispatched, signAwaiz)}
       </div>
 

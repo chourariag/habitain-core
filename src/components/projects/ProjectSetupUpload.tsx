@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchRoleHolderName } from "@/hooks/useRoleHolderName";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -465,7 +466,7 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
           ["Number of Modules", moduleCount],
           ["Number of Panels", panelCount],
           ["Production Head", "Azad Ali"],
-          ["Site Installation Manager", "Awaiz Ahmed"],
+          ["Site Installation Manager", await fetchRoleHolderName("site_installation_mgr")],
           ["Planning Engineer", "Karthik"],
           ["Costing Engineer", "Mohammed Nakeem"],
           ["Operations Architect", "Venkat"],

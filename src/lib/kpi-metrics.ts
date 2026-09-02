@@ -3,10 +3,12 @@ import type { AppRole } from "@/lib/roles";
 
 export type RagStatus = "on_track" | "needs_attention" | "at_risk" | "no_data";
 
+// `name` may be empty — in that case the card resolves the active holder of
+// `role` from profiles (role-based lookup, never a hardcoded person).
 export const KPI_EMPLOYEES: { name: string; role: AppRole; subtitle: string }[] = [
   { name: "Suraj Rao",       role: "head_operations",        subtitle: "Planning & Ops Head" },
   { name: "Azad Ali",        role: "production_head",        subtitle: "Production Head" },
-  { name: "Awaiz Ahmed",     role: "site_installation_mgr",  subtitle: "Site Installation Manager" },
+  { name: "",                role: "site_installation_mgr",  subtitle: "Site Installation Manager" },
   { name: "Karthik",         role: "planning_engineer",      subtitle: "Planning Engineer" },
   { name: "Mohammed Nakeem", role: "costing_engineer",       subtitle: "Costing Engineer" },
   { name: "Vijay",           role: "procurement",            subtitle: "Procurement" },
