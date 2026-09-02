@@ -399,7 +399,12 @@ export default function UserManagement() {
             </Table>
           </div>
         </TabsContent>
+
+        <TabsContent value="offboarding" className="mt-4">
+          <OffboardingTab />
+        </TabsContent>
       </Tabs>
+
 
       <AddUserRequestDialog
         open={addOpen} onOpenChange={setAddOpen}
