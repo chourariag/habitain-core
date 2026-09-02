@@ -57,7 +57,9 @@ export default function SuperAdmin() {
         <TabsContent value="users" className="mt-4"><UsersTab /></TabsContent>
         <TabsContent value="create-accounts" className="mt-4"><CreateAccountsTab /></TabsContent>
         <TabsContent value="audit" className="mt-4"><AuditTrailTab /></TabsContent>
+        <TabsContent value="sole-roles" className="mt-4"><SoleRoleHoldersTab /></TabsContent>
       </Tabs>
+
 
       <div className="pt-4">
         <h2 className="font-display text-lg font-bold mb-3">App Settings — Tally Integration</h2>
