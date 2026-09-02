@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { projectCode } from "@/lib/code-generators";
 import { BriefScopeSection } from "@/components/design/BriefScopeSection";
+import { DesignScheduleUpload } from "@/components/projects/DesignScheduleUpload";
 import { MyTasksSection } from "@/components/tasks/MyTasksSection";
 import { ConsultantRow } from "@/components/design/ConsultantRow";
 import { ProjectHealthCard } from "@/components/design/ProjectHealthCard";
@@ -1391,6 +1392,14 @@ export default function DesignPortal() {
             </ScrollableTabsWrapper>
 
             <TabsContent value="design-file" className="space-y-6">
+              {selectedProjectId && (
+                <DesignScheduleUpload
+                  projectId={selectedProjectId}
+                  pipeline={((selectedProject?.division as string) === "ADS" ? "ads" : "habitainer")}
+                  userRole={userRole}
+                  onImported={fetchData}
+                />
+              )}
               <MyTasksSection
                 userRole={userRole}
                 projectId={selectedProjectId}
