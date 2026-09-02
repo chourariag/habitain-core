@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserRole } from "@/hooks/useUserRole";
-import { ShieldAlert, ListTree, KeySquare, AlertOctagon, BadgeIndianRupee, Database, Users, History, UserPlus, Shield } from "lucide-react";
+import { ShieldAlert, ListTree, KeySquare, AlertOctagon, BadgeIndianRupee, Database, Users, History, UserPlus, Shield, UsersRound } from "lucide-react";
 import { TaskMasterTab } from "@/components/super-admin/TaskMasterTab";
 import { RolesAccessTab } from "@/components/super-admin/RolesAccessTab";
 import { RolePermissionsTab } from "@/components/super-admin/RolePermissionsTab";
