@@ -12,6 +12,8 @@ import { UsersTab } from "@/components/super-admin/UsersTab";
 import { AuditTrailTab } from "@/components/super-admin/AuditTrailTab";
 import { CreateAccountsTab } from "@/components/super-admin/CreateAccountsTab";
 import { TallyIngestionKeySection } from "@/components/super-admin/TallyIngestionKeySection";
+import { SoleRoleHoldersTab } from "@/components/super-admin/SoleRoleHoldersTab";
+
 
 const MD_ROLES = ["managing_director", "super_admin"];
 
