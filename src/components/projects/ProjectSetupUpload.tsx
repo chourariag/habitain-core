@@ -469,7 +469,11 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
           ["Site Installation Manager", await fetchRoleHolderName("site_installation_mgr")],
           ["Planning Engineer", "Karthik"],
           ["Costing Engineer", "Mohammed Nakeem"],
-          ["Operations Architect", "Venkat"],
+          // Role-resolved, never a hardcoded name. Falls back to the Head of
+          // Operations (Design) when nobody holds operations_architect.
+          ["Operations Architect",
+            (await fetchRoleHolderName("operations_architect", "")) ||
+            (await fetchRoleHolderName("head_operations"))],
         ];
         const matchRow = (label: string): number | null => {
           const want = label.toLowerCase();

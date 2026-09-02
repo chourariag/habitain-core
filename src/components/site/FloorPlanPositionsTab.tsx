@@ -141,7 +141,7 @@ export function FloorPlanPositionsTab({ projectId, userRole }: Props) {
       )}
 
       {floorPlans.length === 0 && (
-        <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">No floor plan uploaded yet. Awaiz / Venkat can upload one above.</CardContent></Card>
+        <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">No floor plan uploaded yet. The Site Installation Manager or Operations Architect can upload one above.</CardContent></Card>
       )}
 
       {floorPlans.map((fp) => {
