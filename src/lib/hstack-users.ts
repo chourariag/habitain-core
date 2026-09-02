@@ -44,8 +44,8 @@ export const HSTACK_USERS: HStackUser[] = [
   { name: "Venugopal", role: "elec_plumbing_installer" as AppRole, group: "Factory Production" },
 
   // Site
-  { name: "Awaiz Ahmed", role: "site_installation_mgr" as AppRole, group: "Site" },
-  { name: "Nazim Raja", role: "site_engineer" as AppRole, group: "Site" },
+  // Awaiz Ahmed (departed) removed — deactivated profile, do not re-add.
+  { name: "Nazim Raja", role: "site_installation_mgr" as AppRole, group: "Site" },
   { name: "Bala", role: "logistics_manager" as AppRole, group: "Site" },
 
   // Procurement & Stores
