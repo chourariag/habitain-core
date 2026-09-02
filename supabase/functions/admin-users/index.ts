@@ -240,7 +240,13 @@ Deno.serve(async (req) => {
 
     // ── OFFBOARDING: CREATE RECORD + IMPACT SCAN ─────────────────
     if (action === "create_offboarding_record") {
+      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const { profile_id, last_working_day, reason, exit_reason_category, exit_interview_notes } = payload;
+
       if (!profile_id || !last_working_day || !reason) {
         return new Response(JSON.stringify({ error: "profile_id, last_working_day, reason required" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
