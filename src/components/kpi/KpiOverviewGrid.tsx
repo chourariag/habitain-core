@@ -34,10 +34,12 @@ export function KpiOverviewGrid({ onSelect }: Props) {
     ]);
 
     const built = KPI_EMPLOYEES.map((e) => {
-      const prof = (profs ?? []).find((p: any) =>
-        p.display_name?.toLowerCase().includes(e.name.toLowerCase().split(" ")[0])
-        && p.role === e.role
-      );
+      const prof = e.name
+        ? (profs ?? []).find((p: any) =>
+            p.display_name?.toLowerCase().includes(e.name.toLowerCase().split(" ")[0])
+            && p.role === e.role
+          )
+        : (profs ?? []).find((p: any) => p.role === e.role);
       const userId: string | null = prof?.auth_user_id ?? null;
       const myDefs = (defs ?? []).filter((d: any) => d.role === e.role).slice(0, 3);
       const metrics = myDefs.map((d: any) => {
@@ -46,7 +48,7 @@ export function KpiOverviewGrid({ onSelect }: Props) {
         return { kpi_name: d.kpi_name, status, actual: s?.actual_value ?? null, target: Number(d.target_value ?? 0), unit: d.unit };
       });
       const overall = rollUpStatus(metrics.map((m) => m.status));
-      return { user_id: userId, name: e.name, role: e.role, subtitle: e.subtitle, overall, metrics };
+      return { user_id: userId, name: prof?.display_name ?? e.name ?? e.subtitle, role: e.role, subtitle: e.subtitle, overall, metrics };
     });
     setCards(built);
     setLoading(false);
