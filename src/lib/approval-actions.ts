@@ -18,7 +18,7 @@ function generateTempPassword(): string {
   return pwd;
 }
 
-export async function approveRequest(req: ApprovalRequest, currentUserId?: string): Promise<{ tempPassword?: string }> {
+export async function approveRequest(req: ApprovalRequest, currentUserId?: string): Promise<{ tempPassword?: string; offboardingRecordId?: string }> {
   if (req.request_type === "add_user") {
     const p = req.payload as Record<string, string>;
     const tempPassword = generateTempPassword();
