@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { setApprovalDecision, type ApprovalRequest } from "@/lib/approval-requests";
-import { createUserWithPassword, reassignAndDeactivate } from "@/lib/admin-api";
+import { createUserWithPassword, createOffboardingRecord } from "@/lib/admin-api";
 import { logAudit } from "@/lib/super-admin";
 import type { AppRole } from "@/lib/roles";
 
