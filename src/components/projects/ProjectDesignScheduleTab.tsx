@@ -133,6 +133,8 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
     <div className="space-y-4">
       <HistoricalBackfillCard projectId={projectId} pipeline={pipeline} onDone={load} />
 
+      <DesignScheduleUpload projectId={projectId} pipeline={pipeline} userRole={userRole} onImported={load} />
+
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
