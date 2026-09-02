@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { UserPlus, UserMinus, Check, X, Eye, ShieldCheck, Search } from "lucide-react";
+import { UserPlus, UserMinus, Check, X, Eye, ShieldCheck, Search, LogOut } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/components/AuthProvider";
 import { ROLE_LABELS, ROLE_TIERS, type AppRole } from "@/lib/roles";
