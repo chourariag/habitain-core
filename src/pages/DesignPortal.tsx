@@ -1391,6 +1391,14 @@ export default function DesignPortal() {
             </ScrollableTabsWrapper>
 
             <TabsContent value="design-file" className="space-y-6">
+              {selectedProjectId && (
+                <DesignScheduleUpload
+                  projectId={selectedProjectId}
+                  pipeline={((selectedProject?.division as string) === "ADS" ? "ads" : "habitainer")}
+                  userRole={userRole}
+                  onImported={fetchData}
+                />
+              )}
               <MyTasksSection
                 userRole={userRole}
                 projectId={selectedProjectId}
