@@ -56,9 +56,33 @@ export async function createUserWithPassword(opts: {
   return callAdminFunction({ action: "create_user_with_password", ...opts });
 }
 
-export async function reassignAndDeactivate(userId: string, reassignTo?: string) {
-  return callAdminFunction({ action: "reassign_and_deactivate", user_id: userId, reassign_to: reassignTo });
+export async function createOffboardingRecord(opts: {
+  profile_id: string;
+  last_working_day: string;
+  reason: string;
+  exit_reason_category?: string;
+  exit_interview_notes?: string;
+}) {
+  return callAdminFunction({ action: "create_offboarding_record", ...opts });
 }
+
+export async function resolveOffboardingImpactItem(opts: {
+  impact_item_id: string;
+  resolution_status: "resolved" | "leave_vacant";
+  reassign_to_profile_id?: string;
+  notes?: string;
+}) {
+  return callAdminFunction({ action: "resolve_offboarding_impact_item", ...opts });
+}
+
+export async function advanceOffboarding(recordId: string, newStatus: string) {
+  return callAdminFunction({ action: "advance_offboarding", record_id: recordId, new_status: newStatus });
+}
+
+export async function getSoleRoleHolders() {
+  return callAdminFunction({ action: "get_sole_role_holders" });
+}
+
 
 export async function createEmployee(opts: {
   full_name: string; email: string; role: AppRole;
