@@ -278,9 +278,31 @@ function EditDialog({ def, stage, projectId, profiles, onClose, onSaved }: {
     const res = stage?.id
       ? await supabase.from("project_design_stages").update(payload).eq("id", stage.id)
       : await supabase.from("project_design_stages").insert(payload);
+    if (res.error) { setSaving(false); toast.error(res.error.message); return; }
+
+    // Combined Gate: completing the gate row completes BOTH underlying
+    // preliminary checkpoints — separate records, never the Final rows.
+    const childCodes = def.combined_gate_codes ?? [];
+    if (childCodes.length > 0) {
+      const { data: childDefs } = await (supabase.from("design_stage_definitions") as any)
+        .select("id, stage_code").eq("pipeline_type", def.pipeline_type).in("stage_code", childCodes);
+      for (const cd of (childDefs ?? []) as { id: string }[]) {
+        const childPayload: any = {
+          status, planned_date: plannedDate || null, actual_date: actualDate || null,
+          updated_by: user?.id ?? null,
+        };
+        const { data: existing } = await (supabase.from("project_design_stages") as any)
+          .select("id").eq("project_id", projectId).eq("stage_definition_id", cd.id).maybeSingle();
+        const cres = existing?.id
+          ? await (supabase.from("project_design_stages") as any).update(childPayload).eq("id", existing.id)
+          : await (supabase.from("project_design_stages") as any)
+              .insert({ project_id: projectId, stage_definition_id: cd.id, ...childPayload });
+        if (cres.error) { setSaving(false); toast.error(`Combined Gate checkpoint: ${cres.error.message}`); return; }
+      }
+    }
+
     setSaving(false);
-    if (res.error) { toast.error(res.error.message); return; }
-    toast.success("Stage updated");
+    toast.success(childCodes.length ? "Stage and both Combined Gate checkpoints updated" : "Stage updated");
     onSaved();
   };
 
