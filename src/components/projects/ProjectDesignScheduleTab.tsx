@@ -18,6 +18,7 @@ import {
 } from "@/lib/design-schedule";
 import { StageAttachments } from "@/components/projects/StageAttachments";
 import { HistoricalBackfillCard, type BackfillRecord } from "@/components/projects/HistoricalBackfillCard";
+import { DesignScheduleUpload } from "@/components/projects/DesignScheduleUpload";
 import { useProjectArchitect, ARCHITECT_OWNED_GATES } from "@/hooks/useProjectArchitect";
 
 
@@ -26,10 +27,17 @@ type StageDef = {
   pipeline_type: "habitainer" | "ads"; stage_group: string | null;
   is_mandatory: boolean; is_production_gate: boolean; is_read_only: boolean;
   deliverable_required: boolean;
+  template_row?: number | null;
+  proof_type?: string | null;
+  design_schedule_section?: string | null;
+  combined_gate_codes?: string[] | null;
+  predecessor_codes?: string[] | null;
+  is_combined_child?: boolean;
 };
 type ProjectStage = {
   id: string; project_id: string; stage_definition_id: string;
   status: DesignStageStatus; planned_date: string | null; actual_date: string | null;
+  planned_start_date?: string | null; planned_end_date?: string | null;
   owner_id: string | null; notes: string | null;
   completion_type?: string | null;
 };
