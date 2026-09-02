@@ -15,6 +15,7 @@ import { ArrowLeft, Check, ClipboardCheck, Lock, Loader2, Package, Wrench, Plus,
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useRoleHolderName } from "@/hooks/useRoleHolderName";
 
 // Section 2 — Pre-Dispatch (Rakesh, Factory Supervisor)
 const MODULES_ITEMS = [
@@ -36,7 +37,7 @@ const TOOLS_ITEMS = [
   "Packing materials issued and confirmed",
 ];
 
-// Section 4 — SIM Confirmation (Awaiz, Site Installation Manager)
+// Section 4 — SIM Confirmation (Site Installation Manager)
 const SIM_ITEMS = [
   "Site readiness confirmed — foundation ready, crane access clear",
   "Installation sequence received and confirmed with crane operator",
@@ -56,6 +57,7 @@ export default function DeliveryChecklist() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { role, userId } = useUserRole();
+  const simName = useRoleHolderName("site_installation_mgr", "Site Installation Manager");
 
   const [projectName, setProjectName] = useState("");
   const [loading, setLoading] = useState(true);
@@ -275,7 +277,7 @@ export default function DeliveryChecklist() {
                 {toolsSigned && <Check className="h-3.5 w-3.5 ml-1" style={{ color: "#006039" }} />}
               </TabsTrigger>
               <TabsTrigger value="additional" className="gap-1.5">
-                <ShieldCheck className="h-4 w-4" /> SIM (Awaiz)
+                <ShieldCheck className="h-4 w-4" /> SIM ({simName})
                 {additionalSigned && <Check className="h-3.5 w-3.5 ml-1" style={{ color: "#006039" }} />}
               </TabsTrigger>
             </TabsList>
@@ -369,10 +371,10 @@ export default function DeliveryChecklist() {
             ) : null}
           </TabsContent>
 
-          {/* TAB 3: SIM Confirmation (Awaiz) */}
+          {/* TAB 3: SIM Confirmation (Site Installation Manager) */}
           <TabsContent value="additional" className="space-y-3">
             <p className="text-xs" style={{ color: "#666666" }}>
-              Done by: Awaiz — Site Installation Manager.
+              Done by: {simName} — Site Installation Manager.
               {!canEditAdditional && " (Read-only for your role)"}
             </p>
             {SIM_ITEMS.map((item, idx) => {
