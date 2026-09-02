@@ -40,9 +40,10 @@ type OffboardingRecord = {
   exit_interview_notes: string | null;
   created_by: string;
   created_at: string;
-  completed_at: string | null;
+  updated_at: string;
   profiles: Profile;
 };
+
 
 type ImpactItem = {
   id: string;
