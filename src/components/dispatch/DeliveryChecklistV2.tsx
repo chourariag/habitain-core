@@ -239,7 +239,7 @@ export function DeliveryChecklistV2({ projectId, projectName }: Props) {
           </div>
         )}
 
-        {renderCard("Party 3 — Site Ready", "Awaiz — Site Installation Manager", AWAIZ_ITEMS, awaizChecks, setAwaizChecks,
+        {renderCard("Party 3 — Site Ready", `${simName} — Site Installation Manager`, AWAIZ_ITEMS, awaizChecks, setAwaizChecks,
           checklist?.awaiz_signed_at ?? null, isAwaiz && !dispatched, signAwaiz)}
       </div>
 
