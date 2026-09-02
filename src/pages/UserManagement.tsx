@@ -12,15 +12,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { UserPlus, UserMinus, Check, X, Eye, ShieldCheck, Search } from "lucide-react";
+import { UserPlus, UserMinus, Check, X, Eye, ShieldCheck, Search, LogOut } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useAuth } from "@/components/AuthProvider";
 import { ROLE_LABELS, ROLE_TIERS, type AppRole } from "@/lib/roles";
 import {
   raiseApprovalRequest, listApprovalRequests, setApprovalDecision, type ApprovalRequest,
 } from "@/lib/approval-requests";
-import { createUserWithPassword, reassignAndDeactivate } from "@/lib/admin-api";
+import { createUserWithPassword, createOffboardingRecord } from "@/lib/admin-api";
 import { logAudit } from "@/lib/super-admin";
+import { OffboardingTab } from "@/components/admin/OffboardingTab";
+
 
 const RAISER_ROLES = [
   "managing_director","super_admin","finance_director","sales_director",
@@ -120,13 +122,25 @@ export default function UserManagement() {
         setTempPwShown({ name: p.full_name || p.email, password: tempPassword });
       } else if (req.request_type === "deactivate_user") {
         const p = req.payload as Record<string, string>;
-        await reassignAndDeactivate(p.user_id, p.reassign_to);
-        await setApprovalDecision(req.id, "approved");
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("auth_user_id", p.user_id)
+          .single();
+        if (!prof?.id) throw new Error("Profile not found for deactivation");
+        const { record_id } = await createOffboardingRecord({
+          profile_id: prof.id,
+          last_working_day: p.last_working_day || new Date().toISOString().slice(0, 10),
+          reason: p.reason || "Deactivation request approved",
+          exit_reason_category: p.exit_reason_category || null,
+        }) as { record_id: string };
+        await setApprovalDecision(req.id, "approved", undefined, `Offboarding record ${record_id} created. Complete impact reassignment and clearance before final deactivation.`);
         await logAudit({
           section: "User Management", action: "approve_deactivate_user",
-          entity: p.user_email, summary: `Approved deactivation — ${p.user_name} (${p.reason})`,
+          entity: p.user_email, summary: `Offboarding initiated — ${p.user_name}`,
         });
-        toast.success("User deactivated");
+        toast.success("Offboarding initiated — complete reassignment and clearance");
+
       } else if (req.request_type === "create_project") {
         const p = req.payload as Record<string, unknown>;
         // Strip non-column fields used only for downstream creation
@@ -252,7 +266,14 @@ export default function UserManagement() {
               </span>
             )}
           </TabsTrigger>
+          {isApprover && (
+            <TabsTrigger value="offboarding" className="gap-1.5">
+              <LogOut className="h-3.5 w-3.5" /> Offboarding
+            </TabsTrigger>
+          )}
         </TabsList>
+
+
 
         <TabsContent value="users" className="mt-4 space-y-3">
           <div className="flex flex-wrap gap-2">
@@ -381,7 +402,12 @@ export default function UserManagement() {
             </Table>
           </div>
         </TabsContent>
+
+        <TabsContent value="offboarding" className="mt-4">
+          <OffboardingTab />
+        </TabsContent>
       </Tabs>
+
 
       <AddUserRequestDialog
         open={addOpen} onOpenChange={setAddOpen}

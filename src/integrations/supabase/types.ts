@@ -7310,6 +7310,150 @@ export type Database = {
         }
         Relationships: []
       }
+      offboarding_clearance_items: {
+        Row: {
+          checklist_item: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          offboarding_record_id: string
+          status: string
+        }
+        Insert: {
+          checklist_item: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          offboarding_record_id: string
+          status?: string
+        }
+        Update: {
+          checklist_item?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          offboarding_record_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offboarding_clearance_items_offboarding_record_id_fkey"
+            columns: ["offboarding_record_id"]
+            isOneToOne: false
+            referencedRelation: "offboarding_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offboarding_impact_items: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          entity_table: string | null
+          field_name: string | null
+          id: string
+          item_type: string
+          new_value: string | null
+          notes: string | null
+          offboarding_record_id: string
+          old_value: string | null
+          resolution_status: string
+          resolved_at: string | null
+          resolved_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          entity_table?: string | null
+          field_name?: string | null
+          id?: string
+          item_type: string
+          new_value?: string | null
+          notes?: string | null
+          offboarding_record_id: string
+          old_value?: string | null
+          resolution_status?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          entity_table?: string | null
+          field_name?: string | null
+          id?: string
+          item_type?: string
+          new_value?: string | null
+          notes?: string | null
+          offboarding_record_id?: string
+          old_value?: string | null
+          resolution_status?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offboarding_impact_items_offboarding_record_id_fkey"
+            columns: ["offboarding_record_id"]
+            isOneToOne: false
+            referencedRelation: "offboarding_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      offboarding_records: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          exit_interview_notes: string | null
+          exit_reason_category: string | null
+          id: string
+          last_working_day: string
+          profile_id: string
+          reason: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          exit_interview_notes?: string | null
+          exit_reason_category?: string | null
+          id?: string
+          last_working_day: string
+          profile_id: string
+          reason: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          exit_interview_notes?: string | null
+          exit_reason_category?: string | null
+          id?: string
+          last_working_day?: string
+          profile_id?: string
+          reason?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "offboarding_records_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_book: {
         Row: {
           category: string
@@ -15874,6 +16018,16 @@ export type Database = {
         }[]
       }
       get_scope_signoff_by_token: { Args: { p_token: string }; Returns: Json }
+      get_sole_role_holders: {
+        Args: never
+        Returns: {
+          holder_email: string
+          holder_name: string
+          holder_profile_id: string
+          role: string
+          role_label: string
+        }[]
+      }
       get_storage_usage_by_bucket: {
         Args: never
         Returns: {
@@ -15916,6 +16070,16 @@ export type Database = {
       is_variation_approver: { Args: { _uid: string }; Returns: boolean }
       is_win_sync_approver: { Args: { _uid: string }; Returns: boolean }
       kickoff_meeting_daily_reminders: { Args: never; Returns: undefined }
+      log_offboarding_audit: {
+        Args: {
+          _action: string
+          _entity_id: string
+          _new_value?: Json
+          _old_value?: Json
+          _performed_by: string
+        }
+        Returns: undefined
+      }
       normalize_ledger_name: { Args: { _name: string }; Returns: string }
       project_archive_upload_reminders: { Args: never; Returns: undefined }
       recalc_running_bill: {
@@ -15941,6 +16105,18 @@ export type Database = {
         Returns: undefined
       }
       required_gfc_for_stage: { Args: { _stage: string }; Returns: string }
+      scan_offboarding_impact: {
+        Args: { _profile_id: string }
+        Returns: {
+          entity_id: string
+          entity_table: string
+          field_name: string
+          item_type: string
+          old_value: string
+          suggested_reassign_name: string
+          suggested_reassign_profile_id: string
+        }[]
+      }
       site_schedule_dispatch_reminders: { Args: never; Returns: number }
       storage_object_project_allowed: {
         Args: { _object_name: string; _uid: string }

@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserRole } from "@/hooks/useUserRole";
-import { ShieldAlert, ListTree, KeySquare, AlertOctagon, BadgeIndianRupee, Database, Users, History, UserPlus, Shield } from "lucide-react";
+import { ShieldAlert, ListTree, KeySquare, AlertOctagon, BadgeIndianRupee, Database, Users, History, UserPlus, Shield, UsersRound } from "lucide-react";
 import { TaskMasterTab } from "@/components/super-admin/TaskMasterTab";
 import { RolesAccessTab } from "@/components/super-admin/RolesAccessTab";
 import { RolePermissionsTab } from "@/components/super-admin/RolePermissionsTab";
@@ -12,6 +12,8 @@ import { UsersTab } from "@/components/super-admin/UsersTab";
 import { AuditTrailTab } from "@/components/super-admin/AuditTrailTab";
 import { CreateAccountsTab } from "@/components/super-admin/CreateAccountsTab";
 import { TallyIngestionKeySection } from "@/components/super-admin/TallyIngestionKeySection";
+import { SoleRoleHoldersTab } from "@/components/super-admin/SoleRoleHoldersTab";
+
 
 const MD_ROLES = ["managing_director", "super_admin"];
 
@@ -43,7 +45,9 @@ export default function SuperAdmin() {
           <TabsTrigger value="users" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Users</TabsTrigger>
           <TabsTrigger value="create-accounts" className="gap-1.5"><UserPlus className="h-3.5 w-3.5" /> Create Accounts</TabsTrigger>
           <TabsTrigger value="audit" className="gap-1.5"><History className="h-3.5 w-3.5" /> Audit</TabsTrigger>
+          <TabsTrigger value="sole-roles" className="gap-1.5"><UsersRound className="h-3.5 w-3.5" /> Sole Role Holders</TabsTrigger>
         </TabsList>
+
         <TabsContent value="tasks" className="mt-4"><TaskMasterTab /></TabsContent>
         <TabsContent value="roles" className="mt-4"><RolesAccessTab /></TabsContent>
         <TabsContent value="role-permissions" className="mt-4"><RolePermissionsTab /></TabsContent>
@@ -53,7 +57,9 @@ export default function SuperAdmin() {
         <TabsContent value="users" className="mt-4"><UsersTab /></TabsContent>
         <TabsContent value="create-accounts" className="mt-4"><CreateAccountsTab /></TabsContent>
         <TabsContent value="audit" className="mt-4"><AuditTrailTab /></TabsContent>
+        <TabsContent value="sole-roles" className="mt-4"><SoleRoleHoldersTab /></TabsContent>
       </Tabs>
+
 
       <div className="pt-4">
         <h2 className="font-display text-lg font-bold mb-3">App Settings — Tally Integration</h2>
