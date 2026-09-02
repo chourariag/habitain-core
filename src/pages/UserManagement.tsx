@@ -21,6 +21,8 @@ import {
 } from "@/lib/approval-requests";
 import { createUserWithPassword, createOffboardingRecord } from "@/lib/admin-api";
 import { logAudit } from "@/lib/super-admin";
+import { OffboardingTab } from "@/components/admin/OffboardingTab";
+
 
 const RAISER_ROLES = [
   "managing_director","super_admin","finance_director","sales_director",
