@@ -477,7 +477,13 @@ Deno.serve(async (req) => {
 
     // ── SOLE ROLE HOLDERS (proactive visibility) ─────────────────
     if (action === "get_sole_role_holders") {
+      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const { data: holders, error: holdersErr } = await supabaseAdmin.rpc("get_sole_role_holders");
+
       if (holdersErr) {
         return new Response(JSON.stringify({ error: holdersErr.message }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
