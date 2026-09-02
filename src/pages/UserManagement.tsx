@@ -120,13 +120,25 @@ export default function UserManagement() {
         setTempPwShown({ name: p.full_name || p.email, password: tempPassword });
       } else if (req.request_type === "deactivate_user") {
         const p = req.payload as Record<string, string>;
-        await reassignAndDeactivate(p.user_id, p.reassign_to);
-        await setApprovalDecision(req.id, "approved");
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("auth_user_id", p.user_id)
+          .single();
+        if (!prof?.id) throw new Error("Profile not found for deactivation");
+        const { record_id } = await createOffboardingRecord({
+          profile_id: prof.id,
+          last_working_day: p.last_working_day || new Date().toISOString().slice(0, 10),
+          reason: p.reason || "Deactivation request approved",
+          exit_reason_category: p.exit_reason_category || null,
+        }) as { record_id: string };
+        await setApprovalDecision(req.id, "approved", undefined, `Offboarding record ${record_id} created. Complete impact reassignment and clearance before final deactivation.`);
         await logAudit({
           section: "User Management", action: "approve_deactivate_user",
-          entity: p.user_email, summary: `Approved deactivation — ${p.user_name} (${p.reason})`,
+          entity: p.user_email, summary: `Offboarding initiated — ${p.user_name}`,
         });
-        toast.success("User deactivated");
+        toast.success("Offboarding initiated — complete reassignment and clearance");
+
       } else if (req.request_type === "create_project") {
         const p = req.payload as Record<string, unknown>;
         // Strip non-column fields used only for downstream creation
