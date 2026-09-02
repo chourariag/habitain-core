@@ -329,7 +329,13 @@ Deno.serve(async (req) => {
 
     // ── OFFBOARDING: RESOLVE IMPACT ITEM ─────────────────────────
     if (action === "resolve_offboarding_impact_item") {
+      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const { impact_item_id, reassign_to_profile_id, resolution_status, notes } = payload;
+
       if (!impact_item_id || !resolution_status) {
         return new Response(JSON.stringify({ error: "impact_item_id and resolution_status required" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
