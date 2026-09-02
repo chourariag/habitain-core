@@ -415,7 +415,13 @@ Deno.serve(async (req) => {
 
     // ── OFFBOARDING: ADVANCE STATUS / COMPLETE ─────────────────
     if (action === "advance_offboarding") {
+      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       const { record_id, new_status } = payload;
+
       if (!record_id || !new_status) {
         return new Response(JSON.stringify({ error: "record_id and new_status required" }), {
           status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
