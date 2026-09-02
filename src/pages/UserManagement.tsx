@@ -266,10 +266,13 @@ export default function UserManagement() {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="offboarding" className="gap-1.5">
-            <LogOut className="h-3.5 w-3.5" /> Offboarding
-          </TabsTrigger>
+          {isApprover && (
+            <TabsTrigger value="offboarding" className="gap-1.5">
+              <LogOut className="h-3.5 w-3.5" /> Offboarding
+            </TabsTrigger>
+          )}
         </TabsList>
+
 
 
         <TabsContent value="users" className="mt-4 space-y-3">
