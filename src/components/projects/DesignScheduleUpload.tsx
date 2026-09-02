@@ -102,7 +102,12 @@ export function DesignScheduleUpload({
           ["Division", proj?.division || "Habitainer"],
           ["Production System", proj?.production_system || ""],
           ["Client Name", proj?.client_name || ""],
-          ["Operations Architect", await fetchRoleHolderName("operations_architect")],
+          // Role-resolved, never a hardcoded name. Falls back to the Head of
+          // Operations (Design) when no one holds operations_architect.
+          ["Operations Architect", await (async () => {
+            const primary = await fetchRoleHolderName("operations_architect", "");
+            return primary || await fetchRoleHolderName("head_operations");
+          })()],
         ];
         const matchRow = (label: string): number | null => {
           const want = label.toLowerCase();
