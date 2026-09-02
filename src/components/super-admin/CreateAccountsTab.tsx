@@ -32,8 +32,8 @@ const SEED: { full_name: string; role: RoleCode; department: string }[] = [
   { full_name: "Rakesh", role: "factory_floor_supervisor", department: "Production" },
   { full_name: "Mohan", role: "electrical_installer", department: "Production" },
   { full_name: "Venugopal", role: "elec_plumbing_installer", department: "Production" },
-  { full_name: "Awaiz Ahmed", role: "site_installation_mgr", department: "Site Installation" },
-  { full_name: "Nazim Raja", role: "site_engineer", department: "Site Installation" },
+  // Awaiz Ahmed (departed) removed from seed — account is deactivated, do not re-create.
+  { full_name: "Nazim Raja", role: "site_installation_mgr", department: "Site Installation" },
   { full_name: "Bala", role: "logistics_manager", department: "Logistics" },
   { full_name: "Vijay", role: "procurement", department: "Procurement & Stores" },
   { full_name: "Sandeep", role: "stores_executive", department: "Procurement & Stores" },
