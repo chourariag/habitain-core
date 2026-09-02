@@ -181,7 +181,15 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
                         <td className={`px-3 py-2 font-mono text-xs ${skipped ? "line-through text-muted-foreground" : ""}`}>
                           {d.stage_code}{d.is_production_gate && <Badge className="ml-1" style={{ backgroundColor: "#006039", color: "#fff", border: "none" }}>Gate</Badge>}
                         </td>
-                        <td className={`px-3 py-2 ${skipped ? "line-through text-muted-foreground" : ""}`}>{d.stage_name}{!d.is_mandatory && <span className="text-xs text-muted-foreground ml-1">(optional)</span>}</td>
+                        <td className={`px-3 py-2 ${skipped ? "line-through text-muted-foreground" : ""} ${d.is_combined_child ? "pl-8" : ""}`}>
+                          {d.is_combined_child && <span className="text-muted-foreground mr-1">↳</span>}
+                          {d.stage_name}
+                          {!d.is_mandatory && <span className="text-xs text-muted-foreground ml-1">(optional)</span>}
+                          {d.is_combined_child && <span className="text-xs text-muted-foreground ml-1">(Combined Gate checkpoint)</span>}
+                          {(d.combined_gate_codes?.length ?? 0) > 0 && (
+                            <Badge className="ml-2" variant="outline" style={{ borderColor: "#006039", color: "#006039" }}>Combined Gate</Badge>
+                          )}
+                        </td>
                         <td className="px-3 py-2">
                           {owner?.display_name ?? (
                             ARCHITECT_OWNED_GATES.includes(d.stage_code)
