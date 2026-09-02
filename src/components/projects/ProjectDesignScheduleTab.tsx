@@ -18,6 +18,7 @@ import {
 } from "@/lib/design-schedule";
 import { StageAttachments } from "@/components/projects/StageAttachments";
 import { HistoricalBackfillCard, type BackfillRecord } from "@/components/projects/HistoricalBackfillCard";
+import { DesignScheduleUpload } from "@/components/projects/DesignScheduleUpload";
 import { useProjectArchitect, ARCHITECT_OWNED_GATES } from "@/hooks/useProjectArchitect";
 
 
@@ -26,10 +27,17 @@ type StageDef = {
   pipeline_type: "habitainer" | "ads"; stage_group: string | null;
   is_mandatory: boolean; is_production_gate: boolean; is_read_only: boolean;
   deliverable_required: boolean;
+  template_row?: number | null;
+  proof_type?: string | null;
+  design_schedule_section?: string | null;
+  combined_gate_codes?: string[] | null;
+  predecessor_codes?: string[] | null;
+  is_combined_child?: boolean;
 };
 type ProjectStage = {
   id: string; project_id: string; stage_definition_id: string;
   status: DesignStageStatus; planned_date: string | null; actual_date: string | null;
+  planned_start_date?: string | null; planned_end_date?: string | null;
   owner_id: string | null; notes: string | null;
   completion_type?: string | null;
 };
@@ -125,6 +133,8 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
     <div className="space-y-4">
       <HistoricalBackfillCard projectId={projectId} pipeline={pipeline} onDone={load} />
 
+      <DesignScheduleUpload projectId={projectId} pipeline={pipeline} userRole={userRole} onImported={load} />
+
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center justify-between mb-2">
@@ -171,7 +181,15 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
                         <td className={`px-3 py-2 font-mono text-xs ${skipped ? "line-through text-muted-foreground" : ""}`}>
                           {d.stage_code}{d.is_production_gate && <Badge className="ml-1" style={{ backgroundColor: "#006039", color: "#fff", border: "none" }}>Gate</Badge>}
                         </td>
-                        <td className={`px-3 py-2 ${skipped ? "line-through text-muted-foreground" : ""}`}>{d.stage_name}{!d.is_mandatory && <span className="text-xs text-muted-foreground ml-1">(optional)</span>}</td>
+                        <td className={`px-3 py-2 ${skipped ? "line-through text-muted-foreground" : ""} ${d.is_combined_child ? "pl-8" : ""}`}>
+                          {d.is_combined_child && <span className="text-muted-foreground mr-1">↳</span>}
+                          {d.stage_name}
+                          {!d.is_mandatory && <span className="text-xs text-muted-foreground ml-1">(optional)</span>}
+                          {d.is_combined_child && <span className="text-xs text-muted-foreground ml-1">(Combined Gate checkpoint)</span>}
+                          {(d.combined_gate_codes?.length ?? 0) > 0 && (
+                            <Badge className="ml-2" variant="outline" style={{ borderColor: "#006039", color: "#006039" }}>Combined Gate</Badge>
+                          )}
+                        </td>
                         <td className="px-3 py-2">
                           {owner?.display_name ?? (
                             ARCHITECT_OWNED_GATES.includes(d.stage_code)
@@ -182,7 +200,15 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
                           )}
                         </td>
 
-                        <td className="px-3 py-2">{s?.planned_date ? format(parseISO(s.planned_date), "dd/MM/yyyy") : "—"}</td>
+                        <td className="px-3 py-2 whitespace-nowrap">
+                          {s?.planned_start_date || s?.planned_end_date ? (
+                            <span className="text-xs">
+                              {s?.planned_start_date ? format(parseISO(s.planned_start_date), "dd/MM/yyyy") : "—"}
+                              {" → "}
+                              {s?.planned_end_date ? format(parseISO(s.planned_end_date), "dd/MM/yyyy") : "—"}
+                            </span>
+                          ) : s?.planned_date ? format(parseISO(s.planned_date), "dd/MM/yyyy") : "—"}
+                        </td>
                         <td className="px-3 py-2">{s?.actual_date ? format(parseISO(s.actual_date), "dd/MM/yyyy") : "—"}</td>
                         <td className="px-3 py-2">
                           <Badge style={{ backgroundColor: style.bg, color: style.fg, border: "none" }}>{status}</Badge>
@@ -260,9 +286,31 @@ function EditDialog({ def, stage, projectId, profiles, onClose, onSaved }: {
     const res = stage?.id
       ? await supabase.from("project_design_stages").update(payload).eq("id", stage.id)
       : await supabase.from("project_design_stages").insert(payload);
+    if (res.error) { setSaving(false); toast.error(res.error.message); return; }
+
+    // Combined Gate: completing the gate row completes BOTH underlying
+    // preliminary checkpoints — separate records, never the Final rows.
+    const childCodes = def.combined_gate_codes ?? [];
+    if (childCodes.length > 0) {
+      const { data: childDefs } = await (supabase.from("design_stage_definitions") as any)
+        .select("id, stage_code").eq("pipeline_type", def.pipeline_type).in("stage_code", childCodes);
+      for (const cd of (childDefs ?? []) as { id: string }[]) {
+        const childPayload: any = {
+          status, planned_date: plannedDate || null, actual_date: actualDate || null,
+          updated_by: user?.id ?? null,
+        };
+        const { data: existing } = await (supabase.from("project_design_stages") as any)
+          .select("id").eq("project_id", projectId).eq("stage_definition_id", cd.id).maybeSingle();
+        const cres = existing?.id
+          ? await (supabase.from("project_design_stages") as any).update(childPayload).eq("id", existing.id)
+          : await (supabase.from("project_design_stages") as any)
+              .insert({ project_id: projectId, stage_definition_id: cd.id, ...childPayload });
+        if (cres.error) { setSaving(false); toast.error(`Combined Gate checkpoint: ${cres.error.message}`); return; }
+      }
+    }
+
     setSaving(false);
-    if (res.error) { toast.error(res.error.message); return; }
-    toast.success("Stage updated");
+    toast.success(childCodes.length ? "Stage and both Combined Gate checkpoints updated" : "Stage updated");
     onSaved();
   };
 

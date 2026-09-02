@@ -2637,43 +2637,61 @@ export type Database = {
       }
       design_stage_definitions: {
         Row: {
+          combined_gate_codes: string[] | null
           created_at: string
           deliverable_required: boolean
+          design_schedule_section: string | null
           id: string
+          is_combined_child: boolean
           is_mandatory: boolean
           is_production_gate: boolean
           is_read_only: boolean
           pipeline_type: string
+          predecessor_codes: string[] | null
+          proof_type: string | null
           stage_code: string
           stage_group: string | null
           stage_name: string
           stage_order: number
+          template_row: number | null
         }
         Insert: {
+          combined_gate_codes?: string[] | null
           created_at?: string
           deliverable_required?: boolean
+          design_schedule_section?: string | null
           id?: string
+          is_combined_child?: boolean
           is_mandatory?: boolean
           is_production_gate?: boolean
           is_read_only?: boolean
           pipeline_type: string
+          predecessor_codes?: string[] | null
+          proof_type?: string | null
           stage_code: string
           stage_group?: string | null
           stage_name: string
           stage_order: number
+          template_row?: number | null
         }
         Update: {
+          combined_gate_codes?: string[] | null
           created_at?: string
           deliverable_required?: boolean
+          design_schedule_section?: string | null
           id?: string
+          is_combined_child?: boolean
           is_mandatory?: boolean
           is_production_gate?: boolean
           is_read_only?: boolean
           pipeline_type?: string
+          predecessor_codes?: string[] | null
+          proof_type?: string | null
           stage_code?: string
           stage_group?: string | null
           stage_name?: string
           stage_order?: number
+          template_row?: number | null
         }
         Relationships: []
       }
@@ -8584,6 +8602,8 @@ export type Database = {
           original_doc_unavailable: boolean
           owner_id: string | null
           planned_date: string | null
+          planned_end_date: string | null
+          planned_start_date: string | null
           project_id: string
           stage_definition_id: string
           status: string
@@ -8605,6 +8625,8 @@ export type Database = {
           original_doc_unavailable?: boolean
           owner_id?: string | null
           planned_date?: string | null
+          planned_end_date?: string | null
+          planned_start_date?: string | null
           project_id: string
           stage_definition_id: string
           status?: string
@@ -8626,6 +8648,8 @@ export type Database = {
           original_doc_unavailable?: boolean
           owner_id?: string | null
           planned_date?: string | null
+          planned_end_date?: string | null
+          planned_start_date?: string | null
           project_id?: string
           stage_definition_id?: string
           status?: string
