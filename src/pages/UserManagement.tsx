@@ -19,7 +19,7 @@ import { ROLE_LABELS, ROLE_TIERS, type AppRole } from "@/lib/roles";
 import {
   raiseApprovalRequest, listApprovalRequests, setApprovalDecision, type ApprovalRequest,
 } from "@/lib/approval-requests";
-import { createUserWithPassword, reassignAndDeactivate } from "@/lib/admin-api";
+import { createUserWithPassword, createOffboardingRecord } from "@/lib/admin-api";
 import { logAudit } from "@/lib/super-admin";
 
 const RAISER_ROLES = [
