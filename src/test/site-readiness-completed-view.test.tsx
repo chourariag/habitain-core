@@ -59,9 +59,14 @@ describe("Site Hub completed Site Readiness view", () => {
     );
 
     expect(await screen.findByText("Site Readiness Confirmed")).toBeInTheDocument();
-    const videoLink = await screen.findByText("View Dry Run Video");
-    expect(videoLink).toBeInTheDocument();
-    expect(videoLink.closest("a")).toHaveAttribute("href", "https://example.com/dry-run.mp4");
+    const videoButton = await screen.findByText("View Dry Run Video");
+    expect(videoButton).toBeInTheDocument();
+    // Signed URLs are minted on click (private bucket) — assert the click opens one.
+    const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
+    fireEvent.click(videoButton);
+    await waitFor(() => expect(openSpy).toHaveBeenCalled());
+    expect(openSpy.mock.calls[0][0]).toContain("https://signed.example/dry-run-videos/");
+    openSpy.mockRestore();
   });
 
   it("renders the confirmed checklist regardless of siteReady state (i.e., when existing.is_complete is true)", async () => {
