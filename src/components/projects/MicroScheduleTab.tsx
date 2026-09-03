@@ -462,7 +462,25 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   }
 
   if (isProductionView) {
-    return <ProductionStageRollup tasks={tasks} userRole={userRole} liveStatus={liveStatus} getDelay={getDelay} />;
+    return (
+      <div className="space-y-3">
+        {!hasFullScheduleAccess && (
+          <Card className={showFullSchedule ? undefined : "border-[#006039]/20 bg-[#006039]/5"}>
+            <CardContent className="py-3 px-4 flex flex-wrap items-center justify-between gap-2">
+              <p className={`text-sm ${showFullSchedule ? "text-muted-foreground" : "text-[#006039]"}`}>
+                {showFullSchedule
+                  ? "Viewing the full project schedule (read-only)."
+                  : `Showing your tasks only (${tasks.length} of ${allTasks.length})`}
+              </p>
+              <Button size="sm" variant="outline" onClick={() => setShowFullSchedule(v => !v)}>
+                {showFullSchedule ? "Show only my tasks" : "View full schedule"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+        <ProductionStageRollup tasks={tasks} userRole={userRole} liveStatus={liveStatus} getDelay={getDelay} />
+      </div>
+    );
   }
 
   return (
