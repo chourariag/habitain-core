@@ -110,12 +110,12 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
       (supabase.from("project_budget_manual_entries" as any) as any).select("*").eq("project_id", projectId).order("entry_date", { ascending: false }),
     ]);
 
-    // Check H1 sign-off from design_stages
-    const { data: signoffs } = await (supabase as any).from("design_stages")
-      .select("id")
+    // H1 sign-off = stage E-5 (Advance GFC — Architectural/Structural) done on the live design schedule
+    const { data: signoffs } = await (supabase as any).from("project_design_stages")
+      .select("id, status, design_stage_definitions!inner(stage_code)")
       .eq("project_id", projectId)
-      .eq("stage_name", "H1")
-      .eq("status", "completed")
+      .eq("design_stage_definitions.stage_code", "E-5")
+      .in("status", ["Completed", "Skipped"])
       .limit(1);
     setHasH1Signoff((signoffs ?? []).length > 0);
 

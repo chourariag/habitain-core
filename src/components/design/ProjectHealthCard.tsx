@@ -9,19 +9,19 @@ interface Props {
   architects: any[];
 }
 
-const DONE_STATUSES = ["completed", "client_approved", "completed_pre_hstack", "skipped"];
+const DONE_STATUSES = ["Completed", "Skipped", "completed", "client_approved", "completed_pre_hstack", "skipped"];
 
 function statusColor(status: string | null | undefined) {
-  if (status === "client_approved" || status === "completed" || status === "completed_pre_hstack") return "hsl(var(--primary))";
-  if (status === "submitted_to_client" || status === "in_progress") return "hsl(var(--warning))";
-  if (status === "changes_requested" || status === "blocked") return "hsl(var(--destructive))";
+  if (status === "Completed" || status === "Skipped" || status === "client_approved" || status === "completed" || status === "completed_pre_hstack") return "hsl(var(--primary))";
+  if (status === "In Progress" || status === "submitted_to_client" || status === "in_progress") return "hsl(var(--warning))";
+  if (status === "Blocked" || status === "changes_requested" || status === "blocked") return "hsl(var(--destructive))";
   return "transparent";
 }
 
 export function ProjectHealthCard({ project, designFile, designStages, architects }: Props) {
   // Real stages for this project, ordered — same source as the Design Schedule list below.
   const stages = designStages
-    .filter((s: any) => s.project_id === project.id)
+    .filter((s: any) => s.project_id === project.id && !s.is_read_only)
     .sort((a: any, b: any) => (a.stage_order ?? 0) - (b.stage_order ?? 0));
 
   const currentIdx = (() => {
@@ -73,11 +73,11 @@ export function ProjectHealthCard({ project, designFile, designStages, architect
         <div>
           <p className="text-xs font-medium mb-1" style={{ color: "hsl(var(--muted-foreground))" }}>Current Stage</p>
           <p className="text-xl font-bold" style={{ color: "hsl(var(--primary))", fontFamily: "var(--font-heading)" }}>
-            {currentStage ? `${currentStage.stage_order}. ${currentStage.stage_name}` : "No design stages yet"}
+            {currentStage ? `${currentStage.stage_code ?? currentStage.stage_order}. ${currentStage.stage_name}` : "No design stages yet"}
           </p>
         </div>
 
-        {/* Stage progress bar — driven by real design_stages rows */}
+        {/* Stage progress bar — driven by the live design schedule (project_design_stages) */}
         {stages.length > 0 && (
           <div className="flex items-start gap-0 overflow-x-auto pb-1">
             {stages.map((stage: any, i: number) => {
