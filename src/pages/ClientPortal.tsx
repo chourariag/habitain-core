@@ -122,31 +122,9 @@ export default function ClientPortal() {
     setLoading(false);
   }, [projectToken]);
 
-  const handleApproveDesignStage = async (stageId: string) => {
-    setSubmittingAction("ds-" + stageId);
-    const { data, error } = await supabase.rpc("client_approve_design_stage" as any, {
-      _token: projectToken, _stage_id: stageId,
-    });
-    if (error || !data) toast.error("Could not approve. Please refresh and try again.");
-    else { toast.success("Stage approved. The design team has been notified."); await fetchData(); }
-    setSubmittingAction(null);
-  };
+  // Design stage approvals were retired with the old design_stages table — the
+  // Design tab is now read-only progress from the live design schedule.
 
-  const handleRequestDesignChanges = async (stageId: string) => {
-    const comment = (revisionCommentMap[stageId] ?? "").trim();
-    if (comment.length < 5) { toast.error("Please describe the changes you'd like."); return; }
-    setSubmittingAction("ds-" + stageId);
-    const { data, error } = await supabase.rpc("client_request_design_changes" as any, {
-      _token: projectToken, _stage_id: stageId, _comment: comment,
-    });
-    if (error || !data) toast.error("Could not submit. Please refresh and try again.");
-    else {
-      toast.success("Change request sent to the design team.");
-      setRevisionCommentMap((m) => ({ ...m, [stageId]: "" }));
-      await fetchData();
-    }
-    setSubmittingAction(null);
-  };
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
