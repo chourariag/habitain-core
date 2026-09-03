@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.get_design_stages_by_portal_token(text);

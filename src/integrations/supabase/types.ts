@@ -15726,19 +15726,22 @@ export type Database = {
           work_order_id: string
         }[]
       }
-      get_design_stages_by_portal_token:
-        | {
-            Args: { _token: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.get_design_stages_by_portal_token(_token => text), public.get_design_stages_by_portal_token(_token => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
-          }
-        | {
-            Args: { _token: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.get_design_stages_by_portal_token(_token => text), public.get_design_stages_by_portal_token(_token => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
-          }
+      get_design_stages_by_portal_token: {
+        Args: { _token: string }
+        Returns: {
+          actual_date: string
+          deliverable_required: boolean
+          deliverable_url: string
+          id: string
+          planned_end_date: string
+          planned_start_date: string
+          stage_code: string
+          stage_group: string
+          stage_name: string
+          stage_order: number
+          status: string
+        }[]
+      }
       get_employee_celebrations: {
         Args: never
         Returns: {
