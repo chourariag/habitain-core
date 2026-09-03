@@ -74,6 +74,14 @@ const UPLOAD_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 // Production roles see a read-only, simplified stage rollup view (Fix 3 + Fix 4)
 const PRODUCTION_VIEW_ROLES = ["production_head", "factory_floor_supervisor", "fabrication_foreman", "site_installation_mgr", "site_engineer"];
+// Roles that need the whole project picture: leadership, planning and production head.
+// Everyone else defaults to their own tasks, with an explicit read-only "full schedule" toggle.
+const FULL_SCHEDULE_ROLES = [
+  "super_admin", "managing_director", "chairman", "director",
+  "finance_director", "sales_director", "architecture_director",
+  "head_operations", "head_of_projects", "planning_head", "planning_engineer",
+  "principal_architect", "production_head",
+];
 
 interface Props {
   projectId: string;
@@ -81,7 +89,7 @@ interface Props {
 }
 
 export function MicroScheduleTab({ projectId, userRole }: Props) {
-  const [tasks, setTasks] = useState<ProjectTask[]>([]);
+  const [allTasks, setAllTasks] = useState<ProjectTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [phaseFilter, setPhaseFilter] = useState("all");
@@ -97,6 +105,12 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const isProductionView = PRODUCTION_VIEW_ROLES.includes(userRole ?? "");
+  const hasFullScheduleAccess = FULL_SCHEDULE_ROLES.includes(userRole ?? "");
+  const [showFullSchedule, setShowFullSchedule] = useState(hasFullScheduleAccess);
+  const tasks = useMemo(
+    () => (showFullSchedule ? allTasks : allTasks.filter((t) => t.responsible_role === userRole)),
+    [allTasks, showFullSchedule, userRole]
+  );
   const canUpload = UPLOAD_ROLES.includes(userRole ?? "") && !isProductionView;
   const canEdit = EDIT_ROLES.includes(userRole ?? "") && !isProductionView;
   const canOverride = ["planning_engineer", "super_admin", "managing_director"].includes(userRole ?? "") && !isProductionView;
@@ -113,7 +127,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
       supabase.from("projects").select("name, production_system").eq("id", projectId).maybeSingle(),
       (supabase.from("project_stages") as any).select("id", { count: "exact", head: true }).eq("project_id", projectId).lte("stage_number", 15),
     ]);
-    setTasks((taskRes.data as any as ProjectTask[]) ?? []);
+    setAllTasks((taskRes.data as any as ProjectTask[]) ?? []);
     setProductionSystem(((projectRes.data as any)?.production_system as string | null) ?? null);
     setProjectName(((projectRes.data as any)?.name as string | null) ?? "Project");
     setSetupStageCount((stagesRes as any)?.count ?? 0);
@@ -440,7 +454,8 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
     return 0;
   };
 
-  const liveStatus = (task: ProjectTask) => computeStatus(task, tasks);
+  // Dependency resolution always runs against the full task set, even in the scoped view.
+  const liveStatus = (task: ProjectTask) => computeStatus(task, allTasks);
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
