@@ -4,6 +4,7 @@ import ExcelJS from "exceljs";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchRoleHolderName } from "@/hooks/useRoleHolderName";
+import { resolveRoleField, resolveSalesOwner, isNotTracked, NOT_TRACKED_FONT } from "@/lib/project-setup-template";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
