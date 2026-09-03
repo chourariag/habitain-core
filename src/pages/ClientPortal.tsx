@@ -716,38 +716,38 @@ export default function ClientPortal() {
 
           {/* DESIGN SCHEDULE TAB */}
           <TabsContent value="design" className="mt-4 space-y-6">
-            {(["pre_deal", "post_deal"] as const).map((group) => {
-              const items = designStages.filter((s) => s.stage_group === group);
+            {Array.from(new Set(designStages.map((s) => s.stage_group).filter(Boolean))).map((group) => {
+              const items = designStages
+                .filter((s) => s.stage_group === group)
+                .sort((a, b) => (a.stage_order ?? 0) - (b.stage_order ?? 0));
               if (items.length === 0) return null;
-              const isPre = group === "pre_deal";
               return (
-                <Card key={group} className={isPre ? "border-warning/40" : "border-primary/30"}>
+                <Card key={group} className="border-primary/30">
                   <CardHeader className="pb-2">
-                    <CardTitle className="font-heading text-base font-bold">
-                      {isPre ? "Pre-Deal Stages" : "Post-Deal Stages"}
-                    </CardTitle>
+                    <CardTitle className="font-heading text-base font-bold">{group}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {items.map((s) => {
-                      const submitted = s.status === "submitted_to_client";
-                      const approved = s.status === "client_approved";
-                      const revisionReq = s.status === "revision_requested";
+                      const done = s.status === "Completed" || s.status === "Skipped";
+                      const active = s.status === "In Progress";
                       return (
                         <div key={s.id} className="rounded-lg border p-3 space-y-2">
                           <div className="flex items-start justify-between gap-2">
                             <div>
                               <p className="font-heading font-bold text-sm">
-                                {s.stage_order}. {s.stage_name}
+                                {s.stage_code} — {s.stage_name}
                               </p>
                               <p className="text-xs text-muted-foreground font-body">
                                 Planned: {s.planned_start_date ? format(new Date(s.planned_start_date), "dd/MM/yyyy") : "—"} → {s.planned_end_date ? format(new Date(s.planned_end_date), "dd/MM/yyyy") : "—"}
                               </p>
+                              {s.actual_date && (
+                                <p className="text-xs text-primary font-body">
+                                  ✓ Completed on {format(new Date(s.actual_date), "dd/MM/yyyy")}
+                                </p>
+                              )}
                             </div>
-                            <Badge
-                              className="text-[10px]"
-                              variant={approved ? "default" : submitted ? "destructive" : revisionReq ? "outline" : "secondary"}
-                            >
-                              {s.status.replace(/_/g, " ")}
+                            <Badge className="text-[10px]" variant={done ? "default" : active ? "outline" : "secondary"}>
+                              {s.status}
                             </Badge>
                           </div>
 
@@ -759,48 +759,6 @@ export default function ClientPortal() {
                             >
                               <Download className="h-3 w-3" /> View deliverable
                             </a>
-                          )}
-
-                          {revisionReq && s.revision_comments && (
-                            <p className="text-xs font-body bg-muted p-2 rounded">
-                              <strong>Your last comment:</strong> {s.revision_comments}
-                            </p>
-                          )}
-
-                          {submitted && (
-                            <div className="space-y-2 pt-1">
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  onClick={() => handleApproveDesignStage(s.id)}
-                                  disabled={submittingAction === "ds-" + s.id}
-                                >
-                                  <ThumbsUp className="h-3.5 w-3.5 mr-1" /> Approve
-                                </Button>
-                              </div>
-                              <Textarea
-                                placeholder="Or describe the changes you'd like (required for Request Changes)"
-                                value={revisionCommentMap[s.id] ?? ""}
-                                onChange={(e) =>
-                                  setRevisionCommentMap((m) => ({ ...m, [s.id]: e.target.value }))
-                                }
-                                className="text-sm h-16"
-                              />
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleRequestDesignChanges(s.id)}
-                                disabled={submittingAction === "ds-" + s.id}
-                              >
-                                <MessageSquare className="h-3.5 w-3.5 mr-1" /> Request Changes
-                              </Button>
-                            </div>
-                          )}
-
-                          {approved && s.approval_date && (
-                            <p className="text-xs text-primary font-body">
-                              ✓ Approved on {format(new Date(s.approval_date), "dd/MM/yyyy")}
-                            </p>
                           )}
                         </div>
                       );
