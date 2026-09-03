@@ -162,9 +162,15 @@ export default function ProjectArchive() {
       </Section>
 
       <Section title={`3. Design Stage History (${data.designStages.length})`}>
-        <Table cols={["#", "Stage", "Status", "Planned", "Actual"]} rows={data.designStages.map(s => [
-          s.stage_number, s.stage_name, s.status, dt(s.planned_finish_date), dt(s.actual_finish_date)
-        ])} />
+        <Table cols={["Code", "Stage", "Status", "Planned", "Actual"]} rows={[...data.designStages]
+          .sort((a: any, b: any) => (a.design_stage_definitions?.stage_order ?? 0) - (b.design_stage_definitions?.stage_order ?? 0))
+          .map((s: any) => [
+            s.design_stage_definitions?.stage_code ?? "—",
+            s.design_stage_definitions?.stage_name ?? "—",
+            s.status,
+            dt(s.planned_end_date ?? s.planned_date),
+            dt(s.actual_date),
+          ])} />
       </Section>
 
       <Section title={`4. QC Inspection Reports (${data.qcInspections.length})`}>
