@@ -431,9 +431,9 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
 
   const taskMap = useMemo(() => {
     const m: Record<string, ProjectTask> = {};
-    tasks.forEach((t) => { m[t.task_id_in_schedule] = t; });
+    allTasks.forEach((t) => { m[t.task_id_in_schedule] = t; });
     return m;
-  }, [tasks]);
+  }, [allTasks]);
 
   const getBlockingName = (task: ProjectTask): string | null => {
     for (const pId of task.predecessor_ids ?? []) {
@@ -494,10 +494,34 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
         </div>
       </div>
 
+      {!showFullSchedule && (
+        <Card className="border-[#006039]/20 bg-[#006039]/5">
+          <CardContent className="py-3 px-4 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-[#006039]">
+              Showing your tasks only ({tasks.length} of {allTasks.length})
+            </p>
+            <Button size="sm" variant="outline" onClick={() => setShowFullSchedule(true)}>View full schedule</Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {showFullSchedule && !hasFullScheduleAccess && (
+        <Card>
+          <CardContent className="py-3 px-4 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">Viewing the full project schedule (read-only).</p>
+            <Button size="sm" variant="outline" onClick={() => setShowFullSchedule(false)}>Show only my tasks</Button>
+          </CardContent>
+        </Card>
+      )}
+
       {tasks.length === 0 && !canUpload && (
         <Card>
           <CardContent className="py-6 text-center">
-            <p className="text-muted-foreground text-sm">No data uploaded yet. Ask Karthik to upload Project Setup Template.</p>
+            <p className="text-muted-foreground text-sm">
+              {allTasks.length > 0 && !showFullSchedule
+                ? "No tasks assigned to your role on this project."
+                : "No data uploaded yet. Ask Karthik to upload Project Setup Template."}
+            </p>
           </CardContent>
         </Card>
       )}
