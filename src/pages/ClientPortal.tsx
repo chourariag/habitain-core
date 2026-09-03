@@ -50,7 +50,6 @@ export default function ClientPortal() {
   const [portalDocuments, setPortalDocuments] = useState<any[]>([]);
   const [amcContract, setAmcContract] = useState<any>(null);
   const [designStages, setDesignStages] = useState<any[]>([]);
-  const [revisionCommentMap, setRevisionCommentMap] = useState<Record<string, string>>({});
 
   // Action states
   const [queryDrawingId, setQueryDrawingId] = useState<string | null>(null);
