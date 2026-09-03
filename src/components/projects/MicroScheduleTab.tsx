@@ -520,22 +520,33 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
         </div>
       </div>
 
-      {!showFullSchedule && (
+      {hasFullScheduleAccess ? (
+        <>
+          {!showFullSchedule && (
+            <Card className="border-[#006039]/20 bg-[#006039]/5">
+              <CardContent className="py-3 px-4 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm text-[#006039]">
+                  Showing your tasks only ({tasks.length} of {allTasks.length})
+                </p>
+                <Button size="sm" variant="outline" onClick={() => setShowFullSchedule(true)}>View full schedule</Button>
+              </CardContent>
+            </Card>
+          )}
+          {showFullSchedule && (
+            <Card>
+              <CardContent className="py-3 px-4 flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm text-muted-foreground">Viewing the full project schedule.</p>
+                <Button size="sm" variant="outline" onClick={() => setShowFullSchedule(false)}>Show only my tasks</Button>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      ) : (
         <Card className="border-[#006039]/20 bg-[#006039]/5">
           <CardContent className="py-3 px-4 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-[#006039]">
               Showing your tasks only ({tasks.length} of {allTasks.length})
             </p>
-            <Button size="sm" variant="outline" onClick={() => setShowFullSchedule(true)}>View full schedule</Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {showFullSchedule && !hasFullScheduleAccess && (
-        <Card>
-          <CardContent className="py-3 px-4 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm text-muted-foreground">Viewing the full project schedule (read-only).</p>
-            <Button size="sm" variant="outline" onClick={() => setShowFullSchedule(false)}>Show only my tasks</Button>
           </CardContent>
         </Card>
       )}
