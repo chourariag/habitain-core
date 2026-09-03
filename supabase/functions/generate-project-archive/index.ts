@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     await supabase.from("project_archives").update({ zip_generation_status: "generating" }).eq("project_id", project_id);
 
     const tables = [
-      "projects","design_stages","qc_inspections","ncr_register","design_queries","site_diary",
+      "projects","project_design_stages","qc_inspections","ncr_register","design_queries","site_diary",
       "punch_list_items","variation_register","project_boq_items","project_billing_milestones",
       "project_invoices","handover_pack","drawings","dispatch_packs","daily_production_logs",
       "project_messages",
@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
     zip.folder("financial")?.file("boq.json", JSON.stringify(data.project_boq_items || [], null, 2));
     zip.folder("qc-reports")?.file("inspections.json", JSON.stringify(data.qc_inspections || [], null, 2));
     zip.folder("ncr-records")?.file("ncrs.json", JSON.stringify(data.ncr_register || [], null, 2));
-    zip.folder("design")?.file("stages.json", JSON.stringify(data.design_stages || [], null, 2));
+    zip.folder("design")?.file("stages.json", JSON.stringify(data.project_design_stages || [], null, 2));
     zip.folder("design")?.file("queries.json", JSON.stringify(data.design_queries || [], null, 2));
     zip.folder("drawings")?.file("manifest.json", JSON.stringify(data.drawings || [], null, 2));
     zip.folder("site-diary")?.file("entries.json", JSON.stringify(data.site_diary || [], null, 2));
