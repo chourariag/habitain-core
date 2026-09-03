@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (event === "SIGNED_OUT") {
           applySession(null);
-          if (!PUBLIC_ROUTES.includes(locationRef.current)) {
+          if (!isPublicPath(locationRef.current)) {
             navigate("/login", { replace: true });
           }
           return;
@@ -115,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    if (!loading && !session && !PUBLIC_ROUTES.includes(location.pathname)) {
+    if (!loading && !session && !isPublicPath(location.pathname)) {
       navigate("/login", { replace: true });
     }
   }, [loading, session, location.pathname, navigate]);
