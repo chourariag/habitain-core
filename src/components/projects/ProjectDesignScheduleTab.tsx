@@ -202,14 +202,13 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
                         </td>
 
                         <td className="px-3 py-2 whitespace-nowrap">
-                          {s?.planned_start_date || s?.planned_end_date ? (
-                            <span className="text-xs">
-                              {s?.planned_start_date ? format(parseISO(s.planned_start_date), "dd/MM/yyyy") : "—"}
-                              {" → "}
-                              {s?.planned_end_date ? format(parseISO(s.planned_end_date), "dd/MM/yyyy") : "—"}
-                            </span>
-                          ) : s?.planned_date ? format(parseISO(s.planned_date), "dd/MM/yyyy") : "—"}
+                          {s?.planned_date
+                            ? format(parseISO(s.planned_date), "dd/MM/yyyy")
+                            : s?.planned_end_date
+                              ? format(parseISO(s.planned_end_date), "dd/MM/yyyy")
+                              : "—"}
                         </td>
+
                         <td className="px-3 py-2">{s?.actual_date ? format(parseISO(s.actual_date), "dd/MM/yyyy") : "—"}</td>
                         <td className="px-3 py-2">
                           <Badge style={{ backgroundColor: style.bg, color: style.fg, border: "none" }}>{status}</Badge>
