@@ -168,7 +168,7 @@ export function DesignScheduleUpload({
       const stageByDef = new Map(stages.map(s => [s.stage_definition_id, s]));
 
       // Parse rows
-      type Parsed = { def: Def; start: string | null; end: string | null; notes: string; na: boolean };
+      type Parsed = { def: Def; date: string | null; notes: string; na: boolean };
       const parsed: Parsed[] = [];
       const seen = new Set<number>();
 
@@ -181,46 +181,43 @@ export function DesignScheduleUpload({
         seen.add(rowNo);
 
         // Proof Type is read-only on upload.
-        const proof = String(r[6] ?? "").trim();
+        const proof = String(r[4] ?? "").trim();
         if (def.proof_type && proof && norm(proof) !== norm(def.proof_type)) {
           errors.push(`Row ${rowNo} (${def.stage_code}): Proof Type changed from "${def.proof_type}" to "${proof}". Proof Type is read-only.`);
           continue;
         }
 
-        const notes = String(r[7] ?? "").trim();
+        const notes = String(r[5] ?? "").trim();
         const na = norm(notes) === "n/a" || norm(notes) === "na";
-        const rawStart = r[3], rawEnd = r[4];
-        const hasStart = String(rawStart ?? "").trim() !== "";
-        const hasEnd = String(rawEnd ?? "").trim() !== "";
+        const rawDate = r[3];
+        const hasDate = String(rawDate ?? "").trim() !== "";
 
-        if (!hasStart && !hasEnd) {
-          if (!na && def.is_mandatory) warnings.push(`Row ${rowNo} (${def.stage_code} · ${def.stage_name}): no dates entered — skipped.`);
-          if (na) parsed.push({ def, start: null, end: null, notes, na });
+        if (!hasDate) {
+          if (!na && def.is_mandatory) warnings.push(`Row ${rowNo} (${def.stage_code} · ${def.stage_name}): no Planned Date entered — skipped.`);
+          if (na) parsed.push({ def, date: null, notes, na });
           continue;
         }
 
-        const start = parseDate(rawStart);
-        const end = parseDate(rawEnd);
-        if (hasStart && !start) { errors.push(`Row ${rowNo} (${def.stage_code}): Planned Start "${rawStart}" is not a valid DD/MM/YYYY date.`); continue; }
-        if (hasEnd && !end) { errors.push(`Row ${rowNo} (${def.stage_code}): Planned End "${rawEnd}" is not a valid DD/MM/YYYY date.`); continue; }
-        if (start && end && end < start) { errors.push(`Row ${rowNo} (${def.stage_code}): Planned End (${rawEnd}) is before Planned Start (${rawStart}).`); continue; }
+        const date = parseDate(rawDate);
+        if (!date) { errors.push(`Row ${rowNo} (${def.stage_code}): Planned Date "${rawDate}" is not a valid DD/MM/YYYY date.`); continue; }
 
-        parsed.push({ def, start, end, notes, na });
+        parsed.push({ def, date, notes, na });
       }
 
-      // Sequence check — a stage cannot be planned to start before its predecessor's planned end.
+
+      // Sequence check — a stage cannot be planned to complete before its predecessor.
       const ordered = [...parsed].sort((a, b) => (a.def.template_row ?? 0) - (b.def.template_row ?? 0));
       let prev: Parsed | null = null;
       for (const p of ordered) {
-        if (p.na || !p.start) continue;
-        if (prev?.end && p.start < prev.end) {
+        if (p.na || !p.date) continue;
+        if (prev?.date && p.date < prev.date) {
           errors.push(
-            `Row ${p.def.template_row} (${p.def.stage_code}) starts ${format(new Date(p.start), "dd/MM/yyyy")}, before its predecessor ` +
-            `Row ${prev.def.template_row} (${prev.def.stage_code}) ends ${format(new Date(prev.end), "dd/MM/yyyy")}. ` +
+            `Row ${p.def.template_row} (${p.def.stage_code}) is planned for ${format(new Date(p.date), "dd/MM/yyyy")}, before its predecessor ` +
+            `Row ${prev.def.template_row} (${prev.def.stage_code}) on ${format(new Date(prev.date), "dd/MM/yyyy")}. ` +
             `Design Schedule stages run sequentially.`
           );
         }
-        if (p.end) prev = p;
+        prev = p;
       }
 
       if (errors.length > 0) {
@@ -231,15 +228,19 @@ export function DesignScheduleUpload({
 
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Apply. Combined Gate rows write the same dates to BOTH underlying
+      // Apply. Combined Gate rows write the same date to BOTH underlying
       // preliminary checkpoints — they are independent records, not the Final rows.
+      // Single source of truth for the planned target date is `planned_date`;
+      // the legacy start/end range fields are cleared so nothing renders a
+      // stale range alongside the new single date.
       const writeOne = async (def: Def, p: Parsed) => {
         const payload: any = {
-          planned_start_date: p.start,
-          planned_end_date: p.end,
-          planned_date: p.start ?? p.end,
+          planned_date: p.date,
+          planned_start_date: null,
+          planned_end_date: null,
           updated_by: user?.id ?? null,
         };
+
         if (p.notes) payload.notes = p.notes;
         if (p.na && !def.is_mandatory) payload.status = "Skipped";
 

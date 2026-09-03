@@ -90,7 +90,8 @@ async function loadLiveDesignStages() {
       deliverable_required: r.design_stage_definitions.deliverable_required,
       status: r.status ?? "Not Started",
       planned_start_date: r.planned_start_date,
-      planned_end_date: r.planned_end_date ?? r.planned_date,
+      planned_end_date: r.planned_date ?? r.planned_end_date,
+
       actual_end_date: r.actual_date,
       deliverable_url: r.deliverable_url,
       completion_type: r.completion_type,

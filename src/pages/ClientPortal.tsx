@@ -715,7 +715,7 @@ export default function ClientPortal() {
                                 {s.stage_code} — {s.stage_name}
                               </p>
                               <p className="text-xs text-muted-foreground font-body">
-                                Planned: {s.planned_start_date ? format(new Date(s.planned_start_date), "dd/MM/yyyy") : "—"} → {s.planned_end_date ? format(new Date(s.planned_end_date), "dd/MM/yyyy") : "—"}
+                                Planned: {s.planned_date ? format(new Date(s.planned_date), "dd/MM/yyyy") : s.planned_end_date ? format(new Date(s.planned_end_date), "dd/MM/yyyy") : "—"}
                               </p>
                               {s.actual_date && (
                                 <p className="text-xs text-primary font-body">
