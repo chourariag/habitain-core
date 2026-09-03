@@ -15618,14 +15618,6 @@ export type Database = {
         Args: { _kickoff_id: string; _remarks: string }
         Returns: Json
       }
-      client_approve_design_stage: {
-        Args: { _stage_id: string; _token: string }
-        Returns: boolean
-      }
-      client_request_design_changes: {
-        Args: { _comment: string; _stage_id: string; _token: string }
-        Returns: boolean
-      }
       clone_task_templates_to_project: {
         Args: { _project_id: string; _system: string }
         Returns: number
@@ -15734,23 +15726,19 @@ export type Database = {
           work_order_id: string
         }[]
       }
-      get_design_stages_by_portal_token: {
-        Args: { _token: string }
-        Returns: {
-          actual_end_date: string
-          approval_date: string
-          deliverable_required: boolean
-          deliverable_url: string
-          id: string
-          planned_end_date: string
-          planned_start_date: string
-          revision_comments: string
-          stage_group: string
-          stage_name: string
-          stage_order: number
-          status: string
-        }[]
-      }
+      get_design_stages_by_portal_token:
+        | {
+            Args: { _token: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.get_design_stages_by_portal_token(_token => text), public.get_design_stages_by_portal_token(_token => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
+        | {
+            Args: { _token: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.get_design_stages_by_portal_token(_token => text), public.get_design_stages_by_portal_token(_token => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
       get_employee_celebrations: {
         Args: never
         Returns: {
@@ -16046,10 +16034,6 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
-      }
-      initialize_design_stages_v13: {
-        Args: { _project_id: string; _start?: string }
-        Returns: number
       }
       is_active_staff: { Args: { _user_id: string }; Returns: boolean }
       is_approver_tier: { Args: { _user_id: string }; Returns: boolean }

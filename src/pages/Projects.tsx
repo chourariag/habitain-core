@@ -34,7 +34,7 @@ export default function Projects() {
       supabase.from("ncr_register").select("inspection_id, status").eq("is_archived", false).in("status", ["open", "critical_open"]),
       (supabase.from("site_readiness") as any).select("project_id, is_complete").eq("is_complete", true),
       supabase.from("design_queries").select("project_id, status").eq("is_archived", false).in("status", ["open", "under_review"]),
-      supabase.from("design_stages").select("project_id, status").in("status", ["submitted_to_client"]),
+      (supabase.from("project_design_stages") as any).select("project_id, status").eq("status", "In Progress"),
     ]);
 
     const allProjects = projRes.data ?? [];
@@ -98,7 +98,7 @@ export default function Projects() {
     (dqRes.data ?? []).forEach((d: any) => { dqMap[d.project_id] = (dqMap[d.project_id] ?? 0) + 1; });
     setDqsByProject(dqMap);
 
-    // Pending client approvals
+    // Design stages currently in progress (live design schedule)
     const appMap: Record<string, number> = {};
     (stageRes.data ?? []).forEach((s: any) => { appMap[s.project_id] = (appMap[s.project_id] ?? 0) + 1; });
     setApprovalsByProject(appMap);

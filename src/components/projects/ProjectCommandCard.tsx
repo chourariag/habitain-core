@@ -134,7 +134,7 @@ export function ProjectCommandCard({
         <div className="grid grid-cols-2 gap-x-4 gap-y-1 pt-1 border-t" style={{ borderColor: "#E5E7EB" }}>
           <div className="flex items-center gap-1.5 text-xs">
             <span style={{ color: pendingApprovals > 0 ? "#D4860A" : "#006039" }} className="font-bold tabular-nums">{pendingApprovals}</span>
-            <span style={{ color: "#666666" }}>Approvals Pending</span>
+            <span style={{ color: "#666666" }}>Design Stages In Progress</span>
           </div>
         </div>
       </div>
