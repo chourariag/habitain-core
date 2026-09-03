@@ -18,9 +18,15 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
-const PUBLIC_ROUTES = ["/login", "/setup", "/welcome", "/onboarding", "/auth/callback", "/reset-password"];
+const PUBLIC_ROUTES = ["/login", "/setup", "/welcome", "/onboarding", "/auth/callback", "/reset-password", "/trust"];
+// Token-authenticated public routes (prefix match) — never gated by app auth
+const PUBLIC_PREFIXES = ["/client/", "/scope-signoff/"];
 // Routes where a logged-in user should NOT be auto-redirected to dashboard
 const NO_AUTO_REDIRECT = ["/onboarding", "/reset-password", "/auth/callback"];
+
+const isPublicPath = (path: string) =>
+  PUBLIC_ROUTES.includes(path) || PUBLIC_PREFIXES.some((p) => path.startsWith(p));
+const isTokenPath = (path: string) => PUBLIC_PREFIXES.some((p) => path.startsWith(p));
 
 export const useAuth = () => useContext(AuthContext);
 
