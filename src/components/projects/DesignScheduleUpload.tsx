@@ -282,9 +282,10 @@ export function DesignScheduleUpload({
           <div className="flex-1 min-w-[220px]">
             <p className="text-sm font-medium">Design Schedule — Excel</p>
             <p className="text-xs text-muted-foreground">
-              Download the template (grey fields pre-filled from this project), fill Planned Start / Planned End in DD/MM/YYYY, then upload.
+              Download the template (grey fields pre-filled from this project), fill a single Planned Date per stage in DD/MM/YYYY, then upload.
               Proof Type is read-only. Combined Gate rows set both preliminary checkpoints.
             </p>
+
           </div>
           <Button variant="outline" onClick={downloadTemplate} disabled={downloading}>
             {downloading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
