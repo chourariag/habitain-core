@@ -46,7 +46,7 @@ export default function ProjectArchive() {
       await Promise.all([
         sb.from("projects").select("*").eq("id", id).maybeSingle(),
         sb.from("project_archives").select("*").eq("project_id", id).maybeSingle(),
-        sb.from("design_stages").select("*").eq("project_id", id).order("stage_number"),
+        sb.from("project_design_stages").select("*, design_stage_definitions(stage_code, stage_name, stage_order)").eq("project_id", id),
         sb.from("qc_inspections").select("*").eq("project_id", id).order("created_at"),
         sb.from("ncr_register").select("*").eq("project_id", id).order("created_at"),
         sb.from("design_queries").select("*").eq("project_id", id).order("created_at"),
