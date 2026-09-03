@@ -7,6 +7,16 @@ const mockFrom = vi.hoisted(() => vi.fn());
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     from: (...args: string[]) => mockFrom(...args),
+    storage: {
+      from: (bucket: string) => ({
+        createSignedUrl: async (path: string) => ({
+          data: { signedUrl: `https://signed.example/${bucket}/${path}` },
+          error: null,
+        }),
+        upload: async () => ({ data: { path: "p" }, error: null }),
+        remove: async () => ({ data: [], error: null }),
+      }),
+    },
   },
 }));
 
