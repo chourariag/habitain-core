@@ -1,8 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
-- [ ] Build real offboarding workflow (impact scan + mandatory reassignment + clearance + audit)
-- [ ] Add read-only "Sole Role Holders" view for MD/Directors
+- [ ] Fix site-readiness-completed-view.test.tsx — broken since 2026-08-31 (commit fccbc31): test mocks `supabase.from` only, but SiteReadinessChecklist now calls `supabase.storage.from().createSignedUrl()` via storage-signed-url.ts. Mock needs a `storage` stub.
 
 ## Recently Completed
 - Fix CreateAccountsTab seed data (Awaiz/Nazim)
