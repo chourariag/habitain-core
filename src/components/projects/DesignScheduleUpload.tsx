@@ -168,7 +168,7 @@ export function DesignScheduleUpload({
       const stageByDef = new Map(stages.map(s => [s.stage_definition_id, s]));
 
       // Parse rows
-      type Parsed = { def: Def; start: string | null; end: string | null; notes: string; na: boolean };
+      type Parsed = { def: Def; date: string | null; notes: string; na: boolean };
       const parsed: Parsed[] = [];
       const seen = new Set<number>();
 
@@ -181,32 +181,29 @@ export function DesignScheduleUpload({
         seen.add(rowNo);
 
         // Proof Type is read-only on upload.
-        const proof = String(r[6] ?? "").trim();
+        const proof = String(r[4] ?? "").trim();
         if (def.proof_type && proof && norm(proof) !== norm(def.proof_type)) {
           errors.push(`Row ${rowNo} (${def.stage_code}): Proof Type changed from "${def.proof_type}" to "${proof}". Proof Type is read-only.`);
           continue;
         }
 
-        const notes = String(r[7] ?? "").trim();
+        const notes = String(r[5] ?? "").trim();
         const na = norm(notes) === "n/a" || norm(notes) === "na";
-        const rawStart = r[3], rawEnd = r[4];
-        const hasStart = String(rawStart ?? "").trim() !== "";
-        const hasEnd = String(rawEnd ?? "").trim() !== "";
+        const rawDate = r[3];
+        const hasDate = String(rawDate ?? "").trim() !== "";
 
-        if (!hasStart && !hasEnd) {
-          if (!na && def.is_mandatory) warnings.push(`Row ${rowNo} (${def.stage_code} · ${def.stage_name}): no dates entered — skipped.`);
-          if (na) parsed.push({ def, start: null, end: null, notes, na });
+        if (!hasDate) {
+          if (!na && def.is_mandatory) warnings.push(`Row ${rowNo} (${def.stage_code} · ${def.stage_name}): no Planned Date entered — skipped.`);
+          if (na) parsed.push({ def, date: null, notes, na });
           continue;
         }
 
-        const start = parseDate(rawStart);
-        const end = parseDate(rawEnd);
-        if (hasStart && !start) { errors.push(`Row ${rowNo} (${def.stage_code}): Planned Start "${rawStart}" is not a valid DD/MM/YYYY date.`); continue; }
-        if (hasEnd && !end) { errors.push(`Row ${rowNo} (${def.stage_code}): Planned End "${rawEnd}" is not a valid DD/MM/YYYY date.`); continue; }
-        if (start && end && end < start) { errors.push(`Row ${rowNo} (${def.stage_code}): Planned End (${rawEnd}) is before Planned Start (${rawStart}).`); continue; }
+        const date = parseDate(rawDate);
+        if (!date) { errors.push(`Row ${rowNo} (${def.stage_code}): Planned Date "${rawDate}" is not a valid DD/MM/YYYY date.`); continue; }
 
-        parsed.push({ def, start, end, notes, na });
+        parsed.push({ def, date, notes, na });
       }
+
 
       // Sequence check — a stage cannot be planned to start before its predecessor's planned end.
       const ordered = [...parsed].sort((a, b) => (a.def.template_row ?? 0) - (b.def.template_row ?? 0));
