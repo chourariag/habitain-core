@@ -453,6 +453,28 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
 
       const ws = wb.getWorksheet("Project Details");
       if (ws) {
+        const NOT_TRACKED = "Not yet tracked";
+
+        // Sales Owner — only a real rep that came through the
+        // sales_deals → sales_pipeline_leads Won bridge counts. No placeholder text.
+        let salesOwner = NOT_TRACKED;
+        {
+          const { data: leadRows } = await (supabase.from("sales_pipeline_leads") as any)
+            .select("sales_rep, sales_rep_name, ready_to_win_deal_id")
+            .eq("project_id", projectId);
+          const lead = (leadRows || []).find((l: any) => l.sales_rep);
+          if (lead?.sales_rep) {
+            const { data: repProfile } = await (supabase.from("profiles") as any)
+              .select("display_name").eq("id", lead.sales_rep).maybeSingle();
+            if (repProfile?.display_name) salesOwner = repProfile.display_name;
+          }
+        }
+
+        // Project Manager — role-resolved (planning_head), same pattern as the
+        // other team fields. Falls back to the explicit not-tracked marker.
+        const projectManager =
+          (await fetchRoleHolderName("planning_head", "")) || NOT_TRACKED;
+
         // Match labels in column A (case-insensitive contains) and fill column B.
         const fills: Array<[string, any]> = [
           ["Project Code", projectCode],
@@ -460,6 +482,8 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
           ["Division", proj?.division || ""],
           ["Production System", proj?.production_system || ""],
           ["Client Name", proj?.client_name || ""],
+          ["Sales Owner", salesOwner],
+          ["Project Manager", projectManager],
           ["Contract Value", Number(proj?.contract_value) || 0],
           ["Contract Start Date", fmtDate(proj?.start_date)],
           ["Expected Delivery Date", fmtDate(proj?.est_completion)],
@@ -485,8 +509,16 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
         };
         for (const [label, value] of fills) {
           const r = matchRow(label);
-          if (r) ws.getCell(r, 2).value = value as any;
+          if (!r) continue;
+          const cell = ws.getCell(r, 2);
+          cell.value = value as any;
+          if (value === NOT_TRACKED) {
+            // Visually distinct from genuine pre-filled lookups: italic amber text.
+            cell.font = { ...(cell.font || {}), italic: true, color: { argb: "FFD4860A" } };
+          }
         }
+      }
+
       }
 
       // Project-specific pre-fill: Vaishnavi Life Mysore 238-244 (VAIS/26/B4C)
