@@ -205,19 +205,19 @@ export function DesignScheduleUpload({
       }
 
 
-      // Sequence check — a stage cannot be planned to start before its predecessor's planned end.
+      // Sequence check — a stage cannot be planned to complete before its predecessor.
       const ordered = [...parsed].sort((a, b) => (a.def.template_row ?? 0) - (b.def.template_row ?? 0));
       let prev: Parsed | null = null;
       for (const p of ordered) {
-        if (p.na || !p.start) continue;
-        if (prev?.end && p.start < prev.end) {
+        if (p.na || !p.date) continue;
+        if (prev?.date && p.date < prev.date) {
           errors.push(
-            `Row ${p.def.template_row} (${p.def.stage_code}) starts ${format(new Date(p.start), "dd/MM/yyyy")}, before its predecessor ` +
-            `Row ${prev.def.template_row} (${prev.def.stage_code}) ends ${format(new Date(prev.end), "dd/MM/yyyy")}. ` +
+            `Row ${p.def.template_row} (${p.def.stage_code}) is planned for ${format(new Date(p.date), "dd/MM/yyyy")}, before its predecessor ` +
+            `Row ${prev.def.template_row} (${prev.def.stage_code}) on ${format(new Date(prev.date), "dd/MM/yyyy")}. ` +
             `Design Schedule stages run sequentially.`
           );
         }
-        if (p.end) prev = p;
+        prev = p;
       }
 
       if (errors.length > 0) {
@@ -228,15 +228,19 @@ export function DesignScheduleUpload({
 
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Apply. Combined Gate rows write the same dates to BOTH underlying
+      // Apply. Combined Gate rows write the same date to BOTH underlying
       // preliminary checkpoints — they are independent records, not the Final rows.
+      // Single source of truth for the planned target date is `planned_date`;
+      // the legacy start/end range fields are cleared so nothing renders a
+      // stale range alongside the new single date.
       const writeOne = async (def: Def, p: Parsed) => {
         const payload: any = {
-          planned_start_date: p.start,
-          planned_end_date: p.end,
-          planned_date: p.start ?? p.end,
+          planned_date: p.date,
+          planned_start_date: null,
+          planned_end_date: null,
           updated_by: user?.id ?? null,
         };
+
         if (p.notes) payload.notes = p.notes;
         if (p.na && !def.is_mandatory) payload.status = "Skipped";
 
