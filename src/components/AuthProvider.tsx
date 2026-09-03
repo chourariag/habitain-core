@@ -18,9 +18,15 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
 });
 
-const PUBLIC_ROUTES = ["/login", "/setup", "/welcome", "/onboarding", "/auth/callback", "/reset-password"];
+const PUBLIC_ROUTES = ["/login", "/setup", "/welcome", "/onboarding", "/auth/callback", "/reset-password", "/trust"];
+// Token-authenticated public routes (prefix match) — never gated by app auth
+const PUBLIC_PREFIXES = ["/client/", "/scope-signoff/"];
 // Routes where a logged-in user should NOT be auto-redirected to dashboard
 const NO_AUTO_REDIRECT = ["/onboarding", "/reset-password", "/auth/callback"];
+
+const isPublicPath = (path: string) =>
+  PUBLIC_ROUTES.includes(path) || PUBLIC_PREFIXES.some((p) => path.startsWith(p));
+const isTokenPath = (path: string) => PUBLIC_PREFIXES.some((p) => path.startsWith(p));
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -52,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (event === "SIGNED_OUT") {
           applySession(null);
-          if (!PUBLIC_ROUTES.includes(locationRef.current)) {
+          if (!isPublicPath(locationRef.current)) {
             navigate("/login", { replace: true });
           }
           return;
@@ -109,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    if (!loading && !session && !PUBLIC_ROUTES.includes(location.pathname)) {
+    if (!loading && !session && !isPublicPath(location.pathname)) {
       navigate("/login", { replace: true });
     }
   }, [loading, session, location.pathname, navigate]);
@@ -138,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   };
 
-  if (loading) {
+  if (loading && !isTokenPath(location.pathname)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm animate-pulse">
