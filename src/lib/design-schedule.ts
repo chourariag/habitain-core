@@ -17,5 +17,17 @@ export const EDIT_ROLES = [
   "costing_engineer",
 ];
 
+/**
+ * Design-schedule grids render only the 22 template rows (Design Concept,
+ * Technical, Design Execution, Handover) plus the combined-gate children
+ * (E-1A/B, E-2A/B), which carry no template_row of their own.
+ * Sales / Commercial / Planning / Production rows stay in the database but
+ * are not rendered here. Pipelines with no template rows (ADS) are unfiltered.
+ */
+export function filterScheduleDefs<T extends { template_row?: number | null; is_combined_child?: boolean | null }>(defs: T[]): T[] {
+  if (!defs.some(d => d.template_row != null)) return defs;
+  return defs.filter(d => d.template_row != null || d.is_combined_child === true);
+}
+
 export const QUOTATION_STATUSES = ["Pending", "Released", "Won", "Lost", "On Hold"] as const;
 export type QuotationStatus = typeof QUOTATION_STATUSES[number];

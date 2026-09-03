@@ -17,7 +17,7 @@ import { format, parseISO, isBefore, startOfToday } from "date-fns";
 import { projectCode } from "@/lib/code-generators";
 import { StageAttachments } from "@/components/projects/StageAttachments";
 import {
-  EDIT_ROLES, STAGE_STATUSES, STATUS_STYLES, QUOTATION_STATUSES,
+  EDIT_ROLES, STAGE_STATUSES, STATUS_STYLES, QUOTATION_STATUSES, filterScheduleDefs,
   type DesignStageStatus, type QuotationStatus,
 } from "@/lib/design-schedule";
 
@@ -25,6 +25,7 @@ type StageDef = {
   id: string; stage_code: string; stage_name: string; stage_order: number;
   pipeline_type: "habitainer" | "ads"; stage_group: string | null;
   is_mandatory: boolean; is_production_gate: boolean; is_read_only: boolean;
+  template_row?: number | null; is_combined_child?: boolean | null;
 };
 type ProjectStage = {
   id: string; project_id: string; stage_definition_id: string;
@@ -95,8 +96,8 @@ export default function DesignSchedule() {
     return m;
   }, [stages]);
 
-  const habitainerDefs = useMemo(() => defs.filter(d => d.pipeline_type === "habitainer"), [defs]);
-  const adsDefs = useMemo(() => defs.filter(d => d.pipeline_type === "ads"), [defs]);
+  const habitainerDefs = useMemo(() => filterScheduleDefs(defs.filter(d => d.pipeline_type === "habitainer")), [defs]);
+  const adsDefs = useMemo(() => filterScheduleDefs(defs.filter(d => d.pipeline_type === "ads")), [defs]);
 
   const filteredProjects = useMemo(() => {
     let list = projects;

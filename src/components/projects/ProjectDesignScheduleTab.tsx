@@ -14,7 +14,7 @@ import { Loader2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import {
-  EDIT_ROLES, STAGE_STATUSES, STATUS_STYLES, type DesignStageStatus,
+  EDIT_ROLES, STAGE_STATUSES, STATUS_STYLES, filterScheduleDefs, type DesignStageStatus,
 } from "@/lib/design-schedule";
 import { StageAttachments } from "@/components/projects/StageAttachments";
 import { HistoricalBackfillCard, type BackfillRecord } from "@/components/projects/HistoricalBackfillCard";
@@ -70,7 +70,7 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
       supabase.from("profiles").select("id, display_name").eq("is_active", true).order("display_name"),
       (supabase as any).from("project_backfills").select("*").eq("project_id", projectId).eq("phase", "design").maybeSingle(),
     ]);
-    const defsData = (defsRes.data ?? []) as StageDef[];
+    const defsData = filterScheduleDefs((defsRes.data ?? []) as StageDef[]);
     const stagesData = (stagesRes.data ?? []) as ProjectStage[];
     setDefs(defsData);
     setStages(stagesData);
@@ -113,7 +113,8 @@ export function ProjectDesignScheduleTab({ projectId, projectType, userRole }: {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [loading, focusStage, defs.length]);
 
-  const editable = defs.filter(d => !d.is_read_only);
+  // Denominator = the 22 template parents; combined-gate children are checkpoints of E-1/E-2.
+  const editable = defs.filter(d => !d.is_read_only && !d.is_combined_child);
   const completed = editable.filter(d => stageByDef.get(d.id)?.status === "Completed").length;
   const pct = editable.length > 0 ? Math.round((completed / editable.length) * 100) : 0;
 
