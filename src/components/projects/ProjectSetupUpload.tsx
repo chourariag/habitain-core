@@ -519,7 +519,6 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
         }
       }
 
-      }
 
       // Project-specific pre-fill: Vaishnavi Life Mysore 238-244 (VAIS/26/B4C)
       // Split the BOQ + Margin sheet into two: a Factory sheet (frozen row 4 header)
