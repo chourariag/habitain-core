@@ -111,6 +111,21 @@ function categorizeLedger(name: string): string {
   return "Other";
 }
 
+/**
+ * Period labels must match on meaning, not on exact text, so a re-upload of the
+ * same financial period REPLACES the previous import instead of creating a
+ * duplicate. Strips the stray "Particulars" prefix older imports captured,
+ * collapses whitespace and normalises casing.
+ */
+export function normalizePeriodLabel(label: string): string {
+  return (label ?? "")
+    .normalize("NFKC")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^particulars\s*/i, "")
+    .toLowerCase();
+}
+
 interface UploadSummary {
   total: number;
   groups: number;
