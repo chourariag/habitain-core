@@ -322,7 +322,7 @@ export function MISTab() {
 
     // Check if period already exists
     const label = periodLabel.trim();
-    if (label && uploads.find(u => u.period_label === label)) {
+    if (label && uploads.some(u => normalizePeriodLabel(u.period_label) === normalizePeriodLabel(label))) {
       setPendingFile(file);
       setConfirmReplace(true);
     } else {
