@@ -31,7 +31,17 @@ interface Props {
 export function ClientPaymentsInvoices({ milestones, projectName }: Props) {
   const [gstOpen, setGstOpen] = useState(false);
 
-  if (milestones.length === 0) return null;
+  if (milestones.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-8">
+          <p className="text-sm text-muted-foreground font-body text-center">
+            Payment schedule will appear here once Finance sets up billing milestones for this project.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const totalContract = milestones.reduce((s, m) => s + Number(m.amount_incl_gst || 0), 0);
   const totalPaid = milestones.filter(m => m.status === "received").reduce((s, m) => s + Number(m.amount_incl_gst || 0), 0);
