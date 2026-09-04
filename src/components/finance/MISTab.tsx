@@ -233,10 +233,13 @@ export function MISTab() {
         return;
       }
 
-      // Delete existing uploads for same period
-      const existing = uploads.find(u => u.period_label === finalPeriod);
-      if (existing) {
-        await supabase.from("finance_mis_uploads").delete().eq("id", existing.id);
+      // Delete every existing upload for the same period (matched on the
+      // normalised label so legacy "Particulars 1-Apr-25 to 31-Mar-26" rows are
+      // replaced too, rather than left behind as duplicates).
+      const target = normalizePeriodLabel(finalPeriod);
+      const stale = uploads.filter(u => normalizePeriodLabel(u.period_label) === target);
+      if (stale.length > 0) {
+        await supabase.from("finance_mis_uploads").delete().in("id", stale.map(u => u.id));
       }
 
       const { data: { user } } = await supabase.auth.getUser();
