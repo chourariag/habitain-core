@@ -78,7 +78,7 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
     setLoading(true);
     let q = supabase.from("work_orders").select("*").eq("is_archived", false).order("raised_at", { ascending: false });
     if (projectId && (mode === "factory" || mode === "site" || mode === "project")) q = q.eq("project_id", projectId);
-    if (mode === "finance") q = q.in("status", ["approved_pending_issue","issued","work_in_progress","completed_pending_measurement","measured_signed_off","closed"]);
+    if (mode === "finance") q = q.in("status", ["pending_costing_approval","pending_director_approval","approved_pending_issue","issued","work_in_progress","completed_pending_measurement","measured_signed_off","closed"]);
     const [woRes, subRes, projRes] = await Promise.all([
       q,
       supabase.from("subcontractors").select("id,sub_id,company_name,contact_person,phone,email,work_type,typical_rate,rate_unit,factory_or_site,status").eq("status","active").order("company_name"),
@@ -110,7 +110,7 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
         <div>
           <h3 className="font-display font-semibold text-base" style={{ color:"#1A1A1A" }}>Work Orders</h3>
           <p className="text-xs" style={{ color:"#666" }}>
-            {mode === "finance" ? "Approved WOs ready to issue" : "Subcontractor work orders"}
+            {mode === "finance" ? "Work orders pending approval and ready to issue" : "Subcontractor work orders"}
           </p>
         </div>
         {canRaise && mode !== "finance" && (
