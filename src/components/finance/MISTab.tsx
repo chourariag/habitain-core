@@ -111,6 +111,21 @@ function categorizeLedger(name: string): string {
   return "Other";
 }
 
+/**
+ * Period labels must match on meaning, not on exact text, so a re-upload of the
+ * same financial period REPLACES the previous import instead of creating a
+ * duplicate. Strips the stray "Particulars" prefix older imports captured,
+ * collapses whitespace and normalises casing.
+ */
+export function normalizePeriodLabel(label: string): string {
+  return (label ?? "")
+    .normalize("NFKC")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/^particulars\s*/i, "")
+    .toLowerCase();
+}
+
 interface UploadSummary {
   total: number;
   groups: number;
@@ -218,10 +233,13 @@ export function MISTab() {
         return;
       }
 
-      // Delete existing uploads for same period
-      const existing = uploads.find(u => u.period_label === finalPeriod);
-      if (existing) {
-        await supabase.from("finance_mis_uploads").delete().eq("id", existing.id);
+      // Delete every existing upload for the same period (matched on the
+      // normalised label so legacy "Particulars 1-Apr-25 to 31-Mar-26" rows are
+      // replaced too, rather than left behind as duplicates).
+      const target = normalizePeriodLabel(finalPeriod);
+      const stale = uploads.filter(u => normalizePeriodLabel(u.period_label) === target);
+      if (stale.length > 0) {
+        await supabase.from("finance_mis_uploads").delete().in("id", stale.map(u => u.id));
       }
 
       const { data: { user } } = await supabase.auth.getUser();
@@ -263,7 +281,7 @@ export function MISTab() {
         raw_data: entries,
         ads_split: {},
       };
-      setUploads(prev => [newUpload, ...prev.filter(u => u.id !== existing?.id)]);
+      setUploads(prev => [newUpload, ...prev.filter(u => !stale.some(s => s.id === u.id))]);
       setCurrentUploadId(inserted.id);
 
       // Build category summary from leaf ledgers only
@@ -304,7 +322,7 @@ export function MISTab() {
 
     // Check if period already exists
     const label = periodLabel.trim();
-    if (label && uploads.find(u => u.period_label === label)) {
+    if (label && uploads.some(u => normalizePeriodLabel(u.period_label) === normalizePeriodLabel(label))) {
       setPendingFile(file);
       setConfirmReplace(true);
     } else {

@@ -191,7 +191,10 @@ export function parseTrialBalanceRows(rows: any[][], indentByRow?: Record<number
   for (let i = 0; i < Math.min(rows.length, 30); i++) {
     const cells = (rows[i] || []).map(c => (c == null ? "" : String(c).trim()));
     const joined = cells.filter(Boolean).join(" ");
-    if (/\d{1,2}-[a-z]{3}-\d{2,4}\s*to\s*\d{1,2}-[a-z]{3}-\d{2,4}/i.test(joined)) detectedPeriod = joined;
+    // Capture ONLY the date range, not the whole header line (Tally often puts
+    // "Particulars" and the period in the same visual row).
+    const periodMatch = joined.match(/(\d{1,2}-[a-z]{3}-\d{2,4})\s*to\s*(\d{1,2}-[a-z]{3}-\d{2,4})/i);
+    if (periodMatch) detectedPeriod = `${periodMatch[1]} to ${periodMatch[2]}`;
     if (headerRowIdx === -1 && joined) headerBlock.push(joined);
     if (cells.some(c => /^particulars$/i.test(c))) { headerRowIdx = i; break; }
   }
