@@ -281,7 +281,7 @@ export function MISTab() {
         raw_data: entries,
         ads_split: {},
       };
-      setUploads(prev => [newUpload, ...prev.filter(u => u.id !== existing?.id)]);
+      setUploads(prev => [newUpload, ...prev.filter(u => !stale.some(s => s.id === u.id))]);
       setCurrentUploadId(inserted.id);
 
       // Build category summary from leaf ledgers only
