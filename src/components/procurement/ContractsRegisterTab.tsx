@@ -71,7 +71,11 @@ export function ContractsRegisterTab({ userRole, projects }: Props) {
     if (!canView) { setLoading(false); return; }
     setLoading(true);
     const [contracts, subs] = await Promise.all([
-      (supabase.from("contracts_register" as any) as any).select("*").eq("is_archived", false).order("created_at", { ascending: false }),
+      (supabase.from("contracts_register" as any) as any)
+        .select("*")
+        .eq("is_archived", false)
+        .neq("contract_type", "Sale Agreement")
+        .order("created_at", { ascending: false }),
       supabase.from("subcontractors").select("company_name,contact_person"),
     ]);
     if (contracts.error) toast.error(contracts.error.message);
