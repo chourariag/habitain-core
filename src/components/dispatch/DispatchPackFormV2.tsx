@@ -250,13 +250,11 @@ export function DispatchPackFormV2({ projectId, projectName }: Props) {
         <CardContent className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead><tr className="border-b text-left" style={{ color: "#666" }}>
-              <th className="py-1 pr-2">Description</th><th className="py-1 pr-2">Qty</th><th className="py-1 pr-2">Unit</th><th className="py-1 pr-2">Weight (kg)</th><th className="py-1 pr-2">Notes</th><th></th>
+              <th className="py-1 pr-2">Description</th><th className="py-1 pr-2">Weight (kg)</th><th className="py-1 pr-2">Notes</th><th></th>
             </tr></thead>
             <tbody>{items.map((it, i) => (
               <tr key={i} className="border-b">
                 <td className="py-1 pr-2"><Input value={it.description} onChange={(e) => updateItem(i, "description", e.target.value)} className="h-7 text-xs" /></td>
-                <td className="py-1 pr-2"><Input type="number" min={0} value={it.qty} onChange={(e) => updateItem(i, "qty", Number(e.target.value))} className="h-7 text-xs w-16" /></td>
-                <td className="py-1 pr-2"><Input value={it.unit} onChange={(e) => updateItem(i, "unit", e.target.value)} className="h-7 text-xs w-20" /></td>
                 <td className="py-1 pr-2"><Input type="number" min={0} value={it.weight} onChange={(e) => updateItem(i, "weight", Number(e.target.value))} className="h-7 text-xs w-20" /></td>
                 <td className="py-1 pr-2"><Input value={it.notes} onChange={(e) => updateItem(i, "notes", e.target.value)} className="h-7 text-xs" /></td>
                 <td className="py-1">{items.length > 1 && <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => removeItem(i)}><Trash2 className="h-3 w-3" /></Button>}</td>
