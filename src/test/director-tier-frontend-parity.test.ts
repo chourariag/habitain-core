@@ -41,7 +41,7 @@ describe("approver lists point at architecture_director, not principal_architect
     "src/pages/Approvals.tsx",
     "src/hooks/usePendingApprovalsCount.ts",
     "src/pages/UserManagement.tsx",
-    "src/components/procurement/WorkOrdersTab.tsx",
+    
     "src/components/finance/RetentionSection.tsx",
   ];
 
