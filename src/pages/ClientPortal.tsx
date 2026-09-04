@@ -23,6 +23,7 @@ import { ClientPaymentsInvoices } from "@/components/portal/ClientPaymentsInvoic
 import { ClientDocuments } from "@/components/portal/ClientDocuments";
 import { ClientPostHandover } from "@/components/portal/ClientPostHandover";
 import { ClientApprovals } from "@/components/portal/ClientApprovals";
+import { ClientMilestoneTracker } from "@/components/portal/ClientMilestoneTracker";
 
 const STAGES = [
   "Main Frame", "Sub-Frame", "MEP Rough-In", "Insulation", "Drywall", "Paint",
@@ -99,7 +100,7 @@ export default function ClientPortal() {
         .in("approval_status", ["approved", "pending"]).order("created_at"),
       supabase.from("handover_pack").select("*").eq("project_id", projAny.id).maybeSingle(),
       supabase.from("variation_orders" as any).select("*").eq("project_id", projAny.id).order("created_at"),
-      supabase.from("project_billing_milestones").select("*").eq("project_id", projAny.id).order("milestone_number"),
+      supabase.rpc("get_billing_milestones_by_portal_token" as any, { _token: projectToken }),
       supabase.from("client_milestone_photos" as any).select("*").eq("project_id", projAny.id).order("created_at"),
       supabase.from("construction_journal" as any).select("*").eq("project_id", projAny.id).eq("is_approved", true).order("entry_date", { ascending: false }).limit(20),
       supabase.from("client_portal_documents").select("*").eq("project_id", projAny.id).order("uploaded_at", { ascending: false }),
@@ -112,7 +113,18 @@ export default function ClientPortal() {
     setDrawings(drawRes.data ?? []);
     setHandover(handRes.data ?? null);
     setVariationOrders((voRes.data as any[]) ?? []);
-    setBillingMilestones((msRes.data as any[]) ?? []);
+    if (msRes.error) {
+      // Fallback for environments where the token RPC is not yet deployed.
+      const fb = await supabase
+        .from("project_billing_milestones")
+        .select("*")
+        .eq("project_id", projAny.id)
+        .order("milestone_number");
+      setBillingMilestones((fb.data as any[]) ?? []);
+    } else {
+      setBillingMilestones((msRes.data as any[]) ?? []);
+    }
+
     setMilestonePhotos((mpRes.data as any[]) ?? []);
     setJournalEntries((cjRes.data as any[]) ?? []);
     setPortalDocuments(docRes.data ?? []);
@@ -324,7 +336,7 @@ export default function ClientPortal() {
                 <Badge variant="destructive" className="ml-1.5 h-5 w-5 p-0 flex items-center justify-center text-[10px] rounded-full">{totalActions}</Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="design">Design Schedule</TabsTrigger>
+            <TabsTrigger value="design">Milestones</TabsTrigger>
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             {isHandedOver && <TabsTrigger value="post-handover">Post-Handover</TabsTrigger>}
@@ -691,65 +703,11 @@ export default function ClientPortal() {
             />
           </TabsContent>
 
-          {/* DESIGN SCHEDULE TAB */}
+          {/* DESIGN SCHEDULE TAB — client-facing milestones only (no internal stage codes) */}
           <TabsContent value="design" className="mt-4 space-y-6">
-            {Array.from(new Set(designStages.map((s) => s.stage_group).filter(Boolean))).map((group) => {
-              const items = designStages
-                .filter((s) => s.stage_group === group)
-                .sort((a, b) => (a.stage_order ?? 0) - (b.stage_order ?? 0));
-              if (items.length === 0) return null;
-              return (
-                <Card key={group} className="border-primary/30">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="font-heading text-base font-bold">{group}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {items.map((s) => {
-                      const done = s.status === "Completed" || s.status === "Skipped";
-                      const active = s.status === "In Progress";
-                      return (
-                        <div key={s.id} className="rounded-lg border p-3 space-y-2">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="font-heading font-bold text-sm">
-                                {s.stage_code} — {s.stage_name}
-                              </p>
-                              <p className="text-xs text-muted-foreground font-body">
-                                Planned: {s.planned_date ? format(new Date(s.planned_date), "dd/MM/yyyy") : s.planned_end_date ? format(new Date(s.planned_end_date), "dd/MM/yyyy") : "—"}
-                              </p>
-                              {s.actual_date && (
-                                <p className="text-xs text-primary font-body">
-                                  ✓ Completed on {format(new Date(s.actual_date), "dd/MM/yyyy")}
-                                </p>
-                              )}
-                            </div>
-                            <Badge className="text-[10px]" variant={done ? "default" : active ? "outline" : "secondary"}>
-                              {s.status}
-                            </Badge>
-                          </div>
-
-                          {s.deliverable_url && (
-                            <a
-                              href={s.deliverable_url}
-                              target="_blank" rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-primary underline font-body"
-                            >
-                              <Download className="h-3 w-3" /> View deliverable
-                            </a>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </CardContent>
-                </Card>
-              );
-            })}
-            {designStages.length === 0 && (
-              <p className="text-sm text-muted-foreground font-body text-center py-6">
-                Design schedule will appear here once the team sets it up.
-              </p>
-            )}
+            <ClientMilestoneTracker stages={designStages} />
           </TabsContent>
+
 
 
           {/* PAYMENTS TAB */}
