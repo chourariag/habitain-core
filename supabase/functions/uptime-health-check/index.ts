@@ -52,9 +52,9 @@ Deno.serve(async (req) => {
   // Remember the previous state so we alert on transitions, not every run.
   let wasDown = false;
   try {
-    const res = await fetch(`${url}/rest/v1/app_settings?setting_key=eq.uptime_last_state&select=setting_value`, { headers });
+    const res = await fetch(`${url}/rest/v1/app_settings?key=eq.uptime_last_state&select=value`, { headers });
     const rows = await res.json();
-    wasDown = rows?.[0]?.setting_value === "down";
+    wasDown = rows?.[0]?.value === "down";
   } catch { /* treat unknown as up */ }
 
   const isDown = failures.length > 0;
@@ -68,10 +68,10 @@ Deno.serve(async (req) => {
   }
 
   try {
-    await fetch(`${url}/rest/v1/app_settings?on_conflict=setting_key`, {
+    await fetch(`${url}/rest/v1/app_settings?on_conflict=key`, {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json", Prefer: "resolution=merge-duplicates,return=minimal" },
-      body: JSON.stringify({ setting_key: "uptime_last_state", setting_value: isDown ? "down" : "up" }),
+      body: JSON.stringify({ key: "uptime_last_state", value: isDown ? "down" : "up" }),
     });
   } catch (e) {
     console.error("[uptime] state persist failed:", e);
