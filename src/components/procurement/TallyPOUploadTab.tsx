@@ -8,17 +8,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Upload, Download, Loader2, Check, X, AlertTriangle, FileSpreadsheet, ChevronRight, Link } from "lucide-react";
+import { Upload, Download, Loader2, AlertTriangle, FileSpreadsheet, ChevronRight, Link } from "lucide-react";
 import { toast } from "sonner";
 import { format, differenceInDays, parseISO, isValid } from "date-fns";
 import * as XLSX from "xlsx";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 
 const UPLOAD_ROLES = ["procurement", "production_head", "super_admin", "managing_director"];
-const DIRECTOR_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
 
 interface TallyPO {
   id: string;
@@ -49,7 +47,6 @@ interface UploadResult {
   imported: number;
   duplicates: number;
   failed: number;
-  pendingApproval: number;
   linked: number;
   unlinked: { poNumber: string; extractedProject: string }[];
   vendorMismatches: { poNumber: string; vendorOnPo: string; approvedVendor: string; lineItem: string }[];
@@ -120,9 +117,6 @@ export function TallyPOUploadTab() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
-  const [rejectOpen, setRejectOpen] = useState(false);
-  const [rejectPoId, setRejectPoId] = useState<string | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
   const [acting, setActing] = useState(false);
   const [allProjects, setAllProjects] = useState<ProjectInfo[]>([]);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
@@ -160,7 +154,6 @@ export function TallyPOUploadTab() {
   useEffect(() => { fetchData(); }, []);
 
   const canUpload = UPLOAD_ROLES.includes(userRole ?? "");
-  const isDirector = DIRECTOR_ROLES.includes(userRole ?? "");
 
   const projectNames = useMemo(() => {
     const set = new Set(pos.map((p) => p.project_name).filter(Boolean));
@@ -184,59 +177,6 @@ export function TallyPOUploadTab() {
       return true;
     });
   }, [pos, filterProject, filterVendor, filterStatus, filterType, filterDateFrom, filterDateTo, filterAbove50k]);
-
-  // FIX 1 + 3 — Notify approvers based on PO threshold and any vendor mismatches
-  const notifyApprovers = async (inserted: any[], mismatches: { poNumber: string; vendorOnPo: string; approvedVendor: string; lineItem: string }[]) => {
-    try {
-      const lowPos = inserted.filter((p) => p.po_type === "purchase_order" && (p.total_amount ?? 0) <= 100000 && (p.total_amount ?? 0) > 0);
-      const highPos = inserted.filter((p) => p.po_type === "purchase_order" && (p.total_amount ?? 0) > 100000);
-      const rolesToNotify = new Set<string>();
-      if (lowPos.length) { rolesToNotify.add("planning_head"); rolesToNotify.add("head_of_projects"); }
-      if (highPos.length) { rolesToNotify.add("managing_director"); rolesToNotify.add("finance_director"); rolesToNotify.add("principal_architect"); }
-      if (mismatches.length) rolesToNotify.add("planning_head");
-      if (rolesToNotify.size === 0) return;
-
-      const { data: recipients } = await supabase
-        .from("profiles")
-        .select("auth_user_id")
-        .in("role", Array.from(rolesToNotify) as any)
-        .eq("is_active", true);
-
-      const notes: any[] = [];
-      for (const r of recipients ?? []) {
-        if (!r.auth_user_id) continue;
-        if (lowPos.length) {
-          notes.push({
-            recipient_id: r.auth_user_id, category: "approval", priority: "normal",
-            title: `${lowPos.length} PO(s) ≤ ₹1L pending approval`,
-            message: `Tally upload added ${lowPos.length} purchase order(s) under ₹1 Lakh for your review.`,
-            navigate_to: "/procurement?tab=tally-pos",
-          });
-        }
-        if (highPos.length) {
-          notes.push({
-            recipient_id: r.auth_user_id, category: "approval", priority: "high",
-            title: `${highPos.length} PO(s) > ₹1L pending approval`,
-            message: `Tally upload added ${highPos.length} purchase order(s) above ₹1 Lakh requiring director approval.`,
-            navigate_to: "/procurement?tab=tally-pos",
-          });
-        }
-        if (mismatches.length) {
-          notes.push({
-            recipient_id: r.auth_user_id, category: "anomaly", priority: "high",
-            title: `${mismatches.length} vendor mismatch(es) detected`,
-            message: mismatches.slice(0, 5).map((m) =>
-              `PO ${m.poNumber} — vendor '${m.vendorOnPo}' does not match approved vendor '${m.approvedVendor}' for ${m.lineItem}.`
-            ).join(" "),
-            navigate_to: "/procurement?tab=tally-pos&status=vendor_mismatch",
-          });
-        }
-      }
-      if (notes.length) await (supabase.from("notifications") as any).insert(notes);
-    } catch (e) {
-      console.warn("notifyApprovers failed", e);
-    }
-  };
 
   const downloadTemplate = () => {
     const t = TEMPLATES.tallyPO;
@@ -296,7 +236,7 @@ export function TallyPOUploadTab() {
 
       const result: UploadResult = {
         totalPOs: 0, totalWOs: 0, imported: 0, duplicates: 0, failed: 0,
-        pendingApproval: 0, linked: 0, unlinked: [], vendorMismatches: [], totalPOValue: 0, totalWOValue: 0,
+        linked: 0, unlinked: [], vendorMismatches: [], totalPOValue: 0, totalWOValue: 0,
       };
 
 
@@ -348,10 +288,7 @@ export function TallyPOUploadTab() {
         }
 
         const totalAmt = orderAmount;
-        const APPROVAL_THRESHOLD = 100000;
-        const status = poType === "purchase_order" && totalAmt > APPROVAL_THRESHOLD ? "pending_approval" : "approved";
-
-        if (status === "pending_approval") result.pendingApproval++;
+        const status = "registered";
 
         if (poType === "work_order") {
           result.totalWOs++;
@@ -464,9 +401,6 @@ export function TallyPOUploadTab() {
         }
       }
 
-      // FIX 1 — Approval routing notifications
-      await notifyApprovers(toInsert, result.vendorMismatches);
-
       setUploadResult(result);
       toast.success(`${result.imported} records imported (${result.totalPOs} POs, ${result.totalWOs} Work Orders)`);
       fetchData();
@@ -497,7 +431,7 @@ export function TallyPOUploadTab() {
 
       const result: UploadResult = {
         totalPOs: 0, totalWOs: 0, imported: 0, duplicates: 0, failed: 0,
-        pendingApproval: 0, linked: 0, unlinked: [], vendorMismatches: [], totalPOValue: 0, totalWOValue: 0,
+        linked: 0, unlinked: [], vendorMismatches: [], totalPOValue: 0, totalWOValue: 0,
       };
       const toInsert: any[] = [];
 
@@ -512,9 +446,7 @@ export function TallyPOUploadTab() {
         if (!parsedDate) { result.failed++; continue; }
 
         const poType = isWorkOrder(poNum) ? "work_order" : "purchase_order";
-        const status = poType === "purchase_order" && totalAmt > 100000 ? "pending_approval" : "approved";
-
-        if (status === "pending_approval") result.pendingApproval++;
+        const status = "registered";
         if (poType === "work_order") { result.totalWOs++; result.totalWOValue += totalAmt; }
         else { result.totalPOs++; result.totalPOValue += totalAmt; }
 
@@ -571,38 +503,6 @@ export function TallyPOUploadTab() {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
     }
-  };
-
-  const handleApprove = async (poId: string) => {
-    setActing(true);
-    try {
-      const { client, session } = await getAuthedClient();
-      const { error } = await (client.from("purchase_orders") as any)
-        .update({ status: "approved", approved_by: session.user.id, approved_at: new Date().toISOString() })
-        .eq("id", poId);
-      if (error) throw error;
-      toast.success("PO approved");
-      fetchData();
-    } catch (err: any) { toast.error(err.message); }
-    finally { setActing(false); }
-  };
-
-  const handleReject = async () => {
-    if (!rejectPoId || !rejectReason.trim()) { toast.error("Reason required"); return; }
-    setActing(true);
-    try {
-      const { client } = await getAuthedClient();
-      const { error } = await (client.from("purchase_orders") as any)
-        .update({ status: "rejected", rejection_reason: rejectReason.trim() })
-        .eq("id", rejectPoId);
-      if (error) throw error;
-      toast.success("PO rejected");
-      setRejectOpen(false);
-      setRejectPoId(null);
-      setRejectReason("");
-      fetchData();
-    } catch (err: any) { toast.error(err.message); }
-    finally { setActing(false); }
   };
 
   const handleLinkProject = async () => {
