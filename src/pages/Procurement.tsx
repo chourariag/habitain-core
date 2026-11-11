@@ -36,6 +36,7 @@ import { DeliveryTrackerTab } from "@/components/procurement/DeliveryTrackerTab"
 import { ContractsRegisterTab } from "@/components/procurement/ContractsRegisterTab";
 import { QuotationsTab } from "@/components/procurement/QuotationsTab";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin", "production_head"];
 const PLANNER_ROLES = ["planning_engineer", "super_admin", "managing_director"];
@@ -92,6 +93,7 @@ function SoDButton({ label, onClick, sodReason }: { label: string; onClick: () =
 export default function Procurement() {
   const [searchParams] = useSearchParams();
   const { role: hookRole } = useUserRole();
+  const featureFlags = useFeatureFlags();
   const tabFromUrl = searchParams.get("tab");
   const projectFromUrl = searchParams.get("project");
   const [items, setItems] = useState<any[]>([]);
@@ -251,18 +253,18 @@ export default function Procurement() {
       {/* Vijay's Daily View Strip */}
       <ProcurementDashboardStrip userRole={userRole} />
 
-      <Tabs defaultValue={tabFromUrl || "requests"} className="space-y-4">
+      <Tabs defaultValue={tabFromUrl === "dashboard" ? "requests" : tabFromUrl || "requests"} className="space-y-4">
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="grn" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> GRN</TabsTrigger>
             <TabsTrigger value="material-plan" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Material Plan</TabsTrigger>
             <TabsTrigger value="requests" className="gap-1.5"><AlertTriangle className="h-4 w-4" /> Requests</TabsTrigger>
             <TabsTrigger value="purchase-orders" className="gap-1.5"><FileText className="h-4 w-4" /> Purchase Orders</TabsTrigger>
-            <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>
+            {featureFlags.isEnabled("inventory") && <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>}
             <TabsTrigger value="quotations" className="gap-1.5"><FileText className="h-4 w-4" /> Quotations</TabsTrigger>
             <TabsTrigger value="transfers" className="gap-1.5"><Truck className="h-4 w-4" /> Transfers</TabsTrigger>
             <TabsTrigger value="30-day-plan" className="gap-1.5"><Calendar className="h-4 w-4" /> 30-Day Plan</TabsTrigger>
-            <TabsTrigger value="equipments" className="gap-1.5"><Hammer className="h-4 w-4" /> Equipments</TabsTrigger>
+            {featureFlags.isEnabled("equipment") && <TabsTrigger value="equipments" className="gap-1.5"><Hammer className="h-4 w-4" /> Equipments</TabsTrigger>}
             <TabsTrigger value="tally-po" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
             <TabsTrigger value="supplier-intel" className="gap-1.5"><TrendingUp className="h-4 w-4" /> Supplier Intelligence</TabsTrigger>
             <TabsTrigger value="material-alerts" className="gap-1.5"><Bell className="h-4 w-4" /> Material Alerts</TabsTrigger>
@@ -516,7 +518,7 @@ export default function Procurement() {
         </TabsContent>
 
         {/* Inventory Tab */}
-        <TabsContent value="inventory" className="space-y-4">
+        {featureFlags.isEnabled("inventory") && <TabsContent value="inventory" className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Inventory</h2>
             {canAddItem && (
@@ -643,7 +645,7 @@ export default function Procurement() {
               )}
             </>
           )}
-        </TabsContent>
+        </TabsContent>}
 
         {/* Transfers Tab */}
         <TabsContent value="transfers">
@@ -654,9 +656,9 @@ export default function Procurement() {
           <ThirtyDayPlanTab />
         </TabsContent>
 
-        <TabsContent value="equipments">
+        {featureFlags.isEnabled("equipment") && <TabsContent value="equipments">
           <FixedAssetsTab />
-        </TabsContent>
+        </TabsContent>}
 
         <TabsContent value="tally-po">
           <TallyPOUploadTab />
