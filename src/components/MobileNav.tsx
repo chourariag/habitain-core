@@ -44,6 +44,7 @@ const allTabs: Tab[] = [
   { to: "/design/schedule", labelKey: "nav.designSchedule", icon: Compass, section: "design", module: "design", featureFlag: "design_schedule" },
   { to: "/sales", labelKey: "nav.sales", icon: BarChart3, section: "sales", module: "sales" },
   { to: "/attendance", labelKey: "nav.hr", icon: UserCog, section: "altree", module: "hr" },
+  { to: "/safety", labelKey: "nav.safety", icon: ShieldAlert, section: "production", featureFlag: "compliance" },
 ];
 
 type MoreItem = {

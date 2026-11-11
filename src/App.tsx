@@ -121,7 +121,7 @@ const App = () => (
                 <Route path="/super-admin" element={<Navigate to="/admin/super-admin" replace />} />
                 <Route path="/admin/super-admin" element={<ModuleGuard module="admin" requireAdminPanel><SuperAdmin /></ModuleGuard>} />
                 <Route path="/admin/hr" element={<ModuleGuard module="hr"><AdminHR /></ModuleGuard>} />
-                <Route path="/safety" element={<ModuleGuard module="factory"><Safety /></ModuleGuard>} />
+                <Route path="/safety" element={<ModuleGuard featureFlag="compliance"><Safety /></ModuleGuard>} />
                 <Route path="/approvals" element={<ModuleGuard module="approvals"><Approvals /></ModuleGuard>} />
                 <Route path="/work-orders" element={<ModuleGuard module="projects" featureFlag="client_work_orders"><WorkOrders /></ModuleGuard>} />
                 <Route path="/announcements" element={<ModuleGuard module="announcements"><Announcements /></ModuleGuard>} />

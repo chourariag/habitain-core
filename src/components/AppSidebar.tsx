@@ -48,7 +48,7 @@ const sectionConfig: NavSection[] = [
       { section: "production", to: "/factory/floor-map", labelKey: "nav.floorMap", icon: Map, module: "factory" },
       { section: "production", to: "/qc", labelKey: "nav.qcNcr", icon: ClipboardCheck, module: "qc" },
       { section: "production", to: "/dispatch-delivery", labelKey: "nav.dispatchDelivery", icon: Truck, module: "dispatch" },
-      { section: "production", to: "/safety", labelKey: "nav.safety", icon: ShieldAlert, module: "factory" },
+      { section: "production", to: "/safety", labelKey: "nav.safety", icon: ShieldAlert, featureFlag: "compliance" },
     ],
   },
   {
