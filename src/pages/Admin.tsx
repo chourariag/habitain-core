@@ -60,9 +60,7 @@ export default function Admin() {
           <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
             Admin
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {activeCount} active user{activeCount !== 1 ? "s" : ""} · {inactiveCount} deactivated
-          </p>
+          <p className="text-muted-foreground text-sm mt-1">Manage active and deactivated accounts.</p>
         </div>
         {(tab === "active" || tab === "inactive") && <AddUserDialog onUserCreated={refetch} />}
       </div>
@@ -83,11 +81,11 @@ export default function Admin() {
         <TabsList className="bg-muted">
           <TabsTrigger value="active" className="gap-1.5">
             <Users className="h-3.5 w-3.5" />
-            Active ({activeCount})
+            Active
           </TabsTrigger>
           <TabsTrigger value="inactive" className="gap-1.5">
             <ShieldOff className="h-3.5 w-3.5" />
-            Inactive ({inactiveCount})
+            Deactivated
           </TabsTrigger>
         </TabsList>
 
