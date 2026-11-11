@@ -77,6 +77,7 @@ export function MobileNav() {
   const primaryPaths = ["/dashboard", "/attendance", "/projects", "/procurement"];
 
   const visibleTabs = allTabs.filter((t) => {
+    if (t.featureFlag && !featureFlags.isEnabled(t.featureFlag)) return false;
     if (t.module) {
       const flagKey = t.featureFlag ?? featureFlagForModule(t.module);
       return (!flagKey || featureFlags.isEnabled(flagKey)) && canView(t.module);

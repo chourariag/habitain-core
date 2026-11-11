@@ -149,6 +149,7 @@ export function AppSidebar() {
     .map((s) => ({
       ...s,
       items: s.items.filter((it) => {
+        if (it.featureFlag && !featureFlags.isEnabled(it.featureFlag)) return false;
         if (it.requireAdminPanel) return featureFlags.isEnabled("user_admin") && canAccessAdminPanel();
         if (it.requireEmployeeManagement) return featureFlags.isEnabled("user_admin") && canAccessEmployeeManagement();
         if (it.module) {

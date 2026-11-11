@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Wallet } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +49,7 @@ import { featureFlagForSiteTab } from "@/lib/feature-flags";
 function SiteHubContent() {
   const featureFlags = useFeatureFlags();
   const navigate = useNavigate();
+  const location = useLocation();
   const { selectedProjectId, selectedProject } = useProjectContext();
   const { userId } = useUserRole();
   const [modules, setModules] = useState<Tables<"modules">[]>([]);
@@ -63,6 +64,12 @@ function SiteHubContent() {
   const initialTab = new URLSearchParams(window.location.search).get("tab") ?? "pipeline";
   const initialTabFlag = featureFlagForSiteTab(initialTab);
   const [activeTab, setActiveTab] = useState(() => initialTabFlag && !featureFlags.isEnabled(initialTabFlag) ? "pipeline" : initialTab);
+
+  useEffect(() => {
+    const requestedTab = new URLSearchParams(location.search).get("tab") ?? "pipeline";
+    const requiredFlag = featureFlagForSiteTab(requestedTab);
+    setActiveTab(requiredFlag && !featureFlags.isEnabled(requiredFlag) ? "pipeline" : requestedTab);
+  }, [location.search, featureFlags.flags]);
 
   const fetchData = useCallback(async () => {
     if (!selectedProjectId) return;
