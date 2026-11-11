@@ -239,17 +239,17 @@ function SiteHubContent() {
           <TabsList>
             <TabsTrigger value="pipeline" className="gap-1.5"><Truck className="h-4 w-4" /> Dispatch Pipeline</TabsTrigger>
             <TabsTrigger value="schedule" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Schedule</TabsTrigger>
-            <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
+            {featureFlags.isEnabled("gfc") && <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>}
             {featureFlags.isEnabled("work_orders") && <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>}
             {featureFlags.isEnabled("factory_feedback") && <TabsTrigger value="factory-feedback" className="gap-1.5"><MessageSquareWarning className="h-4 w-4" /> Factory Feedback</TabsTrigger>}
             {featureFlags.isEnabled("dispatch") && <TabsTrigger value="dispatch-packs" className="gap-1.5"><Package className="h-4 w-4" /> Dispatch Pack</TabsTrigger>}
             {featureFlags.isEnabled("inventory") && <TabsTrigger value="site-inventory" className="gap-1.5"><Boxes className="h-4 w-4" /> Inventory</TabsTrigger>}
             <TabsTrigger value="diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
-            <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Document</TabsTrigger>
+            {featureFlags.isEnabled("dispatch") && <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Document</TabsTrigger>}
             {featureFlags.isEnabled("labour") && <TabsTrigger value="labour" className="gap-1.5"><Users className="h-4 w-4" /> People</TabsTrigger>}
             {featureFlags.isEnabled("design_schedule") && <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Installation Sequence</TabsTrigger>}
             {featureFlags.isEnabled("compliance") && <TabsTrigger value="safety" className="gap-1.5"><HardHat className="h-4 w-4" /> Safety</TabsTrigger>}
-            <TabsTrigger value="client-visits" className="gap-1.5"><Handshake className="h-4 w-4" /> Client Visits</TabsTrigger>
+            {featureFlags.isEnabled("sales") && <TabsTrigger value="client-visits" className="gap-1.5"><Handshake className="h-4 w-4" /> Client Visits</TabsTrigger>}
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -358,13 +358,13 @@ function SiteHubContent() {
           />
         </TabsContent>
 
-        <TabsContent value="drawings">
+        {featureFlags.isEnabled("gfc") && <TabsContent value="drawings">
           <Card>
             <CardContent className="pt-6">
               <ModuleDrawingsTab projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent>}
 
         <TabsContent value="diary" className="space-y-4">
           <Tabs defaultValue="daily" className="space-y-3">
@@ -390,9 +390,9 @@ function SiteHubContent() {
             </TabsContent>
           </Tabs>
         </TabsContent>
-        <TabsContent value="handover">
+        {featureFlags.isEnabled("dispatch") && <TabsContent value="handover">
           <HandoverPack projectId={selectedProjectId!} clientName={selectedProject?.client_name ?? null} userRole={userRole} installationComplete={installationComplete} onHandedOver={fetchData} />
-        </TabsContent>
+        </TabsContent>}
         {featureFlags.isEnabled("procurement") && <TabsContent value="materials">
           <MaterialRequestsPanel projectId={selectedProjectId!} />
         </TabsContent>}
@@ -402,12 +402,12 @@ function SiteHubContent() {
         {featureFlags.isEnabled("inventory") && <TabsContent value="site-inventory">
           <SiteInventoryTab projectId={selectedProjectId!} userRole={userRole} />
         </TabsContent>}
-        <TabsContent value="subcontractors">
+        {featureFlags.isEnabled("labour") && <TabsContent value="subcontractors">
           <SubcontractorManagement projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
-        </TabsContent>
-        <TabsContent value="punch-list">
+        </TabsContent>}
+        {featureFlags.isEnabled("compliance") && <TabsContent value="punch-list">
           <PunchListModule projectId={selectedProjectId!} userRole={userRole} />
-        </TabsContent>
+        </TabsContent>}
         {featureFlags.isEnabled("design_schedule") && <TabsContent value="install-seq">
           <InstallationSequenceDoc projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
         </TabsContent>}
@@ -455,14 +455,14 @@ function SiteHubContent() {
             </TabsContent>
           </Tabs>
         </TabsContent>
-        <TabsContent value="client-visits">
+        {featureFlags.isEnabled("sales") && <TabsContent value="client-visits">
           <ClientVisitsTab
             projectId={selectedProjectId!}
             projectName={selectedProject?.name ?? ""}
             clientName={selectedProject?.client_name ?? null}
             userRole={userRole}
           />
-        </TabsContent>
+        </TabsContent>}
       </Tabs>
     </div>
     </div>
