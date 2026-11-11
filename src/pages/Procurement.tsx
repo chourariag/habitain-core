@@ -271,59 +271,8 @@ export default function Procurement() {
           </TabsList>
         </ScrollableTabsWrapper>
 
-        {/* Dashboard Tab */}
         <TabsContent value="dashboard" className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { label: "Overdue Materials", count: overduePlanCount, alert: overduePlanCount > 0, bg: overduePlanCount > 0 ? "#FFF0F0" : "#F7F7F7", color: overduePlanCount > 0 ? "#F40009" : "#1A1A1A" },
-              { label: "Pending Requests", count: pendingReqCount, alert: pendingReqCount > 0, bg: pendingReqCount > 0 ? "#FFF8E8" : "#F7F7F7", color: pendingReqCount > 0 ? "#D4860A" : "#1A1A1A" },
-              { label: "Reorder Alerts", count: lowStockCount, alert: lowStockCount > 0, bg: lowStockCount > 0 ? "#FFF8E8" : "#F7F7F7", color: lowStockCount > 0 ? "#D4860A" : "#1A1A1A" },
-              { label: "POs Pending Director", count: pendingDirectorPOCount, alert: pendingDirectorPOCount > 0, bg: pendingDirectorPOCount > 0 ? "#FFF0F0" : "#F7F7F7", color: pendingDirectorPOCount > 0 ? "#F40009" : "#1A1A1A" },
-            ].map((tile) => (
-              <div key={tile.label} className="rounded-lg p-4" style={{ backgroundColor: tile.bg, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-                <p className="text-2xl font-bold" style={{ color: tile.color }}>{tile.count}</p>
-                <p className="text-xs font-medium mt-1" style={{ color: "#666666" }}>{tile.label}</p>
-              </div>
-            ))}
-          </div>
-
-          {upcomingDeadlines.length > 0 && (
-            <div>
-              <h2 className="font-display text-lg font-semibold mb-3" style={{ color: "#1A1A1A" }}>Upcoming Order Deadlines</h2>
-              <Card>
-                <CardContent className="p-0 overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Material</TableHead><TableHead>Project</TableHead><TableHead>Qty</TableHead>
-                        <TableHead>Required By</TableHead><TableHead>Order By</TableHead><TableHead>Supplier</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {upcomingDeadlines.map((item: any) => {
-                        const orderBy = item.required_by ? subDays(new Date(item.required_by), Number(item.lead_time_days || 7)) : null;
-                        return (
-                          <TableRow key={item.id}>
-                            <TableCell className="font-medium" style={{ color: "#1A1A1A" }}>{item.material_name}</TableCell>
-                            <TableCell style={{ color: "#666666" }}>{projectsMap[item.project_id] ?? "—"}</TableCell>
-                            <TableCell>{item.quantity} {item.unit}</TableCell>
-                            <TableCell>{item.required_by ? format(new Date(item.required_by), "dd MMM yyyy") : "—"}</TableCell>
-                            <TableCell style={{ color: orderBy && isBefore(orderBy, today) ? "#F40009" : "#1A1A1A", fontWeight: 600 }}>
-                              {orderBy ? format(orderBy, "dd MMM yyyy") : "—"}
-                            </TableCell>
-                            <TableCell style={{ color: "#666666" }}>{item.supplier ?? "—"}</TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Material Availability Gate */}
-          <MaterialAvailabilityGate />
+          <p className="text-sm text-muted-foreground">Select a procurement list to view current records.</p>
         </TabsContent>
 
         {/* Material Plan Tab */}
