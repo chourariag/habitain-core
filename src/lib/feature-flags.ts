@@ -45,6 +45,8 @@ const knownFlags: Array<[string, string]> = [
   ["site_report", "Site Reports"],
   ["project_setup", "Project Setup"],
   ["procurement", "Procurement"],
+  ["site", "Site Hub"],
+  ["design", "Design"],
   ["reminders", "Reminders"],
   ["exports", "Exports"],
   ["user_admin", "User Administration"],

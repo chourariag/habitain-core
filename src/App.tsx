@@ -87,6 +87,7 @@ const App = () => (
                 <Route path="/projects/:id/archive" element={<ModuleGuard module="projects"><ProjectArchive /></ModuleGuard>} />
                 <Route path="/management" element={<ModuleGuard module="reports"><ManagementRouteGuard><Management /></ManagementRouteGuard></ModuleGuard>} />
                 <Route path="/production" element={<ModuleGuard module="factory"><Production /></ModuleGuard>} />
+                <Route path="/labour" element={<ModuleGuard featureFlag="labour"><Production labourOnly /></ModuleGuard>} />
                 <Route path="/production/dashboard" element={<ModuleGuard module="factory"><ProductionDashboard /></ModuleGuard>} />
                 <Route path="/production/delivery-checklist/:projectId" element={<ModuleGuard module="factory"><DeliveryChecklist /></ModuleGuard>} />
                 <Route path="/dispatch-delivery" element={<ModuleGuard module="dispatch"><DispatchDelivery /></ModuleGuard>} />

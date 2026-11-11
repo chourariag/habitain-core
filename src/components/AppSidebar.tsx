@@ -44,7 +44,7 @@ const sectionConfig: NavSection[] = [
     items: [
       { section: "production", to: "/capacity", labelKey: "nav.capacityPlanning", icon: BarChart3, roles: CAPACITY_ROLES, module: "factory" },
       { section: "production", to: "/production?tab=modules", labelKey: "nav.factoryFloor", icon: Factory, module: "factory" },
-      { section: "production", to: "/production?tab=people", labelKey: "nav.hr", icon: Users, module: "factory", featureFlag: "labour" },
+      { section: "production", to: "/labour", labelKey: "nav.hr", icon: Users, featureFlag: "labour" },
       { section: "production", to: "/factory/floor-map", labelKey: "nav.floorMap", icon: Map, module: "factory" },
       { section: "production", to: "/qc", labelKey: "nav.qcNcr", icon: ClipboardCheck, module: "qc" },
       { section: "production", to: "/dispatch-delivery", labelKey: "nav.dispatchDelivery", icon: Truck, module: "dispatch" },
