@@ -44,7 +44,7 @@ const allTabs: Tab[] = [
   { to: "/design/schedule", labelKey: "nav.designSchedule", icon: Compass, section: "design", module: "design", featureFlag: "design_schedule" },
   { to: "/sales", labelKey: "nav.sales", icon: BarChart3, section: "sales", module: "sales" },
   { to: "/attendance", labelKey: "nav.hr", icon: UserCog, section: "altree", module: "hr" },
-  { to: "/safety", labelKey: "nav.safety", icon: ShieldAlert, section: "production", featureFlag: "compliance" },
+  { to: "/safety", labelKey: "nav.safety", icon: ShieldAlert, section: "production", module: "factory", featureFlag: "compliance" },
 ];
 
 type MoreItem = {
@@ -79,8 +79,8 @@ export function MobileNav() {
   const visibleTabs = allTabs.filter((t) => {
     if (t.featureFlag && !featureFlags.isEnabled(t.featureFlag)) return false;
     if (t.module) {
-      const flagKey = t.featureFlag ?? featureFlagForModule(t.module);
-      return (!flagKey || featureFlags.isEnabled(flagKey)) && canView(t.module);
+      const moduleFlag = featureFlagForModule(t.module);
+      return (!moduleFlag || featureFlags.isEnabled(moduleFlag)) && canView(t.module);
     }
     if (t.alwaysVisible) return true;
     if (t.roles) return userRole ? t.roles.includes(userRole) : false;
