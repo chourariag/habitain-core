@@ -43,8 +43,10 @@ import { useProjectContext } from "@/contexts/ProjectContext";
 import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import type { Tables } from "@/integrations/supabase/types";
 import { MyTasksSection } from "@/components/tasks/MyTasksSection";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 function SiteHubContent() {
+  const featureFlags = useFeatureFlags();
   const navigate = useNavigate();
   const { selectedProjectId, selectedProject } = useProjectContext();
   const { userId } = useUserRole();
@@ -227,13 +229,13 @@ function SiteHubContent() {
             <TabsTrigger value="pipeline" className="gap-1.5"><Truck className="h-4 w-4" /> Dispatch Pipeline</TabsTrigger>
             <TabsTrigger value="schedule" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Schedule</TabsTrigger>
             <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
-            <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>
-            <TabsTrigger value="factory-feedback" className="gap-1.5"><MessageSquareWarning className="h-4 w-4" /> Factory Feedback</TabsTrigger>
+            {featureFlags.isEnabled("work_orders") && <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>}
+            {featureFlags.isEnabled("factory_feedback") && <TabsTrigger value="factory-feedback" className="gap-1.5"><MessageSquareWarning className="h-4 w-4" /> Factory Feedback</TabsTrigger>}
             <TabsTrigger value="dispatch-packs" className="gap-1.5"><Package className="h-4 w-4" /> Dispatch Pack</TabsTrigger>
-            <TabsTrigger value="site-inventory" className="gap-1.5"><Boxes className="h-4 w-4" /> Inventory</TabsTrigger>
+            {featureFlags.isEnabled("inventory") && <TabsTrigger value="site-inventory" className="gap-1.5"><Boxes className="h-4 w-4" /> Inventory</TabsTrigger>}
             <TabsTrigger value="diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
             <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Document</TabsTrigger>
-            <TabsTrigger value="labour" className="gap-1.5"><Users className="h-4 w-4" /> People</TabsTrigger>
+            {featureFlags.isEnabled("labour") && <TabsTrigger value="labour" className="gap-1.5"><Users className="h-4 w-4" /> People</TabsTrigger>}
             <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Installation Sequence</TabsTrigger>
             <TabsTrigger value="safety" className="gap-1.5"><HardHat className="h-4 w-4" /> Safety</TabsTrigger>
             <TabsTrigger value="client-visits" className="gap-1.5"><Handshake className="h-4 w-4" /> Client Visits</TabsTrigger>
@@ -380,15 +382,15 @@ function SiteHubContent() {
         <TabsContent value="handover">
           <HandoverPack projectId={selectedProjectId!} clientName={selectedProject?.client_name ?? null} userRole={userRole} installationComplete={installationComplete} onHandedOver={fetchData} />
         </TabsContent>
-        <TabsContent value="materials">
+        {featureFlags.isEnabled("procurement") && <TabsContent value="materials">
           <MaterialRequestsPanel projectId={selectedProjectId!} />
-        </TabsContent>
-        <TabsContent value="dispatch-packs">
+        </TabsContent>}
+        {featureFlags.isEnabled("dispatch") && <TabsContent value="dispatch-packs">
           <DispatchPacksTab projectId={selectedProjectId!} />
-        </TabsContent>
-        <TabsContent value="site-inventory">
+        </TabsContent>}
+        {featureFlags.isEnabled("inventory") && <TabsContent value="site-inventory">
           <SiteInventoryTab projectId={selectedProjectId!} userRole={userRole} />
-        </TabsContent>
+        </TabsContent>}
         <TabsContent value="subcontractors">
           <SubcontractorManagement projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
         </TabsContent>
@@ -408,10 +410,10 @@ function SiteHubContent() {
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="factory-feedback">
+        {featureFlags.isEnabled("factory_feedback") && <TabsContent value="factory-feedback">
           <SiteFactoryFeedback projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} modules={modules.map(m => ({ id: m.id, name: m.name, module_code: m.module_code || m.name }))} />
-        </TabsContent>
-        <TabsContent value="labour">
+        </TabsContent>}
+        {featureFlags.isEnabled("labour") && <TabsContent value="labour">
           <Tabs defaultValue="daily" className="space-y-3">
             <TabsList>
               <TabsTrigger value="daily">Daily Labour Log</TabsTrigger>
@@ -424,10 +426,10 @@ function SiteHubContent() {
               <ManpowerWeeklyExcel location="site" projectId={selectedProjectId} />
             </TabsContent>
           </Tabs>
-        </TabsContent>
-        <TabsContent value="work-orders">
+        </TabsContent>}
+        {featureFlags.isEnabled("work_orders") && <TabsContent value="work-orders">
           <WorkOrdersTab mode="site" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
-        </TabsContent>
+        </TabsContent>}
         <TabsContent value="site-measurements" className="space-y-4">
           <Tabs defaultValue="entry" className="space-y-3">
             <TabsList>

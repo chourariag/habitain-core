@@ -34,10 +34,7 @@ export function FeatureModulesPanel({ role }: { role: string | null }) {
 
   const changeFlag = async (key: string, enabled: boolean) => {
     setSavingKey(key);
-    const { error } = await supabase
-      .from("feature_flags")
-      .update({ enabled, updated_at: new Date().toISOString() })
-      .eq("key", key);
+    const { error } = await supabase.rpc("set_feature_flag", { _key: key, _enabled: enabled });
     if (error) toast.error("Could not update module status");
     else {
       await queryClient.invalidateQueries({ queryKey: ["feature-flags"] });

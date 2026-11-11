@@ -33,6 +33,7 @@ import { LabourTeamsManager } from "@/components/production/LabourTeamsManager";
 import { ModuleTeamAssignment } from "@/components/production/ModuleTeamAssignment";
 import { SpecialMaterialRequests } from "@/components/production/SpecialMaterialRequests";
 import { PackagePlus as PackagePlusIcon } from "lucide-react";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
 
@@ -45,6 +46,7 @@ const STAGE_COLORS: Record<string, string> = {
 };
 
 function ProductionContent() {
+  const featureFlags = useFeatureFlags();
   const { selectedProjectId, selectedProject } = useProjectContext();
   const { role: userRole, userId } = useUserRole();
   const [modules, setModules] = useState<ModuleWithProject[]>([]);
@@ -161,7 +163,7 @@ function ProductionContent() {
               <TabsList>
                 <TabsTrigger value="modules" className="gap-1.5"><Factory className="h-4 w-4" /> Modules</TabsTrigger>
                 <TabsTrigger value="measurement" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> Measurement Sheet</TabsTrigger>
-                <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>
+                {featureFlags.isEnabled("work_orders") && <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>}
                 <TabsTrigger value="special-materials" className="gap-1.5"><PackagePlusIcon className="h-4 w-4" /> Special Materials</TabsTrigger>
                 <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
                 <TabsTrigger value="people" className="gap-1.5"><Users className="h-4 w-4" /> People</TabsTrigger>
@@ -256,9 +258,9 @@ function ProductionContent() {
               </div>
             </TabsContent>
 
-            <TabsContent value="work-orders">
+                {featureFlags.isEnabled("work_orders") && <TabsContent value="work-orders">
               <WorkOrdersTab mode="factory" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
-            </TabsContent>
+                </TabsContent>}
 
           </Tabs>
         )}

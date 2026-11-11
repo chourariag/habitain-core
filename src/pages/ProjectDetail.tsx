@@ -34,6 +34,7 @@ import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-statu
 import { isAdsProject } from "@/lib/project-type";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 
 const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
@@ -62,6 +63,7 @@ export default function ProjectDetail() {
   const [hasHandover, setHasHandover] = useState(false);
   // Honour the MD/Super Admin "View as User" persona so gating matches what that user sees.
   const { role: effectiveRole } = useUserRole();
+  const flags = useFeatureFlags();
   const userRole = effectiveRole ?? dbRole;
   const setUserRole = setDbRole;
 
@@ -204,11 +206,11 @@ export default function ProjectDetail() {
       <PreProductionChecklist projectId={id!} division={proj.division ?? null} />
 
 
-      {!isAds && (
+      {!isAds && flags.isEnabled("project_setup") && (
         <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} projectType={proj.division ?? null} onImported={fetchData} />
       )}
 
-      {!isAds && (
+      {!isAds && flags.isEnabled("project_setup") && (
         <ProjectSetupApprovalSection
           projectId={id!}
           projectName={project.name}
@@ -228,7 +230,7 @@ export default function ProjectDetail() {
             {!isAds && <TabsTrigger value="budget" className="gap-1.5"><Wallet className="h-4 w-4" /> Budget</TabsTrigger>}
             {!isAds && <TabsTrigger value="scope" className="gap-1.5"><ScrollText className="h-4 w-4" /> Scope</TabsTrigger>}
             {!isAds && <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover</TabsTrigger>}
-            <TabsTrigger value="design-schedule" className="gap-1.5"><CalendarRange className="h-4 w-4" /> Design Schedule</TabsTrigger>
+            {flags.isEnabled("design_schedule") && <TabsTrigger value="design-schedule" className="gap-1.5"><CalendarRange className="h-4 w-4" /> Design Schedule</TabsTrigger>}
             {PL_VIEW_ROLES.includes(userRole ?? "") && (
               <TabsTrigger value="project-pl" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Project P&amp;L</TabsTrigger>
             )}
@@ -294,9 +296,11 @@ export default function ProjectDetail() {
           </TabsContent>
         )}
 
-        <TabsContent value="design-schedule" className="space-y-4">
-          <ProjectDesignScheduleTab projectId={id!} projectType={isAds ? "ads" : "habitainer"} userRole={userRole} />
-        </TabsContent>
+        {flags.isEnabled("design_schedule") && (
+          <TabsContent value="design-schedule" className="space-y-4">
+            <ProjectDesignScheduleTab projectId={id!} projectType={isAds ? "ads" : "habitainer"} userRole={userRole} />
+          </TabsContent>
+        )}
 
         {PL_VIEW_ROLES.includes(userRole ?? "") && (
           <TabsContent value="project-pl" className="space-y-4">
