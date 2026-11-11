@@ -104,6 +104,11 @@ export const FEATURE_FLAG_BY_MODULE: Record<string, string> = {
 };
 
 const SITE_TAB_FLAGS: Record<string, string> = {
+  drawings: "gfc",
+  handover: "dispatch",
+  "client-visits": "sales",
+  subcontractors: "labour",
+  "punch-list": "compliance",
   "work-orders": "work_orders",
   "factory-feedback": "factory_feedback",
   "dispatch-packs": "dispatch",

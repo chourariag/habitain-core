@@ -22,7 +22,7 @@ export function HomeTaskList({ userRole }: { userRole: string | null }) {
       if (flags.isEnabled("attendance")) {
         const { data } = await supabase
           .from("attendance_records")
-          .select("id,name")
+          .select("id")
           .eq("user_id", user.id)
           .eq("date", today)
           .maybeSingle();

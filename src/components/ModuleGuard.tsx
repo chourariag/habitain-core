@@ -31,13 +31,17 @@ export function ModuleGuard({
   const siteTabFlag = location.pathname === "/site-hub"
     ? featureFlagForSiteTab(new URLSearchParams(location.search).get("tab"))
     : undefined;
-  const resolvedFlag = featureFlag ?? siteTabFlag ?? (module ? featureFlagForModule(module) : undefined);
+  const resolvedFlags = [
+    featureFlag,
+    siteTabFlag,
+    module ? featureFlagForModule(module) : undefined,
+  ].filter((flag): flag is string => Boolean(flag));
 
-  if (loading || (resolvedFlag && flags.isLoading)) {
+  if (loading || (resolvedFlags.length > 0 && flags.isLoading)) {
     return <div className="flex justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
-  if (resolvedFlag && (flags.isError || !flags.isEnabled(resolvedFlag))) {
+  if (resolvedFlags.some((flag) => flags.isError || !flags.isEnabled(flag))) {
     return <Navigate to="/dashboard" replace />;
   }
 

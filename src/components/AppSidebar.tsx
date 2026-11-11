@@ -48,7 +48,7 @@ const sectionConfig: NavSection[] = [
       { section: "production", to: "/factory/floor-map", labelKey: "nav.floorMap", icon: Map, module: "factory" },
       { section: "production", to: "/qc", labelKey: "nav.qcNcr", icon: ClipboardCheck, module: "qc" },
       { section: "production", to: "/dispatch-delivery", labelKey: "nav.dispatchDelivery", icon: Truck, module: "dispatch" },
-      { section: "production", to: "/safety", labelKey: "nav.safety", icon: ShieldAlert, featureFlag: "compliance" },
+      { section: "production", to: "/safety", labelKey: "nav.safety", icon: ShieldAlert, module: "factory", featureFlag: "compliance" },
     ],
   },
   {
@@ -153,8 +153,10 @@ export function AppSidebar() {
         if (it.requireAdminPanel) return featureFlags.isEnabled("user_admin") && canAccessAdminPanel();
         if (it.requireEmployeeManagement) return featureFlags.isEnabled("user_admin") && canAccessEmployeeManagement();
         if (it.module) {
-          const flagKey = it.featureFlag ?? featureFlagForModule(it.module);
-          return (!flagKey || featureFlags.isEnabled(flagKey)) && canView(it.module);
+          const moduleFlag = featureFlagForModule(it.module);
+          return (!it.featureFlag || featureFlags.isEnabled(it.featureFlag))
+            && (!moduleFlag || featureFlags.isEnabled(moduleFlag))
+            && canView(it.module);
         }
         const sectionOk = it.alwaysVisible || canSeeSection(userRole, it.section);
         const roleOk = !it.roles || (userRole && it.roles.includes(userRole));
