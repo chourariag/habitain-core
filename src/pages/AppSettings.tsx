@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { MapPin, Loader2, Save, Factory, Building2, HardHat } from "lucide-react";
 import { toast } from "sonner";
 import { APP_VERSION } from "@/pwa/version";
+import { FeatureModulesPanel } from "@/components/settings/FeatureModulesPanel";
 
 const ADMIN_ROLES = ["super_admin", "managing_director"];
 
@@ -188,6 +189,8 @@ export default function AppSettings() {
           </div>
         </div>
       )}
+
+      {isAdmin && <FeatureModulesPanel role={role} />}
 
       {!isAdmin && (
         <div className="bg-card rounded-lg p-8 text-center" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>

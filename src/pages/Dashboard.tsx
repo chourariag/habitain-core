@@ -1,124 +1,34 @@
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getDashboardTier } from "@/lib/role-nav";
-import { ROLE_LABELS, type AppRole } from "@/lib/roles";
+import type { AppRole } from "@/lib/roles";
 import { Loader2, HardHat } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/components/AuthProvider";
-import { supabase } from "@/integrations/supabase/client";
-import { Tier1Dashboard } from "@/components/dashboard/Tier1Dashboard";
-import { OrderBookTab } from "@/components/dashboard/OrderBookTab";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-import { PlaceholderDashboard } from "@/components/dashboard/PlaceholderDashboard";
-import { SharedDashboardBottom } from "@/components/dashboard/SharedDashboardBottom";
+import { HomeTaskList } from "@/components/dashboard/HomeTaskList";
 import { CheckInButton } from "@/components/attendance/CheckInButton";
-import { LogExpenseButton } from "@/components/expenses/LogExpenseButton";
-import { WeeklyDigestCard } from "@/components/kpi/WeeklyDigestCard";
-import { MyTasksSummaryStrip } from "@/components/tasks/MyTasksSummaryStrip";
-import { DailyReadinessBrief } from "@/components/dashboard/DailyReadinessBrief";
-import { MyReportsSection } from "@/components/reports/MyReportsSection";
-import { ReportsToReviewSection } from "@/components/reports/ReportsToReviewSection";
-import { SalesTasksCard } from "@/components/dashboard/SalesTasksCard";
-
-const SALES_TASK_ROLES = ["sales_executive", "sales_associate", "sales_director"];
-
-const FLOOR_ROLES = ["factory_floor_supervisor", "fabrication_foreman", "electrical_installer", "elec_plumbing_installer", "site_engineer", "delivery_rm_lead"];
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 export default function Dashboard() {
-  const { t } = useTranslation();
-  const { role, userId, loading } = useUserRole();
-  const { user } = useAuth();
+  const { role, loading } = useUserRole();
   const userRole = role as AppRole | null;
-  const [firstName, setFirstName] = useState("User");
-  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const flags = useFeatureFlags();
 
   useEffect(() => {
-    supabase.from("projects").select("id,name").eq("is_archived", false).order("name")
-      .then(({ data }) => setProjects(data ?? []));
+    document.title = "Home | HStack";
   }, []);
-
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("profiles")
-      .select("display_name")
-      .eq("auth_user_id", user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (error) return;
-        const name = data?.display_name?.trim();
-        if (name) setFirstName(name.split(/\s+/)[0]);
-        else if (user.email) setFirstName(user.email.split("@")[0]);
-      });
-  }, [user]);
 
   if (loading) {
 
     return <div className="flex justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
-  const tier = getDashboardTier(userRole);
-  const isSalesTaskRole = !!userRole && SALES_TASK_ROLES.includes(userRole);
-  const roleName = userRole ? ROLE_LABELS[userRole] ?? userRole : "User";
-  const today = new Date().toLocaleDateString("en-IN", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
-
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      {/* My Tasks summary strip — pinned at top, always visible */}
-      <MyTasksSummaryStrip userRole={userRole} />
-
-      {/* Daily Readiness Brief — pinned above check-in, hidden after 10am */}
-      <DailyReadinessBrief userRole={userRole} userId={userId} />
-
-      {/* Check-in card */}
-      <CheckInButton userRole={userRole} />
-
-      {/* Quick action: Log Today's Work — for floor/site workers */}
-      {userRole && FLOOR_ROLES.includes(userRole) && (
-        <Link to="/production?tab=people">
-          <Button className="w-full gap-2 text-white font-display font-bold h-14 text-base" style={{ backgroundColor: "#D4860A" }}>
-            <HardHat className="h-5 w-5" /> {t("dashboard.logTodaysWork")}
-          </Button>
-        </Link>
-      )}
-
-      {/* Submit Expense button */}
-      <LogExpenseButton userRole={userRole} />
-
-      {/* Weekly KPI Digest */}
-      <WeeklyDigestCard />
-
-      {/* Weekly status reports */}
-      <MyReportsSection />
-      <ReportsToReviewSection />
-
-      {tier === 1 ? (
-        <Tabs defaultValue="command-centre" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="command-centre">{t("dashboard.commandCentre")}</TabsTrigger>
-            <TabsTrigger value="order-book">{t("dashboard.orderBook")}</TabsTrigger>
-          </TabsList>
-          <TabsContent value="command-centre" className="space-y-6">
-            <Tier1Dashboard today={today} firstName={firstName} />
-          </TabsContent>
-          <TabsContent value="order-book">
-            <OrderBookTab projects={projects} />
-          </TabsContent>
-        </Tabs>
-      ) : tier === 2 ? (
-        <PlaceholderDashboard title={t("dashboard.myDashboardRole", { role: roleName })} today={today} tier={2} role={userRole} firstName={firstName} />
-      ) : tier === 4 ? (
-        <PlaceholderDashboard title={t("dashboard.designWorkspace")} today={today} tier={4} role={userRole} firstName={firstName} />
-      ) : (
-        <PlaceholderDashboard title={t("dashboard.myWorkspaceRole", { role: roleName })} today={today} tier={3} role={userRole} firstName={firstName} hideTiles={isSalesTaskRole} />
-      )}
-
-      {isSalesTaskRole && <SalesTasksCard userId={userId} userRole={userRole} />}
-
-      <SharedDashboardBottom userRole={userRole} hideMyTasks={isSalesTaskRole} />
+    <div className="mx-auto w-full max-w-3xl space-y-6 p-4 md:p-6">
+      <div>
+        <h1 className="font-display text-2xl font-bold text-foreground">Home</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{userRole ?? ""}</p>
+      </div>
+      {flags.isEnabled("attendance") && <CheckInButton userRole={userRole} />}
+      <HomeTaskList userRole={userRole} />
     </div>
   );
 }
