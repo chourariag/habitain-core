@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Users, ShieldOff, ShieldAlert, Shield, UserPlus, BarChart3, AlertOctagon, BadgeIndianRupee, ChevronRight } from "lucide-react";
+import { Search, Users, ShieldOff, ShieldAlert, Shield, UserPlus, AlertOctagon, BadgeIndianRupee, ChevronRight } from "lucide-react";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
 import { UserRow } from "@/components/admin/UserRow";
 import { ROLE_LABELS, AppRole } from "@/lib/roles";
