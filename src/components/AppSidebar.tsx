@@ -24,7 +24,7 @@ import { RoleSwitcher } from "./RoleSwitcher";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { featureFlagForModule } from "@/lib/feature-flags";
 
-type NavItem = { to: string; labelKey: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean; module?: ModuleKey; requireAdminPanel?: boolean; requireEmployeeManagement?: boolean };
+type NavItem = { to: string; labelKey: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean; module?: ModuleKey; featureFlag?: string; requireAdminPanel?: boolean; requireEmployeeManagement?: boolean };
 type NavSection = { key: string; labelKey?: string; items: NavItem[]; group?: "altree" };
 
 const CAPACITY_ROLES = ["super_admin", "managing_director", "head_operations", "planning_head", "production_head"];
@@ -44,6 +44,7 @@ const sectionConfig: NavSection[] = [
     items: [
       { section: "production", to: "/capacity", labelKey: "nav.capacityPlanning", icon: BarChart3, roles: CAPACITY_ROLES, module: "factory" },
       { section: "production", to: "/production?tab=modules", labelKey: "nav.factoryFloor", icon: Factory, module: "factory" },
+      { section: "production", to: "/production?tab=people", labelKey: "nav.hr", icon: Users, module: "factory", featureFlag: "labour" },
       { section: "production", to: "/factory/floor-map", labelKey: "nav.floorMap", icon: Map, module: "factory" },
       { section: "production", to: "/qc", labelKey: "nav.qcNcr", icon: ClipboardCheck, module: "qc" },
       { section: "production", to: "/dispatch-delivery", labelKey: "nav.dispatchDelivery", icon: Truck, module: "dispatch" },
@@ -72,8 +73,8 @@ const sectionConfig: NavSection[] = [
   {
     key: "design", labelKey: "nav.design",
     items: [
-      { section: "design", to: "/design", labelKey: "nav.projects", icon: Compass, module: "design" },
-      { section: "design", to: "/design/schedule", labelKey: "nav.designSchedule", icon: ClipboardList, module: "design" },
+      { section: "design", to: "/design", labelKey: "nav.projects", icon: Compass, module: "design", featureFlag: "design" },
+      { section: "design", to: "/design/schedule", labelKey: "nav.designSchedule", icon: ClipboardList, module: "design", featureFlag: "design_schedule" },
       { section: "design", to: "/design?tab=dq-register", labelKey: "nav.designQueries", icon: MessageSquare, module: "design" },
     ],
   },
@@ -151,7 +152,7 @@ export function AppSidebar() {
         if (it.requireAdminPanel) return featureFlags.isEnabled("user_admin") && canAccessAdminPanel();
         if (it.requireEmployeeManagement) return featureFlags.isEnabled("user_admin") && canAccessEmployeeManagement();
         if (it.module) {
-          const flagKey = featureFlagForModule(it.module);
+          const flagKey = it.featureFlag ?? featureFlagForModule(it.module);
           return (!flagKey || featureFlags.isEnabled(flagKey)) && canView(it.module);
         }
         const sectionOk = it.alwaysVisible || canSeeSection(userRole, it.section);

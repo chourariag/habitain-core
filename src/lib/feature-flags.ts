@@ -49,7 +49,7 @@ const knownFlags: Array<[string, string]> = [
   ["exports", "Exports"],
   ["user_admin", "User Administration"],
   ["production", "Production"],
-  ["site", "Site Hub"],
+  ["design", "Design"],
   ["dispatch", "Dispatch"],
   ["design_schedule", "Design Schedule"],
   ["gfc", "GFC"],

@@ -25,6 +25,7 @@ type Tab = {
   alwaysVisible?: boolean;
   roles?: string[];
   module?: ModuleKey;
+  featureFlag?: string;
 };
 
 const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
@@ -35,10 +36,12 @@ const allTabs: Tab[] = [
   { to: "/approvals", labelKey: "nav.approvals", icon: ShieldCheck, section: "approvals", module: "approvals" },
   { to: "/projects", labelKey: "nav.projects", icon: FolderKanban, section: "projects", module: "projects" },
   { to: "/production?tab=modules", labelKey: "nav.factory", icon: Factory, section: "production", module: "factory" },
+  { to: "/production?tab=people", labelKey: "nav.hr", icon: Users, section: "production", module: "factory", featureFlag: "labour" },
   { to: "/site-hub?tab=pipeline", labelKey: "nav.site", icon: Truck, section: "site", module: "site" },
   { to: "/procurement?tab=dashboard", labelKey: "nav.procurement", icon: ShoppingCart, section: "procurement", module: "procurement" },
   { to: "/finance?tab=mis-invoices", labelKey: "nav.finance", icon: DollarSign, section: "finance", module: "finance" },
-  { to: "/design", labelKey: "nav.design", icon: Compass, section: "design", module: "design" },
+  { to: "/design", labelKey: "nav.design", icon: Compass, section: "design", module: "design", featureFlag: "design" },
+  { to: "/design/schedule", labelKey: "nav.designSchedule", icon: Compass, section: "design", module: "design", featureFlag: "design_schedule" },
   { to: "/sales", labelKey: "nav.sales", icon: BarChart3, section: "sales", module: "sales" },
   { to: "/attendance", labelKey: "nav.hr", icon: UserCog, section: "altree", module: "hr" },
 ];
@@ -74,7 +77,7 @@ export function MobileNav() {
 
   const visibleTabs = allTabs.filter((t) => {
     if (t.module) {
-      const flagKey = featureFlagForModule(t.module);
+      const flagKey = t.featureFlag ?? featureFlagForModule(t.module);
       return (!flagKey || featureFlags.isEnabled(flagKey)) && canView(t.module);
     }
     if (t.alwaysVisible) return true;
