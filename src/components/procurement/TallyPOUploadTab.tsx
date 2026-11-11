@@ -526,9 +526,7 @@ export function TallyPOUploadTab() {
 
   const statusBadge = (status: string) => {
     const map: Record<string, { label: string; bg: string; color: string }> = {
-      approved: { label: "Approved", bg: "#E8F2ED", color: "#006039" },
-      pending_approval: { label: "Pending Approval", bg: "#FFF3CD", color: "#D4860A" },
-      rejected: { label: "Rejected", bg: "#FDE8E8", color: "#F40009" },
+      registered: { label: "Registered", bg: "#E8F2ED", color: "#006039" },
       vendor_mismatch: { label: "Vendor Mismatch", bg: "#FDE8E8", color: "#F40009" },
     };
 
@@ -603,7 +601,6 @@ export function TallyPOUploadTab() {
                   <span>POs linked to projects: <strong style={{ color: "#006039" }}>{uploadResult.linked}</strong></span>
                   <span>Total PO Value: <strong className="font-mono">₹{uploadResult.totalPOValue.toLocaleString("en-IN")}</strong></span>
                   <span>Total WO Value: <strong className="font-mono">₹{uploadResult.totalWOValue.toLocaleString("en-IN")}</strong></span>
-                  {uploadResult.pendingApproval > 0 && <span style={{ color: "#D4860A" }}>{uploadResult.pendingApproval} pending approval (above ₹1L)</span>}
                 </div>
                 {uploadResult.unlinked.length > 0 && (
                   <Collapsible>
@@ -679,9 +676,7 @@ export function TallyPOUploadTab() {
             <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="pending_approval">Pending Approval</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="registered">Registered</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -748,19 +743,6 @@ export function TallyPOUploadTab() {
                           <Link className="h-3 w-3" /> Link Project
                         </Button>
                       )}
-                      {isDirector && po.status === "pending_approval" && (
-                        <>
-                          <Button size="sm" onClick={() => handleApprove(po.id)} disabled={acting} className="gap-1 font-display text-xs" style={{ backgroundColor: "#006039" }}>
-                            <Check className="h-3 w-3" /> Approve
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => { setRejectPoId(po.id); setRejectOpen(true); }} disabled={acting} className="gap-1 font-display text-xs" style={{ borderColor: "#F40009", color: "#F40009" }}>
-                            <X className="h-3 w-3" /> Reject
-                          </Button>
-                        </>
-                      )}
-                      {po.status === "rejected" && po.rejection_reason && (
-                        <span className="text-xs font-inter" style={{ color: "#F40009" }}>Reason: {po.rejection_reason}</span>
-                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -769,23 +751,6 @@ export function TallyPOUploadTab() {
           </Table>
         </CardContent>
       </Card>
-
-      {/* Reject Dialog */}
-      <Dialog open={rejectOpen} onOpenChange={(v) => { if (!v) { setRejectOpen(false); setRejectPoId(null); setRejectReason(""); } }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle className="font-display">Reject PO</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <Label className="font-display text-sm">Reason for Rejection</Label>
-              <Textarea placeholder="Explain why this PO is being rejected..." value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} className="font-inter mt-1" />
-            </div>
-            <Button onClick={handleReject} disabled={acting || !rejectReason.trim()} className="w-full font-display" style={{ backgroundColor: "#F40009" }}>
-              {acting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-              Confirm Rejection
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Link to Project Dialog */}
       <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
