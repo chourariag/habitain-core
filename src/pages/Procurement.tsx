@@ -29,7 +29,7 @@ import { SupplierIntelligenceTab } from "@/components/procurement/SupplierIntell
 import { MaterialAlertsTab } from "@/components/procurement/MaterialAlertsTab";
 import { GRNTab } from "@/components/procurement/GRNTab";
 // SubcontractorsTab moved to Production → People
-import { format } from "date-fns";
+import { format, isBefore, subDays } from "date-fns";
 import { Calendar, Hammer, Bell, ClipboardCheck } from "lucide-react";
 import { FixedAssetsTab } from "@/components/procurement/FixedAssetsTab";
 import { DeliveryTrackerTab } from "@/components/procurement/DeliveryTrackerTab";
@@ -91,6 +91,7 @@ function SoDButton({ label, onClick, sodReason }: { label: string; onClick: () =
 }
 
 export default function Procurement() {
+  const today = new Date();
   const [searchParams] = useSearchParams();
   const { role: hookRole } = useUserRole();
   const featureFlags = useFeatureFlags();
