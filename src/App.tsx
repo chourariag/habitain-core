@@ -90,7 +90,7 @@ const App = () => (
                 <Route path="/production/dashboard" element={<ModuleGuard module="factory"><ProductionDashboard /></ModuleGuard>} />
                 <Route path="/production/delivery-checklist/:projectId" element={<ModuleGuard module="factory"><DeliveryChecklist /></ModuleGuard>} />
                 <Route path="/dispatch-delivery" element={<ModuleGuard module="dispatch"><DispatchDelivery /></ModuleGuard>} />
-                <Route path="/site-dashboard" element={<ModuleGuard module="site"><SiteDashboard /></ModuleGuard>} />
+                <Route path="/site-dashboard" element={<ModuleGuard featureFlag="reports"><SiteDashboard /></ModuleGuard>} />
                 <Route path="/site-hub" element={<ModuleGuard module="site"><SiteHub /></ModuleGuard>} />
                 <Route path="/site-hub/dispatch-pack" element={<ModuleGuard module="site" featureFlag="dispatch"><DispatchPackForm /></ModuleGuard>} />
                 <Route path="/dispatch-pack-form" element={<ModuleGuard module="site" featureFlag="dispatch"><DispatchPackForm /></ModuleGuard>} />
@@ -111,7 +111,7 @@ const App = () => (
                 <Route path="/admin" element={<ModuleGuard module="admin" requireAdminPanel><Admin /></ModuleGuard>} />
                 <Route path="/admin/users" element={<ModuleGuard module="admin" requireAdminPanel><UserManagement /></ModuleGuard>} />
                 <Route path="/admin/employees" element={<ModuleGuard module="admin" requireEmployeeManagement><EmployeeManagement /></ModuleGuard>} />
-                <Route path="/settings" element={<AppSettings />} />
+                <Route path="/settings" element={<ModuleGuard featureFlag="user_admin"><AppSettings /></ModuleGuard>} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/attendance" element={<ModuleGuard module="hr"><Attendance /></ModuleGuard>} />
                 <Route path="/alerts" element={<Alerts />} />
@@ -123,7 +123,7 @@ const App = () => (
                 <Route path="/admin/hr" element={<ModuleGuard module="hr"><AdminHR /></ModuleGuard>} />
                 <Route path="/safety" element={<ModuleGuard module="factory"><Safety /></ModuleGuard>} />
                 <Route path="/approvals" element={<ModuleGuard module="approvals"><Approvals /></ModuleGuard>} />
-                <Route path="/work-orders" element={<ModuleGuard module="projects" featureFlag="work_orders"><WorkOrders /></ModuleGuard>} />
+                <Route path="/work-orders" element={<ModuleGuard module="projects" featureFlag="client_work_orders"><WorkOrders /></ModuleGuard>} />
                 <Route path="/announcements" element={<ModuleGuard module="announcements"><Announcements /></ModuleGuard>} />
               </Route>
               <Route path="/client/:projectToken" element={<ClientPortal />} />

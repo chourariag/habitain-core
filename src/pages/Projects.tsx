@@ -134,7 +134,7 @@ export default function Projects() {
           <p className="text-sm mt-1" style={{ color: "#666666" }}>Command centre — all construction projects</p>
         </div>
         <div className="flex items-center gap-2">
-        {flags.isEnabled("work_orders") && <Button variant="outline" onClick={() => (window.location.href = "/work-orders")}>Work Orders</Button>}
+        {flags.isEnabled("client_work_orders") && <Button variant="outline" onClick={() => (window.location.href = "/work-orders")}>Work Orders</Button>}
         {canCreate && (
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />

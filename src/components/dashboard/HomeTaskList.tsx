@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { format } from "date-fns";
 
 type Task = { id: string; label: string; to: string };
 
@@ -16,7 +17,7 @@ export function HomeTaskList({ userRole }: { userRole: string | null }) {
     const load = async () => {
       if (!user || flags.isLoading) return;
       const next: Task[] = [];
-      const today = new Date().toISOString().slice(0, 10);
+      const today = format(new Date(), "yyyy-MM-dd");
 
       if (flags.isEnabled("attendance")) {
         const { data } = await supabase

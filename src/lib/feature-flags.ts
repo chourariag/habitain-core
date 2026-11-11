@@ -49,7 +49,6 @@ const knownFlags: Array<[string, string]> = [
   ["exports", "Exports"],
   ["user_admin", "User Administration"],
   ["production", "Production"],
-  ["design", "Design"],
   ["dispatch", "Dispatch"],
   ["design_schedule", "Design Schedule"],
   ["gfc", "GFC"],

@@ -226,6 +226,10 @@ export function CheckInButton({ userRole }: Props) {
 
   const handleCheckIn = async () => {
     if (!user) return;
+    if (gpsLat === null || gpsLng === null) {
+      toast.error("GPS location is required to check in. Enable location access and try again.");
+      return;
+    }
     setSubmitting(true);
     const now = new Date();
     const finalLocationType = locationType === "office" ? (subType === "remote" ? "remote" : "office") : locationType;
@@ -492,8 +496,11 @@ export function CheckInButton({ userRole }: Props) {
                 </div>
               )}
               {!gpsCaptured && (
-                <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-                  GPS location is required for employee attendance. Allow location access and try again.
+                <div className="space-y-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                  <p>GPS location is required for employee attendance. Allow location access and try again.</p>
+                  <Button variant="outline" className="w-full" onClick={() => void handleSelectType(locationType)}>
+                    Retry GPS
+                  </Button>
                 </div>
               )}
               {gpsApplies && gpsDistance != null && !gpsDisabled && (
