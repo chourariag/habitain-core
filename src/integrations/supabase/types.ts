@@ -3765,6 +3765,30 @@ export type Database = {
           },
         ]
       }
+      feature_flags: {
+        Row: {
+          enabled: boolean
+          key: string
+          label: string
+          updated_at: string
+          wave: number
+        }
+        Insert: {
+          enabled?: boolean
+          key: string
+          label: string
+          updated_at?: string
+          wave: number
+        }
+        Update: {
+          enabled?: boolean
+          key?: string
+          label?: string
+          updated_at?: string
+          wave?: number
+        }
+        Relationships: []
+      }
       file_attachments: {
         Row: {
           created_at: string | null
