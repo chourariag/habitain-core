@@ -92,11 +92,11 @@ const App = () => (
                 <Route path="/dispatch-delivery" element={<ModuleGuard module="dispatch"><DispatchDelivery /></ModuleGuard>} />
                 <Route path="/site-dashboard" element={<ModuleGuard module="site"><SiteDashboard /></ModuleGuard>} />
                 <Route path="/site-hub" element={<ModuleGuard module="site"><SiteHub /></ModuleGuard>} />
-                <Route path="/site-hub/dispatch-pack" element={<ModuleGuard module="site"><DispatchPackForm /></ModuleGuard>} />
-                <Route path="/dispatch-pack-form" element={<ModuleGuard module="site"><DispatchPackForm /></ModuleGuard>} />
+                <Route path="/site-hub/dispatch-pack" element={<ModuleGuard module="site" featureFlag="dispatch"><DispatchPackForm /></ModuleGuard>} />
+                <Route path="/dispatch-pack-form" element={<ModuleGuard module="site" featureFlag="dispatch"><DispatchPackForm /></ModuleGuard>} />
                 <Route path="/site-hub/advance-request" element={<ModuleGuard module="site" featureFlag="advances"><AdvanceRequest /></ModuleGuard>} />
-                <Route path="/design" element={<ModuleGuard module="design"><DesignPortal /></ModuleGuard>} />
-                <Route path="/design/schedule" element={<ModuleGuard module="design"><DesignSchedule /></ModuleGuard>} />
+                <Route path="/design" element={<ModuleGuard module="design" featureFlag="design"><DesignPortal /></ModuleGuard>} />
+                <Route path="/design/schedule" element={<ModuleGuard module="design" featureFlag="design_schedule"><DesignSchedule /></ModuleGuard>} />
                 <Route path="/drawings" element={<ModuleGuard module="design" featureFlag="gfc"><Drawings /></ModuleGuard>} />
                 <Route path="/qc" element={<ModuleGuard module="qc"><QualityControl /></ModuleGuard>} />
                 <Route path="/procurement" element={<ModuleGuard module="procurement"><Procurement /></ModuleGuard>} />

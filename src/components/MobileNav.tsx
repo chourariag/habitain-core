@@ -29,7 +29,7 @@ type Tab = {
 };
 
 const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
-const SETTINGS_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
+const SETTINGS_ROLES = ["super_admin", "managing_director"];
 
 const allTabs: Tab[] = [
   { to: "/dashboard", labelKey: "nav.home", icon: LayoutDashboard, section: "dashboard", module: "dashboard" },

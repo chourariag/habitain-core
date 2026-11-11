@@ -28,7 +28,7 @@ type NavItem = { to: string; labelKey: string; icon: any; roles?: string[]; sect
 type NavSection = { key: string; labelKey?: string; items: NavItem[]; group?: "altree" };
 
 const CAPACITY_ROLES = ["super_admin", "managing_director", "head_operations", "planning_head", "production_head"];
-const SETTINGS_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
+const SETTINGS_ROLES = ["super_admin", "managing_director"];
 const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
 
 // Strict spec-defined sidebar. Each item declares the RBAC `module` it maps to;

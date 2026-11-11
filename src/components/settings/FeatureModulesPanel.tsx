@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { FEATURE_FLAG_LABELS } from "@/lib/feature-flags";
 import { FEATURE_FLAG_DEFINITIONS } from "@/lib/feature-flags";
-import { SCHEDULED_JOB_SNAPSHOT } from "@/lib/scheduled-jobs";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 
@@ -17,6 +16,16 @@ export function FeatureModulesPanel({ role }: { role: string | null }) {
   const flagsQuery = useFeatureFlags();
   const queryClient = useQueryClient();
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const jobsQuery = useQuery({
+    queryKey: ["scheduled-job-status"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_scheduled_job_status");
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: allowed,
+    staleTime: 30_000,
+  });
 
   const rows = FEATURE_FLAG_DEFINITIONS.map((definition) => ({
     ...definition,
@@ -79,15 +88,19 @@ export function FeatureModulesPanel({ role }: { role: string | null }) {
           <p className="text-sm text-muted-foreground">Current status and run times, in UTC.</p>
         </div>
         <div className="divide-y divide-border border-y border-border">
-          {SCHEDULED_JOB_SNAPSHOT.map((job) => (
-            <div key={job.name} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
-              <span className="min-w-0 break-all text-sm font-medium text-foreground">{job.name}</span>
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-xs text-muted-foreground">{job.schedule}</span>
-                <Badge variant={job.active ? "default" : "secondary"}>{job.active ? "Active" : "Paused"}</Badge>
+          {jobsQuery.isLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          ) : jobsQuery.isError ? (
+            <p className="py-3 text-sm text-destructive">Scheduled job status could not be loaded.</p>
+          ) : jobsQuery.data?.map((job) => (
+              <div key={job.job_name} className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <span className="min-w-0 break-all text-sm font-medium text-foreground">{job.job_name}</span>
+                <div className="flex items-center gap-3">
+                  <span className="font-mono text-xs text-muted-foreground">{job.schedule}</span>
+                  <Badge variant={job.active ? "default" : "secondary"}>{job.active ? "Active" : "Paused"}</Badge>
+                </div>
               </div>
-            </div>
-          ))}
+            )}
         </div>
       </section>
     </div>
