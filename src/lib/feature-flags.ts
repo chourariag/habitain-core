@@ -60,6 +60,7 @@ const knownFlags: Array<[string, string]> = [
   ["approvals", "Approvals"],
   ["announcements", "Announcements"],
   ["reports", "Management Reports"],
+  ["site", "Site Hub"],
   ["inventory", "Inventory"],
   ["equipment", "Equipment"],
   ["compliance", "Compliance"],
