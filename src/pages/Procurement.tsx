@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, LayoutDashboard, Truck, Info, FileSpreadsheet, TrendingUp } from "lucide-react";
+import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, Truck, Info, FileSpreadsheet, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { NewMaterialRequestDialog } from "@/components/materials/NewMaterialRequestDialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -29,7 +29,7 @@ import { SupplierIntelligenceTab } from "@/components/procurement/SupplierIntell
 import { MaterialAlertsTab } from "@/components/procurement/MaterialAlertsTab";
 import { GRNTab } from "@/components/procurement/GRNTab";
 // SubcontractorsTab moved to Production → People
-import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
+import { format } from "date-fns";
 import { Calendar, Hammer, Bell, ClipboardCheck } from "lucide-react";
 import { FixedAssetsTab } from "@/components/procurement/FixedAssetsTab";
 import { DeliveryTrackerTab } from "@/components/procurement/DeliveryTrackerTab";
@@ -161,26 +161,6 @@ export default function Procurement() {
   const canPlan = PLANNER_ROLES.includes(userRole ?? "");
 
   // Dashboard counts
-  const lowStockCount = items.filter((i) => Number(i.current_stock) <= Number(i.reorder_level)).length;
-  const pendingReqCount = requests.filter((r) => ["pending_budget", "pending_director_approval"].includes(r.status)).length;
-  const today = new Date();
-  const overduePlanCount = planItems.filter((p) => {
-    if (p.status !== "planned") return false;
-    const orderBy = p.required_by ? subDays(new Date(p.required_by), Number(p.lead_time_days || 7)) : null;
-    return orderBy && isBefore(orderBy, today);
-  }).length;
-  const pendingDirectorPOCount = purchaseOrders.filter((po) => po.status === "pending" && Number(po.amount) > 50000).length;
-
-  // Upcoming order deadlines (next 7 days)
-  const upcomingDeadlines = useMemo(() => {
-    const next7 = addDays(today, 7);
-    return planItems.filter((p) => {
-      if (p.status !== "planned") return false;
-      const orderBy = p.required_by ? subDays(new Date(p.required_by), Number(p.lead_time_days || 7)) : null;
-      return orderBy && isAfter(orderBy, subDays(today, 1)) && isBefore(orderBy, next7);
-    }).slice(0, 10);
-  }, [planItems, today]);
-
   const handleSaveItem = async () => {
     if (!itemForm.material_name.trim() || !itemForm.category.trim()) { toast.error("Name and category required"); return; }
     if (itemDeliveryDest === "site_direct" && !itemForm.project_id) { toast.error("Project is required for site direct delivery."); return; }
@@ -271,10 +251,9 @@ export default function Procurement() {
       {/* Vijay's Daily View Strip */}
       <ProcurementDashboardStrip userRole={userRole} />
 
-      <Tabs defaultValue={tabFromUrl || "dashboard"} className="space-y-4">
+      <Tabs defaultValue={tabFromUrl || "requests"} className="space-y-4">
         <ScrollableTabsWrapper>
           <TabsList>
-            <TabsTrigger value="dashboard" className="gap-1.5"><LayoutDashboard className="h-4 w-4" /> Dashboard</TabsTrigger>
             <TabsTrigger value="grn" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> GRN</TabsTrigger>
             <TabsTrigger value="material-plan" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Material Plan</TabsTrigger>
             <TabsTrigger value="requests" className="gap-1.5"><AlertTriangle className="h-4 w-4" /> Requests</TabsTrigger>

@@ -15,15 +15,17 @@ export function ModuleGuard({
   featureFlag,
   requireAdminPanel,
   requireEmployeeManagement,
+  requireRoles,
   children,
 }: {
   module?: ModuleKey;
   featureFlag?: string;
   requireAdminPanel?: boolean;
   requireEmployeeManagement?: boolean;
+  requireRoles?: string[];
   children: ReactNode;
 }) {
-  const { loading, canView, canAccessAdminPanel, canAccessEmployeeManagement } = usePermissions();
+  const { loading, role, canView, canAccessAdminPanel, canAccessEmployeeManagement } = usePermissions();
   const flags = useFeatureFlags();
   const resolvedFlag = featureFlag ?? (module ? featureFlagForModule(module) : undefined);
 
@@ -39,6 +41,9 @@ export function ModuleGuard({
     return <Navigate to="/dashboard" replace />;
   }
   if (requireEmployeeManagement && !canAccessEmployeeManagement()) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  if (requireRoles && (!role || !requireRoles.includes(role))) {
     return <Navigate to="/dashboard" replace />;
   }
   if (module && !canView(module)) {

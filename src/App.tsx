@@ -111,7 +111,7 @@ const App = () => (
                 <Route path="/admin" element={<ModuleGuard module="admin" requireAdminPanel><Admin /></ModuleGuard>} />
                 <Route path="/admin/users" element={<ModuleGuard module="admin" requireAdminPanel><UserManagement /></ModuleGuard>} />
                 <Route path="/admin/employees" element={<ModuleGuard module="admin" requireEmployeeManagement><EmployeeManagement /></ModuleGuard>} />
-                <Route path="/settings" element={<ModuleGuard featureFlag="user_admin" requireAdminPanel><AppSettings /></ModuleGuard>} />
+                <Route path="/settings" element={<ModuleGuard featureFlag="user_admin" requireRoles={["super_admin", "managing_director"]}><AppSettings /></ModuleGuard>} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/attendance" element={<ModuleGuard module="hr"><Attendance /></ModuleGuard>} />
                 <Route path="/alerts" element={<ModuleGuard featureFlag="reminders"><Alerts /></ModuleGuard>} />
