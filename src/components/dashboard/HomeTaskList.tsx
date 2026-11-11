@@ -21,7 +21,7 @@ export function HomeTaskList({ userRole }: { userRole: string | null }) {
       if (flags.isEnabled("attendance")) {
         const { data } = await supabase
           .from("attendance_records")
-          .select("id")
+          .select("id,name")
           .eq("user_id", user.id)
           .eq("date", today)
           .maybeSingle();
@@ -52,7 +52,8 @@ export function HomeTaskList({ userRole }: { userRole: string | null }) {
           .eq("is_archived", false)
           .is("setup_uploaded_at", null)
           .limit(1);
-        if (projects?.length) next.push({ id: "project-setup", label: "Project setup upload pending", to: "/projects" });
+        const pendingProject = projects?.[0];
+        if (pendingProject) next.push({ id: "project-setup", label: "Project setup upload pending", to: `/projects/${pendingProject.id}` });
       }
 
       if (!cancelled) setTasks(next);

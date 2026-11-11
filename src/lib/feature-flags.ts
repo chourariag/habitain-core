@@ -94,7 +94,7 @@ export const FEATURE_FLAG_BY_MODULE: Record<string, string> = {
   finance: "finance",
   hr: "attendance",
   sales: "sales",
-  design: "design_schedule",
+  design: "design",
   qc: "compliance",
   dispatch: "dispatch",
   announcements: "announcements",
