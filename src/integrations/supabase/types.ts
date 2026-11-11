@@ -16032,6 +16032,14 @@ export type Database = {
           wip_yday: number
         }[]
       }
+      get_scheduled_job_status: {
+        Args: never
+        Returns: {
+          active: boolean
+          job_name: string
+          schedule: string
+        }[]
+      }
       get_scope_signoff_by_token: { Args: { p_token: string }; Returns: Json }
       get_sole_role_holders: {
         Args: never

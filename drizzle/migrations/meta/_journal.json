@@ -8,6 +8,13 @@
       "when": 1794420792536,
       "tag": "0000_create_feature_flags",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794421344274,
+      "tag": "0001_add_scheduled_job_status_reader",
+      "breakpoints": true
     }
   ]
 }
