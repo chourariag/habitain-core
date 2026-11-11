@@ -97,7 +97,7 @@ export function FeatureModulesPanel({ role }: { role: string | null }) {
                   <Badge variant={job.active ? "default" : "secondary"}>{job.active ? "Active" : "Paused"}</Badge>
                 </div>
               </div>
-            )}
+            ))}
         </div>
       </section>
     </div>

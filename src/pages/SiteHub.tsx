@@ -231,13 +231,13 @@ function SiteHubContent() {
             <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>
             {featureFlags.isEnabled("work_orders") && <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>}
             {featureFlags.isEnabled("factory_feedback") && <TabsTrigger value="factory-feedback" className="gap-1.5"><MessageSquareWarning className="h-4 w-4" /> Factory Feedback</TabsTrigger>}
-            <TabsTrigger value="dispatch-packs" className="gap-1.5"><Package className="h-4 w-4" /> Dispatch Pack</TabsTrigger>
+            {featureFlags.isEnabled("dispatch") && <TabsTrigger value="dispatch-packs" className="gap-1.5"><Package className="h-4 w-4" /> Dispatch Pack</TabsTrigger>}
             {featureFlags.isEnabled("inventory") && <TabsTrigger value="site-inventory" className="gap-1.5"><Boxes className="h-4 w-4" /> Inventory</TabsTrigger>}
             <TabsTrigger value="diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
             <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Document</TabsTrigger>
             {featureFlags.isEnabled("labour") && <TabsTrigger value="labour" className="gap-1.5"><Users className="h-4 w-4" /> People</TabsTrigger>}
-            <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Installation Sequence</TabsTrigger>
-            <TabsTrigger value="safety" className="gap-1.5"><HardHat className="h-4 w-4" /> Safety</TabsTrigger>
+            {featureFlags.isEnabled("design_schedule") && <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Installation Sequence</TabsTrigger>}
+            {featureFlags.isEnabled("compliance") && <TabsTrigger value="safety" className="gap-1.5"><HardHat className="h-4 w-4" /> Safety</TabsTrigger>}
             <TabsTrigger value="client-visits" className="gap-1.5"><Handshake className="h-4 w-4" /> Client Visits</TabsTrigger>
           </TabsList>
         </ScrollableTabsWrapper>
@@ -397,10 +397,10 @@ function SiteHubContent() {
         <TabsContent value="punch-list">
           <PunchListModule projectId={selectedProjectId!} userRole={userRole} />
         </TabsContent>
-        <TabsContent value="install-seq">
+        {featureFlags.isEnabled("design_schedule") && <TabsContent value="install-seq">
           <InstallationSequenceDoc projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} />
-        </TabsContent>
-        <TabsContent value="safety">
+        </TabsContent>}
+        {featureFlags.isEnabled("compliance") && <TabsContent value="safety">
           <Card>
             <CardContent className="py-10 text-center space-y-3">
               <HardHat className="h-10 w-10 mx-auto" style={{ color: "#006039" }} />
@@ -409,7 +409,7 @@ function SiteHubContent() {
               <Button onClick={() => navigate("/safety")} style={{ backgroundColor: "#006039", color: "#FFFFFF" }}>Open Safety Module</Button>
             </CardContent>
           </Card>
-        </TabsContent>
+        </TabsContent>}
         {featureFlags.isEnabled("factory_feedback") && <TabsContent value="factory-feedback">
           <SiteFactoryFeedback projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} userRole={userRole} modules={modules.map(m => ({ id: m.id, name: m.name, module_code: m.module_code || m.name }))} />
         </TabsContent>}

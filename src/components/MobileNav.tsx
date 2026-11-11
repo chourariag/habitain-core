@@ -102,6 +102,10 @@ export function MobileNav() {
     const path = i.to.split("?")[0];
     return location.pathname === path || location.pathname.startsWith(path + "/");
   });
+  const overflowActive = overflowTabs.some((tab) => {
+    const path = tab.to.split("?")[0];
+    return location.pathname === path || location.pathname.startsWith(path + "/");
+  });
 
   return (
     <>
@@ -142,7 +146,7 @@ export function MobileNav() {
                 data-active={moreActive ? "true" : undefined}
                 className="flex min-w-0 flex-col items-center justify-center gap-[2px] px-1 py-1 text-[10px] font-medium transition-colors"
                 style={{
-                  color: moreActive ? "#006039" : "#999999",
+                  color: moreActive || overflowActive ? "#006039" : "#999999",
                 }}
                 aria-label={t("nav.moreOptions")}
               >

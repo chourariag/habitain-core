@@ -100,8 +100,8 @@ const App = () => (
                 <Route path="/drawings" element={<ModuleGuard module="design" featureFlag="gfc"><Drawings /></ModuleGuard>} />
                 <Route path="/qc" element={<ModuleGuard module="qc"><QualityControl /></ModuleGuard>} />
                 <Route path="/procurement" element={<ModuleGuard module="procurement"><Procurement /></ModuleGuard>} />
-                <Route path="/inventory" element={<Navigate to="/procurement" replace />} />
-                <Route path="/materials" element={<Navigate to="/procurement" replace />} />
+                <Route path="/inventory" element={<ModuleGuard featureFlag="inventory"><Navigate to="/procurement" replace /></ModuleGuard>} />
+                <Route path="/materials" element={<ModuleGuard module="procurement"><Navigate to="/procurement" replace /></ModuleGuard>} />
                 <Route path="/rm" element={<ModuleGuard module="site" featureFlag="equipment"><RMPage /></ModuleGuard>} />
                 <Route path="/amc" element={<ModuleGuard module="site" featureFlag="compliance"><AMCPage /></ModuleGuard>} />
                 <Route path="/sales" element={<ModuleGuard module="sales"><Sales /></ModuleGuard>} />
@@ -117,7 +117,7 @@ const App = () => (
                 <Route path="/alerts" element={<Alerts />} />
                 <Route path="/factory/floor-map" element={<ModuleGuard module="factory"><FactoryFloorMap /></ModuleGuard>} />
                 <Route path="/capacity" element={<ModuleGuard module="factory"><CapacityPlanning /></ModuleGuard>} />
-                <Route path="/sops" element={<SOPs />} />
+                <Route path="/sops" element={<ModuleGuard featureFlag="training"><SOPs /></ModuleGuard>} />
                 <Route path="/super-admin" element={<Navigate to="/admin/super-admin" replace />} />
                 <Route path="/admin/super-admin" element={<ModuleGuard module="admin" requireAdminPanel><SuperAdmin /></ModuleGuard>} />
                 <Route path="/admin/hr" element={<ModuleGuard module="hr"><AdminHR /></ModuleGuard>} />
