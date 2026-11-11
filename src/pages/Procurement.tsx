@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, LayoutDashboard, Truck, Info, FileSpreadsheet, TrendingUp } from "lucide-react";
+import { Loader2, Package, FileText, Plus, AlertTriangle, ClipboardList, Truck, Info, FileSpreadsheet, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { NewMaterialRequestDialog } from "@/components/materials/NewMaterialRequestDialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -24,22 +24,21 @@ import { TransfersTab } from "@/components/procurement/TransfersTab";
 import { TallyPOUploadTab } from "@/components/procurement/TallyPOUploadTab";
 import { MaterialAvailabilityGate } from "@/components/procurement/MaterialAvailabilityGate";
 import { ThirtyDayPlanTab } from "@/components/procurement/ThirtyDayPlanTab";
-import { ProcurementDashboardStrip } from "@/components/procurement/ProcurementDashboardStrip";
 
 import { SupplierIntelligenceTab } from "@/components/procurement/SupplierIntelligenceTab";
 import { MaterialAlertsTab } from "@/components/procurement/MaterialAlertsTab";
 import { GRNTab } from "@/components/procurement/GRNTab";
 // SubcontractorsTab moved to Production → People
-import { format, addDays, isBefore, isAfter, subDays } from "date-fns";
+import { format } from "date-fns";
 import { Calendar, Hammer, Bell, ClipboardCheck } from "lucide-react";
 import { FixedAssetsTab } from "@/components/procurement/FixedAssetsTab";
 import { DeliveryTrackerTab } from "@/components/procurement/DeliveryTrackerTab";
 import { ContractsRegisterTab } from "@/components/procurement/ContractsRegisterTab";
 import { QuotationsTab } from "@/components/procurement/QuotationsTab";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin", "production_head"];
-const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
 const PLANNER_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const REQUESTOR_ROLES = [
   "super_admin", "managing_director", "site_installation_mgr", "site_engineer",
@@ -94,6 +93,7 @@ function SoDButton({ label, onClick, sodReason }: { label: string; onClick: () =
 export default function Procurement() {
   const [searchParams] = useSearchParams();
   const { role: hookRole } = useUserRole();
+  const featureFlags = useFeatureFlags();
   const tabFromUrl = searchParams.get("tab");
   const projectFromUrl = searchParams.get("project");
   const [items, setItems] = useState<any[]>([]);
@@ -115,9 +115,6 @@ export default function Procurement() {
   const [siteReceipts, setSiteReceipts] = useState<any[]>([]);
 
   // Add PO dialog
-  const [poDialogOpen, setPoDialogOpen] = useState(false);
-  const [poForm, setPoForm] = useState({ vendor_name: "", items_summary: "", amount: "", po_date: new Date().toISOString().slice(0, 10) });
-  const [poSaving, setPoSaving] = useState(false);
 
   // Add plan item dialog
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
@@ -161,32 +158,11 @@ export default function Procurement() {
 
   const effectiveRole = hookRole ?? userRole;
   const canAddItem = STOCK_CREATOR_ROLES.includes(effectiveRole ?? "");
-  const canAddPO = PO_CREATOR_ROLES.includes(userRole ?? "");
   const canRequest = REQUESTOR_ROLES.includes(userRole ?? "");
   const canApprove = APPROVER_ROLES.includes(userRole ?? "");
   const canPlan = PLANNER_ROLES.includes(userRole ?? "");
 
   // Dashboard counts
-  const lowStockCount = items.filter((i) => Number(i.current_stock) <= Number(i.reorder_level)).length;
-  const pendingReqCount = requests.filter((r) => ["pending_budget", "pending_director_approval"].includes(r.status)).length;
-  const today = new Date();
-  const overduePlanCount = planItems.filter((p) => {
-    if (p.status !== "planned") return false;
-    const orderBy = p.required_by ? subDays(new Date(p.required_by), Number(p.lead_time_days || 7)) : null;
-    return orderBy && isBefore(orderBy, today);
-  }).length;
-  const pendingDirectorPOCount = purchaseOrders.filter((po) => po.status === "pending" && Number(po.amount) > 50000).length;
-
-  // Upcoming order deadlines (next 7 days)
-  const upcomingDeadlines = useMemo(() => {
-    const next7 = addDays(today, 7);
-    return planItems.filter((p) => {
-      if (p.status !== "planned") return false;
-      const orderBy = p.required_by ? subDays(new Date(p.required_by), Number(p.lead_time_days || 7)) : null;
-      return orderBy && isAfter(orderBy, subDays(today, 1)) && isBefore(orderBy, next7);
-    }).slice(0, 10);
-  }, [planItems, today]);
-
   const handleSaveItem = async () => {
     if (!itemForm.material_name.trim() || !itemForm.category.trim()) { toast.error("Name and category required"); return; }
     if (itemDeliveryDest === "site_direct" && !itemForm.project_id) { toast.error("Project is required for site direct delivery."); return; }
@@ -219,25 +195,6 @@ export default function Procurement() {
       setItemDeliveryDest("factory");
       fetchData();
     } catch (err: any) { toast.error(err.message); } finally { setItemSaving(false); }
-  };
-
-  const handleSavePO = async () => {
-    if (!poForm.vendor_name.trim() || !poForm.items_summary.trim()) { toast.error("Vendor and items required"); return; }
-    setPoSaving(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-      const { client } = await getAuthedClient();
-      const { error } = await (client.from("purchase_orders") as any).insert({
-        vendor_name: poForm.vendor_name.trim(), items_summary: poForm.items_summary.trim(),
-        amount: Number(poForm.amount) || 0, po_date: poForm.po_date, raised_by: user.id,
-      });
-      if (error) throw error;
-      toast.success("PO added");
-      setPoDialogOpen(false);
-      setPoForm({ vendor_name: "", items_summary: "", amount: "", po_date: new Date().toISOString().slice(0, 10) });
-      fetchData();
-    } catch (err: any) { toast.error(err.message); } finally { setPoSaving(false); }
   };
 
   const handleSavePlanItem = async () => {
@@ -273,7 +230,6 @@ export default function Procurement() {
       if (action === "approve_budget") update = { status: "pending_po", budget_approved_by: session.user.id, budget_approved_at: new Date().toISOString() };
       else if (action === "over_budget") update = { status: "pending_director_approval", is_over_budget: true, budget_approved_by: session.user.id, budget_approved_at: new Date().toISOString() };
       else if (action === "director_approve") update = { status: "pending_po", director_approved_by: session.user.id, director_approved_at: new Date().toISOString() };
-      else if (action === "raise_po") update = { status: "po_raised", po_raised_by: session.user.id, po_raised_at: new Date().toISOString() };
       else if (action === "mark_received") update = { status: "received", received_by: session.user.id, received_at: new Date().toISOString() };
       else if (action === "reject") update = { status: "rejected", rejection_reason: "Rejected by approver" };
       const { error } = await (client.from("material_requests") as any).update(update).eq("id", requestId);
@@ -294,22 +250,18 @@ export default function Procurement() {
         <p className="text-sm mt-1" style={{ color: "#666666" }}>Material planning, purchase orders & inventory</p>
       </div>
 
-      {/* Vijay's Daily View Strip */}
-      <ProcurementDashboardStrip userRole={userRole} />
-
-      <Tabs defaultValue={tabFromUrl || "dashboard"} className="space-y-4">
+      <Tabs defaultValue={tabFromUrl === "dashboard" ? "requests" : tabFromUrl || "requests"} className="space-y-4">
         <ScrollableTabsWrapper>
           <TabsList>
-            <TabsTrigger value="dashboard" className="gap-1.5"><LayoutDashboard className="h-4 w-4" /> Dashboard</TabsTrigger>
             <TabsTrigger value="grn" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> GRN</TabsTrigger>
             <TabsTrigger value="material-plan" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Material Plan</TabsTrigger>
             <TabsTrigger value="requests" className="gap-1.5"><AlertTriangle className="h-4 w-4" /> Requests</TabsTrigger>
             <TabsTrigger value="purchase-orders" className="gap-1.5"><FileText className="h-4 w-4" /> Purchase Orders</TabsTrigger>
-            <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>
+            {featureFlags.isEnabled("inventory") && <TabsTrigger value="inventory" className="gap-1.5"><Package className="h-4 w-4" /> Inventory</TabsTrigger>}
             <TabsTrigger value="quotations" className="gap-1.5"><FileText className="h-4 w-4" /> Quotations</TabsTrigger>
             <TabsTrigger value="transfers" className="gap-1.5"><Truck className="h-4 w-4" /> Transfers</TabsTrigger>
             <TabsTrigger value="30-day-plan" className="gap-1.5"><Calendar className="h-4 w-4" /> 30-Day Plan</TabsTrigger>
-            <TabsTrigger value="equipments" className="gap-1.5"><Hammer className="h-4 w-4" /> Equipments</TabsTrigger>
+            {featureFlags.isEnabled("equipment") && <TabsTrigger value="equipments" className="gap-1.5"><Hammer className="h-4 w-4" /> Equipments</TabsTrigger>}
             <TabsTrigger value="tally-po" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Tally PO Upload</TabsTrigger>
             <TabsTrigger value="supplier-intel" className="gap-1.5"><TrendingUp className="h-4 w-4" /> Supplier Intelligence</TabsTrigger>
             <TabsTrigger value="material-alerts" className="gap-1.5"><Bell className="h-4 w-4" /> Material Alerts</TabsTrigger>
@@ -513,10 +465,7 @@ export default function Procurement() {
                                 {r.status === "pending_director_approval" && ["managing_director", "finance_director", "super_admin"].includes(userRole ?? "") && (
                                   <SoDButton label="Approve" onClick={() => handleAction(r.id, "director_approve")} sodReason={isBlockedBySoD(r, userId, "director_approve")} />
                                 )}
-                                {r.status === "pending_po" && ["procurement", "super_admin", "managing_director"].includes(userRole ?? "") && (
-                                  <SoDButton label="Raise PO" onClick={() => handleAction(r.id, "raise_po")} sodReason={isBlockedBySoD(r, userId, "raise_po")} />
-                                )}
-                                {r.status === "po_raised" && ["stores_executive", "super_admin", "managing_director"].includes(userRole ?? "") && (
+                                {r.status === "pending_po" && ["stores_executive", "super_admin", "managing_director"].includes(userRole ?? "") && (
                                   <SoDButton label="Received" onClick={() => handleAction(r.id, "mark_received")} sodReason={isBlockedBySoD(r, userId, "mark_received")} />
                                 )}
                               </div>
@@ -536,25 +485,7 @@ export default function Procurement() {
         <TabsContent value="purchase-orders" className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Purchase Orders</h2>
-            {canAddPO && (
-              <Dialog open={poDialogOpen} onOpenChange={setPoDialogOpen}>
-                <DialogTrigger asChild><Button style={{ backgroundColor: "#006039" }}><Plus className="h-4 w-4 mr-1" /> Add PO</Button></DialogTrigger>
-                <DialogContent>
-                  <DialogHeader><DialogTitle>Add Purchase Order</DialogTitle></DialogHeader>
-                  <div className="space-y-4">
-                    <div className="space-y-2"><Label>Vendor</Label><Input value={poForm.vendor_name} onChange={(e) => setPoForm((p) => ({ ...p, vendor_name: e.target.value }))} /></div>
-                    <div className="space-y-2"><Label>Items</Label><Input value={poForm.items_summary} onChange={(e) => setPoForm((p) => ({ ...p, items_summary: e.target.value }))} /></div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><Label>Amount (₹)</Label><Input type="number" value={poForm.amount} onChange={(e) => setPoForm((p) => ({ ...p, amount: e.target.value }))} /></div>
-                      <div className="space-y-2"><Label>Date</Label><Input type="date" value={poForm.po_date} onChange={(e) => setPoForm((p) => ({ ...p, po_date: e.target.value }))} /></div>
-                    </div>
-                    <Button onClick={handleSavePO} disabled={poSaving} className="w-full" style={{ backgroundColor: "#006039" }}>
-                      {poSaving && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Save PO
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
+            <p className="text-sm text-muted-foreground">Purchase orders are created in Tally and registered here through the Tally upload.</p>
           </div>
           {purchaseOrders.length === 0 ? (
             <Card><CardContent className="py-10 text-center"><p className="text-sm" style={{ color: "#666666" }}>No purchase orders yet.</p></CardContent></Card>
@@ -584,7 +515,7 @@ export default function Procurement() {
         </TabsContent>
 
         {/* Inventory Tab */}
-        <TabsContent value="inventory" className="space-y-4">
+        {featureFlags.isEnabled("inventory") && <TabsContent value="inventory" className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Inventory</h2>
             {canAddItem && (
@@ -711,7 +642,7 @@ export default function Procurement() {
               )}
             </>
           )}
-        </TabsContent>
+        </TabsContent>}
 
         {/* Transfers Tab */}
         <TabsContent value="transfers">
@@ -722,9 +653,9 @@ export default function Procurement() {
           <ThirtyDayPlanTab />
         </TabsContent>
 
-        <TabsContent value="equipments">
+        {featureFlags.isEnabled("equipment") && <TabsContent value="equipments">
           <FixedAssetsTab />
-        </TabsContent>
+        </TabsContent>}
 
         <TabsContent value="tally-po">
           <TallyPOUploadTab />

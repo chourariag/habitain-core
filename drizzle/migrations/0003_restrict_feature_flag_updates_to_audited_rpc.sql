@@ -1,0 +1,1 @@
+REVOKE UPDATE (enabled, updated_at) ON public.feature_flags FROM authenticated;

@@ -78,7 +78,7 @@ const App = () => (
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/trust" element={<Trust />} />
-              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/onboarding" element={<ModuleGuard featureFlag="training"><Onboarding /></ModuleGuard>} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route element={<AppLayout />}>
                 <Route path="/dashboard" element={<Dashboard />} />
@@ -111,17 +111,17 @@ const App = () => (
                 <Route path="/admin" element={<ModuleGuard module="admin" requireAdminPanel><Admin /></ModuleGuard>} />
                 <Route path="/admin/users" element={<ModuleGuard module="admin" requireAdminPanel><UserManagement /></ModuleGuard>} />
                 <Route path="/admin/employees" element={<ModuleGuard module="admin" requireEmployeeManagement><EmployeeManagement /></ModuleGuard>} />
-                <Route path="/settings" element={<ModuleGuard featureFlag="user_admin"><AppSettings /></ModuleGuard>} />
+                <Route path="/settings" element={<ModuleGuard featureFlag="user_admin" requireRoles={["super_admin", "managing_director"]}><AppSettings /></ModuleGuard>} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/attendance" element={<ModuleGuard module="hr"><Attendance /></ModuleGuard>} />
-                <Route path="/alerts" element={<Alerts />} />
+                <Route path="/alerts" element={<ModuleGuard featureFlag="reminders"><Alerts /></ModuleGuard>} />
                 <Route path="/factory/floor-map" element={<ModuleGuard module="factory"><FactoryFloorMap /></ModuleGuard>} />
                 <Route path="/capacity" element={<ModuleGuard module="factory"><CapacityPlanning /></ModuleGuard>} />
                 <Route path="/sops" element={<ModuleGuard featureFlag="training"><SOPs /></ModuleGuard>} />
                 <Route path="/super-admin" element={<Navigate to="/admin/super-admin" replace />} />
                 <Route path="/admin/super-admin" element={<ModuleGuard module="admin" requireAdminPanel><SuperAdmin /></ModuleGuard>} />
                 <Route path="/admin/hr" element={<ModuleGuard module="hr"><AdminHR /></ModuleGuard>} />
-                <Route path="/safety" element={<ModuleGuard module="factory"><Safety /></ModuleGuard>} />
+                <Route path="/safety" element={<ModuleGuard featureFlag="compliance"><Safety /></ModuleGuard>} />
                 <Route path="/approvals" element={<ModuleGuard module="approvals"><Approvals /></ModuleGuard>} />
                 <Route path="/work-orders" element={<ModuleGuard module="projects" featureFlag="client_work_orders"><WorkOrders /></ModuleGuard>} />
                 <Route path="/announcements" element={<ModuleGuard module="announcements"><Announcements /></ModuleGuard>} />

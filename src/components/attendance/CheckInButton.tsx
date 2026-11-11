@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
+import { hasRequiredAttendanceLocation } from "@/lib/attendance-location";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import { useConnectionStatus } from "@/components/OfflineProvider";
 import { Button } from "@/components/ui/button";
@@ -226,7 +227,7 @@ export function CheckInButton({ userRole }: Props) {
 
   const handleCheckIn = async () => {
     if (!user) return;
-    if (gpsLat === null || gpsLng === null) {
+    if (!hasRequiredAttendanceLocation(gpsLat, gpsLng)) {
       toast.error("GPS location is required to check in. Enable location access and try again.");
       return;
     }
@@ -468,7 +469,7 @@ export function CheckInButton({ userRole }: Props) {
               {subType === "remote" && (
                 <Input placeholder="Brief reason (max 100 chars)" maxLength={100} value={remoteReason} onChange={(e) => setRemoteReason(e.target.value)} className="font-inter text-[15px]" />
               )}
-              <Button onClick={() => { if (subType === "remote") { setStep("confirm"); } else { handleSelectType("office"); } }} className="w-full" style={{ backgroundColor: "#006039" }}>
+              <Button onClick={() => handleSelectType("office")} className="w-full" style={{ backgroundColor: "#006039" }}>
                 Continue
               </Button>
             </div>
@@ -487,7 +488,7 @@ export function CheckInButton({ userRole }: Props) {
                   ? "Low accuracy — manual"
                   : "Not verified";
             const gpsColor = gpsDisabled ? "#666" : gpsVerified ? "#006039" : gpsLowAccuracy ? "#D4860A" : "#D4860A";
-            const gpsCaptured = gpsLat !== null && gpsLng !== null;
+            const gpsCaptured = hasRequiredAttendanceLocation(gpsLat, gpsLng);
             return (
             <div className="space-y-4">
               {gpsDisabled && (

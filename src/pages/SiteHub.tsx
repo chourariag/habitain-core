@@ -44,6 +44,7 @@ import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import type { Tables } from "@/integrations/supabase/types";
 import { MyTasksSection } from "@/components/tasks/MyTasksSection";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { featureFlagForSiteTab } from "@/lib/feature-flags";
 
 function SiteHubContent() {
   const featureFlags = useFeatureFlags();
@@ -59,7 +60,9 @@ function SiteHubContent() {
   const [siteReady, setSiteReady] = useState(false);
   const [dispatchConditions, setDispatchConditions] = useState<Record<string, { qc: boolean; inspection: boolean; site: boolean; signoff: boolean }>>({});
   const [showReadinessChecklist, setShowReadinessChecklist] = useState(false);
-  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get("tab") ?? "pipeline");
+  const initialTab = new URLSearchParams(window.location.search).get("tab") ?? "pipeline";
+  const initialTabFlag = featureFlagForSiteTab(initialTab);
+  const [activeTab, setActiveTab] = useState(() => initialTabFlag && !featureFlags.isEnabled(initialTabFlag) ? "pipeline" : initialTab);
 
   const fetchData = useCallback(async () => {
     if (!selectedProjectId) return;

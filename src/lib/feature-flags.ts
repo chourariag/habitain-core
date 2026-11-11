@@ -59,7 +59,6 @@ const knownFlags: Array<[string, string]> = [
   ["approvals", "Approvals"],
   ["announcements", "Announcements"],
   ["reports", "Management Reports"],
-  ["site", "Site Hub"],
   ["inventory", "Inventory"],
   ["equipment", "Equipment"],
   ["compliance", "Compliance"],
@@ -103,6 +102,21 @@ export const FEATURE_FLAG_BY_MODULE: Record<string, string> = {
   admin: "user_admin",
   reports: "reports",
 };
+
+const SITE_TAB_FLAGS: Record<string, string> = {
+  "work-orders": "work_orders",
+  "factory-feedback": "factory_feedback",
+  "dispatch-packs": "dispatch",
+  "site-inventory": "inventory",
+  labour: "labour",
+  "install-seq": "design_schedule",
+  safety: "compliance",
+  materials: "procurement",
+};
+
+export function featureFlagForSiteTab(tab: string | null): string | undefined {
+  return tab ? SITE_TAB_FLAGS[tab] : undefined;
+}
 
 export function featureFlagForModule(module: string): string | undefined {
   return FEATURE_FLAG_BY_MODULE[module];
