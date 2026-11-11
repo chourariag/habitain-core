@@ -16136,6 +16136,10 @@ export type Database = {
           suggested_reassign_profile_id: string
         }[]
       }
+      set_feature_flag: {
+        Args: { _enabled: boolean; _key: string }
+        Returns: boolean
+      }
       site_schedule_dispatch_reminders: { Args: never; Returns: number }
       storage_object_project_allowed: {
         Args: { _object_name: string; _uid: string }
