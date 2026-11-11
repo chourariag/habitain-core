@@ -24,7 +24,6 @@ import { TransfersTab } from "@/components/procurement/TransfersTab";
 import { TallyPOUploadTab } from "@/components/procurement/TallyPOUploadTab";
 import { MaterialAvailabilityGate } from "@/components/procurement/MaterialAvailabilityGate";
 import { ThirtyDayPlanTab } from "@/components/procurement/ThirtyDayPlanTab";
-import { ProcurementDashboardStrip } from "@/components/procurement/ProcurementDashboardStrip";
 
 import { SupplierIntelligenceTab } from "@/components/procurement/SupplierIntelligenceTab";
 import { MaterialAlertsTab } from "@/components/procurement/MaterialAlertsTab";
@@ -39,7 +38,6 @@ import { QuotationsTab } from "@/components/procurement/QuotationsTab";
 import { useUserRole } from "@/hooks/useUserRole";
 
 const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin", "production_head"];
-const PO_CREATOR_ROLES = ["procurement", "stores_executive", "managing_director", "super_admin"];
 const PLANNER_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const REQUESTOR_ROLES = [
   "super_admin", "managing_director", "site_installation_mgr", "site_engineer",
@@ -115,9 +113,6 @@ export default function Procurement() {
   const [siteReceipts, setSiteReceipts] = useState<any[]>([]);
 
   // Add PO dialog
-  const [poDialogOpen, setPoDialogOpen] = useState(false);
-  const [poForm, setPoForm] = useState({ vendor_name: "", items_summary: "", amount: "", po_date: new Date().toISOString().slice(0, 10) });
-  const [poSaving, setPoSaving] = useState(false);
 
   // Add plan item dialog
   const [planDialogOpen, setPlanDialogOpen] = useState(false);
@@ -161,7 +156,6 @@ export default function Procurement() {
 
   const effectiveRole = hookRole ?? userRole;
   const canAddItem = STOCK_CREATOR_ROLES.includes(effectiveRole ?? "");
-  const canAddPO = PO_CREATOR_ROLES.includes(userRole ?? "");
   const canRequest = REQUESTOR_ROLES.includes(userRole ?? "");
   const canApprove = APPROVER_ROLES.includes(userRole ?? "");
   const canPlan = PLANNER_ROLES.includes(userRole ?? "");
@@ -221,25 +215,6 @@ export default function Procurement() {
     } catch (err: any) { toast.error(err.message); } finally { setItemSaving(false); }
   };
 
-  const handleSavePO = async () => {
-    if (!poForm.vendor_name.trim() || !poForm.items_summary.trim()) { toast.error("Vendor and items required"); return; }
-    setPoSaving(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-      const { client } = await getAuthedClient();
-      const { error } = await (client.from("purchase_orders") as any).insert({
-        vendor_name: poForm.vendor_name.trim(), items_summary: poForm.items_summary.trim(),
-        amount: Number(poForm.amount) || 0, po_date: poForm.po_date, raised_by: user.id,
-      });
-      if (error) throw error;
-      toast.success("PO added");
-      setPoDialogOpen(false);
-      setPoForm({ vendor_name: "", items_summary: "", amount: "", po_date: new Date().toISOString().slice(0, 10) });
-      fetchData();
-    } catch (err: any) { toast.error(err.message); } finally { setPoSaving(false); }
-  };
-
   const handleSavePlanItem = async () => {
     if (!planForm.project_id || !planForm.material_name.trim()) { toast.error("Project and material required"); return; }
     setPlanSaving(true);
@@ -273,7 +248,6 @@ export default function Procurement() {
       if (action === "approve_budget") update = { status: "pending_po", budget_approved_by: session.user.id, budget_approved_at: new Date().toISOString() };
       else if (action === "over_budget") update = { status: "pending_director_approval", is_over_budget: true, budget_approved_by: session.user.id, budget_approved_at: new Date().toISOString() };
       else if (action === "director_approve") update = { status: "pending_po", director_approved_by: session.user.id, director_approved_at: new Date().toISOString() };
-      else if (action === "raise_po") update = { status: "po_raised", po_raised_by: session.user.id, po_raised_at: new Date().toISOString() };
       else if (action === "mark_received") update = { status: "received", received_by: session.user.id, received_at: new Date().toISOString() };
       else if (action === "reject") update = { status: "rejected", rejection_reason: "Rejected by approver" };
       const { error } = await (client.from("material_requests") as any).update(update).eq("id", requestId);
@@ -513,10 +487,7 @@ export default function Procurement() {
                                 {r.status === "pending_director_approval" && ["managing_director", "finance_director", "super_admin"].includes(userRole ?? "") && (
                                   <SoDButton label="Approve" onClick={() => handleAction(r.id, "director_approve")} sodReason={isBlockedBySoD(r, userId, "director_approve")} />
                                 )}
-                                {r.status === "pending_po" && ["procurement", "super_admin", "managing_director"].includes(userRole ?? "") && (
-                                  <SoDButton label="Raise PO" onClick={() => handleAction(r.id, "raise_po")} sodReason={isBlockedBySoD(r, userId, "raise_po")} />
-                                )}
-                                {r.status === "po_raised" && ["stores_executive", "super_admin", "managing_director"].includes(userRole ?? "") && (
+                                {r.status === "pending_po" && ["stores_executive", "super_admin", "managing_director"].includes(userRole ?? "") && (
                                   <SoDButton label="Received" onClick={() => handleAction(r.id, "mark_received")} sodReason={isBlockedBySoD(r, userId, "mark_received")} />
                                 )}
                               </div>
@@ -536,25 +507,7 @@ export default function Procurement() {
         <TabsContent value="purchase-orders" className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold" style={{ color: "#1A1A1A" }}>Purchase Orders</h2>
-            {canAddPO && (
-              <Dialog open={poDialogOpen} onOpenChange={setPoDialogOpen}>
-                <DialogTrigger asChild><Button style={{ backgroundColor: "#006039" }}><Plus className="h-4 w-4 mr-1" /> Add PO</Button></DialogTrigger>
-                <DialogContent>
-                  <DialogHeader><DialogTitle>Add Purchase Order</DialogTitle></DialogHeader>
-                  <div className="space-y-4">
-                    <div className="space-y-2"><Label>Vendor</Label><Input value={poForm.vendor_name} onChange={(e) => setPoForm((p) => ({ ...p, vendor_name: e.target.value }))} /></div>
-                    <div className="space-y-2"><Label>Items</Label><Input value={poForm.items_summary} onChange={(e) => setPoForm((p) => ({ ...p, items_summary: e.target.value }))} /></div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2"><Label>Amount (₹)</Label><Input type="number" value={poForm.amount} onChange={(e) => setPoForm((p) => ({ ...p, amount: e.target.value }))} /></div>
-                      <div className="space-y-2"><Label>Date</Label><Input type="date" value={poForm.po_date} onChange={(e) => setPoForm((p) => ({ ...p, po_date: e.target.value }))} /></div>
-                    </div>
-                    <Button onClick={handleSavePO} disabled={poSaving} className="w-full" style={{ backgroundColor: "#006039" }}>
-                      {poSaving && <Loader2 className="h-4 w-4 animate-spin mr-1" />} Save PO
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
+            <p className="text-sm text-muted-foreground">Purchase orders are created in Tally and registered here through the Tally upload.</p>
           </div>
           {purchaseOrders.length === 0 ? (
             <Card><CardContent className="py-10 text-center"><p className="text-sm" style={{ color: "#666666" }}>No purchase orders yet.</p></CardContent></Card>

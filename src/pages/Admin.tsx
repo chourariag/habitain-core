@@ -4,12 +4,10 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Users, ShieldOff, TrendingUp, FileText, ShieldAlert, Shield, UserPlus, BarChart3, AlertOctagon, BadgeIndianRupee, ChevronRight } from "lucide-react";
+import { Search, Users, ShieldOff, ShieldAlert, Shield, UserPlus, BarChart3, AlertOctagon, BadgeIndianRupee, ChevronRight } from "lucide-react";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
 import { UserRow } from "@/components/admin/UserRow";
 import { ROLE_LABELS, AppRole } from "@/lib/roles";
-import { BenchmarksView } from "@/components/kpi/BenchmarksView";
-import { BoardPaperGenerator } from "@/components/admin/BoardPaperGenerator";
 import { StorageUsageCard } from "@/components/admin/StorageUsageCard";
 import { useUserRole } from "@/hooks/useUserRole";
 
@@ -18,7 +16,6 @@ const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
 const SUPER_ADMIN_LINKS = [
   { to: "/admin/super-admin?tab=role-permissions", label: "Role Permissions", icon: Shield, desc: "Control which pages each role can see" },
   { to: "/admin/super-admin?tab=create-accounts", label: "Create All Accounts", icon: UserPlus, desc: "Bulk create user accounts" },
-  { to: "/admin/kpi-settings", label: "KPI Settings", icon: BarChart3, desc: "Configure KPI weights and targets" },
   { to: "/admin/super-admin?tab=escalation", label: "Escalation Matrix", icon: AlertOctagon, desc: "Define escalation chains" },
   { to: "/admin/super-admin?tab=approvals", label: "Approval Thresholds", icon: BadgeIndianRupee, desc: "Set financial approval limits" },
 ];
@@ -92,14 +89,6 @@ export default function Admin() {
             <ShieldOff className="h-3.5 w-3.5" />
             Inactive ({inactiveCount})
           </TabsTrigger>
-          <TabsTrigger value="benchmarks" className="gap-1.5">
-            <TrendingUp className="h-3.5 w-3.5" />
-            Benchmarks
-          </TabsTrigger>
-          <TabsTrigger value="reports" className="gap-1.5">
-            <FileText className="h-3.5 w-3.5" />
-            Reports
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="mt-4">
@@ -136,14 +125,6 @@ export default function Admin() {
               </div>
             )}
           </div>
-        </TabsContent>
-
-        <TabsContent value="benchmarks" className="mt-4">
-          <BenchmarksView />
-        </TabsContent>
-
-        <TabsContent value="reports" className="mt-4">
-          <BoardPaperGenerator />
         </TabsContent>
 
       </Tabs>
