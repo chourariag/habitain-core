@@ -85,3 +85,24 @@ export const FEATURE_FLAG_DEFINITIONS: FeatureFlagDefinition[] = knownFlags.map(
 export const FEATURE_FLAG_LABELS = Object.fromEntries(
   FEATURE_FLAG_DEFINITIONS.map(({ key, label }) => [key, label]),
 );
+
+export const FEATURE_FLAG_BY_MODULE: Record<string, string> = {
+  projects: "projects",
+  factory: "production",
+  site: "site_report",
+  procurement: "procurement",
+  finance: "finance",
+  hr: "attendance",
+  sales: "sales",
+  design: "design_schedule",
+  qc: "compliance",
+  dispatch: "dispatch",
+  announcements: "announcements",
+  approvals: "approvals",
+  admin: "user_admin",
+  reports: "reports",
+};
+
+export function featureFlagForModule(module: string): string | undefined {
+  return FEATURE_FLAG_BY_MODULE[module];
+}

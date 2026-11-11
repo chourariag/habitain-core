@@ -14,6 +14,8 @@ import type { ModuleKey } from "@/lib/rbac-matrix";
 import type { AppRole } from "@/lib/roles";
 import { useTranslation } from "react-i18next";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { featureFlagForModule } from "@/lib/feature-flags";
 
 type Tab = {
   to: string;
@@ -64,22 +66,26 @@ export function MobileNav() {
   const { t } = useTranslation();
   const userRole = role as AppRole | null;
   const { canView, canAccessAdminPanel, canAccessEmployeeManagement } = usePermissions();
+  const featureFlags = useFeatureFlags();
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
 
   const visibleTabs = allTabs.filter((t) => {
-    if (t.module) return canView(t.module);
+    if (t.module) {
+      const flagKey = featureFlagForModule(t.module);
+      return (!flagKey || featureFlags.isEnabled(flagKey)) && canView(t.module);
+    }
     if (t.alwaysVisible) return true;
     if (t.roles) return userRole ? t.roles.includes(userRole) : false;
     return canSeeSection(userRole, t.section);
   });
 
   const visibleMoreItems = moreItems.filter((i) => {
-    if (i.requireAdminPanel) return canAccessAdminPanel();
-    if (i.requireEmployeeManagement) return canAccessEmployeeManagement();
-    return i.roles ? (userRole ? i.roles.includes(userRole) : false) : false;
+    if (i.requireAdminPanel) return featureFlags.isEnabled("user_admin") && canAccessAdminPanel();
+    if (i.requireEmployeeManagement) return featureFlags.isEnabled("user_admin") && canAccessEmployeeManagement();
+    return featureFlags.isEnabled("user_admin") && (i.roles ? (userRole ? i.roles.includes(userRole) : false) : false);
   });
 
   const showMore = visibleMoreItems.length > 0;

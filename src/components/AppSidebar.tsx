@@ -21,6 +21,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useTranslation } from "react-i18next";
 import type { AppRole } from "@/lib/roles";
 import { RoleSwitcher } from "./RoleSwitcher";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { featureFlagForModule } from "@/lib/feature-flags";
 
 type NavItem = { to: string; labelKey: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean; module?: ModuleKey; requireAdminPanel?: boolean; requireEmployeeManagement?: boolean };
 type NavSection = { key: string; labelKey?: string; items: NavItem[]; group?: "altree" };
@@ -125,6 +127,7 @@ export function AppSidebar() {
   const { role } = useUserRole();
   const userRole = role as AppRole | null;
   const { canView, canAccessAdminPanel, canAccessEmployeeManagement } = usePermissions();
+  const featureFlags = useFeatureFlags();
   const { projects, selectedProjectId, setSelectedProjectId } = useProjectContext();
   const { i18n, t } = useTranslation();
   const location = useLocation();
@@ -145,12 +148,15 @@ export function AppSidebar() {
     .map((s) => ({
       ...s,
       items: s.items.filter((it) => {
-        if (it.requireAdminPanel) return canAccessAdminPanel();
-        if (it.requireEmployeeManagement) return canAccessEmployeeManagement();
-        if (it.module) return canView(it.module);
+        if (it.requireAdminPanel) return featureFlags.isEnabled("user_admin") && canAccessAdminPanel();
+        if (it.requireEmployeeManagement) return featureFlags.isEnabled("user_admin") && canAccessEmployeeManagement();
+        if (it.module) {
+          const flagKey = featureFlagForModule(it.module);
+          return (!flagKey || featureFlags.isEnabled(flagKey)) && canView(it.module);
+        }
         const sectionOk = it.alwaysVisible || canSeeSection(userRole, it.section);
         const roleOk = !it.roles || (userRole && it.roles.includes(userRole));
-        return sectionOk && roleOk;
+        return sectionOk && roleOk && (it.to !== "/settings" || featureFlags.isEnabled("user_admin"));
       }),
     }))
     .filter((s) => s.items.length > 0);

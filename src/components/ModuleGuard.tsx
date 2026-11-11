@@ -1,7 +1,10 @@
 import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { featureFlagForModule } from "@/lib/feature-flags";
 import type { ModuleKey } from "@/lib/rbac-matrix";
+import { Loader2 } from "lucide-react";
 
 /**
  * Redirects to /dashboard when the current role has NONE access for the given module.
@@ -9,18 +12,28 @@ import type { ModuleKey } from "@/lib/rbac-matrix";
  */
 export function ModuleGuard({
   module,
+  featureFlag,
   requireAdminPanel,
   requireEmployeeManagement,
   children,
 }: {
   module?: ModuleKey;
+  featureFlag?: string;
   requireAdminPanel?: boolean;
   requireEmployeeManagement?: boolean;
   children: ReactNode;
 }) {
   const { loading, canView, canAccessAdminPanel, canAccessEmployeeManagement } = usePermissions();
+  const flags = useFeatureFlags();
+  const resolvedFlag = featureFlag ?? (module ? featureFlagForModule(module) : undefined);
 
-  if (loading) return <>{children}</>; // don't flicker before role resolves
+  if (loading || (resolvedFlag && flags.isLoading)) {
+    return <div className="flex justify-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  if (resolvedFlag && (flags.isError || !flags.isEnabled(resolvedFlag))) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   if (requireAdminPanel && !canAccessAdminPanel()) {
     return <Navigate to="/dashboard" replace />;
