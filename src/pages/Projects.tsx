@@ -6,11 +6,13 @@ import { NewProjectDialog } from "@/components/projects/NewProjectDialog";
 import { ProjectCommandCard } from "@/components/projects/ProjectCommandCard";
 import type { Tables } from "@/integrations/supabase/types";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 const NEW_PROJECT_ROLES = ["planning_head", "planning_engineer", "managing_director", "super_admin"];
 
 export default function Projects() {
   const { role } = useUserRole();
+  const flags = useFeatureFlags();
   const canCreate = !!role && NEW_PROJECT_ROLES.includes(role);
   const [projects, setProjects] = useState<Tables<"projects">[]>([]);
   const [modulesByProject, setModulesByProject] = useState<Record<string, any[]>>({});
@@ -132,7 +134,7 @@ export default function Projects() {
           <p className="text-sm mt-1" style={{ color: "#666666" }}>Command centre — all construction projects</p>
         </div>
         <div className="flex items-center gap-2">
-        <Button variant="outline" onClick={() => (window.location.href = "/work-orders")}>Work Orders</Button>
+        {flags.isEnabled("client_work_orders") && <Button variant="outline" onClick={() => (window.location.href = "/work-orders")}>Work Orders</Button>}
         {canCreate && (
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />

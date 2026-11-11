@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, FolderKanban, Factory, Truck,
@@ -14,6 +14,8 @@ import type { ModuleKey } from "@/lib/rbac-matrix";
 import type { AppRole } from "@/lib/roles";
 import { useTranslation } from "react-i18next";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { featureFlagForModule } from "@/lib/feature-flags";
 
 type Tab = {
   to: string;
@@ -23,20 +25,23 @@ type Tab = {
   alwaysVisible?: boolean;
   roles?: string[];
   module?: ModuleKey;
+  featureFlag?: string;
 };
 
 const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
-const SETTINGS_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
+const SETTINGS_ROLES = ["super_admin", "managing_director"];
 
 const allTabs: Tab[] = [
   { to: "/dashboard", labelKey: "nav.home", icon: LayoutDashboard, section: "dashboard", module: "dashboard" },
   { to: "/approvals", labelKey: "nav.approvals", icon: ShieldCheck, section: "approvals", module: "approvals" },
   { to: "/projects", labelKey: "nav.projects", icon: FolderKanban, section: "projects", module: "projects" },
   { to: "/production?tab=modules", labelKey: "nav.factory", icon: Factory, section: "production", module: "factory" },
+  { to: "/site-hub?tab=labour", labelKey: "nav.hr", icon: Users, section: "site", featureFlag: "labour" },
   { to: "/site-hub?tab=pipeline", labelKey: "nav.site", icon: Truck, section: "site", module: "site" },
   { to: "/procurement?tab=dashboard", labelKey: "nav.procurement", icon: ShoppingCart, section: "procurement", module: "procurement" },
   { to: "/finance?tab=mis-invoices", labelKey: "nav.finance", icon: DollarSign, section: "finance", module: "finance" },
-  { to: "/design", labelKey: "nav.design", icon: Compass, section: "design", module: "design" },
+  { to: "/design", labelKey: "nav.design", icon: Compass, section: "design", module: "design", featureFlag: "design_schedule" },
+  { to: "/design/schedule", labelKey: "nav.designSchedule", icon: Compass, section: "design", module: "design", featureFlag: "design_schedule" },
   { to: "/sales", labelKey: "nav.sales", icon: BarChart3, section: "sales", module: "sales" },
   { to: "/attendance", labelKey: "nav.hr", icon: UserCog, section: "altree", module: "hr" },
 ];
@@ -64,41 +69,43 @@ export function MobileNav() {
   const { t } = useTranslation();
   const userRole = role as AppRole | null;
   const { canView, canAccessAdminPanel, canAccessEmployeeManagement } = usePermissions();
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const featureFlags = useFeatureFlags();
   const navigate = useNavigate();
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
+  const primaryPaths = ["/dashboard", "/attendance", "/projects", "/procurement"];
 
   const visibleTabs = allTabs.filter((t) => {
-    if (t.module) return canView(t.module);
+    if (t.module) {
+      const flagKey = t.featureFlag ?? featureFlagForModule(t.module);
+      return (!flagKey || featureFlags.isEnabled(flagKey)) && canView(t.module);
+    }
     if (t.alwaysVisible) return true;
     if (t.roles) return userRole ? t.roles.includes(userRole) : false;
     return canSeeSection(userRole, t.section);
   });
+  const primaryTabs = primaryPaths
+    .map((path) => visibleTabs.find((tab) => tab.to.split("?")[0] === path))
+    .filter((tab): tab is Tab => Boolean(tab));
+  const overflowTabs = visibleTabs.filter((tab) => !primaryTabs.includes(tab));
 
   const visibleMoreItems = moreItems.filter((i) => {
-    if (i.requireAdminPanel) return canAccessAdminPanel();
-    if (i.requireEmployeeManagement) return canAccessEmployeeManagement();
-    return i.roles ? (userRole ? i.roles.includes(userRole) : false) : false;
+    if (i.requireAdminPanel) return featureFlags.isEnabled("user_admin") && canAccessAdminPanel();
+    if (i.requireEmployeeManagement) return featureFlags.isEnabled("user_admin") && canAccessEmployeeManagement();
+    return featureFlags.isEnabled("user_admin") && (i.roles ? (userRole ? i.roles.includes(userRole) : false) : false);
   });
 
-  const showMore = visibleMoreItems.length > 0;
+  const showMore = visibleMoreItems.length > 0 || overflowTabs.length > 0;
 
   // Highlight "More" when on any admin/settings route
   const moreActive = visibleMoreItems.some((i) => {
     const path = i.to.split("?")[0];
     return location.pathname === path || location.pathname.startsWith(path + "/");
   });
-
-  // Scroll active tab into view
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const active = el.querySelector("[data-active='true']") as HTMLElement | null;
-    if (active) {
-      active.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
-    }
-  }, []);
+  const overflowActive = overflowTabs.some((tab) => {
+    const path = tab.to.split("?")[0];
+    return location.pathname === path || location.pathname.startsWith(path + "/");
+  });
 
   return (
     <>
@@ -106,28 +113,18 @@ export function MobileNav() {
         className="md:hidden fixed bottom-0 left-0 right-0 z-40"
         style={{ backgroundColor: "#FFFFFF", borderTop: "1px solid #E0E0E0" }}
       >
-        <div className="relative h-[56px] overflow-hidden">
-          <div
-            ref={scrollRef}
-            className="flex items-center h-full overflow-x-auto scrollbar-none px-1"
-            style={{ WebkitOverflowScrolling: "touch", scrollSnapType: "x proximity" }}
-          >
-            {visibleTabs.map((tab) => (
+        <div className="grid h-[56px] grid-cols-5 items-stretch px-1">
+            {primaryTabs.map((tab) => (
               <NavLink
                 key={tab.to}
                 to={tab.to}
-                onClick={(e) => {
-                  const el = (e.currentTarget as HTMLElement);
-                  setTimeout(() => el.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" }), 0);
-                }}
                 className={() =>
                   cn(
-                    "flex flex-col items-center justify-center gap-[2px] min-w-[68px] flex-shrink-0 px-2 py-1 text-[10px] font-medium transition-colors"
+                    "flex min-w-0 flex-col items-center justify-center gap-[2px] px-1 py-1 text-[10px] font-medium transition-colors"
                   )
                 }
                 style={({ isActive }) => ({
                   color: isActive ? "#006039" : "#999999",
-                  scrollSnapAlign: "center",
                 })}
               >
                 {({ isActive }) => (
@@ -136,7 +133,7 @@ export function MobileNav() {
                     className="flex flex-col items-center gap-[2px]"
                   >
                     <tab.icon className="h-[20px] w-[20px]" />
-                    <span className="whitespace-nowrap">{t(tab.labelKey)}</span>
+                    <span className="max-w-full truncate">{t(tab.labelKey)}</span>
                   </span>
                 )}
               </NavLink>
@@ -147,28 +144,16 @@ export function MobileNav() {
                 type="button"
                 onClick={() => setMoreOpen(true)}
                 data-active={moreActive ? "true" : undefined}
-                className="flex flex-col items-center justify-center gap-[2px] min-w-[68px] flex-shrink-0 px-2 py-1 text-[10px] font-medium transition-colors"
+                className="flex min-w-0 flex-col items-center justify-center gap-[2px] px-1 py-1 text-[10px] font-medium transition-colors"
                 style={{
-                  color: moreActive ? "#006039" : "#999999",
-                  scrollSnapAlign: "center",
+                  color: moreActive || overflowActive ? "#006039" : "#999999",
                 }}
                 aria-label={t("nav.moreOptions")}
               >
                 <MoreHorizontal className="h-[20px] w-[20px]" />
-                <span className="whitespace-nowrap">{t("nav.more")}</span>
+                <span className="max-w-full truncate">{t("nav.more")}</span>
               </button>
             )}
-          </div>
-
-          {/* Right scroll hint fade */}
-          <div
-            className="absolute top-0 right-0 bottom-0 w-6 pointer-events-none"
-            style={{ background: "linear-gradient(to right, transparent, #FFFFFF)" }}
-          />
-          <div
-            className="absolute top-0 left-0 bottom-0 w-4 pointer-events-none"
-            style={{ background: "linear-gradient(to left, transparent, #FFFFFF)" }}
-          />
         </div>
       </nav>
 
@@ -178,6 +163,17 @@ export function MobileNav() {
             <SheetTitle className="font-display text-lg">{t("nav.more")}</SheetTitle>
           </SheetHeader>
           <div className="px-3 pb-6 space-y-1">
+            {overflowTabs.map((tab) => {
+              const path = tab.to.split("?")[0];
+              const isActive = location.pathname === path || location.pathname.startsWith(path + "/");
+              return (
+                <button key={tab.to} type="button" onClick={() => { setMoreOpen(false); navigate(tab.to); }} className={cn("w-full flex items-center gap-3 px-3 py-3 rounded-lg text-left transition-colors", isActive ? "bg-muted" : "hover:bg-muted/60")}>
+                  <tab.icon className="h-5 w-5 shrink-0 text-primary" />
+                  <div className="min-w-0 flex-1 text-sm font-semibold text-foreground">{t(tab.labelKey)}</div>
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </button>
+              );
+            })}
             {visibleMoreItems.map((item) => {
               const path = item.to.split("?")[0];
               const isActive = location.pathname === path || location.pathname.startsWith(path + "/");

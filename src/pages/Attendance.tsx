@@ -9,9 +9,11 @@ import { MyExpenses } from "@/components/expenses/MyExpenses";
 import { MyPayslipsTab } from "@/components/attendance/MyPayslipsTab";
 import { MyDocumentsTab } from "@/components/attendance/MyDocumentsTab";
 import { MyKpisTab } from "@/components/hr/MyKpisTab";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 export default function Attendance() {
   const { role } = useUserRole();
+  const flags = useFeatureFlags();
   const [tab, setTab] = useState("attendance");
 
   return (
@@ -29,20 +31,20 @@ export default function Attendance() {
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="attendance" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Attendance</TabsTrigger>
-            <TabsTrigger value="leave" className="gap-1.5"><Plane className="h-4 w-4" /> Leave</TabsTrigger>
-            <TabsTrigger value="expenses" className="gap-1.5"><Receipt className="h-4 w-4" /> Expenses</TabsTrigger>
-            <TabsTrigger value="payslips" className="gap-1.5"><Wallet className="h-4 w-4" /> Payslips</TabsTrigger>
-            <TabsTrigger value="documents" className="gap-1.5"><FileBadge className="h-4 w-4" /> Documents</TabsTrigger>
-            <TabsTrigger value="kpis" className="gap-1.5"><BarChart3 className="h-4 w-4" /> My KPIs</TabsTrigger>
+            {flags.isEnabled("leave") && <TabsTrigger value="leave" className="gap-1.5"><Plane className="h-4 w-4" /> Leave</TabsTrigger>}
+            {flags.isEnabled("expenses") && <TabsTrigger value="expenses" className="gap-1.5"><Receipt className="h-4 w-4" /> Expenses</TabsTrigger>}
+            {flags.isEnabled("payroll") && <TabsTrigger value="payslips" className="gap-1.5"><Wallet className="h-4 w-4" /> Payslips</TabsTrigger>}
+            {flags.isEnabled("user_admin") && <TabsTrigger value="documents" className="gap-1.5"><FileBadge className="h-4 w-4" /> Documents</TabsTrigger>}
+            {flags.isEnabled("kpis") && <TabsTrigger value="kpis" className="gap-1.5"><BarChart3 className="h-4 w-4" /> My KPIs</TabsTrigger>}
           </TabsList>
         </ScrollableTabsWrapper>
 
         <TabsContent value="attendance" className="mt-4"><MyAttendanceTab userRole={role} /></TabsContent>
-        <TabsContent value="leave" className="mt-4"><MyLeaveTab /></TabsContent>
-        <TabsContent value="expenses" className="mt-4"><MyExpenses /></TabsContent>
-        <TabsContent value="payslips" className="mt-4"><MyPayslipsTab /></TabsContent>
-        <TabsContent value="documents" className="mt-4"><MyDocumentsTab /></TabsContent>
-        <TabsContent value="kpis" className="mt-4"><MyKpisTab /></TabsContent>
+        {flags.isEnabled("leave") && <TabsContent value="leave" className="mt-4"><MyLeaveTab /></TabsContent>}
+        {flags.isEnabled("expenses") && <TabsContent value="expenses" className="mt-4"><MyExpenses /></TabsContent>}
+        {flags.isEnabled("payroll") && <TabsContent value="payslips" className="mt-4"><MyPayslipsTab /></TabsContent>}
+        {flags.isEnabled("user_admin") && <TabsContent value="documents" className="mt-4"><MyDocumentsTab /></TabsContent>}
+        {flags.isEnabled("kpis") && <TabsContent value="kpis" className="mt-4"><MyKpisTab /></TabsContent>}
       </Tabs>
     </div>
   );

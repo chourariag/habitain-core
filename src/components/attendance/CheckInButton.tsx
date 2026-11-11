@@ -90,15 +90,27 @@ export function CheckInButton({ userRole }: Props) {
 
   const handleSelectType = async (type: string) => {
     setLocationType(type);
+    setGpsLat(null);
+    setGpsLng(null);
     setGpsNotConfigured(false);
     setGpsDisabled(false);
     setGpsDistance(null);
     setGpsAccuracy(null);
     setGpsLowAccuracy(false);
 
-    // Office "remote" sub-type → no GPS needed
+    // Remote attendance still records the employee's current GPS location.
     if (type === "office" && subType === "remote") {
-      setStep("confirm");
+      try {
+        const pos = await getGPS();
+        setGpsLat(pos.coords.latitude);
+        setGpsLng(pos.coords.longitude);
+        setGpsAccuracy(pos.coords.accuracy ?? null);
+        setGpsVerified(false);
+        setStep("confirm");
+      } catch {
+        toast.error("GPS location is required to check in. Enable location access and try again.");
+        setStep("confirm");
+      }
       return;
     }
 
@@ -116,6 +128,14 @@ export function CheckInButton({ userRole }: Props) {
           radius = Math.max(parseInt(radVal || "0") || 0, MIN_RADIUS_METERS);
           if (!enabled || !refLat || !refLng) {
             setGpsDisabled(true);
+            try {
+              const pos = await getGPS();
+              setGpsLat(pos.coords.latitude);
+              setGpsLng(pos.coords.longitude);
+              setGpsAccuracy(pos.coords.accuracy ?? null);
+            } catch {
+              toast.error("GPS location is required to check in. Enable location access and try again.");
+            }
             setStep("confirm");
             return;
           }
@@ -130,6 +150,14 @@ export function CheckInButton({ userRole }: Props) {
           radius = Math.max(parseInt(radVal || "0") || 0, MIN_RADIUS_METERS);
           if (!enabled || !refLat || !refLng) {
             setGpsDisabled(true);
+            try {
+              const pos = await getGPS();
+              setGpsLat(pos.coords.latitude);
+              setGpsLng(pos.coords.longitude);
+              setGpsAccuracy(pos.coords.accuracy ?? null);
+            } catch {
+              toast.error("GPS location is required to check in. Enable location access and try again.");
+            }
             setStep("confirm");
             return;
           }
@@ -142,6 +170,14 @@ export function CheckInButton({ userRole }: Props) {
           }
           if (!refLat || !refLng) {
             setGpsDisabled(true);
+            try {
+              const pos = await getGPS();
+              setGpsLat(pos.coords.latitude);
+              setGpsLng(pos.coords.longitude);
+              setGpsAccuracy(pos.coords.accuracy ?? null);
+            } catch {
+              toast.error("GPS location is required to check in. Enable location access and try again.");
+            }
             setStep("confirm");
             return;
           }
@@ -190,6 +226,10 @@ export function CheckInButton({ userRole }: Props) {
 
   const handleCheckIn = async () => {
     if (!user) return;
+    if (gpsLat === null || gpsLng === null) {
+      toast.error("GPS location is required to check in. Enable location access and try again.");
+      return;
+    }
     setSubmitting(true);
     const now = new Date();
     const finalLocationType = locationType === "office" ? (subType === "remote" ? "remote" : "office") : locationType;
@@ -447,11 +487,20 @@ export function CheckInButton({ userRole }: Props) {
                   ? "Low accuracy — manual"
                   : "Not verified";
             const gpsColor = gpsDisabled ? "#666" : gpsVerified ? "#006039" : gpsLowAccuracy ? "#D4860A" : "#D4860A";
+            const gpsCaptured = gpsLat !== null && gpsLng !== null;
             return (
             <div className="space-y-4">
               {gpsDisabled && (
                 <div className="rounded-md p-3 text-sm font-inter" style={{ backgroundColor: "#F7F7F7", color: "#666" }}>
                   Location: {locLabel} — GPS verification not enabled
+                </div>
+              )}
+              {!gpsCaptured && (
+                <div className="space-y-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                  <p>GPS location is required for employee attendance. Allow location access and try again.</p>
+                  <Button variant="outline" className="w-full" onClick={() => void handleSelectType(locationType)}>
+                    Retry GPS
+                  </Button>
                 </div>
               )}
               {gpsApplies && gpsDistance != null && !gpsDisabled && (
@@ -496,7 +545,7 @@ export function CheckInButton({ userRole }: Props) {
                 <div className="flex justify-between"><span style={{ color: "#666" }}>Location</span><span style={{ color: "#1A1A1A" }} className="capitalize">{locationType === "office" ? subType : locationType}</span></div>
                 <div className="flex justify-between"><span style={{ color: "#666" }}>GPS</span><span style={{ color: gpsColor }}>{gpsLabel}</span></div>
               </div>
-              <Button onClick={handleCheckIn} disabled={submitting || !noteValid} className="w-full" style={{ backgroundColor: noteValid && !submitting ? "#006039" : undefined }}>
+              <Button onClick={handleCheckIn} disabled={submitting || !noteValid || !gpsCaptured} className="w-full" style={{ backgroundColor: noteValid && gpsCaptured && !submitting ? "#006039" : undefined }}>
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Check className="h-4 w-4 mr-1" />}
                 Confirm Check In
               </Button>

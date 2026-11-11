@@ -16032,6 +16032,14 @@ export type Database = {
           wip_yday: number
         }[]
       }
+      get_scheduled_job_status: {
+        Args: never
+        Returns: {
+          active: boolean
+          job_name: string
+          schedule: string
+        }[]
+      }
       get_scope_signoff_by_token: { Args: { p_token: string }; Returns: Json }
       get_sole_role_holders: {
         Args: never
@@ -16127,6 +16135,10 @@ export type Database = {
           suggested_reassign_name: string
           suggested_reassign_profile_id: string
         }[]
+      }
+      set_feature_flag: {
+        Args: { _enabled: boolean; _key: string }
+        Returns: boolean
       }
       site_schedule_dispatch_reminders: { Args: never; Returns: number }
       storage_object_project_allowed: {

@@ -21,12 +21,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useTranslation } from "react-i18next";
 import type { AppRole } from "@/lib/roles";
 import { RoleSwitcher } from "./RoleSwitcher";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { featureFlagForModule } from "@/lib/feature-flags";
 
-type NavItem = { to: string; labelKey: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean; module?: ModuleKey; requireAdminPanel?: boolean; requireEmployeeManagement?: boolean };
+type NavItem = { to: string; labelKey: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean; module?: ModuleKey; featureFlag?: string; requireAdminPanel?: boolean; requireEmployeeManagement?: boolean };
 type NavSection = { key: string; labelKey?: string; items: NavItem[]; group?: "altree" };
 
 const CAPACITY_ROLES = ["super_admin", "managing_director", "head_operations", "planning_head", "production_head"];
-const SETTINGS_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
+const SETTINGS_ROLES = ["super_admin", "managing_director"];
 const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
 
 // Strict spec-defined sidebar. Each item declares the RBAC `module` it maps to;
@@ -42,6 +44,7 @@ const sectionConfig: NavSection[] = [
     items: [
       { section: "production", to: "/capacity", labelKey: "nav.capacityPlanning", icon: BarChart3, roles: CAPACITY_ROLES, module: "factory" },
       { section: "production", to: "/production?tab=modules", labelKey: "nav.factoryFloor", icon: Factory, module: "factory" },
+      { section: "site", to: "/site-hub?tab=labour", labelKey: "nav.hr", icon: Users, featureFlag: "labour" },
       { section: "production", to: "/factory/floor-map", labelKey: "nav.floorMap", icon: Map, module: "factory" },
       { section: "production", to: "/qc", labelKey: "nav.qcNcr", icon: ClipboardCheck, module: "qc" },
       { section: "production", to: "/dispatch-delivery", labelKey: "nav.dispatchDelivery", icon: Truck, module: "dispatch" },
@@ -70,8 +73,8 @@ const sectionConfig: NavSection[] = [
   {
     key: "design", labelKey: "nav.design",
     items: [
-      { section: "design", to: "/design", labelKey: "nav.projects", icon: Compass, module: "design" },
-      { section: "design", to: "/design/schedule", labelKey: "nav.designSchedule", icon: ClipboardList, module: "design" },
+      { section: "design", to: "/design", labelKey: "nav.projects", icon: Compass, module: "design", featureFlag: "design_schedule" },
+      { section: "design", to: "/design/schedule", labelKey: "nav.designSchedule", icon: ClipboardList, module: "design", featureFlag: "design_schedule" },
       { section: "design", to: "/design?tab=dq-register", labelKey: "nav.designQueries", icon: MessageSquare, module: "design" },
     ],
   },
@@ -125,6 +128,7 @@ export function AppSidebar() {
   const { role } = useUserRole();
   const userRole = role as AppRole | null;
   const { canView, canAccessAdminPanel, canAccessEmployeeManagement } = usePermissions();
+  const featureFlags = useFeatureFlags();
   const { projects, selectedProjectId, setSelectedProjectId } = useProjectContext();
   const { i18n, t } = useTranslation();
   const location = useLocation();
@@ -145,12 +149,15 @@ export function AppSidebar() {
     .map((s) => ({
       ...s,
       items: s.items.filter((it) => {
-        if (it.requireAdminPanel) return canAccessAdminPanel();
-        if (it.requireEmployeeManagement) return canAccessEmployeeManagement();
-        if (it.module) return canView(it.module);
+        if (it.requireAdminPanel) return featureFlags.isEnabled("user_admin") && canAccessAdminPanel();
+        if (it.requireEmployeeManagement) return featureFlags.isEnabled("user_admin") && canAccessEmployeeManagement();
+        if (it.module) {
+          const flagKey = it.featureFlag ?? featureFlagForModule(it.module);
+          return (!flagKey || featureFlags.isEnabled(flagKey)) && canView(it.module);
+        }
         const sectionOk = it.alwaysVisible || canSeeSection(userRole, it.section);
         const roleOk = !it.roles || (userRole && it.roles.includes(userRole));
-        return sectionOk && roleOk;
+        return sectionOk && roleOk && (it.to !== "/settings" || featureFlags.isEnabled("user_admin"));
       }),
     }))
     .filter((s) => s.items.length > 0);
