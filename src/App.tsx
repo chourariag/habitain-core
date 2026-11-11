@@ -87,7 +87,6 @@ const App = () => (
                 <Route path="/projects/:id/archive" element={<ModuleGuard module="projects"><ProjectArchive /></ModuleGuard>} />
                 <Route path="/management" element={<ModuleGuard module="reports"><ManagementRouteGuard><Management /></ManagementRouteGuard></ModuleGuard>} />
                 <Route path="/production" element={<ModuleGuard module="factory"><Production /></ModuleGuard>} />
-                <Route path="/labour" element={<ModuleGuard featureFlag="labour"><Production labourOnly /></ModuleGuard>} />
                 <Route path="/production/dashboard" element={<ModuleGuard module="factory"><ProductionDashboard /></ModuleGuard>} />
                 <Route path="/production/delivery-checklist/:projectId" element={<ModuleGuard module="factory"><DeliveryChecklist /></ModuleGuard>} />
                 <Route path="/dispatch-delivery" element={<ModuleGuard module="dispatch"><DispatchDelivery /></ModuleGuard>} />
@@ -96,7 +95,7 @@ const App = () => (
                 <Route path="/site-hub/dispatch-pack" element={<ModuleGuard module="site" featureFlag="dispatch"><DispatchPackForm /></ModuleGuard>} />
                 <Route path="/dispatch-pack-form" element={<ModuleGuard module="site" featureFlag="dispatch"><DispatchPackForm /></ModuleGuard>} />
                 <Route path="/site-hub/advance-request" element={<ModuleGuard module="site" featureFlag="advances"><AdvanceRequest /></ModuleGuard>} />
-                <Route path="/design" element={<ModuleGuard module="design" featureFlag="design"><DesignPortal /></ModuleGuard>} />
+                <Route path="/design" element={<ModuleGuard module="design" featureFlag="design_schedule"><DesignPortal /></ModuleGuard>} />
                 <Route path="/design/schedule" element={<ModuleGuard module="design" featureFlag="design_schedule"><DesignSchedule /></ModuleGuard>} />
                 <Route path="/drawings" element={<ModuleGuard module="design" featureFlag="gfc"><Drawings /></ModuleGuard>} />
                 <Route path="/qc" element={<ModuleGuard module="qc"><QualityControl /></ModuleGuard>} />

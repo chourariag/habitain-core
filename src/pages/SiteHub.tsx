@@ -59,6 +59,7 @@ function SiteHubContent() {
   const [siteReady, setSiteReady] = useState(false);
   const [dispatchConditions, setDispatchConditions] = useState<Record<string, { qc: boolean; inspection: boolean; site: boolean; signoff: boolean }>>({});
   const [showReadinessChecklist, setShowReadinessChecklist] = useState(false);
+  const [activeTab, setActiveTab] = useState(() => new URLSearchParams(window.location.search).get("tab") ?? "pipeline");
 
   const fetchData = useCallback(async () => {
     if (!selectedProjectId) return;
@@ -223,7 +224,7 @@ function SiteHubContent() {
       {/* My Site Tasks */}
       <MyTasksSection userRole={userRole} projectId={selectedProjectId} phaseFilter={["Site Installation", "Finishing"]} title="My Site Tasks" showProjectName={false} />
 
-      <Tabs defaultValue="pipeline" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="pipeline" className="gap-1.5"><Truck className="h-4 w-4" /> Dispatch Pipeline</TabsTrigger>

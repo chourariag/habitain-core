@@ -44,7 +44,7 @@ const sectionConfig: NavSection[] = [
     items: [
       { section: "production", to: "/capacity", labelKey: "nav.capacityPlanning", icon: BarChart3, roles: CAPACITY_ROLES, module: "factory" },
       { section: "production", to: "/production?tab=modules", labelKey: "nav.factoryFloor", icon: Factory, module: "factory" },
-      { section: "production", to: "/labour", labelKey: "nav.hr", icon: Users, featureFlag: "labour" },
+      { section: "site", to: "/site-hub?tab=labour", labelKey: "nav.hr", icon: Users, featureFlag: "labour" },
       { section: "production", to: "/factory/floor-map", labelKey: "nav.floorMap", icon: Map, module: "factory" },
       { section: "production", to: "/qc", labelKey: "nav.qcNcr", icon: ClipboardCheck, module: "qc" },
       { section: "production", to: "/dispatch-delivery", labelKey: "nav.dispatchDelivery", icon: Truck, module: "dispatch" },
@@ -73,7 +73,7 @@ const sectionConfig: NavSection[] = [
   {
     key: "design", labelKey: "nav.design",
     items: [
-      { section: "design", to: "/design", labelKey: "nav.projects", icon: Compass, module: "design", featureFlag: "design" },
+      { section: "design", to: "/design", labelKey: "nav.projects", icon: Compass, module: "design", featureFlag: "design_schedule" },
       { section: "design", to: "/design/schedule", labelKey: "nav.designSchedule", icon: ClipboardList, module: "design", featureFlag: "design_schedule" },
       { section: "design", to: "/design?tab=dq-register", labelKey: "nav.designQueries", icon: MessageSquare, module: "design" },
     ],
