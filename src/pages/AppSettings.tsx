@@ -157,7 +157,7 @@ export default function AppSettings() {
           <div>
             <h2 className="font-display text-lg font-bold" style={{ color: "#1A1A1A" }}>Location Management</h2>
             <p className="text-xs mt-1" style={{ color: "#666" }}>
-              Configure GPS coordinates for each work location. When GPS verification is disabled, employees can check in with location name only.
+              GPS location is required for every employee check-in. Geofence verification can be configured for each work location.
             </p>
           </div>
 
@@ -184,7 +184,7 @@ export default function AppSettings() {
               <HardHat className="h-4 w-4" style={{ color: "#D4860A" }} /> Site (project-specific)
             </h3>
             <p className="text-xs mt-2" style={{ color: "#666" }}>
-              Site GPS coordinates are configured per project on the Project Detail page (Latitude, Longitude, Radius fields under Site Information). When not set, site check-ins record manually without GPS verification.
+              Site GPS coordinates are configured per project on the Project Detail page. Current GPS location is still required when a site geofence is not set.
             </p>
           </div>
         </div>
