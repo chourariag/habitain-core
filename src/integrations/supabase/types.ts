@@ -1991,7 +1991,10 @@ export type Database = {
           module_id: string | null
           notes: string | null
           project_id: string
+          report_status: string | null
           reviewed_by: string | null
+          site_clean: boolean
+          site_clean_photo_path: string | null
           stage: string | null
           submitted_at: string | null
           submitted_by: string
@@ -2018,7 +2021,10 @@ export type Database = {
           module_id?: string | null
           notes?: string | null
           project_id: string
+          report_status?: string | null
           reviewed_by?: string | null
+          site_clean?: boolean
+          site_clean_photo_path?: string | null
           stage?: string | null
           submitted_at?: string | null
           submitted_by: string
@@ -2045,7 +2051,10 @@ export type Database = {
           module_id?: string | null
           notes?: string | null
           project_id?: string
+          report_status?: string | null
           reviewed_by?: string | null
+          site_clean?: boolean
+          site_clean_photo_path?: string | null
           stage?: string | null
           submitted_at?: string | null
           submitted_by?: string
@@ -7078,6 +7087,7 @@ export type Database = {
           measurement_id: string
           pct_complete_snapshot: number
           photo_urls: string[]
+          remarks: string | null
           stage_name: string | null
           today_qty: number
           value_today_snapshot: number
@@ -7093,6 +7103,7 @@ export type Database = {
           measurement_id: string
           pct_complete_snapshot?: number
           photo_urls?: string[]
+          remarks?: string | null
           stage_name?: string | null
           today_qty?: number
           value_today_snapshot?: number
@@ -7108,6 +7119,7 @@ export type Database = {
           measurement_id?: string
           pct_complete_snapshot?: number
           photo_urls?: string[]
+          remarks?: string | null
           stage_name?: string | null
           today_qty?: number
           value_today_snapshot?: number
@@ -10046,6 +10058,7 @@ export type Database = {
           task_name: string
           task_type: Database["public"]["Enums"]["task_template_type"]
           updated_at: string
+          work_category: string
         }
         Insert: {
           actual_finish_date?: string | null
@@ -10092,6 +10105,7 @@ export type Database = {
           task_name: string
           task_type?: Database["public"]["Enums"]["task_template_type"]
           updated_at?: string
+          work_category?: string
         }
         Update: {
           actual_finish_date?: string | null
@@ -10138,6 +10152,7 @@ export type Database = {
           task_name?: string
           task_type?: Database["public"]["Enums"]["task_template_type"]
           updated_at?: string
+          work_category?: string
         }
         Relationships: [
           {
@@ -13216,6 +13231,239 @@ export type Database = {
           },
         ]
       }
+      site_report_edit_log: {
+        Row: {
+          edited_at: string
+          edited_by: string
+          field: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          project_id: string
+          report_id: string
+        }
+        Insert: {
+          edited_at?: string
+          edited_by: string
+          field: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          project_id: string
+          report_id: string
+        }
+        Update: {
+          edited_at?: string
+          edited_by?: string
+          field?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          project_id?: string
+          report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_report_edit_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_edit_log_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_measurements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_report_labour: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          hours: number
+          id: string
+          project_id: string
+          report_id: string
+          task_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          hours?: number
+          id?: string
+          project_id: string
+          report_id: string
+          task_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          hours?: number
+          id?: string
+          project_id?: string
+          report_id?: string
+          task_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_report_labour_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_labour_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_measurements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_labour_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_report_photos: {
+        Row: {
+          exif_taken_at: string | null
+          flags: string[]
+          from_gallery: boolean
+          gps_lat: number | null
+          gps_lng: number | null
+          gps_source: string
+          id: string
+          is_archived: boolean
+          kind: string
+          project_id: string
+          report_id: string
+          storage_path: string
+          uploaded_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          exif_taken_at?: string | null
+          flags?: string[]
+          from_gallery?: boolean
+          gps_lat?: number | null
+          gps_lng?: number | null
+          gps_source?: string
+          id?: string
+          is_archived?: boolean
+          kind: string
+          project_id: string
+          report_id: string
+          storage_path: string
+          uploaded_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          exif_taken_at?: string | null
+          flags?: string[]
+          from_gallery?: boolean
+          gps_lat?: number | null
+          gps_lng?: number | null
+          gps_source?: string
+          id?: string
+          is_archived?: boolean
+          kind?: string
+          project_id?: string
+          report_id?: string
+          storage_path?: string
+          uploaded_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_report_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_photos_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_measurements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_report_task_progress: {
+        Row: {
+          completion_percentage_after: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          project_id: string
+          remarks: string | null
+          report_id: string
+          task_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          completion_percentage_after?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id: string
+          remarks?: string | null
+          report_id: string
+          task_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          completion_percentage_after?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id?: string
+          remarks?: string | null
+          report_id?: string
+          task_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_report_task_progress_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_task_progress_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_measurements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_task_progress_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_schedules: {
         Row: {
           approved_at: string | null
@@ -15820,6 +16068,33 @@ export type Database = {
     }
     Functions: {
       _cpt_validate: { Args: { _token: string }; Returns: string }
+      _site_report_check_window: {
+        Args: { p_date: string; p_project_id: string }
+        Returns: undefined
+      }
+      _site_report_log: {
+        Args: {
+          _field: string
+          _new: string
+          _old: string
+          _project: string
+          _report: string
+        }
+        Returns: undefined
+      }
+      add_site_report_photo: {
+        Args: {
+          p_exif_taken_at: string
+          p_from_gallery: boolean
+          p_gps_lat: number
+          p_gps_lng: number
+          p_gps_source: string
+          p_kind: string
+          p_report_id: string
+          p_storage_path: string
+        }
+        Returns: Json
+      }
       amc_followup_daily_reminders: { Args: never; Returns: undefined }
       apply_record_edit: {
         Args: {
@@ -15961,6 +16236,10 @@ export type Database = {
       can_view_profile_pii: { Args: { _user_id: string }; Returns: boolean }
       can_view_quotations: { Args: { _user_id: string }; Returns: boolean }
       can_view_work_orders: { Args: { _user_id: string }; Returns: boolean }
+      can_write_site_report: {
+        Args: { _project_id: string; _uid: string }
+        Returns: boolean
+      }
       cancel_kickoff_meeting: {
         Args: { _kickoff_id: string; _remarks: string }
         Returns: Json
@@ -16406,6 +16685,10 @@ export type Database = {
         }[]
       }
       get_scope_signoff_by_token: { Args: { p_token: string }; Returns: Json }
+      get_site_report: {
+        Args: { p_date: string; p_project_id: string }
+        Returns: Json
+      }
       get_sole_role_holders: {
         Args: never
         Returns: {
@@ -16489,6 +16772,7 @@ export type Database = {
         Returns: undefined
       }
       required_gfc_for_stage: { Args: { _stage: string }; Returns: string }
+      safe_uuid: { Args: { _t: string }; Returns: string }
       save_labour_attendance: {
         Args: {
           p_project_id: string
@@ -16497,6 +16781,10 @@ export type Database = {
           p_work_date: string
         }
         Returns: number
+      }
+      save_site_report_draft: {
+        Args: { p_date: string; p_payload: Json; p_project_id: string }
+        Returns: string
       }
       scan_offboarding_impact: {
         Args: { _profile_id: string }
@@ -16514,6 +16802,7 @@ export type Database = {
         Args: { _enabled: boolean; _key: string }
         Returns: boolean
       }
+      site_report_today: { Args: never; Returns: string }
       site_schedule_dispatch_reminders: { Args: never; Returns: number }
       storage_object_project_allowed: {
         Args: { _object_name: string; _uid: string }
@@ -16532,6 +16821,7 @@ export type Database = {
         }
         Returns: string
       }
+      submit_site_report: { Args: { p_report_id: string }; Returns: Json }
       sync_deal_win: {
         Args: {
           p_create_lead?: boolean

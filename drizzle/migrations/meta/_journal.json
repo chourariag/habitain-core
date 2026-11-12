@@ -127,6 +127,13 @@
       "when": 1794510564441,
       "tag": "0017_labour_codes_and_attendance_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794516737244,
+      "tag": "0018_p4_daily_site_report",
+      "breakpoints": true
     }
   ]
 }
