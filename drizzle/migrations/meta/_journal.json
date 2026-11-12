@@ -64,6 +64,13 @@
       "when": 1794504843802,
       "tag": "0008_project_setup_restrict_rpc_entrypoints",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794505857028,
+      "tag": "0009_restrict_project_scoped_select_policies",
+      "breakpoints": true
     }
   ]
 }
