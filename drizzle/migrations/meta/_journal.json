@@ -92,6 +92,13 @@
       "when": 1794508490132,
       "tag": "0012_secure_labour_attendance_actions",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794509087159,
+      "tag": "0013_fix_labour_master_security_and_audit",
+      "breakpoints": true
     }
   ]
 }
