@@ -76,7 +76,6 @@ export function validateLabourMasterRows(
       errors.push(`Row ${line}: remove the example row before upload.`);
       continue;
     }
-    if (!workerCode) errors.push(`Row ${line}: worker_code is required.`);
     if (!name) errors.push(`Row ${line}: name is required.`);
     if (!skillType) errors.push(`Row ${line}: skill_type is required.`);
     if (contractor && !knownContractors.has(contractor.toLowerCase())) {
