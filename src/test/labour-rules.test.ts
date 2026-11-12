@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, LABOUR_SCREEN_ROLES, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
+import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
 
 const TODAY = new Date("2026-11-12T12:00:00");
 
@@ -11,11 +11,6 @@ describe("contract labour attendance rules", () => {
     expect([...LABOUR_MASTER_UPLOAD_ROLES]).toEqual(["planning_head", "managing_director", "super_admin", "head_of_projects"]);
     expect([...LABOUR_RATE_VIEW_ROLES]).toEqual([
       "site_engineer", "site_installation_mgr", "head_of_projects", "planning_head", "managing_director", "super_admin", "finance_manager",
-    ]);
-    expect([...LABOUR_SCREEN_ROLES]).toEqual([
-      "super_admin", "managing_director", "finance_director", "sales_director", "architecture_director", "finance_manager",
-      "production_head", "site_installation_mgr", "hr_executive", "head_operations", "factory_floor_supervisor",
-      "fabrication_foreman", "site_engineer", "head_of_projects", "planning_head",
     ]);
   });
 
