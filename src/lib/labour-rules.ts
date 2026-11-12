@@ -16,7 +16,15 @@ export const LABOUR_MASTER_UPLOAD_ROLES = [
   "head_of_projects",
 ] as const;
 
-export const LABOUR_MASTER_VIEW_ROLES = [...LABOUR_ATTENDANCE_ROLES, "finance_manager"] as const;
+export const LABOUR_RATE_VIEW_ROLES = [
+  "site_engineer",
+  "site_installation_mgr",
+  "head_of_projects",
+  "planning_head",
+  "managing_director",
+  "super_admin",
+  "finance_manager",
+] as const;
 
 export function isValidLabourHours(hours: number): boolean {
   return Number.isFinite(hours) && hours >= 0 && hours <= 16;
@@ -26,6 +34,10 @@ export function requiresLabourAttendanceReason(workDate: string, today: Date): b
   const todayISO = format(today, "yyyy-MM-dd");
   const oldestAllowedWithoutReason = format(subDays(parseISO(todayISO), 2), "yyyy-MM-dd");
   return workDate < oldestAllowedWithoutReason;
+}
+
+export function requiresReasonForSavedAttendanceEdit(savedHours: number | null, nextHours: number): boolean {
+  return savedHours !== null && savedHours !== nextHours;
 }
 
 export function attendanceWarningLabels(warning: {

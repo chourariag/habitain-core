@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attendanceWarningLabels, isValidLabourHours, requiresLabourAttendanceReason } from "@/lib/labour-rules";
+import { attendanceWarningLabels, isValidLabourHours, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
 
 const TODAY = new Date("2026-11-12T12:00:00");
 
@@ -14,6 +14,12 @@ describe("contract labour attendance rules", () => {
   it("requires a reason only for work dates earlier than two days ago", () => {
     expect(requiresLabourAttendanceReason("2026-11-10", TODAY)).toBe(false);
     expect(requiresLabourAttendanceReason("2026-11-09", TODAY)).toBe(true);
+  });
+
+  it("requires a reason whenever saved attendance changes, including same-day edits", () => {
+    expect(requiresReasonForSavedAttendanceEdit(8, 7)).toBe(true);
+    expect(requiresReasonForSavedAttendanceEdit(8, 8)).toBe(false);
+    expect(requiresReasonForSavedAttendanceEdit(null, 8)).toBe(false);
   });
 
   it("keeps cross-project, over-twelve-hour, and deactivated-worker conditions as warnings", () => {

@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { rowsFromLabourMasterSheet, validateLabourMasterRows, type LabourMasterImportRow } from "@/lib/labour-master-excel";
-import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_MASTER_VIEW_ROLES, requiresLabourAttendanceReason } from "@/lib/labour-rules";
+import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
 const MASTER_HEADERS = ["worker_code", "name", "contractor", "skill_type", "hourly_rate", "monthly_salary", "status"];
 
 type LabourWorker = {
@@ -66,7 +66,8 @@ export default function LabourPage() {
   const [loading, setLoading] = useState(true);
   const canManageAttendance = LABOUR_ATTENDANCE_ROLES.includes(role as (typeof LABOUR_ATTENDANCE_ROLES)[number]);
   const canUploadMaster = LABOUR_MASTER_UPLOAD_ROLES.includes(role as (typeof LABOUR_MASTER_UPLOAD_ROLES)[number]);
-  const canViewMaster = LABOUR_MASTER_VIEW_ROLES.includes(role as (typeof LABOUR_MASTER_VIEW_ROLES)[number]);
+  const canViewMaster = Boolean(role);
+  const canViewRates = LABOUR_RATE_VIEW_ROLES.includes(role as (typeof LABOUR_RATE_VIEW_ROLES)[number]);
 
   useEffect(() => {
     if (!canManageAttendance) setTab("master");
@@ -75,15 +76,17 @@ export default function LabourPage() {
   const loadMaster = useCallback(async () => {
     if (!canViewMaster) return;
     setLoading(true);
-    const [{ data: directory, error: directoryError }, { data: rateData }] = await Promise.all([
-      supabase.from("labour_worker_directory").select("worker_id,worker_code,name,contractor,skill_type,status,deactivated_at").order("worker_code"),
-      supabase.from("labour_worker_rates").select("worker_id,worker_code,name,contractor,skill_type,status,hourly_rate,monthly_salary,effective_hourly_rate").order("worker_code"),
-    ]);
+    const directoryQuery = supabase.from("labour_worker_directory").select("worker_id,worker_code,name,contractor,skill_type,status,deactivated_at").order("worker_code");
+    const rateQuery = canViewRates
+      ? supabase.from("labour_worker_rates").select("worker_id,worker_code,name,contractor,skill_type,status,hourly_rate,monthly_salary,effective_hourly_rate").order("worker_code")
+      : Promise.resolve({ data: null, error: null });
+    const [{ data: directory, error: directoryError }, { data: rateData, error: rateError }] = await Promise.all([directoryQuery, rateQuery]);
     if (directoryError) toast.error(directoryError.message);
+    if (rateError) toast.error(rateError.message);
     setWorkers((directory ?? []) as LabourWorker[]);
     setRates((rateData ?? []) as LabourWorker[]);
     setLoading(false);
-  }, [canViewMaster]);
+  }, [canViewMaster, canViewRates]);
 
   useEffect(() => { void loadMaster(); }, [loadMaster]);
 
@@ -109,7 +112,7 @@ export default function LabourPage() {
           onProjectChange={setSelectedProjectId}
           canEdit={canManageAttendance}
         /></TabsContent>}
-        <TabsContent value="master"><MasterTab workers={directory} canUpload={canUploadMaster} onUploaded={loadMaster} /></TabsContent>
+        <TabsContent value="master"><MasterTab workers={directory} canUpload={canUploadMaster} canViewRates={canViewRates} onUploaded={loadMaster} /></TabsContent>
       </Tabs>
     </div>
   );
@@ -191,13 +194,13 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
     if (selectedRows.some((row) => !isValidLabourHours(row.hours))) {
       toast.error("Hours must be between 0 and 16."); return;
     }
-    const oldRecordEdited = selectedRows.some((row) => row.savedHours !== null && row.savedHours !== (row.present ? row.hours : 0));
+    const oldRecordEdited = selectedRows.some((row) => requiresReasonForSavedAttendanceEdit(row.savedHours, row.present ? row.hours : 0));
     const dateIsPast = workDate < todayISO();
     if (requiresLabourAttendanceReason(workDate, new Date()) && !reason.trim()) {
       toast.error("Add a reason for attendance more than two days ago."); return;
     }
-    if (dateIsPast && oldRecordEdited && !reason.trim()) {
-      toast.error("Add a reason for changing saved past attendance."); return;
+    if (oldRecordEdited && !reason.trim()) {
+      toast.error("Add a reason for changing saved attendance."); return;
     }
     const payload = selectedRows.map((row) => ({ worker_id: row.worker.worker_id, hours: row.present ? row.hours : 0 }));
     setSaving(true);
@@ -255,7 +258,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
       )}
       {projectId && searchCandidates.length > 0 && <div className="space-y-2 border-t border-border pt-3"><p className="text-sm font-medium">Add active workers</p>{searchCandidates.slice(0, 30).map((worker) => <div key={worker.worker_id} className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-border p-3"><div className="min-w-0"><div className="break-words text-sm font-medium">{worker.name}</div><div className="break-words text-xs text-muted-foreground">{worker.worker_code} · {worker.contractor ?? "No contractor"} · {worker.skill_type}</div></div><Button size="sm" variant="outline" onClick={() => addVisibleWorker(worker)}>Add</Button></div>)}</div>}
       {canEdit && projectId && <div className="space-y-3 border-t border-border pt-3">
-        {(workDate < todayISO() || workDate < format(subDays(new Date(), 2), "yyyy-MM-dd")) && <div className="space-y-1.5"><Label htmlFor="attendance-reason">Reason for back-dating or editing</Label><Input id="attendance-reason" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Required for older dates or past edits" /></div>}
+        {(workDate < todayISO() || workDate < format(subDays(new Date(), 2), "yyyy-MM-dd") || Object.values(rows).some((row) => requiresReasonForSavedAttendanceEdit(row.savedHours, row.present ? row.hours : 0))) && <div className="space-y-1.5"><Label htmlFor="attendance-reason">Reason for back-dating or editing</Label><Input id="attendance-reason" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Required for dates over two days old or saved-entry edits" /></div>}
         <div className="flex justify-end"><Button onClick={saveAttendance} disabled={saving || !projectId} className="w-full sm:w-auto">{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Save attendance</Button></div>
       </div>}
       {warnings.length > 0 && <div className="space-y-2">{warnings.map((warning, index) => <Alert key={`${warning.workerName}-${index}`}><AlertTriangle className="h-4 w-4" /><AlertTitle>{warning.workerName}</AlertTitle><AlertDescription>{warning.text}</AlertDescription></Alert>)}</div>}
@@ -264,7 +267,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
   );
 }
 
-function MasterTab({ workers, canUpload, onUploaded }: { workers: LabourWorker[]; canUpload: boolean; onUploaded: () => Promise<void> }) {
+function MasterTab({ workers, canUpload, canViewRates, onUploaded }: { workers: LabourWorker[]; canUpload: boolean; canViewRates: boolean; onUploaded: () => Promise<void> }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
   const [pendingRows, setPendingRows] = useState<LabourMasterImportRow[]>([]);
@@ -287,10 +290,15 @@ function MasterTab({ workers, canUpload, onUploaded }: { workers: LabourWorker[]
 
   const downloadCurrent = async () => {
     setBusy(true);
-    const { data, error } = await supabase.from("labour_worker_rates").select("worker_code,name,contractor,skill_type,hourly_rate,monthly_salary,status").order("worker_code");
+    const query = canViewRates
+      ? supabase.from("labour_worker_rates").select("worker_code,name,contractor,skill_type,hourly_rate,monthly_salary,status").order("worker_code")
+      : supabase.from("labour_worker_directory").select("worker_code,name,contractor,skill_type,status").order("worker_code");
+    const { data, error } = await query;
     setBusy(false);
     if (error) { toast.error(error.message); return; }
-    const rows = (data ?? []).map((worker) => [worker.worker_code, worker.name, worker.contractor, worker.skill_type, worker.hourly_rate, worker.monthly_salary, worker.status]);
+    const rows = canViewRates
+      ? (data ?? []).map((worker) => [worker.worker_code, worker.name, worker.contractor, worker.skill_type, worker.hourly_rate, worker.monthly_salary, worker.status])
+      : (data ?? []).map((worker) => [worker.worker_code, worker.name, worker.contractor, worker.skill_type, "", "", worker.status]);
     downloadWorkbook(rows, "Labour_Master_Current.xlsx");
   };
 
@@ -356,7 +364,7 @@ function MasterTab({ workers, canUpload, onUploaded }: { workers: LabourWorker[]
             <div className="col-span-2 min-w-0 sm:col-span-1"><div className="break-words font-medium">{worker.name}</div><div className="break-words text-xs text-muted-foreground">{worker.worker_code}</div></div>
             <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Contractor</div><div className="break-words text-sm">{worker.contractor ?? "—"}</div></div>
             <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Skill</div><div className="break-words text-sm">{worker.skill_type ?? "—"}</div></div>
-            <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Rate / hour</div><div className="break-words text-sm">{inr(hourlyRate)}</div></div>
+            {canViewRates && <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Rate / hour</div><div className="break-words text-sm">{inr(hourlyRate)}</div></div>}
             <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Status</div><Badge variant={worker.status === "active" ? "secondary" : "outline"}>{worker.status?.replace(/_/g, " ") ?? "—"}</Badge></div>
           </div>;
         })}
