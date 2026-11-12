@@ -369,6 +369,12 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
               {data.can_manage_elevations && <Link to={`/projects/${projectId}?tab=setup`} className="text-primary underline">Open project Setup to add elevations</Link>}
             </div>
           ) : elevations.map((e) => <PhotoSlot key={e.id} kind={`elevation:${e.id}`} label={e.name} sub={e.drawing_ref} />)}
+          {data.photos.filter((p) => p.kind.startsWith("elevation") && !(p.kind === "elevation" && elevations.some((e) => e.id === p.elevation_id))).map((p) => (
+            <div key={p.id} className="rounded-md border border-border p-2 space-y-1 min-w-0">
+              <span className="text-sm font-semibold">{PHOTO_LABEL[p.kind] ?? "Earlier elevation"}</span>
+              {thumbs[slotKey(p)] && <img src={thumbs[slotKey(p)]} alt="Stored elevation photo" className="w-full aspect-video object-cover rounded" />}
+            </div>
+          ))}
         </CardContent>
       </Card>
 
