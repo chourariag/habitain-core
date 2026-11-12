@@ -25,6 +25,7 @@ import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
 import { ProjectPLTab } from "@/components/projects/ProjectPLTab";
 import { ProjectSetupWorkbook } from "@/components/projects/ProjectSetupWorkbook";
+import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
 import { ProjectSetupApprovalSection } from "@/components/projects/ProjectSetupApprovalSection";
 import { ProjectDesignScheduleTab } from "@/components/projects/ProjectDesignScheduleTab";
 import { PreProductionChecklist } from "@/components/projects/PreProductionChecklist";
@@ -41,6 +42,7 @@ const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
 const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admin", "managing_director"];
 const ARCHIVE_REQUEST_ROLES = ["managing_director", "super_admin", "finance_director", "sales_director", "architecture_director"];
 const PL_VIEW_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director", "head_operations", "finance_manager", "accounts_executive"];
+const LEGACY_PROJECT_SETUP_UPLOAD_VISIBLE = false;
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -205,6 +207,9 @@ export default function ProjectDetail() {
 
       <PreProductionChecklist projectId={id!} division={proj.division ?? null} />
 
+      {LEGACY_PROJECT_SETUP_UPLOAD_VISIBLE && !isAds && flags.isEnabled("project_setup") && (
+        <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} projectType={proj.division ?? null} onImported={fetchData} />
+      )}
 
       {!isAds && flags.isEnabled("project_setup") && (
         <ProjectSetupApprovalSection

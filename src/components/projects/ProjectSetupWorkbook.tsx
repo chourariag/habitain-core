@@ -96,7 +96,7 @@ function normalizeHeader(value: unknown) {
 function sheetRows(workbook: XLSX.WorkBook, sheetName: string, columns: string[]): { rows: SetupSheetRow[]; errors: string[] } {
   const worksheet = workbook.Sheets[sheetName];
   if (!worksheet) return { rows: [], errors: [`Missing “${sheetName}” sheet.`] };
-  const matrix = XLSX.utils.sheet_to_json<unknown[]>(worksheet, { header: 1, defval: "", raw: true, blankrows: false });
+  const matrix = XLSX.utils.sheet_to_json<unknown[]>(worksheet, { header: 1, defval: "", raw: true, blankrows: true });
   const header = (matrix[0] ?? []).map(normalizeHeader);
   const missing = columns.filter((column) => !header.includes(column));
   if (missing.length) return { rows: [], errors: [`${sheetName} sheet is missing columns: ${missing.join(", ")}.`] };
