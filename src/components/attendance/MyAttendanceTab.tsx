@@ -34,10 +34,11 @@ export function MyAttendanceTab({ userRole }: Props) {
     return () => { cancelled = true; };
   }, [user, month]);
 
-  const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) })
-    .filter((day) => day.getDay() !== 0)
-    .reverse();
   const today = new Date();
+  const days = eachDayOfInterval({ start: startOfMonth(month), end: endOfMonth(month) })
+    .filter((day) => !isBefore(today, day) || isSameDay(day, today))
+    .filter((day) => day.getDay() !== 0 || isSameDay(day, today))
+    .reverse();
 
   return (
     <div className="space-y-4">

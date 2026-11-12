@@ -244,7 +244,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
               <div className="flex items-center gap-2"><Switch checked={row.present} disabled={!canEdit} onCheckedChange={(checked) => updateRow(worker.worker_id, { present: checked })} aria-label={`Present: ${worker.name ?? "worker"}`} /></div>
               <div className="min-w-0"><div className="break-words font-medium">{worker.name}</div><div className="break-words text-xs text-muted-foreground">{worker.worker_code} · {worker.contractor ?? "No contractor"} · {worker.skill_type}</div>{worker.status !== "active" && <Badge variant="outline" className="mt-1">{worker.status?.replace(/_/g, " ")}</Badge>}</div>
               <div className="space-y-1"><Label className="text-xs" htmlFor={`hours-${worker.worker_id}`}>Hours</Label><Input id={`hours-${worker.worker_id}`} type="number" min={0} max={16} step="0.5" value={row.hours} disabled={!canEdit || !row.present} onChange={(event) => updateRow(worker.worker_id, { hours: Number(event.target.value) })} /></div>
-              <div className="text-xs text-muted-foreground">Amount <span className="block break-words font-semibold text-foreground">{inr(row.present ? row.hours * hourlyRate / 8 : 0)}</span></div>
+              <div className="text-xs text-muted-foreground">Amount <span className="block break-words font-semibold text-foreground">{inr(row.present ? row.hours * hourlyRate : 0)}</span></div>
             </div>;
           })}
         </div>
