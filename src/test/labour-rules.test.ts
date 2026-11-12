@@ -1,9 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { attendanceWarningLabels, isValidLabourHours, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
+import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
 
 const TODAY = new Date("2026-11-12T12:00:00");
 
 describe("contract labour attendance rules", () => {
+  it("matches the explicitly requested attendance, upload, and rate-view roles", () => {
+    expect([...LABOUR_ATTENDANCE_ROLES]).toEqual([
+      "site_engineer", "site_installation_mgr", "head_of_projects", "planning_head", "managing_director", "super_admin",
+    ]);
+    expect([...LABOUR_MASTER_UPLOAD_ROLES]).toEqual(["planning_head", "managing_director", "super_admin", "head_of_projects"]);
+    expect([...LABOUR_RATE_VIEW_ROLES]).toEqual([
+      "site_engineer", "site_installation_mgr", "head_of_projects", "planning_head", "managing_director", "super_admin", "finance_manager",
+    ]);
+  });
+
   it("allows hours from zero through sixteen and rejects values outside the range", () => {
     expect(isValidLabourHours(0)).toBe(true);
     expect(isValidLabourHours(16)).toBe(true);
