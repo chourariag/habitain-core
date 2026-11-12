@@ -320,6 +320,8 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
   const filteredTasks = useMemo(() => tasks.filter((row) => matchesSearch(search, [row.task_id_in_schedule, row.task_name, row.responsible_role, row.status])), [tasks, search]);
   const filteredBoq = useMemo(() => boqRows.filter((row) => matchesSearch(search, [row.sno, row.item_description, row.category, row.unit, row.task_code, row.task_name])), [boqRows, search]);
   const filteredMaterials = useMemo(() => materialRows.filter((row) => matchesSearch(search, [row.item_id, row.material_description, row.section, row.unit, row.task_code, row.task_name])), [materialRows, search]);
+  const unmappedBoqCount = unmappedRows.filter((row) => row.section === "BOQ").length;
+  const unmappedMaterialCount = unmappedRows.filter((row) => row.section === "Material Plan").length;
 
   if (loading) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
@@ -377,7 +379,8 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
 
       <section className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <span className="font-medium">Unmapped ({unmappedRows.length})</span>
+          <span className="font-medium">BOQ Unmapped ({unmappedBoqCount})</span>
+          <span className="font-medium">Material Plan Unmapped ({unmappedMaterialCount})</span>
           {unmappedRows.length > 0 && (
             <Button variant="outline" size="sm" onClick={downloadUnmapped} className="max-w-full gap-2">
               <Download className="h-4 w-4 shrink-0" /> Download list
