@@ -57,7 +57,7 @@ export default function LabourPage() {
   const canViewRates = LABOUR_RATE_VIEW_ROLES.includes(role as (typeof LABOUR_RATE_VIEW_ROLES)[number]);
 
   useEffect(() => {
-    if (!canManageAttendance) setTab("master");
+    setTab(canManageAttendance ? "attendance" : "master");
   }, [canManageAttendance]);
 
   const loadMaster = useCallback(async () => {
