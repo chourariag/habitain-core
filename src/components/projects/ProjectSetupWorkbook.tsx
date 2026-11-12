@@ -343,7 +343,7 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
                 <span className="max-w-full break-all text-xs text-muted-foreground">{row.task_id_in_schedule || "No task code"}</span>
               </div>
               <p className="break-words text-sm text-muted-foreground">{displayDate(row.planned_start_date)} – {displayDate(row.planned_finish_date)} · {row.responsible_role || "Role unassigned"}</p>
-              <p className="break-words text-xs text-muted-foreground">{row.status} · {Number(row.completion_percentage) || 0}%</p>
+              <p className="break-words text-xs text-muted-foreground">{row.status}</p>
             </article>
           ))}
           {filteredTasks.length === 0 && <p className="py-6 text-sm text-muted-foreground">No schedule rows match this search.</p>}
