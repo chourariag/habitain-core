@@ -43,6 +43,13 @@
       "when": 1794503893860,
       "tag": "0005_project_setup_status_reader",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794504624620,
+      "tag": "0006_project_setup_upload_validation",
+      "breakpoints": true
     }
   ]
 }

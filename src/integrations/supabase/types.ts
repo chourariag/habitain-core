@@ -15719,6 +15719,15 @@ export type Database = {
         }
         Returns: Json
       }
+      commit_project_setup_upload_validated: {
+        Args: {
+          p_boq_rows: Json
+          p_material_rows: Json
+          p_project_id: string
+          p_schedule_rows: Json
+        }
+        Returns: Json
+      }
       confirm_kickoff_meeting: {
         Args: {
           _kickoff_id: string
