@@ -44,19 +44,6 @@ type AttendanceWarning = { worker_id: string; has_other_project: boolean; total_
 const todayISO = () => format(new Date(), "yyyy-MM-dd");
 const inr = (value: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(value);
 
-function nextWorkerCodes(rows: ReturnType<typeof rowsFromLabourMasterSheet>, existing: LabourWorker[]) {
-  let next = existing.reduce((max, worker) => {
-    const match = worker.worker_code?.match(/^LW-(\d+)$/i);
-    return match ? Math.max(max, Number(match[1])) : max;
-  }, 0) + 1;
-  return rows.map((row) => {
-    const code = String(row.values.worker_code ?? "").trim();
-    if (code) return row;
-    const workerCode = `LW-${String(next++).padStart(3, "0")}`;
-    return { ...row, values: { ...row.values, worker_code: workerCode } };
-  });
-}
-
 export default function LabourPage() {
   const { projects, selectedProjectId, setSelectedProjectId } = useProjectContext();
   const { role } = useUserRole();
@@ -202,7 +189,8 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
     if (oldRecordEdited && !reason.trim()) {
       toast.error("Add a reason for changing saved attendance."); return;
     }
-    const payload = selectedRows.map((row) => ({ worker_id: row.worker.worker_id, hours: row.present ? row.hours : 0 }));
+    const rowsToSave = selectedRows.filter((row) => row.present || row.savedHours !== null);
+    const payload = rowsToSave.map((row) => ({ worker_id: row.worker.worker_id, hours: row.present ? row.hours : 0 }));
     setSaving(true);
     const { data: warningRows, error: warningError } = await supabase.rpc("get_labour_attendance_warnings", {
       p_project_id: projectId,
@@ -215,7 +203,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
       return;
     }
     const warningsByWorker = new Map(((warningRows ?? []) as AttendanceWarning[]).map((warning) => [warning.worker_id, warning]));
-    const generatedWarnings = selectedRows.flatMap((row) => {
+    const generatedWarnings = rowsToSave.flatMap((row) => {
       const warning = warningsByWorker.get(row.worker.worker_id);
       if (!warning || !row.present) return [];
       const labels = attendanceWarningLabels(warning);
@@ -297,9 +285,10 @@ function MasterTab({ workers, canUpload, canViewRates, onUploaded }: { workers: 
     const { data, error } = await query;
     setBusy(false);
     if (error) { toast.error(error.message); return; }
+    const exportRows = (data ?? []) as Array<Record<string, string | number | null>>;
     const rows = canViewRates
-      ? (data ?? []).map((worker) => [worker.worker_code, worker.name, worker.contractor, worker.skill_type, worker.hourly_rate, worker.monthly_salary, worker.status])
-      : (data ?? []).map((worker) => [worker.worker_code, worker.name, worker.contractor, worker.skill_type, "", "", worker.status]);
+      ? exportRows.map((worker) => [worker.worker_code, worker.name, worker.contractor, worker.skill_type, worker.hourly_rate, worker.monthly_salary, worker.status])
+      : exportRows.map((worker) => [worker.worker_code, worker.name, worker.contractor, worker.skill_type, "", "", worker.status]);
     downloadWorkbook(rows, "Labour_Master_Current.xlsx");
   };
 
@@ -314,7 +303,7 @@ function MasterTab({ workers, canUpload, canViewRates, onUploaded }: { workers: 
       const sheet = workbook.Sheets["Labour Master"] ?? workbook.Sheets[workbook.SheetNames[0] ?? ""];
       if (!sheet) throw new Error("The workbook needs a Labour Master sheet.");
       const grid = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, raw: false, defval: "" });
-      const parsedRows = nextWorkerCodes(rowsFromLabourMasterSheet(grid), workers);
+      const parsedRows = rowsFromLabourMasterSheet(grid);
       if (parsedRows.length === 0) throw new Error("No worker rows were found.");
       const validation = validateLabourMasterRows(parsedRows, workers, [...new Set(workers.map((worker) => worker.contractor).filter((name): name is string => Boolean(name)))]);
       setErrors(validation.errors);
