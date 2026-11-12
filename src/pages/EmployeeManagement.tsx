@@ -160,29 +160,23 @@ export default function EmployeeManagement() {
         </div>
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <p className="text-sm text-muted-foreground">Create, edit, deactivate and reset passwords for all HStack employees.</p>
-          <div className="flex flex-nowrap gap-2 max-sm:gap-1.5 max-sm:w-full max-sm:justify-between">
-            <Button variant="outline" onClick={() => setSeedOpen(true)} className="max-sm:h-8 max-sm:px-2 max-sm:text-xs">
-              <Sparkles className="h-4 w-4 max-sm:h-3 max-sm:w-3 mr-2 max-sm:mr-1" />
-              <span className="hidden sm:inline">Bulk Seed</span>
-              <span className="sm:hidden">Seed</span>
-            </Button>
+          <div className="flex flex-nowrap gap-2 max-sm:gap-1.5 max-sm:w-full max-sm:justify-end">
             <Button onClick={() => setCreateOpen(true)} className="max-sm:h-8 max-sm:px-2 max-sm:text-xs">
               <UserPlus className="h-4 w-4 max-sm:h-3 max-sm:w-3 mr-2 max-sm:mr-1" />
               <span className="hidden sm:inline">New Employee</span>
               <span className="sm:hidden">New</span>
             </Button>
-            {(role === "super_admin" || role === "managing_director") && <RemoveAllButton onCleared={loadRows} compact />}
           </div>
         </div>
       </header>
 
       <div className="flex flex-wrap gap-3 items-center bg-[#F7F7F7] border rounded-lg p-3">
-        <div className="relative flex-1 min-w-[240px]">
+        <div className="relative flex-1 min-w-0 basis-full sm:basis-auto sm:min-w-[240px]">
           <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name, email, department…" className="pl-9 bg-white" />
         </div>
         <Select value={filterRole} onValueChange={setFilterRole}>
-          <SelectTrigger className="w-[220px] bg-white"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[220px] bg-white"><SelectValue /></SelectTrigger>
           <SelectContent className="max-h-72">
             <SelectItem value="all">All roles</SelectItem>
             {Object.entries(ROLE_TIERS).map(([tier, roles]) => (
@@ -194,7 +188,7 @@ export default function EmployeeManagement() {
           </SelectContent>
         </Select>
         <Select value={filterDept} onValueChange={setFilterDept}>
-          <SelectTrigger className="w-[200px] bg-white"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[200px] bg-white"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All departments</SelectItem>
             {departments.map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
@@ -210,7 +204,33 @@ export default function EmployeeManagement() {
         </TabsList>
 
         <TabsContent value="table" className="mt-0">
-          <div className="bg-white border rounded-lg overflow-hidden">
+          <ul className="space-y-2 md:hidden">
+            {loading ? (
+              <li className="text-center py-10"><Loader2 className="h-5 w-5 animate-spin inline" /></li>
+            ) : filtered.length === 0 ? (
+              <li className="text-center py-10 text-sm text-muted-foreground">No employees match these filters.</li>
+            ) : filtered.map((r) => (
+              <li key={r.id} className="min-w-0 rounded-lg border bg-white p-3 space-y-2">
+                <div className="flex min-w-0 items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="font-semibold break-words">{r.display_name || "—"}</div>
+                    <div className="text-sm text-muted-foreground break-words">{ROLE_LABELS[r.role] || r.role}</div>
+                  </div>
+                  {r.is_active
+                    ? <Badge className="shrink-0" style={{ background: "#E8F2ED", color: "#006039" }}>Active</Badge>
+                    : <Badge className="shrink-0" style={{ background: "#FDE7E9", color: "#F40009" }}>Inactive</Badge>}
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  <Button size="sm" variant="outline" onClick={() => setEditTarget(r)}><Pencil className="h-4 w-4 mr-1" />Edit</Button>
+                  <Button size="sm" variant="outline" onClick={() => setResetTarget(r)}><KeyRound className="h-4 w-4 mr-1" />Reset</Button>
+                  {r.is_active
+                    ? <Button size="sm" variant="outline" onClick={() => setDeactivateTarget(r)}><ShieldOff className="h-4 w-4 mr-1" />Deactivate</Button>
+                    : <Button size="sm" variant="outline" onClick={async () => { await updateEmployee({ user_id: r.auth_user_id, is_active: true }); toast.success("Reactivated"); loadRows(); }}><ShieldCheck className="h-4 w-4 mr-1" />Activate</Button>}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="hidden md:block bg-white border rounded-lg overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -227,7 +247,7 @@ export default function EmployeeManagement() {
                 {loading ? (
                   <TableRow><TableCell colSpan={7} className="text-center py-10"><Loader2 className="h-5 w-5 animate-spin inline" /></TableCell></TableRow>
                 ) : employeeCount === 0 ? (
-                  <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees found. Use Bulk Seed or New Employee to add team members.</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees found. Use New Employee to add team members.</TableCell></TableRow>
                 ) : filtered.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">No employees match these filters.</TableCell></TableRow>
                 ) : filtered.map((r) => {
@@ -264,7 +284,6 @@ export default function EmployeeManagement() {
                         {r.is_active
                           ? <Button size="sm" variant="ghost" title="Deactivate" onClick={() => setDeactivateTarget(r)}><ShieldOff className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
                           : <Button size="sm" variant="ghost" title="Reactivate" onClick={async () => { await updateEmployee({ user_id: r.auth_user_id, is_active: true }); toast.success("Reactivated"); loadRows(); }}><ShieldCheck className="h-4 w-4" style={{ color: "#006039" }} /></Button>}
-                        <Button size="sm" variant="ghost" title="Delete employee" onClick={() => setDeleteTarget(r)}><Trash2 className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -323,8 +342,8 @@ export default function EmployeeManagement() {
                             className={`inline-block h-2.5 w-2.5 rounded-full flex-shrink-0 ${r.is_active ? "bg-[#006039]" : "bg-[#F40009]"}`}
                             title={r.is_active ? "Active" : "Inactive"}
                           />
-                          <div className="font-bold min-w-[140px]">{r.display_name || "—"}</div>
-                          <div className="text-sm text-muted-foreground min-w-[160px]">{ROLE_LABELS[r.role] || r.role}</div>
+                          <div className="font-bold min-w-0 break-words sm:min-w-[140px]">{r.display_name || "—"}</div>
+                          <div className="text-sm text-muted-foreground min-w-0 break-words sm:min-w-[160px]">{ROLE_LABELS[r.role] || r.role}</div>
                           <div className="text-sm text-muted-foreground flex-1 break-all">{r.email || "—"}</div>
                           <div className="flex gap-1 ml-auto">
                             <Button size="sm" variant="ghost" title="Edit" onClick={() => setEditTarget(r)}><Pencil className="h-4 w-4" /></Button>
@@ -332,8 +351,7 @@ export default function EmployeeManagement() {
                             {r.is_active
                               ? <Button size="sm" variant="ghost" title="Deactivate" onClick={() => setDeactivateTarget(r)}><ShieldOff className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
                               : <Button size="sm" variant="ghost" title="Reactivate" onClick={async () => { await updateEmployee({ user_id: r.auth_user_id, is_active: true }); toast.success("Reactivated"); loadRows(); }}><ShieldCheck className="h-4 w-4" style={{ color: "#006039" }} /></Button>}
-                            <Button size="sm" variant="ghost" title="Delete employee" onClick={() => setDeleteTarget(r)}><Trash2 className="h-4 w-4" style={{ color: "#F40009" }} /></Button>
-                          </div>
+                              </div>
                         </li>
                       ))}
                     </ul>

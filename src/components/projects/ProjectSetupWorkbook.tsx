@@ -149,6 +149,14 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
   const [fileErrors, setFileErrors] = useState<string[]>([]);
   const [checking, setChecking] = useState(false);
   const [committing, setCommitting] = useState(false);
+  const validCount = (sheet: string, total: number) => {
+    const bad = new Set<string>();
+    for (const error of validation?.errors ?? []) {
+      const match = error.match(/^(Schedule|BOQ|Material Plan) row (\d+):/);
+      if (match && match[1] === sheet) bad.add(match[2]);
+    }
+    return Math.max(0, total - bad.size);
+  };
   const fileRef = useRef<HTMLInputElement>(null);
   const canUpload = UPLOAD_ROLES.includes(userRole ?? "");
 
@@ -290,9 +298,9 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
             <div className="space-y-3 rounded-md border border-border p-3">
               <h3 className="font-medium">Dry run</h3>
               <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
-                <p>Schedule rows: {workbookRows?.schedule.length ?? 0} ({validation?.prepared.schedule.length ?? 0} valid)</p>
-                <p>BOQ rows: {workbookRows?.boq.length ?? 0} ({validation?.prepared.boq.length ?? 0} valid)</p>
-                <p>Material rows: {workbookRows?.materials.length ?? 0} ({validation?.prepared.materials.length ?? 0} valid)</p>
+                <p>Schedule rows: {workbookRows?.schedule.length ?? 0} ({validCount("Schedule", workbookRows?.schedule.length ?? 0)} valid)</p>
+                <p>BOQ rows: {workbookRows?.boq.length ?? 0} ({validCount("BOQ", workbookRows?.boq.length ?? 0)} valid)</p>
+                <p>Material rows: {workbookRows?.materials.length ?? 0} ({validCount("Material Plan", workbookRows?.materials.length ?? 0)} valid)</p>
               </div>
               {(fileErrors.length > 0 || (validation?.errors.length ?? 0) > 0) ? (
                 <div className="max-h-64 space-y-1 overflow-y-auto text-sm text-destructive" role="alert">
@@ -301,7 +309,7 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
               ) : <p className="text-sm text-muted-foreground">No errors found. No data has been written yet.</p>}
               <Button onClick={() => void commitUpload()} disabled={!validation || !workbookRows || fileErrors.length > 0 || validation.errors.length > 0 || committing || checking} className="max-w-full">
                 {committing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Commit valid rows
+                Commit
               </Button>
             </div>
           )}

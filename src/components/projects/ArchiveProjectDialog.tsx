@@ -26,10 +26,10 @@ export function ArchiveProjectDialog({ open, onOpenChange, projectId, projectNam
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!reason) { toast.error("Reason is required"); return; }
+    const finalReason = (reason === "Other" ? reasonOther : reason).trim();
+    if (finalReason.length < 5) { toast.error("Reason is required (at least 5 characters)"); return; }
     setSubmitting(true);
     try {
-      const finalReason = reason === "Other" ? reasonOther : reason;
       const reqRow: any = await raiseApprovalRequest("archive_project", {
         project_id: projectId,
         project_name: projectName,
@@ -49,7 +49,7 @@ export function ArchiveProjectDialog({ open, onOpenChange, projectId, projectNam
           await insertNotifications(recipients.map((rid) => ({
             recipient_id: rid,
             title: `Archive request — ${projectName}`,
-            body: `Reason: ${finalReason}. Tap to review.`,
+            body: `Project: ${projectName}. Reason: ${finalReason}. Tap to review.`,
             category: "approval_request",
             related_table: "approval_requests",
             related_id: reqRow?.id,
@@ -92,7 +92,7 @@ export function ArchiveProjectDialog({ open, onOpenChange, projectId, projectNam
           </label>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={()=>onOpenChange(false)}>Cancel</Button>
-            <Button type="submit" disabled={submitting}>{submitting ? "Sending…" : "Send for MD Approval"}</Button>
+            <Button type="submit" disabled={submitting || (reason === "Other" ? reasonOther : reason).trim().length < 5}>{submitting ? "Sending…" : "Send for MD Approval"}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

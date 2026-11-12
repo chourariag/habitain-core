@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
-import type { AppRole } from "@/lib/roles";
+import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { Loader2 } from "lucide-react";
 import { HomeTaskList } from "@/components/dashboard/HomeTaskList";
 
@@ -21,7 +21,7 @@ export default function Dashboard() {
     <div className="mx-auto w-full max-w-3xl space-y-6 p-4 md:p-6">
       <div>
         <h1 className="font-display text-2xl font-bold text-foreground">Home</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{userRole ?? ""}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{userRole ? (ROLE_LABELS[userRole] ?? userRole.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())) : ""}</p>
       </div>
       <HomeTaskList userRole={userRole} />
     </div>
