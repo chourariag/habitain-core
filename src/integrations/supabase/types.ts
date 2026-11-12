@@ -16060,6 +16060,14 @@ export type Database = {
         }[]
       }
       get_handover_readiness: { Args: { _project_id: string }; Returns: Json }
+      get_labour_attendance_warnings: {
+        Args: { p_project_id: string; p_rows: Json; p_work_date: string }
+        Returns: {
+          has_other_project: boolean
+          total_hours: number
+          worker_id: string
+        }[]
+      }
       get_labour_rate_for_trade: { Args: { _trade: string }; Returns: number }
       get_labour_workers_full: {
         Args: never
