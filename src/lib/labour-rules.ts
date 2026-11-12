@@ -58,12 +58,15 @@ export function requiresReasonForSavedAttendanceEdit(savedHours: number | null, 
   return savedHours !== null && savedHours !== nextHours;
 }
 
-export function labourEditReasonForSave(
-  savedHours: number | null,
-  nextHours: number,
+export function labourAuditReasonForSave(
+  workDate: string,
+  today: Date,
+  hasSavedChanges: boolean,
   reason: string,
-): string {
-  return requiresReasonForSavedAttendanceEdit(savedHours, nextHours) ? reason.trim() : "";
+): string | null {
+  return requiresLabourAttendanceReason(workDate, today) || hasSavedChanges
+    ? reason.trim() || null
+    : null;
 }
 
 export function parseLabourDateInput(value: string): string | null {

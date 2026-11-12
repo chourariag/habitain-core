@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { rowsFromLabourMasterSheet, validateLabourMasterRows, type LabourMasterImportRow } from "@/lib/labour-master-excel";
-import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_DIRECTORY_VIEW_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, labourEditReasonForSave, parseLabourDateInput, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
+import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_DIRECTORY_VIEW_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, labourAuditReasonForSave, parseLabourDateInput, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
 const MASTER_HEADERS = ["worker_code", "name", "contractor", "skill_type", "hourly_rate", "monthly_salary", "status"];
 
 type LabourWorker = {
@@ -213,9 +213,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
       const labels = attendanceWarningLabels(warning);
       return labels.length ? [{ workerName: row.worker.name ?? "Worker", text: labels.join("; ") }] : [];
     });
-    const auditReason = rowsToSave
-      .map((row) => labourEditReasonForSave(row.savedHours, row.present ? row.hours : 0, reason))
-      .find((entry) => Boolean(entry)) ?? null;
+    const auditReason = labourAuditReasonForSave(workDate, new Date(), oldRecordEdited, reason);
     const { data, error } = await supabase.rpc("save_labour_attendance", {
       p_project_id: projectId,
       p_work_date: workDate,

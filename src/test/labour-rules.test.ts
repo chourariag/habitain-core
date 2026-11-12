@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_DIRECTORY_VIEW_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, labourEditReasonForSave, parseLabourDateInput, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
+import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_DIRECTORY_VIEW_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, labourAuditReasonForSave, parseLabourDateInput, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
 
 const TODAY = new Date("2026-11-12T12:00:00");
 
@@ -37,10 +37,10 @@ describe("contract labour attendance rules", () => {
     expect(requiresReasonForSavedAttendanceEdit(null, 8)).toBe(false);
   });
 
-  it("sends the user reason only when saved hours are actually changed", () => {
-    expect(labourEditReasonForSave(8, 7, "Correction approved")).toBe("Correction approved");
-    expect(labourEditReasonForSave(8, 8, "Routine entry")).toBe("");
-    expect(labourEditReasonForSave(null, 8, "Initial entry")).toBe("");
+  it("sends the reason for saved edits and dates older than two days", () => {
+    expect(labourAuditReasonForSave("2026-11-12", TODAY, true, " Correction approved ")).toBe("Correction approved");
+    expect(labourAuditReasonForSave("2026-11-09", TODAY, false, "Historical entry")).toBe("Historical entry");
+    expect(labourAuditReasonForSave("2026-11-10", TODAY, false, "Routine entry")).toBeNull();
   });
 
   it("parses strict DD/MM/YYYY dates and rejects impossible calendar dates", () => {
