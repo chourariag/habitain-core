@@ -76,7 +76,8 @@ export function validateLabourMasterRows(
       errors.push(`Row ${line}: remove the example row before upload.`);
       continue;
     }
-      if (!name) errors.push(`Row ${line}: name is required.`);
+    if (!workerCode) errors.push(`Row ${line}: worker_code is required.`);
+    if (!name) errors.push(`Row ${line}: name is required.`);
     if (!skillType) errors.push(`Row ${line}: skill_type is required.`);
     if (contractor && !knownContractors.has(contractor.toLowerCase())) {
       errors.push(`Row ${line}: contractor “${contractor}” was not found in the contractor list.`);
@@ -85,7 +86,7 @@ export function validateLabourMasterRows(
       errors.push(`Row ${line}: status must be active, on_leave, or inactive.`);
     }
 
-      if (workerCode) {
+    if (workerCode) {
       const normalizedCode = workerCode.toLowerCase();
       if (seenCodes.has(normalizedCode)) errors.push(`Row ${line}: duplicate worker_code “${workerCode}”.`);
       seenCodes.add(normalizedCode);
