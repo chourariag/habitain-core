@@ -117,6 +117,7 @@ const SITE_TAB_FLAGS: Record<string, string> = {
   "install-seq": "design_schedule",
   safety: "compliance",
   materials: "procurement",
+  "daily-report": "site_report",
 };
 
 export function featureFlagForSiteTab(tab: string | null): string | undefined {
