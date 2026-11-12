@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Box, FileText, Phone, Mail, IndianRupee, ClipboardList, Package, GitCompareArrows, ScrollText, Wallet, Archive, CalendarRange } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Box, FileText, Phone, Mail, IndianRupee, ClipboardList, Package, GitCompareArrows, ScrollText, Wallet, Archive, CalendarRange, FileSpreadsheet } from "lucide-react";
 import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 import { AddModuleDialog } from "@/components/projects/AddModuleDialog";
@@ -25,6 +25,7 @@ import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
 import { ProjectPLTab } from "@/components/projects/ProjectPLTab";
 import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
+import { ProjectSetupWorkbook } from "@/components/projects/ProjectSetupWorkbook";
 import { ProjectSetupApprovalSection } from "@/components/projects/ProjectSetupApprovalSection";
 import { ProjectDesignScheduleTab } from "@/components/projects/ProjectDesignScheduleTab";
 import { PreProductionChecklist } from "@/components/projects/PreProductionChecklist";
@@ -224,6 +225,7 @@ export default function ProjectDetail() {
         <ScrollableTabsWrapper>
           <TabsList>
             <TabsTrigger value="schedule" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Schedule</TabsTrigger>
+            {!isAds && flags.isEnabled("project_setup") && <TabsTrigger value="setup" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Setup</TabsTrigger>}
             <TabsTrigger value="billing" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Billing</TabsTrigger>
             {!isAds && <TabsTrigger value="materials" className="gap-1.5"><Package className="h-4 w-4" /> Materials</TabsTrigger>}
             <TabsTrigger value="variations" className="gap-1.5"><GitCompareArrows className="h-4 w-4" /> Variations</TabsTrigger>
@@ -251,6 +253,12 @@ export default function ProjectDetail() {
           <MicroScheduleTab projectId={id!} userRole={userRole} />
           <SiteScheduleSection projectId={id!} projectName={project.name} userRole={userRole} />
         </TabsContent>
+
+        {!isAds && flags.isEnabled("project_setup") && (
+          <TabsContent value="setup" className="min-w-0 space-y-4">
+            <ProjectSetupWorkbook projectId={id!} userRole={userRole} />
+          </TabsContent>
+        )}
 
         {!isAds && (
           <TabsContent value="materials" className="space-y-4">
