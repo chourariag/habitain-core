@@ -71,6 +71,13 @@
       "when": 1794505857028,
       "tag": "0009_restrict_project_scoped_select_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794507708676,
+      "tag": "0010_restrict_project_setup_read_policies",
+      "breakpoints": true
     }
   ]
 }
