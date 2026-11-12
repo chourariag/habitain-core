@@ -45,7 +45,7 @@ export interface SetupValidationResult {
 }
 
 const text = (value: unknown) => String(value ?? "").trim();
-const codeKey = (value: string) => value.trim().toLocaleLowerCase();
+const codeKey = (value: string) => value.trim();
 const isExampleRow = (values: Record<string, unknown>) =>
   text(values.task_code) === "__TEMPLATE_EXAMPLE__" ||
   Object.values(values).some((value) => text(value).toLocaleLowerCase().startsWith("example row"));

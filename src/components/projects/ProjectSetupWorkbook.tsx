@@ -101,10 +101,19 @@ function sheetRows(workbook: XLSX.WorkBook, sheetName: string, columns: string[]
   const missing = columns.filter((column) => !header.includes(column));
   if (missing.length) return { rows: [], errors: [`${sheetName} sheet is missing columns: ${missing.join(", ")}.`] };
   const indexes = new Map(columns.map((column) => [column, header.indexOf(column)]));
+  const dateColumns = new Set(["planned_start", "planned_end", "planned_po_release_date", "planned_delivery_date"]);
   const result = matrix.slice(1).flatMap((values, index) => {
     if (!values.some((value) => String(value ?? "").trim())) return [];
     const mapped: Record<string, unknown> = {};
-    for (const column of columns) mapped[column] = values[indexes.get(column) ?? -1];
+    for (const column of columns) {
+      const value = values[indexes.get(column) ?? -1];
+      if (dateColumns.has(column) && typeof value === "number" && Number.isFinite(value)) {
+        const excelDate = XLSX.SSF.parse_date_code(value);
+        mapped[column] = excelDate ? `${String(excelDate.d).padStart(2, "0")}/${String(excelDate.m).padStart(2, "0")}/${excelDate.y}` : value;
+      } else {
+        mapped[column] = value;
+      }
+    }
     return [{ rowNumber: index + 2, values: mapped }];
   });
   return { rows: result, errors: [] };
