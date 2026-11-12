@@ -247,7 +247,7 @@ function SiteHubContent() {
             {featureFlags.isEnabled("factory_feedback") && <TabsTrigger value="factory-feedback" className="gap-1.5"><MessageSquareWarning className="h-4 w-4" /> Factory Feedback</TabsTrigger>}
             {featureFlags.isEnabled("dispatch") && <TabsTrigger value="dispatch-packs" className="gap-1.5"><Package className="h-4 w-4" /> Dispatch Pack</TabsTrigger>}
             {featureFlags.isEnabled("inventory") && <TabsTrigger value="site-inventory" className="gap-1.5"><Boxes className="h-4 w-4" /> Inventory</TabsTrigger>}
-            <TabsTrigger value="diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>
+            {featureFlags.isEnabled("site_diary") && <TabsTrigger value="diary" className="gap-1.5"><BookOpen className="h-4 w-4" /> Site Diary</TabsTrigger>}
             {featureFlags.isEnabled("dispatch") && <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover Document</TabsTrigger>}
             {featureFlags.isEnabled("labour") && <TabsTrigger value="labour" className="gap-1.5"><Users className="h-4 w-4" /> People</TabsTrigger>}
             {featureFlags.isEnabled("design_schedule") && <TabsTrigger value="install-seq" className="gap-1.5"><FileCheck className="h-4 w-4" /> Installation Sequence</TabsTrigger>}
@@ -373,7 +373,7 @@ function SiteHubContent() {
           <DailySiteReport projectId={selectedProjectId} />
         </TabsContent>}
 
-        <TabsContent value="diary" className="space-y-4">
+        {featureFlags.isEnabled("site_diary") && <TabsContent value="diary" className="space-y-4">
           <Tabs defaultValue="daily" className="space-y-3">
             <TabsList>
               <TabsTrigger value="daily">Daily Log</TabsTrigger>
@@ -396,7 +396,7 @@ function SiteHubContent() {
               <PhotoTimelineTab projectId={selectedProjectId!} />
             </TabsContent>
           </Tabs>
-        </TabsContent>
+        </TabsContent>}
         {featureFlags.isEnabled("dispatch") && <TabsContent value="handover">
           <HandoverPack projectId={selectedProjectId!} clientName={selectedProject?.client_name ?? null} userRole={userRole} installationComplete={installationComplete} onHandedOver={fetchData} />
         </TabsContent>}

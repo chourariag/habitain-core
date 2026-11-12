@@ -25,6 +25,7 @@ import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
 import { ProjectPLTab } from "@/components/projects/ProjectPLTab";
 import { ProjectSetupWorkbook } from "@/components/projects/ProjectSetupWorkbook";
+import { ProjectElevationsCard } from "@/components/projects/ProjectElevationsCard";
 import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
 import { ProjectSetupApprovalSection } from "@/components/projects/ProjectSetupApprovalSection";
 import { ProjectDesignScheduleTab } from "@/components/projects/ProjectDesignScheduleTab";
@@ -256,6 +257,7 @@ export default function ProjectDetail() {
 
         {!isAds && flags.isEnabled("project_setup") && (
           <TabsContent value="setup" className="min-w-0 space-y-4">
+            <ProjectElevationsCard projectId={id!} userRole={userRole} />
             <ProjectSetupWorkbook projectId={id!} userRole={userRole} />
           </TabsContent>
         )}

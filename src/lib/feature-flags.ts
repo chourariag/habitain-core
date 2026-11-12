@@ -43,6 +43,7 @@ const knownFlags: Array<[string, string]> = [
   ["expenses", "Expenses"],
   ["labour", "Labour"],
   ["site_report", "Site Reports"],
+  ["site_diary", "Site Diary"],
   ["project_setup", "Project Setup"],
   ["procurement", "Procurement"],
   ["site", "Site Hub"],
@@ -118,6 +119,7 @@ const SITE_TAB_FLAGS: Record<string, string> = {
   safety: "compliance",
   materials: "procurement",
   "daily-report": "site_report",
+  diary: "site_diary",
 };
 
 export function featureFlagForSiteTab(tab: string | null): string | undefined {

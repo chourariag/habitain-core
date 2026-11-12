@@ -30,7 +30,7 @@ export function HomeTaskList({ userRole }: { userRole: string | null }) {
       }
 
       const siteRoles = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"];
-      if (flags.isEnabled("site_report") && userRole && siteRoles.includes(userRole)) {
+      if (flags.isEnabled("site_report") && flags.isEnabled("site_diary") && userRole && siteRoles.includes(userRole)) {
         const { data: projects } = await supabase.from("projects").select("id,name").eq("is_archived", false);
         const projectIds = (projects ?? []).map((project) => project.id);
         let submittedIds = new Set<string>();
