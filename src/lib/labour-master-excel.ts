@@ -57,11 +57,10 @@ export function validateLabourMasterRows(
   const errors: string[] = [];
   const prepared: LabourMasterImportRow[] = [];
   const seenCodes = new Set<string>();
-  const knownWorkers = new Map(
-    existingWorkers
-      .filter((worker) => worker.worker_code)
-      .map((worker) => [worker.worker_code!.toLowerCase(), worker.name]),
-  );
+  const knownWorkers = new Map<string, string>();
+  existingWorkers.forEach((worker) => {
+    if (worker.worker_code) knownWorkers.set(worker.worker_code.toLowerCase(), worker.name);
+  });
   const knownContractors = new Set(contractorNames.map((name) => name.trim().toLowerCase()));
 
   for (const row of rows) {
