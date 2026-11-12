@@ -99,6 +99,13 @@
       "when": 1794509087159,
       "tag": "0013_fix_labour_master_security_and_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1794509155219,
+      "tag": "0014_protect_labour_worker_identity_and_attendance",
+      "breakpoints": true
     }
   ]
 }
