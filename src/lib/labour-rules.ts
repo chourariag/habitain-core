@@ -58,6 +58,17 @@ export function requiresReasonForSavedAttendanceEdit(savedHours: number | null, 
   return savedHours !== null && savedHours !== nextHours;
 }
 
+export function parseLabourDateInput(value: string): string | null {
+  const match = value.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return null;
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 export function attendanceWarningLabels(warning: {
   has_other_project: boolean;
   total_hours: number;
