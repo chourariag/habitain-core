@@ -16090,6 +16090,10 @@ export type Database = {
         Args: { _on_date: string; _project_id: string }
         Returns: number
       }
+      get_project_setup_status: {
+        Args: { p_project_id: string }
+        Returns: Json
+      }
       get_project_wip_summary: {
         Args: { _on_date?: string; _project_id: string }
         Returns: {
