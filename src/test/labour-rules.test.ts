@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_DIRECTORY_VIEW_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, parseLabourDateInput, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
+import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_DIRECTORY_VIEW_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, labourEditReasonForSave, parseLabourDateInput, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
 
 const TODAY = new Date("2026-11-12T12:00:00");
 
@@ -35,6 +35,12 @@ describe("contract labour attendance rules", () => {
     expect(requiresReasonForSavedAttendanceEdit(8, 7)).toBe(true);
     expect(requiresReasonForSavedAttendanceEdit(8, 8)).toBe(false);
     expect(requiresReasonForSavedAttendanceEdit(null, 8)).toBe(false);
+  });
+
+  it("sends the user reason only when saved hours are actually changed", () => {
+    expect(labourEditReasonForSave(8, 7, "Correction approved")).toBe("Correction approved");
+    expect(labourEditReasonForSave(8, 8, "Routine entry")).toBe("");
+    expect(labourEditReasonForSave(null, 8, "Initial entry")).toBe("");
   });
 
   it("parses strict DD/MM/YYYY dates and rejects impossible calendar dates", () => {

@@ -58,6 +58,14 @@ export function requiresReasonForSavedAttendanceEdit(savedHours: number | null, 
   return savedHours !== null && savedHours !== nextHours;
 }
 
+export function labourEditReasonForSave(
+  savedHours: number | null,
+  nextHours: number,
+  reason: string,
+): string {
+  return requiresReasonForSavedAttendanceEdit(savedHours, nextHours) ? reason.trim() : "";
+}
+
 export function parseLabourDateInput(value: string): string | null {
   const match = value.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
   if (!match) return null;
