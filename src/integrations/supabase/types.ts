@@ -5433,6 +5433,96 @@ export type Database = {
           },
         ]
       }
+      labour_attendance: {
+        Row: {
+          hours: number
+          id: string
+          project_id: string
+          recorded_at: string
+          recorded_by: string
+          work_date: string
+          worker_id: string
+        }
+        Insert: {
+          hours: number
+          id?: string
+          project_id: string
+          recorded_at?: string
+          recorded_by: string
+          work_date: string
+          worker_id: string
+        }
+        Update: {
+          hours?: number
+          id?: string
+          project_id?: string
+          recorded_at?: string
+          recorded_by?: string
+          work_date?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_attendance_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labour_attendance_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_worker_rates"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "labour_attendance_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labour_attendance_edit_log: {
+        Row: {
+          attendance_id: string
+          edited_at: string
+          edited_by: string | null
+          id: string
+          new_hours: number
+          old_hours: number
+          reason: string
+        }
+        Insert: {
+          attendance_id: string
+          edited_at?: string
+          edited_by?: string | null
+          id?: string
+          new_hours: number
+          old_hours: number
+          reason: string
+        }
+        Update: {
+          attendance_id?: string
+          edited_at?: string
+          edited_by?: string | null
+          id?: string
+          new_hours?: number
+          old_hours?: number
+          reason?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_attendance_edit_log_attendance_id_fkey"
+            columns: ["attendance_id"]
+            isOneToOne: false
+            referencedRelation: "labour_attendance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       labour_claims: {
         Row: {
           approved_at: string | null
@@ -5516,6 +5606,13 @@ export type Database = {
           worker_name_snapshot?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "labour_claims_labour_worker_id_fkey"
+            columns: ["labour_worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_worker_rates"
+            referencedColumns: ["worker_id"]
+          },
           {
             foreignKeyName: "labour_claims_labour_worker_id_fkey"
             columns: ["labour_worker_id"]
@@ -5744,6 +5841,13 @@ export type Database = {
             foreignKeyName: "labour_team_members_worker_id_fkey"
             columns: ["worker_id"]
             isOneToOne: false
+            referencedRelation: "labour_worker_rates"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "labour_team_members_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
             referencedRelation: "labour_workers"
             referencedColumns: ["id"]
           },
@@ -5791,6 +5895,13 @@ export type Database = {
             foreignKeyName: "labour_teams_team_head_id_fkey"
             columns: ["team_head_id"]
             isOneToOne: false
+            referencedRelation: "labour_worker_rates"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "labour_teams_team_head_id_fkey"
+            columns: ["team_head_id"]
+            isOneToOne: false
             referencedRelation: "labour_workers"
             referencedColumns: ["id"]
           },
@@ -5825,6 +5936,13 @@ export type Database = {
           worker_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "labour_worker_compensation_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: true
+            referencedRelation: "labour_worker_rates"
+            referencedColumns: ["worker_id"]
+          },
           {
             foreignKeyName: "labour_worker_compensation_worker_id_fkey"
             columns: ["worker_id"]
@@ -5867,6 +5985,55 @@ export type Database = {
             foreignKeyName: "labour_worker_rate_history_worker_id_fkey"
             columns: ["worker_id"]
             isOneToOne: false
+            referencedRelation: "labour_worker_rates"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "labour_worker_rate_history_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labour_worker_status_log: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          new_status: string
+          old_status: string
+          worker_id: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status: string
+          old_status: string
+          worker_id: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          new_status?: string
+          old_status?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_worker_status_log_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_worker_rates"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "labour_worker_status_log_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
             referencedRelation: "labour_workers"
             referencedColumns: ["id"]
           },
@@ -5887,6 +6054,7 @@ export type Database = {
           skill_type: string
           status: string
           updated_at: string
+          worker_code: string | null
         }
         Insert: {
           contractor_id?: string | null
@@ -5902,6 +6070,7 @@ export type Database = {
           skill_type: string
           status?: string
           updated_at?: string
+          worker_code?: string | null
         }
         Update: {
           contractor_id?: string | null
@@ -5917,6 +6086,7 @@ export type Database = {
           skill_type?: string
           status?: string
           updated_at?: string
+          worker_code?: string | null
         }
         Relationships: [
           {
@@ -6098,6 +6268,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "manpower_plans"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manpower_plan_entries_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_worker_rates"
+            referencedColumns: ["worker_id"]
           },
           {
             foreignKeyName: "manpower_plan_entries_worker_id_fkey"
@@ -15502,6 +15679,20 @@ export type Database = {
           },
         ]
       }
+      labour_worker_rates: {
+        Row: {
+          contractor: string | null
+          effective_hourly_rate: number | null
+          hourly_rate: number | null
+          monthly_salary: number | null
+          name: string | null
+          skill_type: string | null
+          status: string | null
+          worker_code: string | null
+          worker_id: string | null
+        }
+        Relationships: []
+      }
       v_latest_panel_handover: {
         Row: {
           handover_id: string | null
@@ -15710,6 +15901,7 @@ export type Database = {
         Args: { _project_id: string; _system: string }
         Returns: number
       }
+      commit_labour_master_upload: { Args: { p_rows: Json }; Returns: number }
       commit_project_setup_excel_upload: {
         Args: {
           p_boq_rows: Json
@@ -15868,6 +16060,14 @@ export type Database = {
         }[]
       }
       get_handover_readiness: { Args: { _project_id: string }; Returns: Json }
+      get_labour_attendance_warnings: {
+        Args: { p_project_id: string; p_rows: Json; p_work_date: string }
+        Returns: {
+          has_other_project: boolean
+          total_hours: number
+          worker_id: string
+        }[]
+      }
       get_labour_rate_for_trade: { Args: { _trade: string }; Returns: number }
       get_labour_workers_full: {
         Args: never
@@ -15885,6 +16085,7 @@ export type Database = {
           skill_type: string
           status: string
           updated_at: string
+          worker_code: string | null
         }[]
         SetofOptions: {
           from: "*"
@@ -16219,6 +16420,15 @@ export type Database = {
         Returns: undefined
       }
       required_gfc_for_stage: { Args: { _stage: string }; Returns: string }
+      save_labour_attendance: {
+        Args: {
+          p_project_id: string
+          p_reason?: string
+          p_rows: Json
+          p_work_date: string
+        }
+        Returns: number
+      }
       scan_offboarding_impact: {
         Args: { _profile_id: string }
         Returns: {
