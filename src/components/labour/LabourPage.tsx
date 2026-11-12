@@ -15,10 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { rowsFromLabourMasterSheet, validateLabourMasterRows, type LabourMasterImportRow } from "@/lib/labour-master-excel";
-
-const ATTENDANCE_ROLES = ["site_engineer", "site_installation_mgr", "head_of_projects", "planning_head", "managing_director", "super_admin"];
-const MASTER_UPLOAD_ROLES = ["planning_head", "managing_director", "super_admin", "head_of_projects"];
-const MASTER_VIEW_ROLES = [...new Set([...ATTENDANCE_ROLES, "finance_manager"])];
+import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_MASTER_VIEW_ROLES, requiresLabourAttendanceReason } from "@/lib/labour-rules";
 const MASTER_HEADERS = ["worker_code", "name", "contractor", "skill_type", "hourly_rate", "monthly_salary", "status"];
 
 type LabourWorker = {
@@ -67,9 +64,13 @@ export default function LabourPage() {
   const [workers, setWorkers] = useState<LabourWorker[]>([]);
   const [rates, setRates] = useState<LabourWorker[]>([]);
   const [loading, setLoading] = useState(true);
-  const canManageAttendance = ATTENDANCE_ROLES.includes(role ?? "");
-  const canUploadMaster = MASTER_UPLOAD_ROLES.includes(role ?? "");
-  const canViewMaster = MASTER_VIEW_ROLES.includes(role ?? "");
+  const canManageAttendance = LABOUR_ATTENDANCE_ROLES.includes(role as (typeof LABOUR_ATTENDANCE_ROLES)[number]);
+  const canUploadMaster = LABOUR_MASTER_UPLOAD_ROLES.includes(role as (typeof LABOUR_MASTER_UPLOAD_ROLES)[number]);
+  const canViewMaster = LABOUR_MASTER_VIEW_ROLES.includes(role as (typeof LABOUR_MASTER_VIEW_ROLES)[number]);
+
+  useEffect(() => {
+    if (!canManageAttendance) setTab("master");
+  }, [canManageAttendance]);
 
   const loadMaster = useCallback(async () => {
     if (!canViewMaster) return;
@@ -100,14 +101,14 @@ export default function LabourPage() {
         {loading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-label="Loading" />}
       </div>
       <Tabs value={tab} onValueChange={setTab} className="mt-4 min-w-0">
-        <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="attendance">Attendance</TabsTrigger><TabsTrigger value="master">Master</TabsTrigger></TabsList>
-        <TabsContent value="attendance"><AttendanceTab
+        {canManageAttendance ? <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="attendance">Attendance</TabsTrigger><TabsTrigger value="master">Master</TabsTrigger></TabsList> : <TabsList className="grid w-full grid-cols-1"><TabsTrigger value="master">Master</TabsTrigger></TabsList>}
+        {canManageAttendance && <TabsContent value="attendance"><AttendanceTab
           workers={directory}
           projects={projects}
           projectId={selectedProjectId}
           onProjectChange={setSelectedProjectId}
           canEdit={canManageAttendance}
-        /></TabsContent>
+        /></TabsContent>}
         <TabsContent value="master"><MasterTab workers={directory} canUpload={canUploadMaster} onUploaded={loadMaster} /></TabsContent>
       </Tabs>
     </div>
@@ -123,19 +124,15 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
 }) {
   const [workDate, setWorkDate] = useState(todayISO());
   const [search, setSearch] = useState("");
-  const [attendance, setAttendance] = useState<StoredAttendance[]>([]);
   const [recentIds, setRecentIds] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, AttendanceRow>>({});
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [warnings, setWarnings] = useState<Array<{ workerName: string; text: string }>>([]);
-  const projectRef = useRef(projectId);
-  projectRef.current = projectId;
-
   const loadDay = useCallback(async () => {
     setWarnings([]);
     setReason("");
-    if (!projectId) { setAttendance([]); setRecentIds([]); setRows({}); return; }
+    if (!projectId) { setRecentIds([]); setRows({}); return; }
     const recentFrom = format(subDays(parseISO(workDate), 13), "yyyy-MM-dd");
     const [{ data: daily }, { data: recent }] = await Promise.all([
       supabase.from("labour_attendance").select("id,worker_id,hours,work_date").eq("project_id", projectId).eq("work_date", workDate),
@@ -144,7 +141,6 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
     const saved = (daily ?? []) as StoredAttendance[];
     const recentWorkerIds = [...new Set((recent ?? []).map((row) => row.worker_id))];
     const includedIds = [...new Set([...recentWorkerIds, ...saved.map((row) => row.worker_id)])];
-    setAttendance(saved);
     setRecentIds(includedIds);
     const workerMap = new Map(workers.map((worker) => [worker.worker_id, worker]));
     const initialRows: Record<string, AttendanceRow> = {};
@@ -165,16 +161,19 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
   useEffect(() => { void loadDay(); }, [loadDay]);
 
   const visibleWorkers = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase();
-    const filtered = workers.filter((worker) => {
-      if (!normalizedSearch) return recentIds.includes(worker.worker_id);
-      return `${worker.worker_code ?? ""} ${worker.name ?? ""} ${worker.contractor ?? ""} ${worker.skill_type ?? ""}`.toLowerCase().includes(normalizedSearch);
-    });
-    return filtered.sort((a, b) => {
+    const included = Object.values(rows).map((row) => row.worker);
+    return included.sort((a, b) => {
       const priority = Number(!recentIds.includes(a.worker_id)) - Number(!recentIds.includes(b.worker_id));
       return priority || (a.name ?? "").localeCompare(b.name ?? "");
     });
-  }, [workers, recentIds, search]);
+  }, [rows, recentIds]);
+
+  const searchCandidates = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase();
+    if (!normalizedSearch) return [];
+    return workers.filter((worker) => worker.status === "active" && !rows[worker.worker_id] &&
+      `${worker.worker_code ?? ""} ${worker.name ?? ""} ${worker.contractor ?? ""} ${worker.skill_type ?? ""}`.toLowerCase().includes(normalizedSearch));
+  }, [workers, rows, search]);
 
   const addVisibleWorker = (worker: LabourWorker) => setRows((current) => current[worker.worker_id] ? current : ({
     ...current,
@@ -189,12 +188,12 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
   const saveAttendance = async () => {
     if (!projectId) { toast.error("Choose a project first."); return; }
     const selectedRows = Object.values(rows);
-    if (selectedRows.some((row) => row.hours < 0 || row.hours > 16 || !Number.isFinite(row.hours))) {
+    if (selectedRows.some((row) => !isValidLabourHours(row.hours))) {
       toast.error("Hours must be between 0 and 16."); return;
     }
     const oldRecordEdited = selectedRows.some((row) => row.savedHours !== null && row.savedHours !== (row.present ? row.hours : 0));
     const dateIsPast = workDate < todayISO();
-    if (workDate < format(subDays(new Date(), 2), "yyyy-MM-dd") && !reason.trim()) {
+    if (requiresLabourAttendanceReason(workDate, new Date()) && !reason.trim()) {
       toast.error("Add a reason for attendance more than two days ago."); return;
     }
     if (dateIsPast && oldRecordEdited && !reason.trim()) {
@@ -216,13 +215,9 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
     const generatedWarnings = selectedRows.flatMap((row) => {
       const warning = warningsByWorker.get(row.worker.worker_id);
       if (!warning || !row.present) return [];
-      const labels: string[] = [];
-      if (warning.has_other_project) labels.push("also recorded on another project this day");
-      if (warning.total_hours > 12) labels.push(`daily total is ${warning.total_hours} hours`);
-      if (warning.is_deactivated) labels.push("worker is deactivated");
+      const labels = attendanceWarningLabels(warning);
       return labels.length ? [{ workerName: row.worker.name ?? "Worker", text: labels.join("; ") }] : [];
     });
-    setWarnings(generatedWarnings);
     const { data, error } = await supabase.rpc("save_labour_attendance", {
       p_project_id: projectId,
       p_work_date: workDate,
@@ -230,9 +225,10 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
       p_reason: reason.trim() || null,
     });
     setSaving(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) { setWarnings(generatedWarnings); toast.error(error.message); return; }
     toast.success(`Attendance saved for ${format(parseISO(workDate), "dd/MM/yyyy")}.`);
     await loadDay();
+    setWarnings(generatedWarnings);
     if (Number(data ?? 0) === 0) toast.message("No attendance values changed.");
   };
 
@@ -242,7 +238,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
         <div className="space-y-1.5"><Label htmlFor="labour-project">Project</Label><Select value={projectId ?? ""} onValueChange={(value) => onProjectChange(value || null)}><SelectTrigger id="labour-project"><SelectValue placeholder="Choose a project" /></SelectTrigger><SelectContent>{projects.map((project) => <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>)}</SelectContent></Select></div>
         <div className="space-y-1.5"><Label htmlFor="labour-date">Work date</Label><Input id="labour-date" type="date" max={todayISO()} value={workDate} onChange={(event) => setWorkDate(event.target.value)} /></div>
       </div>
-      <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" aria-label="Search workers" placeholder="Search active workers to add" value={search} onChange={(event) => { setSearch(event.target.value); workers.filter((worker) => `${worker.worker_code ?? ""} ${worker.name ?? ""} ${worker.contractor ?? ""} ${worker.skill_type ?? ""}`.toLowerCase().includes(event.target.value.trim().toLowerCase())).forEach(addVisibleWorker); }} /></div>
+      <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" aria-label="Search workers" placeholder="Search active workers to add" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
       {!projectId ? <p className="py-8 text-center text-sm text-muted-foreground">Select a project to record contract-labour attendance.</p> : visibleWorkers.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No recent workers. Search to add an active worker.</p> : (
         <div className="space-y-2">
           {visibleWorkers.map((worker) => {
@@ -257,6 +253,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
           })}
         </div>
       )}
+      {projectId && searchCandidates.length > 0 && <div className="space-y-2 border-t border-border pt-3"><p className="text-sm font-medium">Add active workers</p>{searchCandidates.slice(0, 30).map((worker) => <div key={worker.worker_id} className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-border p-3"><div className="min-w-0"><div className="break-words text-sm font-medium">{worker.name}</div><div className="break-words text-xs text-muted-foreground">{worker.worker_code} · {worker.contractor ?? "No contractor"} · {worker.skill_type}</div></div><Button size="sm" variant="outline" onClick={() => addVisibleWorker(worker)}>Add</Button></div>)}</div>}
       {canEdit && projectId && <div className="space-y-3 border-t border-border pt-3">
         {(workDate < todayISO() || workDate < format(subDays(new Date(), 2), "yyyy-MM-dd")) && <div className="space-y-1.5"><Label htmlFor="attendance-reason">Reason for back-dating or editing</Label><Input id="attendance-reason" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Required for older dates or past edits" /></div>}
         <div className="flex justify-end"><Button onClick={saveAttendance} disabled={saving || !projectId} className="w-full sm:w-auto">{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Save attendance</Button></div>
@@ -359,7 +356,7 @@ function MasterTab({ workers, canUpload, onUploaded }: { workers: LabourWorker[]
             <div className="col-span-2 min-w-0 sm:col-span-1"><div className="break-words font-medium">{worker.name}</div><div className="break-words text-xs text-muted-foreground">{worker.worker_code}</div></div>
             <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Contractor</div><div className="break-words text-sm">{worker.contractor ?? "—"}</div></div>
             <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Skill</div><div className="break-words text-sm">{worker.skill_type ?? "—"}</div></div>
-            <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Rate / 8h day</div><div className="break-words text-sm">{inr(hourlyRate * 8)}</div></div>
+            <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Rate / hour</div><div className="break-words text-sm">{inr(hourlyRate)}</div></div>
             <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Status</div><Badge variant={worker.status === "active" ? "secondary" : "outline"}>{worker.status?.replaceAll("_", " ") ?? "—"}</Badge></div>
           </div>;
         })}
