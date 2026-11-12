@@ -4,7 +4,7 @@ import { rowsFromLabourMasterSheet, validateLabourMasterRows } from "@/lib/labou
 const headers = ["worker_code", "name", "contractor", "skill_type", "hourly_rate", "monthly_salary", "status"];
 
 describe("labour master Excel validation", () => {
-  it("accepts valid rows and allows the database to assign a blank new worker code", () => {
+  it("requires worker_code so re-uploading a master matches the same worker", () => {
     const rows = rowsFromLabourMasterSheet([
       headers,
       ["LW-001", "Worker One", "Site Crew", "Welder", "125.5", "26000", "active"],
@@ -12,9 +12,9 @@ describe("labour master Excel validation", () => {
     ]);
     const result = validateLabourMasterRows(rows, [{ worker_code: "LW-001", name: "Worker One" }], ["Site Crew"]);
 
-    expect(result.errors).toEqual([]);
-    expect(result.prepared).toHaveLength(2);
-    expect(result.prepared[1]?.worker_code).toBe("");
+    expect(result.errors).toEqual(["Row 3: worker_code is required."]);
+    expect(result.prepared).toHaveLength(1);
+    expect(result.prepared[0]?.worker_code).toBe("LW-001");
   });
 
   it("rejects duplicate codes, missing fields, unknown contractors, invalid values, and renames", () => {
