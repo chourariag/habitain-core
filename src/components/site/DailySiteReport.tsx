@@ -32,7 +32,7 @@ type Pending = { file: Blob; meta: PhotoMeta; gallery: boolean; error?: string; 
 
 const istToday = () => format(new Date(Date.now() + (330 + new Date().getTimezoneOffset()) * 60000), "yyyy-MM-dd");
 const ddmmyyyy = (iso: string) => format(parseISO(iso), "dd/MM/yyyy");
-const rpc = supabase.rpc as any;
+const rpc = (fn: string, args: Record<string, unknown>) => (supabase as any).rpc(fn, args);
 
 export function DailySiteReport({ projectId }: { projectId: string }) {
   const [date, setDate] = useState(istToday());
