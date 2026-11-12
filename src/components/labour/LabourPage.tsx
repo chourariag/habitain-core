@@ -246,7 +246,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
             const hourlyRate = Number(worker.effective_hourly_rate ?? 0);
             return <div key={worker.worker_id} className="grid min-w-0 grid-cols-[auto_1fr] gap-x-3 gap-y-3 rounded-md border border-border p-3 sm:grid-cols-[auto_minmax(0,1fr)_120px_140px] sm:items-center">
               <div className="flex items-center gap-2"><Switch checked={row.present} disabled={!canEdit} onCheckedChange={(checked) => updateRow(worker.worker_id, { present: checked })} aria-label={`Present: ${worker.name ?? "worker"}`} /></div>
-              <div className="min-w-0"><div className="break-words font-medium">{worker.name}</div><div className="break-words text-xs text-muted-foreground">{worker.worker_code} · {worker.contractor ?? "No contractor"} · {worker.skill_type}</div>{worker.status !== "active" && <Badge variant="outline" className="mt-1">{worker.status?.replaceAll("_", " ")}</Badge>}</div>
+              <div className="min-w-0"><div className="break-words font-medium">{worker.name}</div><div className="break-words text-xs text-muted-foreground">{worker.worker_code} · {worker.contractor ?? "No contractor"} · {worker.skill_type}</div>{worker.status !== "active" && <Badge variant="outline" className="mt-1">{worker.status?.replace(/_/g, " ")}</Badge>}</div>
               <div className="space-y-1"><Label className="text-xs" htmlFor={`hours-${worker.worker_id}`}>Hours</Label><Input id={`hours-${worker.worker_id}`} type="number" min={0} max={16} step="0.5" value={row.hours} disabled={!canEdit || !row.present} onChange={(event) => updateRow(worker.worker_id, { hours: Number(event.target.value) })} /></div>
               <div className="text-xs text-muted-foreground">Amount <span className="block break-words font-semibold text-foreground">{inr(row.present ? row.hours * hourlyRate / 8 : 0)}</span></div>
             </div>;
@@ -357,7 +357,7 @@ function MasterTab({ workers, canUpload, onUploaded }: { workers: LabourWorker[]
             <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Contractor</div><div className="break-words text-sm">{worker.contractor ?? "—"}</div></div>
             <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Skill</div><div className="break-words text-sm">{worker.skill_type ?? "—"}</div></div>
             <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Rate / hour</div><div className="break-words text-sm">{inr(hourlyRate)}</div></div>
-            <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Status</div><Badge variant={worker.status === "active" ? "secondary" : "outline"}>{worker.status?.replaceAll("_", " ") ?? "—"}</Badge></div>
+            <div className="min-w-0"><div className="text-[11px] text-muted-foreground">Status</div><Badge variant={worker.status === "active" ? "secondary" : "outline"}>{worker.status?.replace(/_/g, " ") ?? "—"}</Badge></div>
           </div>;
         })}
         {visibleRows.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">No workers match this search.</p>}

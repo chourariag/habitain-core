@@ -35,7 +35,7 @@ function textValue(value: unknown): string {
 function numericValue(value: unknown): number | null | "invalid" {
   const text = textValue(value);
   if (!text) return null;
-  const parsed = Number(text.replaceAll(",", ""));
+  const parsed = Number(text.replace(/,/g, ""));
   return Number.isFinite(parsed) ? parsed : "invalid";
 }
 
@@ -104,8 +104,8 @@ export function validateLabourMasterRows(
 
     if (
       name && skillType &&
-      (hourlyRate === null || typeof hourlyRate === "number") &&
-      (monthlySalary === null || typeof monthlySalary === "number") &&
+      hourlyRate !== "invalid" &&
+      monthlySalary !== "invalid" &&
       !errors.some((error) => error.startsWith(`Row ${line}:`))
     ) {
       prepared.push({
