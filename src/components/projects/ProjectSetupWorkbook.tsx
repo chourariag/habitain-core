@@ -212,7 +212,7 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
     }
     setCommitting(true);
     try {
-      const { data, error } = await (supabase.rpc as any)("commit_project_setup_upload", {
+      const { data, error } = await (supabase.rpc as any)("commit_project_setup_upload_validated", {
         p_project_id: projectId,
         p_schedule_rows: schedule,
         p_boq_rows: boq,
