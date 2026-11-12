@@ -161,7 +161,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
   const searchCandidates = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
     if (!normalizedSearch) return [];
-    return workers.filter((worker) => worker.status === "active" && !rows[worker.worker_id] &&
+    return workers.filter((worker) => !rows[worker.worker_id] &&
       `${worker.worker_code ?? ""} ${worker.name ?? ""} ${worker.contractor ?? ""} ${worker.skill_type ?? ""}`.toLowerCase().includes(normalizedSearch));
   }, [workers, rows, search]);
 
@@ -230,7 +230,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
         <div className="space-y-1.5"><Label htmlFor="labour-date">Work date</Label><Input id="labour-date" type="date" max={todayISO()} value={workDate} onChange={(event) => setWorkDate(event.target.value)} /></div>
       </div>
       <p className="text-xs text-muted-foreground">Selected date: {format(parseISO(workDate), "dd/MM/yyyy")}</p>
-      <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" aria-label="Search workers" placeholder="Search active workers to add" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
+      <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" aria-label="Search workers" placeholder="Search workers to add" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
       {!projectId ? <p className="py-8 text-center text-sm text-muted-foreground">Select a project to record contract-labour attendance.</p> : visibleWorkers.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No recent workers. Search to add an active worker.</p> : (
         <div className="space-y-2">
           {visibleWorkers.map((worker) => {
