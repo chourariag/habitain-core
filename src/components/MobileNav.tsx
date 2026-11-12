@@ -36,7 +36,7 @@ const allTabs: Tab[] = [
   { to: "/approvals", labelKey: "nav.approvals", icon: ShieldCheck, section: "approvals", module: "approvals" },
   { to: "/projects", labelKey: "nav.projects", icon: FolderKanban, section: "projects", module: "projects" },
   { to: "/production?tab=modules", labelKey: "nav.factory", icon: Factory, section: "production", module: "factory" },
-  { to: "/site-hub?tab=labour", labelKey: "nav.hr", icon: Users, section: "site", module: "site", featureFlag: "labour" },
+  { to: "/labour", labelKey: "nav.labour", icon: Users, section: "site", module: "site", featureFlag: "labour", roles: ["site_engineer", "site_installation_mgr", "head_of_projects", "planning_head", "managing_director", "super_admin", "finance_manager"] },
   { to: "/site-hub?tab=pipeline", labelKey: "nav.site", icon: Truck, section: "site", module: "site" },
   { to: "/procurement?tab=dashboard", labelKey: "nav.procurement", icon: ShoppingCart, section: "procurement", module: "procurement" },
   { to: "/finance?tab=mis-invoices", labelKey: "nav.finance", icon: DollarSign, section: "finance", module: "finance" },
