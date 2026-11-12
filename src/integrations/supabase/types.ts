@@ -5473,6 +5473,13 @@ export type Database = {
             foreignKeyName: "labour_attendance_worker_id_fkey"
             columns: ["worker_id"]
             isOneToOne: false
+            referencedRelation: "labour_worker_directory"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "labour_attendance_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
             referencedRelation: "labour_worker_rates"
             referencedColumns: ["worker_id"]
           },
@@ -5606,6 +5613,13 @@ export type Database = {
           worker_name_snapshot?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "labour_claims_labour_worker_id_fkey"
+            columns: ["labour_worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_worker_directory"
+            referencedColumns: ["worker_id"]
+          },
           {
             foreignKeyName: "labour_claims_labour_worker_id_fkey"
             columns: ["labour_worker_id"]
@@ -5841,6 +5855,13 @@ export type Database = {
             foreignKeyName: "labour_team_members_worker_id_fkey"
             columns: ["worker_id"]
             isOneToOne: false
+            referencedRelation: "labour_worker_directory"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "labour_team_members_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
             referencedRelation: "labour_worker_rates"
             referencedColumns: ["worker_id"]
           },
@@ -5895,6 +5916,13 @@ export type Database = {
             foreignKeyName: "labour_teams_team_head_id_fkey"
             columns: ["team_head_id"]
             isOneToOne: false
+            referencedRelation: "labour_worker_directory"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "labour_teams_team_head_id_fkey"
+            columns: ["team_head_id"]
+            isOneToOne: false
             referencedRelation: "labour_worker_rates"
             referencedColumns: ["worker_id"]
           },
@@ -5936,6 +5964,13 @@ export type Database = {
           worker_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "labour_worker_compensation_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: true
+            referencedRelation: "labour_worker_directory"
+            referencedColumns: ["worker_id"]
+          },
           {
             foreignKeyName: "labour_worker_compensation_worker_id_fkey"
             columns: ["worker_id"]
@@ -5985,6 +6020,13 @@ export type Database = {
             foreignKeyName: "labour_worker_rate_history_worker_id_fkey"
             columns: ["worker_id"]
             isOneToOne: false
+            referencedRelation: "labour_worker_directory"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "labour_worker_rate_history_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
             referencedRelation: "labour_worker_rates"
             referencedColumns: ["worker_id"]
           },
@@ -6023,6 +6065,13 @@ export type Database = {
           worker_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "labour_worker_status_log_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_worker_directory"
+            referencedColumns: ["worker_id"]
+          },
           {
             foreignKeyName: "labour_worker_status_log_worker_id_fkey"
             columns: ["worker_id"]
@@ -6268,6 +6317,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "manpower_plans"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "manpower_plan_entries_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_worker_directory"
+            referencedColumns: ["worker_id"]
           },
           {
             foreignKeyName: "manpower_plan_entries_worker_id_fkey"
@@ -15679,6 +15735,18 @@ export type Database = {
           },
         ]
       }
+      labour_worker_directory: {
+        Row: {
+          contractor: string | null
+          deactivated_at: string | null
+          name: string | null
+          skill_type: string | null
+          status: string | null
+          worker_code: string | null
+          worker_id: string | null
+        }
+        Relationships: []
+      }
       labour_worker_rates: {
         Row: {
           contractor: string | null
@@ -16064,6 +16132,7 @@ export type Database = {
         Args: { p_project_id: string; p_rows: Json; p_work_date: string }
         Returns: {
           has_other_project: boolean
+          is_deactivated: boolean
           total_hours: number
           worker_id: string
         }[]
