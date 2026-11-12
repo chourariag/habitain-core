@@ -96,7 +96,7 @@ function normalizeHeader(value: unknown) {
 function sheetRows(workbook: XLSX.WorkBook, sheetName: string, columns: string[]): { rows: SetupSheetRow[]; errors: string[] } {
   const worksheet = workbook.Sheets[sheetName];
   if (!worksheet) return { rows: [], errors: [`Missing “${sheetName}” sheet.`] };
-  const matrix = XLSX.utils.sheet_to_json<unknown[]>(worksheet, { header: 1, defval: "", raw: true, blankrows: false });
+  const matrix = XLSX.utils.sheet_to_json<unknown[]>(worksheet, { header: 1, defval: "", raw: true, blankrows: true });
   const header = (matrix[0] ?? []).map(normalizeHeader);
   const missing = columns.filter((column) => !header.includes(column));
   if (missing.length) return { rows: [], errors: [`${sheetName} sheet is missing columns: ${missing.join(", ")}.`] };
@@ -155,82 +155,13 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [taskResult, boqHeaderResult, planHeaderResult] = await Promise.all([
-        (supabase.from("project_tasks") as any)
-          .select("id, task_id_in_schedule, task_name, planned_start_date, planned_finish_date, responsible_role, status, completion_percentage, display_order")
-          .eq("project_id", projectId)
-          .order("display_order", { ascending: true, nullsFirst: false })
-          .order("created_at", { ascending: true }),
-        (supabase.from("project_boq") as any)
-          .select("id, version_number, uploaded_at")
-          .eq("project_id", projectId)
-          .order("version_number", { ascending: false })
-          .order("uploaded_at", { ascending: false }),
-        (supabase.from("project_material_plans") as any)
-          .select("id, version, uploaded_at")
-          .eq("project_id", projectId)
-          .order("version", { ascending: false })
-          .order("uploaded_at", { ascending: false }),
-      ]);
-      if (taskResult.error) throw taskResult.error;
-      if (boqHeaderResult.error) throw boqHeaderResult.error;
-      if (planHeaderResult.error) throw planHeaderResult.error;
-      const taskRows = taskResult.data ?? [];
-      const boqHeaders = (boqHeaderResult.data ?? []) as Array<{ id: string; version_number: number }>;
-      const planHeaders = (planHeaderResult.data ?? []) as Array<{ id: string; version: number }>;
-      setTasks(taskRows);
-
-      const taskById = new Map(taskRows.map((task: any) => [task.id, task]));
-      const currentBoq = boqHeaders[0];
-      const currentPlan = planHeaders[0];
-      const [currentBoqResult, currentPlanResult, oldBoqResult, oldPlanResult] = await Promise.all([
-        currentBoq
-          ? (supabase.from("project_boq_items") as any).select("id, sno, category, item_description, unit, boq_qty, boq_rate, schedule_task_id, boq_id").eq("boq_id", currentBoq.id).order("sno", { ascending: true })
-          : Promise.resolve({ data: [], error: null }),
-        currentPlan
-          ? (supabase.from("project_material_plan_items") as any).select("id, item_id, section, material_description, unit, tender_qty, planned_po_release_date, planned_delivery_date, schedule_task_id, plan_id").eq("plan_id", currentPlan.id).order("item_id", { ascending: true })
-          : Promise.resolve({ data: [], error: null }),
-        boqHeaders.length
-          ? (supabase.from("project_boq_items") as any).select("id, sno, item_description, unit, boq_id").in("boq_id", boqHeaders.map((header) => header.id)).is("schedule_task_id", null)
-          : Promise.resolve({ data: [], error: null }),
-        planHeaders.length
-          ? (supabase.from("project_material_plan_items") as any).select("id, item_id, material_description, unit, plan_id").in("plan_id", planHeaders.map((header) => header.id)).is("schedule_task_id", null)
-          : Promise.resolve({ data: [], error: null }),
-      ]);
-      if (currentBoqResult.error) throw currentBoqResult.error;
-      if (currentPlanResult.error) throw currentPlanResult.error;
-      if (oldBoqResult.error) throw oldBoqResult.error;
-      if (oldPlanResult.error) throw oldPlanResult.error;
-      setBoqRows((currentBoqResult.data ?? []).map((row: any) => ({
-        ...row,
-        task_name: row.schedule_task_id ? taskById.get(row.schedule_task_id)?.task_name ?? "—" : "—",
-        task_code: row.schedule_task_id ? taskById.get(row.schedule_task_id)?.task_id_in_schedule ?? "—" : "—",
-        version: currentBoq?.version_number ?? 0,
-      })));
-      setMaterialRows((currentPlanResult.data ?? []).map((row: any) => ({
-        ...row,
-        task_name: row.schedule_task_id ? taskById.get(row.schedule_task_id)?.task_name ?? "—" : "—",
-        task_code: row.schedule_task_id ? taskById.get(row.schedule_task_id)?.task_id_in_schedule ?? "—" : "—",
-        version: currentPlan?.version ?? 0,
-      })));
-      const boqVersionById = new Map(boqHeaders.map((header) => [header.id, header.version_number]));
-      const planVersionById = new Map(planHeaders.map((header) => [header.id, header.version]));
-      setUnmappedRows([
-        ...(oldBoqResult.data ?? []).map((row: any) => ({
-          section: "BOQ",
-          version: boqVersionById.get(row.boq_id) ?? 0,
-          row_key: String(row.sno),
-          description: row.item_description ?? "",
-          unit: row.unit ?? "",
-        })),
-        ...(oldPlanResult.data ?? []).map((row: any) => ({
-          section: "Material Plan",
-          version: planVersionById.get(row.plan_id) ?? 0,
-          row_key: String(row.item_id),
-          description: row.material_description ?? "",
-          unit: row.unit ?? "",
-        })),
-      ]);
+      const { data, error } = await (supabase.rpc as any)("get_project_setup_status", { p_project_id: projectId });
+      if (error) throw error;
+      const status = data as { tasks?: any[]; boq?: any[]; materials?: any[]; unmapped?: UnmappedRow[] };
+      setTasks(status.tasks ?? []);
+      setBoqRows(status.boq ?? []);
+      setMaterialRows(status.materials ?? []);
+      setUnmappedRows(status.unmapped ?? []);
     } catch (error: any) {
       toast.error(error?.message ?? "Could not load project setup data.");
     } finally {
@@ -281,7 +212,7 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
     }
     setCommitting(true);
     try {
-      const { data, error } = await (supabase.rpc as any)("commit_project_setup_upload", {
+      const { data, error } = await (supabase.rpc as any)("commit_project_setup_excel_upload", {
         p_project_id: projectId,
         p_schedule_rows: schedule,
         p_boq_rows: boq,
@@ -412,7 +343,7 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
                 <span className="max-w-full break-all text-xs text-muted-foreground">{row.task_id_in_schedule || "No task code"}</span>
               </div>
               <p className="break-words text-sm text-muted-foreground">{displayDate(row.planned_start_date)} – {displayDate(row.planned_finish_date)} · {row.responsible_role || "Role unassigned"}</p>
-              <p className="break-words text-xs text-muted-foreground">{row.status} · {Number(row.completion_percentage) || 0}%</p>
+              <p className="break-words text-xs text-muted-foreground">{row.status}</p>
             </article>
           ))}
           {filteredTasks.length === 0 && <p className="py-6 text-sm text-muted-foreground">No schedule rows match this search.</p>}

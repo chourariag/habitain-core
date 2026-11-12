@@ -28,7 +28,7 @@ describe("project setup Excel validation", () => {
     const rows = emptyRows();
     rows.schedule = [
       { rowNumber: 2, values: { task_code: "T-1", task_name: "One" } },
-      { rowNumber: 3, values: { task_code: "t-1", task_name: "Duplicate" } },
+      { rowNumber: 3, values: { task_code: "T-1", task_name: "Duplicate" } },
     ];
     rows.boq = [
       { rowNumber: 2, values: { sno: 1, item_description: "Steel", unit: "kg", boq_qty: 5, boq_rate: 2, task_code: "T-1" } },

@@ -15710,7 +15710,25 @@ export type Database = {
         Args: { _project_id: string; _system: string }
         Returns: number
       }
+      commit_project_setup_excel_upload: {
+        Args: {
+          p_boq_rows: Json
+          p_material_rows: Json
+          p_project_id: string
+          p_schedule_rows: Json
+        }
+        Returns: Json
+      }
       commit_project_setup_upload: {
+        Args: {
+          p_boq_rows: Json
+          p_material_rows: Json
+          p_project_id: string
+          p_schedule_rows: Json
+        }
+        Returns: Json
+      }
+      commit_project_setup_upload_validated: {
         Args: {
           p_boq_rows: Json
           p_material_rows: Json
