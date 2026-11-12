@@ -247,6 +247,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
               <div className="text-xs text-muted-foreground">Amount <span className="block break-words font-semibold text-foreground">{inr(row.present ? row.hours * hourlyRate : 0)}</span></div>
             </div>;
           })}
+          <div className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-border bg-muted p-3 text-sm font-semibold"><span>Day total</span><span className="break-words">{inr(visibleWorkers.reduce((sum, worker) => { const row = rows[worker.worker_id]; return sum + (row?.present ? row.hours * Number(worker.effective_hourly_rate ?? 0) : 0); }, 0))}</span></div>
         </div>
       )}
       {projectId && searchCandidates.length > 0 && <div className="space-y-2 border-t border-border pt-3"><p className="text-sm font-medium">Add workers</p>{searchCandidates.slice(0, 30).map((worker) => <div key={worker.worker_id} className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-border p-3"><div className="min-w-0"><div className="break-words text-sm font-medium">{worker.name}</div><div className="break-words text-xs text-muted-foreground">{worker.worker_code} · {worker.contractor ?? "No contractor"} · {worker.skill_type}</div></div><Button size="sm" variant="outline" onClick={() => addVisibleWorker(worker)}>Add</Button></div>)}</div>}

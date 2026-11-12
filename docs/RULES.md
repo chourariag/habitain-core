@@ -13,3 +13,5 @@ These rules govern all future app changes.
 8. Currency is INR (₹). Dates are DD/MM/YYYY. Financial year is April to March.
 9. Every status change and escalation is recorded with who, when, and the old and new value.
 10. Mobile-first. No text overflow or horizontal scroll at 360px width.
+
+- Exception: daily attendance and daily site-report entry use row-by-row mobile controls with sensible defaults. Excel upload applies to masters, setup data and batch imports.
