@@ -35,11 +35,13 @@ export function exceedsBoq(boqQty: number, cumulative: number, today: number) {
   return boqQty > 0 && cumulative + today > boqQty;
 }
 
-export type SubmitCheck = { elevationKinds: string[]; siteClean: boolean; siteCleanPhoto: boolean; tasksWithProgress: number; notes: string };
+export const NO_ELEVATIONS_MSG = "No elevations defined for this project";
+export type SubmitCheck = { elevations: { id: string; name: string }[]; photoElevationIds: string[]; siteClean: boolean; siteCleanPhoto: boolean; tasksWithProgress: number; notes: string };
 export function submitBlockers(c: SubmitCheck): string[] {
   const out: string[] = [];
-  const missing = ELEVATION_KINDS.filter((k) => !c.elevationKinds.includes(k));
-  if (missing.length) out.push(`Elevation photos missing: ${missing.map((k) => PHOTO_LABEL[k]).join(", ")}`);
+  if (c.elevations.length === 0) out.push(NO_ELEVATIONS_MSG);
+  const missing = c.elevations.filter((e) => !c.photoElevationIds.includes(e.id));
+  if (missing.length) out.push(`Elevation photos missing: ${missing.map((e) => e.name).join(", ")}`);
   if (!c.siteClean) out.push("Tick site clean");
   if (!c.siteCleanPhoto) out.push("Add the site clean photo");
   if (c.tasksWithProgress === 0 && c.notes.trim().length < 5) out.push("Enter progress on a task, or write in notes why no work happened");
