@@ -9103,6 +9103,88 @@ export type Database = {
           },
         ]
       }
+      project_elevation_log: {
+        Row: {
+          edited_at: string
+          edited_by: string
+          elevation_id: string
+          field: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          project_id: string
+        }
+        Insert: {
+          edited_at?: string
+          edited_by: string
+          elevation_id: string
+          field: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          project_id: string
+        }
+        Update: {
+          edited_at?: string
+          edited_by?: string
+          elevation_id?: string
+          field?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_elevation_log_elevation_id_fkey"
+            columns: ["elevation_id"]
+            isOneToOne: false
+            referencedRelation: "project_elevations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_elevations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          drawing_ref: string | null
+          id: string
+          is_active: boolean
+          name: string
+          project_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          drawing_ref?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          project_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          drawing_ref?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          project_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_elevations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_grns: {
         Row: {
           basic_amount_excl_gst: number
@@ -13339,6 +13421,7 @@ export type Database = {
       }
       site_report_photos: {
         Row: {
+          elevation_id: string | null
           exif_taken_at: string | null
           flags: string[]
           from_gallery: boolean
@@ -13355,6 +13438,7 @@ export type Database = {
           uploaded_by: string
         }
         Insert: {
+          elevation_id?: string | null
           exif_taken_at?: string | null
           flags?: string[]
           from_gallery?: boolean
@@ -13371,6 +13455,7 @@ export type Database = {
           uploaded_by: string
         }
         Update: {
+          elevation_id?: string | null
           exif_taken_at?: string | null
           flags?: string[]
           from_gallery?: boolean
@@ -13387,6 +13472,13 @@ export type Database = {
           uploaded_by?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "site_report_photos_elevation_id_fkey"
+            columns: ["elevation_id"]
+            isOneToOne: false
+            referencedRelation: "project_elevations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "site_report_photos_project_id_fkey"
             columns: ["project_id"]
@@ -16068,6 +16160,10 @@ export type Database = {
     }
     Functions: {
       _cpt_validate: { Args: { _token: string }; Returns: string }
+      _elevation_log: {
+        Args: { _e: string; _f: string; _n: string; _o: string; _p: string }
+        Returns: undefined
+      }
       _site_report_check_window: {
         Args: { p_date: string; p_project_id: string }
         Returns: undefined
@@ -16081,6 +16177,19 @@ export type Database = {
           _report: string
         }
         Returns: undefined
+      }
+      add_site_report_elevation_photo: {
+        Args: {
+          p_elevation_id: string
+          p_exif_taken_at: string
+          p_from_gallery: boolean
+          p_gps_lat: number
+          p_gps_lng: number
+          p_gps_source: string
+          p_report_id: string
+          p_storage_path: string
+        }
+        Returns: Json
       }
       add_site_report_photo: {
         Args: {
@@ -16110,6 +16219,7 @@ export type Database = {
         Args: { _handover_id: string }
         Returns: undefined
       }
+      archive_project_elevation: { Args: { p_id: string }; Returns: undefined }
       attachment_entity_project: {
         Args: { _entity_id: string; _entity_type: string }
         Returns: string
@@ -16181,6 +16291,10 @@ export type Database = {
       can_manage_hr_documents: { Args: { _user_id: string }; Returns: boolean }
       can_manage_labour_register: {
         Args: { _user_id: string }
+        Returns: boolean
+      }
+      can_manage_project_elevations: {
+        Args: { _project_id: string; _uid: string }
         Returns: boolean
       }
       can_manage_quotations: { Args: { _user_id: string }; Returns: boolean }
@@ -16842,6 +16956,16 @@ export type Database = {
       }
       unlock_locked_document: {
         Args: { p_reason: string; p_record_id: string; p_record_table: string }
+        Returns: string
+      }
+      upsert_project_elevation: {
+        Args: {
+          p_drawing_ref: string
+          p_id: string
+          p_name: string
+          p_project_id: string
+          p_sort_order: number
+        }
         Returns: string
       }
       user_can_access_project: {

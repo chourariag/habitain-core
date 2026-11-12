@@ -11,13 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Camera, ImageIcon, Loader2, RotateCw, CheckCircle2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import {
-  ELEVATION_KINDS, FLAG_LABEL, PHOTO_LABEL, allowedReportDates, exceedsBoq, labourBalance, parsePct, submitBlockers,
+  NO_ELEVATIONS_MSG, FLAG_LABEL, PHOTO_LABEL, allowedReportDates, exceedsBoq, labourBalance, parsePct, submitBlockers,
 } from "@/lib/site-report-rules";
 import { compressPhoto, readPhotoMeta, type PhotoMeta } from "@/lib/site-report-photo";
 
 type Task = { id: string; code: string; name: string; pct: number; planned_start: string; actual_start: string | null };
 type Boq = { id: string; task_id: string; description: string; unit: string | null; boq_qty: number; cumulative: number };
-type Photo = { id: string; kind: string; storage_path: string; flags: string[]; gps_source: string };
+type Photo = { id: string; kind: string; elevation_id?: string | null; storage_path: string; flags: string[]; gps_source: string };
 type Data = {
   can_write: boolean; today: string;
   report: null | { id: string; status: string | null; notes: string | null; site_clean: boolean; site_clean_photo_path: string | null; submitted_by: string | null; submitted_at: string | null };
@@ -26,12 +26,16 @@ type Data = {
   labour: { task_id: string; hours: number }[];
   quantities: { boq_item_id: string; today_qty: number; remarks: string | null }[];
   photos: Photo[];
+  elevations: { id: string; name: string; drawing_ref: string | null }[];
+  can_manage_elevations: boolean;
   attendance: { workers: number; hours: number };
 };
 type Pending = { file: Blob; meta: PhotoMeta; gallery: boolean; error?: string; busy?: boolean };
 
 const istToday = () => format(new Date(Date.now() + (330 + new Date().getTimezoneOffset()) * 60000), "yyyy-MM-dd");
 const ddmmyyyy = (iso: string) => format(parseISO(iso), "dd/MM/yyyy");
+const FAIL_MSG = "Could not save the report. Please try again.";
+const slotKey = (p: { kind: string; elevation_id?: string | null }) => p.kind === "elevation" && p.elevation_id ? `elevation:${p.elevation_id}` : p.kind;
 const rpc = (fn: string, args: Record<string, unknown>) => (supabase as any).rpc(fn, args);
 
 export function DailySiteReport({ projectId }: { projectId: string }) {
@@ -59,7 +63,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     setLoading(true);
     const { data: d, error } = await rpc("get_site_report", { p_project_id: projectId, p_date: date });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) { console.error(error); toast.error("Could not load the report. Please try again."); return; }
     const v = d as Data;
     setData(v);
     reportId.current = v.report?.id ?? null;
@@ -80,7 +84,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
       const out: Record<string, string> = {};
       for (const p of data.photos) {
         const { data: s } = await supabase.storage.from("site-report-photos").createSignedUrl(p.storage_path, 3600);
-        if (s?.signedUrl) out[p.kind] = s.signedUrl;
+        if (s?.signedUrl) out[slotKey(p)] = s.signedUrl;
       }
       setThumbs(out);
     })();
@@ -110,7 +114,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     if (!canEdit) return null;
     setSaveState("saving");
     const { data: id, error } = await rpc("save_site_report_draft", { p_project_id: projectId, p_date: date, p_payload: buildPayload() });
-    if (error) { setSaveState("error"); toast.error(error.message); return null; }
+    if (error) { setSaveState("error"); console.error("save_site_report_draft failed:", error); toast.error(FAIL_MSG); return null; }
     reportId.current = id as string; dirty.current = false; cleared.current = { hours: new Set(), qty: new Set() }; setSaveState("saved");
     return id as string;
   }, [canEdit, projectId, date, buildPayload]);
@@ -129,19 +133,21 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     try {
       const id = reportId.current ?? (await saveNow());
       if (!id) throw new Error("Could not save the draft");
-      const path = `${projectId}/${id}/${kind}-${Date.now()}.jpg`;
+      const elevId = kind.startsWith("elevation:") ? kind.slice(10) : null;
+      const path = elevId ? `${projectId}/${id}/elevation-${elevId}-${Date.now()}.jpg` : `${projectId}/${id}/${kind}-${Date.now()}.jpg`;
       const up = await supabase.storage.from("site-report-photos").upload(path, p.file, { contentType: "image/jpeg" });
       if (up.error) throw up.error;
-      const { error } = await rpc("add_site_report_photo", {
-        p_report_id: id, p_kind: kind, p_storage_path: path, p_exif_taken_at: p.meta.takenAt,
-        p_gps_lat: p.meta.lat, p_gps_lng: p.meta.lng, p_gps_source: p.meta.source, p_from_gallery: p.gallery,
-      });
+      const meta = { p_storage_path: path, p_exif_taken_at: p.meta.takenAt, p_gps_lat: p.meta.lat, p_gps_lng: p.meta.lng, p_gps_source: p.meta.source, p_from_gallery: p.gallery };
+      const { error } = elevId
+        ? await rpc("add_site_report_elevation_photo", { p_report_id: id, p_elevation_id: elevId, ...meta })
+        : await rpc("add_site_report_photo", { p_report_id: id, p_kind: kind, ...meta });
       if (error) throw error;
       setPending((s) => { const n = { ...s }; delete n[kind]; return n; });
       const { data: d } = await rpc("get_site_report", { p_project_id: projectId, p_date: date });
       if (d) setData((prev) => prev ? { ...prev, photos: (d as Data).photos, report: (d as Data).report } : (d as Data));
     } catch (e: any) {
-      setPending((s) => ({ ...s, [kind]: { ...p, busy: false, error: e?.message ?? "Upload failed" } }));
+      console.error("site report photo upload failed:", e);
+      setPending((s) => ({ ...s, [kind]: { ...p, busy: false, error: "Upload failed. Please retry." } }));
     }
   };
 
@@ -160,7 +166,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     if (!id) { setSubmitting(false); return; }
     const { data: res, error } = await rpc("submit_site_report", { p_report_id: id });
     setSubmitting(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) { console.error("submit_site_report failed:", error); toast.error(error.message?.includes(NO_ELEVATIONS_MSG) ? NO_ELEVATIONS_MSG : FAIL_MSG); return; }
     await load();
     setSummary(res);
     toast.success("Daily report submitted");
@@ -169,24 +175,25 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
   if (loading && !data) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   if (!data) return null;
 
-  const photoByKind = Object.fromEntries(data.photos.map((p) => [p.kind, p]));
+  const photoByKind = Object.fromEntries(data.photos.map((p) => [slotKey(p), p]));
+  const elevations = data.elevations ?? [];
   const tasks = data.tasks.filter((t) => !taskSearch || `${t.code} ${t.name}`.toLowerCase().includes(taskSearch.toLowerCase()));
   const bal = labourBalance(Number(data.attendance?.hours ?? 0), workedTaskIds.map((id) => Number(hours[id]) || 0));
   const blockers = submitBlockers({
-    elevationKinds: data.photos.map((p) => p.kind), siteClean, siteCleanPhoto: !!photoByKind.site_clean,
+    elevations, photoElevationIds: data.photos.filter((p) => p.kind === "elevation" && p.elevation_id).map((p) => p.elevation_id as string), siteClean, siteCleanPhoto: !!photoByKind.site_clean,
     tasksWithProgress: workedTaskIds.length, notes,
   });
   const readOnly = !canEdit;
 
-  const PhotoSlot = ({ kind }: { kind: string }) => {
+  const PhotoSlot = ({ kind, label, sub }: { kind: string; label?: string; sub?: string | null }) => {
     const ph = photoByKind[kind] as Photo | undefined; const pd = pending[kind];
     return (
       <div className="rounded-md border border-border p-2 space-y-2 min-w-0">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-semibold">{PHOTO_LABEL[kind]}</span>
+          <span className="min-w-0"><span className="text-sm font-semibold break-words block">{label ?? PHOTO_LABEL[kind]}</span>{sub && <span className="text-xs text-muted-foreground break-words block">Drawing: {sub}</span>}</span>
           {ph ? <CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> : <span className="text-xs text-muted-foreground">Required</span>}
         </div>
-        {thumbs[kind] && ph && <img src={thumbs[kind]} alt={`${PHOTO_LABEL[kind]} photo`} className="w-full aspect-video object-cover rounded" />}
+        {thumbs[kind] && ph && <img src={thumbs[kind]} alt={`${label ?? PHOTO_LABEL[kind]} photo`} className="w-full aspect-video object-cover rounded" />}
         {ph?.flags?.length ? <div className="flex flex-wrap gap-1">{ph.flags.map((f) => <Badge key={f} variant="outline" className="text-[10px] border-warning text-warning">{FLAG_LABEL[f] ?? f}</Badge>)}</div> : null}
         {pd?.busy && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Uploading…</div>}
         {pd?.error && (
@@ -356,7 +363,18 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
       <Card>
         <CardHeader className="p-3 pb-1"><CardTitle className="text-base">4. Elevation photos</CardTitle></CardHeader>
         <CardContent className="p-3 pt-1 grid grid-cols-1 min-[400px]:grid-cols-2 gap-2">
-          {ELEVATION_KINDS.map((k) => <PhotoSlot key={k} kind={k} />)}
+          {elevations.length === 0 ? (
+            <div className="text-sm space-y-1 col-span-full">
+              <p>{NO_ELEVATIONS_MSG}</p>
+              {data.can_manage_elevations && <Link to={`/projects/${projectId}?tab=setup`} className="text-primary underline">Open project Setup to add elevations</Link>}
+            </div>
+          ) : elevations.map((e) => <PhotoSlot key={e.id} kind={`elevation:${e.id}`} label={e.name} sub={e.drawing_ref} />)}
+          {data.photos.filter((p) => p.kind.startsWith("elevation") && !(p.kind === "elevation" && elevations.some((e) => e.id === p.elevation_id))).map((p) => (
+            <div key={p.id} className="rounded-md border border-border p-2 space-y-1 min-w-0">
+              <span className="text-sm font-semibold">{PHOTO_LABEL[p.kind] ?? "Earlier elevation"}</span>
+              {thumbs[slotKey(p)] && <img src={thumbs[slotKey(p)]} alt="Stored elevation photo" className="w-full aspect-video object-cover rounded" />}
+            </div>
+          ))}
         </CardContent>
       </Card>
 

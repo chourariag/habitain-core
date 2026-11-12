@@ -20,9 +20,10 @@ describe("site report rules", () => {
     expect(exceedsBoq(100, 95, 5)).toBe(false);
   });
   it("submit needs 4 elevations, site clean tick+photo, and progress or a notes reason", () => {
-    const ok = { elevationKinds: ["elevation_front", "elevation_rear", "elevation_left", "elevation_right"], siteClean: true, siteCleanPhoto: true, tasksWithProgress: 1, notes: "" };
+    const ok = { elevations: [{ id: "a", name: "North" }, { id: "b", name: "South" }], photoElevationIds: ["a", "b"], siteClean: true, siteCleanPhoto: true, tasksWithProgress: 1, notes: "" };
     expect(submitBlockers(ok)).toEqual([]);
-    expect(submitBlockers({ ...ok, elevationKinds: ok.elevationKinds.slice(1) })).toHaveLength(1);
+    expect(submitBlockers({ ...ok, photoElevationIds: ["a"] })).toEqual(["Elevation photos missing: South"]);
+    expect(submitBlockers({ ...ok, elevations: [], photoElevationIds: [] })).toEqual(["No elevations defined for this project"]);
     expect(submitBlockers({ ...ok, siteCleanPhoto: false })).toHaveLength(1);
     expect(submitBlockers({ ...ok, tasksWithProgress: 0 })).toHaveLength(1);
     expect(submitBlockers({ ...ok, tasksWithProgress: 0, notes: "Rain all day" })).toEqual([]);
