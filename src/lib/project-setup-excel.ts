@@ -46,6 +46,7 @@ export interface SetupValidationResult {
 
 const text = (value: unknown) => String(value ?? "").trim();
 const codeKey = (value: string) => value.trim();
+const duplicateCodeKey = (value: string) => value.trim().toLocaleLowerCase();
 const isExampleRow = (values: Record<string, unknown>) =>
   text(values.task_code) === "__TEMPLATE_EXAMPLE__" ||
   Object.values(values).some((value) => text(value).toLocaleLowerCase().startsWith("example row"));
@@ -98,8 +99,8 @@ export function validateProjectSetupRows(
     const taskCode = text(values.task_code);
     const taskName = text(values.task_name);
     if (!taskCode) errors.push(`Schedule row ${row.rowNumber}: task_code is required.`);
-    else if (scheduleCodes.has(codeKey(taskCode))) errors.push(`Schedule row ${row.rowNumber}: duplicate task_code “${taskCode}”.`);
-    else scheduleCodes.add(codeKey(taskCode));
+    else if (scheduleCodes.has(duplicateCodeKey(taskCode))) errors.push(`Schedule row ${row.rowNumber}: duplicate task_code “${taskCode}”.`);
+    else scheduleCodes.add(duplicateCodeKey(taskCode));
     if (!taskName) errors.push(`Schedule row ${row.rowNumber}: task_name is required.`);
     const start = parseOptionalDate(values.planned_start, "planned_start", "Schedule", row.rowNumber, errors);
     const end = parseOptionalDate(values.planned_end, "planned_end", "Schedule", row.rowNumber, errors);
