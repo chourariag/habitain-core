@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { rowsFromLabourMasterSheet, validateLabourMasterRows, type LabourMasterImportRow } from "@/lib/labour-master-excel";
-import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, LABOUR_SCREEN_ROLES, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
+import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
 const MASTER_HEADERS = ["worker_code", "name", "contractor", "skill_type", "hourly_rate", "monthly_salary", "status"];
 
 type LabourWorker = {
@@ -53,7 +53,7 @@ export default function LabourPage() {
   const [loading, setLoading] = useState(true);
   const canManageAttendance = LABOUR_ATTENDANCE_ROLES.includes(role as (typeof LABOUR_ATTENDANCE_ROLES)[number]);
   const canUploadMaster = LABOUR_MASTER_UPLOAD_ROLES.includes(role as (typeof LABOUR_MASTER_UPLOAD_ROLES)[number]);
-  const canViewMaster = LABOUR_SCREEN_ROLES.includes(role as (typeof LABOUR_SCREEN_ROLES)[number]);
+  const canViewMaster = Boolean(role);
   const canViewRates = LABOUR_RATE_VIEW_ROLES.includes(role as (typeof LABOUR_RATE_VIEW_ROLES)[number]);
 
   useEffect(() => {
@@ -182,7 +182,6 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
       toast.error("Hours must be between 0 and 16."); return;
     }
     const oldRecordEdited = selectedRows.some((row) => requiresReasonForSavedAttendanceEdit(row.savedHours, row.present ? row.hours : 0));
-    const dateIsPast = workDate < todayISO();
     if (requiresLabourAttendanceReason(workDate, new Date()) && !reason.trim()) {
       toast.error("Add a reason for attendance more than two days ago."); return;
     }
@@ -245,7 +244,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
           })}
         </div>
       )}
-      {projectId && searchCandidates.length > 0 && <div className="space-y-2 border-t border-border pt-3"><p className="text-sm font-medium">Add active workers</p>{searchCandidates.slice(0, 30).map((worker) => <div key={worker.worker_id} className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-border p-3"><div className="min-w-0"><div className="break-words text-sm font-medium">{worker.name}</div><div className="break-words text-xs text-muted-foreground">{worker.worker_code} · {worker.contractor ?? "No contractor"} · {worker.skill_type}</div></div><Button size="sm" variant="outline" onClick={() => addVisibleWorker(worker)}>Add</Button></div>)}</div>}
+      {projectId && searchCandidates.length > 0 && <div className="space-y-2 border-t border-border pt-3"><p className="text-sm font-medium">Add workers</p>{searchCandidates.slice(0, 30).map((worker) => <div key={worker.worker_id} className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-border p-3"><div className="min-w-0"><div className="break-words text-sm font-medium">{worker.name}</div><div className="break-words text-xs text-muted-foreground">{worker.worker_code} · {worker.contractor ?? "No contractor"} · {worker.skill_type}</div></div><Button size="sm" variant="outline" onClick={() => addVisibleWorker(worker)}>Add</Button></div>)}</div>}
       {canEdit && projectId && <div className="space-y-3 border-t border-border pt-3">
         {(workDate < todayISO() || workDate < format(subDays(new Date(), 2), "yyyy-MM-dd") || Object.values(rows).some((row) => requiresReasonForSavedAttendanceEdit(row.savedHours, row.present ? row.hours : 0))) && <div className="space-y-1.5"><Label htmlFor="attendance-reason">Reason for back-dating or editing</Label><Input id="attendance-reason" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Required for dates over two days old or saved-entry edits" /></div>}
         <div className="flex justify-end"><Button onClick={saveAttendance} disabled={saving || !projectId} className="w-full sm:w-auto">{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Save attendance</Button></div>

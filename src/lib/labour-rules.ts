@@ -26,24 +26,6 @@ export const LABOUR_RATE_VIEW_ROLES = [
   "finance_manager",
 ] as const;
 
-export const LABOUR_SCREEN_ROLES = [
-  "super_admin",
-  "managing_director",
-  "finance_director",
-  "sales_director",
-  "architecture_director",
-  "finance_manager",
-  "production_head",
-  "site_installation_mgr",
-  "hr_executive",
-  "head_operations",
-  "factory_floor_supervisor",
-  "fabrication_foreman",
-  "site_engineer",
-  "head_of_projects",
-  "planning_head",
-] as const;
-
 export function isValidLabourHours(hours: number): boolean {
   return Number.isFinite(hours) && hours >= 0 && hours <= 16;
 }
