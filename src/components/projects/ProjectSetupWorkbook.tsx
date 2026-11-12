@@ -57,8 +57,8 @@ function makeTemplate() {
     ["Schedule", SHEET_COLUMNS.schedule, {
       task_code: "__TEMPLATE_EXAMPLE__",
       task_name: "Example row — replace or remove",
-      planned_start: "DD/MM/YYYY",
-      planned_end: "DD/MM/YYYY",
+      planned_start: "01/01/2026",
+      planned_end: "02/01/2026",
       responsible_role: "planning_head",
     }],
     ["BOQ", SHEET_COLUMNS.boq, {
@@ -74,8 +74,8 @@ function makeTemplate() {
       material_description: "Example row — replace or remove",
       unit: "kg",
       planned_qty: 0,
-      planned_po_release_date: "DD/MM/YYYY",
-      planned_delivery_date: "DD/MM/YYYY",
+      planned_po_release_date: "01/01/2026",
+      planned_delivery_date: "02/01/2026",
       section: "Example section",
       task_code: "__TEMPLATE_EXAMPLE__",
     }],
@@ -249,6 +249,9 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
       const materials = sheetRows(workbook, "Material Plan", SHEET_COLUMNS.materials);
       const rows = { schedule: schedule.rows, boq: boq.rows, materials: materials.rows };
       const errors = [...schedule.errors, ...boq.errors, ...materials.errors];
+      if (rows.schedule.length + rows.boq.length + rows.materials.length === 0) {
+        errors.push("The workbook has no data rows.");
+      }
       setWorkbookRows(rows);
       setFileErrors(errors);
       const result = validateProjectSetupRows(rows, tasks.map((task) => task.task_id_in_schedule).filter(Boolean));

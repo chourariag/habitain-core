@@ -24,7 +24,6 @@ import { BudgetTrackingTab } from "@/components/projects/BudgetTrackingTab";
 import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
 import { ProjectPLTab } from "@/components/projects/ProjectPLTab";
-import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
 import { ProjectSetupWorkbook } from "@/components/projects/ProjectSetupWorkbook";
 import { ProjectSetupApprovalSection } from "@/components/projects/ProjectSetupApprovalSection";
 import { ProjectDesignScheduleTab } from "@/components/projects/ProjectDesignScheduleTab";
@@ -206,10 +205,6 @@ export default function ProjectDetail() {
 
       <PreProductionChecklist projectId={id!} division={proj.division ?? null} />
 
-
-      {!isAds && flags.isEnabled("project_setup") && (
-        <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} projectType={proj.division ?? null} onImported={fetchData} />
-      )}
 
       {!isAds && flags.isEnabled("project_setup") && (
         <ProjectSetupApprovalSection
