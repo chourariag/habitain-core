@@ -45,6 +45,8 @@ import type { Tables } from "@/integrations/supabase/types";
 import { MyTasksSection } from "@/components/tasks/MyTasksSection";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { featureFlagForSiteTab } from "@/lib/feature-flags";
+import { DailySiteReport } from "@/components/site/DailySiteReport";
+import { ClipboardList } from "lucide-react";
 
 function SiteHubContent() {
   const featureFlags = useFeatureFlags();
@@ -237,6 +239,7 @@ function SiteHubContent() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <ScrollableTabsWrapper>
           <TabsList>
+            {featureFlags.isEnabled("site_report") && <TabsTrigger value="daily-report" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Daily Report</TabsTrigger>}
             <TabsTrigger value="pipeline" className="gap-1.5"><Truck className="h-4 w-4" /> Dispatch Pipeline</TabsTrigger>
             <TabsTrigger value="schedule" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Schedule</TabsTrigger>
             {featureFlags.isEnabled("gfc") && <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>}
@@ -364,6 +367,10 @@ function SiteHubContent() {
               <ModuleDrawingsTab projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
             </CardContent>
           </Card>
+        </TabsContent>}
+
+        {featureFlags.isEnabled("site_report") && selectedProjectId && <TabsContent value="daily-report" className="space-y-4">
+          <DailySiteReport projectId={selectedProjectId} />
         </TabsContent>}
 
         <TabsContent value="diary" className="space-y-4">
