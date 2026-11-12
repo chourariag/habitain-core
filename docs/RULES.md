@@ -5,6 +5,7 @@ These rules govern all future app changes.
 1. Never hardcode a personal name. Resolve people by role.
 2. Deactivate accounts; never rename or delete them.
 3. Any form with more than 3 fields, or any structured data, is entered by Excel upload with a Download Template button. Templates match Tally export columns where a Tally source exists.
+   - Exception: contract-labour daily attendance uses the requested on-screen per-worker attendance rows.
 4. All purchase orders are created in Tally only. The app registers and matches them; it never creates or blocks them.
 5. GPS attendance is mandatory for all employee roles.
 6. Billing milestones are progress signals only. WIP comes from measured quantities. Schedule % is status only.
