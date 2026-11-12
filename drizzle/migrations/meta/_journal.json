@@ -120,6 +120,13 @@
       "when": 1794510047272,
       "tag": "0016_scope_labour_directory_and_edit_reasons",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794510564441,
+      "tag": "0017_labour_codes_and_attendance_audit",
+      "breakpoints": true
     }
   ]
 }
