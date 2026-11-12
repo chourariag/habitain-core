@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { rowsFromLabourMasterSheet, validateLabourMasterRows, type LabourMasterImportRow } from "@/lib/labour-master-excel";
-import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_DIRECTORY_VIEW_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
+import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_DIRECTORY_VIEW_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, labourAuditReasonForSave, parseLabourDateInput, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
 const MASTER_HEADERS = ["worker_code", "name", "contractor", "skill_type", "hourly_rate", "monthly_salary", "status"];
 
 type LabourWorker = {
@@ -113,6 +113,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
   canEdit: boolean;
 }) {
   const [workDate, setWorkDate] = useState(todayISO());
+  const [dateText, setDateText] = useState(format(new Date(), "dd/MM/yyyy"));
   const [search, setSearch] = useState("");
   const [recentIds, setRecentIds] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, AttendanceRow>>({});
@@ -161,7 +162,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
   const searchCandidates = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
     if (!normalizedSearch) return [];
-    return workers.filter((worker) => !rows[worker.worker_id] &&
+    return workers.filter((worker) => worker.status === "active" && !rows[worker.worker_id] &&
       `${worker.worker_code ?? ""} ${worker.name ?? ""} ${worker.contractor ?? ""} ${worker.skill_type ?? ""}`.toLowerCase().includes(normalizedSearch));
   }, [workers, rows, search]);
 
@@ -177,6 +178,10 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
 
   const saveAttendance = async () => {
     if (!projectId) { toast.error("Choose a project first."); return; }
+    const parsedWorkDate = parseLabourDateInput(dateText);
+    if (!parsedWorkDate) { toast.error("Enter the date as DD/MM/YYYY."); return; }
+    if (parsedWorkDate !== workDate) { toast.error("Finish entering a valid date before saving."); return; }
+    if (workDate > todayISO()) { toast.error("Future attendance cannot be saved."); return; }
     const selectedRows = Object.values(rows);
     if (selectedRows.some((row) => !isValidLabourHours(row.hours))) {
       toast.error("Hours must be between 0 and 16."); return;
@@ -208,11 +213,12 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
       const labels = attendanceWarningLabels(warning);
       return labels.length ? [{ workerName: row.worker.name ?? "Worker", text: labels.join("; ") }] : [];
     });
+    const auditReason = labourAuditReasonForSave(workDate, new Date(), oldRecordEdited, reason);
     const { data, error } = await supabase.rpc("save_labour_attendance", {
       p_project_id: projectId,
       p_work_date: workDate,
       p_rows: payload,
-      p_reason: reason.trim() || null,
+      p_reason: auditReason,
     });
     setSaving(false);
     if (error) { setWarnings(generatedWarnings); toast.error(error.message); return; }
@@ -226,9 +232,8 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
     <div className="space-y-4 pt-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1.5"><Label htmlFor="labour-project">Project</Label><Select value={projectId ?? ""} onValueChange={(value) => onProjectChange(value || null)}><SelectTrigger id="labour-project"><SelectValue placeholder="Choose a project" /></SelectTrigger><SelectContent>{projects.map((project) => <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>)}</SelectContent></Select></div>
-        <div className="space-y-1.5"><Label htmlFor="labour-date">Work date</Label><Input id="labour-date" type="date" max={todayISO()} value={workDate} onChange={(event) => setWorkDate(event.target.value)} /></div>
+        <div className="space-y-1.5"><Label htmlFor="labour-date">Work date</Label><Input id="labour-date" inputMode="numeric" maxLength={10} placeholder="DD/MM/YYYY" value={dateText} onChange={(event) => { const value = event.target.value; setDateText(value); const parsed = parseLabourDateInput(value); if (parsed) setWorkDate(parsed); }} onBlur={() => { if (!parseLabourDateInput(dateText)) setDateText(format(parseISO(workDate), "dd/MM/yyyy")); }} /></div>
       </div>
-      <p className="text-xs text-muted-foreground">Selected date: {format(parseISO(workDate), "dd/MM/yyyy")}</p>
       <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" aria-label="Search workers" placeholder="Search workers to add" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
       {!projectId ? <p className="py-8 text-center text-sm text-muted-foreground">Select a project to record contract-labour attendance.</p> : visibleWorkers.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No recent workers. Search to add an active worker.</p> : (
         <div className="space-y-2">
