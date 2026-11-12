@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { featureFlagForModule } from "@/lib/feature-flags";
+import { LABOUR_DIRECTORY_VIEW_ROLES } from "@/lib/labour-rules";
 
 type Tab = {
   to: string;
@@ -36,7 +37,7 @@ const allTabs: Tab[] = [
   { to: "/approvals", labelKey: "nav.approvals", icon: ShieldCheck, section: "approvals", module: "approvals" },
   { to: "/projects", labelKey: "nav.projects", icon: FolderKanban, section: "projects", module: "projects" },
   { to: "/production?tab=modules", labelKey: "nav.factory", icon: Factory, section: "production", module: "factory" },
-  { to: "/labour", labelKey: "nav.labour", icon: Users, section: "dashboard", featureFlag: "labour" },
+  { to: "/labour", labelKey: "nav.labour", icon: Users, section: "dashboard", featureFlag: "labour", roles: [...LABOUR_DIRECTORY_VIEW_ROLES] },
   { to: "/site-hub?tab=pipeline", labelKey: "nav.site", icon: Truck, section: "site", module: "site" },
   { to: "/procurement?tab=dashboard", labelKey: "nav.procurement", icon: ShoppingCart, section: "procurement", module: "procurement" },
   { to: "/finance?tab=mis-invoices", labelKey: "nav.finance", icon: DollarSign, section: "finance", module: "finance" },
