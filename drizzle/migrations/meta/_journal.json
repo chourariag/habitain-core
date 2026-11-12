@@ -78,6 +78,13 @@
       "when": 1794507708676,
       "tag": "0010_restrict_project_setup_read_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1794508407910,
+      "tag": "0011_labour_master_and_attendance",
+      "breakpoints": true
     }
   ]
 }
