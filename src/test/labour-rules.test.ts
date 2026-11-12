@@ -1,0 +1,42 @@
+import { describe, expect, it } from "vitest";
+import { attendanceWarningLabels, isValidLabourHours, LABOUR_ATTENDANCE_ROLES, LABOUR_MASTER_UPLOAD_ROLES, LABOUR_RATE_VIEW_ROLES, requiresLabourAttendanceReason, requiresReasonForSavedAttendanceEdit } from "@/lib/labour-rules";
+
+const TODAY = new Date("2026-11-12T12:00:00");
+
+describe("contract labour attendance rules", () => {
+  it("matches the explicitly requested attendance, upload, and rate-view roles", () => {
+    expect([...LABOUR_ATTENDANCE_ROLES]).toEqual([
+      "site_engineer", "site_installation_mgr", "head_of_projects", "planning_head", "managing_director", "super_admin",
+    ]);
+    expect([...LABOUR_MASTER_UPLOAD_ROLES]).toEqual(["planning_head", "managing_director", "super_admin", "head_of_projects"]);
+    expect([...LABOUR_RATE_VIEW_ROLES]).toEqual([
+      "site_engineer", "site_installation_mgr", "head_of_projects", "planning_head", "managing_director", "super_admin", "finance_manager",
+    ]);
+  });
+
+  it("allows hours from zero through sixteen and rejects values outside the range", () => {
+    expect(isValidLabourHours(0)).toBe(true);
+    expect(isValidLabourHours(16)).toBe(true);
+    expect(isValidLabourHours(-0.5)).toBe(false);
+    expect(isValidLabourHours(16.5)).toBe(false);
+  });
+
+  it("requires a reason only for work dates earlier than two days ago", () => {
+    expect(requiresLabourAttendanceReason("2026-11-10", TODAY)).toBe(false);
+    expect(requiresLabourAttendanceReason("2026-11-09", TODAY)).toBe(true);
+  });
+
+  it("requires a reason whenever saved attendance changes, including same-day edits", () => {
+    expect(requiresReasonForSavedAttendanceEdit(8, 7)).toBe(true);
+    expect(requiresReasonForSavedAttendanceEdit(8, 8)).toBe(false);
+    expect(requiresReasonForSavedAttendanceEdit(null, 8)).toBe(false);
+  });
+
+  it("keeps cross-project, over-twelve-hour, and deactivated-worker conditions as warnings", () => {
+    expect(attendanceWarningLabels({ has_other_project: true, total_hours: 13, is_deactivated: true })).toEqual([
+      "also recorded on another project this day",
+      "daily total is 13 hours",
+      "worker is deactivated",
+    ]);
+  });
+});

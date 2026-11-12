@@ -60,6 +60,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import Trust from "@/pages/Trust";
 import ScopeSignoff from "@/pages/ScopeSignoff";
 import { ModuleGuard } from "@/components/ModuleGuard";
+import LabourPage from "@/components/labour/LabourPage";
 
 const queryClient = new QueryClient();
 
@@ -92,6 +93,7 @@ const App = () => (
                 <Route path="/dispatch-delivery" element={<ModuleGuard module="dispatch"><DispatchDelivery /></ModuleGuard>} />
                 <Route path="/site-dashboard" element={<ModuleGuard featureFlag="reports"><SiteDashboard /></ModuleGuard>} />
                 <Route path="/site-hub" element={<ModuleGuard module="site"><SiteHub /></ModuleGuard>} />
+                <Route path="/labour" element={<ModuleGuard featureFlag="labour"><LabourPage /></ModuleGuard>} />
                 <Route path="/site-hub/dispatch-pack" element={<ModuleGuard module="site" featureFlag="dispatch"><DispatchPackForm /></ModuleGuard>} />
                 <Route path="/dispatch-pack-form" element={<ModuleGuard module="site" featureFlag="dispatch"><DispatchPackForm /></ModuleGuard>} />
                 <Route path="/site-hub/advance-request" element={<ModuleGuard module="site" featureFlag="advances"><AdvanceRequest /></ModuleGuard>} />
