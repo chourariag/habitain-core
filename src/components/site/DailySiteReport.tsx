@@ -49,10 +49,11 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
   const [pending, setPending] = useState<Record<string, Pending>>({});
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [summary, setSummary] = useState<null | { tasks_updated: number; quantity_lines: number; photos: number }>(null);
+  const [summary, setSummary] = useState<null | { tasks_updated: number; tasks_skipped?: { code: string }[]; quantity_lines: number; photos: number }>(null);
   const reportId = useRef<string | null>(null);
   const timer = useRef<number | null>(null);
   const dirty = useRef(false);
+  const cleared = useRef<{ hours: Set<string>; qty: Set<string> }>({ hours: new Set(), qty: new Set() });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -98,8 +99,11 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
   const buildPayload = useCallback(() => ({
     notes, site_clean: siteClean,
     progress: Object.entries(pct).map(([task_id, v]) => ({ task_id, pct: parsePct(v) })),
-    labour: Object.entries(hours).map(([task_id, v]) => ({ task_id, hours: Math.max(Number(v) || 0, 0) })),
-    quantities: Object.entries(qty).map(([boq_item_id, v]) => ({ boq_item_id, today_qty: Math.max(Number(v) || 0, 0) })),
+    // entries removed from a cleared task are sent once as 0 so previously saved values do not linger
+    labour: [...Object.entries(hours).map(([task_id, v]) => ({ task_id, hours: Math.max(Number(v) || 0, 0) })),
+      ...[...cleared.current.hours].filter((id) => !(id in hours)).map((task_id) => ({ task_id, hours: 0 }))],
+    quantities: [...Object.entries(qty).map(([boq_item_id, v]) => ({ boq_item_id, today_qty: Math.max(Number(v) || 0, 0) })),
+      ...[...cleared.current.qty].filter((id) => !(id in qty)).map((boq_item_id) => ({ boq_item_id, today_qty: 0 }))],
   }), [notes, siteClean, pct, hours, qty]);
 
   const saveNow = useCallback(async () => {
@@ -107,7 +111,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     setSaveState("saving");
     const { data: id, error } = await rpc("save_site_report_draft", { p_project_id: projectId, p_date: date, p_payload: buildPayload() });
     if (error) { setSaveState("error"); toast.error(error.message); return null; }
-    reportId.current = id as string; dirty.current = false; setSaveState("saved");
+    reportId.current = id as string; dirty.current = false; cleared.current = { hours: new Set(), qty: new Set() }; setSaveState("saved");
     return id as string;
   }, [canEdit, projectId, date, buildPayload]);
 
@@ -231,6 +235,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
           <CardContent className="p-3 text-sm space-y-1">
             <p className="font-semibold flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Report submitted for {ddmmyyyy(date)}</p>
             <p>Tasks updated: {summary.tasks_updated}</p>
+            {!!summary.tasks_skipped?.length && <p className="text-warning">Not applied (a later report exists): {summary.tasks_skipped.map((x) => x.code).join(", ")}</p>}
             <p>Quantity lines: {summary.quantity_lines}</p>
             <p>Photos: {summary.photos}</p>
           </CardContent>
@@ -244,20 +249,34 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
           <Input placeholder="Search tasks" value={taskSearch} onChange={(e) => setTaskSearch(e.target.value)} />
           {data.tasks.length === 0 && <p className="text-sm text-muted-foreground">No construction tasks are due by this date. Tasks come from the Project Setup upload.</p>}
           {tasks.map((t) => {
-            const v = pct[t.id] ?? ""; const bad = v !== "" && parsePct(v) == null;
+            const v = pct[t.id] ?? ""; const parsed = parsePct(v); const bad = v !== "" && parsed == null;
+            const lower = parsed != null && parsed < t.pct;
+            const future = t.planned_start && t.planned_start > date;
             return (
-              <div key={t.id} className="rounded-md border border-border p-2 flex items-center gap-2 min-w-0">
+              <div key={t.id} className="rounded-md border border-border space-y-1 min-w-0">
+              <div className="p-2 flex items-center gap-2 min-w-0">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-muted-foreground">{t.code}</p>
                   <p className="text-sm font-medium break-words">{t.name}</p>
                   <p className="text-xs text-muted-foreground">Now {t.pct}%</p>
+                  {future && <Badge variant="outline" className="text-[10px] mt-1">Starts {ddmmyyyy(t.planned_start)}</Badge>}
                 </div>
                 <div className="w-24 shrink-0">
                   <label className="text-[11px] text-muted-foreground">% after today</label>
                   <Input inputMode="decimal" type="number" min={0} max={100} value={v} disabled={readOnly}
                     className={bad ? "border-destructive" : ""}
-                    onChange={(e) => { touch(); setPct((s) => ({ ...s, [t.id]: e.target.value })); }} />
+                    onChange={(e) => {
+                      touch(); const val = e.target.value;
+                      setPct((s) => ({ ...s, [t.id]: val }));
+                      if (val.trim() === "") {
+                        const lineIds = data.boq.filter((b) => b.task_id === t.id).map((b) => b.id);
+                        setQty((s) => { const n = { ...s }; lineIds.forEach((id) => { if (id in n) { cleared.current.qty.add(id); delete n[id]; } }); return n; });
+                        setHours((s) => { if (!(t.id in s)) return s; cleared.current.hours.add(t.id); const n = { ...s }; delete n[t.id]; return n; });
+                      }
+                    }} />
                 </div>
+              </div>
+              {lower && <p className="text-xs text-warning flex items-center gap-1 -mt-1 px-2"><AlertTriangle className="h-3 w-3" /> Lower than current progress</p>}
               </div>
             );
           })}
