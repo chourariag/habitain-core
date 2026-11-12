@@ -3,7 +3,7 @@
 ## In Progress
 - [x] Lean shell, feature flags, rules, and paused scheduled jobs
 - [ ] Project setup Excel import, validation, audit logging, and read-only status views
-- [ ] Labour master Excel upload and project-scoped contract-labour attendance
+- [x] Labour master Excel upload and project-scoped contract-labour attendance
 
 ## Recently Completed
 - Fixed site-readiness-completed-view.test.tsx (storage mock + signed-URL-on-click assertion) — full suite green: 89 passed, 5 skipped
