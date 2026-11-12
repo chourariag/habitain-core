@@ -8554,6 +8554,7 @@ export type Database = {
           material_rate: number
           oh_rate: number
           procured_qty: number
+          schedule_task_id: string | null
           scope: string
           sno: number
           tender_amount: number | null
@@ -8577,6 +8578,7 @@ export type Database = {
           material_rate?: number
           oh_rate?: number
           procured_qty?: number
+          schedule_task_id?: string | null
           scope?: string
           sno?: number
           tender_amount?: number | null
@@ -8600,6 +8602,7 @@ export type Database = {
           material_rate?: number
           oh_rate?: number
           procured_qty?: number
+          schedule_task_id?: string | null
           scope?: string
           sno?: number
           tender_amount?: number | null
@@ -8614,6 +8617,13 @@ export type Database = {
             columns: ["boq_id"]
             isOneToOne: false
             referencedRelation: "project_boq"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_boq_items_schedule_task_id_fkey"
+            columns: ["schedule_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -9007,6 +9017,7 @@ export type Database = {
           planned_procurement_date: string | null
           qty_variation_note: string | null
           reason_for_delay: string | null
+          schedule_task_id: string | null
           section: string
           status: string
           supplier_committed_date: string | null
@@ -9036,6 +9047,7 @@ export type Database = {
           planned_procurement_date?: string | null
           qty_variation_note?: string | null
           reason_for_delay?: string | null
+          schedule_task_id?: string | null
           section?: string
           status?: string
           supplier_committed_date?: string | null
@@ -9065,6 +9077,7 @@ export type Database = {
           planned_procurement_date?: string | null
           qty_variation_note?: string | null
           reason_for_delay?: string | null
+          schedule_task_id?: string | null
           section?: string
           status?: string
           supplier_committed_date?: string | null
@@ -9078,6 +9091,13 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "project_material_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_material_plan_items_schedule_task_id_fkey"
+            columns: ["schedule_task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -12351,6 +12371,50 @@ export type Database = {
             columns: ["scope_of_work_id"]
             isOneToOne: false
             referencedRelation: "project_scope_of_work"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      setup_change_log: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          field: string
+          id: string
+          new_value: string | null
+          old_value: string | null
+          project_id: string
+          row_key: string
+          table_name: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          field: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          project_id: string
+          row_key: string
+          table_name: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          field?: string
+          id?: string
+          new_value?: string | null
+          old_value?: string | null
+          project_id?: string
+          row_key?: string
+          table_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "setup_change_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -15646,6 +15710,15 @@ export type Database = {
         Args: { _project_id: string; _system: string }
         Returns: number
       }
+      commit_project_setup_upload: {
+        Args: {
+          p_boq_rows: Json
+          p_material_rows: Json
+          p_project_id: string
+          p_schedule_rows: Json
+        }
+        Returns: Json
+      }
       confirm_kickoff_meeting: {
         Args: {
           _kickoff_id: string
@@ -16016,6 +16089,10 @@ export type Database = {
       get_project_material_cost_for_date: {
         Args: { _on_date: string; _project_id: string }
         Returns: number
+      }
+      get_project_setup_status: {
+        Args: { p_project_id: string }
+        Returns: Json
       }
       get_project_wip_summary: {
         Args: { _on_date?: string; _project_id: string }
