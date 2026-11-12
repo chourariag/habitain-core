@@ -1,0 +1,41 @@
+import { format, parseISO, subDays } from "date-fns";
+
+export const LABOUR_ATTENDANCE_ROLES = [
+  "site_engineer",
+  "site_installation_mgr",
+  "head_of_projects",
+  "planning_head",
+  "managing_director",
+  "super_admin",
+] as const;
+
+export const LABOUR_MASTER_UPLOAD_ROLES = [
+  "planning_head",
+  "managing_director",
+  "super_admin",
+  "head_of_projects",
+] as const;
+
+export const LABOUR_MASTER_VIEW_ROLES = [...LABOUR_ATTENDANCE_ROLES, "finance_manager"] as const;
+
+export function isValidLabourHours(hours: number): boolean {
+  return Number.isFinite(hours) && hours >= 0 && hours <= 16;
+}
+
+export function requiresLabourAttendanceReason(workDate: string, today: Date): boolean {
+  const todayISO = format(today, "yyyy-MM-dd");
+  const oldestAllowedWithoutReason = format(subDays(parseISO(todayISO), 2), "yyyy-MM-dd");
+  return workDate < oldestAllowedWithoutReason;
+}
+
+export function attendanceWarningLabels(warning: {
+  has_other_project: boolean;
+  total_hours: number;
+  is_deactivated: boolean;
+}): string[] {
+  const labels: string[] = [];
+  if (warning.has_other_project) labels.push("also recorded on another project this day");
+  if (warning.total_hours > 12) labels.push(`daily total is ${warning.total_hours} hours`);
+  if (warning.is_deactivated) labels.push("worker is deactivated");
+  return labels;
+}
