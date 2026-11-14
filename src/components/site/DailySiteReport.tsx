@@ -14,6 +14,7 @@ import {
   NO_ELEVATIONS_MSG, FLAG_LABEL, PHOTO_LABEL, allowedReportDates, exceedsBoq, labourBalance, parsePct, submitBlockers,
 } from "@/lib/site-report-rules";
 import { compressPhoto, readPhotoMeta, type PhotoMeta } from "@/lib/site-report-photo";
+import { siteReportErrorMessage } from "@/lib/site-report-errors";
 
 type Task = { id: string; code: string; name: string; pct: number; planned_start: string; actual_start: string | null };
 type Boq = { id: string; task_id: string; description: string; unit: string | null; boq_qty: number; cumulative: number };
@@ -34,7 +35,6 @@ type Pending = { file: Blob; meta: PhotoMeta; gallery: boolean; error?: string; 
 
 const istToday = () => format(new Date(Date.now() + (330 + new Date().getTimezoneOffset()) * 60000), "yyyy-MM-dd");
 const ddmmyyyy = (iso: string) => format(parseISO(iso), "dd/MM/yyyy");
-const FAIL_MSG = "Could not save the report. Please try again.";
 const slotKey = (p: { kind: string; elevation_id?: string | null }) => p.kind === "elevation" && p.elevation_id ? `elevation:${p.elevation_id}` : p.kind;
 const rpc = (fn: string, args: Record<string, unknown>) => (supabase as any).rpc(fn, args);
 
@@ -114,7 +114,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     if (!canEdit) return null;
     setSaveState("saving");
     const { data: id, error } = await rpc("save_site_report_draft", { p_project_id: projectId, p_date: date, p_payload: buildPayload() });
-    if (error) { setSaveState("error"); console.error("save_site_report_draft failed:", error); toast.error(FAIL_MSG); return null; }
+    if (error) { setSaveState("error"); console.error("save_site_report_draft failed:", error); toast.error(siteReportErrorMessage(error)); return null; }
     reportId.current = id as string; dirty.current = false; cleared.current = { hours: new Set(), qty: new Set() }; setSaveState("saved");
     return id as string;
   }, [canEdit, projectId, date, buildPayload]);
@@ -166,7 +166,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     if (!id) { setSubmitting(false); return; }
     const { data: res, error } = await rpc("submit_site_report", { p_report_id: id });
     setSubmitting(false);
-    if (error) { console.error("submit_site_report failed:", error); toast.error(error.message?.includes(NO_ELEVATIONS_MSG) ? NO_ELEVATIONS_MSG : FAIL_MSG); return; }
+    if (error) { console.error("submit_site_report failed:", error); toast.error(siteReportErrorMessage(error)); return; }
     await load();
     setSummary(res);
     toast.success("Daily report submitted");
