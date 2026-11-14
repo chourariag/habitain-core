@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [ ] P4d: isolate Daily Report quantities, surface rule errors, verify real quantity save
 - [x] Lean shell, feature flags, rules, and paused scheduled jobs
 - [ ] Project setup Excel import, validation, audit logging, and read-only status views
 - [x] Labour master Excel upload and project-scoped contract-labour attendance
