@@ -1,7 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
-- [ ] P4e: skip legacy measurement notifications for Daily Site Reports; inspect triggers and verify unchanged legacy flow
+- [x] P4e: applied Site Report notification exclusion; verified live function and two legacy-preservation regression tests
 - [x] P4d: isolated Daily Report quantities, surfaced rule errors, verified quantity 4 saves and reads back; reported task HTTP 400 as not reproduced
 - [x] Lean shell, feature flags, rules, and paused scheduled jobs
 - [ ] Project setup Excel import, validation, audit logging, and read-only status views
