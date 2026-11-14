@@ -13495,6 +13495,67 @@ export type Database = {
           },
         ]
       }
+      site_report_quantities: {
+        Row: {
+          boq_item_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          project_id: string
+          remarks: string | null
+          report_id: string
+          today_qty: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          boq_item_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id: string
+          remarks?: string | null
+          report_id: string
+          today_qty?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          boq_item_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id?: string
+          remarks?: string | null
+          report_id?: string
+          today_qty?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_report_quantities_boq_item_id_fkey"
+            columns: ["boq_item_id"]
+            isOneToOne: false
+            referencedRelation: "project_boq_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_quantities_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_quantities_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_measurements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_report_task_progress: {
         Row: {
           completion_percentage_after: number | null
