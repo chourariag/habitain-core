@@ -84,7 +84,7 @@ describe("no side-effect grants to uncovered roles", () => {
 
   for (const role of UNCOVERED) {
     it(`${role} cannot reach the Admin Panel`, () => {
-      expect(canAccessAdminPanel(role)).toBe(true);
+      expect(canAccessAdminPanel(role)).toBe(false);
     });
     it(`${role} does not gain FULL finance access`, () => {
       expect(getAccessLevel(role, "finance")).not.toBe("FULL");

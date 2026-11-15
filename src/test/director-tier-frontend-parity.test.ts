@@ -31,7 +31,7 @@ describe("Employee Management access (HR FULL, not Admin Panel)", () => {
 
   it("routes /admin/employees through the employee-management guard", () => {
     expect(read("src/App.tsx")).toContain(
-      '<Route path="/admin/employees" element={<ModuleGuard featureFlag="user_admin" requireEmployeeManagement>'
+      '<Route path="/admin/employees" element={<ModuleGuard module="admin" requireEmployeeManagement>'
     );
   });
 });
