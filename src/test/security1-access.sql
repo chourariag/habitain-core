@@ -65,7 +65,7 @@ END $after$;
 DO $readiness$ DECLARE s record;p record;allowed boolean;actual boolean;v_pass int:=0;BEGIN
 FOR s IN SELECT * FROM pg_temp.security1_subjects WHERE NOT synthetic LOOP
  PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',s.uid,'role','authenticated')::text,true);
- allowed:=s.role=ANY(ARRAY['super_admin','managing_director','finance_director','sales_director','architecture_director','head_operations','planning_engineer','delivery_rm_lead']);
+ allowed:=s.role=ANY(ARRAY['super_admin','managing_director','finance_director','sales_director','architecture_director','head_operations','planning_engineer','site_installation_mgr','site_engineer','delivery_rm_lead']);
  FOR p IN SELECT cmd,qual,with_check FROM pg_policies WHERE schemaname='public' AND tablename='site_readiness' AND cmd IN ('INSERT','UPDATE') LOOP
   EXECUTE 'SET LOCAL ROLE authenticated';
   EXECUTE 'SELECT ('||coalesce(p.with_check,p.qual)||')' INTO actual;

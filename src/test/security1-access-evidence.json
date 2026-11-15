@@ -1,0 +1,1787 @@
+{
+  "active_role_counts": [
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "accounts_executive",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 9,
+      "before_count": 9,
+      "role": "architecture_director",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "assistant_manager",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "chairman",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 9,
+      "before_count": 9,
+      "role": "costing_engineer",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "delivery_rm_lead",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "electrical_installer",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 9,
+      "before_count": 9,
+      "role": "finance_director",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 9,
+      "before_count": 9,
+      "role": "finance_manager",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "head_of_projects",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "head_operations",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "hr_executive",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 9,
+      "before_count": 9,
+      "role": "managing_director",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "marketing",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "planning_engineer",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 9,
+      "before_count": 9,
+      "role": "planning_head",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "production_head",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "project_architect",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "purchase_assistant",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "qc_inspector",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 9,
+      "before_count": 9,
+      "role": "sales_director",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "sales_executive",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "senior_architect",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "site_engineer",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "site_installation_mgr",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 9,
+      "role": "stores_executive",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 9,
+      "before_count": 9,
+      "role": "super_admin",
+      "table_name": "approval_thresholds"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "accounts_executive",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "architecture_director",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "assistant_manager",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "chairman",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "costing_engineer",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "delivery_rm_lead",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "electrical_installer",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_director",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_manager",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_of_projects",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_operations",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "hr_executive",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "managing_director",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "marketing",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_engineer",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_head",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "production_head",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "project_architect",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "purchase_assistant",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "qc_inspector",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_director",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_executive",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "senior_architect",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_engineer",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_installation_mgr",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "stores_executive",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "super_admin",
+      "table_name": "manpower_plan_entries"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "accounts_executive",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "architecture_director",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "assistant_manager",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "chairman",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "costing_engineer",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "delivery_rm_lead",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "electrical_installer",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_director",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_manager",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_of_projects",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_operations",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "hr_executive",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "managing_director",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "marketing",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_engineer",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_head",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "production_head",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "project_architect",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "purchase_assistant",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "qc_inspector",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_director",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_executive",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "senior_architect",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_engineer",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_installation_mgr",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "stores_executive",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "super_admin",
+      "table_name": "manpower_plans"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "accounts_executive",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "architecture_director",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "assistant_manager",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "chairman",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "costing_engineer",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "delivery_rm_lead",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "electrical_installer",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_director",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_manager",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_of_projects",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_operations",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "hr_executive",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "managing_director",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "marketing",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_engineer",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_head",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "production_head",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "project_architect",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "purchase_assistant",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "qc_inspector",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_director",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_executive",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "senior_architect",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_engineer",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_installation_mgr",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "stores_executive",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "super_admin",
+      "table_name": "manpower_subcontractor_plan"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "accounts_executive",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "architecture_director",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "assistant_manager",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "chairman",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "costing_engineer",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "delivery_rm_lead",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "electrical_installer",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_director",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_manager",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_of_projects",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_operations",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "hr_executive",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "managing_director",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "marketing",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_engineer",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_head",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "production_head",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "project_architect",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "purchase_assistant",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "qc_inspector",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_director",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_executive",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "senior_architect",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_engineer",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_installation_mgr",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "stores_executive",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "super_admin",
+      "table_name": "panels"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "accounts_executive",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 55,
+      "before_count": 55,
+      "role": "architecture_director",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "assistant_manager",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "chairman",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "costing_engineer",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "delivery_rm_lead",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "electrical_installer",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 55,
+      "before_count": 55,
+      "role": "finance_director",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "finance_manager",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 55,
+      "before_count": 55,
+      "role": "head_of_projects",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 55,
+      "before_count": 55,
+      "role": "head_operations",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "hr_executive",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 55,
+      "before_count": 55,
+      "role": "managing_director",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "marketing",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 55,
+      "before_count": 55,
+      "role": "planning_engineer",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 55,
+      "before_count": 55,
+      "role": "planning_head",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 55,
+      "before_count": 55,
+      "role": "production_head",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "project_architect",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "purchase_assistant",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "qc_inspector",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 55,
+      "before_count": 55,
+      "role": "sales_director",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "sales_executive",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "senior_architect",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "site_engineer",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "site_installation_mgr",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 55,
+      "role": "stores_executive",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 55,
+      "before_count": 55,
+      "role": "super_admin",
+      "table_name": "production_stages"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "accounts_executive",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "architecture_director",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "assistant_manager",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "chairman",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "costing_engineer",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "delivery_rm_lead",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "electrical_installer",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_director",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_manager",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_of_projects",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_operations",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "hr_executive",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "managing_director",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "marketing",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_engineer",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_head",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "production_head",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "project_architect",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "purchase_assistant",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "qc_inspector",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_director",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_executive",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "senior_architect",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_engineer",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_installation_mgr",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "stores_executive",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "super_admin",
+      "table_name": "project_progress_matrix"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "accounts_executive",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 82,
+      "before_count": 82,
+      "role": "architecture_director",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "assistant_manager",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "chairman",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "costing_engineer",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "delivery_rm_lead",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "electrical_installer",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 82,
+      "before_count": 82,
+      "role": "finance_director",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "finance_manager",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 82,
+      "before_count": 82,
+      "role": "head_of_projects",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 82,
+      "before_count": 82,
+      "role": "head_operations",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "hr_executive",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 82,
+      "before_count": 82,
+      "role": "managing_director",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "marketing",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 82,
+      "before_count": 82,
+      "role": "planning_engineer",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 82,
+      "before_count": 82,
+      "role": "planning_head",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 82,
+      "before_count": 82,
+      "role": "production_head",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "project_architect",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "purchase_assistant",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "qc_inspector",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 82,
+      "before_count": 82,
+      "role": "sales_director",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "sales_executive",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "senior_architect",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "site_engineer",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "site_installation_mgr",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 82,
+      "role": "stores_executive",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 82,
+      "before_count": 82,
+      "role": "super_admin",
+      "table_name": "project_scope_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "accounts_executive",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "architecture_director",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "assistant_manager",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "chairman",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "costing_engineer",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "delivery_rm_lead",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "electrical_installer",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_director",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_manager",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_of_projects",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_operations",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "hr_executive",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "managing_director",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "marketing",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_engineer",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_head",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "production_head",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "project_architect",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "purchase_assistant",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "qc_inspector",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_director",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_executive",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "senior_architect",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_engineer",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_installation_mgr",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "stores_executive",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "super_admin",
+      "table_name": "qc_checklist_items"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "accounts_executive",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "architecture_director",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "assistant_manager",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "chairman",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "costing_engineer",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "delivery_rm_lead",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "electrical_installer",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_director",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_manager",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_of_projects",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_operations",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "hr_executive",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "managing_director",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "marketing",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_engineer",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_head",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "production_head",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "project_architect",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "purchase_assistant",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "qc_inspector",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_director",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_executive",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "senior_architect",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_engineer",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_installation_mgr",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "stores_executive",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "super_admin",
+      "table_name": "sales_amc_contacts"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "accounts_executive",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "architecture_director",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "assistant_manager",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "chairman",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "costing_engineer",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "delivery_rm_lead",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "electrical_installer",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_director",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "finance_manager",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_of_projects",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "head_operations",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "hr_executive",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "managing_director",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "marketing",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_engineer",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "planning_head",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "production_head",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "project_architect",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "purchase_assistant",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "qc_inspector",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_director",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "sales_executive",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "senior_architect",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_engineer",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "site_installation_mgr",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "stores_executive",
+      "table_name": "subcontractor_schedules"
+    },
+    {
+      "after_count": 0,
+      "before_count": 0,
+      "role": "super_admin",
+      "table_name": "subcontractor_schedules"
+    }
+  ],
+  "site_readiness_role_checks": 54
+}
