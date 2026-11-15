@@ -8,6 +8,7 @@ import { Loader2, Receipt, Trash2, Info, Eye, Camera } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { ExpenseExcelUpload } from "./ExpenseExcelUpload";
+import { LogExpenseDrawer } from "./LogExpenseDrawer";
 import { hasReceipt, openReceiptUrl, uploadReceipt } from "@/lib/expense-policy";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -60,6 +61,7 @@ export function MyExpenses() {
   const { user } = useAuth();
   const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [logOpen, setLogOpen] = useState(false);
   const [viewUrl, setViewUrl] = useState<string | null>(null);
   const [attachingId, setAttachingId] = useState<string | null>(null);
 
@@ -135,7 +137,10 @@ export function MyExpenses() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2"><Receipt className="h-4 w-4" /> My Expenses</CardTitle>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <CardTitle className="text-base flex items-center gap-2"><Receipt className="h-4 w-4" /> My Expenses</CardTitle>
+            <Button size="sm" onClick={() => setLogOpen(true)} style={{ backgroundColor: "#006039" }} className="text-white">Log Expense</Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {/* Drafts info banner — auto-submission is handled by the system */}
@@ -227,6 +232,8 @@ export function MyExpenses() {
           )}
         </CardContent>
       </Card>
+
+      <LogExpenseDrawer open={logOpen} onOpenChange={(v) => { setLogOpen(v); if (!v) fetchData(); }} />
 
       <Dialog open={!!viewUrl} onOpenChange={(v) => { if (!v) setViewUrl(null); }}>
         <DialogContent className="max-w-lg">
