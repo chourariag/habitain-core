@@ -205,7 +205,8 @@ async function runDailyReadinessBrief(supabase: any) {
     `⏰ ${overdueTasks?.length ?? 0} task(s) became overdue yesterday`,
   ];
 
-  const mdProfiles = await getProfilesByRoles(supabase, ["man[...TIER1_ROLES]await notify(supabase, mdProfiles.map((p: any) => p.auth_user_id), `Daily Readiness Brief — ${today}`, lines.join("\n"), "daily_brief", "/dashboard");
+  const mdProfiles = await getProfilesByRoles(supabase, [...TIER1_ROLES]);
+  await notify(supabase, mdProfiles.map((p: any) => p.auth_user_id), `Daily Readiness Brief — ${today}`, lines.join("\n"), "daily_brief", "/dashboard");
   return "Daily brief sent";
 }
 
@@ -231,7 +232,8 @@ async function runLabourCostVariance(supabase: any) {
   const boqByProject: Record<string, number> = {};
   for (const m of measurements ?? []) { if (m.project_id) boqByProject[m.project_id] = (boqByProject[m.project_id] || 0) + (Number(m.boq_labour_cost) || 0); }
 
-  const recipients = await getProfilesByRoles(supabase, ["fin["finance_director", ...TIER1_ROLES]const recipientIds = recipients.map((r: any) => r.auth_user_id);
+  const recipients = await getProfilesByRoles(supabase, ["finance_director", ...TIER1_ROLES]);
+  const recipientIds = recipients.map((r: any) => r.auth_user_id);
   const alerts: string[] = [];
 
   for (const pid of projectIds) {
@@ -279,7 +281,8 @@ async function runDispatchRiskPredictor(supabase: any) {
   const { data: openNcrs } = await supabase.from("qc_inspections").select("module_id").eq("result", "fail").is("reinspection_result", null);
   const ncrModuleIds = new Set((openNcrs ?? []).map((n: any) => n.module_id));
 
-  const recipients = await getProfilesByRoles(supabase, ["pro["production_head", "site_installation_manager", "planning_engineer", ...TIER1_ROLES]const recipientIds = recipients.map((r: any) => r.auth_user_id);
+  const recipients = await getProfilesByRoles(supabase, ["production_head", "site_installation_manager", "planning_engineer", ...TIER1_ROLES]);
+  const recipientIds = recipients.map((r: any) => r.auth_user_id);
 
   let alertCount = 0;
   for (const dispatch of dispatches) {
@@ -550,7 +553,8 @@ async function runSiteDiaryVerify(supabase: any, payload?: any) {
 
       if (distance > 500) {
         // Flag to MD (Gaurav)
-        const mdProfiles = await getProfilesByRoles(supabase, ["man[...TIER1_ROLES]      await notify(supabase, mdProfiles.map((p: any) => p.auth_user_id), "Site Diary — GPS Mismatch",
+        const mdProfiles = await getProfilesByRoles(supabase, [...TIER1_ROLES]);
+        await notify(supabase, mdProfiles.map((p: any) => p.auth_user_id), "Site Diary — GPS Mismatch",
           `⚠️ Site diary for ${projectName} on ${diary.entry_date} — photo GPS is ${Math.round(distance)}m from site location. Possible off-site submission. Review required.`,
           "site_diary_gps", `/site-hub`);
         return `GPS mismatch flagged (${Math.round(distance)}m away)`;
@@ -667,7 +671,8 @@ async function runPOAnomalyDetector(supabase: any, payload?: any): Promise<strin
   const { data: notifyUsers } = await supabase
     .from("profiles")
     .select("auth_user_id, role")
-    .in("role", ["pro["procurement_manager", "stores_manager", ...TIER1_ROLES] .eq("is_active", true);
+    .in("role", ["procurement_manager", "stores_manager", ...TIER1_ROLES])
+    .eq("is_active", true);
 
   const vijayIds = (notifyUsers || []).filter((u: any) => ["procurement_manager", "stores_manager"].includes(u.role)).map((u: any) => u.auth_user_id);
   const mdIds = (notifyUsers || []).filter((u: any) => isTier1(u.role)).map((u: any) => u.auth_user_id);
@@ -792,7 +797,8 @@ Net position: ₹${Math.round(netPosition).toLocaleString()} — ${status}${next
   const { data: recipients } = await supabase
     .from("profiles")
     .select("auth_user_id")
-    .in("role", ["fina["finance_director", ...TIER1_ROLES].eq("is_active", true);
+    .in("role", ["finance_director", ...TIER1_ROLES])
+    .eq("is_active", true);
 
   for (const u of recipients || []) {
     await supabase.from("notifications").insert({
@@ -954,7 +960,8 @@ async function runLostDealPatternAnalyst(supabase: any): Promise<string> {
   const { data: recipients } = await supabase
     .from("profiles")
     .select("auth_user_id")
-    .in("role", ["sale["sales_director", ...TIER1_ROLES].eq("is_active", true);
+    .in("role", ["sales_director", ...TIER1_ROLES])
+    .eq("is_active", true);
 
   for (const u of recipients || []) {
     await supabase.from("notifications").insert({
@@ -997,7 +1004,8 @@ async function runDealStagnationAlert(supabase: any): Promise<string> {
   const { data: salesUsers } = await supabase
     .from("profiles")
     .select("auth_user_id, role")
-    .in("role", ["sale["sales_director", ...TIER1_ROLES, "sales_executive"].eq("is_active", true);
+    .in("role", ["sales_director", ...TIER1_ROLES, "sales_executive"])
+    .eq("is_active", true);
 
   const johnIds = (salesUsers || []).filter((u: any) => u.role === "sales_director").map((u: any) => u.auth_user_id);
   const mdIds = (salesUsers || []).filter((u: any) => isTier1(u.role)).map((u: any) => u.auth_user_id);
@@ -1144,7 +1152,7 @@ async function runLongLeaveEarlyWarning(supabase: any): Promise<string> {
 
   // Get MD + Planning Engineer for notifications
   const { data: notifyUsers } = await supabase.from("profiles").select("auth_user_id, role")
-    .in("role", ["managing_di[...TIER1_ROLES, "planning_engineer"]ve", true);
+    .in("role", [...TIER1_ROLES, "planning_engineer"]).eq("is_active", true);
   const recipientIds = (notifyUsers || []).map((u: any) => u.auth_user_id);
 
   // Part 1: Approved leave requests for 5+ consecutive days starting within 21 days
