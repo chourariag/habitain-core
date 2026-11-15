@@ -1,4 +1,4 @@
-import { TIER1_ROLES } from "@/lib/roles";
+import { TIER1_ROLES, isTier1 } from "@/lib/roles";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,7 +65,7 @@ export function MyTasksSection({ userRole, phaseFilter, projectId, title = "My T
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
-    const mapped = ROLE_MAP[userRole ?? ""];
+    const mapped = isTier1(userRole) ? "__all__" : ROLE_MAP[userRole ?? ""];
     if (!mapped) { setTasks([]); setLoading(false); return; }
 
     let query = supabase

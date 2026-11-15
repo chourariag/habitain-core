@@ -185,7 +185,7 @@ export default function AdvanceRequest() {
 
     // Notify HOD (production_head) or MD for emergency
     const targetRoles = isEmergency
-      ? ["managing_director" as const]
+      ? [...TIER1_ROLES]
       : ["production_head" as const, "head_operations" as const];
     const { data: targets } = await supabase
       .from("profiles")

@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
   const admin = createClient(supabaseUrl, serviceKey);
   const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", user.id);
   const roleList = (roles ?? []).map(r => r.role);
-  const isAdmin = roleList.some(r => r === "super_admin" || r === "managing_director");
+  const isAdmin = roleList.some(r => r === "super_admin" || isTier1(r));
   const isViewer = isAdmin || roleList.includes("finance_manager");
   if (!isViewer) return jsonResp({ error: "Forbidden" }, 403);
 
