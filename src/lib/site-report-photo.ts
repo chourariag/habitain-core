@@ -16,6 +16,15 @@ export async function readPhotoMeta(file: File): Promise<PhotoMeta> {
   return { takenAt, lat: null, lng: null, source: "none" };
 }
 
+/** Read ONLY the EXIF capture date. Never requests device location. */
+export async function readExifDate(file: File): Promise<string | null> {
+  try {
+    const ex: any = await exifr.parse(file, { pick: ["DateTimeOriginal"] } as any);
+    if (ex?.DateTimeOriginal instanceof Date && !isNaN(ex.DateTimeOriginal.getTime())) return ex.DateTimeOriginal.toISOString();
+  } catch { /* no EXIF */ }
+  return null;
+}
+
 function deviceLocation(): Promise<{ lat: number; lng: number } | null> {
   return new Promise((resolve) => {
     if (!("geolocation" in navigator)) return resolve(null);

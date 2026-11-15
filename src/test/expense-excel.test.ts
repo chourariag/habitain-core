@@ -27,3 +27,15 @@ describe("expense excel template ↔ reader", () => {
     expect(res.rejected).toBe(true);
   });
 });
+
+import { readFileSync } from "fs";
+describe("receipt upload location", () => {
+  it("uploadReceipt uses readExifDate and readExifDate never touches geolocation", () => {
+    const pol = readFileSync("src/lib/expense-policy.ts", "utf8");
+    expect(pol).toContain("readExifDate(file)");
+    expect(pol).not.toContain("readPhotoMeta");
+    const src = readFileSync("src/lib/site-report-photo.ts", "utf8");
+    const fn = src.slice(src.indexOf("export async function readExifDate"), src.indexOf("function deviceLocation"));
+    expect(fn).not.toMatch(/geolocation|deviceLocation/);
+  });
+});

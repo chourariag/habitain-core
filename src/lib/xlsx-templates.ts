@@ -47,10 +47,11 @@ export function buildBoqWorksheet(rowCount: number = 30): XLSX.WorkSheet {
 
 export const TEMPLATES = {
   expense: {
+    // Kept for reference only — the live template + reader come from src/lib/expense-excel.ts (EXPENSE_COLUMNS).
     filename: "Expense_Report_Template.xlsx",
     sheet: "Expenses",
-    headers: ["Date (DD/MM/YYYY)", "Employee Name", "Category", "Description", "Basic Amount (excl GST)", "GST Amount", "Total Amount", "Receipt Number", "Payment Mode", "Approved By", "Remarks", "Vendor", "Bill No", "Project Code"] as const,
-    sample: [["15/04/2026", "Karthik M", "Travel", "Site visit — Malur to Bangalore", 2200, 396, 2596, "REC-0042", "UPI", "Azad", "Monthly reimbursement", "", "", ""]] as const,
+    headers: ["Date (DD/MM/YYYY)", "Category", "Description", "Distance km", "Amount", "Receipt (Yes/No)", "Vendor", "Bill No", "Project Code", "Notes"] as const,
+    sample: [] as const,
   },
   tallyPO: {
     filename: "PO_Register_Template.xlsx",
