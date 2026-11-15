@@ -1,4 +1,4 @@
-import {  } from "../_shared/director-tier.ts";
+import { isTier1 } from "../_shared/director-tier.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 // Manage the Tally ingestion API key: status + rotate.
 // Only Super Admin and Managing Director may rotate; Finance Manager can view status.
