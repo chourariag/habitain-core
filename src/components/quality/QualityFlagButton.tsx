@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -9,7 +10,7 @@ import { Flag, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { insertNotifications } from "@/lib/notifications";
 
-const QC_ROLES = ["qc_inspector", "production_head", "managing_director", "super_admin"]; // Tagore = qc_inspector
+const QC_ROLES = ["qc_inspector", "production_head", ...TIER1_ROLES, "super_admin"]; // Tagore = qc_inspector
 
 interface Props {
   bayNumber: number;

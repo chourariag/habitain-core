@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,7 +10,7 @@ import { listClientWorkOrders, inr, type ClientWorkOrder } from "@/lib/contracto
 import { useUserRole } from "@/hooks/useUserRole";
 
 const MANAGE_ROLES = [
-  "super_admin", "managing_director", "chairman", "finance_director",
+  "super_admin", ...TIER1_ROLES, "chairman", "finance_director",
   "sales_director", "finance_manager", "planning_head", "head_of_projects",
 ];
 

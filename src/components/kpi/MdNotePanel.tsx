@@ -1,3 +1,4 @@
+import { isTier1 } from "@/lib/roles";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -12,7 +13,7 @@ interface Props { userId: string; }
 export function MdNotePanel({ userId }: Props) {
   const { user } = useAuth();
   const { role } = useUserRole();
-  const isMd = role === "managing_director" || role === "super_admin";
+  const isMd = isTier1(role) || role === "super_admin";
   const month = new Date(); month.setDate(1);
   const monthStr = month.toISOString().slice(0, 10);
 

@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -47,7 +48,7 @@ interface Props {
 
 const RAKESH_ROLES = new Set([
   "factory_floor_supervisor", "production_head", "fabrication_foreman",
-  "super_admin", "managing_director",
+  "super_admin", ...TIER1_ROLES,
 ]);
 
 export function StageChecklistDrawer({

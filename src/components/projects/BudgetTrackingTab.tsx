@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -77,8 +78,8 @@ export function BudgetTrackingTab({ projectId, contractValue: contractValueProp,
 
   useEffect(() => { setContractValue(contractValueProp || 0); }, [contractValueProp]);
 
-  const canEdit = ["super_admin", "managing_director", "finance_director", "finance_manager", "planning_engineer", "procurement"].includes(userRole ?? "");
-  const isMd = ["super_admin", "managing_director"].includes(userRole ?? "");
+  const canEdit = ["super_admin", ...TIER1_ROLES, "finance_director", "finance_manager", "planning_engineer", "procurement"].includes(userRole ?? "");
+  const isMd = ["super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   const saveContractValue = async () => {
     const v = Number(contractInput);

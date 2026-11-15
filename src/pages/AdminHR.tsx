@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Upload, Check, X, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { ROLE_LABELS, type AppRole } from "@/lib/roles";
+import { ROLE_LABELS, type AppRole, TIER1_ROLES } from "@/lib/roles";
 import { ExpensesTab } from "@/components/expenses/ExpensesTab";
 import { PayrollSettingsTab } from "@/components/admin/PayrollSettingsTab";
 import { PayrollGenerateTab } from "@/components/admin/PayrollGenerateTab";
@@ -67,7 +67,7 @@ function TeamAttendance() {
 }
 
 // Roles genuinely entitled to org-wide leave visibility
-const LEAVE_ORG_WIDE_ROLES = ["super_admin", "managing_director", "hr_executive"];
+const LEAVE_ORG_WIDE_ROLES = ["super_admin", ...TIER1_ROLES, "hr_executive"];
 
 function LeaveApprovals() {
   const { user } = useAuth();

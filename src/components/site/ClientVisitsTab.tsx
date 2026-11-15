@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -44,7 +45,7 @@ export function ClientVisitsTab({ projectId, projectName, clientName, userRole }
     follow_up_action: "",
   });
 
-  const canEdit = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canEdit = ["site_installation_mgr", "site_engineer", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   const load = useCallback(async () => {
     setLoading(true);

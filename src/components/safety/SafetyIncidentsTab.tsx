@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -24,7 +25,7 @@ const TYPES: Record<string, string> = {
 const SEVERITIES = ["minor", "moderate", "serious", "critical"] as const;
 const SEV_COLOR: Record<string, string> = { minor: "#006039", moderate: "#D4860A", serious: "#F40009", critical: "#F40009" };
 
-const MANAGE_ROLES = ["super_admin", "managing_director", "head_operations", "production_head", "site_installation_mgr", "hr_executive"];
+const MANAGE_ROLES = ["super_admin", ...TIER1_ROLES, "head_operations", "production_head", "site_installation_mgr", "hr_executive"];
 const URGENT_NOTIFY_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
 const STANDARD_NOTIFY_ROLES = ["head_operations", "production_head", "site_installation_mgr", "hr_executive"]; // Azad+Suraj equivalents
 

@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
@@ -64,7 +65,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }>
 };
 
 const FULL_ACCESS_ROLES = [
-  "super_admin", "managing_director", "finance_director", "finance_manager",
+  "super_admin", ...TIER1_ROLES, "finance_director", "finance_manager",
 ];
 const SUMMARY_ONLY_ROLES = ["sales_director", "architecture_director"];
 const READ_ONLY_ROLES = ["planning_engineer"];

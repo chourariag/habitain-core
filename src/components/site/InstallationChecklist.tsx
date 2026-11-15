@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -30,7 +31,7 @@ export function InstallationChecklist({ moduleId, userRole, onComplete }: Props)
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
 
-  const canManage = ["site_installation_mgr", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canManage = ["site_installation_mgr", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   useEffect(() => {
     loadRecord();

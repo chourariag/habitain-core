@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useProjectImportListener } from "@/lib/use-project-import";
 import { SetupTemplateBanner } from "./SetupTemplateBanner";
@@ -90,9 +91,9 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
   const [dirty, setDirty] = useState(false);
   const [showPctError, setShowPctError] = useState(false);
 
-  const canEdit = ["super_admin", "managing_director", "finance_director", "finance_manager"].includes(userRole || "");
-  const canEditAutoTrigger = ["super_admin", "managing_director", "planning_engineer", "finance_manager"].includes(userRole || "");
-  const canUnlock = ["super_admin", "managing_director"].includes(userRole || "");
+  const canEdit = ["super_admin", ...TIER1_ROLES, "finance_director", "finance_manager"].includes(userRole || "");
+  const canEditAutoTrigger = ["super_admin", ...TIER1_ROLES, "planning_engineer", "finance_manager"].includes(userRole || "");
+  const canUnlock = ["super_admin", ...TIER1_ROLES].includes(userRole || "");
   const isEditable = canEdit && !locked;
 
   const loadMilestones = useCallback(async () => {

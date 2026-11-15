@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -53,7 +54,7 @@ export function ReworkLogSection({ moduleId, ncrId, ncrNumber, projectId, userRo
   const [hoursWorked, setHoursWorked] = useState("");
   const [taskDesc, setTaskDesc] = useState("");
 
-  const canLog = ["factory_floor_supervisor", "production_head", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canLog = ["factory_floor_supervisor", "production_head", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   const loadEntries = useCallback(async () => {
     setLoading(true);

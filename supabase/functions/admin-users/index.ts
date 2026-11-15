@@ -1,10 +1,7 @@
+import { TIER1_ROLES, isTier1 } from "../_shared/director-tier.ts";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -12,9 +9,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseUrl = (Deno.env.get("SUPABASE_URL") ?? "");
+    const serviceRoleKey = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
+    const anonKey = (Deno.env.get("SUPABASE_ANON_KEY") ?? "");
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
     const authHeader = req.headers.get("Authorization");
@@ -240,7 +237,7 @@ Deno.serve(async (req) => {
 
     // ── OFFBOARDING: CREATE RECORD + IMPACT SCAN ─────────────────
     if (action === "create_offboarding_record") {
-      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+      if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -329,7 +326,7 @@ Deno.serve(async (req) => {
 
     // ── OFFBOARDING: RESOLVE IMPACT ITEM ─────────────────────────
     if (action === "resolve_offboarding_impact_item") {
-      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+      if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -415,7 +412,7 @@ Deno.serve(async (req) => {
 
     // ── OFFBOARDING: ADVANCE STATUS / COMPLETE ─────────────────
     if (action === "advance_offboarding") {
-      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+      if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -477,7 +474,7 @@ Deno.serve(async (req) => {
 
     // ── SOLE ROLE HOLDERS (proactive visibility) ─────────────────
     if (action === "get_sole_role_holders") {
-      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+      if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -604,7 +601,7 @@ Deno.serve(async (req) => {
     // ── CREATE EMPLOYEE (full panel) ─────────────────────────────
     if (action === "create_employee") {
       // Only super_admin / managing_director may use this endpoint
-      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+      if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden: super_admin or managing_director only" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -618,7 +615,7 @@ Deno.serve(async (req) => {
         });
       }
       // Privilege escalation guard
-      if (["super_admin", "managing_director"].includes(role) && callerProfile.role !== "super_admin" && callerProfile.role !== "managing_director") {
+      if (["super_admin", ...TIER1_ROLES].includes(role) && callerProfile.role !== "super_admin" && !isTier1(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Only super_admin/managing_director can assign that role" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -690,7 +687,7 @@ Deno.serve(async (req) => {
 
     // ── UPDATE EMPLOYEE (role, dept, manager, active) ────────────
     if (action === "update_employee") {
-      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+      if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -744,7 +741,7 @@ Deno.serve(async (req) => {
 
     // ── RESET PASSWORD ───────────────────────────────────────────
     if (action === "reset_password") {
-      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+      if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -778,7 +775,7 @@ Deno.serve(async (req) => {
 
     // ── DELETE EMPLOYEE (hard delete) ────────────────────────────
     if (action === "delete_employee") {
-      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+      if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden: super_admin only" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -836,7 +833,7 @@ Deno.serve(async (req) => {
 
     // ── BULK DELETE ALL EMPLOYEES (super_admin only) ─────────────
     if (action === "bulk_delete_all_employees") {
-      if (!["super_admin", "managing_director"].includes(callerProfile.role)) {
+      if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden: super_admin only" }), {
           status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

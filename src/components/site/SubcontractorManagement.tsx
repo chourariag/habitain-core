@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -35,7 +36,7 @@ export function SubcontractorManagement({ projectId, projectName, userRole }: Pr
   const [startDate, setStartDate] = useState("");
   const [completionDate, setCompletionDate] = useState("");
 
-  const canManage = ["site_installation_mgr", "head_operations", "super_admin", "managing_director", "production_head"].includes(userRole ?? "");
+  const canManage = ["site_installation_mgr", "head_operations", "super_admin", ...TIER1_ROLES, "production_head"].includes(userRole ?? "");
 
   const load = useCallback(async () => {
     setLoading(true);

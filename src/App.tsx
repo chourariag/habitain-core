@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -114,7 +115,7 @@ const App = () => (
                 <Route path="/admin" element={<ModuleGuard module="admin" requireAdminPanel><Admin /></ModuleGuard>} />
                 <Route path="/admin/users" element={<ModuleGuard module="admin" requireAdminPanel><UserManagement /></ModuleGuard>} />
                 <Route path="/admin/employees" element={<ModuleGuard module="admin" requireEmployeeManagement><EmployeeManagement /></ModuleGuard>} />
-                <Route path="/settings" element={<ModuleGuard featureFlag="user_admin" requireRoles={["super_admin", "managing_director"]}><AppSettings /></ModuleGuard>} />
+                <Route path="/settings" element={<ModuleGuard featureFlag="user_admin" requireRoles={["super_admin", ...TIER1_ROLES]}><AppSettings /></ModuleGuard>} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/attendance" element={<ModuleGuard module="hr"><Attendance /></ModuleGuard>} />
                 <Route path="/alerts" element={<ModuleGuard featureFlag="reminders"><Alerts /></ModuleGuard>} />

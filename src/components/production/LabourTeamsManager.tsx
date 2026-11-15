@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ interface Team {
 
 const FOREMEN_NAMES = ["Abu Hassan", "Ajay Nishad", "Shambu Yadav"];
 
-const MANAGE_ROLES = ["super_admin", "managing_director", "production_head", "head_operations"];
+const MANAGE_ROLES = ["super_admin", ...TIER1_ROLES, "production_head", "head_operations"];
 
 export function LabourTeamsManager({ userRole }: { userRole: string | null }) {
   const canManage = userRole ? MANAGE_ROLES.includes(userRole) : false;

@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,7 @@ interface Props {
 
 const SUPERVISOR_ROLES = [
   "super_admin",
-  "managing_director",
+  ...TIER1_ROLES,
   "head_operations",
   "production_head",
   "factory_floor_supervisor",

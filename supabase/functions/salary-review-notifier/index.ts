@@ -1,18 +1,16 @@
+import { TIER1_ROLES, isTier1, uniqueByAuthUser } from "../_shared/director-tier.ts";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 // Daily cron: notify Azad/Awaiz + HR (Mary) about workers whose salary review
 // is due within 30 days. Fires once per worker per cycle (uses notifications table).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    (Deno.env.get("SUPABASE_URL") ?? ""),
+    (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""),
   );
 
   try {
@@ -35,7 +33,7 @@ Deno.serve(async (req) => {
     const { data: recipients } = await supabase
       .from("profiles")
       .select("auth_user_id, role")
-      .in("role", ["production_head", "site_installation_mgr", "hr_executive", "managing_director", "super_admin"])
+      .in("role", ["production_head", "site_installation_mgr", "hr_executive", ...TIER1_ROLES, "super_admin"])
       .eq("is_active", true);
 
     let queued = 0;
@@ -52,13 +50,13 @@ Deno.serve(async (req) => {
       // Filter by department: production_head -> Factory, site_installation_mgr -> Site
       const dept = (w as any).department as string;
       const targets = (recipients ?? []).filter((r) => {
-        if (r.role === "hr_executive" || r.role === "managing_director" || r.role === "super_admin") return true;
+        if (r.role === "hr_executive" || isTier1(r.role) || r.role === "super_admin") return true;
         if (r.role === "production_head") return dept === "Factory" || dept === "Both";
         if (r.role === "site_installation_mgr") return dept === "Site" || dept === "Both";
         return false;
       });
 
-      for (const t of targets) {
+      for (const t of uniqueByAuthUser(targets)) {
         const { data: existing } = await supabase
           .from("notifications")
           .select("id")

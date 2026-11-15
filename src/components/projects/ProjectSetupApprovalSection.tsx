@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
@@ -27,7 +28,7 @@ type Approval = {
 };
 
 const APPROVER_ROLES = new Set(["planning_head", "head_of_projects"]);
-const ADMIN_ROLES = new Set(["super_admin", "managing_director"]);
+const ADMIN_ROLES = new Set(["super_admin", ...TIER1_ROLES]);
 
 const REQUIRED_ROLES: Array<{ key: "planning_head" | "head_of_projects"; label: string }> = [
   { key: "planning_head", label: "Planning Head" },

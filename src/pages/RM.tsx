@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -133,10 +134,10 @@ const PRIORITY_BADGE: Record<string, string> = {
   cosmetic: "bg-muted text-muted-foreground",
 };
 
-const CAN_RAISE = ["super_admin", "managing_director", "site_installation_mgr", "site_engineer", "delivery_rm_lead", "head_operations", "production_head", "sales_director"];
-const CAN_ESTIMATE = ["costing_engineer", "super_admin", "managing_director"];
-const CAN_SCHEDULE = ["planning_engineer", "super_admin", "managing_director"];
-const CAN_COMPLETE = ["delivery_rm_lead", "super_admin", "managing_director"];
+const CAN_RAISE = ["super_admin", ...TIER1_ROLES, "site_installation_mgr", "site_engineer", "delivery_rm_lead", "head_operations", "production_head", "sales_director"];
+const CAN_ESTIMATE = ["costing_engineer", "super_admin", ...TIER1_ROLES];
+const CAN_SCHEDULE = ["planning_engineer", "super_admin", ...TIER1_ROLES];
+const CAN_COMPLETE = ["delivery_rm_lead", "super_admin", ...TIER1_ROLES];
 
 function RMImageUploader({ aiPhotos, addAIPhotos, retakePhoto, overridePhoto, guidanceCollapsed }: {
   aiPhotos: any[];

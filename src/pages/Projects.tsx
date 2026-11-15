@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import type { Tables } from "@/integrations/supabase/types";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
-const NEW_PROJECT_ROLES = ["planning_head", "planning_engineer", "managing_director", "super_admin"];
+const NEW_PROJECT_ROLES = ["planning_head", "planning_engineer", ...TIER1_ROLES, "super_admin"];
 
 export default function Projects() {
   const { role } = useUserRole();

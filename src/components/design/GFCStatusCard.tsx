@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -107,8 +108,8 @@ export function GFCStatusCard({ projectId, projectName, isPrincipal, userId, use
       });
 
       // Recipients vary by stage; H3 also notifies site installation team
-      const baseRoles = ["production_head", "head_operations", "managing_director", "planning_engineer"];
-      const h3Roles = ["site_installation_mgr", "site_engineer", "head_operations", "managing_director"];
+      const baseRoles = ["production_head", "head_operations", ...TIER1_ROLES, "planning_engineer"];
+      const h3Roles = ["site_installation_mgr", "site_engineer", "head_operations", ...TIER1_ROLES];
       const recipientRoles = issueDialog.stage === "interior_h3" ? h3Roles : baseRoles;
       const { data: prodProfiles } = await supabase.from("profiles")
         .select("auth_user_id").in("role", recipientRoles as any[]).eq("is_active", true);

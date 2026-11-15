@@ -21,7 +21,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { raiseApprovalRequest } from "@/lib/approval-requests";
 import { listClientWorkOrders, type ClientWorkOrder } from "@/lib/contractor-wo";
 import { fetchArchitectCandidates, type ArchitectProfile } from "@/hooks/useProjectArchitect";
-import { ROLE_LABELS } from "@/lib/roles";
+import { ROLE_LABELS, TIER1_ROLES } from "@/lib/roles";
 import { useEffect } from "react";
 
 
@@ -37,12 +37,12 @@ const PRODUCTION_SYSTEMS: { value: "modular" | "panelised" | "hybrid"; label: st
   { value: "hybrid", label: "Hybrid" },
 ];
 
-const ALLOWED_RAISERS = ["planning_head", "managing_director", "super_admin"];
+const ALLOWED_RAISERS = ["planning_head", ...TIER1_ROLES, "super_admin"];
 
 export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDialogProps) {
   const { role } = useUserRole();
   const canRaise = !!role && ALLOWED_RAISERS.includes(role);
-  const requiresApproval = !!role && !["managing_director", "super_admin"].includes(role);
+  const requiresApproval = !!role && ![...TIER1_ROLES, "super_admin"].includes(role);
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [clientName, setClientName] = useState("");

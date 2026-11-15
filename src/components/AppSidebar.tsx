@@ -29,7 +29,7 @@ import { LABOUR_DIRECTORY_VIEW_ROLES } from "@/lib/labour-rules";
 type NavItem = { to: string; labelKey: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean; module?: ModuleKey; featureFlag?: string; requireAdminPanel?: boolean; requireEmployeeManagement?: boolean };
 type NavSection = { key: string; labelKey?: string; items: NavItem[]; group?: "altree" };
 
-const CAPACITY_ROLES = ["super_admin", "managing_director", "head_operations", "planning_head", "production_head"];
+const CAPACITY_ROLES = ["super_admin", ...TIER1_ROLES, "head_operations", "planning_head", "production_head"];
 const SETTINGS_ROLES = ["super_admin", ...TIER1_ROLES];
 const SUPER_ADMIN_ROLES = ["super_admin", ...TIER1_ROLES];
 

@@ -1,3 +1,4 @@
+import { isTier1 } from "@/lib/roles";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +37,7 @@ export function HistoricalBackfillCard({
   onDone?: () => void;
 }) {
   const { actualRole } = useUserRole();
-  const allowed = actualRole === "managing_director" || actualRole === "super_admin";
+  const allowed = isTier1(actualRole) || actualRole === "super_admin";
 
   const [record, setRecord] = useState<BackfillRecord | null>(null);
   const [options, setOptions] = useState<StageOption[]>([]);

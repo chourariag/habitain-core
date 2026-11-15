@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,7 +12,7 @@ import { format } from "date-fns";
 import { getWoSummary, getPaymentStages, inr, type ClientWorkOrder, type WoSummary, type WoPaymentStage } from "@/lib/contractor-wo";
 import { useUserRole } from "@/hooks/useUserRole";
 
-const FINANCE_RELEASE_ROLES = ["finance_manager", "finance_director", "managing_director", "chairman", "super_admin"];
+const FINANCE_RELEASE_ROLES = ["finance_manager", "finance_director", ...TIER1_ROLES, "chairman", "super_admin"];
 
 interface Props {
   workOrder: ClientWorkOrder;

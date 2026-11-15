@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +23,7 @@ interface WIPProject {
 }
 
 const FULL_ACCESS_ROLES = [
-  "super_admin", "managing_director", "finance_director", "finance_manager",
+  "super_admin", ...TIER1_ROLES, "finance_director", "finance_manager",
 ];
 const SUMMARY_ONLY_ROLES = [
   "sales_director", "architecture_director",

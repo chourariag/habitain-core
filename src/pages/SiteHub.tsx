@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Wallet } from "lucide-react";
@@ -188,8 +189,8 @@ function SiteHubContent() {
 
   // Site-present roles submit the readiness checklist — mirrors the site_readiness RLS insert/update policy.
   const canManageReadiness = canSubmitSiteReadiness(userRole);
-  const canCreateDispatchPack = ["factory_floor_supervisor", "production_head", "super_admin", "managing_director"].includes(userRole ?? "");
-  const canRequestAdvance = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canCreateDispatchPack = ["factory_floor_supervisor", "production_head", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
+  const canRequestAdvance = ["site_installation_mgr", "site_engineer", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   const Cond = ({ met, label }: { met: boolean; label: string }) => (
     <div className="flex items-center gap-1.5 text-xs">

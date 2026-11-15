@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +14,7 @@ import { format } from "date-fns";
 
 // Categories are derived dynamically from each project's uploaded BOQ — no hardcoded list.
 
-const EDIT_ROLES = ["super_admin", "managing_director", "finance_director", "finance_manager", "planning_engineer", "costing_engineer"];
+const EDIT_ROLES = ["super_admin", ...TIER1_ROLES, "finance_director", "finance_manager", "planning_engineer", "costing_engineer"];
 
 interface Props {
   projectId: string;

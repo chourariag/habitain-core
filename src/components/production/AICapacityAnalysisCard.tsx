@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +20,7 @@ interface Analysis {
   bottlenecks: Bottleneck[];
 }
 
-const AI_ALLOWED = ["production_head", "planning_head", "managing_director", "super_admin"];
+const AI_ALLOWED = ["production_head", "planning_head", ...TIER1_ROLES, "super_admin"];
 
 function statusColor(pct: number, status?: string) {
   const s = (status ?? "").toLowerCase();

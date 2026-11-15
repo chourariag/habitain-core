@@ -1,3 +1,4 @@
+import { isTier1 } from "@/lib/roles";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -23,7 +24,7 @@ function levelStyle(l: PermissionLevel) {
 
 export function RolePermissionsTab() {
   const { role: currentRole, userId } = useUserRole();
-  const isMD = currentRole === "managing_director" || currentRole === "super_admin";
+  const isMD = isTier1(currentRole) || currentRole === "super_admin";
 
   const [rows, setRows] = useState<Row[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);

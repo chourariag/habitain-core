@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
@@ -24,7 +25,7 @@ interface Props {
   onImported?: () => void;
 }
 
-const ALLOWED = ["super_admin", "managing_director", "finance_director", "finance_manager", "planning_engineer", "costing_engineer", "principal_architect", "architecture_director", "head_operations"];
+const ALLOWED = ["super_admin", ...TIER1_ROLES, "finance_director", "finance_manager", "planning_engineer", "costing_engineer", "principal_architect", "architecture_director", "head_operations"];
 
 interface SheetResult { name: string; ok: boolean; count: number; message: string; warnings?: string[]; }
 

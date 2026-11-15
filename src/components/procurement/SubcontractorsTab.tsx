@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -22,7 +23,7 @@ const WORK_TYPES = [
 const PRICING_TYPES = ["Piece Rate","Daily Rate","Fixed Lump Sum","Per Running Foot","Per KG","Per Unit"];
 
 const VIEW_ROLES = ["super_admin","managing_director","finance_director","sales_director","architecture_director","finance_manager","accounts_executive","production_head","site_installation_mgr","procurement","stores_executive","planning_engineer"];
-const MANAGE_ROLES = ["super_admin","managing_director","finance_director","production_head","site_installation_mgr","procurement"];
+const MANAGE_ROLES = ["super_admin",...TIER1_ROLES,"finance_director","production_head","site_installation_mgr","procurement"];
 
 type Sub = {
   id: string; sub_id: string; company_name: string | null; contact_person: string;

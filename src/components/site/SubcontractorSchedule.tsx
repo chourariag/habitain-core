@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -24,7 +25,7 @@ export function SubcontractorSchedule({ projectId, projectName, userRole }: Prop
   const [newDate, setNewDate] = useState("");
   const [adding, setAdding] = useState(false);
 
-  const canManage = ["site_installation_mgr", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canManage = ["site_installation_mgr", "head_operations", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -78,7 +79,7 @@ export function SubcontractorSchedule({ projectId, projectName, userRole }: Prop
     const { data: mdRecipients } = await supabase
       .from("profiles")
       .select("auth_user_id")
-      .eq("role", "managing_director" as any)
+      .in("role", [...TIER1_ROLES])
       .eq("is_active", true);
 
     if (mdRecipients?.length) {

@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1 } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -56,9 +57,9 @@ export function SpecialMaterialRequests({ projectId, projectName, userRole }: Pr
     urgency: "normal" as "normal" | "urgent",
   });
 
-  const canCreate = userRole === "factory_floor_supervisor" || userRole === "production_head" || userRole === "super_admin" || userRole === "managing_director";
-  const canApprove = ["production_head", "head_operations", "managing_director", "super_admin"].includes(userRole ?? "");
-  const canIssue = ["stores_executive", "managing_director", "super_admin"].includes(userRole ?? "");
+  const canCreate = userRole === "factory_floor_supervisor" || userRole === "production_head" || userRole === "super_admin" || isTier1(userRole);
+  const canApprove = ["production_head", "head_operations", ...TIER1_ROLES, "super_admin"].includes(userRole ?? "");
+  const canIssue = ["stores_executive", ...TIER1_ROLES, "super_admin"].includes(userRole ?? "");
 
   const load = useCallback(async () => {
     setLoading(true);

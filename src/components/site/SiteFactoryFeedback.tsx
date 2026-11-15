@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -52,8 +53,8 @@ export function SiteFactoryFeedback({ projectId, projectName, userRole, modules 
   const [response, setResponse] = useState<"ncr_required" | "no_ncr" | "">("");
   const [explanation, setExplanation] = useState("");
 
-  const canRaise = ["site_installation_mgr", "super_admin", "managing_director"].includes(userRole ?? "");
-  const canRespond = ["production_head", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canRaise = ["site_installation_mgr", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
+  const canRespond = ["production_head", "head_operations", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -104,7 +105,7 @@ export function SiteFactoryFeedback({ projectId, projectName, userRole, modules 
 
       // Notify Azad (production_head), Suraj (head_operations), and Gaurav (managing_director) simultaneously
       const { data: recipients } = await supabase.from("profiles").select("auth_user_id")
-        .in("role", ["production_head", "head_operations", "managing_director"] as any).eq("is_active", true);
+        .in("role", ["production_head", "head_operations", ...TIER1_ROLES] as any).eq("is_active", true);
       if (recipients?.length) {
         await insertNotifications(recipients.map((r: any) => ({
           recipient_id: r.auth_user_id,

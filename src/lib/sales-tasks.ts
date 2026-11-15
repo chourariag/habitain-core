@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
@@ -23,10 +24,10 @@ const db = supabase as any;
 
 const ACTIVE_PROJECT_EXCLUDE = ["closed", "archived", "cancelled"];
 
-const PORTAL_TOKEN_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "planning_head"];
+const PORTAL_TOKEN_ROLES = ["super_admin", ...TIER1_ROLES, "finance_director", "sales_director", "planning_head"];
 
 // Roles that can actually sign / approve on behalf of the sales function.
-const SALES_APPROVER_ROLES = ["sales_director", "managing_director", "super_admin"];
+const SALES_APPROVER_ROLES = ["sales_director", ...TIER1_ROLES, "super_admin"];
 
 export async function fetchSalesTasks(authUserId: string | null, role?: string | null): Promise<SalesTask[]> {
   const canSeePortalTokens = PORTAL_TOKEN_ROLES.includes(role ?? "");

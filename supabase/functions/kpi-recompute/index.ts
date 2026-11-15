@@ -1,15 +1,12 @@
+import { TIER1_ROLES, uniqueByAuthUser } from "../_shared/director-tier.ts";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 // kpi-recompute: server-side calculator for all 13 KPI employees.
 // Modes: ?mode=daily  | ?mode=weekly | ?user_id=<uuid>
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-};
 
-const SB_URL = Deno.env.get("SUPABASE_URL")!;
-const SB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SB_URL = (Deno.env.get("SUPABASE_URL") ?? "");
+const SB_KEY = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 const sb = createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
 
 type CalcResult = {
@@ -233,7 +230,7 @@ async function recomputeUser(userId: string, periodType: "daily" | "weekly", per
 
 async function notifyMdWeeklyDigest() {
   const { data: directors } = await sb.from("profiles")
-    .select("auth_user_id").in("role", ["super_admin", "managing_director"]).eq("is_active", true);
+    .select("auth_user_id").in("role", ["super_admin", ...TIER1_ROLES]).eq("is_active", true);
   if (!directors) return;
   const today = new Date().toISOString().slice(0, 10);
   const { data: snaps } = await sb.from("kpi_snapshots")
@@ -241,7 +238,7 @@ async function notifyMdWeeklyDigest() {
   const reds = (snaps ?? []).filter((s: any) => s.status === "at_risk").length;
   const total = (snaps ?? []).length;
   const msg = `Weekly KPI digest: ${reds}/${total} metrics in red.`;
-  for (const d of directors) {
+  for (const d of uniqueByAuthUser(directors)) {
     await sb.from("notifications").insert({
       user_id: d.auth_user_id, title: "Weekly KPI Digest", message: msg,
       type: "kpi_digest", link: "/kpi",

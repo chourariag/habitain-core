@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -122,7 +123,7 @@ export default function QualityControl() {
     setReinspPhotoPreview(null);
   }, [selectedNCR?.id]);
 
-  const canInspect = ["qc_inspector", "production_head", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canInspect = ["qc_inspector", "production_head", "head_operations", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
   const isQCInspector = userRole === "qc_inspector";
   const isSupervisor = userRole === "factory_supervisor";
 

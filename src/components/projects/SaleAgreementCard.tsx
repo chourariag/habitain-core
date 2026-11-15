@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,7 @@ import { canUnlockLockedDocument, isUnlockWindowOpen } from "@/lib/unlock-author
 
 const EDIT_ROLES = ["super_admin", "managing_director", "sales_director", "architecture_director", "planning_head", "finance_director", "sales_executive", "sales_associate"];
 // Externally-executed combined docs are Sales Director and above only — same tier as the magic-link flow.
-const EXTERNAL_ROLES = ["super_admin", "managing_director", "chairman", "sales_director"];
+const EXTERNAL_ROLES = ["super_admin", ...TIER1_ROLES, "chairman", "sales_director"];
 
 export function SaleAgreementCard({
   projectId,

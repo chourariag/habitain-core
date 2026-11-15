@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { subDays, isBefore } from "date-fns";
@@ -6,7 +7,7 @@ interface StripProps {
   userRole: string | null;
 }
 
-const PROCUREMENT_ROLES = ["procurement", "stores_executive", "super_admin", "managing_director"];
+const PROCUREMENT_ROLES = ["procurement", "stores_executive", "super_admin", ...TIER1_ROLES];
 
 export function ProcurementDashboardStrip({ userRole }: StripProps) {
   const [counts, setCounts] = useState({ toOrder: 0, pendingConfirm: 0, pendingDirector: 0, overdue: 0 });

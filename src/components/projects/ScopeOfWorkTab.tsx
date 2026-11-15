@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useState, useEffect, useCallback } from "react";
 import { useProjectImportListener } from "@/lib/use-project-import";
@@ -43,8 +44,8 @@ const DEFAULT_EXCLUSIONS = [
   "Labour accommodation", "Water & Electricity on site", "18% GST", "MEP Consultancy (CCTV, Plumbing, Electricals, DG)",
 ];
 
-const DRAFT_EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director", "sales_director", "architecture_director", "sales_executive", "sales_associate"];
-const SALES_DIRECTOR_ROLES = ["sales_director", "managing_director", "super_admin"];
+const DRAFT_EDIT_ROLES = ["planning_engineer", "super_admin", ...TIER1_ROLES, "sales_director", "architecture_director", "sales_executive", "sales_associate"];
+const SALES_DIRECTOR_ROLES = ["sales_director", ...TIER1_ROLES, "super_admin"];
 // Equal-tier unlock group — see src/lib/unlock-authority.ts (mirrors the DB check)
 const UNLOCK_ROLES = UNLOCK_TIER_ROLES as readonly string[];
 

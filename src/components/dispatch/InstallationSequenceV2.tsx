@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -40,8 +41,8 @@ const READINESS_KEYS = [
 
 export function InstallationSequenceV2({ projectId, projectName }: Props) {
   const { role, userId } = useUserRole();
-  const isAwaiz = ["site_installation_mgr", "super_admin", "managing_director"].includes(role ?? "");
-  const isMD = ["super_admin", "managing_director"].includes(role ?? "");
+  const isAwaiz = ["site_installation_mgr", "super_admin", ...TIER1_ROLES].includes(role ?? "");
+  const isMD = ["super_admin", ...TIER1_ROLES].includes(role ?? "");
 
   const [doc, setDoc] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -184,7 +185,7 @@ export function InstallationSequenceV2({ projectId, projectName }: Props) {
       await (client.from("installation_sequence_docs") as any)
         .update({ unlock_requested_at: new Date().toISOString() }).eq("id", doc.id);
       const { data: mds } = await supabase.from("profiles").select("auth_user_id")
-        .in("role", ["managing_director", "super_admin"] as any).eq("is_active", true);
+        .in("role", [...TIER1_ROLES, "super_admin"] as any).eq("is_active", true);
       if (mds?.length) {
         await insertNotifications(mds.map((r: any) => ({
           recipient_id: r.auth_user_id,

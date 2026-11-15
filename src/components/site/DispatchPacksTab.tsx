@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,7 +10,7 @@ import { format } from "date-fns";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useProjectContext } from "@/contexts/ProjectContext";
 
-const CREATE_ROLES = ["super_admin", "managing_director", "production_head", "factory_floor_supervisor", "head_operations"];
+const CREATE_ROLES = ["super_admin", ...TIER1_ROLES, "production_head", "factory_floor_supervisor", "head_operations"];
 
 interface DispatchPack {
   id: string;

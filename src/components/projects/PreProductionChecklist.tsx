@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -115,7 +116,7 @@ export function usePreProdGates(projectId: string, pipeline: "habitainer" | "ads
   return { gates, completedCount, total, setupReady, allComplete, loading: gates === null };
 }
 
-const LEADERSHIP_ROLES = ["super_admin", "managing_director"];
+const LEADERSHIP_ROLES = ["super_admin", ...TIER1_ROLES];
 const SCOPE_ROLES = ["sales_director", "sales_executive", "sales_associate"];
 
 // Deep-link for each gate to the exact screen where the work is completed.

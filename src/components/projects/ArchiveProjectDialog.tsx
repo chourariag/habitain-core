@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,7 @@ export function ArchiveProjectDialog({ open, onOpenChange, projectId, projectNam
         const { supabase } = await import("@/integrations/supabase/client");
         const { insertNotifications } = await import("@/lib/notifications");
         const { data: mds } = await supabase.from("profiles")
-          .select("auth_user_id").in("role", ["managing_director", "super_admin"] as any).eq("is_active", true);
+          .select("auth_user_id").in("role", [...TIER1_ROLES, "super_admin"] as any).eq("is_active", true);
         const recipients = (mds || []).map((m: any) => m.auth_user_id);
         if (recipients.length) {
           await insertNotifications(recipients.map((rid) => ({

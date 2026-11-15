@@ -1,3 +1,4 @@
+import { isTier1 } from "@/lib/roles";
 import { useState, useEffect, useCallback, useMemo } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -27,7 +28,7 @@ export function MyTasksSummaryStrip({ userRole }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   const fetchTasks = useCallback(async () => {
-    const mapped = ROLE_MAP[userRole ?? ""];
+    const mapped = isTier1(userRole) ? "__all__" : ROLE_MAP[userRole ?? ""];
     if (!mapped) { setTasks([]); setLoading(false); return; }
     setLoading(true);
     let q = supabase

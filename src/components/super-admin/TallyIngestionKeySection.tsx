@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +11,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 
-const ADMIN_ROLES = ["super_admin", "managing_director"];
+const ADMIN_ROLES = ["super_admin", ...TIER1_ROLES];
 const VIEW_ROLES = [...ADMIN_ROLES, "finance_manager"];
 
 type StatusResp = {

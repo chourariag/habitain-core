@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -53,7 +54,7 @@ const CATEGORY_OPTIONS = [
   { value: "site_mobile", label: "Site Mobile" },
 ];
 
-const EDITOR_ROLES = ["stores_executive", "procurement", "super_admin", "managing_director"];
+const EDITOR_ROLES = ["stores_executive", "procurement", "super_admin", ...TIER1_ROLES];
 
 interface Props {
   userRole: string | null;

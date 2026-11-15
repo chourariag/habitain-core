@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +21,7 @@ const STANDARD_CATEGORIES = [
   "On-Site Works", "Handover",
 ];
 
-const EDIT_ROLES = ["super_admin","managing_director","procurement","stores_executive","planning_engineer","planning_head","head_operations"];
+const EDIT_ROLES = ["super_admin",...TIER1_ROLES,"procurement","stores_executive","planning_engineer","planning_head","head_operations"];
 const VIEW_ROLES = [...EDIT_ROLES,"finance_director","sales_director","architecture_director","production_head","site_installation_mgr","costing_engineer"];
 
 interface Row {

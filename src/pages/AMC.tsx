@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ const TIER_BADGE: Record<string, string> = {
   premium: "bg-warning/20 text-warning-foreground",
 };
 
-const CAN_CREATE = ["super_admin", "managing_director", "sales_director"];
+const CAN_CREATE = ["super_admin", ...TIER1_ROLES, "sales_director"];
 
 function getContractStatus(endDate: string): { label: string; class: string } {
   const daysLeft = differenceInDays(new Date(endDate), new Date());

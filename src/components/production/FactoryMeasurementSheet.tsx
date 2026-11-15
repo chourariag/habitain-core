@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -39,8 +40,8 @@ interface LineDraft {
   files: File[];
 }
 
-const SUPERVISOR_ROLES = ["factory_floor_supervisor", "production_head", "head_operations", "super_admin", "managing_director"];
-const COSTING_ROLES = ["costing_engineer", "finance_manager", "finance_director", "head_of_projects", "managing_director", "super_admin", "head_operations", "production_head"];
+const SUPERVISOR_ROLES = ["factory_floor_supervisor", "production_head", "head_operations", "super_admin", ...TIER1_ROLES];
+const COSTING_ROLES = ["costing_engineer", "finance_manager", "finance_director", "head_of_projects", ...TIER1_ROLES, "super_admin", "head_operations", "production_head"];
 
 const fmt = (n: number) => `₹${(n ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 

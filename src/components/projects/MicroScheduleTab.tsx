@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -70,8 +71,8 @@ const STATUS_CONFIG: Record<string, { label: string; className: string; icon: an
 
 type ViewMode = "list" | "phase" | "gantt" | "delays" | "measurement" | "flags";
 
-const UPLOAD_ROLES = ["planning_engineer", "super_admin", "managing_director"];
-const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
+const UPLOAD_ROLES = ["planning_engineer", "super_admin", ...TIER1_ROLES];
+const EDIT_ROLES = ["planning_engineer", "super_admin", ...TIER1_ROLES];
 // Production roles see a read-only, simplified stage rollup view (Fix 3 + Fix 4)
 const PRODUCTION_VIEW_ROLES = ["production_head", "factory_floor_supervisor", "fabrication_foreman", "site_installation_mgr", "site_engineer"];
 // Roles that need the whole project picture: leadership, planning and production head.
@@ -113,7 +114,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   );
   const canUpload = UPLOAD_ROLES.includes(userRole ?? "") && !isProductionView;
   const canEdit = EDIT_ROLES.includes(userRole ?? "") && !isProductionView;
-  const canOverride = ["planning_engineer", "super_admin", "managing_director"].includes(userRole ?? "") && !isProductionView;
+  const canOverride = ["planning_engineer", "super_admin", ...TIER1_ROLES].includes(userRole ?? "") && !isProductionView;
   const PHASES = useMemo(() => getPhasesForSystem(productionSystem), [productionSystem]);
   // Hide the manual "Upload Schedule" button once stages have been loaded via the
   // Project Setup Template (Project Schedule sheet) — Karthik should not be asked twice.

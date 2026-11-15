@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +16,7 @@ const FUNNEL_SUBMIT_ROLES = [
   "sales_executive",
   "sales_director",
   "marketing",
-  "managing_director",
+  ...TIER1_ROLES,
   "super_admin",
   "chairman",
 ];

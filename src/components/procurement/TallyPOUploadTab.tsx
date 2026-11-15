@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -16,7 +17,7 @@ import { format, differenceInDays, parseISO, isValid } from "date-fns";
 import * as XLSX from "xlsx";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 
-const UPLOAD_ROLES = ["procurement", "production_head", "super_admin", "managing_director"];
+const UPLOAD_ROLES = ["procurement", "production_head", "super_admin", ...TIER1_ROLES];
 
 interface TallyPO {
   id: string;

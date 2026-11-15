@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -19,7 +20,7 @@ const CATEGORIES = [
 ];
 
 const UPLOAD_ROLES = [
-  "super_admin", "managing_director", "architecture_director",
+  "super_admin", ...TIER1_ROLES, "architecture_director",
   "principal_architect", "operations_architect",
   "planning_engineer", "costing_engineer", "quantity_surveyor",
 ];

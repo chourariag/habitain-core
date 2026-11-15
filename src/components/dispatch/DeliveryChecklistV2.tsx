@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -41,9 +42,9 @@ export function DeliveryChecklistV2({ projectId, projectName }: Props) {
   const [grnDestination, setGrnDestination] = useState<"factory" | "site" | "">("");
   const [awaizChecks, setAwaizChecks] = useState<boolean[]>(new Array(AWAIZ_ITEMS.length).fill(false));
 
-  const isRakesh = ["factory_floor_supervisor", "production_head", "super_admin", "managing_director"].includes(role ?? "");
-  const isSandeep = ["stores_executive", "super_admin", "managing_director"].includes(role ?? "");
-  const isAwaiz = ["site_installation_mgr", "super_admin", "managing_director"].includes(role ?? "");
+  const isRakesh = ["factory_floor_supervisor", "production_head", "super_admin", ...TIER1_ROLES].includes(role ?? "");
+  const isSandeep = ["stores_executive", "super_admin", ...TIER1_ROLES].includes(role ?? "");
+  const isAwaiz = ["site_installation_mgr", "super_admin", ...TIER1_ROLES].includes(role ?? "");
 
   const load = useCallback(async () => {
     setLoading(true);

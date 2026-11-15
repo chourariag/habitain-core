@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -34,7 +35,7 @@ export function SiteReceiptChecklist({ projectId, moduleId, moduleName, userRole
   const [damageDescription, setDamageDescription] = useState("");
   const [damagePhotos, setDamagePhotos] = useState<string[]>([]);
 
-  const canManage = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canManage = ["site_installation_mgr", "site_engineer", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   useEffect(() => { loadRecord(); }, [moduleId]);
 
@@ -116,7 +117,7 @@ export function SiteReceiptChecklist({ projectId, moduleId, moduleName, userRole
         const { data: recipients } = await supabase
           .from("profiles")
           .select("auth_user_id")
-          .in("role", ["head_operations", "managing_director"] as any)
+          .in("role", ["head_operations", ...TIER1_ROLES] as any)
           .eq("is_active", true);
 
         if (recipients?.length) {

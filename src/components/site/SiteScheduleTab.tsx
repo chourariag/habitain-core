@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,7 @@ interface Props {
 // Karthik (planning_engineer) owns Site Schedule.
 const PLANNING_ROLES = new Set([
   "planning_engineer",
-  "super_admin", "managing_director", "head_operations",
+  "super_admin", ...TIER1_ROLES, "head_operations",
 ]);
 
 type Row = {

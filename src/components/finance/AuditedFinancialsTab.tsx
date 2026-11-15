@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +32,7 @@ interface AuditedLine {
   confirmation_note: string | null;
 }
 
-const CONFIRM_ROLES = ["finance_director", "managing_director", "super_admin"];
+const CONFIRM_ROLES = ["finance_director", ...TIER1_ROLES, "super_admin"];
 
 /** Amounts are stored exactly as the auditors presented them — ₹ Lakhs. */
 const fmtLakhs = (v: number | null) =>

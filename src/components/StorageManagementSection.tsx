@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,7 +39,7 @@ export function StorageManagementSection({
       const { data: prof } = await (supabase as any)
         .from("profiles").select("role").eq("auth_user_id", user.id).maybeSingle();
       const role = prof?.role;
-      setAllowed(["managing_director", "super_admin", "head_of_projects"].includes(role));
+      setAllowed([...TIER1_ROLES, "super_admin", "head_of_projects"].includes(role));
     })();
     (async () => {
       const { data } = await (supabase as any)
