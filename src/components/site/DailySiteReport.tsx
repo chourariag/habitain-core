@@ -193,7 +193,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
           <span className="min-w-0"><span className="text-sm font-semibold break-words block">{label ?? PHOTO_LABEL[kind]}</span>{sub && <span className="text-xs text-muted-foreground break-words block">Drawing: {sub}</span>}</span>
           {ph ? <CheckCircle2 className="h-4 w-4 text-primary shrink-0" /> : <span className="text-xs text-muted-foreground">Required</span>}
         </div>
-        {thumbs[kind] && ph && <img src={thumbs[kind]} alt={`${label ?? PHOTO_LABEL[kind]} photo`} className="w-full aspect-video object-cover rounded" />}
+        {thumbs[kind] && ph && <div className="relative aspect-video w-full overflow-hidden rounded"><img src={thumbs[kind]} alt={`${label ?? PHOTO_LABEL[kind]} photo`} className="absolute inset-0 h-full w-full object-cover" /></div>}
         {ph?.flags?.length ? <div className="flex flex-wrap gap-1">{ph.flags.map((f) => <Badge key={f} variant="outline" className="text-[10px] border-warning text-warning">{FLAG_LABEL[f] ?? f}</Badge>)}</div> : null}
         {pd?.busy && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Uploading…</div>}
         {pd?.error && (
@@ -254,7 +254,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
         <CardHeader className="p-3 pb-1"><CardTitle className="text-base">1. Tasks</CardTitle></CardHeader>
         <CardContent className="p-3 pt-1 space-y-2">
           <Input placeholder="Search tasks" value={taskSearch} onChange={(e) => setTaskSearch(e.target.value)} />
-          {data.tasks.length === 0 && <p className="text-sm text-muted-foreground">No construction tasks are due by this date. Tasks come from the Project Setup upload.</p>}
+          {data.tasks.length === 0 && <p className="text-sm text-muted-foreground">No open construction tasks on this project.</p>}
           {tasks.map((t) => {
             const v = pct[t.id] ?? ""; const parsed = parsePct(v); const bad = v !== "" && parsed == null;
             const lower = parsed != null && parsed < t.pct;
@@ -372,7 +372,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
           {data.photos.filter((p) => p.kind.startsWith("elevation") && !(p.kind === "elevation" && elevations.some((e) => e.id === p.elevation_id))).map((p) => (
             <div key={p.id} className="rounded-md border border-border p-2 space-y-1 min-w-0">
               <span className="text-sm font-semibold">{PHOTO_LABEL[p.kind] ?? "Earlier elevation"}</span>
-              {thumbs[slotKey(p)] && <img src={thumbs[slotKey(p)]} alt="Stored elevation photo" className="w-full aspect-video object-cover rounded" />}
+              {thumbs[slotKey(p)] && <div className="relative aspect-video w-full overflow-hidden rounded"><img src={thumbs[slotKey(p)]} alt="Stored elevation photo" className="absolute inset-0 h-full w-full object-cover" /></div>}
             </div>
           ))}
         </CardContent>

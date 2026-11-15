@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { useFeatureFlags } from '@/hooks/useFeatureFlags';
 
 type Run = { id: string; run_at: string; status: string; trigger: string; row_counts: unknown; error: string | null };
-type Token = { id: string; label: string; created_at: string; last_used_at: string | null; revoked_at: string | null };
+type Token = { id: string; label: string; created_at: string; last_used_at: string | null; expires_at: string; revoked_at: string | null };
 type Sizes = { database_bytes: number | null; buckets: { id: string; files: number; bytes: number }[] };
 const date = (value: string) => new Date(value).toLocaleString('en-GB', { timeZone: 'Asia/Kolkata' });
 
@@ -19,6 +19,7 @@ export function ExportsPanel() {
   const [sizes, setSizes] = useState<Sizes | null>(null);
   const [busy, setBusy] = useState(false);
   const [label, setLabel] = useState('');
+  const [expiryDays, setExpiryDays] = useState(180);
   const [shownToken, setShownToken] = useState<string | null>(null);
   const load = async () => {
     const [{ data, error }, admin] = await Promise.all([
@@ -61,8 +62,8 @@ export function ExportsPanel() {
     <p className="text-sm">Database: {sizes?.database_bytes == null ? 'not visible' : `${(sizes.database_bytes / 1e9).toFixed(6)} GB`}</p>
     <ul className="divide-y divide-border text-sm">{sizes?.buckets.map(bucket => <li key={bucket.id} className="flex min-w-0 flex-wrap justify-between gap-2 py-2"><span className="break-all">{bucket.id}</span><span>{bucket.files} files · {(bucket.bytes / 1e9).toFixed(6)} GB</span></li>)}</ul>
     <h3 className="font-semibold">Dashboard tokens</h3>
-    <div className="flex flex-wrap gap-2"><Input aria-label="Token label" placeholder="Token label" value={label} maxLength={100} onChange={event => setLabel(event.target.value)} className="min-w-0 flex-1" /><Button disabled={busy || !label.trim()} onClick={() => void action('export-admin', { action: 'create', label })}><KeyRound className="mr-2 h-4 w-4" />Create token</Button></div>
+    <div className="flex flex-wrap items-end gap-2"><Input aria-label="Token label" placeholder="Token label" value={label} maxLength={100} onChange={event => setLabel(event.target.value)} className="min-w-0 flex-1" /><label className="text-xs text-muted-foreground">Expires in days<Input aria-label="Token expiry days" type="number" min={1} max={365} value={expiryDays} onChange={event => setExpiryDays(Number(event.target.value))} className="mt-1 w-24" /></label><Button disabled={busy || !label.trim() || !Number.isInteger(expiryDays) || expiryDays < 1 || expiryDays > 365} onClick={() => void action('export-admin', { action: 'create', label, expires_in_days: expiryDays })}><KeyRound className="mr-2 h-4 w-4" />Create token</Button></div>
     {shownToken && <div className="min-w-0 space-y-2 border border-border p-3"><div className="flex justify-between gap-2"><strong className="text-sm">Token · shown once</strong><Button variant="ghost" size="icon" aria-label="Dismiss token" onClick={() => setShownToken(null)}><X className="h-4 w-4" /></Button></div><Input aria-label="New dashboard token" readOnly value={shownToken} /><Button variant="outline" onClick={() => void navigator.clipboard.writeText(shownToken).then(() => toast.success('Token copied')).catch(() => toast.error('Copy unavailable'))}>Copy token</Button></div>}
-    <ul className="divide-y divide-border">{tokens.map(token => <li key={token.id} className="flex min-w-0 flex-wrap items-center justify-between gap-3 py-3"><div className="min-w-0"><p className="break-all text-sm font-medium">{token.label}</p><p className="text-xs text-muted-foreground">{token.revoked_at ? `Revoked ${date(token.revoked_at)}` : token.last_used_at ? `Last used ${date(token.last_used_at)}` : 'Never used'}</p></div>{!token.revoked_at && <Button variant="outline" disabled={busy} onClick={() => void action('export-admin', { action: 'revoke', id: token.id })}>Revoke</Button>}</li>)}</ul>
+    <ul aria-label="Dashboard token list" className="divide-y divide-border">{tokens.map(token => <li key={token.id} className="flex min-w-0 flex-wrap items-center justify-between gap-3 py-3"><div className="min-w-0 space-y-1"><p className="break-all text-sm font-medium">{token.label}</p><p className="text-xs text-muted-foreground">Created {date(token.created_at)}</p><p className="text-xs text-muted-foreground">Last used {token.last_used_at ? date(token.last_used_at) : 'Never'}</p><p className="text-xs text-muted-foreground">Expires {date(token.expires_at)}</p>{token.revoked_at && <p className="text-xs text-muted-foreground">Revoked {date(token.revoked_at)}</p>}</div>{!token.revoked_at && <Button variant="outline" disabled={busy} onClick={() => void action('export-admin', { action: 'revoke', id: token.id })}>Revoke</Button>}</li>)}</ul>
   </section>;
 }
