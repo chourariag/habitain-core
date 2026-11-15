@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { CalendarIcon, Loader2, Upload } from "lucide-react";
+import { CalendarIcon, Loader2, Camera, ImageIcon, AlertTriangle } from "lucide-react";
+import { computeWarnings, isDuplicate, reasonOk, uploadReceipt, WARNING_LABELS, MIN_REASON, type ExpenseWarning } from "@/lib/expense-policy";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -41,6 +42,13 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptFromGallery, setReceiptFromGallery] = useState(false);
+  const [noReceipt, setNoReceipt] = useState(false);
+  const [noReceiptReason, setNoReceiptReason] = useState("");
+  const [vendor, setVendor] = useState("");
+  const [billNo, setBillNo] = useState("");
+  const [pendingWarnings, setPendingWarnings] = useState<ExpenseWarning[] | null>(null);
+  const [warningReason, setWarningReason] = useState("");
 
   // Conveyance
   const [vehicleType, setVehicleType] = useState("car");
@@ -69,6 +77,8 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
     });
   }, [open, user?.id]);
 
+  useEffect(() => { setPendingWarnings(null); }, [entryDate, amount, vendor, billNo, receiptFile, noReceipt, expenseType, distanceKm]);
+
   const conveyanceRate = vehicleType === "car" ? carRate : bikeRate;
   const conveyanceAmount = distanceKm ? (Number(distanceKm) * conveyanceRate) : 0;
 
@@ -80,6 +90,13 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
     setAmount("");
     setDescription("");
     setReceiptFile(null);
+    setReceiptFromGallery(false);
+    setNoReceipt(false);
+    setNoReceiptReason("");
+    setVendor("");
+    setBillNo("");
+    setPendingWarnings(null);
+    setWarningReason("");
     setVehicleType("car");
     setToLocation("");
     setDistanceKm("");
@@ -96,19 +113,44 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
       toast.error("Fill distance and destination");
       return;
     }
+    const isRegular = expenseType === "regular";
+    const receiptMissing = isRegular && !receiptFile;
+    if (receiptMissing && !(noReceipt && reasonOk(noReceiptReason))) {
+      toast.error(`Add a receipt photo, or tick "No receipt" and type a reason (at least ${MIN_REASON} characters)`);
+      return;
+    }
+    const finalAmt = isRegular ? Number(amount) : conveyanceAmount;
+    // Policy checks — warnings only; a reason must be recorded before saving.
+    if (pendingWarnings === null) {
+      setSubmitting(true);
+      const dup = isRegular ? await isDuplicate(vendor, billNo, finalAmt) : false;
+      setSubmitting(false);
+      const w = computeWarnings({ entryDate, receiptMissing, duplicate: dup, categoryCap: null, amount: finalAmt });
+      if (w.length > 0) {
+        setPendingWarnings(w);
+        if (receiptMissing && !warningReason) setWarningReason(noReceiptReason.trim());
+        return;
+      }
+    } else if (pendingWarnings.length > 0 && !reasonOk(warningReason)) {
+      toast.error(`Type a reason for the warnings (at least ${MIN_REASON} characters)`);
+      return;
+    }
 
     setSubmitting(true);
     try {
-      let receiptUrl: string | null = null;
-      if (receiptFile) {
-        const ext = receiptFile.name.split(".").pop();
-        const path = `expense-receipts/${user.id}/${Date.now()}.${ext}`;
-        const { error: upErr } = await supabase.storage.from("site-photos").upload(path, receiptFile);
-        if (!upErr) {
-          const { data: urlData } = supabase.storage.from("site-photos").getPublicUrl(path);
-          receiptUrl = urlData.publicUrl;
+      let receipt: { path: string; exifAt: string | null; flags: string[] } | null = null;
+      if (expenseType === "regular" && receiptFile) {
+        try {
+          receipt = await uploadReceipt(user.id, receiptFile, receiptFromGallery);
+        } catch (upErr) {
+          console.error("receipt upload failed", upErr);
+          toast.error("Receipt upload failed — check your connection and try again");
+          setSubmitting(false);
+          return;
         }
       }
+      const warnings = pendingWarnings ?? [];
+      const missing = expenseType === "regular" && !receipt;
 
       const now = new Date();
       const day = now.getDate();
@@ -132,7 +174,14 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
         amount: finalAmount,
         project_id: projectId === "none" ? null : projectId,
         description: expenseType === "regular" ? description.trim() : `${fromLocation} → ${toLocation}`,
-        receipt_url: receiptUrl,
+        receipt_url: null,
+        receipt_path: receipt?.path ?? null,
+        receipt_exif_at: receipt?.exifAt ?? null,
+        receipt_flags: missing ? ["receipt_missing"] : (receipt?.flags ?? []),
+        policy_warnings: warnings,
+        warning_reason: warnings.length ? (warningReason.trim() || noReceiptReason.trim()) : (missing ? noReceiptReason.trim() : null),
+        vendor: expenseType === "regular" ? (vendor.trim() || null) : null,
+        bill_no: expenseType === "regular" ? (billNo.trim() || null) : null,
         vehicle_type: expenseType === "conveyance" ? vehicleType : null,
         from_location: expenseType === "conveyance" ? fromLocation : null,
         to_location: expenseType === "conveyance" ? toLocation : null,
@@ -147,7 +196,8 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
       resetForm();
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err.message || "Failed to save");
+      console.error("expense save failed", err);
+      toast.error("Could not save the expense. Please try again.");
     }
     setSubmitting(false);
   };
@@ -228,14 +278,49 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
                 <Textarea value={description} onChange={(e) => setDescription(e.target.value.slice(0, 150))} placeholder="Briefly describe" className="mt-1 font-inter" rows={3} style={{ fontSize: 15 }} />
                 <p className="text-[10px] mt-1" style={{ color: "#999" }}>{description.length}/150</p>
               </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs font-inter" style={{ color: "#666" }}>Vendor</Label>
+                  <Input value={vendor} onChange={(e) => setVendor(e.target.value.slice(0, 80))} placeholder="Shop / supplier" className="mt-1 font-inter" style={{ fontSize: 15 }} />
+                </div>
+                <div>
+                  <Label className="text-xs font-inter" style={{ color: "#666" }}>Bill number</Label>
+                  <Input value={billNo} onChange={(e) => setBillNo(e.target.value.slice(0, 40))} placeholder="Bill no." className="mt-1 font-inter" style={{ fontSize: 15 }} />
+                </div>
+              </div>
               <div>
-                <Label className="text-xs font-inter" style={{ color: "#666" }}>Receipt Photo (optional)</Label>
-                <p className="text-[10px] mb-1" style={{ color: "#999" }}>Attach receipt for faster approval</p>
-                <label className="flex items-center gap-2 cursor-pointer border border-dashed border-border rounded-md p-3 hover:bg-muted/50 transition-colors">
-                  <Upload className="h-4 w-4" style={{ color: "#006039" }} />
-                  <span className="text-sm font-inter" style={{ color: "#666" }}>{receiptFile ? receiptFile.name : "Choose file"}</span>
-                  <input type="file" accept="image/jpeg,image/png" className="hidden" onChange={(e) => setReceiptFile(e.target.files?.[0] ?? null)} />
-                </label>
+                <Label className="text-xs font-inter" style={{ color: "#666" }}>Receipt photo *</Label>
+                {receiptFile ? (
+                  <div className="flex items-center justify-between gap-2 border border-border rounded-md p-2 mt-1">
+                    <span className="text-xs font-inter truncate min-w-0">{receiptFile.name}{receiptFromGallery ? " (gallery)" : ""}</span>
+                    <Button size="sm" variant="ghost" className="text-xs h-7" onClick={() => setReceiptFile(null)}>Change</Button>
+                  </div>
+                ) : !noReceipt && (
+                  <div className="grid grid-cols-2 gap-2 mt-1">
+                    <label className="flex items-center justify-center gap-2 cursor-pointer border border-dashed border-border rounded-md p-3 hover:bg-muted/50">
+                      <Camera className="h-4 w-4" style={{ color: "#006039" }} />
+                      <span className="text-sm font-inter">Camera</span>
+                      <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setReceiptFile(f); setReceiptFromGallery(false); } e.target.value = ""; }} />
+                    </label>
+                    <label className="flex items-center justify-center gap-2 cursor-pointer border border-dashed border-border rounded-md p-3 hover:bg-muted/50">
+                      <ImageIcon className="h-4 w-4" style={{ color: "#006039" }} />
+                      <span className="text-sm font-inter">Gallery</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setReceiptFile(f); setReceiptFromGallery(true); } e.target.value = ""; }} />
+                    </label>
+                  </div>
+                )}
+                {!receiptFile && (
+                  <label className="flex items-center gap-2 mt-2 text-xs font-inter" style={{ color: "#666" }}>
+                    <input type="checkbox" checked={noReceipt} onChange={(e) => setNoReceipt(e.target.checked)} />
+                    No receipt available
+                  </label>
+                )}
+                {!receiptFile && noReceipt && (
+                  <div className="mt-1">
+                    <Input value={noReceiptReason} onChange={(e) => setNoReceiptReason(e.target.value.slice(0, 200))} placeholder="Why is there no receipt? (min 5 characters)" className="font-inter" style={{ fontSize: 15 }} />
+                    <p className="text-[10px] mt-1" style={{ color: "#D4860A" }}>This entry will be marked "Receipt missing".</p>
+                  </div>
+                )}
               </div>
             </>
           ) : (
@@ -287,6 +372,15 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
             </>
           )}
 
+          {pendingWarnings && pendingWarnings.length > 0 && (
+            <div className="rounded-md p-3 border space-y-2" style={{ backgroundColor: "#FFF8E8", borderColor: "#D4860A" }}>
+              <p className="text-xs font-semibold flex items-center gap-1" style={{ color: "#7a5c00" }}><AlertTriangle className="h-3.5 w-3.5" /> Please check before saving</p>
+              <ul className="text-xs list-disc pl-4" style={{ color: "#7a5c00" }}>
+                {pendingWarnings.map((w) => <li key={w}>{WARNING_LABELS[w]}</li>)}
+              </ul>
+              <Textarea value={warningReason} onChange={(e) => setWarningReason(e.target.value.slice(0, 300))} placeholder="Reason (required, min 5 characters)" rows={2} className="font-inter" style={{ fontSize: 15 }} />
+            </div>
+          )}
           <Button
             onClick={handleSubmit}
             disabled={submitting}
@@ -294,7 +388,7 @@ export function LogExpenseDrawer({ open, onOpenChange }: Props) {
             style={{ backgroundColor: "#006039" }}
           >
             {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Save as Draft
+            {pendingWarnings && pendingWarnings.length > 0 ? "Save with reason" : "Save as Draft"}
           </Button>
           <p className="text-[10px] text-center" style={{ color: "#999" }}>
             Drafts can be submitted during the next submission window.
