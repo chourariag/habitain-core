@@ -8060,6 +8060,39 @@ export type Database = {
           },
         ]
       }
+      parity2_backup: {
+        Row: {
+          backed_up_at: string
+          created_at: string
+          created_by: string | null
+          object_kind: string
+          object_name: string
+          original_definition: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          backed_up_at?: string
+          created_at?: string
+          created_by?: string | null
+          object_kind: string
+          object_name: string
+          original_definition: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          backed_up_at?: string
+          created_at?: string
+          created_by?: string | null
+          object_kind?: string
+          object_name?: string
+          original_definition?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       payment_approvals: {
         Row: {
           amount: number
@@ -17157,6 +17190,7 @@ export type Database = {
         Returns: undefined
       }
       normalize_ledger_name: { Args: { _name: string }; Returns: string }
+      parity2_rollback: { Args: never; Returns: undefined }
       project_archive_upload_reminders: { Args: never; Returns: undefined }
       recalc_running_bill: {
         Args: { _project_id: string }
