@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,7 +28,7 @@ interface ProjectRow {
 }
 
 const FULL_ACCESS_ROLES = [
-  "finance_director", "managing_director", "super_admin", "finance_manager",
+  "finance_director", ...TIER1_ROLES, "super_admin", "finance_manager",
 ];
 const SUMMARY_ROLES = [
   "sales_director", "architecture_director",

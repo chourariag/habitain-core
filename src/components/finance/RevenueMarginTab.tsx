@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -19,7 +20,7 @@ const ACCESS_ROLES = [
   "sales_director", "architecture_director",
 ];
 const EDIT_ROLES = [
-  "super_admin", "managing_director", "finance_director", "finance_manager",
+  "super_admin", ...TIER1_ROLES, "finance_director", "finance_manager",
 ];
 
 const SITE_MANAGERS = ["All", "Azad", "Awaiz", "Bala", "Naik"];

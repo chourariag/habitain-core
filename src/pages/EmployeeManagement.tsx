@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { AppRole, ROLE_LABELS, ROLE_TIERS } from "@/lib/roles";
+import { AppRole, ROLE_LABELS, ROLE_TIERS, isTier1 } from "@/lib/roles";
 import { createEmployee, updateEmployee, resetEmployeePassword, logBulkDeleteAllEmployees, deleteEmployee } from "@/lib/admin-api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,7 +72,7 @@ function downloadCsv(rows: Record<string, string>[], filename: string) {
 
 export default function EmployeeManagement() {
   const { role, loading: roleLoading } = useUserRole();
-  const allowed = role === "super_admin" || role === "managing_director";
+  const allowed = role === "super_admin" || isTier1(role);
 
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");

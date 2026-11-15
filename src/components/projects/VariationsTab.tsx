@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -34,10 +35,10 @@ const STATUS_CONFIG: Record<string, { label: string; className: string; icon: an
   Rejected: { label: "Rejected", className: "bg-red-100 text-red-800 border-red-200", icon: XCircle },
 };
 
-const CREATE_ROLES = ["planning_engineer", "costing_engineer", "super_admin", "managing_director"];
-const SCOPE_APPROVE_ROLES = ["sales_director", "super_admin", "managing_director"];
-const FINANCE_APPROVE_ROLES = ["finance_director", "finance_manager", "super_admin", "managing_director"];
-const MD_APPROVE_ROLES = ["managing_director", "super_admin"];
+const CREATE_ROLES = ["planning_engineer", "costing_engineer", "super_admin", ...TIER1_ROLES];
+const SCOPE_APPROVE_ROLES = ["sales_director", "super_admin", ...TIER1_ROLES];
+const FINANCE_APPROVE_ROLES = ["finance_director", "finance_manager", "super_admin", ...TIER1_ROLES];
+const MD_APPROVE_ROLES = [...TIER1_ROLES, "super_admin"];
 const DELETE_ROLES = ["managing_director", "super_admin", "finance_director", "sales_director", "architecture_director"];
 const VIEW_ROLES = [...CREATE_ROLES, ...SCOPE_APPROVE_ROLES, ...FINANCE_APPROVE_ROLES, "sales_executive", "sales_associate"];
 

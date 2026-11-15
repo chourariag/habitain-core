@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ interface Props {
 }
 
 const MANAGE_ROLES = [
-  "super_admin", "managing_director", "finance_director",
+  "super_admin", ...TIER1_ROLES, "finance_director",
   "sales_director", "planning_head", "site_installation_mgr",
 ];
 
@@ -29,7 +30,7 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
   const [newClientEmail, setNewClientEmail] = useState("");
 
   const canManage = MANAGE_ROLES.includes(userRole ?? "");
-  const canRevoke = ["super_admin", "managing_director", "finance_director", "sales_director", "planning_head"].includes(userRole ?? "");
+  const canRevoke = ["super_admin", ...TIER1_ROLES, "finance_director", "sales_director", "planning_head"].includes(userRole ?? "");
 
   const loadMagicTokens = async () => {
     const { data } = await supabase

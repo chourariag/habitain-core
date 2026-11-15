@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,8 +40,8 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 
-const EDIT_ROLES = ["planning_engineer", "super_admin", "managing_director"];
-const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admin", "managing_director"];
+const EDIT_ROLES = ["planning_engineer", "super_admin", ...TIER1_ROLES];
+const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admin", ...TIER1_ROLES];
 const ARCHIVE_REQUEST_ROLES = ["managing_director", "super_admin", "finance_director", "sales_director", "architecture_director"];
 const PL_VIEW_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director", "head_operations", "finance_manager", "accounts_executive"];
 const LEGACY_PROJECT_SETUP_UPLOAD_VISIBLE = false;

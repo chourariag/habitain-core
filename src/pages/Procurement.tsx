@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,14 +39,14 @@ import { QuotationsTab } from "@/components/procurement/QuotationsTab";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
-const STOCK_CREATOR_ROLES = ["stores_executive", "managing_director", "super_admin", "production_head"];
-const PLANNER_ROLES = ["planning_engineer", "super_admin", "managing_director"];
+const STOCK_CREATOR_ROLES = ["stores_executive", ...TIER1_ROLES, "super_admin", "production_head"];
+const PLANNER_ROLES = ["planning_engineer", "super_admin", ...TIER1_ROLES];
 const REQUESTOR_ROLES = [
-  "super_admin", "managing_director", "site_installation_mgr", "site_engineer",
+  "super_admin", ...TIER1_ROLES, "site_installation_mgr", "site_engineer",
   "factory_floor_supervisor", "fabrication_foreman", "production_head", "head_operations",
 ];
 const APPROVER_ROLES = [
-  "super_admin", "managing_director", "finance_director", "costing_engineer",
+  "super_admin", ...TIER1_ROLES, "finance_director", "costing_engineer",
   "procurement", "stores_executive", "head_operations", "production_head",
 ];
 
@@ -406,16 +407,16 @@ export default function Procurement() {
                           {canApprove && (
                             <TableCell>
                               <div className="flex gap-1 flex-wrap">
-                                {r.status === "pending_budget" && ["costing_engineer", "super_admin", "managing_director"].includes(userRole ?? "") && (
+                                {r.status === "pending_budget" && ["costing_engineer", "super_admin", ...TIER1_ROLES].includes(userRole ?? "") && (
                                   <>
                                     <SoDButton label="Approve" onClick={() => handleAction(r.id, "approve_budget")} sodReason={isBlockedBySoD(r, userId, "approve_budget")} />
                                     <SoDButton label="Over Budget" onClick={() => handleAction(r.id, "over_budget")} sodReason={isBlockedBySoD(r, userId, "over_budget")} />
                                   </>
                                 )}
-                                {r.status === "pending_director_approval" && ["managing_director", "finance_director", "super_admin"].includes(userRole ?? "") && (
+                                {r.status === "pending_director_approval" && [...TIER1_ROLES, "finance_director", "super_admin"].includes(userRole ?? "") && (
                                   <SoDButton label="Approve" onClick={() => handleAction(r.id, "director_approve")} sodReason={isBlockedBySoD(r, userId, "director_approve")} />
                                 )}
-                                {r.status === "pending_po" && ["stores_executive", "super_admin", "managing_director"].includes(userRole ?? "") && (
+                                {r.status === "pending_po" && ["stores_executive", "super_admin", ...TIER1_ROLES].includes(userRole ?? "") && (
                                   <SoDButton label="Received" onClick={() => handleAction(r.id, "mark_received")} sodReason={isBlockedBySoD(r, userId, "mark_received")} />
                                 )}
                               </div>

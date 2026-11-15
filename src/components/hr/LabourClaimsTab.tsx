@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -16,8 +17,8 @@ import { toast } from "sonner";
 import { getSlaInfo } from "@/lib/sla";
 import { insertNotifications } from "@/lib/notifications";
 
-const APPROVER_ROLES = ["super_admin", "managing_director", "production_head", "head_operations"];
-const ESCALATION_ROLES = ["super_admin", "managing_director", "head_operations", "production_head"]; // Azad-equivalent
+const APPROVER_ROLES = ["super_admin", ...TIER1_ROLES, "production_head", "head_operations"];
+const ESCALATION_ROLES = ["super_admin", ...TIER1_ROLES, "head_operations", "production_head"]; // Azad-equivalent
 
 export function LabourClaimsTab() {
   const { user } = useAuth();

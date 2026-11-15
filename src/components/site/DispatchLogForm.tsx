@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -36,7 +37,7 @@ export function DispatchLogForm({ moduleId, moduleCode, userRole, siteReady, onD
   });
   const [loadingConditions, setLoadingConditions] = useState(true);
 
-  const canDispatch = ["delivery_rm_lead", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canDispatch = ["delivery_rm_lead", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   useEffect(() => {
     const checkConditions = async () => {

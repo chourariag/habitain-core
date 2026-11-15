@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -103,7 +104,7 @@ function CashPositionCard() {
 
 export function PaymentsTab() {
   const { role } = useUserRole();
-  const canUpload = ["finance_manager", "finance_director", "managing_director", "super_admin"].includes(role || "");
+  const canUpload = ["finance_manager", "finance_director", ...TIER1_ROLES, "super_admin"].includes(role || "");
   const [payments, setPayments] = useState<Payment[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [form, setForm] = useState({ project: "", description: "", due_date: "", amount: "" });

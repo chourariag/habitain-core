@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -66,7 +67,7 @@ interface Props {
 }
 
 export function WeeklyManpowerPlanner({ projectId, userRole }: Props) {
-  const canAccess = ["production_head", "site_installation_mgr", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canAccess = ["production_head", "site_installation_mgr", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
   const [planTab, setPlanTab] = useState<"factory" | "site">(
     userRole === "site_installation_mgr" ? "site" : "factory"
   );

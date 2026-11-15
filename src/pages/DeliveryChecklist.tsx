@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,9 +70,9 @@ export default function DeliveryChecklist() {
   const [toolsChecked, setToolsChecked] = useState<boolean[]>(new Array(TOOLS_ITEMS.length).fill(false));
   const [additionalMaterials, setAdditionalMaterials] = useState<AdditionalMaterial[]>([]);
 
-  const canEditModules = ["factory_floor_supervisor", "production_head", "super_admin", "managing_director"].includes(role ?? "");
-  const canEditTools = ["stores_executive", "super_admin", "managing_director"].includes(role ?? "");
-  const canEditAdditional = ["site_installation_mgr", "super_admin", "managing_director"].includes(role ?? "");
+  const canEditModules = ["factory_floor_supervisor", "production_head", "super_admin", ...TIER1_ROLES].includes(role ?? "");
+  const canEditTools = ["stores_executive", "super_admin", ...TIER1_ROLES].includes(role ?? "");
+  const canEditAdditional = ["site_installation_mgr", "super_admin", ...TIER1_ROLES].includes(role ?? "");
 
   const modulesSigned = !!checklist?.modules_signed_at;
   const toolsSigned = !!checklist?.tools_signed_at;

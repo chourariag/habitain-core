@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -15,7 +16,7 @@ import { TallyIngestionKeySection } from "@/components/super-admin/TallyIngestio
 import { SoleRoleHoldersTab } from "@/components/super-admin/SoleRoleHoldersTab";
 
 
-const MD_ROLES = ["managing_director", "super_admin"];
+const MD_ROLES = [...TIER1_ROLES, "super_admin"];
 
 export default function SuperAdmin() {
   const { role, loading } = useUserRole();

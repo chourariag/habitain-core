@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { Navigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
@@ -11,7 +12,7 @@ import { InstallationSequenceV2 } from "@/components/dispatch/InstallationSequen
 import { Truck } from "lucide-react";
 
 const ALLOWED_ROLES = [
-  "super_admin", "managing_director",
+  "super_admin", ...TIER1_ROLES,
   "production_head", "site_installation_mgr", "head_operations",
   "delivery_rm_lead", "factory_floor_supervisor",
 ];

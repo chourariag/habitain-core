@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -8,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useUserRole } from "@/hooks/useUserRole";
 
-const APPROVER_ROLES = ["sales_director", "managing_director", "super_admin"];
+const APPROVER_ROLES = ["sales_director", ...TIER1_ROLES, "super_admin"];
 
 /** Normalised similarity 0..1 (Levenshtein based) — tolerant of spelling variants
  *  such as "Thakur Bakshani" vs "Thakur Bhakshani". */

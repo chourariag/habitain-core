@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -31,7 +32,7 @@ interface AdvanceRow {
   settled_amount: number | null;
 }
 
-const APPROVER_ROLES = ["managing_director", "super_admin", "finance_director"];
+const APPROVER_ROLES = [...TIER1_ROLES, "super_admin", "finance_director"];
 
 export function AdvanceApprovalsTab() {
   const { role } = useUserRole();

@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -161,7 +162,7 @@ export function MasterQCChecklist({
       }).eq("project_id", projectId);
 
       const { data: prodProfiles } = await supabase.from("profiles")
-        .select("auth_user_id").in("role", ["production_head", "head_operations", "managing_director"] as any[]).eq("is_active", true);
+        .select("auth_user_id").in("role", ["production_head", "head_operations", ...TIER1_ROLES] as any[]).eq("is_active", true);
 
       if (prodProfiles?.length) {
         await insertNotifications(

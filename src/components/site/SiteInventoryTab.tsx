@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -38,7 +39,7 @@ interface Props {
   userRole: string | null;
 }
 
-const USAGE_ROLES = ["site_installation_mgr", "super_admin", "managing_director", "production_head"];
+const USAGE_ROLES = ["site_installation_mgr", "super_admin", ...TIER1_ROLES, "production_head"];
 
 export function SiteInventoryTab({ projectId, userRole }: Props) {
   const [items, setItems] = useState<SiteItem[]>([]);

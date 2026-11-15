@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { insertNotifications } from "@/lib/notifications";
@@ -64,7 +65,7 @@ export default function Drawings() {
   const [dqResponse, setDqResponse] = useState("");
   const [respondingDq, setRespondingDq] = useState(false);
 
-  const canUpload = ["principal_architect", "project_architect", "structural_architect", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canUpload = ["principal_architect", "project_architect", "structural_architect", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
   const isArchitect = ["principal_architect", "project_architect", "structural_architect"].includes(userRole ?? "");
 
   const fetchData = useCallback(async () => {

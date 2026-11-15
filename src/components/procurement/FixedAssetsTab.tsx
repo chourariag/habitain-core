@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -16,9 +17,9 @@ import { Plus, Wrench, AlertTriangle, Loader2, MoveRight, Trash2, ShieldCheck, H
 import { toast } from "sonner";
 import { format, differenceInDays, parseISO } from "date-fns";
 
-const EDIT_ROLES = ["super_admin", "managing_director", "procurement", "stores_executive", "production_head"];
-const SERVICE_ROLES = ["super_admin", "managing_director", "procurement", "production_head"];
-const MD_ROLES = ["super_admin", "managing_director"];
+const EDIT_ROLES = ["super_admin", ...TIER1_ROLES, "procurement", "stores_executive", "production_head"];
+const SERVICE_ROLES = ["super_admin", ...TIER1_ROLES, "procurement", "production_head"];
+const MD_ROLES = ["super_admin", ...TIER1_ROLES];
 
 const ASSET_CATEGORIES = [
   { value: "machinery", label: "Machinery" },

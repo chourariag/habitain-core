@@ -1,3 +1,4 @@
+import { isTier1 } from "@/lib/roles";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ export default function KickoffMeetingCard({ userRole }: Props) {
   const [cancelDrafts, setCancelDrafts] = useState<Record<string, string>>({});
   const [drafts, setDrafts] = useState<Record<string, { date: string; time: string; notes: string; link: string }>>({});
 
-  const canAct = userRole === "operations_architect" || userRole === "managing_director"
+  const canAct = userRole === "operations_architect" || isTier1(userRole)
     || userRole === "principal_architect" || userRole === "head_operations" || userRole === "super_admin";
 
   async function load() {

@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,12 +45,12 @@ type VQ = {
   is_preferred: boolean; is_approved: boolean; sayeed_notes: string | null;
 };
 
-const MANAGE_ROLES = ["procurement", "purchase_assistant", "managing_director", "super_admin"];
-const APPROVE_ROLES = ["costing_engineer", "managing_director", "super_admin"];
+const MANAGE_ROLES = ["procurement", "purchase_assistant", ...TIER1_ROLES, "super_admin"];
+const APPROVE_ROLES = ["costing_engineer", ...TIER1_ROLES, "super_admin"];
 const PLANNING_ROLE = "planning_head";
 const VIEW_ROLES = [
   "procurement", "purchase_assistant", "costing_engineer", "planning_head", "planning_engineer",
-  "managing_director", "super_admin", "finance_director", "head_operations",
+  ...TIER1_ROLES, "super_admin", "finance_director", "head_operations",
 ];
 
 const MAX_REQUOTE_ROUNDS = 2;

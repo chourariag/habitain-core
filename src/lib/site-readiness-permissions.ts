@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 /**
  * Single source of truth for Site Readiness Checklist permissions.
  *
@@ -11,7 +12,7 @@ export const SITE_READINESS_SUBMIT_ROLES = [
   "delivery_rm_lead",
   "head_operations",
   "super_admin",
-  "managing_director",
+  ...TIER1_ROLES,
 ] as const;
 
 export type SiteReadinessSubmitRole = (typeof SITE_READINESS_SUBMIT_ROLES)[number];

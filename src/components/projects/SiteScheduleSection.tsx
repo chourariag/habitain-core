@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useEffect, useState, useCallback } from "react";
 import * as XLSX from "xlsx";
@@ -32,9 +33,9 @@ const TEMPLATE_MILESTONES = [
   "Handover",
 ];
 
-const UPLOAD_ROLES = new Set(["planning_engineer", "planning_head", "head_operations", "super_admin", "managing_director"]);
+const UPLOAD_ROLES = new Set(["planning_engineer", "planning_head", "head_operations", "super_admin", ...TIER1_ROLES]);
 const APPROVER_ROLES = new Set(["planning_head", "head_of_projects"]);
-const ADMIN_ROLES = new Set(["super_admin", "managing_director"]);
+const ADMIN_ROLES = new Set(["super_admin", ...TIER1_ROLES]);
 
 type Milestone = { milestone_name: string; planned_date: string | null; notes?: string };
 

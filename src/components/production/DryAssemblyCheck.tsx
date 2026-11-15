@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -66,7 +67,7 @@ export function DryAssemblyCheck({ projectId, projectName, userRole, userId, all
   const isProductionHead = userRole === "production_head";
   const isQcInspector = userRole === "qc_inspector";
   const canEdit = isProductionHead || isQcInspector;
-  const isSuperUser = ["super_admin", "managing_director", "head_operations"].includes(userRole ?? "");
+  const isSuperUser = ["super_admin", ...TIER1_ROLES, "head_operations"].includes(userRole ?? "");
 
   const fetchRecord = useCallback(async () => {
     const { data } = await supabase

@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -42,7 +43,7 @@ export function PaymentApprovalSection({ canUpload }: Props) {
     const [{ data }, { data: dirData }] = await Promise.all([
       (supabase.from("payment_approvals") as any).select("*").order("submitted_at", { ascending: false }),
       supabase.from("profiles").select("auth_user_id, display_name, role")
-        .in("role", ["finance_director", "managing_director", "super_admin"] as any)
+        .in("role", ["finance_director", ...TIER1_ROLES, "super_admin"] as any)
         .eq("is_active", true),
     ]);
     setApprovals((data ?? []) as PaymentApproval[]);
@@ -66,7 +67,7 @@ export function PaymentApprovalSection({ canUpload }: Props) {
           const { data: allDirectors } = await supabase
             .from("profiles")
             .select("auth_user_id, display_name")
-            .in("role", ["finance_director", "managing_director", "super_admin"] as any)
+            .in("role", ["finance_director", ...TIER1_ROLES, "super_admin"] as any)
             .eq("is_active", true);
 
           if (allDirectors?.length) {

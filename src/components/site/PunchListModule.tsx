@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -54,7 +55,7 @@ export function PunchListModule({ projectId, userRole }: Props) {
   const [waivingId, setWaivingId] = useState<string | null>(null);
   const [waiveReason, setWaiveReason] = useState("");
 
-  const canManage = ["site_installation_mgr", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canManage = ["site_installation_mgr", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
   const canView = canManage || ["director", "finance_director", "sales_director", "architecture_director", "head_operations", "production_head"].includes(userRole ?? "");
 
   const load = useCallback(async () => {

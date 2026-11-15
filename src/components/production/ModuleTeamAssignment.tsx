@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, ClipboardList, Save } from "lucide-react";
 import { toast } from "sonner";
 
-const ASSIGN_ROLES = ["super_admin", "managing_director", "head_operations", "production_head", "factory_floor_supervisor", "fabrication_foreman"];
+const ASSIGN_ROLES = ["super_admin", ...TIER1_ROLES, "head_operations", "production_head", "factory_floor_supervisor", "fabrication_foreman"];
 
 interface Props {
   projectId: string;

@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -46,7 +47,7 @@ const STATUS_LABEL: Record<string,{label:string;bg:string;color:string}> = {
   closed: { label: "Closed", bg:"#E0E0E0", color:"#666" },
 };
 
-const SUBMIT_ROLES = ["super_admin","managing_director","production_head","planning_head","site_installation_mgr"];
+const SUBMIT_ROLES = ["super_admin",...TIER1_ROLES,"production_head","planning_head","site_installation_mgr"];
 
 const fmtINR = (n: number) => `₹${(n||0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
@@ -69,10 +70,10 @@ export function WorkOrdersTab({ mode, projectId, projectName }: Props) {
   const [editWo, setEditWo] = useState<any | null>(null);
 
 
-  const canRaise = ["super_admin","managing_director","production_head","site_installation_mgr"].includes(role ?? "");
-  const canCostingApprove = ["super_admin","managing_director","planning_engineer","costing_engineer"].includes(role ?? "");
+  const canRaise = ["super_admin",...TIER1_ROLES,"production_head","site_installation_mgr"].includes(role ?? "");
+  const canCostingApprove = ["super_admin",...TIER1_ROLES,"planning_engineer","costing_engineer"].includes(role ?? "");
   const canDirectorApprove = ["super_admin","managing_director","finance_director","sales_director","architecture_director"].includes(role ?? "");
-  const canIssue = ["super_admin","managing_director","finance_director","finance_manager","accounts_executive"].includes(role ?? "");
+  const canIssue = ["super_admin",...TIER1_ROLES,"finance_director","finance_manager","accounts_executive"].includes(role ?? "");
 
   const fetchAll = useCallback(async () => {
     setLoading(true);

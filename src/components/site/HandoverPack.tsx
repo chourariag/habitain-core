@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -63,7 +64,7 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
   const [approving, setApproving] = useState(false);
 
   const canInitiate = ["head_of_projects", "super_admin"].includes(userRole ?? "");
-  const canApprove = ["managing_director", "super_admin"].includes(userRole ?? "");
+  const canApprove = [...TIER1_ROLES, "super_admin"].includes(userRole ?? "");
 
   useEffect(() => { loadAll(); }, [projectId]);
 
@@ -137,7 +138,7 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
       await supabase.from("projects").update({ status: "handover_pending" }).eq("id", projectId);
 
       // Notify managing_director
-      const { data: mdRoles } = await supabase.from("user_roles").select("user_id").eq("role", "managing_director" as any);
+      const { data: mdRoles } = await supabase.from("user_roles").select("user_id").in("role", [...TIER1_ROLES]);
       if (mdRoles?.length) {
         const projName = project?.name || "Project";
         await supabase.from("notifications").insert(
@@ -203,7 +204,7 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
           <CardTitle className="text-sm flex items-center gap-2 text-primary">
             {isClosed ? <PartyPopper className="h-4 w-4" /> : <Check className="h-4 w-4" />}
             {isClosed ? "Project Closed" : isPending ? "Handover Pack Submitted — Awaiting MD Approval" : "Handed Over"}
-            {isPending && <ResponsiblePerson roles={["managing_director"]} />}
+            {isPending && <ResponsiblePerson roles={[...TIER1_ROLES]} />}
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-3 space-y-2">

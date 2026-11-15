@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,7 +38,7 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
   const [dispatchDate, setDispatchDate] = useState<Date | null>(null);
 
   // Installation Sequence is owned by Awaiz (site_installation_mgr); admins can also edit.
-  const canUploadRole = ["site_installation_mgr", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canUploadRole = ["site_installation_mgr", "head_operations", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   // 14-day lock: pull planned dispatch date from project_tasks (Stage with "Dispatch")
   useEffect(() => {

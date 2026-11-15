@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -17,7 +18,7 @@ export const ARCHITECT_ROLES = [
 /** Roles allowed to assign / reassign the Project Architect on a project. */
 export const ARCHITECT_ASSIGN_ROLES = [
   "super_admin",
-  "managing_director",
+  ...TIER1_ROLES,
   "chairman",
   "architecture_director",
   "sales_director",

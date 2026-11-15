@@ -1,3 +1,4 @@
+import { isTier1 } from "@/lib/roles";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -319,7 +320,7 @@ async function buildBriefForRole(role: AppRole, uid: string): Promise<BriefLine[
     if (role === "qc_inspector") return await buildQCBrief();
     if (["principal_architect", "project_architect", "structural_architect", "architecture_director"].includes(role)) return await buildDesignBrief(uid);
     if (role === "super_admin") return await buildSuperAdminBrief();
-    if (role === "managing_director") return await buildDirectorBrief();
+    if (isTier1(role)) return await buildDirectorBrief();
   } catch (e) {
     console.warn("Daily brief fetch error", e);
   }

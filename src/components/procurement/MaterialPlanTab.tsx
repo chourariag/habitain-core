@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useProjectImportListener } from "@/lib/use-project-import";
 import { SetupTemplateBanner, useSetupUploaded } from "@/components/projects/SetupTemplateBanner";
@@ -104,9 +105,9 @@ export function MaterialPlanTab({ projectId, userRole }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const setupUploaded = useSetupUploaded(projectId);
-  const inUploadRoles = ["procurement", "stores_executive", "super_admin", "managing_director", "planning_engineer"].includes(userRole ?? "");
+  const inUploadRoles = ["procurement", "stores_executive", "super_admin", ...TIER1_ROLES, "planning_engineer"].includes(userRole ?? "");
   const canUpload = inUploadRoles;
-  const canEdit = ["procurement", "stores_executive", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canEdit = ["procurement", "stores_executive", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   const fetchData = useCallback(async () => {
     setLoading(true);

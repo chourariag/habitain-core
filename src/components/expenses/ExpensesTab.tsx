@@ -153,7 +153,7 @@ export function ExpensesTab() {
     const sample = entries.find((e) => e.id === entryIds[0]);
     const empName = sample ? getName(sample.submitted_by) : "Employee";
     const total = entries.filter(e => entryIds.includes(e.id)).reduce((s, e) => s + Number(e.amount), 0);
-    await notifyByRole(["finance_director", "managing_director"], {
+    await notifyByRole(["finance_director", ...TIER1_ROLES], {
       title: "Expense Report Pending Finance Approval",
       body: `${empName}'s expense report (₹${total.toLocaleString("en-IN")}) was approved by HR and is awaiting your payment approval. Open Finance → Costing & Estimation.`,
       relatedId: entryIds[0],

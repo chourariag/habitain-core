@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -23,7 +24,7 @@ interface Props {
   projectName: string;
 }
 
-const CREATE_ROLES = ["super_admin", "managing_director", "production_head", "factory_floor_supervisor", "head_operations"];
+const CREATE_ROLES = ["super_admin", ...TIER1_ROLES, "production_head", "factory_floor_supervisor", "head_operations"];
 const VEHICLE_TYPES = ["Truck (16ft)", "Truck (20ft)", "Truck (24ft)", "Trailer (32ft)", "Trailer (40ft)", "LCV", "Other"];
 
 export function DispatchPackFormV2({ projectId, projectName }: Props) {

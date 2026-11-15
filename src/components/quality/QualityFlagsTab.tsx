@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -11,7 +12,7 @@ import { Loader2, Flag } from "lucide-react";
 import { format, startOfWeek, endOfWeek } from "date-fns";
 import { toast } from "sonner";
 
-const ACTION_ROLES = ["qc_inspector", "production_head", "managing_director", "super_admin", "head_operations"];
+const ACTION_ROLES = ["qc_inspector", "production_head", ...TIER1_ROLES, "super_admin", "head_operations"];
 
 export function QualityFlagsTab() {
   const { user } = useAuth();

@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useMemo } from "react";
 import { Check, Lock, AlertTriangle, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,7 +15,7 @@ import { getStagesForSystem, type ProductionSystem, MODULAR_STAGES } from "@/lib
 export const PRODUCTION_STAGES = MODULAR_STAGES;
 
 const HYBRID_AWAITING_STAGE = "Awaiting Panels";
-const OVERRIDE_ROLES = ["planning_engineer", "production_head", "head_operations", "super_admin", "managing_director"];
+const OVERRIDE_ROLES = ["planning_engineer", "production_head", "head_operations", "super_admin", ...TIER1_ROLES];
 
 interface Props {
   moduleId: string;
@@ -97,7 +98,7 @@ export function ProductionStageTracker({
     return () => { active = false; };
   }, [isHybrid, projectId, currentStage]);
 
-  const canStartInspection = ["qc_inspector", "production_head", "head_operations", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canStartInspection = ["qc_inspector", "production_head", "head_operations", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
   const canOverride = OVERRIDE_ROLES.includes(userRole ?? "");
   const isBlocked = isOnHold && openNCRCount > 0;
   // Block advancing from Stage 1 to Stage 2 if dry assembly check not done

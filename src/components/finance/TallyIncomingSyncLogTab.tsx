@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useUserRole } from "@/hooks/useUserRole";
 
-const ALLOWED = ["super_admin", "managing_director", "finance_manager"];
+const ALLOWED = ["super_admin", ...TIER1_ROLES, "finance_manager"];
 
 type LogRow = {
   id: string;

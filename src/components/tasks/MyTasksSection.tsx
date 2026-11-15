@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -142,8 +143,8 @@ export function MyTasksSection({ userRole, phaseFilter, projectId, title = "My T
   const visibleTasks = expanded ? sortedTasks : sortedTasks.slice(0, 3);
   const remaining = Math.max(0, sortedTasks.length - 3);
 
-  const canEdit = ["planning_engineer", "production_head", "factory_supervisor", "site_installation_manager", "site_manager", "super_admin", "managing_director"].includes(userRole ?? "");
-  const canAddSubtasks = ["planning_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canEdit = ["planning_engineer", "production_head", "factory_supervisor", "site_installation_manager", "site_manager", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
+  const canAddSubtasks = ["planning_engineer", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   if (loading) {
     return (

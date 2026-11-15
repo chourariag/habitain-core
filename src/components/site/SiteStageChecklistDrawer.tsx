@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { StageChecklistDrawer } from "@/components/production/StageChecklistDrawer";
 import { SITE_STAGES } from "@/lib/hstack-stages";
 
@@ -13,7 +14,7 @@ interface Props {
 
 const SIM_EDITOR_ROLES = [
   "site_installation_mgr", "site_engineer", "delivery_rm_lead",
-  "super_admin", "managing_director", "head_operations",
+  "super_admin", ...TIER1_ROLES, "head_operations",
 ];
 
 export function SiteStageChecklistDrawer(props: Props) {

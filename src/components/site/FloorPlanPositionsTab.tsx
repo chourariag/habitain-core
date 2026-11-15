@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +20,7 @@ const DIRECTIONS = ["N", "S", "E", "W", "NE", "NW", "SE", "SW"];
 
 const CAN_MANAGE = new Set([
   "super_admin",
-  "managing_director",
+  ...TIER1_ROLES,
   "site_installation_mgr",
   "operations_architect",
   "project_architect",

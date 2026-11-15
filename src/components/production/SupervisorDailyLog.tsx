@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -49,8 +50,8 @@ export function SupervisorDailyLog({ moduleId, moduleName, moduleCode, currentSt
     qualityMeta,
   } = usePhotoWithAI("daily_log");
 
-  const isSupervisor = ["factory_floor_supervisor", "production_head", "super_admin", "managing_director", "head_operations"].includes(userRole ?? "");
-  const isReviewer = ["production_head", "super_admin", "managing_director", "head_operations"].includes(userRole ?? "");
+  const isSupervisor = ["factory_floor_supervisor", "production_head", "super_admin", ...TIER1_ROLES, "head_operations"].includes(userRole ?? "");
+  const isReviewer = ["production_head", "super_admin", ...TIER1_ROLES, "head_operations"].includes(userRole ?? "");
 
   const loadLogs = useCallback(async () => {
     setLoading(true);

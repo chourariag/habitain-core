@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1 } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -24,13 +25,13 @@ const URGENCY_CLASS: Record<string, string> = {
 };
 
 const REQUESTOR_ROLES = [
-  "super_admin", "managing_director",
+  "super_admin", ...TIER1_ROLES,
   "site_installation_mgr", "site_engineer", "factory_floor_supervisor",
   "fabrication_foreman", "production_head", "head_operations",
 ];
 
 const APPROVER_ROLES = [
-  "super_admin", "managing_director", "finance_director",
+  "super_admin", ...TIER1_ROLES, "finance_director",
   "costing_engineer", "procurement", "stores_executive", "head_operations", "production_head",
 ];
 
@@ -170,23 +171,23 @@ export function MaterialRequestsPanel({ projectId }: Props) {
                       {canApprove && (
                         <td className="p-3">
                           <div className="flex gap-1 flex-wrap">
-                            {r.status === "pending_budget" && (userRole === "costing_engineer" || userRole === "super_admin" || userRole === "managing_director") && (
+                            {r.status === "pending_budget" && (userRole === "costing_engineer" || userRole === "super_admin" || isTier1(userRole)) && (
                               <>
                                 <SoDButton label="Approve" onClick={() => handleAction(r.id, "approve_budget")} sodReason={isBlockedBySoD(r, userId, "approve_budget")} />
                                 <SoDButton label="Over Budget" onClick={() => handleAction(r.id, "over_budget")} sodReason={isBlockedBySoD(r, userId, "over_budget")} />
                                 <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleAction(r.id, "reject")}>Reject</Button>
                               </>
                             )}
-                            {r.status === "pending_director_approval" && (userRole === "managing_director" || userRole === "finance_director" || userRole === "super_admin") && (
+                            {r.status === "pending_director_approval" && (isTier1(userRole) || userRole === "finance_director" || userRole === "super_admin") && (
                               <>
                                 <SoDButton label="Approve" onClick={() => handleAction(r.id, "director_approve")} sodReason={isBlockedBySoD(r, userId, "director_approve")} />
                                 <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleAction(r.id, "reject")}>Reject</Button>
                               </>
                             )}
-                            {r.status === "pending_po" && (userRole === "procurement" || userRole === "super_admin" || userRole === "managing_director") && (
+                            {r.status === "pending_po" && (userRole === "procurement" || userRole === "super_admin" || isTier1(userRole)) && (
                               <SoDButton label="Raise PO" onClick={() => handleAction(r.id, "raise_po")} sodReason={isBlockedBySoD(r, userId, "raise_po")} />
                             )}
-                            {r.status === "po_raised" && (userRole === "stores_executive" || userRole === "super_admin" || userRole === "managing_director") && (
+                            {r.status === "po_raised" && (userRole === "stores_executive" || userRole === "super_admin" || isTier1(userRole)) && (
                               <SoDButton label="Mark Received" onClick={() => handleAction(r.id, "mark_received")} sodReason={isBlockedBySoD(r, userId, "mark_received")} />
                             )}
                           </div>

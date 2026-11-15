@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -31,7 +32,7 @@ interface Row {
 }
 
 const ACCESS_ROLES = ["super_admin","managing_director","finance_director","sales_director","architecture_director","finance_manager","accounts_executive","head_operations"];
-const EDIT_ROLES = ["super_admin","managing_director","finance_director","finance_manager"];
+const EDIT_ROLES = ["super_admin",...TIER1_ROLES,"finance_director","finance_manager"];
 
 const fmt = (n: number) => "₹" + (n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 

@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { Loader2, CheckCircle, XCircle, ArrowRight, PartyPopper } from "lucide-react";
 import { getOnboardingForRole, type OnboardingFeature, type RoleOnboarding } from "@/lib/onboarding-data";
-import { ROLE_LABELS } from "@/lib/roles";
+import { ROLE_LABELS, TIER1_ROLES } from "@/lib/roles";
 import { insertNotifications } from "@/lib/notifications";
 
 interface RoleStep { label: string; sublabel: string; to: string; }
@@ -194,7 +194,7 @@ export default function Onboarding() {
     const { data: hods } = await supabase
       .from("profiles")
       .select("id")
-      .in("role", ["production_head", "head_operations", "managing_director", "super_admin"])
+      .in("role", ["production_head", "head_operations", ...TIER1_ROLES, "super_admin"])
       .eq("is_active", true);
 
     if (hods?.length) {

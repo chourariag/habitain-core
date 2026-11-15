@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ExcelJS from "exceljs";
 import * as XLSX from "xlsx";
@@ -28,7 +29,7 @@ export function ManpowerWeeklyExcel({ location, projectId }: Props) {
 
   const canSubmit = useMemo(() => {
     if (!role) return false;
-    if (["super_admin", "managing_director", "planning_head", "head_operations"].includes(role)) return true;
+    if (["super_admin", ...TIER1_ROLES, "planning_head", "head_operations"].includes(role)) return true;
     if (location === "factory" && role === "production_head") return true;
     if (location === "site" && role === "site_installation_mgr") return true;
     return false;
@@ -278,7 +279,7 @@ export function ManpowerWeeklyExcel({ location, projectId }: Props) {
 
       // Notify Suraj + MD
       const { data: dirs } = await supabase.from("profiles")
-        .select("auth_user_id").in("role", ["managing_director", "super_admin", "head_operations", "planning_head"])
+        .select("auth_user_id").in("role", [...TIER1_ROLES, "super_admin", "head_operations", "planning_head"])
         .eq("is_active", true);
       if (dirs?.length) {
         await supabase.from("notifications").insert(dirs.map((d: any) => ({

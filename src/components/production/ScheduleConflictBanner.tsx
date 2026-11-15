@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -101,7 +102,7 @@ export function ScheduleConflictBanner({ projectId, userRole }: Props) {
 
   if (!conflicts.length) return null;
 
-  const canAct = ["production_head", "managing_director", "super_admin", "head_operations"].includes(userRole ?? "");
+  const canAct = ["production_head", ...TIER1_ROLES, "super_admin", "head_operations"].includes(userRole ?? "");
   const severConflicts = conflicts.filter((c) => c.days_behind >= 5);
 
   return (

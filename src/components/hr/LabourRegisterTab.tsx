@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -21,7 +22,7 @@ const SKILL_TYPES = [
   "Electrician","Plumber","HVAC Installer","Fabricator","False Ceiling","Waterproofing","Driver","Other",
 ];
 
-const MANAGE_ROLES = ["super_admin","managing_director","finance_director","production_head","site_installation_mgr","finance_manager"];
+const MANAGE_ROLES = ["super_admin",...TIER1_ROLES,"finance_director","production_head","site_installation_mgr","finance_manager"];
 const VIEW_ROLES = [...MANAGE_ROLES,"sales_director","architecture_director","hr_executive"];
 
 type Contractor = {

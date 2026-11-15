@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +11,7 @@ import { ProjectScopeGuard } from "@/components/ProjectScopeGuard";
 import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { Factory, ClipboardCheck, Package, Users, ArrowRight, AlertTriangle, BarChart3 } from "lucide-react";
 
-const AZAD_ROLES = ["super_admin", "managing_director", "production_head", "head_operations"];
+const AZAD_ROLES = ["super_admin", ...TIER1_ROLES, "production_head", "head_operations"];
 
 function ProductionDashboardContent() {
   const { selectedProjectId, selectedProject } = useProjectContext();

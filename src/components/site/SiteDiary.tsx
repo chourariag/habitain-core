@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
@@ -71,7 +72,7 @@ export function SiteDiary({ projectId, userRole }: Props) {
   const [plannedActivities, setPlannedActivities] = useState<PlannedActivity[]>([]);
   const [activityErrors, setActivityErrors] = useState<Record<number, string>>({});
 
-  const canAdd = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"].includes(userRole ?? "");
+  const canAdd = ["site_installation_mgr", "site_engineer", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   useEffect(() => { loadEntries(); }, [projectId]);
 

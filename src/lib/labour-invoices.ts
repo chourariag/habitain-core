@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 
 export const LABOUR_INVOICE_STATUS: Record<string, { bg: string; text: string; label: string }> = {
@@ -10,12 +11,12 @@ export const LABOUR_INVOICE_STATUS: Record<string, { bg: string; text: string; l
 };
 
 export const LABOUR_INVOICE_RAISE_ROLES = [
-  "super_admin", "managing_director", "production_head", "site_installation_mgr",
+  "super_admin", ...TIER1_ROLES, "production_head", "site_installation_mgr",
   "finance_director", "finance_manager", "head_operations",
 ];
 
 export const LABOUR_INVOICE_APPROVE_ROLES = [
-  "super_admin", "managing_director", "finance_director", "finance_manager",
+  "super_admin", ...TIER1_ROLES, "finance_director", "finance_manager",
   "production_head", "head_operations",
 ];
 
