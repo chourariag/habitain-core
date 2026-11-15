@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [ ] P8: private versioned CSV exports, nightly schedule, audited dashboard tokens and Settings lists; verify real export and token lifecycle
 - [x] PARITY-2B: 115 existing src files/11 deployed Edge functions; migration 0030 backs up three scoped functions, wage counts 49/49/49; 192 tests passed/5 skipped, automatic build OK; populated MD mobile views fit 360px, Alerts content blocked by OFF flag
 - [x] PARITY-2A: migration 0029 rewrote 319 A with 319 backups; 213 B/7 C/0 D, live definition comparison and authenticated MD/sales/architecture counts verified; events 0 and jobs unchanged; three unrelated security findings pending access review
 - [x] PARITY-1 scoped delivery: audit 342 objects, migration 0027/shared UI parity, 112 tests, MD/mobile preview, events 0 and seven jobs unchanged
