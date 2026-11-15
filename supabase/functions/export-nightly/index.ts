@@ -1,7 +1,7 @@
 import { authenticateCronRequest } from '../_shared/cron-auth.ts';
 import { director, service, json } from '../_shared/export-auth.ts';
 import { EXPORT_SCHEMA } from '../_shared/export-schema.ts';
-import { expiredFolder, istDate, toCsv } from '../_shared/export-utils.ts';
+import { expiredFolder, istDate, toCsv, wageAmount } from '../_shared/export-utils.ts';
 
 Deno.serve(async req => {
   if (req.method === 'OPTIONS') return json({});
@@ -47,7 +47,7 @@ Deno.serve(async req => {
         }
         if (schema.table === 'labour_attendance') rows = rows.map(row => {
           const rate = rateMap.get(String(row.worker_id)) ?? 0;
-          return { ...row, effective_hourly_rate: rate, amount: Number(row.hours) * rate };
+          return { ...row, effective_hourly_rate: rate, amount: wageAmount(Number(row.hours), rate) };
         });
       }
       const name = `${schema.table}_v${schema.version}.csv`;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EXPORT_SCHEMA } from '../../supabase/functions/_shared/export-schema';
-import { expiredFolder, hashToken, istDate, LINK_SECONDS, RETENTION_DAYS, sanitize, toCsv } from '../../supabase/functions/_shared/export-utils';
+import { expiredFolder, hashToken, istDate, LINK_SECONDS, RETENTION_DAYS, sanitize, toCsv, wageAmount } from '../../supabase/functions/_shared/export-utils';
 describe('P8 export rules', () => {
   it('exports hourly wages and amounts but not salary, bank, ID numbers or auth fields', () => {
     expect(EXPORT_SCHEMA).toHaveLength(17);
@@ -21,6 +21,7 @@ describe('P8 export rules', () => {
     expect(LINK_SECONDS).toBe(300);
   });
   it('writes plain amounts and properly escaped UTF-8 CSV metadata', () => {
+    expect(wageAmount(6, 110.58)).toBe(663.48);
     expect(toCsv(['hours', 'amount', 'flags'], [{ hours: 8, amount: 750, flags: ['no_exif'] }])).toBe('hours,amount,flags\r\n8,750,"[""no_exif""]"\r\n');
     expect(toCsv(['path'], [{ path: 'é,a"b' }])).toContain('"é,a""b"');
   });
