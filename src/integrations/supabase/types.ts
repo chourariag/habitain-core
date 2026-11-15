@@ -11848,6 +11848,7 @@ export type Database = {
           delivery_mode: string
           description: string
           due_time_ist: string
+          effective_from: string
           key: string
           updated_at: string
           updated_by: string | null
@@ -11860,6 +11861,7 @@ export type Database = {
           delivery_mode?: string
           description: string
           due_time_ist: string
+          effective_from?: string
           key: string
           updated_at?: string
           updated_by?: string | null
@@ -11872,6 +11874,7 @@ export type Database = {
           delivery_mode?: string
           description?: string
           due_time_ist?: string
+          effective_from?: string
           key?: string
           updated_at?: string
           updated_by?: string | null
@@ -17191,7 +17194,9 @@ export type Database = {
         }[]
       }
       required_gfc_for_stage: { Args: { _stage: string }; Returns: string }
-      run_reminders: { Args: { p_dry?: boolean }; Returns: Json }
+      run_reminders:
+        | { Args: { p_dry?: boolean }; Returns: Json }
+        | { Args: { p_asof: string; p_dry: boolean }; Returns: Json }
       safe_uuid: { Args: { _t: string }; Returns: string }
       save_labour_attendance: {
         Args: {
@@ -17273,16 +17278,28 @@ export type Database = {
         }
         Returns: undefined
       }
-      update_reminder_rule: {
-        Args: {
-          p_active: boolean
-          p_days: number[]
-          p_due: string
-          p_key: string
-          p_mode: string
-        }
-        Returns: undefined
-      }
+      update_reminder_rule:
+        | {
+            Args: {
+              p_active: boolean
+              p_days: number[]
+              p_due: string
+              p_key: string
+              p_mode: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_active: boolean
+              p_days: number[]
+              p_due: string
+              p_effective_from: string
+              p_key: string
+              p_mode: string
+            }
+            Returns: undefined
+          }
       upsert_project_elevation: {
         Args: {
           p_drawing_ref: string
