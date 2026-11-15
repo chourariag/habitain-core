@@ -9,7 +9,7 @@ export function sanitize(value: unknown): unknown {
 export function csvCell(value: unknown): string {
   const cleaned = sanitize(value);
   const text = cleaned == null ? '' : typeof cleaned === 'object' ? JSON.stringify(cleaned) : String(cleaned);
-  return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 export function toCsv(columns: readonly string[], rows: Record<string, unknown>[]): string {
   return [columns.join(','), ...rows.map(row => columns.map(column => csvCell(row[column])).join(','))].join('\r\n') + '\r\n';
