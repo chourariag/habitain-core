@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [ ] PARITY-1: audit legacy gaps; unify Tier 1 frontend and Wave 1 access; verify rolled-back previews, zero events and unchanged jobs
 - [x] P7c: migration 0026 enables MD dated previews; three rolled-back previews verified, MD UI verified at 360px, 16 tests passed; events 0, flag OFF, seven jobs unchanged
 - [x] P7b: three-day cap, window-close resolution, effective date and safe as-of preview; requested dated outputs verified in P7c
 - [x] P7: migration 0024, shadow rules, flag OFF, hourly job, read-only MD settings and open-reminder lists; signed-in dry run [], 360px no overflow, 11 tests passed; live-delivery checks intentionally not run
