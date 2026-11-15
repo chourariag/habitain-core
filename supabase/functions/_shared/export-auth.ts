@@ -9,7 +9,7 @@ export async function director(req: Request, db: ReturnType<typeof service>): Pr
   if (!token) return null;
   const { data, error } = await db.auth.getUser(token);
   if (error || !data.user) return null;
-  const { data: allowed, error: roleError } = await db.rpc('is_tier1_or_super', { _user_id: data.user.id });
+  const { data: allowed, error: roleError } = await db.rpc('is_tier1_or_super', { _uid: data.user.id });
   const { data: profile } = await db.from('profiles').select('is_active').eq('auth_user_id', data.user.id).maybeSingle();
   return allowed && !roleError && profile?.is_active ? data.user.id : null;
 }
