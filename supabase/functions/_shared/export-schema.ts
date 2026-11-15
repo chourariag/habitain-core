@@ -434,44 +434,6 @@ export const EXPORT_SCHEMA = [
     ]
   },
   {
-    "table": "labour_worker_rates",
-    "version": 1,
-    "columns": [
-      {
-        "name": "worker_id",
-        "type": "uuid"
-      },
-      {
-        "name": "worker_code",
-        "type": "text"
-      },
-      {
-        "name": "name",
-        "type": "text"
-      },
-      {
-        "name": "contractor",
-        "type": "text"
-      },
-      {
-        "name": "skill_type",
-        "type": "text"
-      },
-      {
-        "name": "status",
-        "type": "text"
-      },
-      {
-        "name": "hourly_rate",
-        "type": "numeric"
-      },
-      {
-        "name": "effective_hourly_rate",
-        "type": "numeric"
-      }
-    ]
-  },
-  {
     "table": "labour_workers",
     "version": 1,
     "columns": [

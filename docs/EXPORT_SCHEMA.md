@@ -6,7 +6,7 @@ Files are stored at `YYYY-MM-DD/<source>_v1.csv` (IST run date) and `latest/<sou
 
 Source rows include archived/draft rows. `daily_measurements` contains only `trade=daily_site_report`. Photo files contain metadata only. No image/receipt bytes are read. `labour_worker_rates` is exported through a service-only projection, not its role-filtered view. `labour_attendance.amount = hours × effective_hourly_rate`; rates are current effective rates (not historical snapshots). Effective rates preserve the existing hourly-rate fallback; monthly salary itself is never exported.
 
-Excluded: auth, employee salary/payroll tables, monthly_salary, client_portal_token, receipt_url, client phone/email, bank/PAN/Aadhaar fields. Explicit projections freeze the schema; no SELECT *. Nested sensitive JSON keys are removed. The token grants all 18 latest files, including wages and GPS metadata; only Tier 1/Super Admin can issue or revoke it. Links expire after 300 seconds; revocation cannot invalidate already issued links before expiry.
+Excluded: auth, employee salary/payroll tables, monthly_salary, client_portal_token, receipt_url, client phone/email, bank/PAN/Aadhaar fields. Explicit projections freeze the schema; no SELECT *. Nested sensitive JSON keys are removed. The token grants all 17 latest files, including wages and GPS metadata; only Tier 1/Super Admin can issue or revoke it. Links expire after 300 seconds; revocation cannot invalidate already issued links before expiry.
 
 Snapshots page each source in deterministic key order; separate tables are not one cross-table transaction. Dated retention is 60 days; latest is never pruned.
 
@@ -122,19 +122,6 @@ Snapshots page each source in deterministic key order; separate tables are not o
 | `recorded_at` | timestamp with time zone |
 | `effective_hourly_rate` | numeric |
 | `amount` | numeric |
-
-## labour_worker_rates_v1.csv
-
-| Column | Type |
-|---|---|
-| `worker_id` | uuid |
-| `worker_code` | text |
-| `name` | text |
-| `contractor` | text |
-| `skill_type` | text |
-| `status` | text |
-| `hourly_rate` | numeric |
-| `effective_hourly_rate` | numeric |
 
 ## labour_worker_rates_v1.csv
 
