@@ -1,16 +1,14 @@
+import { TIER1_ROLES, uniqueByAuthUser } from "../_shared/director-tier.ts";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    (Deno.env.get("SUPABASE_URL") ?? ""),
+    (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""),
   );
 
   const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
@@ -33,7 +31,7 @@ Deno.serve(async (req) => {
   const { data: recipients } = await supabase
     .from("profiles")
     .select("auth_user_id")
-    .in("role", ["super_admin", "managing_director", "production_head", "head_operations"])
+    .in("role", ["super_admin", ...TIER1_ROLES, "production_head", "head_operations"])
     .eq("is_active", true);
 
   const now = new Date().toISOString();
@@ -44,7 +42,7 @@ Deno.serve(async (req) => {
       .eq("id", c.id);
 
     if (recipients?.length) {
-      const rows = recipients.map((r: any) => ({
+      const rows = uniqueByAuthUser(recipients).map((r: any) => ({
         recipient_id: r.auth_user_id,
         title: "Labour claim — SLA breached",
         body: `Claim from ${c.worker_name_snapshot} has been pending Rakesh's approval for 4 hours. Please review.`,

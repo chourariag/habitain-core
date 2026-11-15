@@ -1,17 +1,15 @@
+import { TIER1_ROLES, uniqueByAuthUser } from "../_shared/director-tier.ts";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 // Daily WO escalation: notify directors about WOs sitting >24h in pending stages.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    (Deno.env.get("SUPABASE_URL") ?? ""),
+    (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""),
   );
 
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
@@ -62,7 +60,7 @@ Deno.serve(async (req) => {
         .limit(1);
       if (existing?.length) continue;
 
-      const rows2 = users.map((u: any) => ({
+      const rows2 = uniqueByAuthUser(users).map((u: any) => ({
         recipient_id: u.auth_user_id,
         title: `WO overdue: ${stageLabel}`,
         body: `${wo.wo_number} — ₹${Number(wo.total_value || 0).toLocaleString("en-IN")} pending >24h`,
@@ -79,9 +77,9 @@ Deno.serve(async (req) => {
     }
   };
 
-  await notifyRoles(["planning_engineer", "costing_engineer", "managing_director"], pendCost ?? [], "Costing review");
+  await notifyRoles(["planning_engineer", "costing_engineer", ...TIER1_ROLES], pendCost ?? [], "Costing review");
   await notifyRoles(["managing_director", "finance_director", "sales_director", "architecture_director"], pendDir ?? [], "Director approval");
-  await notifyRoles(["finance_manager", "accounts_executive", "managing_director"], pendIssue ?? [], "Issue WO PDF");
+  await notifyRoles(["finance_manager", "accounts_executive", ...TIER1_ROLES], pendIssue ?? [], "Issue WO PDF");
 
   return new Response(JSON.stringify({ ok: true, sent }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },

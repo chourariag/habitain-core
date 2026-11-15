@@ -1,3 +1,5 @@
+import { TIER1_ROLES, uniqueRecipientIds } from "../_shared/director-tier.ts";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 // Daily measurement submission checks.
 // Runs at 8pm IST via pg_cron. For each active project:
 //   - If today has no factory measurement -> notify Azad (head_operations / production_head)
@@ -5,10 +7,6 @@
 //   - If a supervisor has missed >= 2 consecutive working days -> notify Suraj + MD
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 type Profile = { auth_user_id: string; role: string; display_name: string | null };
 
@@ -20,7 +18,7 @@ function todayIso() {
 
 async function notify(supabase: any, recipients: string[], title: string, body: string, category: string) {
   if (recipients.length === 0) return;
-  const rows = recipients.map((r) => ({
+  const rows = uniqueRecipientIds(recipients).map((r) => ({
     recipient_id: r,
     title,
     body,
@@ -36,8 +34,8 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    (Deno.env.get("SUPABASE_URL") ?? ""),
+    (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "")
   );
 
   try {
@@ -59,7 +57,7 @@ Deno.serve(async (req) => {
 
     const factoryApprovers = byRole(["production_head", "head_operations"]);
     const siteApprovers = byRole(["site_installation_mgr", "head_operations"]);
-    const escalation = byRole(["super_admin", "managing_director", "head_operations"]);
+    const escalation = byRole(["super_admin", ...TIER1_ROLES, "head_operations"]);
 
     let factoryMissCount = 0;
     let siteMissCount = 0;

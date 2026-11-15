@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "../_shared/director-tier.ts";
 // Permanently delete source media for a closed project across known buckets.
 // Requires: caller is MD or head_of_projects, and project_archives.storage_cleanup_eligible = true.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
@@ -10,7 +11,8 @@ async function listAll(supabase: any, bucket: string, prefix: string): Promise<s
   // Recursive walk: list folder, recurse into subfolders
   const stack: string[] = [prefix.replace(/\/$/, "")];
   while (stack.length) {
-    const dir = stack.pop()!;
+    const dir = stack.pop();
+    if (dir === undefined) continue;
     const { data, error } = await supabase.storage.from(bucket).list(dir, { limit: 1000 });
     if (error) {
       if (String(error.message || "").toLowerCase().includes("not found")) continue;
@@ -36,7 +38,7 @@ Deno.serve(async (req) => {
     const { project_id, confirm_name } = await req.json();
     if (!project_id || !confirm_name) return json({ error: "project_id and confirm_name required" }, 400);
 
-    const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const supabase = createClient((Deno.env.get("SUPABASE_URL") ?? ""), (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""));
 
     // Identify caller
     const { data: userData } = await supabase.auth.getUser(token);
@@ -49,7 +51,7 @@ Deno.serve(async (req) => {
       .eq("auth_user_id", user.id)
       .maybeSingle();
     const role = (profile as any)?.role;
-    if (!profile?.is_active || !["managing_director", "super_admin", "head_of_projects"].includes(role)) {
+    if (!profile?.is_active || ![...TIER1_ROLES, "super_admin", "head_of_projects"].includes(role)) {
       return json({ error: "Forbidden" }, 403);
     }
 

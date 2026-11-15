@@ -1,3 +1,5 @@
+import { TIER1_ROLES, isTier1, uniqueRecipientIds } from "../_shared/director-tier.ts";
+import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 // Weekly Reports — Reminders & Escalations
 // Runs every 15 minutes via pg_cron.
 // - 2h before deadline → notify submitter
@@ -5,13 +7,9 @@
 // - 2 consecutive weeks missed → notify MD + Directors
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_URL = (Deno.env.get("SUPABASE_URL") ?? "");
+const SERVICE_KEY = (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
 function startOfWeekMonday(d: Date) {
   const x = new Date(d);
@@ -29,7 +27,7 @@ function deadlineFor(cfg: any, ref: Date) {
   return d;
 }
 async function authIdsForRole(sb: any, role: string) {
-  const { data } = await sb.from("profiles").select("auth_user_id").eq("role", role).eq("is_active", true);
+  const { data } = await sb.from("profiles").select("auth_user_id").in("role", isTier1(role) ? [...TIER1_ROLES] : [role]).eq("is_active", true);
   return (data || []).map((d: any) => d.auth_user_id).filter(Boolean);
 }
 async function authIdForProfile(sb: any, profileId: string) {
@@ -41,7 +39,7 @@ async function notify(sb: any, recipients: string[], title: string, body: string
   // Dedupe: skip if same recipient + dedupeKey already sent today
   const today = new Date().toISOString().slice(0, 10);
   const rows: any[] = [];
-  for (const r of recipients) {
+  for (const r of uniqueRecipientIds(recipients)) {
     const { data: existing } = await sb.from("notifications").select("id")
       .eq("recipient_id", r).eq("category", "weekly_report")
       .ilike("body", `%${dedupeKey}%`)
