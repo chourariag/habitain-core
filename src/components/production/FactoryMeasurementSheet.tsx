@@ -71,7 +71,7 @@ export function FactoryMeasurementSheet({ projectId, projectName, userRole }: Pr
         supabase.rpc("get_project_wip_summary", { _project_id: projectId, _on_date: today }),
         supabase
           .from("daily_measurements")
-          .select("id, submitted_at, total_wip_today")
+          .select("id, submitted_at")
           .eq("project_id", projectId)
           .eq("measurement_date", today)
           .eq("location", "factory")
@@ -198,11 +198,15 @@ export function FactoryMeasurementSheet({ projectId, projectName, userRole }: Pr
           trade,
           submitted_by: user.id,
           submitted_at: new Date().toISOString(),
-          total_wip_today: totalWip,
         })
         .select("id")
         .single();
       if (hErr) throw hErr;
+      const { error: wipError } = await supabase.rpc("save_factory_measurement_wip", {
+        p_measurement_id: header.id,
+        p_total: totalWip,
+      });
+      if (wipError) throw wipError;
 
       // 2) Upload photos and build line rows
       const lineRows: any[] = [];
