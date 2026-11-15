@@ -138,11 +138,16 @@ export function ExpensesTab() {
   const handleHRApprove = async (entryIds: string[]) => {
     if (!user) return;
     for (const id of entryIds) {
-      await supabase.from("expense_entries").update({
+      const { data, error } = await supabase.from("expense_entries").update({
         status: "pending_finance",
         hr_reviewed_by: user.id,
         hr_reviewed_at: new Date().toISOString(),
       } as any).eq("id", id).eq("status", "pending_hr").select("id");
+      if (error || !data?.length) {
+        toast.error(error?.message ?? "Already decided. Refreshing the list.");
+        await fetchData();
+        return;
+      }
     }
     // Notify Finance Director + MD
     const sample = entries.find((e) => e.id === entryIds[0]);
@@ -160,11 +165,16 @@ export function ExpensesTab() {
   const handleFinanceApprove = async (entryIds: string[]) => {
     if (!user) return;
     for (const id of entryIds) {
-      await supabase.from("expense_entries").update({
+      const { data, error } = await supabase.from("expense_entries").update({
         status: "approved",
         hod_approved_by: user.id,
         hod_approved_at: new Date().toISOString(),
       } as any).eq("id", id).in("status", ["pending_hod", "pending_finance"]).select("id");
+      if (error || !data?.length) {
+        toast.error(error?.message ?? "Already decided. Refreshing the list.");
+        await fetchData();
+        return;
+      }
     }
     // Notify employee
     const sample = entries.find((e) => e.id === entryIds[0]);

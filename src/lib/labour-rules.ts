@@ -30,9 +30,6 @@ export const LABOUR_RATE_VIEW_ROLES = [
 export const LABOUR_DIRECTORY_VIEW_ROLES = [
   "super_admin",
   ...TIER1_ROLES,
-  "finance_director",
-  "sales_director",
-  "architecture_director",
   "finance_manager",
   "production_head",
   "site_installation_mgr",
