@@ -17,9 +17,9 @@ describe("Employee Management access (HR FULL, not Admin Panel)", () => {
     }
   });
 
-  it("never grants Admin Panel or impersonation tier to SD/AD", () => {
-    expect(canAccessAdminPanel(SD)).toBe(false);
-    expect(canAccessAdminPanel(AD)).toBe(false);
+  it("grants Admin Panel access to SD/AD", () => {
+    expect(canAccessAdminPanel(SD)).toBe(true);
+    expect(canAccessAdminPanel(AD)).toBe(true);
   });
 
   it("keeps principal_architect and unrelated roles out", () => {
@@ -31,7 +31,7 @@ describe("Employee Management access (HR FULL, not Admin Panel)", () => {
 
   it("routes /admin/employees through the employee-management guard", () => {
     expect(read("src/App.tsx")).toContain(
-      '<Route path="/admin/employees" element={<ModuleGuard requireEmployeeManagement>'
+      '<Route path="/admin/employees" element={<ModuleGuard featureFlag="user_admin" requireEmployeeManagement>'
     );
   });
 });

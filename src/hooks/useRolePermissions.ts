@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -39,7 +40,7 @@ export function usePagePermission(pageKey: string): PermissionLevel {
   const { role, map, loading } = useRolePermissions();
   return useMemo(() => {
     if (loading || !role) return "hidden";
-    if (role === "managing_director" || role === "super_admin") return "full";
+    if (isTier1OrSuper(role)) return "full";
     const explicit = map.get(pageKey);
     if (explicit) return explicit;
     return defaultPermission(role as PermissionRole, pageKey);

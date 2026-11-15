@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -11,7 +12,7 @@ import { APP_VERSION } from "@/pwa/version";
 import { FeatureModulesPanel } from "@/components/settings/FeatureModulesPanel";
 import { RemindersPanel } from "@/components/settings/RemindersPanel";
 
-const ADMIN_ROLES = ["super_admin", "managing_director"];
+const ADMIN_ROLES = ["super_admin", ...TIER1_ROLES];
 
 type LocCfg = { lat: string; lng: string; radius: string; enabled: boolean };
 

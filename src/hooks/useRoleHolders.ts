@@ -1,9 +1,10 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 
 // Super Admin + MD only: resolve an app_role to the actual named people holding it.
-const OVERSIGHT_ROLES = ["super_admin", "managing_director"];
+const OVERSIGHT_ROLES = ["super_admin", ...TIER1_ROLES];
 
 let cache: Record<string, string[]> | null = null;
 let inflight: Promise<Record<string, string[]>> | null = null;

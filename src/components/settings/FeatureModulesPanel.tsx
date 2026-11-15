@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -9,7 +10,7 @@ import { FEATURE_FLAG_DEFINITIONS } from "@/lib/feature-flags";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 
-const ADMIN_ROLES = ["super_admin", "managing_director"];
+const ADMIN_ROLES = ["super_admin", ...TIER1_ROLES];
 
 export function FeatureModulesPanel({ role }: { role: string | null }) {
   const allowed = role !== null && ADMIN_ROLES.includes(role);

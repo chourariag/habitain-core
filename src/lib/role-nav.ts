@@ -1,12 +1,12 @@
-import type { AppRole } from "@/lib/roles";
+import { TIER1_OR_SUPER_ROLES, type AppRole } from "@/lib/roles";
 
 // Roles that see everything.
 // NOTE: principal_architect used to be listed here as "identical access to managing_director".
 // That was misleading — this list only drives sidebar section visibility and dashboard layout,
 // never module rights or RLS. The blanket rule has been removed: principal_architect is a
 // dormant, unprivileged role (no live profile holds it). Karan Nadig is architecture_director.
-const FULL_ACCESS: AppRole[] = ["super_admin", "managing_director"];
-const DIRECTORS: AppRole[] = [...FULL_ACCESS, "finance_director", "sales_director", "architecture_director"];
+const FULL_ACCESS: AppRole[] = [...TIER1_OR_SUPER_ROLES];
+const DIRECTORS: AppRole[] = [...FULL_ACCESS];
 
 export type NavSection = {
   label: string;
@@ -69,7 +69,7 @@ export const PROJECT_SELECTOR_ROLES: AppRole[] = [
 // Tier classification for dashboard
 export function getDashboardTier(role: AppRole | null): 1 | 2 | 3 | 4 {
   if (!role) return 3;
-  if (FULL_ACCESS.includes(role) || ["finance_director", "sales_director", "architecture_director"].includes(role)) return 1;
+  if (FULL_ACCESS.includes(role)) return 1;
   if (["production_head", "head_operations", "site_installation_mgr", "finance_manager", "planning_head"].includes(role)) return 2;
   if (["project_architect", "structural_architect"].includes(role)) return 4;
   return 3;

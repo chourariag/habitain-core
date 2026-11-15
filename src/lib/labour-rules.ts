@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { format, parseISO, subDays } from "date-fns";
 
 export const LABOUR_ATTENDANCE_ROLES = [
@@ -5,13 +6,13 @@ export const LABOUR_ATTENDANCE_ROLES = [
   "site_installation_mgr",
   "head_of_projects",
   "planning_head",
-  "managing_director",
+  ...TIER1_ROLES,
   "super_admin",
 ] as const;
 
 export const LABOUR_MASTER_UPLOAD_ROLES = [
   "planning_head",
-  "managing_director",
+  ...TIER1_ROLES,
   "super_admin",
   "head_of_projects",
 ] as const;
@@ -21,14 +22,14 @@ export const LABOUR_RATE_VIEW_ROLES = [
   "site_installation_mgr",
   "head_of_projects",
   "planning_head",
-  "managing_director",
+  ...TIER1_ROLES,
   "super_admin",
   "finance_manager",
 ] as const;
 
 export const LABOUR_DIRECTORY_VIEW_ROLES = [
   "super_admin",
-  "managing_director",
+  ...TIER1_ROLES,
   "finance_director",
   "sales_director",
   "architecture_director",

@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { HSTACK_USERS } from "@/lib/hstack-users";
@@ -5,7 +6,7 @@ import { HSTACK_USERS } from "@/lib/hstack-users";
 const OVERRIDE_KEY = "hstack_role_override";
 const OVERRIDE_NAME_KEY = "hstack_role_override_name";
 const OVERRIDE_EVENT = "hstack:role-override-changed";
-const MD_ROLES = ["managing_director", "super_admin"];
+const MD_ROLES = [...TIER1_ROLES, "super_admin"];
 
 export function getRoleOverride(): string | null {
   if (typeof window === "undefined") return null;

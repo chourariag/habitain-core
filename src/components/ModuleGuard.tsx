@@ -1,3 +1,4 @@
+import { isTier1 } from "@/lib/roles";
 import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -51,7 +52,7 @@ export function ModuleGuard({
   if (requireEmployeeManagement && !canAccessEmployeeManagement()) {
     return <Navigate to="/dashboard" replace />;
   }
-  if (requireRoles && (!role || !requireRoles.includes(role))) {
+  if (requireRoles && (!role || !(requireRoles.includes(role) || (requireRoles.includes("managing_director") && isTier1(role))))) {
     return <Navigate to="/dashboard" replace />;
   }
   if (module && !canView(module)) {

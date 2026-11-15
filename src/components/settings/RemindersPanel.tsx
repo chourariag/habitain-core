@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +17,7 @@ import type { Database } from "@/integrations/supabase/types";
 type Rule = Database["public"]["Tables"]["reminder_rules"]["Row"];
 type Level = Database["public"]["Tables"]["escalation_levels"]["Row"];
 type Event = { id: string; description: string; project_name: string | null; subject_ref: string; subject_date: string; raised_at: string; level: number; delivery: string; recipient_names: string; notified_role: string; recipient_ids: string[]; acknowledgements: Record<string, string> };
-const READ_ROLES = ["super_admin", "managing_director", "head_of_projects", "planning_head"];
+const READ_ROLES = ["super_admin", ...TIER1_ROLES, "head_of_projects", "planning_head"];
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const displayDate = (date: string) => new Date(date).toLocaleDateString("en-GB", { timeZone: "Asia/Kolkata" });
 
@@ -76,8 +77,8 @@ export function RemindersPanel() {
   const [dry, setDry] = useState<Record<string, unknown>[] | null>(null);
   const [asof, setAsof] = useState("");
   const [busy, setBusy] = useState(false);
-  const admin = role === "super_admin" || role === "managing_director";
-  const editable = role === "super_admin";
+  const admin = isTier1OrSuper(role);
+  const editable = admin;
   const query = useQuery({ queryKey: ["reminder-settings"], enabled: admin, queryFn: async () => { const [rules, levels] = await Promise.all([supabase.from("reminder_rules").select("*").order("key"), supabase.from("escalation_levels").select("*").order("level")]); if (rules.error) throw rules.error; if (levels.error) throw levels.error; return { rules: rules.data, levels: levels.data }; } });
   const refresh = () => { void client.invalidateQueries({ queryKey: ["reminder-settings"] }); };
   if (!admin) return null;

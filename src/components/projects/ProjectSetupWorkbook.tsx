@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +13,7 @@ import {
   type SetupValidationResult,
 } from "@/lib/project-setup-excel";
 
-const UPLOAD_ROLES = ["planning_head", "managing_director", "super_admin"];
+const UPLOAD_ROLES = ["planning_head", ...TIER1_ROLES, "super_admin"];
 const SHEET_COLUMNS: Record<keyof ProjectSetupWorkbookRows, string[]> = {
   schedule: ["task_code", "task_name", "planned_start", "planned_end", "responsible_role"],
   boq: ["sno", "item_description", "unit", "boq_qty", "boq_rate", "category", "task_code"],

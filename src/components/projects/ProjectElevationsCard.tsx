@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ArrowDown, ArrowUp, Archive, Check, Pencil, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
-export const ELEVATION_MANAGER_ROLES = ["planning_head", "managing_director", "super_admin", "head_of_projects"];
+export const ELEVATION_MANAGER_ROLES = ["planning_head", ...TIER1_ROLES, "super_admin", "head_of_projects"];
 type Elevation = { id: string; name: string; drawing_ref: string | null; sort_order: number };
 const rpc = (fn: string, args: Record<string, unknown>) => (supabase as any).rpc(fn, args);
 
@@ -49,7 +50,8 @@ export function ProjectElevationsCard({ projectId, userRole }: { projectId: stri
     const order = rows.map((r) => r.id); order[i] = b.id; order[i + dir] = a.id;
     setBusy(true);
     for (let k = 0; k < order.length; k++) {
-      const r = rows.find((x) => x.id === order[k])!;
+      const r = rows.find((x) => x.id === order[k]);
+      if (!r) continue;
       if (r.sort_order === k + 1) continue;
       const { error } = await rpc("upsert_project_elevation", { p_project_id: projectId, p_id: r.id, p_name: r.name, p_drawing_ref: r.drawing_ref, p_sort_order: k + 1 });
       if (error) { console.error(error); toast.error("Could not reorder. Please try again."); break; }
