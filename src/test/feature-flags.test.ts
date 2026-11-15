@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { FEATURE_FLAG_DEFINITIONS } from "@/lib/feature-flags";
 
 describe("feature flag rollout defaults", () => {
-  it("enables only the ten modules selected for the first rollout", () => {
+  it("keeps reminders off while retaining the other rollout modules", () => {
     const enabled = FEATURE_FLAG_DEFINITIONS.filter((flag) => flag.enabled).map((flag) => flag.key).sort();
     expect(enabled).toEqual([
       "attendance",
@@ -12,7 +12,6 @@ describe("feature flag rollout defaults", () => {
       "procurement",
       "project_setup",
       "projects",
-      "reminders",
       "site_report",
       "user_admin",
     ]);

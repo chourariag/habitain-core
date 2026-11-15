@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { OpenReminders } from "@/components/settings/RemindersPanel";
 
 const CATEGORIES = [
   { key: "all", label: "All" },
@@ -112,6 +113,7 @@ export default function Alerts() {
 
   return (
     <div className="p-4 md:p-6 space-y-4">
+      <OpenReminders />
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="text-xl font-bold" style={{ fontFamily: "var(--font-heading)", color: "hsl(var(--foreground))" }}>
           Alerts

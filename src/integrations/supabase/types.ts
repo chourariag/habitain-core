@@ -3453,6 +3453,47 @@ export type Database = {
         }
         Relationships: []
       }
+      escalation_levels: {
+        Row: {
+          after_hours: number
+          created_at: string
+          created_by: string | null
+          level: number
+          notify_role: string
+          rule_key: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          after_hours: number
+          created_at?: string
+          created_by?: string | null
+          level: number
+          notify_role: string
+          rule_key: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          after_hours?: number
+          created_at?: string
+          created_by?: string | null
+          level?: number
+          notify_role?: string
+          rule_key?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escalation_levels_rule_key_fkey"
+            columns: ["rule_key"]
+            isOneToOne: false
+            referencedRelation: "reminder_rules"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
       escalation_rules: {
         Row: {
           active: boolean
@@ -11691,6 +11732,153 @@ export type Database = {
           },
         ]
       }
+      reminder_change_log: {
+        Row: {
+          actor: string
+          changed_at: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          subject_ref: string
+        }
+        Insert: {
+          actor: string
+          changed_at?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          subject_ref: string
+        }
+        Update: {
+          actor?: string
+          changed_at?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          subject_ref?: string
+        }
+        Relationships: []
+      }
+      reminder_events: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledgements: Json
+          created_at: string
+          created_by: string | null
+          delivery: string
+          id: string
+          level: number
+          notified_role: string
+          notified_user: string | null
+          project_id: string | null
+          raised_at: string
+          recipient_ids: string[]
+          resolved_at: string | null
+          resolved_by: string | null
+          rule_key: string
+          subject_date: string
+          subject_ref: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledgements?: Json
+          created_at?: string
+          created_by?: string | null
+          delivery: string
+          id?: string
+          level: number
+          notified_role: string
+          notified_user?: string | null
+          project_id?: string | null
+          raised_at?: string
+          recipient_ids?: string[]
+          resolved_at?: string | null
+          resolved_by?: string | null
+          rule_key: string
+          subject_date: string
+          subject_ref: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledgements?: Json
+          created_at?: string
+          created_by?: string | null
+          delivery?: string
+          id?: string
+          level?: number
+          notified_role?: string
+          notified_user?: string | null
+          project_id?: string | null
+          raised_at?: string
+          recipient_ids?: string[]
+          resolved_at?: string | null
+          resolved_by?: string | null
+          rule_key?: string
+          subject_date?: string
+          subject_ref?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reminder_events_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reminder_events_rule_key_fkey"
+            columns: ["rule_key"]
+            isOneToOne: false
+            referencedRelation: "reminder_rules"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
+      reminder_rules: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          delivery_mode: string
+          description: string
+          due_time_ist: string
+          key: string
+          updated_at: string
+          updated_by: string | null
+          working_days: number[]
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          delivery_mode?: string
+          description: string
+          due_time_ist: string
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          working_days?: number[]
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          delivery_mode?: string
+          description?: string
+          due_time_ist?: string
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          working_days?: number[]
+        }
+        Relationships: []
+      }
       retention_records: {
         Row: {
           actual_release_date: string | null
@@ -16260,6 +16448,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      acknowledge_reminder: { Args: { p_id: string }; Returns: undefined }
       add_site_report_elevation_photo: {
         Args: {
           p_elevation_id: string
@@ -16951,6 +17140,7 @@ export type Database = {
       is_variation_approver: { Args: { _uid: string }; Returns: boolean }
       is_win_sync_approver: { Args: { _uid: string }; Returns: boolean }
       kickoff_meeting_daily_reminders: { Args: never; Returns: undefined }
+      list_open_reminders: { Args: never; Returns: Json }
       log_offboarding_audit: {
         Args: {
           _action: string
@@ -16985,7 +17175,23 @@ export type Database = {
         Args: { _project_id: string; _start?: string }
         Returns: undefined
       }
+      reminder_expected_day: {
+        Args: { p_date: string; p_project: string }
+        Returns: boolean
+      }
+      reminder_subjects: {
+        Args: { p_now?: string }
+        Returns: {
+          due_at: string
+          owner_id: string
+          project_id: string
+          rule_key: string
+          subject_date: string
+          subject_ref: string
+        }[]
+      }
       required_gfc_for_stage: { Args: { _stage: string }; Returns: string }
+      run_reminders: { Args: { p_dry?: boolean }; Returns: Json }
       safe_uuid: { Args: { _t: string }; Returns: string }
       save_labour_attendance: {
         Args: {
@@ -17057,6 +17263,25 @@ export type Database = {
       unlock_locked_document: {
         Args: { p_reason: string; p_record_id: string; p_record_table: string }
         Returns: string
+      }
+      update_escalation_level: {
+        Args: {
+          p_hours: number
+          p_key: string
+          p_level: number
+          p_role: string
+        }
+        Returns: undefined
+      }
+      update_reminder_rule: {
+        Args: {
+          p_active: boolean
+          p_days: number[]
+          p_due: string
+          p_key: string
+          p_mode: string
+        }
+        Returns: undefined
       }
       upsert_project_elevation: {
         Args: {

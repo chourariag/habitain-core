@@ -13,7 +13,6 @@ const enabledKeys = new Set([
   "site_report",
   "project_setup",
   "procurement",
-  "reminders",
   "exports",
   "user_admin",
 ]);
