@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -29,8 +30,8 @@ type Tab = {
   featureFlag?: string;
 };
 
-const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
-const SETTINGS_ROLES = ["super_admin", "managing_director"];
+const SUPER_ADMIN_ROLES = ["super_admin", ...TIER1_ROLES];
+const SETTINGS_ROLES = ["super_admin", ...TIER1_ROLES];
 
 const allTabs: Tab[] = [
   { to: "/dashboard", labelKey: "nav.home", icon: LayoutDashboard, section: "dashboard", module: "dashboard" },

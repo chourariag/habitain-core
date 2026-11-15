@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Loader2, Check, X, FileDown, AlertTriangle, Eye, MessageCircle, Upload, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { ROLE_LABELS, type AppRole } from "@/lib/roles";
+import { ROLE_LABELS, TIER1_ROLES, isTier1OrSuper, expandTier1Recipients, type AppRole } from "@/lib/roles";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import { insertNotifications } from "@/lib/notifications";
 import * as XLSX from "xlsx";
@@ -87,9 +87,9 @@ export function ExpensesTab() {
   const getProject = (pid: string | null) => pid ? projects.find((p) => p.id === pid)?.name || "—" : "—";
 
   // Stage 1 — HR review (Sindhu / hr_admin). MD / super_admin retain oversight.
-  const isHR = role === "hr_admin" || role === "super_admin" || role === "managing_director";
+  const isHR = role === "hr_admin" || isTier1OrSuper(role);
   // Stage 2 — Finance payment approval (Finance Director / MD). Mary (finance_manager) does NOT approve expenses.
-  const isFinanceApprover = role === "finance_director" || role === "managing_director" || role === "super_admin";
+  const isFinanceApprover = isTier1OrSuper(role);
 
   // Group entries by report_period + submitted_by for pending review
   const pendingEntries = entries.filter((e) => {
@@ -121,7 +121,7 @@ export function ExpensesTab() {
     const { data: recips } = await supabase
       .from("profiles")
       .select("auth_user_id")
-      .in("role", roles as any)
+      .in("role", expandTier1Recipients(roles) as any)
       .eq("is_active", true);
     if (!recips?.length) return;
     await insertNotifications(recips.map((r: any) => ({
@@ -142,7 +142,7 @@ export function ExpensesTab() {
         status: "pending_finance",
         hr_reviewed_by: user.id,
         hr_reviewed_at: new Date().toISOString(),
-      } as any).eq("id", id);
+      } as any).eq("id", id).eq("status", "pending_hr").select("id");
     }
     // Notify Finance Director + MD
     const sample = entries.find((e) => e.id === entryIds[0]);
@@ -164,7 +164,7 @@ export function ExpensesTab() {
         status: "approved",
         hod_approved_by: user.id,
         hod_approved_at: new Date().toISOString(),
-      } as any).eq("id", id);
+      } as any).eq("id", id).in("status", ["pending_hod", "pending_finance"]).select("id");
     }
     // Notify employee
     const sample = entries.find((e) => e.id === entryIds[0]);
@@ -244,6 +244,8 @@ export function ExpensesTab() {
       Description: e.description,
       "Amount ₹": e.amount,
       Status: STATUS_LABELS[e.status] || e.status,
+      "Decided by": getName(e.hod_approved_by || e.hr_reviewed_by),
+      "Decided at": e.hod_approved_at || e.hr_reviewed_at || "",
       "Vehicle": e.vehicle_type || "—",
       "Distance km": e.distance_km || "—",
       Vendor: e.vendor || "—",
@@ -499,6 +501,7 @@ export function ExpensesTab() {
                           <Badge variant="outline" className="text-[10px]" style={{ color: sc.color, borderColor: sc.color, backgroundColor: sc.bg }}>
                             {STATUS_LABELS[e.status] || e.status}
                           </Badge>
+                          {(e.hod_approved_by || e.hr_reviewed_by) && <span className="block text-xs text-muted-foreground">{getName(e.hod_approved_by || e.hr_reviewed_by)} · {format(new Date(e.hod_approved_at || e.hr_reviewed_at), "dd/MM/yyyy HH:mm")}</span>}
                           {(e as any).submission_method === "excel_upload" && (
                             <Badge variant="outline" className="text-[9px]" style={{ color: "#006039", borderColor: "#006039", backgroundColor: "#E8F2ED" }}>Excel</Badge>
                           )}

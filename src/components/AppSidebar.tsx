@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, FolderKanban, Factory, ClipboardCheck,
@@ -29,8 +30,8 @@ type NavItem = { to: string; labelKey: string; icon: any; roles?: string[]; sect
 type NavSection = { key: string; labelKey?: string; items: NavItem[]; group?: "altree" };
 
 const CAPACITY_ROLES = ["super_admin", "managing_director", "head_operations", "planning_head", "production_head"];
-const SETTINGS_ROLES = ["super_admin", "managing_director"];
-const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
+const SETTINGS_ROLES = ["super_admin", ...TIER1_ROLES];
+const SUPER_ADMIN_ROLES = ["super_admin", ...TIER1_ROLES];
 
 // Strict spec-defined sidebar. Each item declares the RBAC `module` it maps to;
 // items with no `module` fall back to legacy canSeeSection/role checks.

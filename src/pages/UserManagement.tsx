@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { PROFILE_SAFE_COLUMNS } from "@/lib/profile-columns";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -28,8 +29,8 @@ const RAISER_ROLES = [
   "managing_director","super_admin","finance_director","sales_director",
   "architecture_director","head_operations","hr_executive","planning_head",
 ];
-const MD_ROLES = ["managing_director","super_admin"];
-const PROJECT_APPROVER_ROLES = ["managing_director","super_admin","sales_director","architecture_director"];
+const MD_ROLES = [...TIER1_ROLES,"super_admin"];
+const PROJECT_APPROVER_ROLES = [...TIER1_ROLES,"super_admin"];
 function generateTempPassword(): string {
   const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
   const lower = "abcdefghijkmnpqrstuvwxyz";
@@ -159,7 +160,7 @@ export default function UserManagement() {
         try {
           const { insertNotifications } = await import("@/lib/notifications");
           const { data: mds } = await supabase
-            .from("profiles").select("auth_user_id").eq("role", "managing_director" as any).eq("is_active", true);
+            .from("profiles").select("auth_user_id").in("role", [...TIER1_ROLES] as any).eq("is_active", true);
           const approverName = (await supabase.from("profiles").select("display_name").eq("auth_user_id", user?.id || "").maybeSingle()).data?.display_name || "approver";
           const notifyList: { recipient_id: string; title: string; body: string; category: string; related_table?: string; related_id?: string; navigate_to?: string }[] = [];
           (mds || []).forEach((m: any) => {

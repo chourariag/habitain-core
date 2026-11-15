@@ -1,9 +1,10 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { useUserRole } from "@/hooks/useUserRole";
 
-const APPROVER_ROLES = ["managing_director", "super_admin", "sales_director", "architecture_director"];
+const APPROVER_ROLES = [...TIER1_ROLES, "super_admin"];
 
 export function usePendingApprovalsCount() {
   const { session } = useAuth();

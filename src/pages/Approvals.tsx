@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, Link } from "react-router-dom";
@@ -16,7 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import KickoffMeetingCard from "@/components/projects/KickoffMeetingCard";
 
-const APPROVER_ROLES = ["managing_director", "super_admin", "sales_director", "architecture_director"];
+const APPROVER_ROLES = [...TIER1_ROLES, "super_admin"];
 
 function daysSince(iso: string) {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);

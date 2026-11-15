@@ -1,3 +1,4 @@
+import { TIER1_ROLES } from "@/lib/roles";
 import { supabase } from "@/integrations/supabase/client";
 import { tplGeneral, tplOverdue, tplMilestone, tplArchiveReady, tplGfcKickoff } from "./email-templates";
 
@@ -22,8 +23,7 @@ const HIGH_PRIORITY_CATEGORIES = new Set<string>([
 
 // Roles whose notifications always get an email copy.
 const ALWAYS_EMAIL_ROLES = new Set<string>([
-  "managing_director", "super_admin", "director",
-  "finance_director", "sales_director", "architecture_director",
+  ...TIER1_ROLES, "super_admin", "director",
   "principal_architect",
 ]);
 
