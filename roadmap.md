@@ -1,7 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
-- [ ] PARITY-2A: live A/B/C/D audit, transactional eligible rewrites and backups/rollback, recipient deduplication, simulated director read counts, unchanged reminders/jobs
+- [x] PARITY-2A: migration 0029 rewrote 319 A with 319 backups; 213 B/7 C/0 D, live definition comparison and authenticated MD/sales/architecture counts verified; events 0 and jobs unchanged; three unrelated security findings pending access review
 - [x] PARITY-1 scoped delivery: audit 342 objects, migration 0027/shared UI parity, 112 tests, MD/mobile preview, events 0 and seven jobs unchanged
 - [ ] PARITY-1 complete legacy parity and atomic approvals: blocked pending review/authorization of audited legacy objects
 - [x] P7d: migration 0028 caps project level 3 at 48 hours; SQL/UI validation, 10 tests, signed-in MD preview and both rolled-back dated previews verified; events 0, flag OFF, seven jobs unchanged
