@@ -11,4 +11,4 @@
 - Expense Excel template and reader share one column list (src/lib/expense-excel.ts) and the reader locates the header by the Date cell, so template and parser cannot drift.
 - Reminders run in PostgreSQL only; one event per subject/level retains all role-resolved recipients in recipient_ids to preserve uniqueness while delivering one summary per recipient per run.
 - Escalation limits are enforced by update_escalation_level and mirrored in reminder-validation for immediate feedback; server validation remains authoritative.
-- Tier 1 business access uses TIER1_ROLES in frontend maps and is_tier1/is_tier1_or_super in Wave 1 SQL; legacy helpers stay unchanged until reviewed so parity cannot silently widen unrelated modules.
+- Tier 1 business access uses TIER1_ROLES and is_tier1/is_tier1_or_super; reviewed legacy rewrites require parity2_backup originals and atomic rollback, while sensitive definitions remain excluded to preserve their review boundary.
