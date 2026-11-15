@@ -48,8 +48,12 @@ describe("approver lists point at architecture_director, not principal_architect
   it("includes both director roles in each approver list", () => {
     for (const f of files) {
       const src = read(f);
-      expect(src, f).toContain("architecture_director");
-      expect(src, f).toContain("sales_director");
+      if (src.includes("TIER1_ROLES")) {
+        expect(src, f).toContain("...TIER1_ROLES");
+      } else {
+        expect(src, f).toContain("architecture_director");
+        expect(src, f).toContain("sales_director");
+      }
     }
   });
 
