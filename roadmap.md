@@ -1,8 +1,8 @@
 # HStack Build Roadmap
 
 ## In Progress
-- [ ] P7c: enable MD dated previews and verify the three requested times without writing events
-- [ ] P7b: three-day cap, window-close resolution, effective date and safe as-of preview; verify requested outputs with flag OFF
+- [x] P7c: migration 0026 enables MD dated previews; three rolled-back previews verified, MD UI verified at 360px, 16 tests passed; events 0, flag OFF, seven jobs unchanged
+- [x] P7b: three-day cap, window-close resolution, effective date and safe as-of preview; requested dated outputs verified in P7c
 - [x] P7: migration 0024, shadow rules, flag OFF, hourly job, read-only MD settings and open-reminder lists; signed-in dry run [], 360px no overflow, 11 tests passed; live-delivery checks intentionally not run
 - [x] P4e: applied Site Report notification exclusion; verified live function and two legacy-preservation regression tests
 - [x] P4d: isolated Daily Report quantities, surfaced rule errors, verified quantity 4 saves and reads back; reported task HTTP 400 as not reproduced
