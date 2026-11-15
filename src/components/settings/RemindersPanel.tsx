@@ -25,7 +25,7 @@ function RuleRow({ initial, editable, refresh }: { initial: Rule; editable: bool
   const [busy, setBusy] = useState(false);
   const save = async () => {
     setBusy(true);
-    const { error } = await supabase.rpc("update_reminder_rule", { p_key: rule.key, p_due: rule.due_time_ist, p_days: rule.working_days, p_mode: rule.delivery_mode, p_active: rule.active });
+    const { error } = await supabase.rpc("update_reminder_rule", { p_key: rule.key, p_due: rule.due_time_ist, p_days: rule.working_days, p_mode: rule.delivery_mode, p_active: rule.active, p_effective_from: rule.effective_from });
     setBusy(false);
     if (error) { console.error(error); toast.error(error.message); } else { toast.success("Reminder rule saved"); refresh(); }
   };
@@ -35,8 +35,9 @@ function RuleRow({ initial, editable, refresh }: { initial: Rule; editable: bool
       <Label className="space-y-2">Due time (IST)<Input aria-label={`${rule.key} due time`} type="time" value={rule.due_time_ist.slice(0, 5)} disabled={!editable} onChange={e => setRule({ ...rule, due_time_ist: e.target.value })} /></Label>
       <Label className="space-y-2">Delivery mode<Select value={rule.delivery_mode} disabled={!editable} onValueChange={delivery_mode => setRule({ ...rule, delivery_mode })}><SelectTrigger aria-label={`${rule.key} delivery mode`}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="shadow">Shadow</SelectItem><SelectItem value="live">Live</SelectItem></SelectContent></Select></Label>
     </div>
+    <Label className="block space-y-2">Effective from<Input aria-label={`${rule.key} effective from`} type="date" value={rule.effective_from} disabled={!editable} onChange={e => setRule({ ...rule, effective_from: e.target.value })} /></Label>
     <fieldset className="flex flex-wrap gap-x-4 gap-y-2"><legend className="mb-2 text-xs text-muted-foreground">Working days</legend>{DAYS.map((day, i) => <label key={day} className="flex items-center gap-1 text-xs"><input type="checkbox" disabled={!editable} checked={rule.working_days.includes(i + 1)} onChange={e => setRule({ ...rule, working_days: e.target.checked ? [...rule.working_days, i + 1].sort() : rule.working_days.filter(d => d !== i + 1) })} />{day}</label>)}</fieldset>
-    <div className="flex items-center justify-between"><Label className="flex items-center gap-2"><Switch checked={rule.active} disabled={!editable} onCheckedChange={active => setRule({ ...rule, active })} aria-label={`${rule.key} active`} />Active</Label>{editable && <Button size="sm" disabled={busy || !rule.working_days.length} onClick={save}><Save className="mr-2 h-4 w-4" />Save rule</Button>}</div>
+    <div className="flex items-center justify-between"><Label className="flex items-center gap-2"><Switch checked={rule.active} disabled={!editable} onCheckedChange={active => setRule({ ...rule, active })} aria-label={`${rule.key} active`} />Active</Label>{editable && <Button size="sm" disabled={busy || !rule.working_days.length || !rule.effective_from} onClick={save}><Save className="mr-2 h-4 w-4" />Save rule</Button>}</div>
   </div>;
 }
 
@@ -73,6 +74,7 @@ export function RemindersPanel() {
   const client = useQueryClient();
   const flags = useFeatureFlags();
   const [dry, setDry] = useState<Record<string, unknown>[] | null>(null);
+  const [asof, setAsof] = useState("");
   const [busy, setBusy] = useState(false);
   const admin = role === "super_admin" || role === "managing_director";
   const editable = role === "super_admin";
@@ -83,8 +85,9 @@ export function RemindersPanel() {
     <p className="text-sm text-muted-foreground">Reminders {flags.isEnabled("reminders") ? "On" : "Off"}</p>
     {query.isError && <p className="text-sm text-destructive">Could not load reminder settings.</p>}
     {query.data?.rules.map(rule => <div key={rule.key} className="min-w-0"><RuleRow key={rule.updated_at} initial={rule} editable={editable} refresh={refresh} /><h3 className="mt-4 text-sm font-semibold">Escalation levels</h3>{query.data.levels.filter(level => level.rule_key === rule.key).map(level => <LevelRow key={`${level.level}-${level.updated_at}`} initial={level} editable={editable} refresh={refresh} />)}</div>)}
-    <Button disabled={busy} onClick={async () => { setBusy(true); const { data, error } = await supabase.rpc("run_reminders", { p_dry: true }); setBusy(false); if (error) { console.error(error); toast.error("Could not run reminders. Please try again."); } else setDry(data as Record<string, unknown>[]); }}><Play className="mr-2 h-4 w-4" />Run now (dry run)</Button>
-    {dry !== null && <div className="space-y-2" aria-live="polite"><h3 className="font-semibold">Dry-run result</h3>{!dry.length ? <p className="text-sm text-muted-foreground">{flags.isEnabled("reminders") ? "No new reminders would be raised." : "Reminders are Off. Nothing would be raised."}</p> : dry.map((row, i) => <div key={i} className="border-b border-border py-2 text-sm"><p className="break-all">{String(row.rule_key)} · {String(row.subject_ref)}</p><p>Level {String(row.level)} · {String(row.notified_role)} · {String(row.delivery)}</p></div>)}</div>}
+    <Label className="block space-y-2">As of (optional date and time IST)<Input aria-label="As of (optional date and time IST)" type="datetime-local" value={asof} disabled={!editable} onChange={e => setAsof(e.target.value)} /></Label>
+    <Button disabled={busy} onClick={async () => { setBusy(true); const { data, error } = await supabase.rpc("run_reminders", { p_dry: true, p_asof: editable && asof ? `${asof}:00+05:30` : undefined }); setBusy(false); if (error) { console.error(error); toast.error("Could not preview reminders. Please try again."); } else setDry(data as Record<string, unknown>[]); }}><Play className="mr-2 h-4 w-4" />Preview (saves nothing)</Button>
+    {dry !== null && <div className="space-y-2" aria-live="polite"><h3 className="font-semibold">Preview result</h3>{!dry.length ? <p className="text-sm text-muted-foreground">No new reminders would be raised.</p> : dry.map((row, i) => <div key={i} className="border-b border-border py-2 text-sm"><p className="break-all">{String(row.rule_key)} · {String(row.subject_ref)}</p><p>Level {String(row.level)} · {String(row.notified_role)} · {String(row.delivery)}</p></div>)}</div>}
     <OpenReminders settings />
   </section>;
 }
