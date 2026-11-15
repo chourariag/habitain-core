@@ -197,6 +197,13 @@
       "when": 1794705796133,
       "tag": "0027_parity1_wave1_director_tier",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1794707219490,
+      "tag": "0028_p7d_project_level3_48_hours",
+      "breakpoints": true
     }
   ]
 }
