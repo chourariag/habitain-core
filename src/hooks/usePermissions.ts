@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useMemo } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 import type { AppRole } from "@/lib/roles";
@@ -34,8 +35,7 @@ export function usePermissions() {
       return lvl === "FULL" || lvl === "MANAGE";
     };
     const canAdmin = () =>
-      appRole === ("super_admin" as AppRole) ||
-      appRole === ("managing_director" as AppRole);
+      isTier1OrSuper(appRole);
 
     return {
       role: appRole,

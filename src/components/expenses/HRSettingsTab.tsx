@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -25,8 +26,8 @@ export function HRSettingsTab() {
   const [reason, setReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const isHR = role === "hr_executive" || role === "super_admin" || role === "managing_director";
-  const canApprove = ["finance_director", "managing_director", "super_admin"].includes(role || "");
+  const isHR = role === "hr_executive" || isTier1OrSuper(role);
+  const canApprove = ["finance_director", ...TIER1_ROLES, "super_admin"].includes(role || "");
 
   useEffect(() => {
     fetchData();

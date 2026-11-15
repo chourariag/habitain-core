@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -11,7 +12,7 @@ import { ROLE_LABELS, AppRole } from "@/lib/roles";
 import { StorageUsageCard } from "@/components/admin/StorageUsageCard";
 import { useUserRole } from "@/hooks/useUserRole";
 
-const SUPER_ADMIN_ROLES = ["super_admin", "managing_director"];
+const SUPER_ADMIN_ROLES = ["super_admin", ...TIER1_ROLES];
 
 const SUPER_ADMIN_LINKS = [
   { to: "/admin/super-admin?tab=role-permissions", label: "Role Permissions", icon: Shield, desc: "Control which pages each role can see" },

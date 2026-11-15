@@ -1,12 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { getAccessLevel, canAccessAdminPanel, MODULE_KEYS, type ModuleKey } from "@/lib/rbac-matrix";
 import { canSeeSection, getDashboardTier } from "@/lib/role-nav";
-import type { AppRole } from "@/lib/roles";
+import { TIER1_ROLES, type AppRole } from "@/lib/roles";
 
 const SD = "sales_director" as AppRole;
 const AD = "architecture_director" as AppRole;
 const PA = "principal_architect" as AppRole;
-const GRANTED: AppRole[] = [SD, AD];
+const GRANTED: AppRole[] = [...TIER1_ROLES];
 
 // The explicit director-tier grant (John = sales_director, Karan = architecture_director).
 const EXPECTED: Partial<Record<ModuleKey, "FULL" | "MANAGE" | "VIEW" | "NONE">> = {
@@ -15,13 +15,13 @@ const EXPECTED: Partial<Record<ModuleKey, "FULL" | "MANAGE" | "VIEW" | "NONE">> 
   hr: "FULL",
   reports: "FULL",
   approvals: "FULL",
-  dispatch: "VIEW",
+  dispatch: "FULL",
   // unchanged by this grant
-  factory: "VIEW",
-  site: "VIEW",
-  procurement: "VIEW",
-  qc: "VIEW",
-  admin: "NONE",
+  factory: "FULL",
+  site: "FULL",
+  procurement: "FULL",
+  qc: "FULL",
+  admin: "FULL",
 };
 
 describe("director-tier grant — sales_director & architecture_director", () => {
@@ -36,8 +36,8 @@ describe("director-tier grant — sales_director & architecture_director", () =>
       expect(["MANAGE", "FULL"]).toContain(getAccessLevel(role, "design"));
     });
 
-    it(`${role} is excluded from the Admin Panel`, () => {
-      expect(canAccessAdminPanel(role)).toBe(false);
+    it(`${role} can access the Admin Panel`, () => {
+      expect(canAccessAdminPanel(role)).toBe(true);
     });
 
     it(`${role} sees finance, projects and admin(HR) nav sections`, () => {
@@ -91,10 +91,10 @@ describe("no side-effect grants to uncovered roles", () => {
     });
   }
 
-  it("only super_admin and managing_director hold blanket FULL access", () => {
-    const blanket = (["super_admin", "managing_director", PA, SD, AD] as AppRole[]).filter((r) =>
+  it("super_admin and all four Tier 1 roles hold blanket FULL access", () => {
+    const blanket = (["super_admin", ...TIER1_ROLES, PA] as AppRole[]).filter((r) =>
       MODULE_KEYS.every((k) => getAccessLevel(r, k) === "FULL"),
     );
-    expect(blanket).toEqual(["super_admin" as AppRole, "managing_director" as AppRole]);
+    expect(blanket).toEqual(["super_admin", ...TIER1_ROLES]);
   });
 });

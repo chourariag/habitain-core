@@ -2,6 +2,18 @@ import { Database } from "@/integrations/supabase/types";
 
 export type AppRole = Database["public"]["Enums"]["app_role"];
 
+export const TIER1_ROLES = ["managing_director", "finance_director", "sales_director", "architecture_director"] as const satisfies readonly AppRole[];
+export const TIER1_OR_SUPER_ROLES = ["super_admin", ...TIER1_ROLES] as const;
+export function isTier1(role: string | null | undefined): boolean {
+  return !!role && TIER1_ROLES.some(candidate => candidate === role);
+}
+export function isTier1OrSuper(role: string | null | undefined): boolean {
+  return role === "super_admin" || isTier1(role);
+}
+export function expandTier1Recipients(roles: readonly string[]): string[] {
+  return [...new Set(roles.includes("managing_director") ? [...roles, ...TIER1_ROLES] : roles)];
+}
+
 export const ROLE_LABELS: Record<string, string> = {
   super_admin: "Super Admin",
   chairman: "Chairman",
@@ -45,7 +57,8 @@ export const ROLE_LABELS: Record<string, string> = {
 
 export const ROLE_TIERS: Record<string, AppRole[]> = {
   "Tier 0 — Super Admin": ["super_admin" as AppRole],
-  "Tier 1 — Directors & MD": ["chairman", "managing_director", "finance_director", "sales_director", "architecture_director"] as AppRole[],
+  "Tier 1 — Directors & MD": [...TIER1_ROLES],
+  "Chairman": ["chairman"],
   "Tier 2 — Functional Heads": ["head_operations", "head_of_projects" as AppRole, "planning_head" as AppRole, "production_head", "finance_manager", "planning_engineer", "costing_engineer", "quantity_surveyor"] as AppRole[],
   "Tier 3 — Site & Delivery": ["site_installation_mgr", "site_engineer" as AppRole, "delivery_rm_lead", "logistics_manager" as AppRole, "assistant_manager" as AppRole] as AppRole[],
 

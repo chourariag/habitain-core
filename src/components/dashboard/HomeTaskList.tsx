@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,7 +30,7 @@ export function HomeTaskList({ userRole }: { userRole: string | null }) {
         if (!data) next.push({ id: "attendance", label: "Attendance check-in due", to: "/attendance" });
       }
 
-      const siteRoles = ["site_installation_mgr", "site_engineer", "super_admin", "managing_director"];
+      const siteRoles = ["site_installation_mgr", "site_engineer", "super_admin", ...TIER1_ROLES];
       if (flags.isEnabled("site_report") && flags.isEnabled("site_diary") && userRole && siteRoles.includes(userRole)) {
         const { data: projects } = await supabase.from("projects").select("id,name").eq("is_archived", false);
         const projectIds = (projects ?? []).map((project) => project.id);
@@ -46,7 +47,7 @@ export function HomeTaskList({ userRole }: { userRole: string | null }) {
         if (dueProject) next.push({ id: "site-report", label: `Today's site report due · ${dueProject.name}`, to: `/site-hub?projectId=${dueProject.id}&tab=diary` });
       }
 
-      if (flags.isEnabled("project_setup") && userRole && ["planning_engineer", "planning_head", "super_admin", "managing_director"].includes(userRole)) {
+      if (flags.isEnabled("project_setup") && userRole && ["planning_engineer", "planning_head", "super_admin", ...TIER1_ROLES].includes(userRole)) {
         const { data: projects } = await supabase
           .from("projects")
           .select("id")

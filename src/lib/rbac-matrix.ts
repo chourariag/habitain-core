@@ -7,7 +7,7 @@
 // VIEW  = read-only, own records only
 // NONE  = hidden from sidebar; URL access redirects to /dashboard
 
-import type { AppRole } from "@/lib/roles";
+import { TIER1_ROLES, TIER1_OR_SUPER_ROLES, type AppRole } from "@/lib/roles";
 
 export type AccessLevel = "FULL" | "MANAGE" | "VIEW" | "NONE";
 
@@ -56,22 +56,10 @@ const m = (
 export const ROLE_ACCESS_MATRIX: Partial<Record<AppRole, ModuleAccess>> = {
   // Tier 0 / 1 — full access
   super_admin: FULL_ALL,
-  managing_director: FULL_ALL,
+  ...Object.fromEntries(TIER1_ROLES.map(role => [role, FULL_ALL])),
 
-  // Chairman — view-only across the board, announcements full
-  chairman:
-    m("FULL","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","FULL","VIEW","VIEW","VIEW"),
-
-  // Directors — sales_director and architecture_director share an explicit director-tier grant:
-  // projects FULL, finance FULL, hr FULL (Employee Management, not Admin Panel), reports FULL,
-  // design view+upload (MANAGE) for SD / FULL for AD (GFC authority), dispatch VIEW,
-  // approvals FULL. factory/site/procurement/qc stay VIEW. admin stays NONE for both.
-  sales_director:
-    m("FULL","FULL","VIEW","VIEW","VIEW","FULL","FULL","FULL","MANAGE","VIEW","VIEW","FULL","FULL","NONE","FULL"),
-  architecture_director:
-    m("FULL","FULL","VIEW","VIEW","VIEW","FULL","FULL","VIEW","FULL","VIEW","VIEW","FULL","FULL","NONE","FULL"),
-  finance_director:
-    m("FULL","VIEW","VIEW","VIEW","VIEW","FULL","FULL","VIEW","VIEW","VIEW","VIEW","FULL","FULL","NONE","FULL"),
+  // Chairman is not part of Tier 1.
+  chairman: m("FULL","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","VIEW","FULL","VIEW","VIEW","VIEW"),
 
   // Heads
   head_of_projects:
@@ -163,10 +151,7 @@ export function getAccessLevel(role: AppRole | null | undefined, mod: ModuleKey)
 }
 
 // Admin Panel (Employee Management) — explicit allow-list per matrix.
-const ADMIN_PANEL_ROLES: AppRole[] = [
-  "super_admin" as AppRole,
-  "managing_director" as AppRole,
-];
+const ADMIN_PANEL_ROLES: readonly AppRole[] = TIER1_OR_SUPER_ROLES;
 
 export function canAccessAdminPanel(role: AppRole | null | undefined): boolean {
   return !!role && ADMIN_PANEL_ROLES.includes(role);
@@ -174,12 +159,7 @@ export function canAccessAdminPanel(role: AppRole | null | undefined): boolean {
 
 // Employee Management (HR directory & profiles) — wider than the Admin Panel:
 // director-tier roles carry HR FULL, but never Admin Panel / impersonation.
-const EMPLOYEE_MANAGEMENT_ROLES: AppRole[] = [
-  "super_admin" as AppRole,
-  "managing_director" as AppRole,
-  "sales_director" as AppRole,
-  "architecture_director" as AppRole,
-];
+const EMPLOYEE_MANAGEMENT_ROLES: readonly AppRole[] = TIER1_OR_SUPER_ROLES;
 
 export function canAccessEmployeeManagement(role: AppRole | null | undefined): boolean {
   return !!role && EMPLOYEE_MANAGEMENT_ROLES.includes(role);

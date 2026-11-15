@@ -1,3 +1,4 @@
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 // Source of truth for the Role Permissions matrix.
 // Adding a new page here automatically adds a new row to the matrix.
 
@@ -17,7 +18,7 @@ export const PERMISSION_LEVELS: {
 ];
 
 export const PERMISSION_ROLES = [
-  "md","director","principal_architect","planning_head","planning_engineer",
+  ...TIER1_ROLES, "md","director","principal_architect","planning_head","planning_engineer",
   "costing_engineer","head_of_projects","operations_architect","project_architect",
   "production_head","factory_supervisor","electrical_installer","plumbing_installer",
   "site_installation_manager","site_engineer","logistics_manager","procurement",
@@ -27,7 +28,7 @@ export const PERMISSION_ROLES = [
 export type PermissionRole = typeof PERMISSION_ROLES[number];
 
 // Roles whose access cannot be edited (always Full)
-export const LOCKED_ROLES: PermissionRole[] = ["md", "super_admin"];
+export const LOCKED_ROLES: PermissionRole[] = [...TIER1_ROLES, "md", "super_admin"];
 
 export type PageDef = { key: string; label: string };
 export type PageGroup = { section: string; pages: PageDef[] };
@@ -164,7 +165,7 @@ function startsWith(key: string, ...prefixes: string[]) {
 
 export function defaultPermission(role: PermissionRole, pageKey: string): PermissionLevel {
   // Always-full roles
-  if (role === "md" || role === "super_admin" || role === "director") return "full";
+  if (isTier1OrSuper(role) || role === "md" || role === "director") return "full";
 
   switch (role) {
     case "principal_architect":
