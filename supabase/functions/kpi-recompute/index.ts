@@ -1,4 +1,4 @@
-import { TIER1_ROLES } from "../_shared/director-tier.ts";
+import { TIER1_ROLES, uniqueByAuthUser } from "../_shared/director-tier.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 // kpi-recompute: server-side calculator for all 13 KPI employees.
 // Modes: ?mode=daily  | ?mode=weekly | ?user_id=<uuid>
@@ -238,7 +238,7 @@ async function notifyMdWeeklyDigest() {
   const reds = (snaps ?? []).filter((s: any) => s.status === "at_risk").length;
   const total = (snaps ?? []).length;
   const msg = `Weekly KPI digest: ${reds}/${total} metrics in red.`;
-  for (const d of directors) {
+  for (const d of uniqueByAuthUser(directors)) {
     await sb.from("notifications").insert({
       user_id: d.auth_user_id, title: "Weekly KPI Digest", message: msg,
       type: "kpi_digest", link: "/kpi",
