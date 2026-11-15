@@ -3836,6 +3836,114 @@ export type Database = {
           },
         ]
       }
+      export_audit: {
+        Row: {
+          action: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          performed_at: string
+          performed_by: string
+          token_id: string | null
+        }
+        Insert: {
+          action: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          performed_at?: string
+          performed_by: string
+          token_id?: string | null
+        }
+        Update: {
+          action?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          performed_at?: string
+          performed_by?: string
+          token_id?: string | null
+        }
+        Relationships: []
+      }
+      export_log: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          error: string | null
+          files: Json
+          id: string
+          row_counts: Json
+          run_at: string
+          status: string
+          trigger: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          files?: Json
+          id?: string
+          row_counts?: Json
+          run_at?: string
+          status?: string
+          trigger: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          files?: Json
+          id?: string
+          row_counts?: Json
+          run_at?: string
+          status?: string
+          trigger?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      export_tokens: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          label: string
+          last_used_at: string | null
+          revoked_at: string | null
+          token_hash: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          label: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          token_hash: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          label?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+          token_hash?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       feature_flags: {
         Row: {
           enabled: boolean
@@ -16744,6 +16852,20 @@ export type Database = {
         Returns: string
       }
       cv_alert_overdue_commitments: { Args: never; Returns: number }
+      export_hourly_rates: {
+        Args: never
+        Returns: {
+          contractor: string
+          effective_hourly_rate: number
+          hourly_rate: number
+          name: string
+          skill_type: string
+          status: string
+          worker_code: string
+          worker_id: string
+        }[]
+      }
+      export_storage_sizes: { Args: never; Returns: Json }
       fire_billing_milestone_event: {
         Args: { _event: string; _event_label?: string; _project_id: string }
         Returns: number

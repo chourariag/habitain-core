@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { APP_VERSION } from "@/pwa/version";
 import { FeatureModulesPanel } from "@/components/settings/FeatureModulesPanel";
 import { RemindersPanel } from "@/components/settings/RemindersPanel";
+import { ExportsPanel } from "@/components/settings/ExportsPanel";
 
 const ADMIN_ROLES = ["super_admin", ...TIER1_ROLES];
 
@@ -194,6 +195,7 @@ export default function AppSettings() {
 
       {isAdmin && <FeatureModulesPanel role={role} />}
       {isAdmin && <RemindersPanel />}
+      {isAdmin && <ExportsPanel />}
 
       {!isAdmin && (
         <div className="bg-card rounded-lg p-8 text-center" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
