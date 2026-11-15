@@ -40,6 +40,11 @@ const STATUS_LABELS: Record<string, string> = {
   paid: "Paid",
 };
 
+async function showReceipt(e: any, set: (u: string | null) => void) {
+  const url = await openReceiptUrl(e);
+  if (url) set(url); else toast.error("Receipt could not be opened");
+}
+
 export function ExpensesTab() {
   const { user } = useAuth();
   const { role } = useUserRole();
@@ -55,6 +60,8 @@ export function ExpensesTab() {
   const [flagNote, setFlagNote] = useState("");
   const [filterMonth, setFilterMonth] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterProject, setFilterProject] = useState("all");
+  const [missingOnly, setMissingOnly] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -99,6 +106,8 @@ export function ExpensesTab() {
 
   const allFiltered = entries.filter((e) => {
     if (filterStatus !== "all" && e.status !== filterStatus) return false;
+    if (filterProject !== "all" && (e.project_id ?? "none") !== filterProject) return false;
+    if (missingOnly && (e.expense_type === "conveyance" || hasReceipt(e))) return false;
     if (filterMonth) {
       const m = format(new Date(e.entry_date), "yyyy-MM");
       if (m !== filterMonth) return false;
@@ -379,8 +388,13 @@ export function ExpensesTab() {
                       {e.expense_type === "conveyance" && (
                         <p style={{ color: "#666" }}>{e.distance_km}km × ₹{e.rate_per_km} ({e.vehicle_type})</p>
                       )}
-                      {e.receipt_url && (
-                        <Button size="sm" variant="ghost" className="text-[10px] h-5 px-1 gap-1" onClick={() => setReceiptUrl(e.receipt_url)}>
+                      {(e.vendor || e.bill_no) && <p style={{ color: "#666" }}>{e.vendor || "—"}{e.bill_no ? ` · Bill ${e.bill_no}` : ""}</p>}
+                      {Array.isArray(e.policy_warnings) && e.policy_warnings.length > 0 && (
+                        <p className="text-[10px]" style={{ color: "#D4860A" }}>Warnings: {e.policy_warnings.map((w: string) => (WARNING_LABELS as any)[w] || w).join("; ")}{e.warning_reason ? ` — Reason: ${e.warning_reason}` : ""}</p>
+                      )}
+                      {e.expense_type !== "conveyance" && !hasReceipt(e) && <p className="text-[10px] font-semibold" style={{ color: "#D4860A" }}>Receipt missing</p>}
+                      {hasReceipt(e) && (
+                        <Button size="sm" variant="ghost" className="text-[10px] h-5 px-1 gap-1" onClick={() => showReceipt(e, setReceiptUrl)}>
                           <Eye className="h-3 w-3" /> Receipt
                         </Button>
                       )}
