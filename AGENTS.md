@@ -12,3 +12,4 @@
 - Reminders run in PostgreSQL only; one event per subject/level retains all role-resolved recipients in recipient_ids to preserve uniqueness while delivering one summary per recipient per run.
 - Escalation limits are enforced by update_escalation_level and mirrored in reminder-validation for immediate feedback; server validation remains authoritative.
 - Tier 1 business access uses TIER1_ROLES and is_tier1/is_tier1_or_super; reviewed legacy rewrites require parity2_backup originals and atomic rollback, while sensitive definitions remain excluded to preserve their review boundary.
+- Edge director access mirrors frontend TIER1_ROLES in _shared/director-tier.ts with a parity test; recipient helpers deduplicate auth user IDs because role-query joins may return the same person more than once.
