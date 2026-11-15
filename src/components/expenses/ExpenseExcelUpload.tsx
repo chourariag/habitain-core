@@ -7,26 +7,12 @@ import { Badge } from "@/components/ui/badge";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Download, Paperclip, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
-import { format, parse, isValid, isFuture, startOfMonth, subMonths } from "date-fns";
+import { format, isValid } from "date-fns";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
-import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
+import { TRAVEL_CATEGORIES, downloadExpenseTemplate, sheetRowsFromWorkbook, parseExpenseRows, type ParsedExpenseRow } from "@/lib/expense-excel";
 import { Textarea } from "@/components/ui/textarea";
 import { computeWarnings, isDuplicate, matchProject, reasonOk, WARNING_LABELS, MIN_REASON, type ExpenseWarning } from "@/lib/expense-policy";
-
-const VALID_CATEGORIES = [
-  "Travel by Car",
-  "Travel by Bike",
-  "Auto/Cab",
-  "Meals and Entertainment",
-  "Stationery and Supplies",
-  "Site Expenses",
-  "Client Meeting",
-  "Medical",
-  "Other",
-];
-
-const TRAVEL_CATEGORIES = ["Travel by Car", "Travel by Bike"];
 
 function getSubmissionWindow(): { isOpen: boolean; label: string; nextWindow: string } {
   const now = new Date();
@@ -38,26 +24,7 @@ function getSubmissionWindow(): { isOpen: boolean; label: string; nextWindow: st
   return { isOpen: false, label: "", nextWindow: `1st ${format(nextMonth, "MMMM yyyy")}` };
 }
 
-interface ParsedRow {
-  rowNum: number;
-  date: string;
-  parsedDate: Date | null;
-  category: string;
-  description: string;
-  distanceKm: number | null;
-  amount: number | null;
-  projectName: string;
-  receiptAvailable: boolean;
-  notes: string;
-  vendor: string;
-  billNo: string;
-  projectCode: string;
-  projectId: string | null;
-  fatal: boolean;
-  warnings: ExpenseWarning[];
-  errors: string[];
-  calculatedAmount: number;
-}
+type ParsedRow = ParsedExpenseRow & { warnings: ExpenseWarning[] };
 
 export function ExpenseExcelUpload() {
   const { user } = useAuth();
@@ -89,8 +56,7 @@ export function ExpenseExcelUpload() {
   }, []);
 
   const downloadTemplate = () => {
-    const t = TEMPLATES.expense;
-    downloadXlsxTemplate(t.filename, t.sheet, t.headers, t.sample);
+    downloadExpenseTemplate({ car: carRate, bike: bikeRate });
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,107 +72,15 @@ export function ExpenseExcelUpload() {
     reader.onload = async (evt) => {
       const data = new Uint8Array(evt.target?.result as ArrayBuffer);
       const wb = XLSX.read(data, { type: "array" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false });
-
-      // Skip first 3 rows (title, instructions, headers) → data starts at index 3
-      const dataRows = rows.slice(3);
-      const now = new Date();
-      const earliestDate = startOfMonth(subMonths(now, 1));
-
+      const res = parseExpenseRows(sheetRowsFromWorkbook(wb), { carRate, bikeRate, matchProject: (c) => matchProject(c, projects) });
+      if (!res.headerFound) { toast.error('Header row not found — the sheet must have a "Date (DD/MM/YYYY)" column'); return; }
       const parsed: ParsedRow[] = [];
-      for (let i = 0; i < dataRows.length; i++) {
-        const r = dataRows[i];
-        if (!r || r.every((c: any) => !c || String(c).trim() === "")) continue;
-        // Stop at reference block
-        if (String(r[0] || "").includes("CONVEYANCE RATES")) break;
-
-        const errors: string[] = [];
-        let fatal = false;
-        const dateStr = String(r[0] || "").trim();
-        let parsedDate: Date | null = null;
-
-        // Try DD/MM/YYYY
-        if (dateStr) {
-          parsedDate = parse(dateStr, "dd/MM/yyyy", new Date());
-          if (!isValid(parsedDate)) {
-            // Try other common formats
-            parsedDate = parse(dateStr, "d/M/yyyy", new Date());
-          }
-          if (!isValid(parsedDate)) {
-            errors.push("Invalid date format — use DD/MM/YYYY");
-            fatal = true;
-            parsedDate = null;
-          } else if (isFuture(parsedDate)) {
-            errors.push("Date cannot be in the future");
-          } else if (parsedDate < earliestDate) {
-            errors.push("Date must be within current or last month");
-          }
-        } else {
-          errors.push("Date is required");
-          fatal = true;
-        }
-
-        const category = String(r[1] || "").trim();
-        if (!category) errors.push("Category is required");
-        else if (!VALID_CATEGORIES.includes(category)) errors.push(`Invalid category "${category}"`);
-
-        const description = String(r[2] || "").trim();
-        if (!description || description.length < 5) errors.push("Description required (min 5 chars)");
-
-        const distanceRaw = r[3] ? Number(r[3]) : null;
-        const amountRaw = r[4] ? Number(r[4]) : null;
-        const isTravel = TRAVEL_CATEGORIES.includes(category);
-
-        if (isTravel && (!distanceRaw || distanceRaw <= 0)) {
-          errors.push("Distance (km) required for travel category");
-        }
-        if (!isTravel && (!amountRaw || amountRaw <= 0)) {
-          errors.push("Amount required for non-travel category");
-        }
-
-        let calculatedAmount = 0;
-        if (isTravel && distanceRaw && distanceRaw > 0) {
-          const rate = category === "Travel by Car" ? carRate : bikeRate;
-          calculatedAmount = distanceRaw * rate;
-        } else if (amountRaw && amountRaw > 0) {
-          calculatedAmount = amountRaw;
-        }
-
-        const receiptStr = String(r[6] || "").trim().toLowerCase();
-        if (receiptStr && receiptStr !== "yes" && receiptStr !== "no") {
-          errors.push("Receipt must be Yes or No");
-        }
-
-        const vendor = String(r[11] ?? "").trim();
-        const billNo = String(r[12] ?? "").trim();
-        const projectCode = String(r[13] ?? "").trim();
-        let projectId: string | null = null;
-        if (projectCode) {
-          const p = matchProject(projectCode, projects);
-          if (!p) { errors.push(`Unknown project code "${projectCode}"`); fatal = true; }
-          else projectId = p.id;
-        }
-        const dup = errors.length === 0 ? await isDuplicate(vendor, billNo, calculatedAmount) : false;
-        const warnings = parsedDate && isValid(parsedDate)
-          ? computeWarnings({ entryDate: parsedDate, receiptMissing: true, duplicate: dup, categoryCap: null, amount: calculatedAmount })
+      for (const row of res.rows) {
+        const dup = row.errors.length === 0 ? await isDuplicate(row.vendor, row.billNo, row.calculatedAmount) : false;
+        const warnings = row.parsedDate && isValid(row.parsedDate)
+          ? computeWarnings({ entryDate: row.parsedDate, receiptMissing: true, duplicate: dup, categoryCap: null, amount: row.calculatedAmount })
           : [];
-
-        parsed.push({
-          vendor, billNo, projectCode, projectId, fatal, warnings,
-          rowNum: i + 4,
-          date: dateStr,
-          parsedDate,
-          category,
-          description,
-          distanceKm: distanceRaw,
-          amount: amountRaw,
-          projectName: String(r[5] || "").trim(),
-          receiptAvailable: receiptStr === "yes",
-          notes: String(r[7] || "").trim(),
-          errors,
-          calculatedAmount,
-        });
+        parsed.push({ ...row, warnings });
       }
 
       setWarningReason("");

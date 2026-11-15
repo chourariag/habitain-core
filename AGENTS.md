@@ -8,3 +8,4 @@
 - Daily Report quantities use site_report_quantities through checked RPCs; measurement_line_items keeps its legacy boq_items foreign key so legacy sheets remain compatible.
 - Legacy measurement notification triggers must return early for trade='daily_site_report' so report submission and re-submission cannot generate factory measurement alerts.
 - Expense receipts live in the private expense-receipts bucket (<user_id>/<yyyy-mm>/<file>), shown via signed URLs; policy checks are stored warnings with a reason, never hard blocks, and cross-user duplicate checks go through a SECURITY DEFINER RPC so expense_entries RLS stays unchanged.
+- Expense Excel template and reader share one column list (src/lib/expense-excel.ts) and the reader locates the header by the Date cell, so template and parser cannot drift.

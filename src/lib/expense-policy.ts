@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { readPhotoMeta, compressPhoto } from "@/lib/site-report-photo";
+import { readExifDate, compressPhoto } from "@/lib/site-report-photo";
 
 export type ExpenseWarning = "duplicate" | "older_than_7_days" | "over_category_cap" | "receipt_missing";
 
@@ -44,7 +44,7 @@ export type UploadedReceipt = { path: string; exifAt: string | null; flags: stri
 /** Read EXIF before compressing, compress (~400 KB, 1600 px, JPEG 0.7), upload to private bucket. */
 export async function uploadReceipt(userId: string, file: File, fromGallery: boolean): Promise<UploadedReceipt> {
   let exifAt: string | null = null;
-  try { exifAt = (await readPhotoMeta(file)).takenAt; } catch { exifAt = null; }
+  try { exifAt = await readExifDate(file); } catch { exifAt = null; }
   const blob = await compressPhoto(file, 1600, 400 * 1024);
   const path = receiptPath(userId);
   const { error } = await supabase.storage.from("expense-receipts").upload(path, blob, { contentType: "image/jpeg", upsert: false });

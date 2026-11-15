@@ -1,3 +1,4 @@
+import { downloadExpenseTemplate } from "@/lib/expense-excel";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
@@ -335,7 +336,7 @@ export function ExpensesTab() {
         </div>
         <div className="flex gap-2">
           <Button size="sm" variant="outline" className="text-xs gap-1" style={{ color: "#006039", borderColor: "#006039" }}
-            onClick={() => downloadXlsxTemplate(TEMPLATES.expense.filename, TEMPLATES.expense.sheet, TEMPLATES.expense.headers, TEMPLATES.expense.sample)}>
+            onClick={() => downloadExpenseTemplate()}>
             <FileDown className="h-3 w-3" /> Download Template
           </Button>
           <Button size="sm" variant="outline" className="text-xs gap-1" style={{ color: "#006039", borderColor: "#006039" }}

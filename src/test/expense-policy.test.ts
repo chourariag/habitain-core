@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
-vi.mock("@/lib/site-report-photo", () => ({ readPhotoMeta: vi.fn(), compressPhoto: vi.fn() }));
+vi.mock("@/lib/site-report-photo", () => ({ readPhotoMeta: vi.fn(), readExifDate: vi.fn(), compressPhoto: vi.fn() }));
 import { computeWarnings, reasonOk, receiptPath, matchProject, daysOld } from "@/lib/expense-policy";
 
 const today = new Date(2026, 10, 15);
