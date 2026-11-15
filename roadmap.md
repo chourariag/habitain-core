@@ -1,7 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
-- [ ] PARITY-2B: frontend/Edge inventory and parity, three backed-up SQL function changes, wage-count checks, full tests and MD 360px screens
+- [x] PARITY-2B: 115 existing src files/11 deployed Edge functions; migration 0030 backs up three scoped functions, wage counts 49/49/49; 192 tests passed/5 skipped, automatic build OK; populated MD mobile views fit 360px, Alerts content blocked by OFF flag
 - [x] PARITY-2A: migration 0029 rewrote 319 A with 319 backups; 213 B/7 C/0 D, live definition comparison and authenticated MD/sales/architecture counts verified; events 0 and jobs unchanged; three unrelated security findings pending access review
 - [x] PARITY-1 scoped delivery: audit 342 objects, migration 0027/shared UI parity, 112 tests, MD/mobile preview, events 0 and seven jobs unchanged
 - [ ] PARITY-1 complete legacy parity and atomic approvals: blocked pending review/authorization of audited legacy objects

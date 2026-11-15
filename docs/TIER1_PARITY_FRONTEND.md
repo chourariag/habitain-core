@@ -234,3 +234,16 @@ Pre-change incomplete role arrays and checks. Role labels, pickers, onboarding c
 - `tally-key-manage`
 - `weekly-report-reminders`
 - `work-order-escalation`
+
+## Delivery and verification
+
+- 115 existing frontend source files changed, plus one new Vitest and one SQL regression test; generated database types refreshed separately.
+- All 11 listed Edge functions deployed successfully; NOT DEPLOYED: none. Shared Edge helper added for tier parity and recipient deduplication.
+- Migration 0030 changed only can_access_labour_compensation, commit_labour_master_upload and notify_costing_on_measurement_submit, with three original definitions backed up first. Total parity2_backup rows: 322.
+- Full before/after definitions: docs/TIER1_PARITY2B_SQL.md. Finance Manager and HR Executive retain their original wage-read access; neither gains master-upload access.
+- Authenticated rolled-back compensation counts: MD 49, Sales Director 49, Architecture Director 49. Empty director master uploads return 0 without changing rows.
+- Full Vitest suite: 192 passed, 5 pre-existing live-RLS tests skipped. Automatic TypeScript/build feedback: build OK.
+- MD at 360px: Settings, Approvals, populated Labour Master and project attendance rendered with document width 360px. Alerts redirects to Home while Reminders is OFF; Alerts content was not tested and the flag was not changed.
+- Notification functions were deployed but not invoked to send live notifications. Role labels and pickers unchanged; existing super_admin terms retained.
+- reminder_events remains 0; Reminders OFF; cron.job full-row hash remains 5fa88816f225db296e602ad722f1babf (all seven jobs unchanged).
+- Three unrelated security findings remain active pending the previously requested access review; no finding state or read policy changed.
