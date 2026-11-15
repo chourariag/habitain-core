@@ -1,7 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
-- [ ] P4f: submitted/date-scoped quantities, fixed photo previews, corrected empty text, expiring export tokens; verify tests, expired token and 360px views
+- [x] P4f: submitted/date-scoped quantities verified by rolled-back SQL regression; fixed 16:9 photo previews and empty text; 180-day/default, 365-day/max token expiry; real token 201/200/401 and revoke 200, both 360px screenshots verified; 200 tests passed/5 unchanged skips, build OK, events 0/eight jobs unchanged
 - [x] P8: private 17-file versioned CSV export, nightly 01:30 IST job, audited hashed tokens, Settings lists; real MD export/readback, all CSV headers, scheduler auth and token revoke verified; 197 tests passed/5 skipped, automatic build OK; unrelated security access review deferred by user
 - [x] PARITY-2B: 115 existing src files/11 deployed Edge functions; migration 0030 backs up three scoped functions, wage counts 49/49/49; 192 tests passed/5 skipped, automatic build OK; populated MD mobile views fit 360px, Alerts content blocked by OFF flag
 - [x] PARITY-2A: migration 0029 rewrote 319 A with 319 backups; 213 B/7 C/0 D, live definition comparison and authenticated MD/sales/architecture counts verified; events 0 and jobs unchanged; three unrelated security findings pending access review
