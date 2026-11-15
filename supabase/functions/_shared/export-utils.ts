@@ -1,5 +1,6 @@
 export const LINK_SECONDS = 300;
 export const RETENTION_DAYS = 60;
+export function wageAmount(hours: number, effectiveRate: number): number { return hours * effectiveRate; }
 const sensitive = /salary|payroll|compensation|bank|aadhaar|aadhar|pan_number|pan_no|token|password|secret/i;
 export function sanitize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(sanitize);
