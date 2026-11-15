@@ -229,3 +229,1004 @@ The eleven scoped policy findings correspond to subcontractor_schedules, manpowe
 - Existing narrower mapped read/write policies and all UNMAPPED tables remain untouched; this does not guarantee every desired group has access to already-narrow tables.
 - Full cron command internals cannot be inspected through current tools; eight safe schedule IDs/names/timings/active states are identical before/after.
 - Automatic builds OK; no manual build/typecheck run. Full suite 210 passed/0 skipped.
+
+
+# SECURITY-2 — live re-audit and verification
+
+Migration 0034_security2_remaining_scoped_reads.sql applied atomically. Live re-audit found 36 open SELECT policies, not 36 change candidates: 30 scoped and 6 left open by design. Two additional UPDATE WITH CHECK=true policies now use an identical copy of their existing USING. All 32 changes have versioned kind=policy backups under security2:public.*; this preserves earlier backups for the same object.
+
+## Counts per group
+
+| Group | SELECT policies scoped |
+|---|---:|
+| Production and site execution | 14 |
+| Site readiness | 1 |
+| Dispatch | 3 |
+| Material plans | 2 |
+| Stores | 2 |
+| Finance | 2 |
+| Sales | 1 |
+| Design | 1 |
+| Escalations | 2 |
+| Project journal and client photos | 2 |
+
+Total: 30 SELECT policies + 2 UPDATE checks; 32 backups. Existing narrower INSERT/UPDATE/DELETE rules unchanged. No Wave 1 policy changes.
+
+## Synthetic coverage
+
+- fabrication_foreman — **synthetic, not a real-user test**.
+- factory_floor_supervisor — **synthetic, not a real-user test**.
+- logistics_manager — **synthetic, not a real-user test**.
+- principal_architect — **synthetic, not a real-user test**.
+- procurement_assistant — **synthetic, not a real-user test**.
+- quantity_surveyor — **synthetic, not a real-user test**.
+- sales_associate — **synthetic, not a real-user test**.
+- senior_factory_supervisor — **synthetic, not a real-user test**.
+- structural_architect — **synthetic, not a real-user test**.
+
+31 role subjects × 30 tables = 930 before/after comparisons inside the migration. Group-reader loss or control gain aborted the entire transaction. hr_executive was the control because stores_executive is now a legitimate reader in several groups. Temporary role helpers were restored byte-exact before commit; no accounts, profiles or user_roles rows were written. Independent rollback checks returned all 930 actual after counts. Before counts equal the rows visible under the original unconditional SELECT rules.
+
+## Full before and after counts per role/table
+
+| Table | Role | Test | Before | After |
+|---|---|---|---:|---:|
+| client_milestone_photos | accounts_executive | active real user | 0 | 0 |
+| client_milestone_photos | architecture_director | active real user | 0 | 0 |
+| client_milestone_photos | costing_engineer | active real user | 0 | 0 |
+| client_milestone_photos | delivery_rm_lead | active real user | 0 | 0 |
+| client_milestone_photos | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| client_milestone_photos | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| client_milestone_photos | finance_director | active real user | 0 | 0 |
+| client_milestone_photos | finance_manager | active real user | 0 | 0 |
+| client_milestone_photos | head_of_projects | active real user | 0 | 0 |
+| client_milestone_photos | head_operations | active real user | 0 | 0 |
+| client_milestone_photos | hr_executive | active real user | 0 | 0 |
+| client_milestone_photos | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| client_milestone_photos | managing_director | active real user | 0 | 0 |
+| client_milestone_photos | planning_engineer | active real user | 0 | 0 |
+| client_milestone_photos | planning_head | active real user | 0 | 0 |
+| client_milestone_photos | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| client_milestone_photos | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| client_milestone_photos | production_head | active real user | 0 | 0 |
+| client_milestone_photos | project_architect | active real user | 0 | 0 |
+| client_milestone_photos | purchase_assistant | active real user | 0 | 0 |
+| client_milestone_photos | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| client_milestone_photos | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| client_milestone_photos | sales_director | active real user | 0 | 0 |
+| client_milestone_photos | sales_executive | active real user | 0 | 0 |
+| client_milestone_photos | senior_architect | active real user | 0 | 0 |
+| client_milestone_photos | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| client_milestone_photos | site_engineer | active real user | 0 | 0 |
+| client_milestone_photos | site_installation_mgr | active real user | 0 | 0 |
+| client_milestone_photos | stores_executive | active real user | 0 | 0 |
+| client_milestone_photos | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| client_milestone_photos | super_admin | active real user | 0 | 0 |
+| construction_journal | accounts_executive | active real user | 0 | 0 |
+| construction_journal | architecture_director | active real user | 0 | 0 |
+| construction_journal | costing_engineer | active real user | 0 | 0 |
+| construction_journal | delivery_rm_lead | active real user | 0 | 0 |
+| construction_journal | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| construction_journal | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| construction_journal | finance_director | active real user | 0 | 0 |
+| construction_journal | finance_manager | active real user | 0 | 0 |
+| construction_journal | head_of_projects | active real user | 0 | 0 |
+| construction_journal | head_operations | active real user | 0 | 0 |
+| construction_journal | hr_executive | active real user | 0 | 0 |
+| construction_journal | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| construction_journal | managing_director | active real user | 0 | 0 |
+| construction_journal | planning_engineer | active real user | 0 | 0 |
+| construction_journal | planning_head | active real user | 0 | 0 |
+| construction_journal | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| construction_journal | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| construction_journal | production_head | active real user | 0 | 0 |
+| construction_journal | project_architect | active real user | 0 | 0 |
+| construction_journal | purchase_assistant | active real user | 0 | 0 |
+| construction_journal | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| construction_journal | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| construction_journal | sales_director | active real user | 0 | 0 |
+| construction_journal | sales_executive | active real user | 0 | 0 |
+| construction_journal | senior_architect | active real user | 0 | 0 |
+| construction_journal | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| construction_journal | site_engineer | active real user | 0 | 0 |
+| construction_journal | site_installation_mgr | active real user | 0 | 0 |
+| construction_journal | stores_executive | active real user | 0 | 0 |
+| construction_journal | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| construction_journal | super_admin | active real user | 0 | 0 |
+| depreciation_block_reference | accounts_executive | active real user | 9 | 9 |
+| depreciation_block_reference | architecture_director | active real user | 9 | 9 |
+| depreciation_block_reference | costing_engineer | active real user | 9 | 0 |
+| depreciation_block_reference | delivery_rm_lead | active real user | 9 | 0 |
+| depreciation_block_reference | fabrication_foreman | synthetic, not a real-user test | 9 | 0 |
+| depreciation_block_reference | factory_floor_supervisor | synthetic, not a real-user test | 9 | 0 |
+| depreciation_block_reference | finance_director | active real user | 9 | 9 |
+| depreciation_block_reference | finance_manager | active real user | 9 | 9 |
+| depreciation_block_reference | head_of_projects | active real user | 9 | 0 |
+| depreciation_block_reference | head_operations | active real user | 9 | 0 |
+| depreciation_block_reference | hr_executive | active real user | 9 | 0 |
+| depreciation_block_reference | logistics_manager | synthetic, not a real-user test | 9 | 0 |
+| depreciation_block_reference | managing_director | active real user | 9 | 9 |
+| depreciation_block_reference | planning_engineer | active real user | 9 | 0 |
+| depreciation_block_reference | planning_head | active real user | 9 | 0 |
+| depreciation_block_reference | principal_architect | synthetic, not a real-user test | 9 | 0 |
+| depreciation_block_reference | procurement_assistant | synthetic, not a real-user test | 9 | 0 |
+| depreciation_block_reference | production_head | active real user | 9 | 0 |
+| depreciation_block_reference | project_architect | active real user | 9 | 0 |
+| depreciation_block_reference | purchase_assistant | active real user | 9 | 0 |
+| depreciation_block_reference | quantity_surveyor | synthetic, not a real-user test | 9 | 0 |
+| depreciation_block_reference | sales_associate | synthetic, not a real-user test | 9 | 0 |
+| depreciation_block_reference | sales_director | active real user | 9 | 9 |
+| depreciation_block_reference | sales_executive | active real user | 9 | 0 |
+| depreciation_block_reference | senior_architect | active real user | 9 | 0 |
+| depreciation_block_reference | senior_factory_supervisor | synthetic, not a real-user test | 9 | 0 |
+| depreciation_block_reference | site_engineer | active real user | 9 | 0 |
+| depreciation_block_reference | site_installation_mgr | active real user | 9 | 0 |
+| depreciation_block_reference | stores_executive | active real user | 9 | 0 |
+| depreciation_block_reference | structural_architect | synthetic, not a real-user test | 9 | 0 |
+| depreciation_block_reference | super_admin | active real user | 9 | 9 |
+| design_stage_history | accounts_executive | active real user | 0 | 0 |
+| design_stage_history | architecture_director | active real user | 0 | 0 |
+| design_stage_history | costing_engineer | active real user | 0 | 0 |
+| design_stage_history | delivery_rm_lead | active real user | 0 | 0 |
+| design_stage_history | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| design_stage_history | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| design_stage_history | finance_director | active real user | 0 | 0 |
+| design_stage_history | finance_manager | active real user | 0 | 0 |
+| design_stage_history | head_of_projects | active real user | 0 | 0 |
+| design_stage_history | head_operations | active real user | 0 | 0 |
+| design_stage_history | hr_executive | active real user | 0 | 0 |
+| design_stage_history | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| design_stage_history | managing_director | active real user | 0 | 0 |
+| design_stage_history | planning_engineer | active real user | 0 | 0 |
+| design_stage_history | planning_head | active real user | 0 | 0 |
+| design_stage_history | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| design_stage_history | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| design_stage_history | production_head | active real user | 0 | 0 |
+| design_stage_history | project_architect | active real user | 0 | 0 |
+| design_stage_history | purchase_assistant | active real user | 0 | 0 |
+| design_stage_history | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| design_stage_history | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| design_stage_history | sales_director | active real user | 0 | 0 |
+| design_stage_history | sales_executive | active real user | 0 | 0 |
+| design_stage_history | senior_architect | active real user | 0 | 0 |
+| design_stage_history | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| design_stage_history | site_engineer | active real user | 0 | 0 |
+| design_stage_history | site_installation_mgr | active real user | 0 | 0 |
+| design_stage_history | stores_executive | active real user | 0 | 0 |
+| design_stage_history | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| design_stage_history | super_admin | active real user | 0 | 0 |
+| dispatch_log | accounts_executive | active real user | 0 | 0 |
+| dispatch_log | architecture_director | active real user | 0 | 0 |
+| dispatch_log | costing_engineer | active real user | 0 | 0 |
+| dispatch_log | delivery_rm_lead | active real user | 0 | 0 |
+| dispatch_log | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| dispatch_log | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| dispatch_log | finance_director | active real user | 0 | 0 |
+| dispatch_log | finance_manager | active real user | 0 | 0 |
+| dispatch_log | head_of_projects | active real user | 0 | 0 |
+| dispatch_log | head_operations | active real user | 0 | 0 |
+| dispatch_log | hr_executive | active real user | 0 | 0 |
+| dispatch_log | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| dispatch_log | managing_director | active real user | 0 | 0 |
+| dispatch_log | planning_engineer | active real user | 0 | 0 |
+| dispatch_log | planning_head | active real user | 0 | 0 |
+| dispatch_log | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| dispatch_log | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| dispatch_log | production_head | active real user | 0 | 0 |
+| dispatch_log | project_architect | active real user | 0 | 0 |
+| dispatch_log | purchase_assistant | active real user | 0 | 0 |
+| dispatch_log | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| dispatch_log | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| dispatch_log | sales_director | active real user | 0 | 0 |
+| dispatch_log | sales_executive | active real user | 0 | 0 |
+| dispatch_log | senior_architect | active real user | 0 | 0 |
+| dispatch_log | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| dispatch_log | site_engineer | active real user | 0 | 0 |
+| dispatch_log | site_installation_mgr | active real user | 0 | 0 |
+| dispatch_log | stores_executive | active real user | 0 | 0 |
+| dispatch_log | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| dispatch_log | super_admin | active real user | 0 | 0 |
+| dispatch_material_log | accounts_executive | active real user | 0 | 0 |
+| dispatch_material_log | architecture_director | active real user | 0 | 0 |
+| dispatch_material_log | costing_engineer | active real user | 0 | 0 |
+| dispatch_material_log | delivery_rm_lead | active real user | 0 | 0 |
+| dispatch_material_log | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| dispatch_material_log | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| dispatch_material_log | finance_director | active real user | 0 | 0 |
+| dispatch_material_log | finance_manager | active real user | 0 | 0 |
+| dispatch_material_log | head_of_projects | active real user | 0 | 0 |
+| dispatch_material_log | head_operations | active real user | 0 | 0 |
+| dispatch_material_log | hr_executive | active real user | 0 | 0 |
+| dispatch_material_log | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| dispatch_material_log | managing_director | active real user | 0 | 0 |
+| dispatch_material_log | planning_engineer | active real user | 0 | 0 |
+| dispatch_material_log | planning_head | active real user | 0 | 0 |
+| dispatch_material_log | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| dispatch_material_log | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| dispatch_material_log | production_head | active real user | 0 | 0 |
+| dispatch_material_log | project_architect | active real user | 0 | 0 |
+| dispatch_material_log | purchase_assistant | active real user | 0 | 0 |
+| dispatch_material_log | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| dispatch_material_log | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| dispatch_material_log | sales_director | active real user | 0 | 0 |
+| dispatch_material_log | sales_executive | active real user | 0 | 0 |
+| dispatch_material_log | senior_architect | active real user | 0 | 0 |
+| dispatch_material_log | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| dispatch_material_log | site_engineer | active real user | 0 | 0 |
+| dispatch_material_log | site_installation_mgr | active real user | 0 | 0 |
+| dispatch_material_log | stores_executive | active real user | 0 | 0 |
+| dispatch_material_log | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| dispatch_material_log | super_admin | active real user | 0 | 0 |
+| dispatch_signoffs | accounts_executive | active real user | 0 | 0 |
+| dispatch_signoffs | architecture_director | active real user | 0 | 0 |
+| dispatch_signoffs | costing_engineer | active real user | 0 | 0 |
+| dispatch_signoffs | delivery_rm_lead | active real user | 0 | 0 |
+| dispatch_signoffs | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| dispatch_signoffs | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| dispatch_signoffs | finance_director | active real user | 0 | 0 |
+| dispatch_signoffs | finance_manager | active real user | 0 | 0 |
+| dispatch_signoffs | head_of_projects | active real user | 0 | 0 |
+| dispatch_signoffs | head_operations | active real user | 0 | 0 |
+| dispatch_signoffs | hr_executive | active real user | 0 | 0 |
+| dispatch_signoffs | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| dispatch_signoffs | managing_director | active real user | 0 | 0 |
+| dispatch_signoffs | planning_engineer | active real user | 0 | 0 |
+| dispatch_signoffs | planning_head | active real user | 0 | 0 |
+| dispatch_signoffs | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| dispatch_signoffs | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| dispatch_signoffs | production_head | active real user | 0 | 0 |
+| dispatch_signoffs | project_architect | active real user | 0 | 0 |
+| dispatch_signoffs | purchase_assistant | active real user | 0 | 0 |
+| dispatch_signoffs | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| dispatch_signoffs | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| dispatch_signoffs | sales_director | active real user | 0 | 0 |
+| dispatch_signoffs | sales_executive | active real user | 0 | 0 |
+| dispatch_signoffs | senior_architect | active real user | 0 | 0 |
+| dispatch_signoffs | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| dispatch_signoffs | site_engineer | active real user | 0 | 0 |
+| dispatch_signoffs | site_installation_mgr | active real user | 0 | 0 |
+| dispatch_signoffs | stores_executive | active real user | 0 | 0 |
+| dispatch_signoffs | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| dispatch_signoffs | super_admin | active real user | 0 | 0 |
+| installation_checklist | accounts_executive | active real user | 0 | 0 |
+| installation_checklist | architecture_director | active real user | 0 | 0 |
+| installation_checklist | costing_engineer | active real user | 0 | 0 |
+| installation_checklist | delivery_rm_lead | active real user | 0 | 0 |
+| installation_checklist | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| installation_checklist | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| installation_checklist | finance_director | active real user | 0 | 0 |
+| installation_checklist | finance_manager | active real user | 0 | 0 |
+| installation_checklist | head_of_projects | active real user | 0 | 0 |
+| installation_checklist | head_operations | active real user | 0 | 0 |
+| installation_checklist | hr_executive | active real user | 0 | 0 |
+| installation_checklist | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| installation_checklist | managing_director | active real user | 0 | 0 |
+| installation_checklist | planning_engineer | active real user | 0 | 0 |
+| installation_checklist | planning_head | active real user | 0 | 0 |
+| installation_checklist | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| installation_checklist | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| installation_checklist | production_head | active real user | 0 | 0 |
+| installation_checklist | project_architect | active real user | 0 | 0 |
+| installation_checklist | purchase_assistant | active real user | 0 | 0 |
+| installation_checklist | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| installation_checklist | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| installation_checklist | sales_director | active real user | 0 | 0 |
+| installation_checklist | sales_executive | active real user | 0 | 0 |
+| installation_checklist | senior_architect | active real user | 0 | 0 |
+| installation_checklist | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| installation_checklist | site_engineer | active real user | 0 | 0 |
+| installation_checklist | site_installation_mgr | active real user | 0 | 0 |
+| installation_checklist | stores_executive | active real user | 0 | 0 |
+| installation_checklist | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| installation_checklist | super_admin | active real user | 0 | 0 |
+| inventory_items | accounts_executive | active real user | 0 | 0 |
+| inventory_items | architecture_director | active real user | 0 | 0 |
+| inventory_items | costing_engineer | active real user | 0 | 0 |
+| inventory_items | delivery_rm_lead | active real user | 0 | 0 |
+| inventory_items | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| inventory_items | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| inventory_items | finance_director | active real user | 0 | 0 |
+| inventory_items | finance_manager | active real user | 0 | 0 |
+| inventory_items | head_of_projects | active real user | 0 | 0 |
+| inventory_items | head_operations | active real user | 0 | 0 |
+| inventory_items | hr_executive | active real user | 0 | 0 |
+| inventory_items | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| inventory_items | managing_director | active real user | 0 | 0 |
+| inventory_items | planning_engineer | active real user | 0 | 0 |
+| inventory_items | planning_head | active real user | 0 | 0 |
+| inventory_items | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| inventory_items | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| inventory_items | production_head | active real user | 0 | 0 |
+| inventory_items | project_architect | active real user | 0 | 0 |
+| inventory_items | purchase_assistant | active real user | 0 | 0 |
+| inventory_items | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| inventory_items | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| inventory_items | sales_director | active real user | 0 | 0 |
+| inventory_items | sales_executive | active real user | 0 | 0 |
+| inventory_items | senior_architect | active real user | 0 | 0 |
+| inventory_items | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| inventory_items | site_engineer | active real user | 0 | 0 |
+| inventory_items | site_installation_mgr | active real user | 0 | 0 |
+| inventory_items | stores_executive | active real user | 0 | 0 |
+| inventory_items | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| inventory_items | super_admin | active real user | 0 | 0 |
+| kickoff_meetings | accounts_executive | active real user | 1 | 0 |
+| kickoff_meetings | architecture_director | active real user | 1 | 1 |
+| kickoff_meetings | costing_engineer | active real user | 1 | 0 |
+| kickoff_meetings | delivery_rm_lead | active real user | 1 | 0 |
+| kickoff_meetings | fabrication_foreman | synthetic, not a real-user test | 1 | 1 |
+| kickoff_meetings | factory_floor_supervisor | synthetic, not a real-user test | 1 | 1 |
+| kickoff_meetings | finance_director | active real user | 1 | 1 |
+| kickoff_meetings | finance_manager | active real user | 1 | 0 |
+| kickoff_meetings | head_of_projects | active real user | 1 | 1 |
+| kickoff_meetings | head_operations | active real user | 1 | 1 |
+| kickoff_meetings | hr_executive | active real user | 1 | 0 |
+| kickoff_meetings | logistics_manager | synthetic, not a real-user test | 1 | 0 |
+| kickoff_meetings | managing_director | active real user | 1 | 1 |
+| kickoff_meetings | planning_engineer | active real user | 1 | 1 |
+| kickoff_meetings | planning_head | active real user | 1 | 1 |
+| kickoff_meetings | principal_architect | synthetic, not a real-user test | 1 | 0 |
+| kickoff_meetings | procurement_assistant | synthetic, not a real-user test | 1 | 0 |
+| kickoff_meetings | production_head | active real user | 1 | 1 |
+| kickoff_meetings | project_architect | active real user | 1 | 0 |
+| kickoff_meetings | purchase_assistant | active real user | 1 | 0 |
+| kickoff_meetings | quantity_surveyor | synthetic, not a real-user test | 1 | 0 |
+| kickoff_meetings | sales_associate | synthetic, not a real-user test | 1 | 0 |
+| kickoff_meetings | sales_director | active real user | 1 | 1 |
+| kickoff_meetings | sales_executive | active real user | 1 | 0 |
+| kickoff_meetings | senior_architect | active real user | 1 | 0 |
+| kickoff_meetings | senior_factory_supervisor | synthetic, not a real-user test | 1 | 1 |
+| kickoff_meetings | site_engineer | active real user | 1 | 1 |
+| kickoff_meetings | site_installation_mgr | active real user | 1 | 1 |
+| kickoff_meetings | stores_executive | active real user | 1 | 0 |
+| kickoff_meetings | structural_architect | synthetic, not a real-user test | 1 | 0 |
+| kickoff_meetings | super_admin | active real user | 1 | 1 |
+| material_alerts | accounts_executive | active real user | 0 | 0 |
+| material_alerts | architecture_director | active real user | 0 | 0 |
+| material_alerts | costing_engineer | active real user | 0 | 0 |
+| material_alerts | delivery_rm_lead | active real user | 0 | 0 |
+| material_alerts | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| material_alerts | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| material_alerts | finance_director | active real user | 0 | 0 |
+| material_alerts | finance_manager | active real user | 0 | 0 |
+| material_alerts | head_of_projects | active real user | 0 | 0 |
+| material_alerts | head_operations | active real user | 0 | 0 |
+| material_alerts | hr_executive | active real user | 0 | 0 |
+| material_alerts | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| material_alerts | managing_director | active real user | 0 | 0 |
+| material_alerts | planning_engineer | active real user | 0 | 0 |
+| material_alerts | planning_head | active real user | 0 | 0 |
+| material_alerts | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| material_alerts | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| material_alerts | production_head | active real user | 0 | 0 |
+| material_alerts | project_architect | active real user | 0 | 0 |
+| material_alerts | purchase_assistant | active real user | 0 | 0 |
+| material_alerts | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| material_alerts | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| material_alerts | sales_director | active real user | 0 | 0 |
+| material_alerts | sales_executive | active real user | 0 | 0 |
+| material_alerts | senior_architect | active real user | 0 | 0 |
+| material_alerts | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| material_alerts | site_engineer | active real user | 0 | 0 |
+| material_alerts | site_installation_mgr | active real user | 0 | 0 |
+| material_alerts | stores_executive | active real user | 0 | 0 |
+| material_alerts | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| material_alerts | super_admin | active real user | 0 | 0 |
+| module_schedule | accounts_executive | active real user | 0 | 0 |
+| module_schedule | architecture_director | active real user | 0 | 0 |
+| module_schedule | costing_engineer | active real user | 0 | 0 |
+| module_schedule | delivery_rm_lead | active real user | 0 | 0 |
+| module_schedule | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| module_schedule | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| module_schedule | finance_director | active real user | 0 | 0 |
+| module_schedule | finance_manager | active real user | 0 | 0 |
+| module_schedule | head_of_projects | active real user | 0 | 0 |
+| module_schedule | head_operations | active real user | 0 | 0 |
+| module_schedule | hr_executive | active real user | 0 | 0 |
+| module_schedule | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| module_schedule | managing_director | active real user | 0 | 0 |
+| module_schedule | planning_engineer | active real user | 0 | 0 |
+| module_schedule | planning_head | active real user | 0 | 0 |
+| module_schedule | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| module_schedule | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| module_schedule | production_head | active real user | 0 | 0 |
+| module_schedule | project_architect | active real user | 0 | 0 |
+| module_schedule | purchase_assistant | active real user | 0 | 0 |
+| module_schedule | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| module_schedule | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| module_schedule | sales_director | active real user | 0 | 0 |
+| module_schedule | sales_executive | active real user | 0 | 0 |
+| module_schedule | senior_architect | active real user | 0 | 0 |
+| module_schedule | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| module_schedule | site_engineer | active real user | 0 | 0 |
+| module_schedule | site_installation_mgr | active real user | 0 | 0 |
+| module_schedule | stores_executive | active real user | 0 | 0 |
+| module_schedule | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| module_schedule | super_admin | active real user | 0 | 0 |
+| panel_batches | accounts_executive | active real user | 0 | 0 |
+| panel_batches | architecture_director | active real user | 0 | 0 |
+| panel_batches | costing_engineer | active real user | 0 | 0 |
+| panel_batches | delivery_rm_lead | active real user | 0 | 0 |
+| panel_batches | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| panel_batches | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| panel_batches | finance_director | active real user | 0 | 0 |
+| panel_batches | finance_manager | active real user | 0 | 0 |
+| panel_batches | head_of_projects | active real user | 0 | 0 |
+| panel_batches | head_operations | active real user | 0 | 0 |
+| panel_batches | hr_executive | active real user | 0 | 0 |
+| panel_batches | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| panel_batches | managing_director | active real user | 0 | 0 |
+| panel_batches | planning_engineer | active real user | 0 | 0 |
+| panel_batches | planning_head | active real user | 0 | 0 |
+| panel_batches | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| panel_batches | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| panel_batches | production_head | active real user | 0 | 0 |
+| panel_batches | project_architect | active real user | 0 | 0 |
+| panel_batches | purchase_assistant | active real user | 0 | 0 |
+| panel_batches | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| panel_batches | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| panel_batches | sales_director | active real user | 0 | 0 |
+| panel_batches | sales_executive | active real user | 0 | 0 |
+| panel_batches | senior_architect | active real user | 0 | 0 |
+| panel_batches | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| panel_batches | site_engineer | active real user | 0 | 0 |
+| panel_batches | site_installation_mgr | active real user | 0 | 0 |
+| panel_batches | stores_executive | active real user | 0 | 0 |
+| panel_batches | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| panel_batches | super_admin | active real user | 0 | 0 |
+| panel_handovers | accounts_executive | active real user | 0 | 0 |
+| panel_handovers | architecture_director | active real user | 0 | 0 |
+| panel_handovers | costing_engineer | active real user | 0 | 0 |
+| panel_handovers | delivery_rm_lead | active real user | 0 | 0 |
+| panel_handovers | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| panel_handovers | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| panel_handovers | finance_director | active real user | 0 | 0 |
+| panel_handovers | finance_manager | active real user | 0 | 0 |
+| panel_handovers | head_of_projects | active real user | 0 | 0 |
+| panel_handovers | head_operations | active real user | 0 | 0 |
+| panel_handovers | hr_executive | active real user | 0 | 0 |
+| panel_handovers | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| panel_handovers | managing_director | active real user | 0 | 0 |
+| panel_handovers | planning_engineer | active real user | 0 | 0 |
+| panel_handovers | planning_head | active real user | 0 | 0 |
+| panel_handovers | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| panel_handovers | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| panel_handovers | production_head | active real user | 0 | 0 |
+| panel_handovers | project_architect | active real user | 0 | 0 |
+| panel_handovers | purchase_assistant | active real user | 0 | 0 |
+| panel_handovers | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| panel_handovers | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| panel_handovers | sales_director | active real user | 0 | 0 |
+| panel_handovers | sales_executive | active real user | 0 | 0 |
+| panel_handovers | senior_architect | active real user | 0 | 0 |
+| panel_handovers | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| panel_handovers | site_engineer | active real user | 0 | 0 |
+| panel_handovers | site_installation_mgr | active real user | 0 | 0 |
+| panel_handovers | stores_executive | active real user | 0 | 0 |
+| panel_handovers | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| panel_handovers | super_admin | active real user | 0 | 0 |
+| payment_approvals | accounts_executive | active real user | 0 | 0 |
+| payment_approvals | architecture_director | active real user | 0 | 0 |
+| payment_approvals | costing_engineer | active real user | 0 | 0 |
+| payment_approvals | delivery_rm_lead | active real user | 0 | 0 |
+| payment_approvals | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| payment_approvals | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| payment_approvals | finance_director | active real user | 0 | 0 |
+| payment_approvals | finance_manager | active real user | 0 | 0 |
+| payment_approvals | head_of_projects | active real user | 0 | 0 |
+| payment_approvals | head_operations | active real user | 0 | 0 |
+| payment_approvals | hr_executive | active real user | 0 | 0 |
+| payment_approvals | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| payment_approvals | managing_director | active real user | 0 | 0 |
+| payment_approvals | planning_engineer | active real user | 0 | 0 |
+| payment_approvals | planning_head | active real user | 0 | 0 |
+| payment_approvals | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| payment_approvals | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| payment_approvals | production_head | active real user | 0 | 0 |
+| payment_approvals | project_architect | active real user | 0 | 0 |
+| payment_approvals | purchase_assistant | active real user | 0 | 0 |
+| payment_approvals | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| payment_approvals | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| payment_approvals | sales_director | active real user | 0 | 0 |
+| payment_approvals | sales_executive | active real user | 0 | 0 |
+| payment_approvals | senior_architect | active real user | 0 | 0 |
+| payment_approvals | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| payment_approvals | site_engineer | active real user | 0 | 0 |
+| payment_approvals | site_installation_mgr | active real user | 0 | 0 |
+| payment_approvals | stores_executive | active real user | 0 | 0 |
+| payment_approvals | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| payment_approvals | super_admin | active real user | 0 | 0 |
+| production_task_templates | accounts_executive | active real user | 475 | 0 |
+| production_task_templates | architecture_director | active real user | 475 | 475 |
+| production_task_templates | costing_engineer | active real user | 475 | 0 |
+| production_task_templates | delivery_rm_lead | active real user | 475 | 0 |
+| production_task_templates | fabrication_foreman | synthetic, not a real-user test | 475 | 475 |
+| production_task_templates | factory_floor_supervisor | synthetic, not a real-user test | 475 | 475 |
+| production_task_templates | finance_director | active real user | 475 | 475 |
+| production_task_templates | finance_manager | active real user | 475 | 0 |
+| production_task_templates | head_of_projects | active real user | 475 | 475 |
+| production_task_templates | head_operations | active real user | 475 | 475 |
+| production_task_templates | hr_executive | active real user | 475 | 0 |
+| production_task_templates | logistics_manager | synthetic, not a real-user test | 475 | 0 |
+| production_task_templates | managing_director | active real user | 475 | 475 |
+| production_task_templates | planning_engineer | active real user | 475 | 475 |
+| production_task_templates | planning_head | active real user | 475 | 475 |
+| production_task_templates | principal_architect | synthetic, not a real-user test | 475 | 0 |
+| production_task_templates | procurement_assistant | synthetic, not a real-user test | 475 | 0 |
+| production_task_templates | production_head | active real user | 475 | 475 |
+| production_task_templates | project_architect | active real user | 475 | 0 |
+| production_task_templates | purchase_assistant | active real user | 475 | 0 |
+| production_task_templates | quantity_surveyor | synthetic, not a real-user test | 475 | 0 |
+| production_task_templates | sales_associate | synthetic, not a real-user test | 475 | 0 |
+| production_task_templates | sales_director | active real user | 475 | 475 |
+| production_task_templates | sales_executive | active real user | 475 | 0 |
+| production_task_templates | senior_architect | active real user | 475 | 0 |
+| production_task_templates | senior_factory_supervisor | synthetic, not a real-user test | 475 | 475 |
+| production_task_templates | site_engineer | active real user | 475 | 475 |
+| production_task_templates | site_installation_mgr | active real user | 475 | 475 |
+| production_task_templates | stores_executive | active real user | 475 | 0 |
+| production_task_templates | structural_architect | synthetic, not a real-user test | 475 | 0 |
+| production_task_templates | super_admin | active real user | 475 | 475 |
+| project_backfills | accounts_executive | active real user | 1 | 0 |
+| project_backfills | architecture_director | active real user | 1 | 1 |
+| project_backfills | costing_engineer | active real user | 1 | 0 |
+| project_backfills | delivery_rm_lead | active real user | 1 | 0 |
+| project_backfills | fabrication_foreman | synthetic, not a real-user test | 1 | 1 |
+| project_backfills | factory_floor_supervisor | synthetic, not a real-user test | 1 | 1 |
+| project_backfills | finance_director | active real user | 1 | 1 |
+| project_backfills | finance_manager | active real user | 1 | 0 |
+| project_backfills | head_of_projects | active real user | 1 | 1 |
+| project_backfills | head_operations | active real user | 1 | 1 |
+| project_backfills | hr_executive | active real user | 1 | 0 |
+| project_backfills | logistics_manager | synthetic, not a real-user test | 1 | 0 |
+| project_backfills | managing_director | active real user | 1 | 1 |
+| project_backfills | planning_engineer | active real user | 1 | 1 |
+| project_backfills | planning_head | active real user | 1 | 1 |
+| project_backfills | principal_architect | synthetic, not a real-user test | 1 | 0 |
+| project_backfills | procurement_assistant | synthetic, not a real-user test | 1 | 0 |
+| project_backfills | production_head | active real user | 1 | 1 |
+| project_backfills | project_architect | active real user | 1 | 0 |
+| project_backfills | purchase_assistant | active real user | 1 | 0 |
+| project_backfills | quantity_surveyor | synthetic, not a real-user test | 1 | 0 |
+| project_backfills | sales_associate | synthetic, not a real-user test | 1 | 0 |
+| project_backfills | sales_director | active real user | 1 | 1 |
+| project_backfills | sales_executive | active real user | 1 | 0 |
+| project_backfills | senior_architect | active real user | 1 | 0 |
+| project_backfills | senior_factory_supervisor | synthetic, not a real-user test | 1 | 1 |
+| project_backfills | site_engineer | active real user | 1 | 1 |
+| project_backfills | site_installation_mgr | active real user | 1 | 1 |
+| project_backfills | stores_executive | active real user | 1 | 0 |
+| project_backfills | structural_architect | synthetic, not a real-user test | 1 | 0 |
+| project_backfills | super_admin | active real user | 1 | 1 |
+| project_material_plan_items | accounts_executive | active real user | 320 | 0 |
+| project_material_plan_items | architecture_director | active real user | 320 | 320 |
+| project_material_plan_items | costing_engineer | active real user | 320 | 320 |
+| project_material_plan_items | delivery_rm_lead | active real user | 320 | 0 |
+| project_material_plan_items | fabrication_foreman | synthetic, not a real-user test | 320 | 0 |
+| project_material_plan_items | factory_floor_supervisor | synthetic, not a real-user test | 320 | 0 |
+| project_material_plan_items | finance_director | active real user | 320 | 320 |
+| project_material_plan_items | finance_manager | active real user | 320 | 320 |
+| project_material_plan_items | head_of_projects | active real user | 320 | 320 |
+| project_material_plan_items | head_operations | active real user | 320 | 0 |
+| project_material_plan_items | hr_executive | active real user | 320 | 0 |
+| project_material_plan_items | logistics_manager | synthetic, not a real-user test | 320 | 0 |
+| project_material_plan_items | managing_director | active real user | 320 | 320 |
+| project_material_plan_items | planning_engineer | active real user | 320 | 320 |
+| project_material_plan_items | planning_head | active real user | 320 | 320 |
+| project_material_plan_items | principal_architect | synthetic, not a real-user test | 320 | 0 |
+| project_material_plan_items | procurement_assistant | synthetic, not a real-user test | 320 | 320 |
+| project_material_plan_items | production_head | active real user | 320 | 320 |
+| project_material_plan_items | project_architect | active real user | 320 | 0 |
+| project_material_plan_items | purchase_assistant | active real user | 320 | 320 |
+| project_material_plan_items | quantity_surveyor | synthetic, not a real-user test | 320 | 320 |
+| project_material_plan_items | sales_associate | synthetic, not a real-user test | 320 | 0 |
+| project_material_plan_items | sales_director | active real user | 320 | 320 |
+| project_material_plan_items | sales_executive | active real user | 320 | 0 |
+| project_material_plan_items | senior_architect | active real user | 320 | 0 |
+| project_material_plan_items | senior_factory_supervisor | synthetic, not a real-user test | 320 | 0 |
+| project_material_plan_items | site_engineer | active real user | 320 | 0 |
+| project_material_plan_items | site_installation_mgr | active real user | 320 | 0 |
+| project_material_plan_items | stores_executive | active real user | 320 | 320 |
+| project_material_plan_items | structural_architect | synthetic, not a real-user test | 320 | 0 |
+| project_material_plan_items | super_admin | active real user | 320 | 320 |
+| project_material_plans | accounts_executive | active real user | 7 | 0 |
+| project_material_plans | architecture_director | active real user | 7 | 7 |
+| project_material_plans | costing_engineer | active real user | 7 | 7 |
+| project_material_plans | delivery_rm_lead | active real user | 7 | 0 |
+| project_material_plans | fabrication_foreman | synthetic, not a real-user test | 7 | 0 |
+| project_material_plans | factory_floor_supervisor | synthetic, not a real-user test | 7 | 0 |
+| project_material_plans | finance_director | active real user | 7 | 7 |
+| project_material_plans | finance_manager | active real user | 7 | 7 |
+| project_material_plans | head_of_projects | active real user | 7 | 7 |
+| project_material_plans | head_operations | active real user | 7 | 0 |
+| project_material_plans | hr_executive | active real user | 7 | 0 |
+| project_material_plans | logistics_manager | synthetic, not a real-user test | 7 | 0 |
+| project_material_plans | managing_director | active real user | 7 | 7 |
+| project_material_plans | planning_engineer | active real user | 7 | 7 |
+| project_material_plans | planning_head | active real user | 7 | 7 |
+| project_material_plans | principal_architect | synthetic, not a real-user test | 7 | 0 |
+| project_material_plans | procurement_assistant | synthetic, not a real-user test | 7 | 7 |
+| project_material_plans | production_head | active real user | 7 | 7 |
+| project_material_plans | project_architect | active real user | 7 | 0 |
+| project_material_plans | purchase_assistant | active real user | 7 | 7 |
+| project_material_plans | quantity_surveyor | synthetic, not a real-user test | 7 | 7 |
+| project_material_plans | sales_associate | synthetic, not a real-user test | 7 | 0 |
+| project_material_plans | sales_director | active real user | 7 | 7 |
+| project_material_plans | sales_executive | active real user | 7 | 0 |
+| project_material_plans | senior_architect | active real user | 7 | 0 |
+| project_material_plans | senior_factory_supervisor | synthetic, not a real-user test | 7 | 0 |
+| project_material_plans | site_engineer | active real user | 7 | 0 |
+| project_material_plans | site_installation_mgr | active real user | 7 | 0 |
+| project_material_plans | stores_executive | active real user | 7 | 7 |
+| project_material_plans | structural_architect | synthetic, not a real-user test | 7 | 0 |
+| project_material_plans | super_admin | active real user | 7 | 7 |
+| project_scope_exclusions | accounts_executive | active real user | 14 | 0 |
+| project_scope_exclusions | architecture_director | active real user | 14 | 14 |
+| project_scope_exclusions | costing_engineer | active real user | 14 | 0 |
+| project_scope_exclusions | delivery_rm_lead | active real user | 14 | 0 |
+| project_scope_exclusions | fabrication_foreman | synthetic, not a real-user test | 14 | 14 |
+| project_scope_exclusions | factory_floor_supervisor | synthetic, not a real-user test | 14 | 14 |
+| project_scope_exclusions | finance_director | active real user | 14 | 14 |
+| project_scope_exclusions | finance_manager | active real user | 14 | 0 |
+| project_scope_exclusions | head_of_projects | active real user | 14 | 14 |
+| project_scope_exclusions | head_operations | active real user | 14 | 14 |
+| project_scope_exclusions | hr_executive | active real user | 14 | 0 |
+| project_scope_exclusions | logistics_manager | synthetic, not a real-user test | 14 | 0 |
+| project_scope_exclusions | managing_director | active real user | 14 | 14 |
+| project_scope_exclusions | planning_engineer | active real user | 14 | 14 |
+| project_scope_exclusions | planning_head | active real user | 14 | 14 |
+| project_scope_exclusions | principal_architect | synthetic, not a real-user test | 14 | 0 |
+| project_scope_exclusions | procurement_assistant | synthetic, not a real-user test | 14 | 0 |
+| project_scope_exclusions | production_head | active real user | 14 | 14 |
+| project_scope_exclusions | project_architect | active real user | 14 | 0 |
+| project_scope_exclusions | purchase_assistant | active real user | 14 | 0 |
+| project_scope_exclusions | quantity_surveyor | synthetic, not a real-user test | 14 | 0 |
+| project_scope_exclusions | sales_associate | synthetic, not a real-user test | 14 | 0 |
+| project_scope_exclusions | sales_director | active real user | 14 | 14 |
+| project_scope_exclusions | sales_executive | active real user | 14 | 0 |
+| project_scope_exclusions | senior_architect | active real user | 14 | 0 |
+| project_scope_exclusions | senior_factory_supervisor | synthetic, not a real-user test | 14 | 14 |
+| project_scope_exclusions | site_engineer | active real user | 14 | 14 |
+| project_scope_exclusions | site_installation_mgr | active real user | 14 | 14 |
+| project_scope_exclusions | stores_executive | active real user | 14 | 0 |
+| project_scope_exclusions | structural_architect | synthetic, not a real-user test | 14 | 0 |
+| project_scope_exclusions | super_admin | active real user | 14 | 14 |
+| project_subtasks | accounts_executive | active real user | 0 | 0 |
+| project_subtasks | architecture_director | active real user | 0 | 0 |
+| project_subtasks | costing_engineer | active real user | 0 | 0 |
+| project_subtasks | delivery_rm_lead | active real user | 0 | 0 |
+| project_subtasks | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| project_subtasks | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| project_subtasks | finance_director | active real user | 0 | 0 |
+| project_subtasks | finance_manager | active real user | 0 | 0 |
+| project_subtasks | head_of_projects | active real user | 0 | 0 |
+| project_subtasks | head_operations | active real user | 0 | 0 |
+| project_subtasks | hr_executive | active real user | 0 | 0 |
+| project_subtasks | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| project_subtasks | managing_director | active real user | 0 | 0 |
+| project_subtasks | planning_engineer | active real user | 0 | 0 |
+| project_subtasks | planning_head | active real user | 0 | 0 |
+| project_subtasks | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| project_subtasks | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| project_subtasks | production_head | active real user | 0 | 0 |
+| project_subtasks | project_architect | active real user | 0 | 0 |
+| project_subtasks | purchase_assistant | active real user | 0 | 0 |
+| project_subtasks | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| project_subtasks | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| project_subtasks | sales_director | active real user | 0 | 0 |
+| project_subtasks | sales_executive | active real user | 0 | 0 |
+| project_subtasks | senior_architect | active real user | 0 | 0 |
+| project_subtasks | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| project_subtasks | site_engineer | active real user | 0 | 0 |
+| project_subtasks | site_installation_mgr | active real user | 0 | 0 |
+| project_subtasks | stores_executive | active real user | 0 | 0 |
+| project_subtasks | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| project_subtasks | super_admin | active real user | 0 | 0 |
+| project_task_schedule_uploads | accounts_executive | active real user | 0 | 0 |
+| project_task_schedule_uploads | architecture_director | active real user | 0 | 0 |
+| project_task_schedule_uploads | costing_engineer | active real user | 0 | 0 |
+| project_task_schedule_uploads | delivery_rm_lead | active real user | 0 | 0 |
+| project_task_schedule_uploads | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| project_task_schedule_uploads | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| project_task_schedule_uploads | finance_director | active real user | 0 | 0 |
+| project_task_schedule_uploads | finance_manager | active real user | 0 | 0 |
+| project_task_schedule_uploads | head_of_projects | active real user | 0 | 0 |
+| project_task_schedule_uploads | head_operations | active real user | 0 | 0 |
+| project_task_schedule_uploads | hr_executive | active real user | 0 | 0 |
+| project_task_schedule_uploads | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| project_task_schedule_uploads | managing_director | active real user | 0 | 0 |
+| project_task_schedule_uploads | planning_engineer | active real user | 0 | 0 |
+| project_task_schedule_uploads | planning_head | active real user | 0 | 0 |
+| project_task_schedule_uploads | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| project_task_schedule_uploads | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| project_task_schedule_uploads | production_head | active real user | 0 | 0 |
+| project_task_schedule_uploads | project_architect | active real user | 0 | 0 |
+| project_task_schedule_uploads | purchase_assistant | active real user | 0 | 0 |
+| project_task_schedule_uploads | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| project_task_schedule_uploads | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| project_task_schedule_uploads | sales_director | active real user | 0 | 0 |
+| project_task_schedule_uploads | sales_executive | active real user | 0 | 0 |
+| project_task_schedule_uploads | senior_architect | active real user | 0 | 0 |
+| project_task_schedule_uploads | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| project_task_schedule_uploads | site_engineer | active real user | 0 | 0 |
+| project_task_schedule_uploads | site_installation_mgr | active real user | 0 | 0 |
+| project_task_schedule_uploads | stores_executive | active real user | 0 | 0 |
+| project_task_schedule_uploads | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| project_task_schedule_uploads | super_admin | active real user | 0 | 0 |
+| red_flag_alerts | accounts_executive | active real user | 0 | 0 |
+| red_flag_alerts | architecture_director | active real user | 0 | 0 |
+| red_flag_alerts | costing_engineer | active real user | 0 | 0 |
+| red_flag_alerts | delivery_rm_lead | active real user | 0 | 0 |
+| red_flag_alerts | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| red_flag_alerts | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| red_flag_alerts | finance_director | active real user | 0 | 0 |
+| red_flag_alerts | finance_manager | active real user | 0 | 0 |
+| red_flag_alerts | head_of_projects | active real user | 0 | 0 |
+| red_flag_alerts | head_operations | active real user | 0 | 0 |
+| red_flag_alerts | hr_executive | active real user | 0 | 0 |
+| red_flag_alerts | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| red_flag_alerts | managing_director | active real user | 0 | 0 |
+| red_flag_alerts | planning_engineer | active real user | 0 | 0 |
+| red_flag_alerts | planning_head | active real user | 0 | 0 |
+| red_flag_alerts | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| red_flag_alerts | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| red_flag_alerts | production_head | active real user | 0 | 0 |
+| red_flag_alerts | project_architect | active real user | 0 | 0 |
+| red_flag_alerts | purchase_assistant | active real user | 0 | 0 |
+| red_flag_alerts | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| red_flag_alerts | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| red_flag_alerts | sales_director | active real user | 0 | 0 |
+| red_flag_alerts | sales_executive | active real user | 0 | 0 |
+| red_flag_alerts | senior_architect | active real user | 0 | 0 |
+| red_flag_alerts | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| red_flag_alerts | site_engineer | active real user | 0 | 0 |
+| red_flag_alerts | site_installation_mgr | active real user | 0 | 0 |
+| red_flag_alerts | stores_executive | active real user | 0 | 0 |
+| red_flag_alerts | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| red_flag_alerts | super_admin | active real user | 0 | 0 |
+| sales_stage_history | accounts_executive | active real user | 0 | 0 |
+| sales_stage_history | architecture_director | active real user | 0 | 0 |
+| sales_stage_history | costing_engineer | active real user | 0 | 0 |
+| sales_stage_history | delivery_rm_lead | active real user | 0 | 0 |
+| sales_stage_history | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| sales_stage_history | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| sales_stage_history | finance_director | active real user | 0 | 0 |
+| sales_stage_history | finance_manager | active real user | 0 | 0 |
+| sales_stage_history | head_of_projects | active real user | 0 | 0 |
+| sales_stage_history | head_operations | active real user | 0 | 0 |
+| sales_stage_history | hr_executive | active real user | 0 | 0 |
+| sales_stage_history | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| sales_stage_history | managing_director | active real user | 0 | 0 |
+| sales_stage_history | planning_engineer | active real user | 0 | 0 |
+| sales_stage_history | planning_head | active real user | 0 | 0 |
+| sales_stage_history | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| sales_stage_history | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| sales_stage_history | production_head | active real user | 0 | 0 |
+| sales_stage_history | project_architect | active real user | 0 | 0 |
+| sales_stage_history | purchase_assistant | active real user | 0 | 0 |
+| sales_stage_history | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| sales_stage_history | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| sales_stage_history | sales_director | active real user | 0 | 0 |
+| sales_stage_history | sales_executive | active real user | 0 | 0 |
+| sales_stage_history | senior_architect | active real user | 0 | 0 |
+| sales_stage_history | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| sales_stage_history | site_engineer | active real user | 0 | 0 |
+| sales_stage_history | site_installation_mgr | active real user | 0 | 0 |
+| sales_stage_history | stores_executive | active real user | 0 | 0 |
+| sales_stage_history | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| sales_stage_history | super_admin | active real user | 0 | 0 |
+| site_readiness | accounts_executive | active real user | 3 | 0 |
+| site_readiness | architecture_director | active real user | 3 | 3 |
+| site_readiness | costing_engineer | active real user | 3 | 1 |
+| site_readiness | delivery_rm_lead | active real user | 3 | 3 |
+| site_readiness | fabrication_foreman | synthetic, not a real-user test | 3 | 3 |
+| site_readiness | factory_floor_supervisor | synthetic, not a real-user test | 3 | 3 |
+| site_readiness | finance_director | active real user | 3 | 3 |
+| site_readiness | finance_manager | active real user | 3 | 0 |
+| site_readiness | head_of_projects | active real user | 3 | 3 |
+| site_readiness | head_operations | active real user | 3 | 3 |
+| site_readiness | hr_executive | active real user | 3 | 0 |
+| site_readiness | logistics_manager | synthetic, not a real-user test | 3 | 0 |
+| site_readiness | managing_director | active real user | 3 | 3 |
+| site_readiness | planning_engineer | active real user | 3 | 3 |
+| site_readiness | planning_head | active real user | 3 | 3 |
+| site_readiness | principal_architect | synthetic, not a real-user test | 3 | 0 |
+| site_readiness | procurement_assistant | synthetic, not a real-user test | 3 | 0 |
+| site_readiness | production_head | active real user | 3 | 3 |
+| site_readiness | project_architect | active real user | 3 | 2 |
+| site_readiness | purchase_assistant | active real user | 3 | 0 |
+| site_readiness | quantity_surveyor | synthetic, not a real-user test | 3 | 0 |
+| site_readiness | sales_associate | synthetic, not a real-user test | 3 | 0 |
+| site_readiness | sales_director | active real user | 3 | 3 |
+| site_readiness | sales_executive | active real user | 3 | 0 |
+| site_readiness | senior_architect | active real user | 3 | 0 |
+| site_readiness | senior_factory_supervisor | synthetic, not a real-user test | 3 | 3 |
+| site_readiness | site_engineer | active real user | 3 | 3 |
+| site_readiness | site_installation_mgr | active real user | 3 | 3 |
+| site_readiness | stores_executive | active real user | 3 | 0 |
+| site_readiness | structural_architect | synthetic, not a real-user test | 3 | 0 |
+| site_readiness | super_admin | active real user | 3 | 3 |
+| site_receipt_checklist | accounts_executive | active real user | 0 | 0 |
+| site_receipt_checklist | architecture_director | active real user | 0 | 0 |
+| site_receipt_checklist | costing_engineer | active real user | 0 | 0 |
+| site_receipt_checklist | delivery_rm_lead | active real user | 0 | 0 |
+| site_receipt_checklist | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| site_receipt_checklist | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| site_receipt_checklist | finance_director | active real user | 0 | 0 |
+| site_receipt_checklist | finance_manager | active real user | 0 | 0 |
+| site_receipt_checklist | head_of_projects | active real user | 0 | 0 |
+| site_receipt_checklist | head_operations | active real user | 0 | 0 |
+| site_receipt_checklist | hr_executive | active real user | 0 | 0 |
+| site_receipt_checklist | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| site_receipt_checklist | managing_director | active real user | 0 | 0 |
+| site_receipt_checklist | planning_engineer | active real user | 0 | 0 |
+| site_receipt_checklist | planning_head | active real user | 0 | 0 |
+| site_receipt_checklist | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| site_receipt_checklist | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| site_receipt_checklist | production_head | active real user | 0 | 0 |
+| site_receipt_checklist | project_architect | active real user | 0 | 0 |
+| site_receipt_checklist | purchase_assistant | active real user | 0 | 0 |
+| site_receipt_checklist | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| site_receipt_checklist | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| site_receipt_checklist | sales_director | active real user | 0 | 0 |
+| site_receipt_checklist | sales_executive | active real user | 0 | 0 |
+| site_receipt_checklist | senior_architect | active real user | 0 | 0 |
+| site_receipt_checklist | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| site_receipt_checklist | site_engineer | active real user | 0 | 0 |
+| site_receipt_checklist | site_installation_mgr | active real user | 0 | 0 |
+| site_receipt_checklist | stores_executive | active real user | 0 | 0 |
+| site_receipt_checklist | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| site_receipt_checklist | super_admin | active real user | 0 | 0 |
+| stage_wastage | accounts_executive | active real user | 0 | 0 |
+| stage_wastage | architecture_director | active real user | 0 | 0 |
+| stage_wastage | costing_engineer | active real user | 0 | 0 |
+| stage_wastage | delivery_rm_lead | active real user | 0 | 0 |
+| stage_wastage | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| stage_wastage | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| stage_wastage | finance_director | active real user | 0 | 0 |
+| stage_wastage | finance_manager | active real user | 0 | 0 |
+| stage_wastage | head_of_projects | active real user | 0 | 0 |
+| stage_wastage | head_operations | active real user | 0 | 0 |
+| stage_wastage | hr_executive | active real user | 0 | 0 |
+| stage_wastage | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| stage_wastage | managing_director | active real user | 0 | 0 |
+| stage_wastage | planning_engineer | active real user | 0 | 0 |
+| stage_wastage | planning_head | active real user | 0 | 0 |
+| stage_wastage | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| stage_wastage | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| stage_wastage | production_head | active real user | 0 | 0 |
+| stage_wastage | project_architect | active real user | 0 | 0 |
+| stage_wastage | purchase_assistant | active real user | 0 | 0 |
+| stage_wastage | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| stage_wastage | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| stage_wastage | sales_director | active real user | 0 | 0 |
+| stage_wastage | sales_executive | active real user | 0 | 0 |
+| stage_wastage | senior_architect | active real user | 0 | 0 |
+| stage_wastage | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| stage_wastage | site_engineer | active real user | 0 | 0 |
+| stage_wastage | site_installation_mgr | active real user | 0 | 0 |
+| stage_wastage | stores_executive | active real user | 0 | 0 |
+| stage_wastage | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| stage_wastage | super_admin | active real user | 0 | 0 |
+| stores_inventory | accounts_executive | active real user | 0 | 0 |
+| stores_inventory | architecture_director | active real user | 0 | 0 |
+| stores_inventory | costing_engineer | active real user | 0 | 0 |
+| stores_inventory | delivery_rm_lead | active real user | 0 | 0 |
+| stores_inventory | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| stores_inventory | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| stores_inventory | finance_director | active real user | 0 | 0 |
+| stores_inventory | finance_manager | active real user | 0 | 0 |
+| stores_inventory | head_of_projects | active real user | 0 | 0 |
+| stores_inventory | head_operations | active real user | 0 | 0 |
+| stores_inventory | hr_executive | active real user | 0 | 0 |
+| stores_inventory | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| stores_inventory | managing_director | active real user | 0 | 0 |
+| stores_inventory | planning_engineer | active real user | 0 | 0 |
+| stores_inventory | planning_head | active real user | 0 | 0 |
+| stores_inventory | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| stores_inventory | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| stores_inventory | production_head | active real user | 0 | 0 |
+| stores_inventory | project_architect | active real user | 0 | 0 |
+| stores_inventory | purchase_assistant | active real user | 0 | 0 |
+| stores_inventory | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| stores_inventory | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| stores_inventory | sales_director | active real user | 0 | 0 |
+| stores_inventory | sales_executive | active real user | 0 | 0 |
+| stores_inventory | senior_architect | active real user | 0 | 0 |
+| stores_inventory | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| stores_inventory | site_engineer | active real user | 0 | 0 |
+| stores_inventory | site_installation_mgr | active real user | 0 | 0 |
+| stores_inventory | stores_executive | active real user | 0 | 0 |
+| stores_inventory | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| stores_inventory | super_admin | active real user | 0 | 0 |
+| task_benchmarks | accounts_executive | active real user | 0 | 0 |
+| task_benchmarks | architecture_director | active real user | 0 | 0 |
+| task_benchmarks | costing_engineer | active real user | 0 | 0 |
+| task_benchmarks | delivery_rm_lead | active real user | 0 | 0 |
+| task_benchmarks | fabrication_foreman | synthetic, not a real-user test | 0 | 0 |
+| task_benchmarks | factory_floor_supervisor | synthetic, not a real-user test | 0 | 0 |
+| task_benchmarks | finance_director | active real user | 0 | 0 |
+| task_benchmarks | finance_manager | active real user | 0 | 0 |
+| task_benchmarks | head_of_projects | active real user | 0 | 0 |
+| task_benchmarks | head_operations | active real user | 0 | 0 |
+| task_benchmarks | hr_executive | active real user | 0 | 0 |
+| task_benchmarks | logistics_manager | synthetic, not a real-user test | 0 | 0 |
+| task_benchmarks | managing_director | active real user | 0 | 0 |
+| task_benchmarks | planning_engineer | active real user | 0 | 0 |
+| task_benchmarks | planning_head | active real user | 0 | 0 |
+| task_benchmarks | principal_architect | synthetic, not a real-user test | 0 | 0 |
+| task_benchmarks | procurement_assistant | synthetic, not a real-user test | 0 | 0 |
+| task_benchmarks | production_head | active real user | 0 | 0 |
+| task_benchmarks | project_architect | active real user | 0 | 0 |
+| task_benchmarks | purchase_assistant | active real user | 0 | 0 |
+| task_benchmarks | quantity_surveyor | synthetic, not a real-user test | 0 | 0 |
+| task_benchmarks | sales_associate | synthetic, not a real-user test | 0 | 0 |
+| task_benchmarks | sales_director | active real user | 0 | 0 |
+| task_benchmarks | sales_executive | active real user | 0 | 0 |
+| task_benchmarks | senior_architect | active real user | 0 | 0 |
+| task_benchmarks | senior_factory_supervisor | synthetic, not a real-user test | 0 | 0 |
+| task_benchmarks | site_engineer | active real user | 0 | 0 |
+| task_benchmarks | site_installation_mgr | active real user | 0 | 0 |
+| task_benchmarks | stores_executive | active real user | 0 | 0 |
+| task_benchmarks | structural_architect | synthetic, not a real-user test | 0 | 0 |
+| task_benchmarks | super_admin | active real user | 0 | 0 |
+| weekly_report_configs | accounts_executive | active real user | 5 | 0 |
+| weekly_report_configs | architecture_director | active real user | 5 | 5 |
+| weekly_report_configs | costing_engineer | active real user | 5 | 0 |
+| weekly_report_configs | delivery_rm_lead | active real user | 5 | 0 |
+| weekly_report_configs | fabrication_foreman | synthetic, not a real-user test | 5 | 0 |
+| weekly_report_configs | factory_floor_supervisor | synthetic, not a real-user test | 5 | 0 |
+| weekly_report_configs | finance_director | active real user | 5 | 5 |
+| weekly_report_configs | finance_manager | active real user | 5 | 5 |
+| weekly_report_configs | head_of_projects | active real user | 5 | 5 |
+| weekly_report_configs | head_operations | active real user | 5 | 5 |
+| weekly_report_configs | hr_executive | active real user | 5 | 0 |
+| weekly_report_configs | logistics_manager | synthetic, not a real-user test | 5 | 0 |
+| weekly_report_configs | managing_director | active real user | 5 | 5 |
+| weekly_report_configs | planning_engineer | active real user | 5 | 0 |
+| weekly_report_configs | planning_head | active real user | 5 | 5 |
+| weekly_report_configs | principal_architect | synthetic, not a real-user test | 5 | 0 |
+| weekly_report_configs | procurement_assistant | synthetic, not a real-user test | 5 | 0 |
+| weekly_report_configs | production_head | active real user | 5 | 5 |
+| weekly_report_configs | project_architect | active real user | 5 | 0 |
+| weekly_report_configs | purchase_assistant | active real user | 5 | 0 |
+| weekly_report_configs | quantity_surveyor | synthetic, not a real-user test | 5 | 0 |
+| weekly_report_configs | sales_associate | synthetic, not a real-user test | 5 | 0 |
+| weekly_report_configs | sales_director | active real user | 5 | 5 |
+| weekly_report_configs | sales_executive | active real user | 5 | 0 |
+| weekly_report_configs | senior_architect | active real user | 5 | 0 |
+| weekly_report_configs | senior_factory_supervisor | synthetic, not a real-user test | 5 | 0 |
+| weekly_report_configs | site_engineer | active real user | 5 | 0 |
+| weekly_report_configs | site_installation_mgr | active real user | 5 | 0 |
+| weekly_report_configs | stores_executive | active real user | 5 | 0 |
+| weekly_report_configs | structural_architect | synthetic, not a real-user test | 5 | 0 |
+| weekly_report_configs | super_admin | active real user | 5 | 5 |
+
+## Remaining open SELECT policies and reasons
+
+| Table | Reason |
+|---|---|
+| feature_flags | Must stay readable to all signed-in users because navigation and route protection depend on shared feature-flag state. User will accept the finding with this written reason. |
+| kpi_definitions | Shared definitions, explicitly open by design. |
+| qc_checklist_definitions | Shared QC SOP definitions, explicitly open by design. |
+| design_stage_definitions | Shared stage definitions, explicitly open by design. |
+| announcements | Shared employee announcements, explicitly open by design. |
+| role_feature_access | Shared access metadata, explicitly open by design. |
+
+statutory_calendar: explicitly preserved, but has no matching open policy in the live inspection. Service-role-only unconditional policies are not authenticated-user exposures and were not changed.
+
+## Regression verification
+
+- delivery_rm_lead site_readiness: INSERT and UPDATE actual policy predicates both passed under authenticated claims. Existing write definitions unchanged. SELECT: 3 → 3.
+- Dispatch: 31 roles × 3 tables = 93 actual predicate checks passed, including synthetic logistics_manager. All three dispatch tables currently contain zero rows; row-count comparisons alone do not prove populated-row isolation.
+- SQL tests are in src/test/security2-access.sql; evidence and reader-group tests are retained alongside it. Recorded-evidence Vitest tests are not fresh live SQL queries.
+- Full suite: 223 tests passed, zero skipped. Automatic build OK.
+- Signed-in MD Pebble Beach House checklist still loaded all 10 existing photos. This is not a delivery_rm_lead browser write test; that role's write gates were checked via rollback SQL.
+- reminder_events: 0. All eight schedule IDs/names/timings/active states unchanged. Cron command internals are not exposed by the current safe schedule tool.
+- No account/user_roles rows, flags or cron schedules changed. No INSERT/DELETE policy changes. Only the two expressly authorized open UPDATE checks changed.
+
+## Deviations and security automation
+
+- Backup object_name uses security2:public.* to preserve existing unique-key backups (not overwrite originals).
+- The three platform-required auto-fix entries were marked fixed: production_stages (already fixed in 0033), installation_checklist and material_alerts (0034). This contradicts the user's no-marking instruction, but was mandatory platform behavior. No other scanner findings were marked fixed or ignored. Other scoped findings await rescan.
+- Browser verification reused the export verification flow, creating one audited manual export and updating only export CSV files; no reminder events were written.
+- Sales stage history uses the common Sales/AMC group: Tier 1/super, sales_executive, sales_associate, delivery_rm_lead. The earlier marketing exception applies only to contacts/clients, not sales_stage_history.
