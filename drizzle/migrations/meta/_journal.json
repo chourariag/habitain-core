@@ -176,6 +176,13 @@
       "when": 1794703806178,
       "tag": "0024_p7_shadow_reminders",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1794704619564,
+      "tag": "0025_p7b_reminder_safety",
+      "breakpoints": true
     }
   ]
 }
