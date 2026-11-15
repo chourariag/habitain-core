@@ -1,5 +1,13 @@
 # Scheduled Job Backup
 
+## P7: reminders-hourly
+
+Added 15/11/2026. Runs hourly at minute 5 UTC (24 runs/day); a due reminder may wait up to one hour. Reminders flag OFF and all rules Shadow at rollout. No previous job changed.
+
+```sql
+SELECT cron.schedule('reminders-hourly', '5 * * * *', $$SELECT public.run_reminders(false);$$);
+```
+
 **Snapshot:** 11 November 2026 UTC, before pausing any jobs.
 **Scope:** All 35 active jobs, with complete definitions and UTC schedules preserved for restoration. Credential literals are redacted and project URLs are replaced with `<CLOUD_URL>` in this documentation copy.
 
