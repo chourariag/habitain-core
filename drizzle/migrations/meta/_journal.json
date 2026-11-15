@@ -204,6 +204,13 @@
       "when": 1794707219490,
       "tag": "0028_p7d_project_level3_48_hours",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1794708079459,
+      "tag": "0029_parity2a_legacy_director_tier",
+      "breakpoints": true
     }
   ]
 }
