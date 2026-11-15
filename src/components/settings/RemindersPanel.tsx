@@ -13,6 +13,7 @@ import { ROLE_LABELS } from "@/lib/roles";
 import { Play, Save, Check } from "lucide-react";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
+import { escalationHoursError } from "@/lib/reminder-validation";
 
 type Rule = Database["public"]["Tables"]["reminder_rules"]["Row"];
 type Level = Database["public"]["Tables"]["escalation_levels"]["Row"];
@@ -46,11 +47,12 @@ function LevelRow({ initial, editable, refresh }: { initial: Level; editable: bo
   const [hours, setHours] = useState(initial.after_hours);
   const [role, setRole] = useState(initial.notify_role);
   const [busy, setBusy] = useState(false);
+  const hoursError = escalationHoursError(initial.rule_key, hours);
   return <div className="grid grid-cols-1 gap-2 border-b border-border py-3 sm:grid-cols-[5rem_6rem_1fr_auto] sm:items-center">
     <span className="text-sm">Level {initial.level}</span>
-    <Label className="space-y-1 text-xs">After hours<Input aria-label={`${initial.rule_key} level ${initial.level} hours`} type="number" min={0} value={hours} disabled={!editable} onChange={e => setHours(Number(e.target.value))} /></Label>
+    <Label className="space-y-1 text-xs">After hours<Input aria-label={`${initial.rule_key} level ${initial.level} hours`} type="number" min={0} value={hours} disabled={!editable} aria-invalid={!!hoursError} onChange={e => setHours(Number(e.target.value))} />{hoursError && <span className="block text-destructive" role="alert">{hoursError}</span>}</Label>
     <Select value={role} disabled={!editable} onValueChange={setRole}><SelectTrigger aria-label={`${initial.rule_key} level ${initial.level} role`}><SelectValue /></SelectTrigger><SelectContent><SelectItem value="owner">Owner</SelectItem>{Object.entries(ROLE_LABELS).map(([key, label]) => <SelectItem key={key} value={key}>{label}</SelectItem>)}</SelectContent></Select>
-    {editable && <Button size="sm" variant="outline" disabled={busy || hours < 0} onClick={async () => { setBusy(true); const { error } = await supabase.rpc("update_escalation_level", { p_key: initial.rule_key, p_level: initial.level, p_hours: hours, p_role: role }); setBusy(false); if (error) { console.error(error); toast.error(error.message); } else { toast.success("Escalation saved"); refresh(); } }}><Save className="mr-2 h-4 w-4" />Save level</Button>}
+    {editable && <Button size="sm" variant="outline" disabled={busy || hours < 0 || !!hoursError} onClick={async () => { setBusy(true); const { error } = await supabase.rpc("update_escalation_level", { p_key: initial.rule_key, p_level: initial.level, p_hours: hours, p_role: role }); setBusy(false); if (error) { console.error(error); toast.error(error.message); } else { toast.success("Escalation saved"); refresh(); } }}><Save className="mr-2 h-4 w-4" />Save level</Button>}
   </div>;
 }
 
