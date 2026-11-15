@@ -17140,6 +17140,8 @@ export type Database = {
       is_sales_writer: { Args: { _user_id: string }; Returns: boolean }
       is_tally_ingest_admin: { Args: { _uid: string }; Returns: boolean }
       is_tally_ingest_viewer: { Args: { _uid: string }; Returns: boolean }
+      is_tier1: { Args: { _uid: string }; Returns: boolean }
+      is_tier1_or_super: { Args: { _uid: string }; Returns: boolean }
       is_variation_approver: { Args: { _uid: string }; Returns: boolean }
       is_win_sync_approver: { Args: { _uid: string }; Returns: boolean }
       kickoff_meeting_daily_reminders: { Args: never; Returns: undefined }
@@ -17181,6 +17183,10 @@ export type Database = {
       reminder_expected_day: {
         Args: { p_date: string; p_project: string }
         Returns: boolean
+      }
+      reminder_recipient_ids: {
+        Args: { p_owner: string; p_project: string; p_role: string }
+        Returns: string[]
       }
       reminder_subjects: {
         Args: { p_now?: string }
