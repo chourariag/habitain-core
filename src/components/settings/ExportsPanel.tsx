@@ -13,6 +13,7 @@ const date = (value: string) => new Date(value).toLocaleString('en-GB', { timeZo
 
 export function ExportsPanel() {
   const { isEnabled } = useFeatureFlags();
+  const enabled = isEnabled('exports');
   const [runs, setRuns] = useState<Run[]>([]);
   const [tokens, setTokens] = useState<Token[]>([]);
   const [sizes, setSizes] = useState<Sizes | null>(null);
@@ -27,8 +28,8 @@ export function ExportsPanel() {
     if (error || admin.error) { toast.error('Export history could not be loaded'); return; }
     setRuns(data ?? []); setTokens(admin.data.tokens ?? []); setSizes(admin.data.sizes ?? null);
   };
-  useEffect(() => { if (isEnabled('exports')) void load(); }, [isEnabled]);
-  if (!isEnabled('exports')) return null;
+  useEffect(() => { if (enabled) void load(); }, [enabled]);
+  if (!enabled) return null;
   const action = async (fn: string, body: Record<string, unknown>) => {
     setBusy(true);
     try {
