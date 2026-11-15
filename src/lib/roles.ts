@@ -58,6 +58,7 @@ export const ROLE_LABELS: Record<string, string> = {
 export const ROLE_TIERS: Record<string, AppRole[]> = {
   "Tier 0 — Super Admin": ["super_admin" as AppRole],
   "Tier 1 — Directors & MD": [...TIER1_ROLES],
+  "Chairman": ["chairman"],
   "Tier 2 — Functional Heads": ["head_operations", "head_of_projects" as AppRole, "planning_head" as AppRole, "production_head", "finance_manager", "planning_engineer", "costing_engineer", "quantity_surveyor"] as AppRole[],
   "Tier 3 — Site & Delivery": ["site_installation_mgr", "site_engineer" as AppRole, "delivery_rm_lead", "logistics_manager" as AppRole, "assistant_manager" as AppRole] as AppRole[],
 
