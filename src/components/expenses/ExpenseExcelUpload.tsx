@@ -11,6 +11,8 @@ import { format, parse, isValid, isFuture, startOfMonth, subMonths } from "date-
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
+import { Textarea } from "@/components/ui/textarea";
+import { computeWarnings, isDuplicate, matchProject, reasonOk, WARNING_LABELS, MIN_REASON, type ExpenseWarning } from "@/lib/expense-policy";
 
 const VALID_CATEGORIES = [
   "Travel by Car",
@@ -47,6 +49,12 @@ interface ParsedRow {
   projectName: string;
   receiptAvailable: boolean;
   notes: string;
+  vendor: string;
+  billNo: string;
+  projectCode: string;
+  projectId: string | null;
+  fatal: boolean;
+  warnings: ExpenseWarning[];
   errors: string[];
   calculatedAmount: number;
 }
@@ -61,9 +69,15 @@ export function ExpenseExcelUpload() {
   const [parsedRows, setParsedRows] = useState<ParsedRow[] | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [fileName, setFileName] = useState("");
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [warningReason, setWarningReason] = useState("");
 
   
   const window = getSubmissionWindow();
+
+  useEffect(() => {
+    supabase.from("projects").select("id, name").then(({ data }) => setProjects((data ?? []) as any[]));
+  }, []);
 
   useEffect(() => {
     supabase.from("hr_settings").select("key, value").in("key", ["car_rate_per_km", "bike_rate_per_km"]).then(({ data }) => {
@@ -89,7 +103,7 @@ export function ExpenseExcelUpload() {
     setFileName(file.name);
 
     const reader = new FileReader();
-    reader.onload = (evt) => {
+    reader.onload = async (evt) => {
       const data = new Uint8Array(evt.target?.result as ArrayBuffer);
       const wb = XLSX.read(data, { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
@@ -108,6 +122,7 @@ export function ExpenseExcelUpload() {
         if (String(r[0] || "").includes("CONVEYANCE RATES")) break;
 
         const errors: string[] = [];
+        let fatal = false;
         const dateStr = String(r[0] || "").trim();
         let parsedDate: Date | null = null;
 
@@ -120,6 +135,7 @@ export function ExpenseExcelUpload() {
           }
           if (!isValid(parsedDate)) {
             errors.push("Invalid date format — use DD/MM/YYYY");
+            fatal = true;
             parsedDate = null;
           } else if (isFuture(parsedDate)) {
             errors.push("Date cannot be in the future");
@@ -128,6 +144,7 @@ export function ExpenseExcelUpload() {
           }
         } else {
           errors.push("Date is required");
+          fatal = true;
         }
 
         const category = String(r[1] || "").trim();
@@ -161,7 +178,22 @@ export function ExpenseExcelUpload() {
           errors.push("Receipt must be Yes or No");
         }
 
+        const vendor = String(r[11] ?? "").trim();
+        const billNo = String(r[12] ?? "").trim();
+        const projectCode = String(r[13] ?? "").trim();
+        let projectId: string | null = null;
+        if (projectCode) {
+          const p = matchProject(projectCode, projects);
+          if (!p) { errors.push(`Unknown project code "${projectCode}"`); fatal = true; }
+          else projectId = p.id;
+        }
+        const dup = errors.length === 0 ? await isDuplicate(vendor, billNo, calculatedAmount) : false;
+        const warnings = parsedDate && isValid(parsedDate)
+          ? computeWarnings({ entryDate: parsedDate, receiptMissing: true, duplicate: dup, categoryCap: null, amount: calculatedAmount })
+          : [];
+
         parsed.push({
+          vendor, billNo, projectCode, projectId, fatal, warnings,
           rowNum: i + 4,
           date: dateStr,
           parsedDate,
@@ -177,6 +209,7 @@ export function ExpenseExcelUpload() {
         });
       }
 
+      setWarningReason("");
       setParsedRows(parsed);
     };
     reader.readAsArrayBuffer(file);
@@ -184,12 +217,18 @@ export function ExpenseExcelUpload() {
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  const validRows = parsedRows?.filter((r) => r.errors.length === 0) ?? [];
+  const fileRejected = parsedRows?.some((r) => r.fatal) ?? false;
+  const validRows = fileRejected ? [] : (parsedRows?.filter((r) => r.errors.length === 0) ?? []);
+  const anyWarnings = validRows.some((r) => r.warnings.length > 0);
   const errorRows = parsedRows?.filter((r) => r.errors.length > 0) ?? [];
   const totalAmount = validRows.reduce((s, r) => s + r.calculatedAmount, 0);
 
   const handleSubmit = async () => {
-    if (!user || !validRows.length) return;
+    if (!user || !validRows.length || fileRejected) return;
+    if (anyWarnings && !reasonOk(warningReason)) {
+      toast.error(`Type a reason for the warnings (at least ${MIN_REASON} characters)`);
+      return;
+    }
     setSubmitting(true);
 
     const targetUserId = user.id;
@@ -221,13 +260,20 @@ export function ExpenseExcelUpload() {
         report_period: reportPeriod,
         submission_method: "excel_upload",
         uploaded_on_behalf_of: null,
-        project_id: null,
+        project_id: r.projectId,
+        vendor: r.vendor || null,
+        bill_no: r.billNo || null,
+        receipt_path: null,
+        receipt_flags: ["receipt_missing"],
+        policy_warnings: r.warnings,
+        warning_reason: r.warnings.length ? warningReason.trim() : null,
       } as any;
     });
 
     const { error } = await supabase.from("expense_entries").insert(entries);
     if (error) {
-      toast.error("Upload failed: " + error.message);
+      console.error("expense excel insert failed", error);
+      toast.error("Upload failed. Nothing was saved — please try again.");
       setSubmitting(false);
       return;
     }
@@ -300,7 +346,7 @@ export function ExpenseExcelUpload() {
               <table className="w-full text-xs">
                 <thead>
                   <tr style={{ backgroundColor: "#F7F7F7" }}>
-                    {["#", "Date", "Category", "Description", "Dist.", "Amount ₹", "Status"].map((h) => (
+                    {["#", "Date", "Category", "Description", "Dist.", "Amount ₹", "Vendor / Bill", "Project", "Status"].map((h) => (
                       <th key={h} className="px-2 py-1.5 text-left font-semibold uppercase tracking-wider" style={{ color: "#666", fontSize: 10 }}>{h}</th>
                     ))}
                   </tr>
@@ -318,11 +364,16 @@ export function ExpenseExcelUpload() {
                         <td className="px-2 py-1.5 font-inter font-semibold" style={{ color: "#006039" }}>
                           {r.calculatedAmount > 0 ? `₹${r.calculatedAmount.toLocaleString("en-IN")}` : "—"}
                         </td>
+                        <td className="px-2 py-1.5">{r.vendor || "—"}{r.billNo ? ` · ${r.billNo}` : ""}</td>
+                        <td className="px-2 py-1.5">{r.projectCode ? (projects.find((p) => p.id === r.projectId)?.name ?? r.projectCode) : "—"}</td>
                         <td className="px-2 py-1.5">
                           {hasErr ? (
                             <span className="text-[10px]" style={{ color: "#F40009" }}>{r.errors.join("; ")}</span>
                           ) : (
-                            <Badge variant="outline" className="text-[9px]" style={{ color: "#006039", borderColor: "#006039", backgroundColor: "#E8F2ED" }}>Valid</Badge>
+                            <>
+                              <Badge variant="outline" className="text-[9px]" style={{ color: "#006039", borderColor: "#006039", backgroundColor: "#E8F2ED" }}>Valid</Badge>
+                              {r.warnings.length > 0 && <span className="block text-[10px]" style={{ color: "#D4860A" }}>{r.warnings.map((w) => WARNING_LABELS[w]).join("; ")}</span>}
+                            </>
                           )}
                         </td>
                       </tr>
@@ -332,6 +383,18 @@ export function ExpenseExcelUpload() {
               </table>
             </div>
 
+            {fileRejected && (
+              <p className="text-xs font-inter" style={{ color: "#F40009" }}>
+                <XCircle className="inline h-3 w-3 mr-0.5" />
+                Whole file rejected: fix every bad date (DD/MM/YYYY) and unknown project code, then re-upload.
+              </p>
+            )}
+            {!fileRejected && validRows.length > 0 && (
+              <p className="text-[10px] font-inter" style={{ color: "#D4860A" }}>Rows are saved as "Receipt missing" — attach receipts later from Missing receipts.</p>
+            )}
+            {!fileRejected && anyWarnings && (
+              <Textarea value={warningReason} onChange={(e) => setWarningReason(e.target.value.slice(0, 300))} placeholder="Reason for the warnings above (required, min 5 characters)" rows={2} className="font-inter text-sm" />
+            )}
             <div className="flex gap-2 flex-wrap">
               <Button variant="outline" size="sm" className="text-xs font-display" onClick={() => { setParsedRows(null); setFileName(""); }}>
                 Fix and Re-upload
@@ -340,7 +403,7 @@ export function ExpenseExcelUpload() {
                 size="sm"
                 className="text-xs font-display text-white"
                 style={{ backgroundColor: "#006039" }}
-                disabled={!validRows.length || !window.isOpen || submitting}
+                disabled={!validRows.length || fileRejected || !window.isOpen || submitting || (anyWarnings && !reasonOk(warningReason))}
                 onClick={handleSubmit}
               >
                 {submitting && <Loader2 className="h-3 w-3 animate-spin mr-1" />}

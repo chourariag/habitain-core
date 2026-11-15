@@ -3543,6 +3543,7 @@ export type Database = {
       expense_entries: {
         Row: {
           amount: number
+          bill_no: string | null
           budget_flag: boolean | null
           category: string | null
           created_at: string | null
@@ -3560,9 +3561,13 @@ export type Database = {
           hr_reviewed_at: string | null
           hr_reviewed_by: string | null
           id: string
+          policy_warnings: Json
           project_id: string | null
           rate_per_km: number | null
           rate_used: number | null
+          receipt_exif_at: string | null
+          receipt_flags: string[]
+          receipt_path: string | null
           receipt_url: string | null
           rejection_reason: string | null
           report_period: string | null
@@ -3573,9 +3578,12 @@ export type Database = {
           updated_at: string | null
           uploaded_on_behalf_of: string | null
           vehicle_type: string | null
+          vendor: string | null
+          warning_reason: string | null
         }
         Insert: {
           amount?: number
+          bill_no?: string | null
           budget_flag?: boolean | null
           category?: string | null
           created_at?: string | null
@@ -3593,9 +3601,13 @@ export type Database = {
           hr_reviewed_at?: string | null
           hr_reviewed_by?: string | null
           id?: string
+          policy_warnings?: Json
           project_id?: string | null
           rate_per_km?: number | null
           rate_used?: number | null
+          receipt_exif_at?: string | null
+          receipt_flags?: string[]
+          receipt_path?: string | null
           receipt_url?: string | null
           rejection_reason?: string | null
           report_period?: string | null
@@ -3606,9 +3618,12 @@ export type Database = {
           updated_at?: string | null
           uploaded_on_behalf_of?: string | null
           vehicle_type?: string | null
+          vendor?: string | null
+          warning_reason?: string | null
         }
         Update: {
           amount?: number
+          bill_no?: string | null
           budget_flag?: boolean | null
           category?: string | null
           created_at?: string | null
@@ -3626,9 +3641,13 @@ export type Database = {
           hr_reviewed_at?: string | null
           hr_reviewed_by?: string | null
           id?: string
+          policy_warnings?: Json
           project_id?: string | null
           rate_per_km?: number | null
           rate_used?: number | null
+          receipt_exif_at?: string | null
+          receipt_flags?: string[]
+          receipt_path?: string | null
           receipt_url?: string | null
           rejection_reason?: string | null
           report_period?: string | null
@@ -3639,6 +3658,8 @@ export type Database = {
           updated_at?: string | null
           uploaded_on_behalf_of?: string | null
           vehicle_type?: string | null
+          vendor?: string | null
+          warning_reason?: string | null
         }
         Relationships: [
           {
@@ -16281,6 +16302,15 @@ export type Database = {
         Returns: undefined
       }
       archive_project_elevation: { Args: { p_id: string }; Returns: undefined }
+      attach_expense_receipt: {
+        Args: {
+          p_entry_id: string
+          p_exif_at: string
+          p_flags: string[]
+          p_path: string
+        }
+        Returns: undefined
+      }
       attachment_entity_project: {
         Args: { _entity_id: string; _entity_type: string }
         Returns: string
@@ -16418,6 +16448,15 @@ export type Database = {
       cancel_kickoff_meeting: {
         Args: { _kickoff_id: string; _remarks: string }
         Returns: Json
+      }
+      check_expense_duplicate: {
+        Args: {
+          p_amount: number
+          p_bill_no: string
+          p_exclude_id?: string
+          p_vendor: string
+        }
+        Returns: boolean
       }
       clone_task_templates_to_project: {
         Args: { _project_id: string; _system: string }

@@ -7,3 +7,4 @@
 - Daily-report elevation photos use kind='elevation' + elevation_id via add_site_report_elevation_photo; legacy fixed kinds stay valid for old rows, and project_elevations changes go only through role-checked RPCs with their own log table.
 - Daily Report quantities use site_report_quantities through checked RPCs; measurement_line_items keeps its legacy boq_items foreign key so legacy sheets remain compatible.
 - Legacy measurement notification triggers must return early for trade='daily_site_report' so report submission and re-submission cannot generate factory measurement alerts.
+- Expense receipts live in the private expense-receipts bucket (<user_id>/<yyyy-mm>/<file>), shown via signed URLs; policy checks are stored warnings with a reason, never hard blocks, and cross-user duplicate checks go through a SECURITY DEFINER RPC so expense_entries RLS stays unchanged.

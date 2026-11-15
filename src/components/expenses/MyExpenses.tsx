@@ -4,10 +4,13 @@ import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Receipt, Trash2, Info } from "lucide-react";
+import { Loader2, Receipt, Trash2, Info, Eye, Camera } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { ExpenseExcelUpload } from "./ExpenseExcelUpload";
+import { LogExpenseDrawer } from "./LogExpenseDrawer";
+import { hasReceipt, openReceiptUrl, uploadReceipt } from "@/lib/expense-policy";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
   draft: { color: "#666", bg: "#F7F7F7" },
@@ -58,6 +61,30 @@ export function MyExpenses() {
   const { user } = useAuth();
   const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [logOpen, setLogOpen] = useState(false);
+  const [viewUrl, setViewUrl] = useState<string | null>(null);
+  const [attachingId, setAttachingId] = useState<string | null>(null);
+
+  const viewReceipt = async (e: any) => {
+    const url = await openReceiptUrl(e);
+    if (url) setViewUrl(url); else toast.error("Receipt could not be opened");
+  };
+
+  const attachReceipt = async (entryId: string, file: File) => {
+    if (!user) return;
+    setAttachingId(entryId);
+    try {
+      const up = await uploadReceipt(user.id, file, true);
+      const { error } = await supabase.rpc("attach_expense_receipt" as any, { p_entry_id: entryId, p_path: up.path, p_exif_at: up.exifAt, p_flags: up.flags } as any);
+      if (error) throw error;
+      toast.success("Receipt attached");
+      fetchData();
+    } catch (err) {
+      console.error("attach receipt failed", err);
+      toast.error("Could not attach the receipt. Please try again.");
+    }
+    setAttachingId(null);
+  };
 
   const fetchData = async () => {
     if (!user) return;
@@ -92,6 +119,7 @@ export function MyExpenses() {
   }, [user, loading, entries.length]);
 
   const drafts = entries.filter((e) => e.status === "draft");
+  const missingReceipts = entries.filter((e) => e.expense_type !== "conveyance" && !hasReceipt(e));
   const totalThisMonth = entries
     .filter((e) => format(new Date(e.entry_date), "yyyy-MM") === format(new Date(), "yyyy-MM"))
     .reduce((s, e) => s + Number(e.amount), 0);
@@ -109,7 +137,10 @@ export function MyExpenses() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2"><Receipt className="h-4 w-4" /> My Expenses</CardTitle>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <CardTitle className="text-base flex items-center gap-2"><Receipt className="h-4 w-4" /> My Expenses</CardTitle>
+            <Button size="sm" onClick={() => setLogOpen(true)} style={{ backgroundColor: "#006039" }} className="text-white">Log Expense</Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {/* Drafts info banner — auto-submission is handled by the system */}
@@ -150,11 +181,17 @@ export function MyExpenses() {
                   <div key={e.id} className="flex items-center justify-between flex-wrap gap-2 p-2 rounded-md border border-border bg-white text-xs">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate" style={{ color: "#1A1A1A" }}>{e.expense_type === "conveyance" ? `🚗 ${e.description}` : e.category}</p>
-                      <p style={{ color: "#999" }}>{format(new Date(e.entry_date), "dd/MM/yyyy")}</p>
+                      <p style={{ color: "#999" }}>{format(new Date(e.entry_date), "dd/MM/yyyy")}{e.vendor ? ` · ${e.vendor}` : ""}{e.bill_no ? ` · Bill ${e.bill_no}` : ""}</p>
+                      {e.expense_type !== "conveyance" && !hasReceipt(e) && <p className="text-[10px] font-semibold" style={{ color: "#D4860A" }}>Receipt missing</p>}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <span className="font-bold font-inter" style={{ color: "#006039" }}>₹{Number(e.amount).toLocaleString("en-IN")}</span>
                       <Badge variant="outline" className="text-[10px]" style={{ color: sc.color, borderColor: sc.color, backgroundColor: sc.bg }}>{STATUS_LABELS[e.status] || e.status}</Badge>
+                      {hasReceipt(e) && (
+                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => viewReceipt(e)} title="View receipt">
+                          <Eye className="h-3 w-3" />
+                        </Button>
+                      )}
                       {isDraft && (
                         <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleDelete(e.id)} title="Delete draft">
                           <Trash2 className="h-3 w-3" style={{ color: "#F40009" }} />
@@ -168,6 +205,42 @@ export function MyExpenses() {
           )}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Missing receipts ({missingReceipts.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {missingReceipts.length === 0 ? (
+            <p className="text-xs text-center py-2" style={{ color: "#999" }}>All your expenses have receipts.</p>
+          ) : (
+            <div className="space-y-2">
+              {missingReceipts.map((e) => (
+                <div key={e.id} className="flex items-center justify-between flex-wrap gap-2 p-2 rounded-md border border-border bg-white text-xs">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate">{e.category}{e.vendor ? ` · ${e.vendor}` : ""}</p>
+                    <p style={{ color: "#999" }}>{format(new Date(e.entry_date), "dd/MM/yyyy")} · ₹{Number(e.amount).toLocaleString("en-IN")}</p>
+                  </div>
+                  <label className="inline-flex items-center gap-1 cursor-pointer rounded-md border px-2 py-1 text-xs font-semibold" style={{ color: "#006039", borderColor: "#006039" }}>
+                    {attachingId === e.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Camera className="h-3 w-3" />}
+                    Attach receipt
+                    <input type="file" accept="image/*" className="hidden" disabled={attachingId !== null} onChange={(ev) => { const f = ev.target.files?.[0]; if (f) attachReceipt(e.id, f); ev.target.value = ""; }} />
+                  </label>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <LogExpenseDrawer open={logOpen} onOpenChange={(v) => { setLogOpen(v); if (!v) fetchData(); }} />
+
+      <Dialog open={!!viewUrl} onOpenChange={(v) => { if (!v) setViewUrl(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Receipt</DialogTitle></DialogHeader>
+          {viewUrl && <img src={viewUrl} alt="Receipt" className="w-full rounded-md" />}
+        </DialogContent>
+      </Dialog>
 
       {/* Excel Upload */}
       <ExpenseExcelUpload />

@@ -15,6 +15,7 @@ import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import { insertNotifications } from "@/lib/notifications";
 import * as XLSX from "xlsx";
+import { hasReceipt, openReceiptUrl, WARNING_LABELS } from "@/lib/expense-policy";
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {
   draft: { color: "#666", bg: "#F7F7F7" },
@@ -40,6 +41,11 @@ const STATUS_LABELS: Record<string, string> = {
   paid: "Paid",
 };
 
+async function showReceipt(e: any, set: (u: string | null) => void) {
+  const url = await openReceiptUrl(e);
+  if (url) set(url); else toast.error("Receipt could not be opened");
+}
+
 export function ExpensesTab() {
   const { user } = useAuth();
   const { role } = useUserRole();
@@ -55,6 +61,8 @@ export function ExpensesTab() {
   const [flagNote, setFlagNote] = useState("");
   const [filterMonth, setFilterMonth] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterProject, setFilterProject] = useState("all");
+  const [missingOnly, setMissingOnly] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -99,6 +107,8 @@ export function ExpensesTab() {
 
   const allFiltered = entries.filter((e) => {
     if (filterStatus !== "all" && e.status !== filterStatus) return false;
+    if (filterProject !== "all" && (e.project_id ?? "none") !== filterProject) return false;
+    if (missingOnly && (e.expense_type === "conveyance" || hasReceipt(e))) return false;
     if (filterMonth) {
       const m = format(new Date(e.entry_date), "yyyy-MM");
       if (m !== filterMonth) return false;
@@ -235,7 +245,9 @@ export function ExpensesTab() {
       Status: STATUS_LABELS[e.status] || e.status,
       "Vehicle": e.vehicle_type || "—",
       "Distance km": e.distance_km || "—",
-      "Receipt URL": e.receipt_url || "—",
+      Vendor: e.vendor || "—",
+      "Bill No": e.bill_no || "—",
+      Receipt: e.receipt_path ? "Attached" : e.receipt_url || (e.expense_type === "conveyance" ? "—" : "Receipt missing"),
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -379,8 +391,13 @@ export function ExpensesTab() {
                       {e.expense_type === "conveyance" && (
                         <p style={{ color: "#666" }}>{e.distance_km}km × ₹{e.rate_per_km} ({e.vehicle_type})</p>
                       )}
-                      {e.receipt_url && (
-                        <Button size="sm" variant="ghost" className="text-[10px] h-5 px-1 gap-1" onClick={() => setReceiptUrl(e.receipt_url)}>
+                      {(e.vendor || e.bill_no) && <p style={{ color: "#666" }}>{e.vendor || "—"}{e.bill_no ? ` · Bill ${e.bill_no}` : ""}</p>}
+                      {Array.isArray(e.policy_warnings) && e.policy_warnings.length > 0 && (
+                        <p className="text-[10px]" style={{ color: "#D4860A" }}>Warnings: {e.policy_warnings.map((w: string) => (WARNING_LABELS as any)[w] || w).join("; ")}{e.warning_reason ? ` — Reason: ${e.warning_reason}` : ""}</p>
+                      )}
+                      {e.expense_type !== "conveyance" && !hasReceipt(e) && <p className="text-[10px] font-semibold" style={{ color: "#D4860A" }}>Receipt missing</p>}
+                      {hasReceipt(e) && (
+                        <Button size="sm" variant="ghost" className="text-[10px] h-5 px-1 gap-1" onClick={() => showReceipt(e, setReceiptUrl)}>
                           <Eye className="h-3 w-3" /> Receipt
                         </Button>
                       )}
@@ -434,6 +451,17 @@ export function ExpensesTab() {
                 {Object.entries(STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k} className="font-inter text-xs">{v}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={filterProject} onValueChange={setFilterProject}>
+              <SelectTrigger className="w-44 font-inter text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All projects</SelectItem>
+                <SelectItem value="none">Not project-specific</SelectItem>
+                {projects.map((p: any) => <SelectItem key={p.id} value={p.id} className="font-inter text-xs">{p.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <label className="flex items-center gap-1 text-xs font-inter h-9" style={{ color: "#666" }}>
+              <input type="checkbox" checked={missingOnly} onChange={(e) => setMissingOnly(e.target.checked)} /> Missing receipts only
+            </label>
             <Button size="sm" variant="outline" onClick={exportToExcel} className="gap-1 text-xs">
               <FileDown className="h-3 w-3" /> Export Excel
             </Button>
@@ -443,23 +471,28 @@ export function ExpensesTab() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ backgroundColor: "#F7F7F7" }}>
-                  {["Employee", "Date", "Type", "Category", "Amount ₹", "Status", "Flag"].map((h) => (
+                  {["Employee", "Date", "Project", "Category", "Amount ₹", "Receipt", "Status", "Flag"].map((h) => (
                     <th key={h} className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider" style={{ color: "#666" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {allFiltered.length === 0 ? (
-                  <tr><td colSpan={7} className="px-3 py-8 text-center text-sm" style={{ color: "#999" }}>No expenses found.</td></tr>
+                  <tr><td colSpan={8} className="px-3 py-8 text-center text-sm" style={{ color: "#999" }}>No expenses found.</td></tr>
                 ) : allFiltered.map((e) => {
                   const sc = STATUS_COLORS[e.status] || STATUS_COLORS.draft;
                   return (
                     <tr key={e.id} className="border-t border-border">
                       <td className="px-3 py-2 text-xs font-medium" style={{ color: "#1A1A1A" }}>{getName(e.submitted_by)}</td>
                       <td className="px-3 py-2 text-xs font-inter">{format(new Date(e.entry_date), "dd/MM/yyyy")}</td>
-                      <td className="px-3 py-2 text-xs capitalize">{e.expense_type}</td>
-                      <td className="px-3 py-2 text-xs">{e.category}</td>
+                      <td className="px-3 py-2 text-xs">{getProject(e.project_id)}</td>
+                      <td className="px-3 py-2 text-xs">{e.category}{e.vendor ? <span className="block text-[10px]" style={{ color: "#999" }}>{e.vendor}{e.bill_no ? ` · ${e.bill_no}` : ""}</span> : null}</td>
                       <td className="px-3 py-2 text-xs font-inter font-semibold">₹{Number(e.amount).toLocaleString("en-IN")}</td>
+                      <td className="px-3 py-2 text-xs">
+                        {hasReceipt(e) ? (
+                          <Button size="sm" variant="ghost" className="h-6 text-[10px] px-1 gap-1" onClick={() => showReceipt(e, setReceiptUrl)}><Eye className="h-3 w-3" /> View</Button>
+                        ) : e.expense_type === "conveyance" ? "—" : <span className="text-[10px] font-semibold" style={{ color: "#D4860A" }}>Missing</span>}
+                      </td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-1">
                           <Badge variant="outline" className="text-[10px]" style={{ color: sc.color, borderColor: sc.color, backgroundColor: sc.bg }}>
