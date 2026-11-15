@@ -1,0 +1,20 @@
+import { service, json } from '../_shared/export-auth.ts';
+import { hashToken, LINK_SECONDS } from '../_shared/export-utils.ts';
+import { EXPORT_SCHEMA } from '../_shared/export-schema.ts';
+Deno.serve(async req => {
+  if (req.method === 'OPTIONS') return json({});
+  if (req.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
+  const token = req.headers.get('x-export-token');
+  if (!token || !/^hexp_[a-f0-9]{64}$/.test(token)) return json({ error: 'Invalid token' }, 401);
+  const db = service();
+  const { data: record, error } = await db.from('export_tokens').select('id').eq('token_hash', await hashToken(token)).is('revoked_at', null).maybeSingle();
+  if (error || !record) return json({ error: 'Invalid token' }, 401);
+  const { data: runs } = await db.from('export_log').select('status').order('run_at', { ascending: false }).limit(1);
+  if (runs?.[0]?.status !== 'success') return json({ error: 'Latest export is not ready' }, 503);
+  const paths = EXPORT_SCHEMA.map(schema => `latest/${schema.table}_v${schema.version}.csv`);
+  const { data, error: signingError } = await db.storage.from('exports').createSignedUrls(paths, LINK_SECONDS);
+  if (signingError || data?.some(item => item.error)) return json({ error: 'Files unavailable' }, 503);
+  const { data: used, error: useError } = await db.from('export_tokens').update({ last_used_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', record.id).is('revoked_at', null).select('id').maybeSingle();
+  if (useError || !used) return json({ error: 'Invalid token' }, 401);
+  return json({ expires_in: LINK_SECONDS, files: data });
+});
