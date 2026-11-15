@@ -625,3 +625,16 @@ Frontend literal-reference locations: 261. Includes complete arrays for review b
 
 ## Scope boundary
 Global legacy helpers (including has_role, is_full_admin, user_can_access_project) are not rewritten. Wave 1 wrappers/policies use the new tier helper; legacy approval and notification functions stay in this audit for review.
+
+## Applied Wave 1 follow-up (0027)
+- New is_tier1 / is_tier1_or_super and internal reminder_recipient_ids helpers.
+- Elevation/site-write helpers, reminder edits/read/acknowledgement/dated preview, setup imports/rate visibility, labour master/attendance RPCs, feature-flag RPC and cron-status reader updated.
+- Reminder, setup-log and labour-attendance/history policies updated; legacy global helpers and unrelated policies unchanged.
+- Shared frontend module/page/nav guards grant equal access including Admin Panel. Wave 1 expense stage permissions and role-based fan-out expanded; approval compare-and-set avoids overwriting decided expense steps.
+
+## Explicit limitations
+- Full legacy approval atomicity, legacy SQL/Edge notification fan-out, employee administration backend privileges and labour-rate-view parity remain review items: changing global helpers would affect objects outside Wave 1.
+- A 17 November preview cannot include level 3 for 16 November gaps: 72 hours have not elapsed. Existing 0/24/72-hour thresholds remain unchanged. The three-day lookback also prevents project subjects reaching 72 hours in the current runner; changing that conflicts with the retained P7b safety cap and requires a separate decision.
+- Four active Tier 1 escalation recipients were verified directly without writing reminder_events.
+- 112 targeted tests passed; signed-in MD preview and 360px Settings checked, no page errors or overflow. Approval actions and live notifications not exercised.
+- The three active unrelated security findings were not changed; their intended access remains unverified.
