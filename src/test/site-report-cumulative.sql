@@ -4,7 +4,7 @@ DO $$
 DECLARE predicate text; total numeric;
 BEGIN
   SELECT substring(pg_get_functiondef('public.get_site_report(uuid,date)'::regprocedure)
-    FROM 'WHERE li.boq_item_id=b.id AND (.*?)\) ORDER BY b.sno') INTO predicate;
+    FROM 'WHERE li.boq_item_id=b.id AND ([^)]*)\)') INTO predicate;
   IF predicate IS NULL THEN RAISE EXCEPTION 'Cumulative predicate not found'; END IF;
   EXECUTE 'WITH d(is_archived,trade,report_status,measurement_date,today_qty) AS (VALUES
     (false,''daily_site_report'',''submitted'',DATE ''2026-11-14'',2),
