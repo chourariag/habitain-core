@@ -35,7 +35,10 @@ Deno.serve(async req => {
       let rows: Record<string, unknown>[] = [];
       if (schema.table === 'labour_worker_rates') rows = rates ?? [];
       else {
-        const selected = columns.filter(column => !['effective_hourly_rate', 'amount'].includes(column) || schema.table !== 'labour_attendance');
+        const wipColumns = ['total_wip_today', 'wip_needs_review', 'wip_review_reason'];
+        const selected = columns.filter(column =>
+          (!['effective_hourly_rate', 'amount'].includes(column) || schema.table !== 'labour_attendance') &&
+          (schema.table !== 'daily_measurements' || !wipColumns.includes(column)));
         for (let offset = 0; ; offset += 500) {
           let query = db.from(schema.table).select(selected.join(',')).order('id').range(offset, offset + 499);
           if (schema.table === 'daily_measurements') query = query.eq('trade', 'daily_site_report');
@@ -49,6 +52,23 @@ Deno.serve(async req => {
           const rate = rateMap.get(String(row.worker_id)) ?? 0;
           return { ...row, effective_hourly_rate: rate, amount: wageAmount(Number(row.hours), rate) };
         });
+        if (schema.table === 'daily_measurements') {
+          const wipRows: Record<string, unknown>[] = [];
+          for (let offset = 0; ; offset += 500) {
+            const { data, error } = await db.from('daily_measurement_wip')
+              .select('measurement_id,total_wip_today,wip_needs_review,wip_review_reason')
+              .order('measurement_id').range(offset, offset + 499);
+            if (error) throw error;
+            wipRows.push(...(data ?? []));
+            if ((data ?? []).length < 500) break;
+          }
+          const wipMap = new Map(wipRows.map(row => [String(row.measurement_id), row]));
+          rows = rows.map(row => {
+            const wip = wipMap.get(String(row.id));
+            return { ...row, total_wip_today: wip?.total_wip_today ?? 0,
+              wip_needs_review: wip?.wip_needs_review ?? false, wip_review_reason: wip?.wip_review_reason ?? null };
+          });
+        }
       }
       const name = `${schema.table}_v${schema.version}.csv`;
       const csv = toCsv(columns, rows);

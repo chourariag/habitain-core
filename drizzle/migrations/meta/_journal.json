@@ -232,6 +232,13 @@
       "when": 1794710215752,
       "tag": "0032_p4f_report_totals_token_expiry",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794717163527,
+      "tag": "0033_security1_scoped_reads_private_wip",
+      "breakpoints": true
     }
   ]
 }

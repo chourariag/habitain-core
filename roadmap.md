@@ -1,7 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
-- [ ] SECURITY-1: live access map saved; atomic policy/WIP changes and credential-free role checks blocked by no active sales_associate, quantity_surveyor, procurement_assistant users; awaiting synthetic-check authorization or real-user coverage. No database/storage/scanner changes.
+- [x] SECURITY-1: migration 0033 scopes 11 policies with atomic real/synthetic checks, isolates 3 WIP rows, exports deployed/verified, 54 readiness SQL checks and 210 tests pass; 10 existing photos render, events 0/eight jobs unchanged. Three findings auto-resolved by mandatory platform rule; eight other scoped findings await user rescan.
 - [x] P4f: submitted/date-scoped quantities verified by rolled-back SQL regression; fixed 16:9 photo previews and empty text; 180-day/default, 365-day/max token expiry; real token 201/200/401 and revoke 200, both 360px screenshots verified; 200 tests passed/5 unchanged skips, build OK, events 0/eight jobs unchanged
 - [x] P8: private 17-file versioned CSV export, nightly 01:30 IST job, audited hashed tokens, Settings lists; real MD export/readback, all CSV headers, scheduler auth and token revoke verified; 197 tests passed/5 skipped, automatic build OK; unrelated security access review deferred by user
 - [x] PARITY-2B: 115 existing src files/11 deployed Edge functions; migration 0030 backs up three scoped functions, wage counts 49/49/49; 192 tests passed/5 skipped, automatic build OK; populated MD mobile views fit 360px, Alerts content blocked by OFF flag

@@ -1978,6 +1978,47 @@ export type Database = {
           },
         ]
       }
+      daily_measurement_wip: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          measurement_id: string
+          total_wip_today: number
+          updated_at: string
+          updated_by: string | null
+          wip_needs_review: boolean
+          wip_review_reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          measurement_id: string
+          total_wip_today?: number
+          updated_at?: string
+          updated_by?: string | null
+          wip_needs_review?: boolean
+          wip_review_reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          measurement_id?: string
+          total_wip_today?: number
+          updated_at?: string
+          updated_by?: string | null
+          wip_needs_review?: boolean
+          wip_review_reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_measurement_wip_measurement_id_fkey"
+            columns: ["measurement_id"]
+            isOneToOne: true
+            referencedRelation: "daily_measurements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_measurements: {
         Row: {
           anomaly_flags: Json
@@ -17363,6 +17404,10 @@ export type Database = {
         | { Args: { p_dry?: boolean }; Returns: Json }
         | { Args: { p_asof: string; p_dry: boolean }; Returns: Json }
       safe_uuid: { Args: { _t: string }; Returns: string }
+      save_factory_measurement_wip: {
+        Args: { p_measurement_id: string; p_total: number }
+        Returns: undefined
+      }
       save_labour_attendance: {
         Args: {
           p_project_id: string

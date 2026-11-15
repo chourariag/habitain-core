@@ -14,3 +14,4 @@
 - Tier 1 business access uses TIER1_ROLES and is_tier1/is_tier1_or_super; reviewed legacy rewrites require parity2_backup originals and atomic rollback, while sensitive definitions remain excluded to preserve their review boundary.
 - Edge director access mirrors frontend TIER1_ROLES in _shared/director-tier.ts with a parity test; recipient helpers deduplicate auth user IDs because role-query joins may return the same person more than once.
 - External exports use a fixed versioned column manifest, service-only hourly-rate projection, and private exports bucket; dashboard tokens are hashed and audited, and can sign only latest manifest files because source credentials and unrestricted storage access must never reach clients.
+- Measurement header WIP lives in finance-only daily_measurement_wip; legacy header fields remain neutral, checked writers update the private table, and service exports join it without changing the versioned CSV schema.
