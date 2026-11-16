@@ -14166,38 +14166,56 @@ export type Database = {
       }
       site_report_quantities: {
         Row: {
-          boq_item_id: string
+          amount_inr: number | null
+          boq_item_id: string | null
+          contractor_id: string | null
           created_at: string
           created_by: string | null
+          extra_work_description: string | null
           id: string
           project_id: string
+          rate_id: string | null
+          rate_used: number | null
           remarks: string | null
           report_id: string
           today_qty: number
+          unit: string | null
           updated_at: string
           updated_by: string | null
         }
         Insert: {
-          boq_item_id: string
+          amount_inr?: number | null
+          boq_item_id?: string | null
+          contractor_id?: string | null
           created_at?: string
           created_by?: string | null
+          extra_work_description?: string | null
           id?: string
           project_id: string
+          rate_id?: string | null
+          rate_used?: number | null
           remarks?: string | null
           report_id: string
           today_qty?: number
+          unit?: string | null
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
-          boq_item_id?: string
+          amount_inr?: number | null
+          boq_item_id?: string | null
+          contractor_id?: string | null
           created_at?: string
           created_by?: string | null
+          extra_work_description?: string | null
           id?: string
           project_id?: string
+          rate_id?: string | null
+          rate_used?: number | null
           remarks?: string | null
           report_id?: string
           today_qty?: number
+          unit?: string | null
           updated_at?: string
           updated_by?: string | null
         }
@@ -14210,6 +14228,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "site_report_quantities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "labour_contractors"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "site_report_quantities_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -14217,7 +14242,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "site_report_quantities_rate_id_fkey"
+            columns: ["rate_id"]
+            isOneToOne: false
+            referencedRelation: "subcontract_rates"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "site_report_quantities_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_measurements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_report_subcontractor_headcount: {
+        Row: {
+          contractor_id: string
+          created_at: string
+          created_by: string | null
+          headcount: number
+          id: string
+          project_id: string
+          report_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          contractor_id: string
+          created_at?: string
+          created_by?: string | null
+          headcount: number
+          id?: string
+          project_id: string
+          report_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          contractor_id?: string
+          created_at?: string
+          created_by?: string | null
+          headcount?: number
+          id?: string
+          project_id?: string
+          report_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_report_subcontractor_headcount_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "labour_contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_subcontractor_headcount_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_subcontractor_headcount_report_id_fkey"
             columns: ["report_id"]
             isOneToOne: false
             referencedRelation: "daily_measurements"
@@ -14743,6 +14833,82 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      subcontract_rates: {
+        Row: {
+          boq_item_id: string | null
+          contractor_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          lump_sum_inr: number | null
+          package_qty: number | null
+          project_id: string
+          rate_inr: number | null
+          rate_type: string
+          unit: string
+          updated_at: string
+          updated_by: string | null
+          work_description: string | null
+        }
+        Insert: {
+          boq_item_id?: string | null
+          contractor_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          lump_sum_inr?: number | null
+          package_qty?: number | null
+          project_id: string
+          rate_inr?: number | null
+          rate_type: string
+          unit: string
+          updated_at?: string
+          updated_by?: string | null
+          work_description?: string | null
+        }
+        Update: {
+          boq_item_id?: string | null
+          contractor_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          lump_sum_inr?: number | null
+          package_qty?: number | null
+          project_id?: string
+          rate_inr?: number | null
+          rate_type?: string
+          unit?: string
+          updated_at?: string
+          updated_by?: string | null
+          work_description?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontract_rates_boq_item_id_fkey"
+            columns: ["boq_item_id"]
+            isOneToOne: false
+            referencedRelation: "project_boq_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_rates_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "labour_contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontract_rates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subcontractor_assignments: {
         Row: {
@@ -17062,6 +17228,10 @@ export type Database = {
         Args: { _project_id: string; _uid: string }
         Returns: boolean
       }
+      can_read_subcontract_rates: {
+        Args: { _project_id: string; _uid: string }
+        Returns: boolean
+      }
       can_sales_edit_scope: {
         Args: { _scope_id: string; _user_id: string }
         Returns: boolean
@@ -17127,6 +17297,16 @@ export type Database = {
           p_boq_rows: Json
           p_material_rows: Json
           p_project_id: string
+          p_schedule_rows: Json
+        }
+        Returns: Json
+      }
+      commit_project_setup_excel_upload_v2: {
+        Args: {
+          p_boq_rows: Json
+          p_material_rows: Json
+          p_project_id: string
+          p_rate_rows?: Json
           p_schedule_rows: Json
         }
         Returns: Json
@@ -17599,6 +17779,7 @@ export type Database = {
           total_bytes: number
         }[]
       }
+      get_subcontract_rates: { Args: { p_project_id: string }; Returns: Json }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -17730,6 +17911,10 @@ export type Database = {
         Args: { _object_name: string; _uid: string }
         Returns: boolean
       }
+      subcontract_effective_rate: {
+        Args: { _lump: number; _pkg: number; _rate: number; _type: string }
+        Returns: number
+      }
       submit_external_combined_contract: {
         Args: {
           p_contract_value?: number
@@ -17825,6 +18010,10 @@ export type Database = {
       user_is_project_participant: {
         Args: { _project_id: string; _uid: string }
         Returns: boolean
+      }
+      validate_subcontract_rates: {
+        Args: { p_file_boq_snos?: Json; p_project_id: string; p_rows: Json }
+        Returns: Json
       }
     }
     Enums: {
