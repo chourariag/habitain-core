@@ -10,7 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { ToolboxCamera, type CapturedPhoto } from "@/components/labour/ToolboxCamera";
+import { TIER1_ROLES } from "@/lib/roles";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -36,12 +37,18 @@ type AttendanceRow = {
   present: boolean;
   hours: number;
   savedHours: number | null;
+  confirmed: boolean;
+  exception: boolean;
+  eveningHours: number;
 };
 
-type StoredAttendance = { id: string; worker_id: string; hours: number; work_date: string };
+type StoredAttendance = { id: string; worker_id: string; hours: number; work_date: string; hours_confirmed?: boolean; no_photo_exception?: boolean };
 type AttendanceWarning = { worker_id: string; has_other_project: boolean; total_hours: number; is_deactivated: boolean };
 
-const todayISO = () => format(new Date(), "yyyy-MM-dd");
+const todayISO = () => istTodayISO();
+const istTodayISO = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+export const PHOTO_EXCEPTION_ROLES = ["head_of_projects", "super_admin", ...TIER1_ROLES] as const;
+const canUsePhotoException = (role: string | null) => !!role && (PHOTO_EXCEPTION_ROLES as readonly string[]).includes(role);
 const inr = (value: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(value);
 
 export default function LabourPage() {
@@ -98,6 +105,7 @@ export default function LabourPage() {
           projectId={selectedProjectId}
           onProjectChange={setSelectedProjectId}
           canEdit={canManageAttendance}
+          role={role}
         /></TabsContent>}
         <TabsContent value="master"><MasterTab workers={directory} canUpload={canUploadMaster} canViewRates={canViewRates} onUploaded={loadMaster} /></TabsContent>
       </Tabs>
@@ -105,12 +113,15 @@ export default function LabourPage() {
   );
 }
 
-function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit }: {
+type DayPhoto = { id: string; storage_path: string; captured_at: string; flags: Record<string, unknown> | null; url?: string };
+
+function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit, role }: {
   workers: LabourWorker[];
   projects: Array<{ id: string; name: string }>;
   projectId: string | null;
   onProjectChange: (id: string | null) => void;
   canEdit: boolean;
+  role: string | null;
 }) {
   const [workDate, setWorkDate] = useState(todayISO());
   const [dateText, setDateText] = useState(format(new Date(), "dd/MM/yyyy"));
@@ -120,15 +131,32 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
   const [warnings, setWarnings] = useState<Array<{ workerName: string; text: string }>>([]);
+  const [photos, setPhotos] = useState<DayPhoto[]>([]);
+  const [standardHours, setStandardHours] = useState(8);
+  const [confirming, setConfirming] = useState(false);
+  const isToday = workDate === istTodayISO();
+  const hasPhoto = photos.length > 0;
+  const canException = canUsePhotoException(role);
+  const projectName = projects.find((p) => p.id === projectId)?.name ?? "";
+
+  useEffect(() => { void supabase.rpc("get_labour_standard_hours").then(({ data }) => { if (data != null) setStandardHours(Number(data)); }); }, []);
+
   const loadDay = useCallback(async () => {
     setWarnings([]);
     setReason("");
-    if (!projectId) { setRecentIds([]); setRows({}); return; }
+    if (!projectId) { setRecentIds([]); setRows({}); setPhotos([]); return; }
     const recentFrom = format(subDays(parseISO(workDate), 13), "yyyy-MM-dd");
-    const [{ data: daily }, { data: recent }] = await Promise.all([
-      supabase.from("labour_attendance").select("id,worker_id,hours,work_date").eq("project_id", projectId).eq("work_date", workDate),
+    const [{ data: daily }, { data: recent }, { data: photoRows }] = await Promise.all([
+      supabase.from("labour_attendance").select("id,worker_id,hours,work_date,hours_confirmed,no_photo_exception").eq("project_id", projectId).eq("work_date", workDate),
       supabase.from("labour_attendance").select("worker_id,work_date").eq("project_id", projectId).gte("work_date", recentFrom).lte("work_date", workDate).gt("hours", 0).order("work_date", { ascending: false }),
+      supabase.from("labour_attendance_photos").select("id,storage_path,captured_at,flags").eq("project_id", projectId).eq("work_date", workDate).order("captured_at"),
     ]);
+    const list = (photoRows ?? []) as DayPhoto[];
+    const signed = await Promise.all(list.map(async (ph) => {
+      const { data } = await supabase.storage.from("attendance-photos").createSignedUrl(ph.storage_path, 3600);
+      return { ...ph, url: data?.signedUrl };
+    }));
+    setPhotos(signed);
     const saved = (daily ?? []) as StoredAttendance[];
     const recentWorkerIds = [...new Set((recent ?? []).map((row) => row.worker_id))];
     const includedIds = [...new Set([...recentWorkerIds, ...saved.map((row) => row.worker_id)])];
@@ -139,15 +167,19 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
       const worker = workerMap.get(id);
       if (!worker) return;
       const record = saved.find((row) => row.worker_id === id);
+      const savedHours = record ? Number(record.hours) : null;
       initialRows[id] = {
         worker,
-        present: record ? Number(record.hours) > 0 : false,
-        hours: record && Number(record.hours) > 0 ? Number(record.hours) : 8,
-        savedHours: record ? Number(record.hours) : null,
+        present: savedHours !== null && savedHours > 0,
+        hours: savedHours && savedHours > 0 ? savedHours : standardHours,
+        savedHours,
+        confirmed: Boolean(record?.hours_confirmed),
+        exception: Boolean(record?.no_photo_exception),
+        eveningHours: savedHours && savedHours > 0 ? savedHours : standardHours,
       };
     });
     setRows(initialRows);
-  }, [projectId, workDate, workers]);
+  }, [projectId, workDate, workers, standardHours]);
 
   useEffect(() => { void loadDay(); }, [loadDay]);
 
@@ -168,44 +200,43 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
 
   const addVisibleWorker = (worker: LabourWorker) => setRows((current) => current[worker.worker_id] ? current : ({
     ...current,
-    [worker.worker_id]: { worker, present: false, hours: 8, savedHours: null },
+    [worker.worker_id]: { worker, present: false, hours: standardHours, savedHours: null, confirmed: false, exception: false, eveningHours: standardHours },
   }));
 
-  const updateRow = (id: string, patch: Partial<AttendanceRow>) => setRows((current) => ({
-    ...current,
-    [id]: { ...current[id], ...patch },
-  }));
+  const updateRow = (id: string, patch: Partial<AttendanceRow>) => setRows((current) => ({ ...current, [id]: { ...current[id], ...patch } }));
+
+  const onCaptured = async (p: CapturedPhoto) => {
+    if (!projectId) return;
+    const path = `${projectId}/${istTodayISO()}/${crypto.randomUUID()}.jpg`;
+    const { error: upErr } = await supabase.storage.from("attendance-photos").upload(path, p.blob, { contentType: "image/jpeg" });
+    if (upErr) { toast.error(`Photo upload failed: ${upErr.message}`); return; }
+    const { error } = await supabase.rpc("add_attendance_photo", { p_project_id: projectId, p_storage_path: path, p_captured_at: p.capturedAt, p_lat: p.lat, p_lng: p.lng, p_accuracy_m: p.accuracy });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Toolbox talk photo saved.");
+    await loadDay();
+  };
+
+  const needsPhotoException = !isToday && !hasPhoto;
+  const photoGateBlocks = isToday ? !hasPhoto : (!hasPhoto && !canException);
 
   const saveAttendance = async () => {
     if (!projectId) { toast.error("Choose a project first."); return; }
     const parsedWorkDate = parseLabourDateInput(dateText);
     if (!parsedWorkDate) { toast.error("Enter the date as DD/MM/YYYY."); return; }
     if (parsedWorkDate !== workDate) { toast.error("Finish entering a valid date before saving."); return; }
-    if (workDate > todayISO()) { toast.error("Future attendance cannot be saved."); return; }
+    if (workDate > istTodayISO()) { toast.error("Future attendance cannot be saved."); return; }
+    if (photoGateBlocks) { toast.error("Take the toolbox talk photo first."); return; }
+    if (needsPhotoException && reason.trim().length < 10) { toast.error("No toolbox talk photo for this day. Enter a reason of at least 10 characters."); return; }
     const selectedRows = Object.values(rows);
-    if (selectedRows.some((row) => !isValidLabourHours(row.hours))) {
-      toast.error("Hours must be between 0 and 16."); return;
-    }
-    const oldRecordEdited = selectedRows.some((row) => requiresReasonForSavedAttendanceEdit(row.savedHours, row.present ? row.hours : 0));
-    if (requiresLabourAttendanceReason(workDate, new Date()) && !reason.trim()) {
-      toast.error("Add a reason for attendance more than two days ago."); return;
-    }
-    if (oldRecordEdited && !reason.trim()) {
-      toast.error("Add a reason for changing saved attendance."); return;
-    }
+    const nextHours = (row: AttendanceRow) => row.present ? (row.savedHours && row.savedHours > 0 ? row.savedHours : standardHours) : 0;
+    const oldRecordEdited = selectedRows.some((row) => requiresReasonForSavedAttendanceEdit(row.savedHours, nextHours(row)));
+    if (requiresLabourAttendanceReason(workDate, new Date()) && !reason.trim()) { toast.error("Add a reason for attendance more than two days ago."); return; }
+    if (oldRecordEdited && !reason.trim()) { toast.error("Add a reason for changing saved attendance."); return; }
     const rowsToSave = selectedRows.filter((row) => row.present || row.savedHours !== null);
-    const payload = rowsToSave.map((row) => ({ worker_id: row.worker.worker_id, hours: row.present ? row.hours : 0 }));
+    const payload = rowsToSave.map((row) => ({ worker_id: row.worker.worker_id, hours: nextHours(row) }));
     setSaving(true);
-    const { data: warningRows, error: warningError } = await supabase.rpc("get_labour_attendance_warnings", {
-      p_project_id: projectId,
-      p_work_date: workDate,
-      p_rows: payload,
-    });
-    if (warningError) {
-      setSaving(false);
-      toast.error(warningError.message);
-      return;
-    }
+    const { data: warningRows, error: warningError } = await supabase.rpc("get_labour_attendance_warnings", { p_project_id: projectId, p_work_date: workDate, p_rows: payload });
+    if (warningError) { setSaving(false); toast.error(warningError.message); return; }
     const warningsByWorker = new Map(((warningRows ?? []) as AttendanceWarning[]).map((warning) => [warning.worker_id, warning]));
     const generatedWarnings = rowsToSave.flatMap((row) => {
       const warning = warningsByWorker.get(row.worker.worker_id);
@@ -213,13 +244,8 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
       const labels = attendanceWarningLabels(warning);
       return labels.length ? [{ workerName: row.worker.name ?? "Worker", text: labels.join("; ") }] : [];
     });
-    const auditReason = labourAuditReasonForSave(workDate, new Date(), oldRecordEdited, reason);
-    const { data, error } = await supabase.rpc("save_labour_attendance", {
-      p_project_id: projectId,
-      p_work_date: workDate,
-      p_rows: payload,
-      p_reason: auditReason,
-    });
+    const auditReason = needsPhotoException ? reason.trim() : labourAuditReasonForSave(workDate, new Date(), oldRecordEdited, reason);
+    const { data, error } = await supabase.rpc("save_labour_attendance", { p_project_id: projectId, p_work_date: workDate, p_rows: payload, p_reason: auditReason });
     setSaving(false);
     if (error) { setWarnings(generatedWarnings); toast.error(error.message); return; }
     toast.success(`Attendance saved for ${format(parseISO(workDate), "dd/MM/yyyy")}.`);
@@ -228,33 +254,81 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit 
     if (Number(data ?? 0) === 0) toast.message("No attendance values changed.");
   };
 
+  const confirmHours = async (items: Array<{ worker_id: string; hours: number }>) => {
+    if (!projectId || items.length === 0) return;
+    if (items.some((i) => !isValidLabourHours(i.hours))) { toast.error("Hours must be between 0 and 16."); return; }
+    setConfirming(true);
+    const { data, error } = await supabase.rpc("confirm_labour_hours", { p_project_id: projectId, p_work_date: workDate, p_rows: items });
+    setConfirming(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success(`Hours confirmed for ${Number(data ?? 0)} worker${Number(data) === 1 ? "" : "s"}.`);
+    await loadDay();
+  };
+
+  const presentSaved = visibleWorkers.map((w) => rows[w.worker_id]).filter((r): r is AttendanceRow => Boolean(r && r.savedHours && r.savedHours > 0));
+  const unconfirmed = presentSaved.filter((r) => !r.confirmed);
+
   return (
     <div className="space-y-4 pt-3">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="space-y-1.5"><Label htmlFor="labour-project">Project</Label><Select value={projectId ?? ""} onValueChange={(value) => onProjectChange(value || null)}><SelectTrigger id="labour-project"><SelectValue placeholder="Choose a project" /></SelectTrigger><SelectContent>{projects.map((project) => <SelectItem key={project.id} value={project.id}>{project.name}</SelectItem>)}</SelectContent></Select></div>
         <div className="space-y-1.5"><Label htmlFor="labour-date">Work date</Label><Input id="labour-date" inputMode="numeric" maxLength={10} placeholder="DD/MM/YYYY" value={dateText} onChange={(event) => { const value = event.target.value; setDateText(value); const parsed = parseLabourDateInput(value); if (parsed) setWorkDate(parsed); }} onBlur={() => { if (!parseLabourDateInput(dateText)) setDateText(format(parseISO(workDate), "dd/MM/yyyy")); }} /></div>
       </div>
+
+      {projectId && <section className="space-y-3 rounded-md border border-border p-3" aria-label="Toolbox talk photo">
+        <h2 className="font-display text-base font-semibold">Step 1 · Toolbox talk photo</h2>
+        <p className="text-xs text-muted-foreground">Take at least 1 photo (up to 3) live with the camera during the toolbox talk. GPS is required.</p>
+        {photos.length > 0 && <div className="grid grid-cols-3 gap-2">{photos.map((ph) => <figure key={ph.id} className="min-w-0 space-y-1">
+          <div className="aspect-video overflow-hidden rounded bg-muted">{ph.url ? <img src={ph.url} alt="Toolbox talk" className="h-full w-full object-cover" /> : null}</div>
+          <figcaption className="flex flex-wrap gap-1 text-[11px] text-muted-foreground">{format(new Date(ph.captured_at), "HH:mm")}
+            {ph.flags?.far_from_site ? <Badge variant="destructive" className="px-1 text-[10px]">Far from site</Badge> : null}
+            {ph.flags?.low_accuracy ? <Badge variant="outline" className="px-1 text-[10px]">Low GPS accuracy</Badge> : null}
+          </figcaption>
+        </figure>)}</div>}
+        {canEdit && isToday && photos.length < 3 && <ToolboxCamera projectName={projectName} onCaptured={onCaptured} />}
+        {!isToday && !hasPhoto && <p className="text-sm text-muted-foreground break-words">No toolbox talk photo was taken on this day. Photos can only be taken on the day itself.{canException ? " You can still record attendance with a reason (logged as an exception)." : " Ask the Head of Projects to record it as an exception."}</p>}
+      </section>}
+
+      {projectId && <h2 className="font-display text-base font-semibold">Step 2 · Mark workers</h2>}
       <div className="relative"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" aria-label="Search workers" placeholder="Search workers to add" value={search} onChange={(event) => setSearch(event.target.value)} /></div>
       {!projectId ? <p className="py-8 text-center text-sm text-muted-foreground">Select a project to record contract-labour attendance.</p> : visibleWorkers.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No recent workers. Search to add an active worker.</p> : (
         <div className="space-y-2">
           {visibleWorkers.map((worker) => {
-            const row = rows[worker.worker_id] ?? { worker, present: false, hours: 8, savedHours: null };
-            const hourlyRate = Number(worker.effective_hourly_rate ?? 0);
-            return <div key={worker.worker_id} className="grid min-w-0 grid-cols-[auto_1fr] gap-x-3 gap-y-3 rounded-md border border-border p-3 sm:grid-cols-[auto_minmax(0,1fr)_120px_140px] sm:items-center">
-              <div className="flex items-center gap-2"><Switch checked={row.present} disabled={!canEdit} onCheckedChange={(checked) => updateRow(worker.worker_id, { present: checked })} aria-label={`Present: ${worker.name ?? "worker"}`} /></div>
-              <div className="min-w-0"><div className="break-words font-medium">{worker.name}</div><div className="break-words text-xs text-muted-foreground">{worker.worker_code} · {worker.contractor ?? "No contractor"} · {worker.skill_type}</div>{worker.status !== "active" && <Badge variant="outline" className="mt-1">{worker.status?.replace(/_/g, " ")}</Badge>}</div>
-              <div className="space-y-1"><Label className="text-xs" htmlFor={`hours-${worker.worker_id}`}>Hours</Label><Input id={`hours-${worker.worker_id}`} type="number" min={0} max={16} step="0.5" value={row.hours} disabled={!canEdit || !row.present} onChange={(event) => updateRow(worker.worker_id, { hours: Number(event.target.value) })} /></div>
-              <div className="text-xs text-muted-foreground">Amount <span className="block break-words font-semibold text-foreground">{inr(row.present ? row.hours * hourlyRate : 0)}</span></div>
+            const row = rows[worker.worker_id];
+            if (!row) return null;
+            return <div key={worker.worker_id} className="flex min-w-0 flex-col gap-2 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between" data-testid="attendance-row">
+              <div className="min-w-0"><div className="break-words font-medium">{worker.name}</div><div className="break-words text-xs text-muted-foreground">{worker.worker_code} · {worker.contractor ?? "No contractor"} · {worker.skill_type}</div>
+                <div className="mt-1 flex flex-wrap gap-1">{worker.status !== "active" && <Badge variant="outline">{worker.status?.replace(/_/g, " ")}</Badge>}{row.exception && <Badge variant="outline" className="border-warning text-warning">No photo · exception</Badge>}</div></div>
+              <div className="grid shrink-0 grid-cols-2 gap-2" role="group" aria-label={`Attendance for ${worker.name ?? "worker"}`}>
+                <Button size="sm" variant={row.present ? "default" : "outline"} disabled={!canEdit || photoGateBlocks} onClick={() => updateRow(worker.worker_id, { present: true })}>Present</Button>
+                <Button size="sm" variant={!row.present ? "secondary" : "outline"} disabled={!canEdit || photoGateBlocks} onClick={() => updateRow(worker.worker_id, { present: false })}>Absent</Button>
+              </div>
             </div>;
           })}
-          <div className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-border bg-muted p-3 text-sm font-semibold"><span>Day total</span><span className="break-words">{inr(visibleWorkers.reduce((sum, worker) => { const row = rows[worker.worker_id]; return sum + (row?.present ? row.hours * Number(worker.effective_hourly_rate ?? 0) : 0); }, 0))}</span></div>
         </div>
       )}
       {projectId && searchCandidates.length > 0 && <div className="space-y-2 border-t border-border pt-3"><p className="text-sm font-medium">Add workers</p>{searchCandidates.slice(0, 30).map((worker) => <div key={worker.worker_id} className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-border p-3"><div className="min-w-0"><div className="break-words text-sm font-medium">{worker.name}</div><div className="break-words text-xs text-muted-foreground">{worker.worker_code} · {worker.contractor ?? "No contractor"} · {worker.skill_type}</div></div><Button size="sm" variant="outline" onClick={() => addVisibleWorker(worker)}>Add</Button></div>)}</div>}
       {canEdit && projectId && <div className="space-y-3 border-t border-border pt-3">
-        {(workDate < todayISO() || workDate < format(subDays(new Date(), 2), "yyyy-MM-dd") || Object.values(rows).some((row) => requiresReasonForSavedAttendanceEdit(row.savedHours, row.present ? row.hours : 0))) && <div className="space-y-1.5"><Label htmlFor="attendance-reason">Reason for back-dating or editing</Label><Input id="attendance-reason" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Required for dates over two days old or saved-entry edits" /></div>}
-        <div className="flex justify-end"><Button onClick={saveAttendance} disabled={saving || !projectId} className="w-full sm:w-auto">{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Save attendance</Button></div>
+        {(needsPhotoException && canException || workDate < format(subDays(new Date(), 2), "yyyy-MM-dd") || Object.values(rows).some((row) => requiresReasonForSavedAttendanceEdit(row.savedHours, row.present ? (row.savedHours && row.savedHours > 0 ? row.savedHours : standardHours) : 0))) && <div className="space-y-1.5"><Label htmlFor="attendance-reason">{needsPhotoException ? "Reason for recording without a toolbox talk photo (min 10 characters)" : "Reason for back-dating or editing"}</Label><Input id="attendance-reason" value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Why is this being recorded late or changed?" /></div>}
+        <p className="text-xs text-muted-foreground">Present workers get the standard shift of {standardHours} hours. Confirm actual hours in the evening below.</p>
+        <div className="flex justify-end"><Button onClick={saveAttendance} disabled={saving || !projectId || photoGateBlocks} className="w-full sm:w-auto">{saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}Save attendance</Button></div>
       </div>}
+
+      {projectId && presentSaved.length > 0 && <section className="space-y-2 border-t border-border pt-3" aria-label="Evening hours">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2"><h2 className="font-display text-base font-semibold">Evening · Confirm hours</h2>
+          {canEdit && unconfirmed.length > 0 && <Button size="sm" variant="outline" disabled={confirming} onClick={() => void confirmHours(unconfirmed.map((r) => ({ worker_id: r.worker.worker_id, hours: standardHours })))}>Confirm all at standard hours</Button>}</div>
+        {presentSaved.map((row) => {
+          const rate = Number(row.worker.effective_hourly_rate ?? 0);
+          return <div key={row.worker.worker_id} className="grid min-w-0 grid-cols-[minmax(0,1fr)_88px] gap-2 rounded-md border border-border p-3 sm:grid-cols-[minmax(0,1fr)_96px_120px_auto] sm:items-end" data-testid="hours-row">
+            <div className="col-span-2 min-w-0 sm:col-span-1"><div className="break-words font-medium">{row.worker.name}</div><div className="text-xs text-muted-foreground">{row.confirmed ? "Hours confirmed" : "Not confirmed yet"}</div></div>
+            <div className="space-y-1"><Label className="text-xs" htmlFor={`eh-${row.worker.worker_id}`}>Hours</Label><Input id={`eh-${row.worker.worker_id}`} type="number" min={0} max={16} step="0.5" value={row.eveningHours} disabled={!canEdit} onChange={(e) => updateRow(row.worker.worker_id, { eveningHours: Number(e.target.value) })} /></div>
+            <div className="min-w-0 text-xs text-muted-foreground">Amount <span className="block break-words font-semibold text-foreground">{inr(row.eveningHours * rate)}</span></div>
+            {canEdit && <Button size="sm" className="col-span-2 sm:col-span-1" variant={row.confirmed ? "outline" : "default"} disabled={confirming} onClick={() => void confirmHours([{ worker_id: row.worker.worker_id, hours: row.eveningHours }])}>Confirm hours</Button>}
+          </div>;
+        })}
+        <div className="flex min-w-0 items-center justify-between gap-3 rounded-md border border-border bg-muted p-3 text-sm font-semibold"><span>Day total</span><span className="break-words">{inr(presentSaved.reduce((sum, r) => sum + r.eveningHours * Number(r.worker.effective_hourly_rate ?? 0), 0))}</span></div>
+      </section>}
+
       {warnings.length > 0 && <div className="space-y-2">{warnings.map((warning, index) => <Alert key={`${warning.workerName}-${index}`}><AlertTriangle className="h-4 w-4" /><AlertTitle>{warning.workerName}</AlertTitle><AlertDescription>{warning.text}</AlertDescription></Alert>)}</div>}
       {!canEdit && <p className="text-sm text-muted-foreground">Read-only access</p>}
     </div>
