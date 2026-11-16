@@ -21,7 +21,6 @@ import { HandoverPack } from "@/components/site/HandoverPack";
 import { SiteReadinessChecklist } from "@/components/site/SiteReadinessChecklist";
 import { canSubmitSiteReadiness } from "@/lib/site-readiness-permissions";
 import { MeasurementSheet } from "@/components/measurements/MeasurementSheet";
-import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { ModuleDrawingsTab } from "@/components/drawings/ModuleDrawingsTab";
 import { MaterialRequestsPanel } from "@/components/materials/MaterialRequestsPanel";
 import { DispatchPacksTab } from "@/components/site/DispatchPacksTab";
@@ -469,18 +468,7 @@ function SiteHubContent() {
           <WorkOrdersTab mode="site" projectId={selectedProjectId!} projectName={selectedProject?.name ?? ""} />
         </TabsContent>}
         <TabsContent value="site-measurements" className="space-y-4">
-          <Tabs defaultValue="entry" className="space-y-3">
-            <TabsList>
-              <TabsTrigger value="entry">Daily Entry</TabsTrigger>
-              <TabsTrigger value="bill">Running Bill</TabsTrigger>
-            </TabsList>
-            <TabsContent value="entry">
-              <MeasurementSheet location="site" />
-            </TabsContent>
-            <TabsContent value="bill">
-              <RunningBillTable projectId={selectedProjectId} />
-            </TabsContent>
-          </Tabs>
+          <MeasurementSheet location="site" />
         </TabsContent>
         {featureFlags.isEnabled("sales") && <TabsContent value="client-visits">
           <ClientVisitsTab
