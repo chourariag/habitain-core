@@ -246,6 +246,13 @@
       "when": 1794718060697,
       "tag": "0034_security2_remaining_scoped_reads",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1794847959651,
+      "tag": "0035_site_readiness_detailed_checks",
+      "breakpoints": true
     }
   ]
 }

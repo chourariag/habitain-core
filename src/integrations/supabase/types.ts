@@ -13641,6 +13641,278 @@ export type Database = {
           },
         ]
       }
+      site_readiness_change_log: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          item_key: string
+          new_value: Json | null
+          old_value: Json | null
+          project_id: string
+          source_table: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          item_key: string
+          new_value?: Json | null
+          old_value?: Json | null
+          project_id: string
+          source_table: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          item_key?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          project_id?: string
+          source_table?: string
+        }
+        Relationships: []
+      }
+      site_readiness_checks: {
+        Row: {
+          checked_at: string
+          checked_by: string | null
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          item_key: string
+          photo_paths: Json
+          project_id: string
+          section: string
+          status: string
+          value_numeric: number | null
+          value_text: string | null
+        }
+        Insert: {
+          checked_at?: string
+          checked_by?: string | null
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_key: string
+          photo_paths?: Json
+          project_id: string
+          section: string
+          status: string
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          checked_at?: string
+          checked_by?: string | null
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_key?: string
+          photo_paths?: Json
+          project_id?: string
+          section?: string
+          status?: string
+          value_numeric?: number | null
+          value_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_readiness_checks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_readiness_crane: {
+        Row: {
+          booked_for_date: string | null
+          capacity_tonnes: number | null
+          comment: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          operator_name: string | null
+          operator_phone: string | null
+          operator_site_visit_done: boolean
+          operator_visit_date: string | null
+          photo_paths: Json
+          project_id: string
+          slot_hours: number | null
+          updated_at: string
+          updated_by: string | null
+          vendor_contact_phone: string | null
+          vendor_name: string | null
+        }
+        Insert: {
+          booked_for_date?: string | null
+          capacity_tonnes?: number | null
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          operator_name?: string | null
+          operator_phone?: string | null
+          operator_site_visit_done?: boolean
+          operator_visit_date?: string | null
+          photo_paths?: Json
+          project_id: string
+          slot_hours?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          vendor_contact_phone?: string | null
+          vendor_name?: string | null
+        }
+        Update: {
+          booked_for_date?: string | null
+          capacity_tonnes?: number | null
+          comment?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          operator_name?: string | null
+          operator_phone?: string | null
+          operator_site_visit_done?: boolean
+          operator_visit_date?: string | null
+          photo_paths?: Json
+          project_id?: string
+          slot_hours?: number | null
+          updated_at?: string
+          updated_by?: string | null
+          vendor_contact_phone?: string | null
+          vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_readiness_crane_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_readiness_crane_cost: {
+        Row: {
+          advance_paid_inr: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          project_id: string
+          rate_basis: string | null
+          rate_inr: number | null
+          total_cost_inr: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          advance_paid_inr?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id: string
+          rate_basis?: string | null
+          rate_inr?: number | null
+          total_cost_inr?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          advance_paid_inr?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id?: string
+          rate_basis?: string | null
+          rate_inr?: number | null
+          total_cost_inr?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_readiness_crane_cost_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_readiness_escalations: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          escalation_date: string
+          id: string
+          item_keys: string[]
+          project_id: string
+          recipient_ids: string[]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          escalation_date: string
+          id?: string
+          item_keys?: string[]
+          project_id: string
+          recipient_ids?: string[]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          escalation_date?: string
+          id?: string
+          item_keys?: string[]
+          project_id?: string
+          recipient_ids?: string[]
+        }
+        Relationships: []
+      }
+      site_readiness_tolerances: {
+        Row: {
+          allowed_diagonal_diff_mm: number
+          allowed_level_diff_mm: number
+          allowed_spacing_dev_mm: number
+          id: string
+          project_id: string
+          set_at: string
+          set_by: string | null
+        }
+        Insert: {
+          allowed_diagonal_diff_mm: number
+          allowed_level_diff_mm: number
+          allowed_spacing_dev_mm: number
+          id?: string
+          project_id: string
+          set_at?: string
+          set_by?: string | null
+        }
+        Update: {
+          allowed_diagonal_diff_mm?: number
+          allowed_level_diff_mm?: number
+          allowed_spacing_dev_mm?: number
+          id?: string
+          project_id?: string
+          set_at?: string
+          set_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_readiness_tolerances_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_receipt_checklist: {
         Row: {
           created_at: string | null
@@ -16738,6 +17010,7 @@ export type Database = {
       }
       can_capture_site_photo: { Args: { _user_id: string }; Returns: boolean }
       can_costing_approve_wo: { Args: { _user_id: string }; Returns: boolean }
+      can_delete_site_readiness: { Args: { _uid: string }; Returns: boolean }
       can_edit_design_schedule: { Args: { _user_id: string }; Returns: boolean }
       can_edit_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_edit_sop_dept: {
@@ -16780,7 +17053,15 @@ export type Database = {
         Returns: boolean
       }
       can_raise_work_order: { Args: { _user_id: string }; Returns: boolean }
+      can_read_crane_cost: {
+        Args: { _entered_by: string; _uid: string }
+        Returns: boolean
+      }
       can_read_measurements: { Args: { _user_id: string }; Returns: boolean }
+      can_read_site_readiness: {
+        Args: { _project_id: string; _uid: string }
+        Returns: boolean
+      }
       can_sales_edit_scope: {
         Args: { _scope_id: string; _user_id: string }
         Returns: boolean
@@ -16818,6 +17099,7 @@ export type Database = {
       can_view_profile_pii: { Args: { _user_id: string }; Returns: boolean }
       can_view_quotations: { Args: { _user_id: string }; Returns: boolean }
       can_view_work_orders: { Args: { _user_id: string }; Returns: boolean }
+      can_write_site_readiness: { Args: { _uid: string }; Returns: boolean }
       can_write_site_report: {
         Args: { _project_id: string; _uid: string }
         Returns: boolean
@@ -16896,6 +17178,10 @@ export type Database = {
         Returns: string
       }
       cv_alert_overdue_commitments: { Args: never; Returns: number }
+      escalate_foundation_issues: {
+        Args: { p_project_id: string }
+        Returns: number
+      }
       export_hourly_rates: {
         Args: never
         Returns: {
