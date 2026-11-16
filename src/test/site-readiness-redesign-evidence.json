@@ -1,6 +1,57 @@
 {
   "source": "src/test/site-readiness-redesign-access.sql, run 16/11/2026 as real active users inside a self-cancelling transaction (nothing committed)",
-  "write": { "delivery_rm_lead": true, "site_engineer": true, "site_installation_mgr": true, "managing_director": true, "stores_executive": false, "hr_executive": false, "finance_manager": false, "head_of_projects": false, "planning_head": false },
-  "cost_rows": { "managing_director": 1, "finance_manager": 1, "head_of_projects": 1, "planning_head": 1, "site_engineer(owner)": 1, "site_engineer(other)": 0, "delivery_rm_lead": 0, "site_installation_mgr": 0, "stores_executive": 0, "hr_executive": 0 },
-  "rules": { "blocked_without_tolerance": true, "over_tolerance_needs_comment": true, "B1_7mm_vs_5mm": "not_ok", "A5_10mm_vs_10mm": "ok", "change_log_rows": 3 }
+  "write": {
+    "delivery_rm_lead": true,
+    "site_engineer": true,
+    "site_installation_mgr": true,
+    "managing_director": true,
+    "stores_executive": false,
+    "hr_executive": false,
+    "finance_manager": false,
+    "head_of_projects": false,
+    "planning_head": false
+  },
+  "cost_rows": {
+    "site_engineer(other)": 1,
+    "delivery_rm_lead": 1,
+    "site_installation_mgr": 1,
+    "managing_director": 1,
+    "finance_manager": 1,
+    "head_of_projects": 1,
+    "planning_head": 1,
+    "production_head": 1,
+    "stores_executive": 0,
+    "hr_executive": 0
+  },
+  "rules": {
+    "blocked_without_tolerance": true,
+    "over_tolerance_needs_comment": true,
+    "B1_7mm_vs_5mm": "not_ok",
+    "A5_10mm_vs_10mm": "ok",
+    "change_log_rows": 3
+  },
+  "cost_update": {
+    "site_engineer(other)": true,
+    "delivery_rm_lead": true,
+    "site_installation_mgr": true,
+    "managing_director": true,
+    "finance_manager": false,
+    "head_of_projects": false,
+    "planning_head": false,
+    "production_head": false,
+    "stores_executive": false,
+    "hr_executive": false
+  },
+  "cost_change_log_visible": {
+    "site_engineer(other)": 1,
+    "delivery_rm_lead": 1,
+    "site_installation_mgr": 1,
+    "managing_director": 1,
+    "finance_manager": 1,
+    "head_of_projects": 1,
+    "planning_head": 1,
+    "production_head": 1,
+    "stores_executive": 0,
+    "hr_executive": 0
+  }
 }

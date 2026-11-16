@@ -364,7 +364,7 @@ Snapshots page each source in deterministic key order; separate tables are not o
 | `created_at` | timestamp with time zone |
 | `updated_at` | timestamp with time zone |
 
-Site readiness files (added with the Site Readiness redesign): `photo_paths` is JSON photo metadata (storage path, EXIF date, GPS, gallery flag), never image bytes. `site_readiness_crane_cost_v1.csv` carries crane amounts in ₹ and is visible in the app only to Tier 1/Super Admin, finance_manager, head_of_projects, planning_head and the person who entered it.
+Site readiness files (added with the Site Readiness redesign): `photo_paths` is JSON photo metadata (storage path, EXIF date, GPS, gallery flag), never image bytes. `site_readiness_crane_cost_v1.csv` carries crane amounts in ₹ and is visible in the app to every Site Readiness reader plus Tier 1/Super Admin, finance_manager, head_of_projects and planning_head.
 
 ## site_readiness_checks_v1.csv
 

@@ -54,10 +54,14 @@ describe("Rolled-back SQL role checks (recorded evidence)", () => {
   it.each(["stores_executive", "hr_executive"])("%s outside the group cannot write", (role) => {
     expect((evidence.write as Record<string, boolean>)[role]).toBe(false);
   });
-  it("crane cost readable only by Tier 1, finance_manager, head_of_projects, planning_head and the person who entered it", () => {
+  it("crane cost: readable by all checklist readers plus Tier 1, finance_manager, head_of_projects, planning_head; written by checklist submitters", () => {
     const rows = evidence.cost_rows as Record<string, number>;
-    for (const r of ["managing_director", "finance_manager", "head_of_projects", "planning_head", "site_engineer(owner)"]) expect(rows[r]).toBe(1);
-    for (const r of ["site_engineer(other)", "delivery_rm_lead", "site_installation_mgr", "stores_executive", "hr_executive"]) expect(rows[r]).toBe(0);
+    const upd = evidence.cost_update as Record<string, boolean>;
+    for (const r of ["site_engineer(other)", "delivery_rm_lead", "site_installation_mgr", "managing_director", "finance_manager", "head_of_projects", "planning_head", "production_head"]) expect(rows[r]).toBe(1);
+    for (const r of ["stores_executive", "hr_executive"]) expect(rows[r]).toBe(0);
+    for (const r of ["site_engineer(other)", "delivery_rm_lead", "site_installation_mgr", "managing_director"]) expect(upd[r]).toBe(true);
+    for (const r of ["finance_manager", "stores_executive", "hr_executive"]) expect(upd[r]).toBe(false);
+    expect((evidence.cost_change_log_visible as Record<string, number>).delivery_rm_lead).toBe(1);
   });
   it("server enforces tolerance rules", () => {
     expect(evidence.rules.blocked_without_tolerance).toBe(true);
