@@ -253,6 +253,13 @@
       "when": 1794847959651,
       "tag": "0035_site_readiness_detailed_checks",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1794848083521,
+      "tag": "0036_site_readiness_crane_cost_entered",
+      "breakpoints": true
     }
   ]
 }

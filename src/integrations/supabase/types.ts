@@ -17163,6 +17163,7 @@ export type Database = {
         Args: { p_signer_name: string; p_token: string }
         Returns: boolean
       }
+      crane_cost_entered: { Args: { p_project_id: string }; Returns: boolean }
       create_labour_worker_with_compensation: {
         Args: {
           _contractor_id?: string
