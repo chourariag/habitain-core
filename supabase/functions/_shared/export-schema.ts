@@ -1607,7 +1607,7 @@ export const EXPORT_SCHEMA = [
   },
   {
     "table": "site_report_quantities",
-    "version": 1,
+    "version": 2,
     "columns": [
       {
         "name": "id",
@@ -1632,6 +1632,30 @@ export const EXPORT_SCHEMA = [
       {
         "name": "remarks",
         "type": "text"
+      },
+      {
+        "name": "contractor_id",
+        "type": "uuid"
+      },
+      {
+        "name": "rate_id",
+        "type": "uuid"
+      },
+      {
+        "name": "extra_work_description",
+        "type": "text"
+      },
+      {
+        "name": "unit",
+        "type": "text"
+      },
+      {
+        "name": "rate_used",
+        "type": "numeric"
+      },
+      {
+        "name": "amount_inr",
+        "type": "numeric"
       },
       {
         "name": "created_by",
@@ -1678,6 +1702,114 @@ export const EXPORT_SCHEMA = [
       {
         "name": "remarks",
         "type": "text"
+      },
+      {
+        "name": "created_by",
+        "type": "uuid"
+      },
+      {
+        "name": "updated_by",
+        "type": "uuid"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone"
+      }
+    ]
+  },
+  {
+    "table": "site_report_subcontractor_headcount",
+    "version": 1,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "name": "report_id",
+        "type": "uuid"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid"
+      },
+      {
+        "name": "contractor_id",
+        "type": "uuid"
+      },
+      {
+        "name": "headcount",
+        "type": "integer"
+      },
+      {
+        "name": "created_by",
+        "type": "uuid"
+      },
+      {
+        "name": "updated_by",
+        "type": "uuid"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone"
+      }
+    ]
+  },
+  {
+    "table": "subcontract_rates",
+    "version": 1,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid"
+      },
+      {
+        "name": "contractor_id",
+        "type": "uuid"
+      },
+      {
+        "name": "rate_type",
+        "type": "text"
+      },
+      {
+        "name": "boq_item_id",
+        "type": "uuid"
+      },
+      {
+        "name": "work_description",
+        "type": "text"
+      },
+      {
+        "name": "unit",
+        "type": "text"
+      },
+      {
+        "name": "rate_inr",
+        "type": "numeric"
+      },
+      {
+        "name": "lump_sum_inr",
+        "type": "numeric"
+      },
+      {
+        "name": "package_qty",
+        "type": "numeric"
+      },
+      {
+        "name": "is_active",
+        "type": "boolean"
       },
       {
         "name": "created_by",

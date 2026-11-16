@@ -6,7 +6,7 @@ Files are stored at `YYYY-MM-DD/<source>_v1.csv` (IST run date) and `latest/<sou
 
 Source rows include archived/draft rows. `daily_measurements` contains only `trade=daily_site_report`. Photo files contain metadata only. No image/receipt bytes are read. `labour_worker_rates` is exported through a service-only projection, not its role-filtered view. `labour_attendance.amount = hours × effective_hourly_rate`; rates are current effective rates (not historical snapshots). Effective rates preserve the existing hourly-rate fallback; monthly salary itself is never exported.
 
-Excluded: auth, employee salary/payroll tables, monthly_salary, client_portal_token, receipt_url, client phone/email, bank/PAN/Aadhaar fields. Explicit projections freeze the schema; no SELECT *. Nested sensitive JSON keys are removed. The token grants all 21 latest files, including wages and GPS metadata; only Tier 1/Super Admin can issue or revoke it. Links expire after 300 seconds; revocation cannot invalidate already issued links before expiry.
+Excluded: auth, employee salary/payroll tables, monthly_salary, client_portal_token, receipt_url, client phone/email, bank/PAN/Aadhaar fields. Explicit projections freeze the schema; no SELECT *. Nested sensitive JSON keys are removed. The token grants all 23 latest files, including wages and GPS metadata; only Tier 1/Super Admin can issue or revoke it. Links expire after 300 seconds; revocation cannot invalidate already issued links before expiry.
 
 Snapshots page each source in deterministic key order; separate tables are not one cross-table transaction. Dated retention is 60 days; latest is never pruned.
 
@@ -480,7 +480,9 @@ Site readiness files (added with the Site Readiness redesign): `photo_paths` is 
 | `uploaded_by` | uuid |
 | `elevation_id` | uuid |
 
-## site_report_quantities_v1.csv
+## site_report_quantities_v2.csv
+
+v2 (B1) replaces v1: adds who did the work and subcontract amounts. `contractor_id` empty = own labour; `boq_item_id` empty = other work (see `extra_work_description`). `rate_used` and `amount_inr` are snapshots taken at submission. v1 is no longer written.
 
 | Column | Type |
 |---|---|
@@ -490,6 +492,12 @@ Site readiness files (added with the Site Readiness redesign): `photo_paths` is 
 | `boq_item_id` | uuid |
 | `today_qty` | numeric |
 | `remarks` | text |
+| `contractor_id` | uuid |
+| `rate_id` | uuid |
+| `extra_work_description` | text |
+| `unit` | text |
+| `rate_used` | numeric |
+| `amount_inr` | numeric |
 | `created_by` | uuid |
 | `updated_by` | uuid |
 | `created_at` | timestamp with time zone |
@@ -505,6 +513,42 @@ Site readiness files (added with the Site Readiness redesign): `photo_paths` is 
 | `task_id` | uuid |
 | `completion_percentage_after` | numeric |
 | `remarks` | text |
+| `created_by` | uuid |
+| `updated_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_at` | timestamp with time zone |
+
+## site_report_subcontractor_headcount_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `report_id` | uuid |
+| `project_id` | uuid |
+| `contractor_id` | uuid |
+| `headcount` | integer |
+| `created_by` | uuid |
+| `updated_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_at` | timestamp with time zone |
+
+## subcontract_rates_v1.csv
+
+Subcontract rates per project (B1). `rate_type` is `per_unit` or `lump_sum`; effective rate = `rate_inr`, or `lump_sum_inr / package_qty`. Inactive rows are kept (`is_active=false`). Payments, TDS and retention stay in Tally and are not exported here.
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `project_id` | uuid |
+| `contractor_id` | uuid |
+| `rate_type` | text |
+| `boq_item_id` | uuid |
+| `work_description` | text |
+| `unit` | text |
+| `rate_inr` | numeric |
+| `lump_sum_inr` | numeric |
+| `package_qty` | numeric |
+| `is_active` | boolean |
 | `created_by` | uuid |
 | `updated_by` | uuid |
 | `created_at` | timestamp with time zone |
