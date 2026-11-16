@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
-import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Box, FileText, Phone, Mail, IndianRupee, ClipboardList, Package, GitCompareArrows, ScrollText, Wallet, Archive, CalendarRange, FileSpreadsheet } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, MapPin, Calendar, Building2, Box, FileText, Phone, Mail, IndianRupee, ClipboardList, Package, GitCompareArrows, ScrollText, Archive, CalendarRange, FileSpreadsheet } from "lucide-react";
 import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 import { AddModuleDialog } from "@/components/projects/AddModuleDialog";
@@ -17,14 +17,9 @@ import { HandoverPack } from "@/components/site/HandoverPack";
 import { ClientPortalManager } from "@/components/projects/ClientPortalManager";
 import { BillingMilestonesSection } from "@/components/projects/BillingMilestonesSection";
 import { MicroScheduleTab } from "@/components/projects/MicroScheduleTab";
-import { SiteScheduleSection } from "@/components/projects/SiteScheduleSection";
 import { MaterialPlanTab } from "@/components/procurement/MaterialPlanTab";
 import { VariationsTab } from "@/components/projects/VariationsTab";
 import { ScopeOfWorkTab } from "@/components/projects/ScopeOfWorkTab";
-import { BudgetTrackingTab } from "@/components/projects/BudgetTrackingTab";
-import { RunningBillTable } from "@/components/measurements/RunningBillTable";
-import { ProjectPLSubTab } from "@/components/projects/ProjectPLSubTab";
-import { ProjectPLTab } from "@/components/projects/ProjectPLTab";
 import { ProjectSetupWorkbook } from "@/components/projects/ProjectSetupWorkbook";
 import { ProjectElevationsCard } from "@/components/projects/ProjectElevationsCard";
 import { ProjectSetupUpload } from "@/components/projects/ProjectSetupUpload";
@@ -50,7 +45,9 @@ export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || "schedule";
+  const rawTab = searchParams.get("tab") || "schedule";
+  // Budget and Project P&L tabs are hidden (components kept); old links land on Schedule.
+  const activeTab = rawTab === "budget" || rawTab === "project-pl" ? "schedule" : rawTab;
   const setActiveTab = (v: string) => {
     const next = new URLSearchParams(searchParams);
     next.set("tab", v);
@@ -228,16 +225,12 @@ export default function ProjectDetail() {
           <TabsList>
             <TabsTrigger value="schedule" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Schedule</TabsTrigger>
             {!isAds && flags.isEnabled("project_setup") && <TabsTrigger value="setup" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Setup</TabsTrigger>}
-            <TabsTrigger value="billing" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Billing</TabsTrigger>
+            <TabsTrigger value="billing" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Payment Milestones</TabsTrigger>
             {!isAds && <TabsTrigger value="materials" className="gap-1.5"><Package className="h-4 w-4" /> Materials</TabsTrigger>}
             <TabsTrigger value="variations" className="gap-1.5"><GitCompareArrows className="h-4 w-4" /> Variations</TabsTrigger>
-            {!isAds && <TabsTrigger value="budget" className="gap-1.5"><Wallet className="h-4 w-4" /> Budget</TabsTrigger>}
             {!isAds && <TabsTrigger value="scope" className="gap-1.5"><ScrollText className="h-4 w-4" /> Scope</TabsTrigger>}
             {!isAds && <TabsTrigger value="handover" className="gap-1.5"><FileText className="h-4 w-4" /> Handover</TabsTrigger>}
             {flags.isEnabled("design_schedule") && <TabsTrigger value="design-schedule" className="gap-1.5"><CalendarRange className="h-4 w-4" /> Design Schedule</TabsTrigger>}
-            {PL_VIEW_ROLES.includes(userRole ?? "") && (
-              <TabsTrigger value="project-pl" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Project P&amp;L</TabsTrigger>
-            )}
           </TabsList>
         </ScrollableTabsWrapper>
 
@@ -253,7 +246,6 @@ export default function ProjectDetail() {
 
         <TabsContent value="schedule" className="space-y-4">
           <MicroScheduleTab projectId={id!} userRole={userRole} />
-          <SiteScheduleSection projectId={id!} projectName={project.name} userRole={userRole} />
         </TabsContent>
 
         {!isAds && flags.isEnabled("project_setup") && (
@@ -274,27 +266,6 @@ export default function ProjectDetail() {
         </TabsContent>
 
         {!isAds && (
-          <TabsContent value="budget" className="space-y-4">
-            <Tabs defaultValue="budget-tracking">
-              <TabsList className="mb-3">
-                <TabsTrigger value="budget-tracking">Budget Tracking</TabsTrigger>
-                <TabsTrigger value="running-bill">Running Bill</TabsTrigger>
-                <TabsTrigger value="project-pl">Project P&L</TabsTrigger>
-              </TabsList>
-              <TabsContent value="budget-tracking">
-                <BudgetTrackingTab projectId={id!} contractValue={Number(proj.contract_value) || 0} userRole={userRole} />
-              </TabsContent>
-              <TabsContent value="running-bill">
-                <RunningBillTable projectId={id!} />
-              </TabsContent>
-              <TabsContent value="project-pl">
-                <ProjectPLSubTab projectId={id!} contractValue={Number(proj.contract_value) || 0} />
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
-        )}
-
-        {!isAds && (
           <TabsContent value="scope" className="space-y-4">
             <ScopeOfWorkTab projectId={id!} userRole={userRole} />
           </TabsContent>
@@ -313,11 +284,6 @@ export default function ProjectDetail() {
           </TabsContent>
         )}
 
-        {PL_VIEW_ROLES.includes(userRole ?? "") && (
-          <TabsContent value="project-pl" className="space-y-4">
-            <ProjectPLTab projectId={id!} contractValue={Number(proj.contract_value) || 0} />
-          </TabsContent>
-        )}
       </Tabs>
 
       <AddModuleDialog open={addModuleOpen} onOpenChange={setAddModuleOpen} projectId={id!} onCreated={fetchData} />

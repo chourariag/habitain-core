@@ -205,7 +205,7 @@ export function WIPStatement() {
                       <TableHead className="font-display text-xs text-right" style={{ color: "#006039" }}>Total Cost (₹)</TableHead>
                       <TableHead className="font-display text-xs text-right" style={{ color: "#006039" }}>Invoiced (₹)</TableHead>
                       <TableHead className="font-display text-xs text-right" style={{ color: "#006039" }}>Net WIP (₹)</TableHead>
-                      <TableHead className="font-display text-xs text-center" style={{ color: "#006039" }}>Billing</TableHead>
+                      <TableHead className="font-display text-xs text-center" style={{ color: "#006039" }}>Payment Milestones</TableHead>
                       <TableHead className="font-display text-xs text-center" style={{ color: "#006039" }}>Status</TableHead>
                     </TableRow>
                   </TableHeader>

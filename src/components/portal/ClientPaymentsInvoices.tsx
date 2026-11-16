@@ -36,7 +36,7 @@ export function ClientPaymentsInvoices({ milestones, projectName }: Props) {
       <Card>
         <CardContent className="py-8">
           <p className="text-sm text-muted-foreground font-body text-center">
-            Payment schedule will appear here once Finance sets up billing milestones for this project.
+            Payment schedule will appear here once Finance sets up payment milestones for this project.
           </p>
         </CardContent>
       </Card>

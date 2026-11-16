@@ -223,7 +223,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
     const { error } = await supabase.from("project_billing_milestones").insert(rows as any);
     if (error) { toast.error(error.message); setSaving(false); return; }
 
-    toast.success("Billing milestones saved ✓");
+    toast.success("Payment milestones saved ✓");
     setDirty(false);
     setSaving(false);
     loadMilestones();
@@ -292,7 +292,7 @@ export function BillingMilestonesSection({ projectId, contractValue, userRole, l
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="font-heading text-base font-bold flex items-center gap-2">
-            <IndianRupee className="h-4 w-4" /> Billing Milestones
+            <IndianRupee className="h-4 w-4" /> Payment Milestones
           </CardTitle>
           <div className="flex items-center gap-2">
             {locked && (

@@ -282,7 +282,7 @@ export function BoardPaperDraft({ data, onBack, onSaveDraft }: BoardPaperDraftPr
             ) : <p className="text-sm text-muted-foreground">None</p>}
           </div>
           <div>
-            <p className="text-sm font-medium text-foreground mb-1">Billing Milestones Due</p>
+            <p className="text-sm font-medium text-foreground mb-1">Payment Milestones Due</p>
             {sections.upcoming_milestones?.billing?.length > 0 ? (
               <ul className="text-sm text-muted-foreground space-y-1">
                 {sections.upcoming_milestones.billing.map((b: any, i: number) => (
