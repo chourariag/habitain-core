@@ -210,7 +210,6 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
   };
   const otherRows = qrows.filter((r) => !r.boq_item_id);
   const missingHeadcount = contractorsMissingHeadcount(qrows, headcount);
-  const qtyProblems = qrows.map((r) => rowProblem(r, rates)).filter(Boolean) as string[];
   const upsertRow = (row: QtyRow, patch: Partial<QtyRow>) => {
     touch();
     setQrows((s) => s.some((r) => r.key === row.key) ? s.map((r) => r.key === row.key ? { ...r, ...patch } : r) : [...s, { ...row, ...patch }]);
@@ -233,13 +232,14 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     upsertRow(row, { contractor_id: cid, ...(row.boq_item_id ? {} : { extra_work_description: "", unit: "" }) });
   };
 
-  const QtyRowEditor = ({ row, unit, other }: { row: QtyRow; unit: string; other?: boolean }) => {
+  // plain render function (not a component) so inputs keep focus while typing
+  const renderQtyRow = (row: QtyRow, unit: string, other?: boolean) => {
     const rate = findRate(row, rates);
     const amount = rowAmount(row, rates);
     const problem = rowProblem(row, rates);
     const descOptions = other && row.contractor_id ? rates.filter((r) => r.contractor_id === row.contractor_id && !r.boq_item_id) : [];
     return (
-      <div className="rounded-md bg-muted/40 p-2 space-y-2 min-w-0">
+      <div key={row.key} className="rounded-md bg-muted/40 p-2 space-y-2 min-w-0">
         <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-2 items-end">
           <div className="min-w-0">
             <label className="text-[11px] text-muted-foreground block">Done by</label>
@@ -405,7 +405,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
                     <div key={b.id} className="rounded-md border border-border p-2 space-y-2 min-w-0">
                       <p className="text-sm break-words">{b.description}</p>
                       <p className="text-xs text-muted-foreground break-words">BOQ {Number(b.boq_qty)} {b.unit ?? ""} · So far {Number(b.cumulative)}</p>
-                      {rows.map((r) => <QtyRowEditor key={r.key} row={r} unit={b.unit ?? ""} />)}
+                      {rows.map((r) => renderQtyRow(r, b.unit ?? ""))}
                       {over && <p className="text-xs text-warning flex items-center gap-1"><AlertTriangle className="h-3 w-3 shrink-0" /> Total would exceed BOQ quantity</p>}
                       {!readOnly && contractors.length > 0 && (
                         <Button type="button" size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={() => splitRow(b.id)}>
@@ -422,7 +422,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
           <div className="space-y-2 border-t border-border pt-3">
             <p className="text-sm font-semibold">Other work (not in BOQ)</p>
             {otherRows.length === 0 && <p className="text-xs text-muted-foreground">Nothing added.</p>}
-            {otherRows.map((r) => <QtyRowEditor key={r.key} row={r} unit={r.unit} other />)}
+            {otherRows.map((r) => renderQtyRow(r, r.unit, true))}
             {!readOnly && (
               <Button type="button" size="sm" variant="outline" onClick={addOther}><Plus className="h-3.5 w-3.5 mr-1" /> Other work</Button>
             )}
