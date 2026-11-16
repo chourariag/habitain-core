@@ -61,6 +61,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
   const [pending, setPending] = useState<Record<string, Pending>>({});
   const [thumbs, setThumbs] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [hoursBlock, setHoursBlock] = useState<string | null>(null);
   const [summary, setSummary] = useState<null | { tasks_updated: number; tasks_skipped?: { code: string }[]; quantity_lines: number; photos: number }>(null);
   const reportId = useRef<string | null>(null);
   const timer = useRef<number | null>(null);
@@ -336,6 +337,11 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
         </CardContent>
       </Card>
 
+      {hoursBlock && (
+        <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm break-words">
+          {hoursBlock} <Link to="/labour" className="font-medium underline">Open People</Link>
+        </div>
+      )}
       {summary && (
         <Card className="border-primary">
           <CardContent className="p-3 text-sm space-y-1">
