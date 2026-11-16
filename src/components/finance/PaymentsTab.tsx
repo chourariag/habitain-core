@@ -338,7 +338,7 @@ export function PaymentsTab() {
               );
             })}</tbody>
           </table>
-          {payments.length === 0 && <p className="text-center text-xs py-8" style={{ color: "#999" }}>No billing milestones found. Add them in each project's Billing tab, or use Quick Add for one-off entries.</p>}
+          {payments.length === 0 && <p className="text-center text-xs py-8" style={{ color: "#999" }}>No payment milestones found. Add them in each project's Payment Milestones tab, or use Quick Add for one-off entries.</p>}
         </CardContent>
       </Card>
 

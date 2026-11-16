@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format, parseISO } from "date-fns";
 import { CalendarRange } from "lucide-react";
@@ -27,9 +26,6 @@ export function SiteScheduleMilestonesCard({ projectId }: Props) {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-base"><CalendarRange className="h-4 w-4" /> Site Schedule Milestones</CardTitle>
-        <Badge className={data.status === "approved" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}>
-          {String(data.status).replace("_", " ")}
-        </Badge>
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
