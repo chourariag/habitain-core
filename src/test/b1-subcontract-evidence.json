@@ -1,0 +1,15 @@
+{
+  "run": "2026-11-16 rolled-back DO block (src/test/b1-subcontract.sql), Test project - 1, real active users",
+  "dry_run": {"valid": 2, "errors": ["Subcontract Rates row 3: unknown contractor “UNKNOWN BUILDERS”."], "warnings": ["Subcontract Rates row 4 (DUSHYANTH ENTERPRISES): This contractor's workers are in labour attendance. Their hourly cost is already counted; piece-rate cost would count it twice."], "rows_written": 0},
+  "per_unit_amount": {"qty": 10, "rate_used": 450, "amount": 4500},
+  "lump_sum_implied_rate": {"lump_sum": 10000, "package_qty": 100, "rate_used": 100, "qty": 60, "amount": 6000},
+  "lump_sum_cap_single": "This takes the lump-sum package past its total: 0 of 100 kg already recorded.",
+  "lump_sum_cap_cumulative_50": "This takes the lump-sum package past its total: 60 of 100 kg already recorded.",
+  "lump_sum_cap_cumulative_40": "saved",
+  "submit_no_rate": "No rate for this contractor on this item. Ask Planning to add it in Setup.",
+  "snapshot_after_rate_edit": {"amount": 4500, "rate_now": 500},
+  "site_engineer_write_rates": {"direct_insert": "blocked by RLS", "direct_update_rows": 0, "setup_upload": "blocked"},
+  "read_rates": {"stores_executive": 0, "managing_director": 3},
+  "existing_own_labour_report_2026_11_14": "saved+submitted",
+  "reminder_events": 0
+}
