@@ -16,7 +16,7 @@ import {
 import { compressPhoto, readPhotoMeta, type PhotoMeta } from "@/lib/site-report-photo";
 import { siteReportErrorMessage } from "@/lib/site-report-errors";
 import {
-  NO_RATE_MSG, type QtyRow, type SubRate, findRate, rowAmount, lumpSumOver, quantityPayload, contractorsMissingHeadcount,
+  type QtyRow, type SubRate, findRate, rowAmount, rowProblem, quantityPayload, contractorsMissingHeadcount,
 } from "@/lib/site-report-subcontract";
 
 type Task = { id: string; code: string; name: string; pct: number; planned_start: string; actual_start: string | null };
@@ -196,7 +196,87 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     elevations, photoElevationIds: data.photos.filter((p) => p.kind === "elevation" && p.elevation_id).map((p) => p.elevation_id as string), siteClean, siteCleanPhoto: !!photoByKind.site_clean,
     tasksWithProgress: workedTaskIds.length, notes,
   });
+  if ((data.rates ?? []).length || (data.contractors ?? []).length) {
+    for (const p of new Set(qrows.map((r) => rowProblem(r, data.rates ?? [])).filter(Boolean) as string[])) blockers.push(p);
+  }
   const readOnly = !canEdit;
+
+  const rates = data.rates ?? [];
+  const contractors = data.contractors ?? [];
+  const contractorName = (id: string | null) => contractors.find((c) => c.id === id)?.name ?? "Contractor";
+  const rowsFor = (bid: string): QtyRow[] => {
+    const rows = qrows.filter((r) => r.boq_item_id === bid);
+    return rows.length ? rows : [{ key: `own:${bid}`, boq_item_id: bid, contractor_id: null, extra_work_description: "", unit: "", today_qty: "" }];
+  };
+  const otherRows = qrows.filter((r) => !r.boq_item_id);
+  const missingHeadcount = contractorsMissingHeadcount(qrows, headcount);
+  const qtyProblems = qrows.map((r) => rowProblem(r, rates)).filter(Boolean) as string[];
+  const upsertRow = (row: QtyRow, patch: Partial<QtyRow>) => {
+    touch();
+    setQrows((s) => s.some((r) => r.key === row.key) ? s.map((r) => r.key === row.key ? { ...r, ...patch } : r) : [...s, { ...row, ...patch }]);
+  };
+  const splitRow = (bid: string) => {
+    touch();
+    setQrows((s) => {
+      const base = s.some((r) => r.boq_item_id === bid) ? s : [...s, rowsFor(bid)[0]];
+      const used = new Set(base.filter((r) => r.boq_item_id === bid).map((r) => r.contractor_id));
+      const next = contractors.find((c) => !used.has(c.id));
+      if (!next) { toast.error("Every contractor already has a row for this item."); return s; }
+      return [...base, { key: crypto.randomUUID(), boq_item_id: bid, contractor_id: next.id, extra_work_description: "", unit: "", today_qty: "" }];
+    });
+  };
+  const addOther = () => { touch(); setQrows((s) => [...s, { key: crypto.randomUUID(), boq_item_id: null, contractor_id: null, extra_work_description: "", unit: "", today_qty: "" }]); };
+  const setDoneBy = (row: QtyRow, cid: string | null) => {
+    if (row.boq_item_id && qrows.some((r) => r.key !== row.key && r.boq_item_id === row.boq_item_id && r.contractor_id === cid)) {
+      toast.error("This item already has a row for that choice."); return;
+    }
+    upsertRow(row, { contractor_id: cid, ...(row.boq_item_id ? {} : { extra_work_description: "", unit: "" }) });
+  };
+
+  const QtyRowEditor = ({ row, unit, other }: { row: QtyRow; unit: string; other?: boolean }) => {
+    const rate = findRate(row, rates);
+    const amount = rowAmount(row, rates);
+    const problem = rowProblem(row, rates);
+    const descOptions = other && row.contractor_id ? rates.filter((r) => r.contractor_id === row.contractor_id && !r.boq_item_id) : [];
+    return (
+      <div className="rounded-md bg-muted/40 p-2 space-y-2 min-w-0">
+        <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-2 items-end">
+          <div className="min-w-0">
+            <label className="text-[11px] text-muted-foreground block">Done by</label>
+            <select className="h-9 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm" value={row.contractor_id ?? ""} disabled={readOnly}
+              aria-label="Done by" onChange={(e) => setDoneBy(row, e.target.value || null)}>
+              <option value="">Own labour</option>
+              {contractors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="text-[11px] text-muted-foreground block">Today{(rate?.unit ?? unit) ? ` (${rate?.unit ?? unit})` : ""}</label>
+            <Input inputMode="decimal" type="number" min={0} value={row.today_qty} disabled={readOnly} aria-label="Quantity today"
+              onChange={(e) => upsertRow(row, { today_qty: e.target.value })} />
+          </div>
+        </div>
+        {other && (row.contractor_id ? (
+          <select className="h-9 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm" value={row.extra_work_description} disabled={readOnly}
+            aria-label="Work" onChange={(e) => upsertRow(row, { extra_work_description: e.target.value, unit: rates.find((r) => r.id && r.work_description === e.target.value && r.contractor_id === row.contractor_id)?.unit ?? "" })}>
+            <option value="">Choose work with a rate</option>
+            {descOptions.map((r) => <option key={r.id} value={r.work_description ?? ""}>{r.work_description}</option>)}
+          </select>
+        ) : (
+          <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-2">
+            <Input placeholder="What was done" value={row.extra_work_description} disabled={readOnly} aria-label="Other work description"
+              onChange={(e) => upsertRow(row, { extra_work_description: e.target.value })} />
+            <Input placeholder="Unit" value={row.unit} disabled={readOnly} aria-label="Unit" onChange={(e) => upsertRow(row, { unit: e.target.value })} />
+          </div>
+        ))}
+        {other && !row.contractor_id && <p className="text-[11px] text-muted-foreground">Own-labour other work is for information only.</p>}
+        {row.contractor_id && amount != null && data.can_see_rates !== false && (
+          <p className="text-xs break-words">₹{amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })} at ₹{Number(rate?.effective_rate).toLocaleString("en-IN", { maximumFractionDigits: 2 })}/{rate?.unit}
+            {rate?.rate_type === "lump_sum" && <span className="text-muted-foreground"> · package {Number(rate.used_qty)} of {Number(rate.package_qty)} done</span>}</p>
+        )}
+        {problem && <p className="text-xs text-destructive flex items-start gap-1"><AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" /><span className="break-words">{problem}</span></p>}
+      </div>
+    );
+  };
 
   const PhotoSlot = ({ kind, label, sub }: { kind: string; label?: string; sub?: string | null }) => {
     const ph = photoByKind[kind] as Photo | undefined; const pd = pending[kind];
@@ -318,27 +398,59 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
                 <p className="text-sm font-semibold break-words">{t.code} · {t.name}</p>
                 {lines.length === 0 && <p className="text-xs text-muted-foreground">No BOQ lines linked to this task.</p>}
                 {lines.map((b) => {
-                  const today = Number(qty[b.id]) || 0; const over = exceedsBoq(Number(b.boq_qty), Number(b.cumulative), today);
+                  const rows = rowsFor(b.id);
+                  const todayTotal = rows.reduce((sum, r) => sum + (Number(r.today_qty) || 0), 0);
+                  const over = exceedsBoq(Number(b.boq_qty), Number(b.cumulative), todayTotal);
                   return (
-                    <div key={b.id} className="rounded-md border border-border p-2 space-y-1 min-w-0">
+                    <div key={b.id} className="rounded-md border border-border p-2 space-y-2 min-w-0">
                       <p className="text-sm break-words">{b.description}</p>
-                      <div className="flex items-end gap-2">
-                        <p className="text-xs text-muted-foreground flex-1 min-w-0">BOQ {Number(b.boq_qty)} {b.unit ?? ""} · So far {Number(b.cumulative)}</p>
-                        <div className="w-24 shrink-0">
-                          <label className="text-[11px] text-muted-foreground">Today</label>
-                          <Input inputMode="decimal" type="number" min={0} value={qty[b.id] ?? ""} disabled={readOnly}
-                            onChange={(e) => { touch(); setQty((s) => ({ ...s, [b.id]: e.target.value })); }} />
-                        </div>
-                      </div>
-                      {over && <p className="text-xs text-warning flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Total would exceed BOQ quantity</p>}
+                      <p className="text-xs text-muted-foreground break-words">BOQ {Number(b.boq_qty)} {b.unit ?? ""} · So far {Number(b.cumulative)}</p>
+                      {rows.map((r) => <QtyRowEditor key={r.key} row={r} unit={b.unit ?? ""} />)}
+                      {over && <p className="text-xs text-warning flex items-center gap-1"><AlertTriangle className="h-3 w-3 shrink-0" /> Total would exceed BOQ quantity</p>}
+                      {!readOnly && contractors.length > 0 && (
+                        <Button type="button" size="sm" variant="ghost" className="h-8 px-2 text-xs" onClick={() => splitRow(b.id)}>
+                          <Split className="h-3.5 w-3.5 mr-1" /> Split to another contractor
+                        </Button>
+                      )}
                     </div>
                   );
                 })}
               </div>
             );
           })}
+
+          <div className="space-y-2 border-t border-border pt-3">
+            <p className="text-sm font-semibold">Other work (not in BOQ)</p>
+            {otherRows.length === 0 && <p className="text-xs text-muted-foreground">Nothing added.</p>}
+            {otherRows.map((r) => <QtyRowEditor key={r.key} row={r} unit={r.unit} other />)}
+            {!readOnly && (
+              <Button type="button" size="sm" variant="outline" onClick={addOther}><Plus className="h-3.5 w-3.5 mr-1" /> Other work</Button>
+            )}
+          </div>
         </CardContent>
       </Card>
+
+      {contractors.length > 0 && (
+        <Card>
+          <CardHeader className="p-3 pb-1"><CardTitle className="text-base">Subcontractor headcount today</CardTitle></CardHeader>
+          <CardContent className="p-3 pt-1 space-y-2">
+            {contractors.map((c) => (
+              <div key={c.id} className="flex items-center gap-2 rounded-md border border-border p-2 min-w-0">
+                <p className="text-sm flex-1 min-w-0 break-words">{c.name}</p>
+                <div className="w-24 shrink-0">
+                  <label className="text-[11px] text-muted-foreground" htmlFor={`hc-${c.id}`}>People</label>
+                  <Input id={`hc-${c.id}`} inputMode="numeric" type="number" min={0} max={500} step={1} value={headcount[c.id] ?? ""} disabled={readOnly}
+                    onChange={(e) => { touch(); setHeadcount((s) => ({ ...s, [c.id]: e.target.value })); }} />
+                </div>
+              </div>
+            ))}
+            {missingHeadcount.length > 0 && (
+              <p className="text-xs text-warning flex items-start gap-1"><AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" />
+                <span className="break-words">Quantities recorded but no headcount: {missingHeadcount.map((id) => contractorName(id)).join(", ")}</span></p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* 3. Labour */}
       <Card>
