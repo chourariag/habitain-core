@@ -8,13 +8,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Camera, ImageIcon, Loader2, RotateCw, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Camera, ImageIcon, Loader2, RotateCw, CheckCircle2, AlertTriangle, Plus, Split } from "lucide-react";
 import { toast } from "sonner";
 import {
   NO_ELEVATIONS_MSG, FLAG_LABEL, PHOTO_LABEL, allowedReportDates, exceedsBoq, labourBalance, parsePct, submitBlockers,
 } from "@/lib/site-report-rules";
 import { compressPhoto, readPhotoMeta, type PhotoMeta } from "@/lib/site-report-photo";
 import { siteReportErrorMessage } from "@/lib/site-report-errors";
+import {
+  NO_RATE_MSG, type QtyRow, type SubRate, findRate, rowAmount, lumpSumOver, quantityPayload, contractorsMissingHeadcount,
+} from "@/lib/site-report-subcontract";
 
 type Task = { id: string; code: string; name: string; pct: number; planned_start: string; actual_start: string | null };
 type Boq = { id: string; task_id: string; description: string; unit: string | null; boq_qty: number; cumulative: number };
@@ -25,7 +28,11 @@ type Data = {
   tasks: Task[]; boq: Boq[];
   progress: { task_id: string; pct: number | null; remarks: string | null }[];
   labour: { task_id: string; hours: number }[];
-  quantities: { boq_item_id: string; today_qty: number; remarks: string | null }[];
+  quantities: { id: string; boq_item_id: string | null; contractor_id: string | null; extra_work_description: string | null; unit: string | null; today_qty: number; remarks: string | null; amount_inr: number | null }[];
+  rates?: SubRate[];
+  contractors?: { id: string; name: string }[];
+  headcount?: { contractor_id: string; headcount: number }[];
+  can_see_rates?: boolean;
   photos: Photo[];
   elevations: { id: string; name: string; drawing_ref: string | null }[];
   can_manage_elevations: boolean;
@@ -44,7 +51,8 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
   const [loading, setLoading] = useState(true);
   const [pct, setPct] = useState<Record<string, string>>({});
   const [hours, setHours] = useState<Record<string, string>>({});
-  const [qty, setQty] = useState<Record<string, string>>({});
+  const [qrows, setQrows] = useState<QtyRow[]>([]);
+  const [headcount, setHeadcount] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
   const [siteClean, setSiteClean] = useState(false);
   const [taskSearch, setTaskSearch] = useState("");
@@ -57,7 +65,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
   const reportId = useRef<string | null>(null);
   const timer = useRef<number | null>(null);
   const dirty = useRef(false);
-  const cleared = useRef<{ hours: Set<string>; qty: Set<string> }>({ hours: new Set(), qty: new Set() });
+  const cleared = useRef<{ hours: Set<string> }>({ hours: new Set() });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -71,7 +79,11 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     setSiteClean(!!v.report?.site_clean);
     setPct(Object.fromEntries(v.progress.filter((p) => p.pct != null).map((p) => [p.task_id, String(p.pct)])));
     setHours(Object.fromEntries(v.labour.map((l) => [l.task_id, String(l.hours)])));
-    setQty(Object.fromEntries(v.quantities.map((q) => [q.boq_item_id, String(q.today_qty)])));
+    setQrows(v.quantities.filter((q) => Number(q.today_qty) > 0 || q.contractor_id || !q.boq_item_id).map((q) => ({
+      key: q.id, boq_item_id: q.boq_item_id, contractor_id: q.contractor_id, extra_work_description: q.extra_work_description ?? "",
+      unit: q.unit ?? "", today_qty: Number(q.today_qty) > 0 ? String(q.today_qty) : "",
+    })));
+    setHeadcount(Object.fromEntries((v.headcount ?? []).map((h) => [h.contractor_id, String(h.headcount)])));
     setSummary(null);
   }, [projectId, date]);
 
@@ -106,16 +118,17 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     // entries removed from a cleared task are sent once as 0 so previously saved values do not linger
     labour: [...Object.entries(hours).map(([task_id, v]) => ({ task_id, hours: Math.max(Number(v) || 0, 0) })),
       ...[...cleared.current.hours].filter((id) => !(id in hours)).map((task_id) => ({ task_id, hours: 0 }))],
-    quantities: [...Object.entries(qty).map(([boq_item_id, v]) => ({ boq_item_id, today_qty: Math.max(Number(v) || 0, 0) })),
-      ...[...cleared.current.qty].filter((id) => !(id in qty)).map((boq_item_id) => ({ boq_item_id, today_qty: 0 }))],
-  }), [notes, siteClean, pct, hours, qty]);
+    // complete set of quantity rows; rows left out are zeroed on the server (never deleted)
+    quantities: quantityPayload(qrows, data?.rates ?? []),
+    headcount: Object.entries(headcount).filter(([, v]) => v.trim() !== "").map(([contractor_id, v]) => ({ contractor_id, headcount: Math.min(Math.max(Math.round(Number(v) || 0), 0), 500) })),
+  }), [notes, siteClean, pct, hours, qrows, headcount, data?.rates]);
 
   const saveNow = useCallback(async () => {
     if (!canEdit) return null;
     setSaveState("saving");
     const { data: id, error } = await rpc("save_site_report_draft", { p_project_id: projectId, p_date: date, p_payload: buildPayload() });
     if (error) { setSaveState("error"); console.error("save_site_report_draft failed:", error); toast.error(siteReportErrorMessage(error)); return null; }
-    reportId.current = id as string; dirty.current = false; cleared.current = { hours: new Set(), qty: new Set() }; setSaveState("saved");
+    reportId.current = id as string; dirty.current = false; cleared.current = { hours: new Set() }; setSaveState("saved");
     return id as string;
   }, [canEdit, projectId, date, buildPayload]);
 
@@ -125,7 +138,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => { saveNow(); }, 900);
     return () => { if (timer.current) window.clearTimeout(timer.current); };
-  }, [pct, hours, qty, notes, siteClean, saveNow]);
+  }, [pct, hours, qrows, headcount, notes, siteClean, saveNow]);
   const touch = () => { dirty.current = true; };
 
   const uploadPending = async (kind: string, p: Pending) => {
@@ -277,7 +290,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
                       setPct((s) => ({ ...s, [t.id]: val }));
                       if (val.trim() === "") {
                         const lineIds = data.boq.filter((b) => b.task_id === t.id).map((b) => b.id);
-                        setQty((s) => { const n = { ...s }; lineIds.forEach((id) => { if (id in n) { cleared.current.qty.add(id); delete n[id]; } }); return n; });
+                        setQrows((s) => s.filter((r) => !r.boq_item_id || !lineIds.includes(r.boq_item_id)));
                         setHours((s) => { if (!(t.id in s)) return s; cleared.current.hours.add(t.id); const n = { ...s }; delete n[t.id]; return n; });
                       }
                     }} />
