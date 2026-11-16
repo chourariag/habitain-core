@@ -179,7 +179,13 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     if (!id) { setSubmitting(false); return; }
     const { data: res, error } = await rpc("submit_site_report", { p_report_id: id });
     setSubmitting(false);
-    if (error) { console.error("submit_site_report failed:", error); toast.error(siteReportErrorMessage(error)); return; }
+    if (error) {
+      console.error("submit_site_report failed:", error);
+      const msg = siteReportErrorMessage(error);
+      if (msg.startsWith("Confirm hours for ")) { setHoursBlock(msg); toast.error(msg); return; }
+      toast.error(msg); return;
+    }
+    setHoursBlock(null);
     await load();
     setSummary(res);
     toast.success("Daily report submitted");
@@ -245,7 +251,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
             <label className="text-[11px] text-muted-foreground block">Done by</label>
             <select className="h-9 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm" value={row.contractor_id ?? ""} disabled={readOnly}
               aria-label="Done by" onChange={(e) => setDoneBy(row, e.target.value || null)}>
-              <option value="">Own labour</option>
+              <option value="">ALTREE labour</option>
               {contractors.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
