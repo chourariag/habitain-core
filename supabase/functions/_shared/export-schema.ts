@@ -355,7 +355,7 @@ export const EXPORT_SCHEMA = [
   },
   {
     "table": "labour_attendance",
-    "version": 1,
+    "version": 2,
     "columns": [
       {
         "name": "id",
@@ -386,12 +386,70 @@ export const EXPORT_SCHEMA = [
         "type": "timestamp with time zone"
       },
       {
+        "name": "hours_confirmed",
+        "type": "boolean"
+      },
+      {
+        "name": "no_photo_exception",
+        "type": "boolean"
+      },
+      {
         "name": "effective_hourly_rate",
         "type": "numeric"
       },
       {
         "name": "amount",
         "type": "numeric"
+      }
+    ]
+  },
+  {
+    "table": "labour_attendance_photos",
+    "version": 1,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid"
+      },
+      {
+        "name": "work_date",
+        "type": "date"
+      },
+      {
+        "name": "storage_path",
+        "type": "text"
+      },
+      {
+        "name": "captured_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "received_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "gps_lat",
+        "type": "numeric"
+      },
+      {
+        "name": "gps_lng",
+        "type": "numeric"
+      },
+      {
+        "name": "gps_accuracy_m",
+        "type": "numeric"
+      },
+      {
+        "name": "flags",
+        "type": "jsonb"
+      },
+      {
+        "name": "uploaded_by",
+        "type": "uuid"
       }
     ]
   },

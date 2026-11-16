@@ -109,7 +109,9 @@ Snapshots page each source in deterministic key order; separate tables are not o
 | `policy_warnings` | jsonb |
 | `warning_reason` | text |
 
-## labour_attendance_v1.csv
+## labour_attendance_v2.csv
+
+v2 adds `hours_confirmed` (evening confirmation; all rows before B1b backfilled true) and `no_photo_exception` (recorded without a toolbox talk photo through the logged exception path).
 
 | Column | Type |
 |---|---|
@@ -120,6 +122,8 @@ Snapshots page each source in deterministic key order; separate tables are not o
 | `hours` | numeric |
 | `recorded_by` | uuid |
 | `recorded_at` | timestamp with time zone |
+| `hours_confirmed` | boolean |
+| `no_photo_exception` | boolean |
 | `effective_hourly_rate` | numeric |
 | `amount` | numeric |
 
@@ -553,3 +557,21 @@ Subcontract rates per project (B1). `rate_type` is `per_unit` or `lump_sum`; eff
 | `updated_by` | uuid |
 | `created_at` | timestamp with time zone |
 | `updated_at` | timestamp with time zone |
+
+## labour_attendance_photos_v1.csv
+
+Metadata only; image files are never exported.
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `project_id` | uuid |
+| `work_date` | date |
+| `storage_path` | text |
+| `captured_at` | timestamp with time zone |
+| `received_at` | timestamp with time zone |
+| `gps_lat` | numeric |
+| `gps_lng` | numeric |
+| `gps_accuracy_m` | numeric |
+| `flags` | jsonb |
+| `uploaded_by` | uuid |
