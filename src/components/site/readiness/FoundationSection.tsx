@@ -137,7 +137,7 @@ export function FoundationSection({ projectId, canEdit, onComplete }: Props) {
               <span className={cn("shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium", bad ? "bg-destructive/10 text-destructive" : done === g.items.length ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>{done}/{g.items.length}</span>
               <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", open[g.key] && "rotate-180")} />
             </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-2 px-3 pb-3">
+            <CollapsibleContent className="space-y-2 px-2 pb-2 sm:px-3 sm:pb-3">
               {g.items.map((it) => <ItemRow key={it.key} item={it} draft={drafts[it.key] ?? EMPTY} tol={tol} canEdit={canEdit} projectId={projectId} saving={saving === it.key} onSave={(d) => saveItem(it, d)} />)}
             </CollapsibleContent>
           </Collapsible>
@@ -167,7 +167,7 @@ function ItemRow({ item, draft, tol, canEdit, projectId, saving, onSave }: { ite
   const commit = (patch: Partial<Draft>) => onSave({ ...d, ...patch });
 
   return (
-    <div className={cn("rounded-md border p-2.5 space-y-2 min-w-0", shown === "not_ok" ? "border-destructive/60 bg-destructive/5" : "border-border")}>
+    <div className={cn("rounded-md border p-2 sm:p-2.5 space-y-2 min-w-0", shown === "not_ok" ? "border-destructive/60 bg-destructive/5" : "border-border")}>
       <p className="text-sm break-words"><span className="font-semibold">{item.key}.</span> {item.label}{item.photo && <span className="text-destructive"> *</span>}</p>
       <div className="grid grid-cols-3 gap-1">
         {STATUS_OPTS.map((o) => (

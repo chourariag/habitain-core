@@ -538,11 +538,11 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
         <div className="border rounded-lg p-3" style={{ borderColor: "#E5E5E5" }}>
           <SectionHeader title="Section 1 — Site Preparation" done={section1Count} total={3} />
           <div className="space-y-3">
-            <div className="rounded-md border p-2.5" style={{ borderColor: "#EEEEEE" }}>
+            <div className="sm:rounded-md sm:border sm:p-2.5" style={{ borderColor: "#EEEEEE" }}>
               <h4 className="text-sm font-semibold mb-2">Foundation</h4>
               <FoundationSection projectId={projectId} canEdit={canManage} onComplete={onFoundation} />
             </div>
-            <div className="rounded-md border p-2.5" style={{ borderColor: "#EEEEEE" }}>
+            <div className="border-t pt-3 sm:rounded-md sm:border sm:p-2.5" style={{ borderColor: "#EEEEEE" }}>
               <h4 className="text-sm font-semibold mb-2">Crane booking</h4>
               <CraneBookingSection projectId={projectId} canEdit={canManage} onComplete={onCrane} />
             </div>
