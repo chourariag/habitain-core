@@ -5659,7 +5659,11 @@ export type Database = {
       labour_attendance: {
         Row: {
           hours: number
+          hours_confirmed: boolean
+          hours_confirmed_at: string | null
+          hours_confirmed_by: string | null
           id: string
+          no_photo_exception: boolean
           project_id: string
           recorded_at: string
           recorded_by: string
@@ -5668,7 +5672,11 @@ export type Database = {
         }
         Insert: {
           hours: number
+          hours_confirmed?: boolean
+          hours_confirmed_at?: string | null
+          hours_confirmed_by?: string | null
           id?: string
+          no_photo_exception?: boolean
           project_id: string
           recorded_at?: string
           recorded_by: string
@@ -5677,7 +5685,11 @@ export type Database = {
         }
         Update: {
           hours?: number
+          hours_confirmed?: boolean
+          hours_confirmed_at?: string | null
+          hours_confirmed_by?: string | null
           id?: string
+          no_photo_exception?: boolean
           project_id?: string
           recorded_at?: string
           recorded_by?: string
@@ -5749,6 +5761,94 @@ export type Database = {
             columns: ["attendance_id"]
             isOneToOne: false
             referencedRelation: "labour_attendance"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labour_attendance_photo_exceptions: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          project_id: string
+          reason: string
+          rows_affected: number
+          work_date: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          project_id: string
+          reason: string
+          rows_affected?: number
+          work_date: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          project_id?: string
+          reason?: string
+          rows_affected?: number
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_attendance_photo_exceptions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labour_attendance_photos: {
+        Row: {
+          captured_at: string
+          flags: Json
+          gps_accuracy_m: number
+          gps_lat: number
+          gps_lng: number
+          id: string
+          project_id: string
+          received_at: string
+          storage_path: string
+          uploaded_by: string
+          work_date: string
+        }
+        Insert: {
+          captured_at: string
+          flags?: Json
+          gps_accuracy_m: number
+          gps_lat: number
+          gps_lng: number
+          id?: string
+          project_id: string
+          received_at?: string
+          storage_path: string
+          uploaded_by: string
+          work_date: string
+        }
+        Update: {
+          captured_at?: string
+          flags?: Json
+          gps_accuracy_m?: number
+          gps_lat?: number
+          gps_lng?: number
+          id?: string
+          project_id?: string
+          received_at?: string
+          storage_path?: string
+          uploaded_by?: string
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labour_attendance_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
             referencedColumns: ["id"]
           },
         ]
@@ -17075,6 +17175,35 @@ export type Database = {
         Returns: undefined
       }
       acknowledge_reminder: { Args: { p_id: string }; Returns: undefined }
+      add_attendance_photo: {
+        Args: {
+          p_accuracy_m: number
+          p_captured_at: string
+          p_lat: number
+          p_lng: number
+          p_project_id: string
+          p_storage_path: string
+        }
+        Returns: {
+          captured_at: string
+          flags: Json
+          gps_accuracy_m: number
+          gps_lat: number
+          gps_lng: number
+          id: string
+          project_id: string
+          received_at: string
+          storage_path: string
+          uploaded_by: string
+          work_date: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "labour_attendance_photos"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       add_site_report_elevation_photo: {
         Args: {
           p_elevation_id: string
@@ -17130,6 +17259,10 @@ export type Database = {
         Args: { _entity_id: string; _entity_type: string }
         Returns: string
       }
+      attendance_photo_object_project: {
+        Args: { _name: string }
+        Returns: string
+      }
       backfill_project_starting_stage: {
         Args: {
           _doc_unavailable?: boolean
@@ -17172,6 +17305,10 @@ export type Database = {
           _row: Database["public"]["Tables"]["approval_requests"]["Row"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      can_attendance_photo_exception: {
+        Args: { _uid: string }
         Returns: boolean
       }
       can_capture_site_photo: { Args: { _user_id: string }; Returns: boolean }
@@ -17219,6 +17356,10 @@ export type Database = {
         Returns: boolean
       }
       can_raise_work_order: { Args: { _user_id: string }; Returns: boolean }
+      can_read_attendance_photos: {
+        Args: { _project: string; _uid: string }
+        Returns: boolean
+      }
       can_read_crane_cost: {
         Args: { _entered_by: string; _uid: string }
         Returns: boolean
@@ -17230,6 +17371,10 @@ export type Database = {
       }
       can_read_subcontract_rates: {
         Args: { _project_id: string; _uid: string }
+        Returns: boolean
+      }
+      can_record_labour_attendance: {
+        Args: { _project: string; _uid: string }
         Returns: boolean
       }
       can_sales_edit_scope: {
@@ -17338,6 +17483,10 @@ export type Database = {
           _notes?: string
         }
         Returns: Json
+      }
+      confirm_labour_hours: {
+        Args: { p_project_id: string; p_rows: Json; p_work_date: string }
+        Returns: number
       }
       consume_scope_signoff_token: {
         Args: { p_signer_name: string; p_token: string }
@@ -17489,6 +17638,7 @@ export type Database = {
         }[]
       }
       get_labour_rate_for_trade: { Args: { _trade: string }; Returns: number }
+      get_labour_standard_hours: { Args: never; Returns: number }
       get_labour_workers_full: {
         Args: never
         Returns: {
@@ -17811,6 +17961,7 @@ export type Database = {
       is_tier1_or_super: { Args: { _uid: string }; Returns: boolean }
       is_variation_approver: { Args: { _uid: string }; Returns: boolean }
       is_win_sync_approver: { Args: { _uid: string }; Returns: boolean }
+      ist_today: { Args: never; Returns: string }
       kickoff_meeting_daily_reminders: { Args: never; Returns: undefined }
       list_open_reminders: { Args: never; Returns: Json }
       log_offboarding_audit: {
@@ -17905,6 +18056,7 @@ export type Database = {
         Args: { _enabled: boolean; _key: string }
         Returns: boolean
       }
+      set_labour_standard_hours: { Args: { p_hours: number }; Returns: number }
       site_report_today: { Args: never; Returns: string }
       site_schedule_dispatch_reminders: { Args: never; Returns: number }
       storage_object_project_allowed: {

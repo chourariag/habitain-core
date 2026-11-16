@@ -19,5 +19,6 @@ const RULE_MESSAGES = new Set([
 
 export function siteReportErrorMessage(error: { message?: string | null }): string {
   const message = error.message?.trim();
+  if (message && /^Confirm hours for \d+ workers in People\.$/.test(message)) return message;
   return message && RULE_MESSAGES.has(message) ? message : SITE_REPORT_SAVE_FAILURE;
 }

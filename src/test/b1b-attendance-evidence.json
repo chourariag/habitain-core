@@ -1,0 +1,12 @@
+{
+  "NO_PHOTO_TODAY": "Take the toolbox talk photo first.",
+  "BACKDATED_PHOTO": "Toolbox talk photos can only be added for today",
+  "CLOCK_OFF": "Photo time is more than 10 minutes from server time. Check the phone clock and take the photo again.",
+  "SUBMIT_UNCONFIRMED": "Confirm hours for 2 workers in People.",
+  "SUBMIT_AFTER_CONFIRM": "ok",
+  "EXCEPTION_SAVED": ["managing_director", "super_admin", "head_of_projects"],
+  "EXCEPTION_BLOCKED": ["planning_head", "site_engineer"],
+  "EXCEPTION_SHORT_REASON": "No toolbox talk photo for this day. Enter a reason of at least 10 characters.",
+  "READ_STORES_EXECUTIVE": 0,
+  "REMINDER_EVENTS": 0
+}
