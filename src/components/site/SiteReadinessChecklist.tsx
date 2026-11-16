@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getAuthedClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,9 @@ import { format } from "date-fns";
 import { insertNotifications } from "@/lib/notifications";
 import { canSubmitSiteReadiness } from "@/lib/site-readiness-permissions";
 import { getSignedUrl, getSignedUrls } from "@/lib/storage-signed-url";
+import { FoundationSection } from "@/components/site/readiness/FoundationSection";
+import { CraneBookingSection } from "@/components/site/readiness/CraneBookingSection";
+import { READINESS_TOTAL } from "@/lib/site-readiness-foundation";
 
 const PHOTO_BUCKET = "site-photos";
 const VIDEO_BUCKET = "dry-run-videos";
@@ -211,11 +214,17 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
   // Site-present roles fill the readiness checklist on the ground; mirrors site_readiness RLS insert/update policy.
   const canManage = canSubmitSiteReadiness(userRole);
 
-  const section1Count = PREP_ITEMS.filter((it) => state[it.key]).length;
+  // Section 1 = Foundation group + Crane booking group + Site Access Clear. Team Briefed / Safety Equipment are install-day items:
+  // hidden and not counted, but their stored values are preserved on save.
+  const [foundationDone, setFoundationDone] = useState(false);
+  const [craneDone, setCraneDone] = useState(false);
+  const onFoundation = useCallback((v: boolean) => setFoundationDone(v), []);
+  const onCrane = useCallback((v: boolean) => setCraneDone(v), []);
+  const section1Count = [foundationDone, craneDone, state.site_access_clear].filter(Boolean).length;
   const section2Count = state.dry_run_video_url ? 1 : 0;
   const section3Count = [state.labour_stay, state.labour_food, state.dg_generator, state.nearest_hardware_shop, state.supervisor_stay].filter(Boolean).length;
   const totalComplete = section1Count + section2Count + section3Count;
-  const allComplete = totalComplete === 11;
+  const allComplete = totalComplete === READINESS_TOTAL;
 
   useEffect(() => { loadExisting(); }, [projectId]);
 
@@ -357,7 +366,7 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
   };
 
   const handleSubmit = async () => {
-    if (!allComplete) { toast.error("All 11 items must be complete before confirming"); return; }
+    if (!allComplete) { toast.error("Foundation, Crane booking, Site Access, Dry Run and Logistics must all be complete before confirming"); return; }
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -370,6 +379,8 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
         submitted_at: new Date().toISOString(),
         is_complete: true,
         ...state,
+        foundation_ready: true,
+        crane_booked: true,
       };
       if (existing) {
         const { error } = await (client.from("site_readiness") as any).update(payload).eq("id", existing.id);
@@ -505,7 +516,7 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
     </div>
   );
 
-  const progressPct = Math.round((totalComplete / 11) * 100);
+  const progressPct = Math.round((totalComplete / READINESS_TOTAL) * 100);
 
   return (
     <Card>
@@ -519,15 +530,23 @@ export function SiteReadinessChecklist({ projectId, userRole, onReadinessConfirm
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs" style={{ color: "#666666" }}>
             <span>Overall Progress</span>
-            <span className="font-medium" style={{ color: allComplete ? "#006039" : "#1A1A1A" }}>{totalComplete} of 11 items</span>
+            <span className="font-medium" style={{ color: allComplete ? "#006039" : "#1A1A1A" }}>{totalComplete} of {READINESS_TOTAL} items</span>
           </div>
           <Progress value={progressPct} className="h-2" />
         </div>
 
         <div className="border rounded-lg p-3" style={{ borderColor: "#E5E5E5" }}>
-          <SectionHeader title="Section 1 — Site Preparation" done={section1Count} total={5} />
-          <div className="space-y-2.5">
-            {PREP_ITEMS.map((it) => (
+          <SectionHeader title="Section 1 — Site Preparation" done={section1Count} total={3} />
+          <div className="space-y-3">
+            <div className="sm:rounded-md sm:border sm:p-2.5" style={{ borderColor: "#EEEEEE" }}>
+              <h4 className="text-sm font-semibold mb-2">Foundation</h4>
+              <FoundationSection projectId={projectId} canEdit={canManage} onComplete={onFoundation} />
+            </div>
+            <div className="border-t pt-3 sm:rounded-md sm:border sm:p-2.5" style={{ borderColor: "#EEEEEE" }}>
+              <h4 className="text-sm font-semibold mb-2">Crane booking</h4>
+              <CraneBookingSection projectId={projectId} canEdit={canManage} onComplete={onCrane} />
+            </div>
+            {PREP_ITEMS.filter((it) => it.key === "site_access_clear").map((it) => (
               <PrepItem
                 key={it.key}
                 label={it.label}

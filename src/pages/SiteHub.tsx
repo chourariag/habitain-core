@@ -43,7 +43,6 @@ import { MobileProjectSwitcher } from "@/components/MobileProjectSwitcher";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import { ProjectChatButton } from "@/components/chat/ProjectChatButton";
 import type { Tables } from "@/integrations/supabase/types";
-import { MyTasksSection } from "@/components/tasks/MyTasksSection";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { featureFlagForSiteTab } from "@/lib/feature-flags";
 import { DailySiteReport } from "@/components/site/DailySiteReport";
@@ -64,14 +63,20 @@ function SiteHubContent() {
   const [siteReady, setSiteReady] = useState(false);
   const [dispatchConditions, setDispatchConditions] = useState<Record<string, { qc: boolean; inspection: boolean; site: boolean; signoff: boolean }>>({});
   const [showReadinessChecklist, setShowReadinessChecklist] = useState(false);
-  const initialTab = new URLSearchParams(window.location.search).get("tab") ?? "pipeline";
-  const initialTabFlag = featureFlagForSiteTab(initialTab);
-  const [activeTab, setActiveTab] = useState(() => initialTabFlag && !featureFlags.isEnabled(initialTabFlag) ? "pipeline" : initialTab);
+  // Dispatch Pipeline tab is hidden (code kept); ?tab=pipeline links land on Site Readiness.
+  // Default: Daily Report when enabled, otherwise Site Readiness.
+  const resolveTab = (search: string) => {
+    const fallback = featureFlags.isEnabled("site_report") ? "daily-report" : "site-readiness";
+    const raw = new URLSearchParams(search).get("tab");
+    const requested = raw === "pipeline" ? "site-readiness" : raw ?? fallback;
+    const requiredFlag = featureFlagForSiteTab(requested);
+    return requiredFlag && !featureFlags.isEnabled(requiredFlag) ? fallback : requested;
+  };
+  const [activeTab, setActiveTab] = useState(() => resolveTab(window.location.search));
 
   useEffect(() => {
-    const requestedTab = new URLSearchParams(location.search).get("tab") ?? "pipeline";
-    const requiredFlag = featureFlagForSiteTab(requestedTab);
-    setActiveTab(requiredFlag && !featureFlags.isEnabled(requiredFlag) ? "pipeline" : requestedTab);
+    setActiveTab(resolveTab(location.search));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search, featureFlags.flags]);
 
   const fetchData = useCallback(async () => {
@@ -234,14 +239,12 @@ function SiteHubContent() {
         </Button>
       )}
 
-      {/* My Site Tasks */}
-      <MyTasksSection userRole={userRole} projectId={selectedProjectId} phaseFilter={["Site Installation", "Finishing"]} title="My Site Tasks" showProjectName={false} />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <ScrollableTabsWrapper>
           <TabsList>
             {featureFlags.isEnabled("site_report") && <TabsTrigger value="daily-report" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Daily Report</TabsTrigger>}
-            <TabsTrigger value="pipeline" className="gap-1.5"><Truck className="h-4 w-4" /> Dispatch Pipeline</TabsTrigger>
+            <TabsTrigger value="site-readiness" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> Site Readiness</TabsTrigger>
             <TabsTrigger value="schedule" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Schedule</TabsTrigger>
             {featureFlags.isEnabled("gfc") && <TabsTrigger value="drawings" className="gap-1.5"><PenTool className="h-4 w-4" /> Drawings</TabsTrigger>}
             {featureFlags.isEnabled("work_orders") && <TabsTrigger value="work-orders" className="gap-1.5"><Hammer className="h-4 w-4" /> Work Orders</TabsTrigger>}
@@ -257,6 +260,22 @@ function SiteHubContent() {
           </TabsList>
         </ScrollableTabsWrapper>
 
+        <TabsContent value="site-readiness" className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <ClipboardCheck className="h-5 w-5 shrink-0" style={{ color: siteReady ? "#006039" : "#D4860A" }} />
+            <h2 className="text-base font-semibold flex-1 min-w-0">Site Readiness Checklist</h2>
+            <Badge variant="outline" className="shrink-0" style={badgeStyle(siteReady ? "success" : "warning")}>{siteReady ? "Confirmed" : "Before dispatch"}</Badge>
+          </div>
+          <p className="text-xs text-muted-foreground">Completed by one person before dispatch so delivery and placement on D-Day go smoothly. Applies to all modules in this project.</p>
+          {selectedProjectId && (
+            <SiteReadinessChecklist projectId={selectedProjectId} userRole={userRole} onReadinessConfirmed={fetchData} />
+          )}
+          {!siteReady && !canManageReadiness && (
+            <Card><CardContent className="py-6 text-center text-sm text-muted-foreground">The site team has not confirmed readiness yet.</CardContent></Card>
+          )}
+        </TabsContent>
+
+        {/* Dispatch Pipeline — hidden from the tab bar; kept for reference */}
         <TabsContent value="pipeline" className="space-y-4">
           {/* Project-level Site Readiness */}
           <div className="bg-card border border-border rounded-lg p-4 space-y-3">
