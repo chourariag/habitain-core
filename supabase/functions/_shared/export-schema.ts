@@ -1248,6 +1248,218 @@ export const EXPORT_SCHEMA = [
     ]
   },
   {
+    "table": "site_readiness_checks",
+    "version": 1,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid"
+      },
+      {
+        "name": "section",
+        "type": "text"
+      },
+      {
+        "name": "item_key",
+        "type": "text"
+      },
+      {
+        "name": "status",
+        "type": "text"
+      },
+      {
+        "name": "value_numeric",
+        "type": "numeric"
+      },
+      {
+        "name": "value_text",
+        "type": "text"
+      },
+      {
+        "name": "comment",
+        "type": "text"
+      },
+      {
+        "name": "photo_paths",
+        "type": "jsonb"
+      },
+      {
+        "name": "checked_by",
+        "type": "uuid"
+      },
+      {
+        "name": "checked_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "created_by",
+        "type": "uuid"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone"
+      }
+    ]
+  },
+  {
+    "table": "site_readiness_crane",
+    "version": 1,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid"
+      },
+      {
+        "name": "vendor_name",
+        "type": "text"
+      },
+      {
+        "name": "vendor_contact_phone",
+        "type": "text"
+      },
+      {
+        "name": "operator_name",
+        "type": "text"
+      },
+      {
+        "name": "operator_phone",
+        "type": "text"
+      },
+      {
+        "name": "capacity_tonnes",
+        "type": "numeric"
+      },
+      {
+        "name": "booked_for_date",
+        "type": "date"
+      },
+      {
+        "name": "slot_hours",
+        "type": "numeric"
+      },
+      {
+        "name": "operator_site_visit_done",
+        "type": "boolean"
+      },
+      {
+        "name": "operator_visit_date",
+        "type": "date"
+      },
+      {
+        "name": "comment",
+        "type": "text"
+      },
+      {
+        "name": "photo_paths",
+        "type": "jsonb"
+      },
+      {
+        "name": "created_by",
+        "type": "uuid"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "updated_by",
+        "type": "uuid"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone"
+      }
+    ]
+  },
+  {
+    "table": "site_readiness_crane_cost",
+    "version": 1,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid"
+      },
+      {
+        "name": "rate_inr",
+        "type": "numeric"
+      },
+      {
+        "name": "rate_basis",
+        "type": "text"
+      },
+      {
+        "name": "total_cost_inr",
+        "type": "numeric"
+      },
+      {
+        "name": "advance_paid_inr",
+        "type": "numeric"
+      },
+      {
+        "name": "created_by",
+        "type": "uuid"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "updated_by",
+        "type": "uuid"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone"
+      }
+    ]
+  },
+  {
+    "table": "site_readiness_tolerances",
+    "version": 1,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid"
+      },
+      {
+        "name": "allowed_level_diff_mm",
+        "type": "numeric"
+      },
+      {
+        "name": "allowed_diagonal_diff_mm",
+        "type": "numeric"
+      },
+      {
+        "name": "allowed_spacing_dev_mm",
+        "type": "numeric"
+      },
+      {
+        "name": "set_by",
+        "type": "uuid"
+      },
+      {
+        "name": "set_at",
+        "type": "timestamp with time zone"
+      }
+    ]
+  },
+  {
     "table": "site_report_edit_log",
     "version": 1,
     "columns": [

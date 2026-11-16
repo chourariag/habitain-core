@@ -6,7 +6,7 @@ Files are stored at `YYYY-MM-DD/<source>_v1.csv` (IST run date) and `latest/<sou
 
 Source rows include archived/draft rows. `daily_measurements` contains only `trade=daily_site_report`. Photo files contain metadata only. No image/receipt bytes are read. `labour_worker_rates` is exported through a service-only projection, not its role-filtered view. `labour_attendance.amount = hours × effective_hourly_rate`; rates are current effective rates (not historical snapshots). Effective rates preserve the existing hourly-rate fallback; monthly salary itself is never exported.
 
-Excluded: auth, employee salary/payroll tables, monthly_salary, client_portal_token, receipt_url, client phone/email, bank/PAN/Aadhaar fields. Explicit projections freeze the schema; no SELECT *. Nested sensitive JSON keys are removed. The token grants all 17 latest files, including wages and GPS metadata; only Tier 1/Super Admin can issue or revoke it. Links expire after 300 seconds; revocation cannot invalidate already issued links before expiry.
+Excluded: auth, employee salary/payroll tables, monthly_salary, client_portal_token, receipt_url, client phone/email, bank/PAN/Aadhaar fields. Explicit projections freeze the schema; no SELECT *. Nested sensitive JSON keys are removed. The token grants all 21 latest files, including wages and GPS metadata; only Tier 1/Super Admin can issue or revoke it. Links expire after 300 seconds; revocation cannot invalidate already issued links before expiry.
 
 Snapshots page each source in deterministic key order; separate tables are not one cross-table transaction. Dated retention is 60 days; latest is never pruned.
 
@@ -363,6 +363,75 @@ Snapshots page each source in deterministic key order; separate tables are not o
 | `updated_by` | uuid |
 | `created_at` | timestamp with time zone |
 | `updated_at` | timestamp with time zone |
+
+Site readiness files (added with the Site Readiness redesign): `photo_paths` is JSON photo metadata (storage path, EXIF date, GPS, gallery flag), never image bytes. `site_readiness_crane_cost_v1.csv` carries crane amounts in ₹ and is visible in the app only to Tier 1/Super Admin, finance_manager, head_of_projects, planning_head and the person who entered it.
+
+## site_readiness_checks_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `project_id` | uuid |
+| `section` | text |
+| `item_key` | text |
+| `status` | text |
+| `value_numeric` | numeric |
+| `value_text` | text |
+| `comment` | text |
+| `photo_paths` | jsonb |
+| `checked_by` | uuid |
+| `checked_at` | timestamp with time zone |
+| `created_by` | uuid |
+| `created_at` | timestamp with time zone |
+
+## site_readiness_crane_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `project_id` | uuid |
+| `vendor_name` | text |
+| `vendor_contact_phone` | text |
+| `operator_name` | text |
+| `operator_phone` | text |
+| `capacity_tonnes` | numeric |
+| `booked_for_date` | date |
+| `slot_hours` | numeric |
+| `operator_site_visit_done` | boolean |
+| `operator_visit_date` | date |
+| `comment` | text |
+| `photo_paths` | jsonb |
+| `created_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_by` | uuid |
+| `updated_at` | timestamp with time zone |
+
+## site_readiness_crane_cost_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `project_id` | uuid |
+| `rate_inr` | numeric |
+| `rate_basis` | text |
+| `total_cost_inr` | numeric |
+| `advance_paid_inr` | numeric |
+| `created_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_by` | uuid |
+| `updated_at` | timestamp with time zone |
+
+## site_readiness_tolerances_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `project_id` | uuid |
+| `allowed_level_diff_mm` | numeric |
+| `allowed_diagonal_diff_mm` | numeric |
+| `allowed_spacing_dev_mm` | numeric |
+| `set_by` | uuid |
+| `set_at` | timestamp with time zone |
 
 ## site_report_edit_log_v1.csv
 
