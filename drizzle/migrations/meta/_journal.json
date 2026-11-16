@@ -281,6 +281,13 @@
       "when": 1794852825303,
       "tag": "0039_b1b_attendance_photo_hours_confirm",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1794853431062,
+      "tag": "0040_b2_running_bill",
+      "breakpoints": true
     }
   ]
 }
