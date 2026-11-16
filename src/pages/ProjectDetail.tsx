@@ -1,3 +1,5 @@
+import { RunningBillStatement } from "@/components/projects/RunningBillStatement";
+import { canViewRunningBill } from "@/lib/running-bill";
 import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
@@ -226,6 +228,7 @@ export default function ProjectDetail() {
             <TabsTrigger value="schedule" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Schedule</TabsTrigger>
             {!isAds && flags.isEnabled("project_setup") && <TabsTrigger value="setup" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Setup</TabsTrigger>}
             <TabsTrigger value="billing" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Payment Milestones</TabsTrigger>
+            {canViewRunningBill(userRole) && <TabsTrigger value="running-bill" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Running Bill</TabsTrigger>}
             {!isAds && <TabsTrigger value="materials" className="gap-1.5"><Package className="h-4 w-4" /> Materials</TabsTrigger>}
             <TabsTrigger value="variations" className="gap-1.5"><GitCompareArrows className="h-4 w-4" /> Variations</TabsTrigger>
             {!isAds && <TabsTrigger value="scope" className="gap-1.5"><ScrollText className="h-4 w-4" /> Scope</TabsTrigger>}
@@ -243,6 +246,10 @@ export default function ProjectDetail() {
             onLockChange={(v) => setProject((p: any) => p ? { ...p, milestones_locked: v } : p)}
           />
         </TabsContent>
+
+        {canViewRunningBill(userRole) && <TabsContent value="running-bill" className="min-w-0 space-y-4">
+          <RunningBillStatement projectId={id!} projectName={proj.name ?? ""} />
+        </TabsContent>}
 
         <TabsContent value="schedule" className="space-y-4">
           <MicroScheduleTab projectId={id!} userRole={userRole} />

@@ -17413,6 +17413,7 @@ export type Database = {
       can_view_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_view_profile_pii: { Args: { _user_id: string }; Returns: boolean }
       can_view_quotations: { Args: { _user_id: string }; Returns: boolean }
+      can_view_running_bill: { Args: { _uid: string }; Returns: boolean }
       can_view_work_orders: { Args: { _user_id: string }; Returns: boolean }
       can_write_site_readiness: { Args: { _uid: string }; Returns: boolean }
       can_write_site_report: {
@@ -17897,6 +17898,10 @@ export type Database = {
           wip_today: number
           wip_yday: number
         }[]
+      }
+      get_running_bill: {
+        Args: { p_as_of: string; p_project_id: string }
+        Returns: Json
       }
       get_scheduled_job_status: {
         Args: never

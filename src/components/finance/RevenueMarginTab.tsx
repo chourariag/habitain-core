@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { format, parseISO, differenceInDays } from "date-fns";
 import { Download, Search, Save, Loader2, ChevronRight, ChevronDown } from "lucide-react";
-import { RunningBillTable } from "@/components/measurements/RunningBillTable";
 import { VariationRegister } from "./VariationRegister";
 
 const ACCESS_ROLES = [
@@ -528,13 +527,6 @@ export function RevenueMarginTab() {
                       <p className="font-semibold text-foreground">{val}</p>
                     </div>
                   ))}
-                </div>
-
-                <div>
-                  <Label className="text-xs mb-1 block">Running Bill (BOQ vs Earned)</Label>
-                  <div className="border rounded-lg p-2 bg-muted/20 max-h-72 overflow-y-auto">
-                    <RunningBillTable projectId={editRow.project_id} />
-                  </div>
                 </div>
 
                 <div className="space-y-3">
