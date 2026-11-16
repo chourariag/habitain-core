@@ -77,6 +77,8 @@ export function FoundationSection({ projectId, canEdit, onComplete }: Props) {
 
   const saveItem = async (item: FoundationItem, next: Draft) => {
     setDrafts((p) => ({ ...p, [item.key]: next }));
+    const vn0 = next.value_numeric === "" ? null : Number(next.value_numeric);
+    if (!next.status && isOutOfTolerance(item, vn0, next.value_text || null, tol)) next = { ...next, status: "not_ok" };
     if (!next.status) return;
     if (item.tolerance && !tol) { toast.error("Enter the allowed tolerances from the GFC drawing first."); return; }
     const vn = next.value_numeric === "" ? null : Number(next.value_numeric);

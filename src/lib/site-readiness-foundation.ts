@@ -91,14 +91,12 @@ export interface CraneState {
   vendor_name: string; vendor_contact_phone: string; booked_for_date: string; capacity_tonnes: string;
   operator_site_visit_done: boolean; operator_visit_date: string;
 }
-export interface CraneCostState { rate_inr: string; total_cost_inr: string }
-
-export function craneComplete(c: CraneState | null, cost: CraneCostState | null): boolean {
+export function craneComplete(c: CraneState | null, costEntered: boolean): boolean {
   if (!c) return false;
   const filled = (v: string | null | undefined) => !!v && String(v).trim() !== "";
   return filled(c.vendor_name) && filled(c.vendor_contact_phone) && filled(c.booked_for_date) && Number(c.capacity_tonnes) > 0
     && c.operator_site_visit_done && filled(c.operator_visit_date)
-    && !!cost && (filled(cost.rate_inr) || filled(cost.total_cost_inr));
+    && costEntered;
 }
 
 /** Section 1 (3 groups) + Section 2 (1) + Section 3 (5) = 9 units. */
