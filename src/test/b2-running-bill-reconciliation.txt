@@ -1,0 +1,8 @@
+Rolled-back reconciliation (sample rows on Test project - 1, as of 31/10/2026; draft and post-as-of reports excluded):
+A function=53288.00 direct=53288.00 diff=0.00
+B function=1942.30 direct=1942.30 diff=0.00
+C function=6300 direct=6300 diff=0
+B by-task total=1942.30 (vs B 1942.30, diff 0.00)
+site_engineer=Not authorized to view the running bill
+stores_executive=Not authorized to view the running bill
+REMINDER_EVENTS=0
