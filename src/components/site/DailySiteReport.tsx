@@ -34,7 +34,7 @@ type Data = {
   tasks: Task[]; boq: Boq[];
   progress: { task_id: string; pct: number | null; remarks: string | null; task_status?: "ongoing" | "completed" }[];
   labour: { task_id: string; hours: number }[];
-  quantities: { id: string; boq_item_id: string | null; contractor_id: string | null; extra_work_description: string | null; unit: string | null; today_qty: number; remarks: string | null; amount_inr: number | null }[];
+  quantities: { id: string; boq_item_id: string | null; contractor_id: string | null; extra_work_description: string | null; unit: string | null; today_qty: number; remarks: string | null; amount_inr?: number | null }[];
   rates?: SubRate[];
   contractors?: { id: string; name: string }[];
   headcount?: { contractor_id: string; headcount: number }[];

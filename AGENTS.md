@@ -22,3 +22,6 @@
 - Running Bill caps earned quantities only for positive BOQ quantities and reports excess separately; scope changes serialize and flush captured Daily Report saves before loading another report to prevent lost or misdated edits.
 - Daily Report task workers are saved only through the checked draft RPC, derive legacy task hours, and allocate Running Bill costs exactly; historical reports keep proportional allocation.
 - Daily Report consumables and site expenses use an audited full-list draft RPC with archival replacement and project-scoped reads, keeping employee expenses separate.
+- Navigation-permission rows are scoped to assigned user_roles; Tier 1/Super retain the cross-role editor, while module-menu logic remains unchanged to preserve screen parity.
+- Site report subcontract snapshots have safe-column-only direct grants; checked commercial paths expose monetary fields, while site report validation receives only matching/package metadata to prevent cost disclosure without breaking quantities.
+- Record corrections use fixed typed statements and caller-bound role checks, preserving record owners, reporting-manager relationships and the 48-hour submitter window to avoid dynamic-command escalation.
