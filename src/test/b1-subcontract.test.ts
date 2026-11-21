@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 import evidence from "./b1-subcontract-evidence.json";
 import { NO_RATE_MSG, effectiveRate, lumpSumOver, quantityPayload, rowAmount, rowProblem, type QtyRow, type SubRate } from "@/lib/site-report-subcontract";
+import { submitBlockers } from "@/lib/site-report-rules";
 
 const perUnit: SubRate = { id: "r1", contractor_id: "c1", boq_item_id: "b1", work_description: null, unit: "cum", rate_type: "per_unit", effective_rate: 450, package_qty: null, lump_sum_inr: null, used_qty: 0 };
 const lump: SubRate = { id: "r2", contractor_id: "c1", boq_item_id: "b2", work_description: null, unit: "kg", rate_type: "lump_sum", effective_rate: 100, package_qty: 100, lump_sum_inr: 10000, used_qty: 60 };
 const row = (p: Partial<QtyRow>): QtyRow => ({ key: "k", boq_item_id: null, contractor_id: null, extra_work_description: "", unit: "", today_qty: "", ...p });
 
 describe("B1 subcontract rules", () => {
+  it("optional photos do not bypass subcontract missing-rate and lump-sum checks", () => {
+    expect(submitBlockers({tasksWithProgress:1,notes:""})).toEqual([]);
+    expect(rowProblem(row({boq_item_id:"missing",contractor_id:"c1",today_qty:"1"}),[perUnit])).toBe(NO_RATE_MSG);
+    expect(rowProblem(row({boq_item_id:"b2",contractor_id:"c1",today_qty:"41"}),[lump])).toBe("This would take the lump-sum package past its total.");
+  });
   it("per-unit amount = quantity × rate", () => {
     expect(rowAmount(row({ boq_item_id: "b1", contractor_id: "c1", today_qty: "10" }), [perUnit])).toBe(4500);
   });

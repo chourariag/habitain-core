@@ -3,11 +3,20 @@ import { EXPORT_SCHEMA } from '../../supabase/functions/_shared/export-schema';
 import { expiredFolder, hashToken, istDate, LINK_SECONDS, RETENTION_DAYS, sanitize, toCsv, wageAmount } from '../../supabase/functions/_shared/export-utils';
 describe('P8 export rules', () => {
   it('exports hourly wages and amounts but not salary, bank, ID numbers or auth fields', () => {
-    expect(EXPORT_SCHEMA).toHaveLength(24);
-    expect(new Set(EXPORT_SCHEMA.map(schema => schema.table)).size).toBe(24);
+    expect(EXPORT_SCHEMA).toHaveLength(26);
+    expect(new Set(EXPORT_SCHEMA.map(schema => schema.table)).size).toBe(26);
     for (const schema of EXPORT_SCHEMA) for (const column of schema.columns) expect(column.name).not.toMatch(/salary|payroll|bank|aadhaar|aadhar|pan_number|pan_no|token|password|secret/i);
     expect(EXPORT_SCHEMA.find(schema => schema.table === 'labour_worker_rates')?.columns.map(column => column.name)).toContain('effective_hourly_rate');
     expect(EXPORT_SCHEMA.find(schema => schema.table === 'labour_attendance')?.columns.map(column => column.name)).toContain('amount');
+  });
+  it('new task workers and expenses export no rates', () => {
+    for (const table of ['site_report_task_workers','site_report_expenses']) {
+      const schema = EXPORT_SCHEMA.find(s => s.table === table);
+      expect(schema?.version).toBe(1);
+      expect(schema?.columns.map(c => c.name)).not.toContain('rate_used');
+      expect(schema?.columns.map(c => c.name)).not.toContain('effective_hourly_rate');
+      expect(schema?.columns.map(c => c.name)).toContain('is_archived');
+    }
   });
   it('keeps 60-day dated folders and latest, removing only older export dates', () => {
     expect(RETENTION_DAYS).toBe(60);

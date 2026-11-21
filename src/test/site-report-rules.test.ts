@@ -19,13 +19,16 @@ describe("site report rules", () => {
     expect(exceedsBoq(100, 95, 6)).toBe(true);
     expect(exceedsBoq(100, 95, 5)).toBe(false);
   });
-  it("submit needs 4 elevations, site clean tick+photo, and progress or a notes reason", () => {
+  it("photos and site-clean are optional; a task or no-work reason remains required", () => {
     const ok = { elevations: [{ id: "a", name: "North" }, { id: "b", name: "South" }], photoElevationIds: ["a", "b"], siteClean: true, siteCleanPhoto: true, tasksWithProgress: 1, notes: "" };
     expect(submitBlockers(ok)).toEqual([]);
-    expect(submitBlockers({ ...ok, photoElevationIds: ["a"] })).toEqual(["Elevation photos missing: South"]);
-    expect(submitBlockers({ ...ok, elevations: [], photoElevationIds: [] })).toEqual(["No elevations defined for this project"]);
-    expect(submitBlockers({ ...ok, siteCleanPhoto: false })).toHaveLength(1);
+    expect(submitBlockers({ ...ok, photoElevationIds: [] })).toEqual([]);
+    expect(submitBlockers({ ...ok, elevations: [], photoElevationIds: [], siteClean: false, siteCleanPhoto: false })).toEqual([]);
+    expect(submitBlockers({ ...ok, siteCleanPhoto: false })).toEqual([]);
     expect(submitBlockers({ ...ok, tasksWithProgress: 0 })).toHaveLength(1);
     expect(submitBlockers({ ...ok, tasksWithProgress: 0, notes: "Rain all day" })).toEqual([]);
+  });
+  it("unconfirmed attendance hours still block submit", () => {
+    expect(submitBlockers({ tasksWithProgress: 1, notes: "", unconfirmedWorkers: 2 })).toEqual(["Confirm hours for 2 workers in People."]);
   });
 });

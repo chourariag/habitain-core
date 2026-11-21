@@ -14130,6 +14130,63 @@ export type Database = {
           },
         ]
       }
+      site_report_expenses: {
+        Row: {
+          amount_inr: number
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          is_archived: boolean
+          kind: string
+          project_id: string
+          report_id: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          amount_inr: number
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          is_archived?: boolean
+          kind: string
+          project_id: string
+          report_id: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          amount_inr?: number
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          is_archived?: boolean
+          kind?: string
+          project_id?: string
+          report_id?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_report_expenses_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_expenses_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_measurements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_report_labour: {
         Row: {
           created_at: string
@@ -14425,6 +14482,7 @@ export type Database = {
           remarks: string | null
           report_id: string
           task_id: string
+          task_status: string
           updated_at: string
           updated_by: string | null
         }
@@ -14437,6 +14495,7 @@ export type Database = {
           remarks?: string | null
           report_id: string
           task_id: string
+          task_status?: string
           updated_at?: string
           updated_by?: string | null
         }
@@ -14449,6 +14508,7 @@ export type Database = {
           remarks?: string | null
           report_id?: string
           task_id?: string
+          task_status?: string
           updated_at?: string
           updated_by?: string | null
         }
@@ -14472,6 +14532,91 @@ export type Database = {
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_report_task_workers: {
+        Row: {
+          created_at: string
+          created_by: string
+          hours: number
+          id: string
+          is_archived: boolean
+          project_id: string
+          report_id: string
+          task_id: string
+          updated_at: string
+          updated_by: string
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          hours: number
+          id?: string
+          is_archived?: boolean
+          project_id: string
+          report_id: string
+          task_id: string
+          updated_at?: string
+          updated_by: string
+          worker_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          hours?: number
+          id?: string
+          is_archived?: boolean
+          project_id?: string
+          report_id?: string
+          task_id?: string
+          updated_at?: string
+          updated_by?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_report_task_workers_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_task_workers_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "daily_measurements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_task_workers_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_report_task_workers_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_worker_directory"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "site_report_task_workers_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_worker_rates"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "site_report_task_workers_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_workers"
             referencedColumns: ["id"]
           },
         ]
@@ -17172,6 +17317,10 @@ export type Database = {
           _project: string
           _report: string
         }
+        Returns: undefined
+      }
+      _site_report_validate_task_workers: {
+        Args: { p_report_id: string }
         Returns: undefined
       }
       acknowledge_reminder: { Args: { p_id: string }; Returns: undefined }

@@ -36,14 +36,10 @@ export function exceedsBoq(boqQty: number, cumulative: number, today: number) {
 }
 
 export const NO_ELEVATIONS_MSG = "No elevations defined for this project";
-export type SubmitCheck = { elevations: { id: string; name: string }[]; photoElevationIds: string[]; siteClean: boolean; siteCleanPhoto: boolean; tasksWithProgress: number; notes: string };
+export type SubmitCheck = { elevations?: { id: string; name: string }[]; photoElevationIds?: string[]; siteClean?: boolean; siteCleanPhoto?: boolean; tasksWithProgress: number; notes: string; unconfirmedWorkers?: number };
 export function submitBlockers(c: SubmitCheck): string[] {
   const out: string[] = [];
-  if (c.elevations.length === 0) out.push(NO_ELEVATIONS_MSG);
-  const missing = c.elevations.filter((e) => !c.photoElevationIds.includes(e.id));
-  if (missing.length) out.push(`Elevation photos missing: ${missing.map((e) => e.name).join(", ")}`);
-  if (!c.siteClean) out.push("Tick site clean");
-  if (!c.siteCleanPhoto) out.push("Add the site clean photo");
+  if (c.unconfirmedWorkers) out.push(`Confirm hours for ${c.unconfirmedWorkers} workers in People.`);
   if (c.tasksWithProgress === 0 && c.notes.trim().length < 5) out.push("Enter progress on a task, or write in notes why no work happened");
   return out;
 }

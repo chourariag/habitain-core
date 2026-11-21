@@ -1,0 +1,43 @@
+-- Run using the backend query tool; every fixture is rolled back.
+BEGIN;
+DO $test$
+DECLARE pid uuid := 'e4f51cd6-fb25-475e-980a-5e46070d678f'; uid uuid := (SELECT user_id FROM public.user_roles WHERE role='managing_director' LIMIT 1);
+ w1 uuid := (SELECT id FROM public.labour_workers ORDER BY id LIMIT 1); w2 uuid := (SELECT id FROM public.labour_workers ORDER BY id OFFSET 1 LIMIT 1);
+ t1 uuid:=gen_random_uuid(); t2 uuid:=gen_random_uuid(); bid uuid:=gen_random_uuid(); bi uuid:=gen_random_uuid(); rid uuid; d date:=public.site_report_today();
+ got jsonb; before_bill jsonb; after_bill jsonb; checks int:=0; val numeric; expense_id uuid:=gen_random_uuid(); bad boolean;
+BEGIN
+ PERFORM set_config('request.jwt.claims',jsonb_build_object('sub',uid,'role','authenticated')::text,true);
+ INSERT INTO public.project_tasks(id,project_id,task_id_in_schedule,task_name,work_category,planned_start_date,planned_finish_date) VALUES(t1,pid,'VERIFY-EXACT','Verification exact task','construction',d,d),(t2,pid,'VERIFY-MANUAL','Verification manual task','construction',d,d);
+ INSERT INTO public.project_boq(id,project_id,version_number) VALUES(bid,pid,999999);
+ INSERT INTO public.project_boq_items(id,boq_id,sno,item_description,unit,boq_qty,boq_rate,schedule_task_id) VALUES(bi,bid,1,'Verification concrete','cum',10,100,t1);
+ INSERT INTO public.labour_attendance(project_id,work_date,worker_id,hours,hours_confirmed,recorded_by) VALUES(pid,d,w1,8,true,uid) ON CONFLICT(worker_id,project_id,work_date) DO UPDATE SET hours=8,hours_confirmed=true;
+ INSERT INTO public.labour_worker_compensation(worker_id,monthly_salary,hourly_rate) VALUES(w1,0,100) ON CONFLICT(worker_id) DO UPDATE SET hourly_rate=100;
+ rid:=public.save_site_report_draft(pid,d,jsonb_build_object('notes','Verification rolled back','task_workers',jsonb_build_array(jsonb_build_object('task_id',t1,'worker_id',w1,'hours',3)), 'quantities',jsonb_build_array(jsonb_build_object('boq_item_id',bi,'today_qty',5.5)), 'expenses',jsonb_build_array(jsonb_build_object('id',expense_id,'kind','consumable','description','Verification consumable','amount_inr',125))));
+ SELECT hours INTO val FROM public.site_report_labour WHERE report_id=rid AND task_id=t1; IF val<>3 THEN RAISE EXCEPTION 'Derived labour mismatch %',val; END IF; checks:=checks+1;
+ got:=public.get_site_report(pid,d); IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(got->'present_workers') x WHERE (x->>'worker_id')::uuid=w1 AND NOT(x ? 'rate') AND NOT(x ? 'amount') AND NOT(x ? 'hourly_rate')) THEN RAISE EXCEPTION 'Present worker privacy failure'; END IF; checks:=checks+1;
+ IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(got->'expenses') x WHERE (x->>'amount_inr')::numeric=125) THEN RAISE EXCEPTION 'Expense readback mismatch'; END IF; checks:=checks+1;
+ bad:=false; BEGIN PERFORM public.save_site_report_draft(pid,d,jsonb_build_object('task_workers',jsonb_build_array(jsonb_build_object('task_id',t1,'worker_id',w1,'hours',5),jsonb_build_object('task_id',t2,'worker_id',w1,'hours',4)))); EXCEPTION WHEN OTHERS THEN IF SQLERRM NOT LIKE '%exceed attendance%' THEN RAISE; END IF; bad:=true; END; IF NOT bad THEN RAISE EXCEPTION 'Over-allocation accepted'; END IF; checks:=checks+1;
+ UPDATE public.labour_attendance SET hours=0 WHERE project_id=pid AND work_date=d AND worker_id=w2;
+ bad:=false; BEGIN PERFORM public.save_site_report_draft(pid,d,jsonb_build_object('task_workers',jsonb_build_array(jsonb_build_object('task_id',t2,'worker_id',w2,'hours',1)))); EXCEPTION WHEN OTHERS THEN IF SQLERRM NOT LIKE '%must be present%' THEN RAISE; END IF; bad:=true; END; IF NOT bad THEN RAISE EXCEPTION 'Absent worker accepted'; END IF; checks:=checks+1;
+ UPDATE public.labour_attendance SET hours_confirmed=false WHERE project_id=pid AND work_date=d AND worker_id=w1;
+ bad:=false; BEGIN PERFORM public.submit_site_report(rid); EXCEPTION WHEN OTHERS THEN IF SQLERRM NOT LIKE 'Confirm hours for %' THEN RAISE; END IF; bad:=true; END; IF NOT bad THEN RAISE EXCEPTION 'Unconfirmed hours accepted'; END IF; checks:=checks+1;
+ UPDATE public.labour_attendance SET hours_confirmed=true WHERE project_id=pid AND work_date=d;
+ got:=public.submit_site_report(rid); checks:=checks+1;
+ SELECT completion_percentage_after INTO val FROM public.site_report_task_progress WHERE report_id=rid AND task_id=t1; IF val<>55 THEN RAISE EXCEPTION 'Progress mismatch %',val; END IF; checks:=checks+1;
+ before_bill:=public.get_running_bill(pid,d);
+ IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(before_bill->'labour_by_task') x WHERE x->>'code'='VERIFY-EXACT' AND x->>'allocation'='Exact' AND (x->>'amount')::numeric=300 AND (x->>'task_hours')::numeric=3) THEN RAISE EXCEPTION 'Exact mismatch %',before_bill->'labour_by_task'; END IF; checks:=checks+1;
+ SELECT sum((x->>'amount')::numeric) INTO val FROM jsonb_array_elements(before_bill->'labour_by_task') x; IF val<>(before_bill->'totals'->>'own_labour_cost')::numeric THEN RAISE EXCEPTION 'Allocation does not reconcile'; END IF; checks:=checks+1;
+ PERFORM public.save_site_report_draft(pid,d,jsonb_build_object('task_workers',jsonb_build_array(jsonb_build_object('task_id',t1,'worker_id',w1,'hours',4)),'expenses','[]'::jsonb,'progress',jsonb_build_array(jsonb_build_object('task_id',t1,'pct',1,'task_status','completed'))));
+ PERFORM public.submit_site_report(rid);
+ SELECT completion_percentage_after INTO val FROM public.site_report_task_progress WHERE report_id=rid AND task_id=t1; IF val<>100 THEN RAISE EXCEPTION 'Completed did not force 100'; END IF; checks:=checks+1;
+ IF NOT EXISTS(SELECT 1 FROM public.site_report_expenses WHERE id=expense_id AND is_archived) THEN RAISE EXCEPTION 'Expense not archived'; END IF; checks:=checks+1;
+ IF NOT EXISTS(SELECT 1 FROM public.site_report_edit_log WHERE report_id=rid AND field='task_workers:'||t1) THEN RAISE EXCEPTION 'Worker edit not logged'; END IF; checks:=checks+1;
+ after_bill:=public.get_running_bill(pid,d); IF before_bill->'totals' IS DISTINCT FROM after_bill->'totals' THEN RAISE EXCEPTION 'Totals changed'; END IF; checks:=checks+1;
+ EXECUTE 'SET LOCAL ROLE authenticated';
+ bad:=false; BEGIN INSERT INTO public.site_report_task_workers(report_id,project_id,task_id,worker_id,hours,created_by,updated_by) VALUES(rid,pid,t2,w1,1,uid,uid); EXCEPTION WHEN insufficient_privilege THEN bad:=true; END; IF NOT bad THEN RAISE EXCEPTION 'Direct worker write allowed'; END IF; checks:=checks+1;
+ bad:=false; BEGIN INSERT INTO public.site_report_expenses(report_id,project_id,kind,description,amount_inr,created_by,updated_by) VALUES(rid,pid,'expense','Not permitted',1,uid,uid); EXCEPTION WHEN insufficient_privilege THEN bad:=true; END; IF NOT bad THEN RAISE EXCEPTION 'Direct expense write allowed'; END IF; checks:=checks+1;
+ EXECUTE 'RESET ROLE';
+ PERFORM set_config('test.report_result',jsonb_build_object('checks',checks,'exact_task',jsonb_build_object('hours',3,'rate',100,'amount',300,'allocation','Exact'),'totals_before',before_bill->'totals','totals_after',after_bill->'totals','difference',0,'photos_required',false)::text,true);
+END $test$;
+SELECT current_setting('test.report_result') AS results;
+ROLLBACK;

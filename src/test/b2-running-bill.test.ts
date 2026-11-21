@@ -25,4 +25,9 @@ describe("Running Bill", () => {
     expect(s["C Subcontract"][1][7]).toBe(6300);
     expect(JSON.stringify(s)).not.toContain("₹");
   });
+  it("labels exact worker allocation without changing totals", () => {
+    const updated = {...bill,labour_by_task:[{code:"T1",task:"Concrete",task_hours:3,amount:300,allocation:"Exact" as const},{code:"",task:"Unallocated",task_hours:5,amount:1642.3,allocation:"Exact" as const}]};
+    expect(runningBillSheets(updated)["B Approx by task"][2]).toEqual(["T1","Concrete",3,300,"Exact"]);
+    expect(totalsOf(updated)).toEqual(totalsOf(bill));
+  });
 });

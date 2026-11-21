@@ -7,7 +7,7 @@ export const canViewRunningBill = (role: string | null | undefined) => !!role &&
 export type WorkRow = { sno: number | string | null; item_description: string | null; unit: string | null; boq_qty: number; qty: number; own_qty: number; sub_qty: number; pct_done: number | null; boq_rate: number; value: number };
 export type DayRow = { work_date: string; workers: number; hours: number; amount: number; cumulative: number };
 export type ConRow = { contractor: string; workers: number; hours: number; amount: number };
-export type TaskRow = { code: string; task: string; task_hours: number; amount: number };
+export type TaskRow = { code: string; task: string; task_hours: number; amount: number; allocation?: "Exact" | "Approximate" };
 export type SubRow = { contractor: string; boq_code: string; item: string | null; unit: string | null; rate_type: string | null; qty: number; rate_used: number | null; amount: number; lump_sum: number | null; package_qty: number | null; pct_consumed: number | null };
 export type RunningBill = { as_of: string; reports: number; work: WorkRow[]; labour_by_day: DayRow[]; labour_by_contractor: ConRow[]; labour_by_task: TaskRow[]; subcontract: SubRow[]; totals: { value_earned: number; own_labour_cost: number; subcontract_accrued: number } };
 
@@ -30,7 +30,7 @@ export function runningBillSheets(b: RunningBill): Record<string, (string | numb
     "B Own labour by day": [["Date", "Workers", "Hours", "Amount (INR)", "Cumulative (INR)"],
       ...b.labour_by_day.map((r) => [d(r.work_date), n(r.workers), n(r.hours), n(r.amount), n(r.cumulative)] as (string | number)[]), ["Total", "", "", t.labour, ""]],
     "B By contractor": [["Labour contractor", "Workers", "Hours", "Amount (INR)"], ...b.labour_by_contractor.map((r) => [r.contractor, n(r.workers), n(r.hours), n(r.amount)] as (string | number)[])],
-    "B Approx by task": [["Approximate cost by task", "", "", ""], ["Task code", "Task", "Task hours", "Approx amount (INR)"], ...b.labour_by_task.map((r) => [r.code, r.task, n(r.task_hours), n(r.amount)] as (string | number)[])],
+    "B Approx by task": [["Cost by task", "", "", "", ""], ["Task code", "Task", "Task hours", "Amount (INR)", "Allocation"], ...b.labour_by_task.map((r) => [r.code, r.task, n(r.task_hours), n(r.amount), r.allocation ?? "Approximate"] as (string | number)[])],
     "C Subcontract": [["Contractor", "BOQ code", "Item / package", "Unit", "Rate type", "Qty to date", "Rate used (INR)", "Amount accrued (INR)", "Lump sum (INR)", "Package qty", "% consumed"],
       ...b.subcontract.map((r) => [r.contractor, r.boq_code, r.item ?? "", r.unit ?? "", r.rate_type === "lump_sum" ? "Lump Sum" : "Per Unit", n(r.qty), n(r.rate_used), n(r.amount), n(r.lump_sum), n(r.package_qty), n(r.pct_consumed)] as (string | number)[]),
       ["Total", "", "", "", "", "", "", t.sub, "", "", ""]],

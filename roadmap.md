@@ -1,6 +1,8 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [x] Mobile Daily Site Report: 0041 plus 0042/0043 corrections, task blocks, exact workers, calculated progress, optional photos, expenses and 26-file exports; 267 tests, 16 rollback SQL checks, signed-in expense submit/readback and 360px checks passed. No present workers on current test date; physical worker-chip flow and actual nightly export run remain unverified.
+- [ ] Navigation-read security finding: user confirmed shared access must remain; restriction is not authorized, finding stays active.
 - [x] SECURITY-2: migration 0034 scopes 30 reads + 2 UPDATE checks, 32 versioned backups; 930 real/synthetic comparisons, 93 dispatch gates, readiness lead write gates pass; 223 tests/build OK; events 0/eight jobs unchanged; 6 intentionally open reads remain. Mandatory platform automation marked 3 supplied findings fixed.
 - [x] SECURITY-1: migration 0033 scopes 11 policies with atomic real/synthetic checks, isolates 3 WIP rows, exports deployed/verified, 54 readiness SQL checks and 210 tests pass; 10 existing photos render, events 0/eight jobs unchanged. Three findings auto-resolved by mandatory platform rule; eight other scoped findings await user rescan.
 - [x] P4f: submitted/date-scoped quantities verified by rolled-back SQL regression; fixed 16:9 photo previews and empty text; 180-day/default, 365-day/max token expiry; real token 201/200/401 and revoke 200, both 360px screenshots verified; 200 tests passed/5 unchanged skips, build OK, events 0/eight jobs unchanged

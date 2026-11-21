@@ -83,9 +83,8 @@ export function RunningBillStatement({ projectId, projectName }: { projectId: st
           <T head={["Date", "Workers", "Hours", "Amount", "Cumulative"]} rows={bill.labour_by_day.map((r) => [format(parseISO(r.work_date), "dd/MM/yyyy"), r.workers, num(r.hours), inr(r.amount), inr(r.cumulative)])} foot={["Total", "", "", inr(t.labour), ""]} />
           <h4 className="pt-2 text-sm font-medium">By labour contractor</h4>
           <T head={["Contractor", "Workers", "Hours", "Amount"]} rows={bill.labour_by_contractor.map((r) => [r.contractor, r.workers, num(r.hours), inr(r.amount)])} />
-          <h4 className="pt-2 text-sm font-medium">Approximate cost by task</h4>
-          <p className="text-xs text-muted-foreground break-words">Approximate: each day's labour amount is spread across tasks by the hours recorded in that day's report. Days with no task hours are Unallocated.</p>
-          <T head={["Task code", "Task", "Task hours", "Approx amount"]} rows={bill.labour_by_task.map((r) => [r.code, r.task, num(r.task_hours), inr(r.amount)])} />
+          <h4 className="pt-2 text-sm font-medium">Cost by task</h4>
+          <T head={["Task code", "Task", "Task hours", "Amount", "Allocation"]} rows={bill.labour_by_task.map((r) => [r.code, r.task, num(r.task_hours), inr(r.amount), r.allocation ?? "Approximate"])} />
         </Section>
         <Section title="C · Subcontract cost accrued" note="Summed from the amounts fixed when each report was submitted.">
           <T head={["Contractor", "BOQ code", "Item / package", "Unit", "Type", "Qty to date", "Rate used", "Accrued", "Lump sum", "% consumed"]}

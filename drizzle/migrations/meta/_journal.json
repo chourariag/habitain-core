@@ -288,6 +288,27 @@
       "when": 1794853431062,
       "tag": "0040_b2_running_bill",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1795271885702,
+      "tag": "0041_mobile_site_report_task_workers_expenses",
+      "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1795272143709,
+      "tag": "0042_mobile_report_previous_completed_tasks",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1795272205948,
+      "tag": "0043_mobile_report_progress_alias_fix",
+      "breakpoints": true
     }
   ]
 }

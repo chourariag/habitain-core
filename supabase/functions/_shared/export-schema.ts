@@ -1886,5 +1886,105 @@ export const EXPORT_SCHEMA = [
         "type": "timestamp with time zone"
       }
     ]
+  },
+  {
+    "table": "site_report_task_workers",
+    "version": 1,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "name": "report_id",
+        "type": "uuid"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid"
+      },
+      {
+        "name": "task_id",
+        "type": "uuid"
+      },
+      {
+        "name": "worker_id",
+        "type": "uuid"
+      },
+      {
+        "name": "hours",
+        "type": "numeric"
+      },
+      {
+        "name": "is_archived",
+        "type": "boolean"
+      },
+      {
+        "name": "created_by",
+        "type": "uuid"
+      },
+      {
+        "name": "updated_by",
+        "type": "uuid"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone"
+      }
+    ]
+  },
+  {
+    "table": "site_report_expenses",
+    "version": 1,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid"
+      },
+      {
+        "name": "report_id",
+        "type": "uuid"
+      },
+      {
+        "name": "project_id",
+        "type": "uuid"
+      },
+      {
+        "name": "kind",
+        "type": "text"
+      },
+      {
+        "name": "description",
+        "type": "text"
+      },
+      {
+        "name": "amount_inr",
+        "type": "numeric"
+      },
+      {
+        "name": "is_archived",
+        "type": "boolean"
+      },
+      {
+        "name": "created_by",
+        "type": "uuid"
+      },
+      {
+        "name": "updated_by",
+        "type": "uuid"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone"
+      }
+    ]
   }
 ] as const;
