@@ -326,9 +326,9 @@ export function DailySiteReport({ projectId: requestedProjectId }: { projectId: 
         </div>
         {other && (row.contractor_id ? (
           <select className="h-9 w-full min-w-0 rounded-md border border-input bg-background px-2 text-sm" value={row.extra_work_description} disabled={readOnly}
-            aria-label="Work" onChange={(e) => upsertRow(row, { extra_work_description: e.target.value, unit: rates.find((r) => r.id && r.work_description === e.target.value && r.contractor_id === row.contractor_id)?.unit ?? "" })}>
+            aria-label="Work" onChange={(e) => upsertRow(row, { extra_work_description: e.target.value, unit: rates.find((r) => r.work_description === e.target.value && r.contractor_id === row.contractor_id)?.unit ?? "" })}>
             <option value="">Choose work with a rate</option>
-            {descOptions.map((r) => <option key={r.id} value={r.work_description ?? ""}>{r.work_description}</option>)}
+            {descOptions.map((r) => <option key={`${r.contractor_id}:${r.work_description}`} value={r.work_description ?? ""}>{r.work_description}</option>)}
           </select>
         ) : (
           <div className="grid grid-cols-[minmax(0,1fr)_6rem] gap-2">
@@ -338,7 +338,7 @@ export function DailySiteReport({ projectId: requestedProjectId }: { projectId: 
           </div>
         ))}
         {other && !row.contractor_id && <p className="text-[11px] text-muted-foreground">Own-labour other work is for information only.</p>}
-        {row.contractor_id && amount != null && data.can_see_rates !== false && (
+        {row.contractor_id && amount != null && data.can_see_rates === true && (
           <p className="text-xs break-words">₹{amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
             {rate?.rate_type === "lump_sum" && <span className="text-muted-foreground"> · package {Number(rate.used_qty)} of {Number(rate.package_qty)} done</span>}</p>
         )}

@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [ ] Scoped security closure: inspect all findings, own-role navigation reads, role-scoped static record corrections, conditional second-critical fix, protected subcontract columns, role matrix and screen parity; one migration maximum, no role/account/flag/cron/export changes.
 - [x] DSR-1 polish: 0044 replaces get_running_bill valuation only; 280 tests/0 skipped, signed-in notes flush/readback/restoration, actual worker groups at 44px, mobile/iPad screenshots and downloaded Excel verified; Test project earned 151000/excess 19500, reconciliation 0; reminder_events 0/eight schedules unchanged.
 - [ ] Record-correction security finding: user confirmed no correction-permission changes in DSR-1; separate review/authorization required, finding remains active.
 - [x] Mobile Daily Site Report: 0041 plus 0042/0043 corrections, task blocks, exact workers, calculated progress, optional photos, expenses and 26-file exports; 267 tests, 16 rollback SQL checks, signed-in expense submit/readback and 360px checks passed. No present workers on current test date; physical worker-chip flow and actual nightly export run remain unverified.

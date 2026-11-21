@@ -4,15 +4,15 @@
 export const NO_RATE_MSG = "No rate for this contractor on this item. Ask Planning to add it in Setup.";
 
 export type SubRate = {
-  id: string;
+  id?: string;
   contractor_id: string;
   boq_item_id: string | null;
   work_description: string | null;
   unit: string;
   rate_type: "per_unit" | "lump_sum";
-  effective_rate: number;
+  effective_rate?: number;
   package_qty: number | null;
-  lump_sum_inr: number | null;
+  lump_sum_inr?: number | null;
   used_qty: number;
 };
 
