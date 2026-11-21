@@ -1,7 +1,8 @@
 # HStack Build Roadmap
 
 ## In Progress
-- [ ] FAC-1 verification only: existing-principal role matrix and direct-access rollback checks; export privacy/docs; exact no-factory baseline and worked-day reconciliation; signed-in 360px/768px screens; unchanged transition diff. No accounts/roles/schedules/reminders changes.
+- [x] FAC-1 verification: 0050 fixes broad factory grants; 15 existing principals/120 rolled-back checks and 52 direct/anonymous checks; 36-file export docs/no-wage projection; exact baseline and reconciliation; unchanged transition diff; 554 tests passed/4 legacy skips.
+- [ ] FAC-1 signed-in 360px/768px factory screens: blocked by mandatory password change; user explicitly chose to leave unverified. Live phone camera/GPS also untested; no account changes permitted.
 - [x] Edge-function caller authentication: inventory schedules/callers, secure scoped machine/user/email functions, add per-function mocked tests and repository guard; preserve schedule timing/state and exempt functions.
 - [ ] Legacy edge callbacks: user confirmed preserving auto-submit-draft-expenses, daily-checkin-nudge, approval-rejection-dm, error-attribution-dm and five unmarked schedules; blocked until a supported header-only migration exposes their exact targets/body/credential configuration.
 - [x] Account security 0046: retired defaults removed from src/supabase/drizzle; 32/32 profiles flagged; trusted-role audited replacement and last-admin protections; initial-admin endpoint removed; 372 tests/0 skips, signed-in mandatory-screen/403/400/404 checks passed. No live account mutations beyond the one-time flag backfill; physical kiosk login and actual password-change completion were not exercised.
