@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, UserPlus, Download, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
+
 
 type RoleCode = string;
 
@@ -132,37 +132,11 @@ export function CreateAccountsTab() {
     toast.success(`Done — ${success} created, ${fail} failed`);
   };
 
-  const downloadPdf = () => {
-    const created = rows.filter((r) => r.temporary_password);
-    if (created.length === 0) return toast.error("No new credentials to export");
-    const doc = new jsPDF();
-    doc.setFontSize(16); doc.setFont("helvetica", "bold");
-    doc.text("HABITAINER — Account Credentials", 14, 18);
-    doc.setFontSize(10); doc.setFont("helvetica", "normal");
-    doc.text(`Generated: ${new Date().toLocaleString("en-IN")}`, 14, 25);
-    doc.text("Confidential — distribute individually", 14, 30);
-    doc.setLineWidth(0.3); doc.line(14, 33, 196, 33);
-
-    let y = 42;
-    doc.setFont("helvetica", "bold"); doc.setFontSize(9);
-    doc.text("Name", 14, y);
-    doc.text("Email", 60, y);
-    doc.text("Temp Password", 120, y);
-    doc.text("Role", 165, y);
-    y += 5;
-    doc.line(14, y - 2, 196, y - 2);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9);
-
-    created.forEach((r) => {
-      if (y > 280) { doc.addPage(); y = 20; }
-      doc.text(r.full_name.slice(0, 26), 14, y);
-      doc.text(r.email.slice(0, 32), 60, y);
-      doc.text(r.temporary_password ?? "", 120, y);
-      doc.text(r.role.slice(0, 20), 165, y);
-      y += 6;
-    });
-
-    doc.save(`habitainer-credentials-${new Date().toISOString().slice(0, 10)}.pdf`);
+  const downloadCsv = () => {
+    const data = [["Name", "Email", "Temporary password", "Role"], ...rows.filter(r => r.temporary_password).map(r => [r.full_name, r.email, r.temporary_password || "", r.role])];
+    const csv = data.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a"); link.href = url; link.download = "hstack-new-credentials.csv"; link.click(); URL.revokeObjectURL(url);
   };
 
   const hasNewCredentials = useMemo(() => rows.some((r) => r.temporary_password), [rows]);
@@ -186,8 +160,8 @@ export function CreateAccountsTab() {
             Create All Accounts ({pendingCount})
           </Button>
           {hasNewCredentials && (
-            <Button onClick={downloadPdf} variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-1" /> Download Credentials PDF
+            <Button onClick={downloadCsv} variant="outline" size="sm">
+              <Download className="h-4 w-4 mr-1" /> Download CSV
             </Button>
           )}
         </div>
@@ -237,6 +211,7 @@ export function CreateAccountsTab() {
                   )}
                 </td>
                 <td className="p-2 text-right">
+                  {r.temporary_password && <div className="space-y-1"><span className="font-mono text-xs break-all">{r.temporary_password}</span><Button size="sm" variant="ghost" onClick={() => void navigator.clipboard.writeText(r.temporary_password || "")}>Copy</Button></div>}
                   <Button
                     size="sm"
                     variant="outline"
@@ -253,7 +228,7 @@ export function CreateAccountsTab() {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Temporary passwords are only shown once after creation — download the PDF before leaving this page.
+        Temporary passwords are only shown once after creation — download the CSV before leaving this page.
         Distribute to each person manually.
       </p>
     </div>

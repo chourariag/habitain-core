@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Download, Upload, KeyRound } from "lucide-react";
 import { downloadXlsx, logAudit, readXlsx } from "@/lib/super-admin";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
-import { createUser, deactivateUser, reactivateUser, updateUserRole } from "@/lib/admin-api";
+import { createUser, deactivateUser, reactivateUser, updateUserRole, resetEmployeePassword } from "@/lib/admin-api";
+import { AccountCredentials, type AccountCredential } from "@/components/admin/AccountCredentials";
 import { AddUserDialog } from "@/components/admin/AddUserDialog";
 import { BulkCreateAccountsDialog } from "@/components/super-admin/BulkCreateAccountsDialog";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ type Profile = {
 
 export function UsersTab() {
   const [diff, setDiff] = useState<Array<{ email: string; role: string; display_name: string }> | null>(null);
+  const [credentials, setCredentials] = useState<AccountCredential[]>([]);
 
   const { data: profiles, refetch } = useQuery({
     queryKey: ["super-admin-users"],
@@ -57,14 +59,15 @@ export function UsersTab() {
     if (!diff) return;
     const existing = new Set((profiles || []).map(p => p.email?.toLowerCase()));
     let created = 0, failed = 0;
+    const newCredentials: AccountCredential[] = [];
     for (const u of diff) {
       if (existing.has(u.email.toLowerCase())) continue;
-      try { await createUser(u.email, u.role as AppRole); created++; }
+      try { const result = await createUser(u.email, u.role as AppRole); newCredentials.push({ email: u.email, password: result.temp_password }); created++; }
       catch { failed++; }
     }
     await logAudit({ section: "Users", action: "bulk_upload", new_value: { created, failed } });
     toast.success(`Created ${created} users, ${failed} failed`);
-    setDiff(null); refetch();
+    setCredentials(newCredentials); setDiff(null); refetch();
   }
 
   async function changeRole(p: Profile, role: AppRole) {
@@ -86,14 +89,16 @@ export function UsersTab() {
 
   async function resetPassword(p: Profile) {
     if (!p.email) return;
-    const { error } = await supabase.auth.resetPasswordForEmail(p.email);
-    if (error) { toast.error(error.message); return; }
-    await logAudit({ section: "Users", action: "password_reset", entity: p.email });
-    toast.success(`Password reset email sent to ${p.email}`);
+    try {
+      const result = await resetEmployeePassword(p.auth_user_id);
+      setCredentials([{ email: p.email, password: result.temp_password }]);
+      toast.success("New temporary password generated");
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Password reset failed"); }
   }
 
   return (
     <div className="space-y-4">
+      <AccountCredentials credentials={credentials} onClose={() => setCredentials([])} />
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" onClick={handleDownload}><Download className="h-4 w-4" /> Download Users</Button>
         <label><input type="file" accept=".xlsx" className="hidden" onChange={handleUpload} /><Button asChild variant="outline"><span><Upload className="h-4 w-4" /> Upload Users</span></Button></label>

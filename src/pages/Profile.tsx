@@ -1,4 +1,6 @@
 import { PROFILE_SAFE_COLUMNS } from "@/lib/profile-columns";
+import { changeAccountPassword } from "@/lib/change-password";
+import { passwordPolicyError } from "@/lib/password-policy";
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -139,8 +141,9 @@ export default function Profile() {
   };
 
   const handleChangePassword = async () => {
-    if (newPassword.length < 6) {
-      toast.error(t("profile.passwordTooShort"));
+    const policyError = await passwordPolicyError(newPassword);
+    if (policyError) {
+      toast.error(policyError);
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -154,19 +157,7 @@ export default function Profile() {
 
     setChangingPassword(true);
     try {
-      // Verify current password by re-authenticating
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user?.email || "",
-        password: currentPassword,
-      });
-      if (signInError) {
-        toast.error(t("profile.currentPasswordIncorrect"));
-        return;
-      }
-
-      // Update to new password
-      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
-      if (updateError) throw updateError;
+      await changeAccountPassword(newPassword, currentPassword);
 
       toast.success(t("profile.passwordUpdated"));
       // Log out so user re-authenticates with new password

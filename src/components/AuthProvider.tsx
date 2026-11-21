@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { RequiredPasswordChange } from "@/components/RequiredPasswordChange";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import i18n from "@/i18n";
@@ -33,6 +34,8 @@ export const useAuth = () => useContext(AuthContext);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [passwordCheck, setPasswordCheck] = useState<{ userId: string; required: boolean } | null>(null);
+  const [authRevision, setAuthRevision] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const locationRef = useRef(location.pathname);
@@ -47,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const applySession = (nextSession: Session | null) => {
       if (!mounted) return;
       setSession(nextSession);
+      if (nextSession) { setPasswordCheck(null); setAuthRevision(revision => revision + 1); }
       setLoading(false);
     };
 
@@ -57,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!mounted) return;
 
         if (event === "SIGNED_OUT") {
+          setPasswordCheck(null);
           applySession(null);
           if (!isPublicPath(locationRef.current)) {
             navigate("/login", { replace: true });
@@ -87,7 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("is_active, language")
+          .select("is_active, language, must_change_password")
           .eq("auth_user_id", session.user.id)
           .maybeSingle();
 
@@ -97,6 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await supabase.auth.signOut();
           return;
         }
+        if (profile) setPasswordCheck({ userId: session.user.id, required: profile.must_change_password });
 
         const lang = (profile as any)?.language;
         if (lang && i18n.language !== lang) {
@@ -112,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [session?.user?.id]);
+  }, [session?.user?.id, authRevision]);
 
   useEffect(() => {
     if (!loading && !session && !isPublicPath(location.pathname)) {
@@ -121,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [loading, session, location.pathname, navigate]);
 
   useEffect(() => {
-    if (!loading && session && PUBLIC_ROUTES.includes(location.pathname) && !NO_AUTO_REDIRECT.includes(location.pathname)) {
+    if (!loading && session && passwordCheck?.userId === session.user.id && !passwordCheck.required && PUBLIC_ROUTES.includes(location.pathname) && !NO_AUTO_REDIRECT.includes(location.pathname)) {
       // Check onboarding status before redirecting to dashboard
       const checkOnboarding = async () => {
         const { data: profile } = await supabase
@@ -138,13 +144,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       };
       checkOnboarding();
     }
-  }, [loading, session, location.pathname, navigate]);
+  }, [loading, session, passwordCheck, location.pathname, navigate]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
-  if (loading && !isTokenPath(location.pathname)) {
+  if ((loading || (session && passwordCheck?.userId !== session.user.id)) && !isTokenPath(location.pathname)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm animate-pulse">
@@ -156,7 +162,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={{ session, user: session?.user ?? null, loading, signOut }}>
-      {children}
+      {session && passwordCheck?.required ? <RequiredPasswordChange signOut={signOut} recovery={["/reset-password", "/welcome"].includes(location.pathname)} onSuccess={async () => {
+        const { data, error } = await supabase.from("profiles").select("must_change_password").eq("auth_user_id", session.user.id).single();
+        if (error || data.must_change_password) throw new Error("Password-change completion could not be confirmed. Retry.");
+        setPasswordCheck({ userId: session.user.id, required: false });
+        navigate("/dashboard", { replace: true });
+      }} /> : children}
     </AuthContext.Provider>
   );
 }

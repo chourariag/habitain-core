@@ -11,9 +11,8 @@ import { createUserWithPassword } from "@/lib/admin-api";
 import { supabase } from "@/integrations/supabase/client";
 import { logAudit } from "@/lib/super-admin";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
 
-const DEFAULT_PASSWORD = "HStack@2026";
+
 
 function slugEmail(name: string) {
   return name.trim().toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "") + "@altree.in";
@@ -53,7 +52,7 @@ export function BulkCreateAccountsDialog({ onDone }: Props) {
           role: u.role,
           group: u.group,
           email,
-          password: DEFAULT_PASSWORD,
+          password: "",
           selected: !exists,
           status: exists ? "skipped" : "pending",
           message: exists ? "Already exists" : undefined,
@@ -83,13 +82,13 @@ export function BulkCreateAccountsDialog({ onDone }: Props) {
         continue;
       }
       try {
-        await createUserWithPassword({
+        const result = await createUserWithPassword({
           email: r.email,
           role: r.role,
           password: r.password,
           display_name: r.name,
         });
-        update(i, { status: "created", message: "Created" });
+        update(i, { status: "created", message: "Created", password: result.temp_password });
         created++;
       } catch (e) {
         update(i, { status: "error", message: (e as Error).message || "Error" });
@@ -109,37 +108,11 @@ export function BulkCreateAccountsDialog({ onDone }: Props) {
     onDone();
   }
 
-  function downloadPdf() {
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text("HStack — Team Account Credentials", 14, 18);
-    doc.setFontSize(9);
-    doc.setTextColor(120);
-    doc.text(`Generated ${new Date().toLocaleString("en-GB")} · share securely`, 14, 24);
-    doc.setTextColor(0);
-
-    let y = 34;
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.text("Name", 14, y);
-    doc.text("Role", 70, y);
-    doc.text("Email", 120, y);
-    doc.text("Password", 170, y);
-    doc.setFont("helvetica", "normal");
-    y += 4;
-    doc.line(14, y, 196, y);
-    y += 5;
-
-    rows.filter((r) => r.status === "created").forEach((r) => {
-      if (y > 280) { doc.addPage(); y = 20; }
-      doc.text(r.name.slice(0, 28), 14, y);
-      doc.text((ROLE_LABELS[r.role] || r.role).slice(0, 26), 70, y);
-      doc.text(r.email.slice(0, 28), 120, y);
-      doc.text(r.password, 170, y);
-      y += 6;
-    });
-
-    doc.save(`hstack-team-credentials-${new Date().toISOString().slice(0, 10)}.pdf`);
+  function downloadCsv() {
+    const values = rows.filter(r => r.status === "created").map(r => [r.name, r.email, r.role, r.password]);
+    const csv = [["Name", "Email", "Role", "Temporary password"], ...values].map(row => row.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a"); link.href = url; link.download = "hstack-new-account-credentials.csv"; link.click(); URL.revokeObjectURL(url);
   }
 
   const summary = useMemo(() => {
@@ -150,7 +123,7 @@ export function BulkCreateAccountsDialog({ onDone }: Props) {
   }, [rows]);
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) init(); }}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) init(); else setRows([]); }}>
       <Button variant="default" onClick={() => { setOpen(true); init(); }}>
         <UsersRound className="h-4 w-4 mr-1" /> Create All User Accounts
       </Button>
@@ -197,10 +170,13 @@ export function BulkCreateAccountsDialog({ onDone }: Props) {
                   <TableCell>
                     <Input
                       className="h-8 text-xs font-mono"
+                      placeholder="Generated on creation"
+                      type={r.status === "created" ? "text" : "password"}
                       value={r.password}
                       disabled={running || r.status === "created"}
                       onChange={(e) => update(i, { password: e.target.value })}
                     />
+                    {r.status === "created" && <Button size="sm" variant="ghost" onClick={() => void navigator.clipboard.writeText(r.password)}>Copy</Button>}
                   </TableCell>
                   <TableCell className="text-xs">
                     {r.status === "creating" && <span className="inline-flex items-center gap-1 text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" /> Creating…</span>}
@@ -224,10 +200,10 @@ export function BulkCreateAccountsDialog({ onDone }: Props) {
         )}
 
         <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={running}>Close</Button>
+          <Button variant="outline" onClick={() => { setOpen(false); setRows([]); }} disabled={running}>Close</Button>
           {summary.created > 0 && (
-            <Button variant="outline" onClick={downloadPdf}>
-              <Download className="h-4 w-4 mr-1" /> Download Credentials PDF
+            <Button variant="outline" onClick={downloadCsv}>
+              <Download className="h-4 w-4 mr-1" /> Download CSV
             </Button>
           )}
           <Button onClick={runCreate} disabled={running || rows.filter((r) => r.selected && r.status !== "created").length === 0}>

@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { changeAccountPassword } from "@/lib/change-password";
+import { passwordPolicyError } from "@/lib/password-policy";
 
 export default function Welcome() {
   const navigate = useNavigate();
@@ -41,8 +43,9 @@ export default function Welcome() {
       toast.error("Please enter your full name");
       return;
     }
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    const policyError = await passwordPolicyError(password);
+    if (policyError) {
+      toast.error(policyError);
       return;
     }
     if (password !== confirmPassword) {
@@ -53,8 +56,7 @@ export default function Welcome() {
     setLoading(true);
     try {
       // Set the user's password
-      const { error: pwError } = await supabase.auth.updateUser({ password });
-      if (pwError) throw pwError;
+      await changeAccountPassword(password, undefined, true);
 
       // Update profile with display name
       const { data: { user } } = await supabase.auth.getUser();
@@ -114,11 +116,11 @@ export default function Welcome() {
               <Input
                 id="password"
                 type="password"
-                placeholder="Min 6 characters"
+                placeholder="Min 10 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={10}
                 className="bg-background text-foreground border-border"
               />
             </div>

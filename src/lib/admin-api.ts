@@ -50,7 +50,7 @@ export async function updateUserRole(userId: string, role: AppRole) {
 }
 
 export async function createUserWithPassword(opts: {
-  email: string; role: AppRole; password: string;
+  email: string; role: AppRole; password?: string;
   display_name?: string; phone?: string; reporting_manager_id?: string;
 }) {
   return callAdminFunction({ action: "create_user_with_password", ...opts });

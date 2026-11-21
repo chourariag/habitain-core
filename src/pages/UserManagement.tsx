@@ -31,20 +31,6 @@ const RAISER_ROLES = [
 ];
 const MD_ROLES = [...TIER1_ROLES,"super_admin"];
 const PROJECT_APPROVER_ROLES = [...TIER1_ROLES,"super_admin"];
-function generateTempPassword(): string {
-  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-  const lower = "abcdefghijkmnpqrstuvwxyz";
-  const digits = "23456789";
-  const symbols = "!@#$%^&*";
-  const all = upper + lower + digits + symbols;
-  const buf = new Uint32Array(16);
-  crypto.getRandomValues(buf);
-  const pick = (set: string, n: number) => set[n % set.length];
-  let pwd = pick(upper, buf[0]) + pick(lower, buf[1]) + pick(digits, buf[2]) + pick(symbols, buf[3]);
-  for (let i = 4; i < 16; i++) pwd += pick(all, buf[i]);
-  return pwd;
-}
-
 type Profile = {
   id: string; auth_user_id: string;
   display_name: string | null; email: string | null;
@@ -106,11 +92,9 @@ export default function UserManagement() {
     try {
       if (req.request_type === "add_user") {
         const p = req.payload as Record<string, string>;
-        const tempPassword = generateTempPassword();
-        await createUserWithPassword({
+        const result = await createUserWithPassword({
           email: p.email,
           role: p.role as AppRole,
-          password: tempPassword,
           display_name: p.full_name,
           phone: p.phone,
           reporting_manager_id: p.reporting_to,
@@ -120,7 +104,7 @@ export default function UserManagement() {
           section: "User Management", action: "approve_add_user",
           entity: p.email, summary: `Approved add user — ${p.full_name} as ${p.role}`,
         });
-        setTempPwShown({ name: p.full_name || p.email, password: tempPassword });
+        setTempPwShown({ name: p.full_name || p.email, password: result.temp_password });
       } else if (req.request_type === "deactivate_user") {
         const p = req.payload as Record<string, string>;
         const { data: prof } = await supabase
@@ -451,7 +435,8 @@ export default function UserManagement() {
             <p className="text-sm">Account for <strong>{tempPwShown?.name}</strong> has been created.</p>
             <div className="rounded-md border p-3" style={{ background: "#F7F7F7" }}>
               <div className="text-xs text-muted-foreground">Temporary password</div>
-              <div className="font-mono text-lg font-bold mt-1">{tempPwShown?.password}</div>
+              <div className="font-mono text-sm break-all mt-1">{tempPwShown?.password}</div>
+              <Button variant="outline" size="sm" onClick={() => void navigator.clipboard.writeText(tempPwShown?.password || "")}>Copy</Button>
             </div>
             <p className="text-xs text-muted-foreground">Share this password with the new employee. They should change it on first login.</p>
           </div>

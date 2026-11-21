@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [x] Account security 0046: retired defaults removed from src/supabase/drizzle; 32/32 profiles flagged; trusted-role audited replacement and last-admin protections; initial-admin endpoint removed; 372 tests/0 skips, signed-in mandatory-screen/403/400/404 checks passed. No live account mutations beyond the one-time flag backfill; physical kiosk login and actual password-change completion were not exercised.
 - [x] Scoped security closure: 0045; both original Critical findings closed and subcontract snapshots protected; 323 tests/0 skips, 43 UI role tests, 99 rolled-back live assertions across 11 roles (3 absent-account live skips); signed-in MD role editor/DSR and unchanged Running Bill verified. Full 46-remaining-findings inventory in docs/SCOPED_SECURITY_0045.md; no roles/accounts/flags/cron/export changes.
 - [ ] Pre-existing correction-alert save error: notifications.content missing in legacy INSERT; user explicitly chose Leave unchanged, separate authorization required. Changed-value correction regression remains blocked.
 - [ ] Remaining security findings: 46 quick/deep findings outside the four scoped targets; separate review/authorization required, no suppressions.

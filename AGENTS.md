@@ -25,3 +25,6 @@
 - Navigation-permission rows are scoped to assigned user_roles; Tier 1/Super retain the cross-role editor, while module-menu logic remains unchanged to preserve screen parity.
 - Site report subcontract snapshots have safe-column-only direct grants; checked commercial paths expose monetary fields, while site report validation receives only matching/package metadata to prevent cost disclosure without breaking quantities.
 - Record corrections use fixed typed statements and caller-bound role checks, preserving record owners, reporting-manager relationships and the 48-hour submitter window to avoid dynamic-command escalation.
+- Account password mutations use the checked account endpoint and shared fingerprint-based policy; mandatory-change flags clear only after Auth succeeds, and authenticated screens stay unmounted until the flag is checked.
+- Account role changes use a service-only serialized, audited RPC replacing all target role rows and synchronizing the profile mirror; server grants use user_roles and protect self changes and the last active Super Admin.
+- Generated account credentials remain only in transient responses and screen state, cleared on dismissal; bulk creation exposes a CSV download without audit-log or persistent client storage copies.

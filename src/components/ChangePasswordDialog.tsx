@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { changeAccountPassword } from "@/lib/change-password";
+import { passwordPolicyError } from "@/lib/password-policy";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -89,8 +90,9 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
     e.preventDefault();
     setError(null);
 
-    if (newPassword.length < 6) {
-      setError("New password must be at least 6 characters");
+    const policyError = await passwordPolicyError(newPassword);
+    if (policyError) {
+      setError(policyError);
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -99,15 +101,9 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
     }
 
     setSaving(true);
-    const { error: updateError } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
-    setSaving(false);
-
-    if (updateError) {
-      setError(updateError.message || "Failed to update password");
-      return;
-    }
+    try { await changeAccountPassword(newPassword, currentPassword); }
+    catch (err) { setError(err instanceof Error ? err.message : "Failed to update password"); return; }
+    finally { setSaving(false); }
 
     toast.success("Password updated successfully");
     resetForm();

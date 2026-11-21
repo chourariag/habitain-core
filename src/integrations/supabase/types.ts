@@ -8673,6 +8673,7 @@ export type Database = {
           is_archived: boolean | null
           language: string | null
           login_type: Database["public"]["Enums"]["login_type"] | null
+          must_change_password: boolean
           onboarding_completed: boolean
           onboarding_completed_at: string | null
           onboarding_quiz_scores: Json | null
@@ -8694,6 +8695,7 @@ export type Database = {
           is_archived?: boolean | null
           language?: string | null
           login_type?: Database["public"]["Enums"]["login_type"] | null
+          must_change_password?: boolean
           onboarding_completed?: boolean
           onboarding_completed_at?: string | null
           onboarding_quiz_scores?: Json | null
@@ -8715,6 +8717,7 @@ export type Database = {
           is_archived?: boolean | null
           language?: string | null
           login_type?: Database["public"]["Enums"]["login_type"] | null
+          must_change_password?: boolean
           onboarding_completed?: boolean
           onboarding_completed_at?: string | null
           onboarding_quiz_scores?: Json | null
@@ -17378,6 +17381,15 @@ export type Database = {
           p_storage_path: string
         }
         Returns: Json
+      }
+      admin_set_account_access: {
+        Args: {
+          _active?: boolean
+          _caller: string
+          _role?: Database["public"]["Enums"]["app_role"]
+          _target: string
+        }
+        Returns: undefined
       }
       amc_followup_daily_reminders: { Args: never; Returns: undefined }
       apply_record_edit: {

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { changeAccountPassword } from "@/lib/change-password";
+import { passwordPolicyError } from "@/lib/password-policy";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,8 +16,9 @@ export default function ResetPassword() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    const policyError = await passwordPolicyError(password);
+    if (policyError) {
+      toast.error(policyError);
       return;
     }
     if (password !== confirm) {
@@ -25,8 +27,7 @@ export default function ResetPassword() {
     }
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
+      await changeAccountPassword(password, undefined, true);
       toast.success("Password set successfully!");
       navigate("/dashboard", { replace: true });
     } catch (err: any) {

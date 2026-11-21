@@ -8,6 +8,7 @@ import { UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { createUser } from "@/lib/admin-api";
 import { AppRole, ROLE_TIERS, ROLE_LABELS, KIOSK_ROLES } from "@/lib/roles";
+import { AccountCredentials, type AccountCredential } from "./AccountCredentials";
 
 interface AddUserDialogProps {
   onUserCreated: () => void;
@@ -20,6 +21,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
   const [role, setRole] = useState<AppRole | "">("");
   const [kioskPin, setKioskPin] = useState("");
   const [loading, setLoading] = useState(false);
+  const [credentials, setCredentials] = useState<AccountCredential[]>([]);
 
   const isKiosk = role && KIOSK_ROLES.includes(role as AppRole);
   const loginType = isKiosk ? "otp" : "email";
@@ -37,17 +39,8 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
     setLoading(true);
     try {
       const result = await createUser(email, role as AppRole, loginType, phone || undefined, isKiosk ? kioskPin : undefined);
-      if (result.invite_sent) {
-        toast.success("Invite email sent!", {
-          description: "The user will receive an email with a magic link to set up their account.",
-          duration: 8000,
-        });
-      } else {
-        toast.success("User created successfully", {
-          description: "Kiosk user created. They can log in via PIN.",
-          duration: 8000,
-        });
-      }
+      setCredentials([{ email, password: result.temp_password }]);
+      toast.success("User created successfully");
       setEmail("");
       setPhone("");
       setRole("");
@@ -62,7 +55,7 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <><AccountCredentials credentials={credentials} onClose={() => setCredentials([])} /><Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>
           <UserPlus className="h-4 w-4 mr-2" />
@@ -139,10 +132,10 @@ export function AddUserDialog({ onUserCreated }: AddUserDialogProps) {
           )}
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating…" : "Create User & Send Invite"}
+            {loading ? "Creating…" : "Create User"}
           </Button>
         </form>
       </DialogContent>
-    </Dialog>
+    </Dialog></>
   );
 }

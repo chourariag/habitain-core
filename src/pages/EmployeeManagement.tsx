@@ -31,7 +31,6 @@ const HIERARCHY_TIERS: { key: string; label: string; roles: AppRole[] }[] = [
 ];
 
 
-const DEFAULT_PWD = "Altree@1234";
 
 interface ProfileRow {
   id: string;
@@ -478,11 +477,11 @@ function CreateEmployeeDialog({ open, onOpenChange, managers, onCreated }: {
 }) {
   const [form, setForm] = useState({
     full_name: "", email: "", phone: "", role: "" as AppRole | "",
-    department: "", reporting_manager_id: "", secondary_manager_id: "", temp_password: DEFAULT_PWD,
+    department: "", reporting_manager_id: "", secondary_manager_id: "", temp_password: "",
   });
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { if (open) setForm({ full_name: "", email: "", phone: "", role: "" as AppRole | "", department: "", reporting_manager_id: "", secondary_manager_id: "", temp_password: DEFAULT_PWD }); }, [open]);
+  useEffect(() => { if (open) setForm({ full_name: "", email: "", phone: "", role: "" as AppRole | "", department: "", reporting_manager_id: "", secondary_manager_id: "", temp_password: "" }); }, [open]);
 
   const submit = async () => {
     if (!form.full_name || !form.email || !form.role) { toast.error("Name, email and role are required"); return; }
@@ -496,7 +495,7 @@ function CreateEmployeeDialog({ open, onOpenChange, managers, onCreated }: {
         department: form.department || undefined,
         reporting_manager_id: form.reporting_manager_id || undefined,
         secondary_manager_id: form.secondary_manager_id || undefined,
-        temp_password: form.temp_password || DEFAULT_PWD,
+        temp_password: form.temp_password || undefined,
       });
       toast.success("Employee created");
       onOpenChange(false);
@@ -551,7 +550,7 @@ function CreateEmployeeDialog({ open, onOpenChange, managers, onCreated }: {
           </Field>
           <Field label="Temporary Password">
             <div className="flex gap-2">
-              <Input value={form.temp_password} onChange={(e) => setForm({ ...form, temp_password: e.target.value })} />
+              <Input type="password" placeholder="Leave empty to generate" value={form.temp_password} onChange={(e) => setForm({ ...form, temp_password: e.target.value })} />
               <Button type="button" variant="outline" size="icon" onClick={() => copy(form.temp_password)}><Copy className="h-4 w-4" /></Button>
             </div>
           </Field>
@@ -768,7 +767,7 @@ function SeedDialog({ open, onClose, managers }: { open: boolean; onClose: () =>
           full_name: e.full_name, email: e.email, role: e.role,
           department: e.department, reporting_manager_id: managerId,
           secondary_manager_id: secondaryManagerId,
-          temp_password: DEFAULT_PWD,
+          temp_password: "",
         });
         // res.user_id is auth_user_id; FK reporting_manager_id references profiles.id — look it up
         const { data: newProfile } = await supabase
@@ -801,7 +800,7 @@ function SeedDialog({ open, onClose, managers }: { open: boolean; onClose: () =>
   const downloadResults = () => {
     const okRows = logs.filter((l) => l.status === "ok").map((l) => {
       const e = parseSeedText(text)[l.idx];
-      return { Name: e?.full_name || "", Email: l.email, "Temp Password": l.password || DEFAULT_PWD };
+      return { Name: e?.full_name || "", Email: l.email, "Temp Password": l.password || "" };
     });
     downloadCsv(okRows, `hstack-credentials-${new Date().toISOString().slice(0, 10)}.csv`);
   };
@@ -811,7 +810,7 @@ function SeedDialog({ open, onClose, managers }: { open: boolean; onClose: () =>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Bulk seed employees</DialogTitle>
-          <DialogDescription>Paste one row per line: <code>Full Name, email@altree.in, role_key, Department, manager_email, secondary_manager_email</code>. The secondary manager email is optional. Default password: <code>{DEFAULT_PWD}</code>.</DialogDescription>
+          <DialogDescription>Paste one row per line: <code>Full Name, email@altree.in, role_key, Department, manager_email, secondary_manager_email</code>. The secondary manager email is optional. A unique temporary password is generated for each account.</DialogDescription>
         </DialogHeader>
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>

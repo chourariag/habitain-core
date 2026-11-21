@@ -1,3 +1,4 @@
+import { generatePassword, passwordPolicyError, roleGrantError } from "../_shared/password-policy.ts";
 import { TIER1_ROLES, isTier1 } from "../_shared/director-tier.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -18,7 +19,7 @@ Deno.serve(async (req) => {
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
@@ -31,27 +32,69 @@ Deno.serve(async (req) => {
     if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
     const callerId = claimsData.claims.sub;
+    const { action, ...payload } = await req.json();
+    const respond = (error: string, status = 403) => new Response(JSON.stringify({ error }), { status, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" } });
+    // Self-service password changes are allowed before the director-only branch.
+    if (action === "change_password") {
+      const { password, current_password, recovery } = payload;
+      const policyError = await passwordPolicyError(password);
+      if (policyError) return respond(policyError, 400);
+      const { data: trusted, error: trustedError } = await supabaseAuth.auth.getUser(token);
+      if (trustedError || !trusted.user) return respond("Unauthorized", 401);
+      // Auth remains authoritative: it exempts genuine recovery/invite sessions only.
+      const recoverySession = recovery === true;
+      if (!recoverySession && typeof current_password !== "string") return respond("Current password is required", 400);
+      if (!recoverySession && password === current_password) return respond("Choose a different password", 400);
+      // Auth verifies the current password; recovery tokens are independently verified above.
+      // A bearer-only server client has no persisted Auth session; send the
+      // authenticated update directly so Auth verifies current/recovery access.
+      const passwordResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+        method: "PUT",
+        headers: { Authorization: authHeader, apikey: anonKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ password, ...(recoverySession ? {} : { current_password }) }),
+      });
+      if (!passwordResponse.ok) {
+        const failure = await passwordResponse.json().catch(() => null);
+        return respond(failure?.msg || failure?.message || "Password change rejected", 400);
+      }
+      const { error: flagError } = await supabaseAdmin.from("profiles").update({ must_change_password: false }).eq("auth_user_id", callerId);
+      if (flagError) return respond("Password changed; access remains locked until completion can be recorded. Retry.", 500);
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" } });
+    }
+    const { data: callerRoleRows, error: callerRoleError } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", callerId);
+    if (callerRoleError) return respond("Unable to verify access", 403);
+    const callerRoles = (callerRoleRows || []).map(r => r.role);
+
 
     const { data: callerProfile } = await supabaseAdmin
       .from("profiles")
-      .select("role")
+      .select("role, is_active, must_change_password")
       .eq("auth_user_id", callerId)
       .single();
 
     const directorRoles = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director"];
-    if (!callerProfile || !directorRoles.includes(callerProfile.role)) {
+    if (!callerProfile || callerProfile.is_active === false || !callerRoles.some(r => directorRoles.includes(r))) {
       return new Response(JSON.stringify({ error: "Forbidden: Director access required" }), {
         status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
-    const { action, ...payload } = await req.json();
+    if (callerProfile.must_change_password) return respond("Set a new password before managing accounts");
+    // All role-mutating entry points share the same server-side rule.
+    if (["create_user", "create_user_with_password", "create_employee"].includes(action)) {
+      const grantError = roleGrantError(callerRoles, callerId, undefined, payload.role);
+      if (grantError) return respond(grantError);
+    }
+    const setAccess = async (userId: string, role: string | null = null, active: boolean | null = null) => {
+      const { error } = await supabaseAdmin.rpc("admin_set_account_access", { _caller: callerId, _target: userId, _role: role, _active: active });
+      return error;
+    };
 
     // ── CREATE USER ──────────────────────────────────────────────
     if (action === "create_user") {
@@ -65,55 +108,30 @@ Deno.serve(async (req) => {
       if (!normalizedEmail || !role) {
         return new Response(JSON.stringify({ error: "Email and role are required" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
       if (kioskRoles.includes(role) && normalizedPhone.length !== 10) {
         return new Response(JSON.stringify({ error: "Kiosk users require a valid 10-digit phone number" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
       if (kioskRoles.includes(role) && normalizedPin.length !== 4) {
         return new Response(JSON.stringify({ error: "Kiosk users require a 4-digit PIN" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
-      // Use inviteUserByEmail for non-kiosk users, createUser for kiosk
-      let userId: string;
-
-      if (kioskRoles.includes(role)) {
-        // Kiosk users get a random password (they use PIN login)
-        const tempPassword = crypto.randomUUID().slice(0, 16) + "Aa1!";
-        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-          email: normalizedEmail,
-          password: tempPassword,
-          email_confirm: true,
-        });
-        if (createError) {
-          return new Response(JSON.stringify({ error: createError.message }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        userId = newUser.user.id;
-      } else {
-        // Non-kiosk users get an invite email with magic link
-        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(normalizedEmail, {
-          redirectTo: `${req.headers.get("origin") || supabaseUrl}/welcome`,
-        });
-        if (inviteError) {
-          return new Response(JSON.stringify({ error: inviteError.message }), {
-            status: 400,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        userId = inviteData.user.id;
-      }
+      const tempPassword = payload.password === undefined || payload.password === "" ? generatePassword() : payload.password;
+      const policyError = await passwordPolicyError(tempPassword);
+      if (policyError) return respond(policyError, 400);
+      const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({ email: normalizedEmail, password: tempPassword, email_confirm: true });
+      if (createError || !newUser.user) return respond(createError?.message || "Create failed", 400);
+      const userId = newUser.user.id;
 
       const profilePayload = {
         auth_user_id: userId,
@@ -121,6 +139,7 @@ Deno.serve(async (req) => {
         role,
         login_type: effectiveLoginType,
         is_active: true,
+        must_change_password: true,
         is_archived: false,
       };
 
@@ -134,7 +153,7 @@ Deno.serve(async (req) => {
         await supabaseAdmin.auth.admin.deleteUser(userId);
         return new Response(JSON.stringify({ error: profileError.message }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
@@ -158,7 +177,7 @@ Deno.serve(async (req) => {
       if (roleError) {
         return new Response(JSON.stringify({ error: roleError.message }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
@@ -180,9 +199,10 @@ Deno.serve(async (req) => {
         JSON.stringify({
           success: true,
           user_id: userId,
-          invite_sent: !kioskRoles.includes(role),
+          invite_sent: false,
+          temp_password: tempPassword,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" } }
       );
     }
 
@@ -190,24 +210,27 @@ Deno.serve(async (req) => {
     if (action === "create_user_with_password") {
       const { email, role, password, display_name, phone, reporting_manager_id } = payload;
       const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
-      if (!normalizedEmail || !role || !password) {
-        return new Response(JSON.stringify({ error: "email, role, password required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      if (!normalizedEmail || !role) {
+        return new Response(JSON.stringify({ error: "email and role required" }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
+      const effectivePassword = password === undefined || password === "" ? generatePassword() : password;
+      const policyError = await passwordPolicyError(effectivePassword);
+      if (policyError) return respond(policyError, 400);
       const { data: newUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
         email: normalizedEmail,
-        password,
+        password: effectivePassword,
         email_confirm: true,
         user_metadata: { display_name: display_name || null },
       });
       if (createErr) {
         return new Response(JSON.stringify({ error: createErr.message }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const userId = newUser.user.id;
-      const { data: pRow } = await supabaseAdmin.from("profiles").upsert({
+      const { data: pRow, error: profileError } = await supabaseAdmin.from("profiles").upsert({
         auth_user_id: userId,
         email: normalizedEmail,
         display_name: display_name || null,
@@ -215,8 +238,14 @@ Deno.serve(async (req) => {
         login_type: "email",
         reporting_manager_id: reporting_manager_id || null,
         is_active: true,
+        must_change_password: true,
         is_archived: false,
       }, { onConflict: "auth_user_id" }).select("id").single();
+      if (profileError || !pRow) {
+        // Do not expose usable credentials if the mandatory-change flag failed.
+        await supabaseAdmin.auth.admin.updateUserById(userId, { ban_duration: "876600h" });
+        return respond("Account setup could not record the required password change", 500);
+      }
       if (phone && pRow?.id) {
         await supabaseAdmin.from("profile_private_info").upsert({
           profile_id: pRow.id, phone,
@@ -230,8 +259,8 @@ Deno.serve(async (req) => {
         entity_id: userId,
         new_value: { email: normalizedEmail, role, display_name },
       });
-      return new Response(JSON.stringify({ success: true, user_id: userId }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ success: true, user_id: userId, temp_password: effectivePassword }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
@@ -239,25 +268,25 @@ Deno.serve(async (req) => {
     if (action === "create_offboarding_record") {
       if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const { profile_id, last_working_day, reason, exit_reason_category, exit_interview_notes } = payload;
 
       if (!profile_id || !last_working_day || !reason) {
         return new Response(JSON.stringify({ error: "profile_id, last_working_day, reason required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const { data: profile } = await supabaseAdmin.from("profiles").select("id, auth_user_id, display_name, role, is_active").eq("id", profile_id).single();
       if (!profile) {
         return new Response(JSON.stringify({ error: "Profile not found" }), {
-          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       if (profile.is_active === false) {
         return new Response(JSON.stringify({ error: "Profile is already inactive" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
@@ -272,7 +301,7 @@ Deno.serve(async (req) => {
       }).select("id").single();
       if (recErr || !record) {
         return new Response(JSON.stringify({ error: recErr?.message || "Failed to create offboarding record" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
@@ -291,7 +320,7 @@ Deno.serve(async (req) => {
         const { error: impactErr } = await supabaseAdmin.from("offboarding_impact_items").insert(impactRows);
         if (impactErr) {
           return new Response(JSON.stringify({ error: impactErr.message }), {
-            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
           });
         }
       }
@@ -308,7 +337,7 @@ Deno.serve(async (req) => {
       );
       if (clearErr) {
         return new Response(JSON.stringify({ error: clearErr.message }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
@@ -320,7 +349,7 @@ Deno.serve(async (req) => {
       });
 
       return new Response(JSON.stringify({ success: true, record_id: record.id, impact_count: impactRows.length }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
@@ -328,19 +357,19 @@ Deno.serve(async (req) => {
     if (action === "resolve_offboarding_impact_item") {
       if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const { impact_item_id, reassign_to_profile_id, resolution_status, notes } = payload;
 
       if (!impact_item_id || !resolution_status) {
         return new Response(JSON.stringify({ error: "impact_item_id and resolution_status required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       if (!["resolved", "leave_vacant"].includes(resolution_status)) {
         return new Response(JSON.stringify({ error: "resolution_status must be resolved or leave_vacant" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
@@ -350,12 +379,12 @@ Deno.serve(async (req) => {
         .single();
       if (!item) {
         return new Response(JSON.stringify({ error: "Impact item not found" }), {
-          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       if ((item as any).offboarding_records.status !== "reassignment_pending") {
         return new Response(JSON.stringify({ error: "Record is not in reassignment phase" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
@@ -372,7 +401,8 @@ Deno.serve(async (req) => {
           // (typically done via update_employee; this path updates the role on the departing profile's record)
           const { data: target } = await supabaseAdmin.from("profiles").select("auth_user_id").eq("id", reassign_to_profile_id).single();
           if (target?.auth_user_id) {
-            await supabaseAdmin.from("user_roles").upsert({ user_id: target.auth_user_id, role: item.old_value }, { onConflict: "user_id,role" });
+            const accessError = await setAccess(target.auth_user_id, item.old_value);
+            if (accessError) return respond(accessError.message, accessError.code === "42501" ? 403 : 400);
           }
         } else if (table === "projects" && field === "project_architect_id") {
           await supabaseAdmin.from("projects").update({ project_architect_id: reassign_to_profile_id, updated_by: callerId }).eq("id", entityId);
@@ -394,7 +424,7 @@ Deno.serve(async (req) => {
       }).eq("id", impact_item_id);
       if (updErr) {
         return new Response(JSON.stringify({ error: updErr.message }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
@@ -406,7 +436,7 @@ Deno.serve(async (req) => {
       });
 
       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
@@ -414,14 +444,14 @@ Deno.serve(async (req) => {
     if (action === "advance_offboarding") {
       if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const { record_id, new_status } = payload;
 
       if (!record_id || !new_status) {
         return new Response(JSON.stringify({ error: "record_id and new_status required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const { data: record } = await supabaseAdmin.from("offboarding_records")
@@ -430,16 +460,21 @@ Deno.serve(async (req) => {
         .single();
       if (!record) {
         return new Response(JSON.stringify({ error: "Offboarding record not found" }), {
-          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 404, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
+      if (new_status === "completed") {
+        const target = (record as any).profiles.auth_user_id;
+        const accessError = await setAccess(target, null, false);
+        if (accessError) return respond(accessError.message, accessError.code === "42501" ? 403 : 400);
+      }
       const { error: statusErr } = await supabaseAdmin.from("offboarding_records")
         .update({ status: new_status })
         .eq("id", record_id);
       if (statusErr) {
         return new Response(JSON.stringify({ error: statusErr.message }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
@@ -468,7 +503,7 @@ Deno.serve(async (req) => {
       });
 
       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
@@ -476,18 +511,18 @@ Deno.serve(async (req) => {
     if (action === "get_sole_role_holders") {
       if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const { data: holders, error: holdersErr } = await supabaseAdmin.rpc("get_sole_role_holders");
 
       if (holdersErr) {
         return new Response(JSON.stringify({ error: holdersErr.message }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       return new Response(JSON.stringify({ success: true, holders: holders || [] }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
@@ -498,7 +533,7 @@ Deno.serve(async (req) => {
       if (!user_id) {
         return new Response(JSON.stringify({ error: "user_id required" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
@@ -508,10 +543,8 @@ Deno.serve(async (req) => {
         .eq("auth_user_id", user_id)
         .single();
 
-      await supabaseAdmin
-        .from("profiles")
-        .update({ is_active: false, is_archived: true })
-        .eq("auth_user_id", user_id);
+      const accessError = await setAccess(user_id, null, false);
+      if (accessError) return respond(accessError.message, accessError.code === "42501" ? 403 : 400);
 
       await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "876600h" });
 
@@ -525,7 +558,7 @@ Deno.serve(async (req) => {
       });
 
       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
@@ -535,7 +568,7 @@ Deno.serve(async (req) => {
       if (!user_id) {
         return new Response(JSON.stringify({ error: "user_id required" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
@@ -555,7 +588,7 @@ Deno.serve(async (req) => {
       });
 
       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
@@ -565,36 +598,15 @@ Deno.serve(async (req) => {
       if (!user_id || !role) {
         return new Response(JSON.stringify({ error: "user_id and role required" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
-      const { data: oldProfile } = await supabaseAdmin
-        .from("profiles")
-        .select("role")
-        .eq("auth_user_id", user_id)
-        .single();
-
-      await supabaseAdmin
-        .from("profiles")
-        .update({ role })
-        .eq("auth_user_id", user_id);
-
-      await supabaseAdmin
-        .from("user_roles")
-        .upsert({ user_id, role }, { onConflict: "user_id,role" });
-
-      await supabaseAdmin.from("admin_audit_log").insert({
-        action: "update_role",
-        performed_by: callerId,
-        entity_type: "profile",
-        entity_id: user_id,
-        old_value: { role: oldProfile?.role },
-        new_value: { role },
-      });
+      const accessError = await setAccess(user_id, role);
+      if (accessError) return respond(accessError.message, accessError.code === "42501" ? 403 : 400);
 
       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
@@ -603,24 +615,19 @@ Deno.serve(async (req) => {
       // Only super_admin / managing_director may use this endpoint
       if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden: super_admin or managing_director only" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const { full_name, email, phone, role, department, reporting_manager_id, secondary_manager_id, temp_password } = payload;
       const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
-      const password = (typeof temp_password === "string" && temp_password.length >= 8) ? temp_password : "Altree@1234";
+      const password = temp_password === undefined || temp_password === "" ? generatePassword() : temp_password;
+      const policyError = await passwordPolicyError(password);
+      if (policyError) return respond(policyError, 400);
       if (!normalizedEmail || !role || !full_name) {
         return new Response(JSON.stringify({ error: "full_name, email and role are required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
-      // Privilege escalation guard
-      if (["super_admin", ...TIER1_ROLES].includes(role) && callerProfile.role !== "super_admin" && !isTier1(callerProfile.role)) {
-        return new Response(JSON.stringify({ error: "Only super_admin/managing_director can assign that role" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
       const { data: newUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
         email: normalizedEmail,
         password,
@@ -634,24 +641,10 @@ Deno.serve(async (req) => {
         const isDuplicate = /already|exists|registered/i.test(msg);
         if (!isDuplicate) {
           return new Response(JSON.stringify({ error: msg || "Create failed" }), {
-            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
           });
         }
-        // Email already registered — locate existing auth user and link / refresh profile
-        let foundId: string | undefined;
-        for (let page = 1; page <= 20 && !foundId; page++) {
-          const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 200 });
-          if (listErr) break;
-          foundId = list?.users?.find((u: any) => (u.email || "").toLowerCase() === normalizedEmail)?.id;
-          if (!list || list.users.length < 200) break;
-        }
-        if (!foundId) {
-          return new Response(JSON.stringify({ error: msg, already_exists: true }), {
-            status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" },
-          });
-        }
-        userId = foundId;
-        alreadyExisted = true;
+        return respond("Account already exists; use the explicit edit or reset action", 409);
       }
       const { error: profileErr } = await supabaseAdmin.from("profiles").upsert({
         auth_user_id: userId,
@@ -664,12 +657,13 @@ Deno.serve(async (req) => {
         secondary_manager_id: secondary_manager_id || null,
         login_type: "email",
         is_active: true,
+        must_change_password: true,
         is_archived: false,
       }, { onConflict: "auth_user_id" });
       if (profileErr) {
         if (!alreadyExisted) await supabaseAdmin.auth.admin.deleteUser(userId);
         return new Response(JSON.stringify({ error: profileErr.message }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       await supabaseAdmin.from("user_roles").upsert({ user_id: userId, role }, { onConflict: "user_id,role" });
@@ -681,7 +675,7 @@ Deno.serve(async (req) => {
         new_value: { email: normalizedEmail, full_name, role, department, phone, reporting_manager_id, already_existed: alreadyExisted },
       });
       return new Response(JSON.stringify({ success: true, user_id: userId, email: normalizedEmail, temp_password: alreadyExisted ? null : password, already_existed: alreadyExisted }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
@@ -689,28 +683,32 @@ Deno.serve(async (req) => {
     if (action === "update_employee") {
       if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const { user_id, role, department, reporting_manager_id, secondary_manager_id, is_active, display_name, phone } = payload;
       if (!user_id) {
         return new Response(JSON.stringify({ error: "user_id required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const { data: oldProfile } = await supabaseAdmin.from("profiles").select("*").eq("auth_user_id", user_id).single();
+      if (role !== undefined || is_active !== undefined) {
+        const accessError = await setAccess(user_id, role ?? null, is_active ?? null);
+        if (accessError) return respond(accessError.message, accessError.code === "42501" ? 403 : 400);
+      }
       const patch: Record<string, unknown> = {};
-      if (role !== undefined) patch.role = role;
+
       if (department !== undefined) patch.department = department;
       if (reporting_manager_id !== undefined) patch.reporting_manager_id = reporting_manager_id || null;
       if (secondary_manager_id !== undefined) patch.secondary_manager_id = secondary_manager_id || null;
-      if (is_active !== undefined) { patch.is_active = is_active; patch.is_archived = !is_active; }
+
       if (display_name !== undefined) patch.display_name = display_name;
 
       const { error: updErr } = await supabaseAdmin.from("profiles").update(patch).eq("auth_user_id", user_id);
       if (updErr) {
         return new Response(JSON.stringify({ error: updErr.message }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       if (phone !== undefined && oldProfile?.id) {
@@ -718,9 +716,7 @@ Deno.serve(async (req) => {
           profile_id: oldProfile.id, phone: phone || null,
         }, { onConflict: "profile_id" });
       }
-      if (role) {
-        await supabaseAdmin.from("user_roles").upsert({ user_id, role }, { onConflict: "user_id,role" });
-      }
+
       if (is_active === false) {
         await supabaseAdmin.auth.admin.updateUserById(user_id, { ban_duration: "876600h" });
       } else if (is_active === true) {
@@ -735,7 +731,7 @@ Deno.serve(async (req) => {
         new_value: patch,
       });
       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
@@ -743,24 +739,29 @@ Deno.serve(async (req) => {
     if (action === "reset_password") {
       if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const { user_id, temp_password } = payload;
       if (!user_id) {
         return new Response(JSON.stringify({ error: "user_id required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
-      const newPwd = (typeof temp_password === "string" && temp_password.length >= 8)
-        ? temp_password
-        : ("Altree@" + Math.random().toString(36).slice(-6) + Math.floor(Math.random() * 90 + 10));
+      const newPwd = temp_password === undefined || temp_password === "" ? generatePassword() : temp_password;
+      const policyError = await passwordPolicyError(newPwd);
+      if (policyError) return respond(policyError, 400);
+      // Fail closed: lock first, so a partial reset cannot leave unlocked access.
+      const { error: flagError } = await supabaseAdmin.from("profiles").update({ must_change_password: true }).eq("auth_user_id", user_id);
+      if (flagError) return respond("Could not require password change", 500);
       const { error: pwdErr } = await supabaseAdmin.auth.admin.updateUserById(user_id, { password: newPwd });
       if (pwdErr) {
         return new Response(JSON.stringify({ error: pwdErr.message }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
+      const { error: finalFlagError } = await supabaseAdmin.from("profiles").update({ must_change_password: true }).eq("auth_user_id", user_id);
+      if (finalFlagError) return respond("Password reset; mandatory-change confirmation needs retry", 500);
       await supabaseAdmin.from("admin_audit_log").insert({
         action: "reset_password",
         performed_by: callerId,
@@ -769,7 +770,7 @@ Deno.serve(async (req) => {
         new_value: { reset_at: new Date().toISOString() },
       });
       return new Response(JSON.stringify({ success: true, temp_password: newPwd }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
@@ -777,28 +778,32 @@ Deno.serve(async (req) => {
     if (action === "delete_employee") {
       if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden: super_admin only" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const { user_id } = payload;
       if (!user_id) {
         return new Response(JSON.stringify({ error: "user_id required" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       if (user_id === callerId) {
         return new Response(JSON.stringify({ error: "Cannot delete self" }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const { data: oldProfile } = await supabaseAdmin.from("profiles").select("*").eq("auth_user_id", user_id).maybeSingle();
+      const { data: targetRoles } = await supabaseAdmin.from("user_roles").select("role").eq("user_id", user_id);
+      if (oldProfile?.role === "super_admin" || targetRoles?.some(r => r.role === "super_admin")) {
+        return respond("Super Admin must first be demoted through the checked role action");
+      }
       // Remove profile-side records first, then soft-delete auth user to avoid FK blocks from historical records.
       await supabaseAdmin.from("profile_kiosk_pins").delete().eq("auth_user_id", user_id);
       await supabaseAdmin.from("user_roles").delete().eq("user_id", user_id);
       const { error: delProfileErr } = await supabaseAdmin.from("profiles").delete().eq("auth_user_id", user_id);
       if (delProfileErr) {
         return new Response(JSON.stringify({ error: delProfileErr.message }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
       const { error: delAuthErr } = await supabaseAdmin.auth.admin.deleteUser(user_id, true);
@@ -815,7 +820,7 @@ Deno.serve(async (req) => {
             new_value: { error: message },
           });
           return new Response(JSON.stringify({ error: message }), {
-            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
           });
         }
       }
@@ -827,7 +832,7 @@ Deno.serve(async (req) => {
         old_value: oldProfile,
       });
       return new Response(JSON.stringify({ success: true }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
@@ -835,7 +840,7 @@ Deno.serve(async (req) => {
     if (action === "bulk_delete_all_employees") {
       if (!["super_admin", ...TIER1_ROLES].includes(callerProfile.role)) {
         return new Response(JSON.stringify({ error: "Forbidden: super_admin only" }), {
-          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 403, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
@@ -846,7 +851,7 @@ Deno.serve(async (req) => {
 
       if (listErr) {
         return new Response(JSON.stringify({ error: listErr.message }), {
-          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
         });
       }
 
@@ -857,6 +862,9 @@ Deno.serve(async (req) => {
       const skippedItems: Array<{ user_id: string; email?: string | null; display_name?: string | null; reason: string }> = [];
       const failures: Array<{ user_id: string; email?: string | null; error: string }> = [];
 
+      const { data: superRoleRows, error: superRoleError } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "super_admin");
+      if (superRoleError) return respond("Cannot verify Super Admin protection");
+      const protectedSuperIds = new Set((superRoleRows || []).map(r => r.user_id));
       for (const profile of profiles || []) {
         const targetId = profile.auth_user_id as string;
         if (targetId === callerId) {
@@ -865,6 +873,11 @@ Deno.serve(async (req) => {
           continue;
         }
 
+        if (profile.role === "super_admin" || protectedSuperIds.has(targetId)) {
+          skipped++;
+          skippedItems.push({ user_id: targetId, reason: "Super Admin requires an individual checked action" });
+          continue;
+        }
         await supabaseAdmin.from("profile_kiosk_pins").delete().eq("auth_user_id", targetId);
         await supabaseAdmin.from("user_roles").delete().eq("user_id", targetId);
         const { error: profileErr } = await supabaseAdmin.from("profiles").delete().eq("auth_user_id", targetId);
@@ -900,18 +913,18 @@ Deno.serve(async (req) => {
         new_value: { deleted, failed, skipped, deleted_items: deletedItems, skipped_items: skippedItems, failures, completed_at: new Date().toISOString() },
       });
       return new Response(JSON.stringify({ success: true, deleted, failed, skipped, deleted_items: deletedItems, skipped_items: skippedItems, failures }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
       });
     }
 
     return new Response(JSON.stringify({ error: "Unknown action" }), {
       status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
     });
   } catch (err) {
     return new Response(JSON.stringify({ error: (err as Error).message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json", "Cache-Control": "no-store" },
     });
   }
 });
