@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ToolboxCamera, type CapturedPhoto } from "@/components/labour/ToolboxCamera";
+import { FactoryAttendance } from "@/components/labour/FactoryAttendance";
+import { canWriteFactory } from "@/lib/factory-report";
 import { TIER1_ROLES } from "@/lib/roles";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -59,16 +61,19 @@ export default function LabourPage() {
   const [rates, setRates] = useState<LabourWorker[]>([]);
   const [loading, setLoading] = useState(true);
   const canManageAttendance = LABOUR_ATTENDANCE_ROLES.includes(role as (typeof LABOUR_ATTENDANCE_ROLES)[number]);
+  const canFactory = canWriteFactory(role);
+  const [location,setLocation] = useState(new URLSearchParams(window.location.search).get("location") === "factory" ? "factory" : "site");
   const canUploadMaster = LABOUR_MASTER_UPLOAD_ROLES.includes(role as (typeof LABOUR_MASTER_UPLOAD_ROLES)[number]);
   const canViewMaster = LABOUR_DIRECTORY_VIEW_ROLES.includes(role as (typeof LABOUR_DIRECTORY_VIEW_ROLES)[number]);
   const canViewRates = LABOUR_RATE_VIEW_ROLES.includes(role as (typeof LABOUR_RATE_VIEW_ROLES)[number]);
 
   useEffect(() => {
-    setTab(canManageAttendance ? "attendance" : "master");
-  }, [canManageAttendance]);
+    setTab(canManageAttendance || canFactory ? "attendance" : "master");
+    if (canFactory && !canManageAttendance) setLocation("factory");
+  }, [canManageAttendance,canFactory]);
 
   const loadMaster = useCallback(async () => {
-    if (!canViewMaster) return;
+    if (!canViewMaster) { setLoading(false); return; }
     setLoading(true);
     const directoryQuery = supabase.from("labour_worker_directory").select("worker_id,worker_code,name,contractor,skill_type,status,deactivated_at").order("worker_code");
     const rateQuery = canViewRates
@@ -84,7 +89,7 @@ export default function LabourPage() {
 
   useEffect(() => { void loadMaster(); }, [loadMaster]);
 
-  if (!canViewMaster) {
+  if (!canViewMaster && !canFactory) {
     return <div className="mx-auto max-w-5xl px-4 pb-24 md:px-6"><h1 className="font-display text-2xl font-bold">Labour</h1><p className="mt-3 text-sm text-muted-foreground">This section is not available for your role.</p></div>;
   }
 
@@ -98,15 +103,17 @@ export default function LabourPage() {
         {loading && <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" aria-label="Loading" />}
       </div>
       <Tabs value={tab} onValueChange={setTab} className="mt-4 min-w-0">
-        {canManageAttendance ? <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="attendance">Attendance</TabsTrigger><TabsTrigger value="master">Master</TabsTrigger></TabsList> : <TabsList className="grid w-full grid-cols-1"><TabsTrigger value="master">Master</TabsTrigger></TabsList>}
-        {canManageAttendance && <TabsContent value="attendance"><AttendanceTab
+        {canManageAttendance || canFactory ? <TabsList className="grid w-full grid-cols-2"><TabsTrigger value="attendance">Attendance</TabsTrigger><TabsTrigger value="master">Master</TabsTrigger></TabsList> : <TabsList className="grid w-full grid-cols-1"><TabsTrigger value="master">Master</TabsTrigger></TabsList>}
+        {(canManageAttendance || canFactory) && <TabsContent value="attendance">
+          {canFactory && <div className="mb-4 space-y-1"><Label>Location</Label><Select value={location} onValueChange={setLocation}><SelectTrigger aria-label="Attendance location"><SelectValue /></SelectTrigger><SelectContent>{canManageAttendance && <SelectItem value="site">Projects</SelectItem>}<SelectItem value="factory">Factory</SelectItem></SelectContent></Select></div>}
+          {location === "factory" && canFactory ? <FactoryAttendance role={role}/> : <AttendanceTab
           workers={directory}
           projects={projects}
           projectId={selectedProjectId}
           onProjectChange={setSelectedProjectId}
           canEdit={canManageAttendance}
           role={role}
-        /></TabsContent>}
+        />}</TabsContent>}
         <TabsContent value="master"><MasterTab workers={directory} canUpload={canUploadMaster} canViewRates={canViewRates} onUploaded={loadMaster} /></TabsContent>
       </Tabs>
     </div>

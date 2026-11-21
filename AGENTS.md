@@ -30,3 +30,7 @@
 - Generated account credentials remain only in transient responses and screen state, cleared on dismissal; bulk creation exposes a CSV download without audit-log or persistent client storage copies.
 - Scoped machine functions use the generated cron authenticator with a validated Tier 1/Super manual fallback; legacy unmarked schedules cannot be tightened until header migration or interruption is explicitly resolved.
 - Scoped user functions authenticate against user_roles and resolve record projects server-side before privileged work; email user input enters escaped server templates and notification flags are caller-owned.
+- Factory attendance is isolated in factory-specific records and reuses the live camera and shared shift setting; never represent the factory as a projects row because it would contaminate project lists and reporting expectations.
+- Factory reports use checked full-list RPCs, archived replacement, private attendance-rate snapshots and module/stage allocation; source-linked production logs preserve history without changing module stages.
+- New factory role gates read caller-bound user_roles, not legacy profile role mirrors; monetary snapshots have no direct authenticated column grants and cost access uses checked RPCs.
+- Running Bill unions submitted site/factory quantities before the existing positive-BOQ cap, while factory labour remains a separate exact-allocation section and legacy site cost CTEs remain unchanged.

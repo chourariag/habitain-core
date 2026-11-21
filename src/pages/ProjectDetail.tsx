@@ -1,4 +1,5 @@
 import { RunningBillStatement } from "@/components/projects/RunningBillStatement";
+import { BOQWorkLocation } from "@/components/projects/BOQWorkLocation";
 import { canViewRunningBill } from "@/lib/running-bill";
 import { TIER1_ROLES } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
@@ -259,6 +260,7 @@ export default function ProjectDetail() {
           <TabsContent value="setup" className="min-w-0 space-y-4">
             <ProjectElevationsCard projectId={id!} userRole={userRole} />
             <ProjectSetupWorkbook projectId={id!} userRole={userRole} />
+            {id && <BOQWorkLocation projectId={id} role={userRole}/>}
           </TabsContent>
         )}
 

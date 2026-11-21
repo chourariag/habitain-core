@@ -67,18 +67,18 @@ export function RunningBillStatement({ projectId, projectName }: { projectId: st
             onBlur={() => { if (!parseLabourDateInput(asOfText)) setAsOfText(format(parseISO(asOf), "dd/MM/yyyy")); }} /></div>
         <Button variant="outline" onClick={download} disabled={!bill}><Download className="mr-2 h-4 w-4" />Download Excel</Button>
       </div>
-      <p className="text-xs text-muted-foreground break-words">Read-only. Counts only submitted daily site reports dated on or before {format(parseISO(asOf), "dd/MM/yyyy")}{bill ? ` (${bill.reports} report${bill.reports === 1 ? "" : "s"})` : ""}.</p>
+      <p className="text-xs text-muted-foreground break-words">Counts submitted site and factory work dated on or before {format(parseISO(asOf), "dd/MM/yyyy")}{bill ? ` (${bill.reports} site report${bill.reports === 1 ? "" : "s"})` : ""}.</p>
       {loading && !bill && <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>}
       {bill && t && <>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" aria-label="Totals">
-          {[["Value earned (A)", t.value], ["Own labour cost (B)", t.labour], ["Subcontract cost accrued (C)", t.sub]].map(([l, v]) =>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4" aria-label="Totals">
+          {[["Value earned (A)", t.value], ["Own labour cost (B)", t.labour], ["Factory labour cost (B2)",bill.totals.factory_labour_cost||0], ["Subcontract cost accrued (C)", t.sub]].map(([l, v]) =>
             <div key={l as string} className="min-w-0 rounded-md border border-border bg-muted p-3"><div className="text-xs text-muted-foreground">{l}</div><div className="break-words text-lg font-semibold">{inr(v as number)}</div></div>)}
         </div>
         {bill.totals.excess_value > 0 && <p className="text-sm text-warning break-words">Excess over BOQ (needs a variation): Rs {num(bill.totals.excess_value)}</p>}
         <Section title="A · Work done by BOQ item">
-          <T head={["BOQ code", "Description", "Unit", "BOQ qty", "Qty to date", "Billable qty", "Excess", "Own labour", "Subcontract", "% done", "BOQ rate", "Value earned"]}
-            rows={bill.work.map((r) => [r.sno ?? "", r.item_description ?? "", r.unit ?? "", num(r.boq_qty), num(r.qty), num(r.billable_qty), num(r.excess_qty), num(r.own_qty), num(r.sub_qty), r.pct_done == null ? "—" : `${r.pct_done}%`, inr(r.boq_rate), inr(r.value)])}
-            foot={["Total", "", "", "", "", "", "", "", "", "", "", inr(t.value)]} />
+          <T head={["BOQ code", "Description", "Unit", "BOQ qty", "Qty to date", "Billable qty", "Excess", "Own labour", "Subcontract", "Of which factory", "% done", "BOQ rate", "Value earned"]}
+            rows={bill.work.map((r) => [r.sno ?? "", r.item_description ?? "", r.unit ?? "", num(r.boq_qty), num(r.qty), num(r.billable_qty), num(r.excess_qty), num(r.own_qty), num(r.sub_qty), num(r.factory_qty||0), r.pct_done == null ? "—" : `${r.pct_done}%`, inr(r.boq_rate), inr(r.value)])}
+            foot={["Total", "", "", "", "", "", "", "", "", "", "", "", inr(t.value)]} />
         </Section>
         <Section title="B · Own labour cost" note="Hours × each worker's effective hourly rate, on days with a submitted report.">
           <T head={["Date", "Workers", "Hours", "Amount", "Cumulative"]} rows={bill.labour_by_day.map((r) => [format(parseISO(r.work_date), "dd/MM/yyyy"), r.workers, num(r.hours), inr(r.amount), inr(r.cumulative)])} foot={["Total", "", "", inr(t.labour), ""]} />
@@ -88,10 +88,11 @@ export function RunningBillStatement({ projectId, projectName }: { projectId: st
           <T head={["Task code", "Task", "Task hours", "Amount", "Allocation"]} rows={bill.labour_by_task.map((r) => [r.code, r.task, num(r.task_hours), inr(r.amount), taskAllocationLabel(r)])} />
           {bill.labour_by_task.some(r => taskAllocationLabel(r) === "Approximate") && <p className="text-xs text-muted-foreground break-words">{approximateAllocationNote}</p>}
         </Section>
+        <Section title="B2 · Factory labour allocated to this project"><T head={["Module","Name","Hours","Labour cost"]} rows={(bill.factory_labour||[]).map(m=>[m.module_code||"",m.name,num(m.hours),inr(m.amount)])} foot={["Total","","",inr(bill.totals.factory_labour_cost)]}/></Section>
         <Section title="C · Subcontract cost accrued" note="Summed from the amounts fixed when each report was submitted.">
-          <T head={["Contractor", "BOQ code", "Item / package", "Unit", "Type", "Qty to date", "Rate used", "Accrued", "Lump sum", "% consumed"]}
-            rows={bill.subcontract.map((r) => [r.contractor, r.boq_code, r.item ?? "", r.unit ?? "", r.rate_type === "lump_sum" ? "Lump sum" : "Per unit", num(r.qty), r.rate_used == null ? "—" : inr(r.rate_used), inr(r.amount), r.lump_sum == null ? "—" : inr(r.lump_sum), r.pct_consumed == null ? "—" : `${r.pct_consumed}%`])}
-            foot={["Total", "", "", "", "", "", "", inr(t.sub), "", ""]} />
+          <T head={["Contractor", "BOQ code", "Item / package", "Location", "Unit", "Type", "Qty to date", "Rate used", "Accrued", "Lump sum", "% consumed"]}
+            rows={bill.subcontract.map((r) => [r.contractor, r.boq_code, r.item ?? "", r.location||"Site", r.unit ?? "", r.rate_type === "lump_sum" ? "Lump sum" : "Per unit", num(r.qty), r.rate_used == null ? "—" : inr(r.rate_used), inr(r.amount), r.lump_sum == null ? "—" : inr(r.lump_sum), r.pct_consumed == null ? "—" : `${r.pct_consumed}%`])}
+            foot={["Total", "", "", "", "", "", "", "", inr(t.sub), "", ""]} />
         </Section>
       </>}
     </div>

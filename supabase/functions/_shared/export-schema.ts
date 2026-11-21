@@ -1,3 +1,4 @@
+import { FACTORY_EXPORT_SCHEMA } from './factory-export-schema.ts';
 export const EXPORT_SCHEMA = [
   {
     "table": "attendance_records",
@@ -1987,4 +1988,5 @@ export const EXPORT_SCHEMA = [
       }
     ]
   }
+, ...FACTORY_EXPORT_SCHEMA
 ] as const;

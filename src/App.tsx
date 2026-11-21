@@ -63,6 +63,7 @@ import ScopeSignoff from "@/pages/ScopeSignoff";
 import { ModuleGuard } from "@/components/ModuleGuard";
 import LabourPage from "@/components/labour/LabourPage";
 import { LABOUR_DIRECTORY_VIEW_ROLES } from "@/lib/labour-rules";
+import { FACTORY_WRITE_ROLES } from "@/lib/factory-report";
 
 const queryClient = new QueryClient();
 
@@ -89,13 +90,13 @@ const App = () => (
                 <Route path="/projects/:id" element={<ModuleGuard module="projects"><ProjectDetail /></ModuleGuard>} />
                 <Route path="/projects/:id/archive" element={<ModuleGuard module="projects"><ProjectArchive /></ModuleGuard>} />
                 <Route path="/management" element={<ModuleGuard module="reports"><ManagementRouteGuard><Management /></ManagementRouteGuard></ModuleGuard>} />
-                <Route path="/production" element={<ModuleGuard module="factory"><Production /></ModuleGuard>} />
+                <Route path="/production" element={<Production />} />
                 <Route path="/production/dashboard" element={<ModuleGuard module="factory"><ProductionDashboard /></ModuleGuard>} />
                 <Route path="/production/delivery-checklist/:projectId" element={<ModuleGuard module="factory"><DeliveryChecklist /></ModuleGuard>} />
                 <Route path="/dispatch-delivery" element={<ModuleGuard module="dispatch"><DispatchDelivery /></ModuleGuard>} />
                 <Route path="/site-dashboard" element={<ModuleGuard featureFlag="reports"><SiteDashboard /></ModuleGuard>} />
                 <Route path="/site-hub" element={<ModuleGuard module="site"><SiteHub /></ModuleGuard>} />
-                <Route path="/labour" element={<ModuleGuard featureFlag="labour" requireRoles={[...LABOUR_DIRECTORY_VIEW_ROLES]}><LabourPage /></ModuleGuard>} />
+                <Route path="/labour" element={<ModuleGuard featureFlag="labour" requireRoles={[...LABOUR_DIRECTORY_VIEW_ROLES,...FACTORY_WRITE_ROLES]}><LabourPage /></ModuleGuard>} />
                 <Route path="/site-hub/dispatch-pack" element={<ModuleGuard module="site" featureFlag="dispatch"><DispatchPackForm /></ModuleGuard>} />
                 <Route path="/dispatch-pack-form" element={<ModuleGuard module="site" featureFlag="dispatch"><DispatchPackForm /></ModuleGuard>} />
                 <Route path="/site-hub/advance-request" element={<ModuleGuard module="site" featureFlag="advances"><AdvanceRequest /></ModuleGuard>} />

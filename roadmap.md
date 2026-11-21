@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [ ] Factory daily reporting: inspect factory/site reuse, choose isolated attendance location, implement checked attendance/report/cost/work-location RPCs, link Running Bill and exports, test privacy/reconciliation and phone flow; preserve all existing transitions and site behaviour.
 - [x] Edge-function caller authentication: inventory schedules/callers, secure scoped machine/user/email functions, add per-function mocked tests and repository guard; preserve schedule timing/state and exempt functions.
 - [ ] Legacy edge callbacks: user confirmed preserving auto-submit-draft-expenses, daily-checkin-nudge, approval-rejection-dm, error-attribution-dm and five unmarked schedules; blocked until a supported header-only migration exposes their exact targets/body/credential configuration.
 - [x] Account security 0046: retired defaults removed from src/supabase/drizzle; 32/32 profiles flagged; trusted-role audited replacement and last-admin protections; initial-admin endpoint removed; 372 tests/0 skips, signed-in mandatory-screen/403/400/404 checks passed. No live account mutations beyond the one-time flag backfill; physical kiosk login and actual password-change completion were not exercised.

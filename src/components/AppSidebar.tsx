@@ -25,6 +25,7 @@ import { RoleSwitcher } from "./RoleSwitcher";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { featureFlagForModule } from "@/lib/feature-flags";
 import { LABOUR_DIRECTORY_VIEW_ROLES } from "@/lib/labour-rules";
+import { FACTORY_WRITE_ROLES, FACTORY_READ_ROLES } from "@/lib/factory-report";
 
 type NavItem = { to: string; labelKey: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean; module?: ModuleKey; featureFlag?: string; requireAdminPanel?: boolean; requireEmployeeManagement?: boolean };
 type NavSection = { key: string; labelKey?: string; items: NavItem[]; group?: "altree" };
@@ -45,8 +46,9 @@ const sectionConfig: NavSection[] = [
     key: "production", labelKey: "nav.production",
     items: [
       { section: "production", to: "/capacity", labelKey: "nav.capacityPlanning", icon: BarChart3, roles: CAPACITY_ROLES, module: "factory" },
+      { section: "dashboard", to: "/production?tab=factory-report", labelKey: "Daily Factory Report", icon: Factory, featureFlag: featureFlagForModule("factory"), roles: [...FACTORY_READ_ROLES] },
       { section: "production", to: "/production?tab=modules", labelKey: "nav.factoryFloor", icon: Factory, module: "factory" },
-      { section: "dashboard", to: "/labour", labelKey: "nav.labour", icon: Users, featureFlag: "labour", roles: [...LABOUR_DIRECTORY_VIEW_ROLES] },
+      { section: "dashboard", to: "/labour", labelKey: "nav.labour", icon: Users, featureFlag: "labour", roles: [...LABOUR_DIRECTORY_VIEW_ROLES,...FACTORY_WRITE_ROLES] },
       { section: "production", to: "/factory/floor-map", labelKey: "nav.floorMap", icon: Map, module: "factory" },
       { section: "production", to: "/qc", labelKey: "nav.qcNcr", icon: ClipboardCheck, module: "qc" },
       { section: "production", to: "/dispatch-delivery", labelKey: "nav.dispatchDelivery", icon: Truck, module: "dispatch" },

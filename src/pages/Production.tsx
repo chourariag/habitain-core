@@ -34,6 +34,13 @@ import { ModuleTeamAssignment } from "@/components/production/ModuleTeamAssignme
 import { SpecialMaterialRequests } from "@/components/production/SpecialMaterialRequests";
 import { PackagePlus as PackagePlusIcon } from "lucide-react";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
+import { FactoryDailyReport } from "@/components/production/FactoryDailyReport";
+import { FactoryCostCard } from "@/components/production/FactoryCostCard";
+import { canReadFactory, FACTORY_READ_ROLES } from "@/lib/factory-report";
+import { ModuleGuard } from "@/components/ModuleGuard";
+import { featureFlagForModule } from "@/lib/feature-flags";
+import { useLocation, useNavigate } from "react-router-dom";
+import { usePermissions } from "@/hooks/usePermissions";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
 
@@ -270,9 +277,14 @@ function ProductionContent() {
 }
 
 export default function Production() {
-  return (
-    <ProjectScopeGuard>
-      <ProductionContent />
-    </ProjectScopeGuard>
-  );
+  const location = useLocation(), navigate = useNavigate();
+  const factoryMode = new URLSearchParams(location.search).get("tab") === "factory-report";
+  const { role, userId } = useUserRole();
+  const { canView } = usePermissions();
+  return <ModuleGuard {...(factoryMode ? {featureFlag:featureFlagForModule("factory"),requireRoles:[...FACTORY_READ_ROLES]} : {module:"factory" as const})}>
+    <div className="min-w-0">
+      {canReadFactory(role) && <Tabs value={factoryMode ? "factory-report" : "project"} onValueChange={tab=>navigate(tab === "factory-report" ? "/production?tab=factory-report" : "/production?tab=modules")} className="px-4 pt-4 md:px-6"><ScrollableTabsWrapper><TabsList>{canView("factory") && <TabsTrigger value="project">Production</TabsTrigger>}<TabsTrigger value="factory-report">Daily Factory Report</TabsTrigger></TabsList></ScrollableTabsWrapper></Tabs>}
+      {factoryMode ? <div className="min-w-0 space-y-5 p-4 md:p-6"><h1 className="font-display text-2xl font-bold">Daily Factory Report</h1><FactoryDailyReport role={role} userId={userId}/><FactoryCostCard role={role}/></div> : <><ProjectScopeGuard><ProductionContent /></ProjectScopeGuard><div className="px-4 md:px-6"><FactoryCostCard role={role}/></div></>}
+    </div>
+  </ModuleGuard>;
 }

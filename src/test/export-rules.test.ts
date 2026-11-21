@@ -3,8 +3,8 @@ import { EXPORT_SCHEMA } from '../../supabase/functions/_shared/export-schema';
 import { expiredFolder, hashToken, istDate, LINK_SECONDS, RETENTION_DAYS, sanitize, toCsv, wageAmount } from '../../supabase/functions/_shared/export-utils';
 describe('P8 export rules', () => {
   it('exports hourly wages and amounts but not salary, bank, ID numbers or auth fields', () => {
-    expect(EXPORT_SCHEMA).toHaveLength(26);
-    expect(new Set(EXPORT_SCHEMA.map(schema => schema.table)).size).toBe(26);
+    expect(EXPORT_SCHEMA).toHaveLength(36);
+    expect(new Set(EXPORT_SCHEMA.map(schema => schema.table)).size).toBe(36);
     for (const schema of EXPORT_SCHEMA) for (const column of schema.columns) expect(column.name).not.toMatch(/salary|payroll|bank|aadhaar|aadhar|pan_number|pan_no|token|password|secret/i);
     expect(EXPORT_SCHEMA.find(schema => schema.table === 'labour_worker_rates')?.columns.map(column => column.name)).toContain('effective_hourly_rate');
     expect(EXPORT_SCHEMA.find(schema => schema.table === 'labour_attendance')?.columns.map(column => column.name)).toContain('amount');

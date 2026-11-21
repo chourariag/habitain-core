@@ -6,10 +6,12 @@ const calls = vi.hoisted(() => ({ rpc: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: calls.rpc } }));
 const data = {can_write:true,today:"2026-11-21",report:{id:"report",status:"draft",notes:"Original",site_clean:false},tasks:[],boq:[],progress:[],labour:[],quantities:[],photos:[],elevations:[],can_manage_elevations:false,attendance:{workers:0,hours:0},present_workers:[],task_workers:[],expenses:[]};
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-11-21T08:00:00Z"));
   vi.stubGlobal("ResizeObserver",class {observe(){} disconnect(){}});
   calls.rpc.mockReset().mockImplementation(async () => ({data,error:null}));
 });
-afterEach(() => {cleanup();vi.unstubAllGlobals();});
+afterEach(() => {cleanup();vi.unstubAllGlobals();vi.useRealTimers();});
 describe("Daily Report scope transitions", () => {
   it("quantity edits switch Completed back to Ongoing and Completed still forces 100", async () => {
     calls.rpc.mockResolvedValue({data:{...data,

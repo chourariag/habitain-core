@@ -330,6 +330,27 @@
       "when": 1795282263325,
       "tag": "0046_retired_password_account_role_security",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1795285237782,
+      "tag": "0047_factory_daily_reporting_cost_and_boq_location",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1795286009370,
+      "tag": "0048_factory_report_validation_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1795286221156,
+      "tag": "0049_factory_permissions_use_assigned_roles",
+      "breakpoints": true
     }
   ]
 }

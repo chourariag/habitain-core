@@ -1002,6 +1002,50 @@ export type Database = {
           },
         ]
       }
+      boq_work_location_log: {
+        Row: {
+          boq_item_id: string
+          created_at: string
+          created_by: string
+          id: string
+          is_archived: boolean
+          new_location: string
+          old_location: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          boq_item_id: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          new_location: string
+          old_location: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Update: {
+          boq_item_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          new_location?: string
+          old_location?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boq_work_location_log_boq_item_id_fkey"
+            columns: ["boq_item_id"]
+            isOneToOne: false
+            referencedRelation: "project_boq_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_funnel_monthly: {
         Row: {
           calls_answered: number
@@ -2138,6 +2182,7 @@ export type Database = {
         Row: {
           ai_quality_checked: boolean | null
           created_at: string | null
+          factory_block_id: string | null
           id: string
           issues_blockers: string | null
           log_date: string
@@ -2159,6 +2204,7 @@ export type Database = {
         Insert: {
           ai_quality_checked?: boolean | null
           created_at?: string | null
+          factory_block_id?: string | null
           id?: string
           issues_blockers?: string | null
           log_date?: string
@@ -2180,6 +2226,7 @@ export type Database = {
         Update: {
           ai_quality_checked?: boolean | null
           created_at?: string | null
+          factory_block_id?: string | null
           id?: string
           issues_blockers?: string | null
           log_date?: string
@@ -2199,6 +2246,13 @@ export type Database = {
           work_completed?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "daily_production_logs_factory_block_id_fkey"
+            columns: ["factory_block_id"]
+            isOneToOne: false
+            referencedRelation: "factory_report_blocks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "daily_production_logs_module_id_fkey"
             columns: ["module_id"]
@@ -3987,6 +4041,540 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      factory_attendance_photos: {
+        Row: {
+          captured_at: string
+          created_at: string
+          created_by: string
+          flags: Json
+          gps_accuracy_m: number
+          gps_lat: number
+          gps_lng: number
+          id: string
+          is_archived: boolean
+          received_at: string
+          storage_path: string
+          updated_at: string
+          updated_by: string
+          work_date: string
+        }
+        Insert: {
+          captured_at: string
+          created_at?: string
+          created_by?: string
+          flags?: Json
+          gps_accuracy_m: number
+          gps_lat: number
+          gps_lng: number
+          id?: string
+          is_archived?: boolean
+          received_at?: string
+          storage_path: string
+          updated_at?: string
+          updated_by?: string
+          work_date: string
+        }
+        Update: {
+          captured_at?: string
+          created_at?: string
+          created_by?: string
+          flags?: Json
+          gps_accuracy_m?: number
+          gps_lat?: number
+          gps_lng?: number
+          id?: string
+          is_archived?: boolean
+          received_at?: string
+          storage_path?: string
+          updated_at?: string
+          updated_by?: string
+          work_date?: string
+        }
+        Relationships: []
+      }
+      factory_daily_reports: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_archived: boolean
+          notes: string | null
+          report_date: string
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          notes?: string | null
+          report_date: string
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+          updated_by?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          notes?: string | null
+          report_date?: string
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: []
+      }
+      factory_labour_attendance: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          effective_hourly_rate: number
+          hours: number
+          hours_confirmed: boolean
+          id: string
+          is_archived: boolean
+          no_photo_exception: boolean
+          updated_at: string
+          updated_by: string
+          work_date: string
+          worker_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          effective_hourly_rate?: number
+          hours: number
+          hours_confirmed?: boolean
+          id?: string
+          is_archived?: boolean
+          no_photo_exception?: boolean
+          updated_at?: string
+          updated_by?: string
+          work_date: string
+          worker_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          effective_hourly_rate?: number
+          hours?: number
+          hours_confirmed?: boolean
+          id?: string
+          is_archived?: boolean
+          no_photo_exception?: boolean
+          updated_at?: string
+          updated_by?: string
+          work_date?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factory_labour_attendance_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_worker_directory"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "factory_labour_attendance_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_worker_rates"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "factory_labour_attendance_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      factory_report_blocks: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_archived: boolean
+          module_id: string
+          progress_pct: number
+          remarks: string | null
+          report_id: string
+          stage: string
+          stage_status: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          module_id: string
+          progress_pct?: number
+          remarks?: string | null
+          report_id: string
+          stage: string
+          stage_status?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          module_id?: string
+          progress_pct?: number
+          remarks?: string | null
+          report_id?: string
+          stage?: string
+          stage_status?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factory_report_blocks_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "factory_report_blocks_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "factory_daily_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      factory_report_edit_log: {
+        Row: {
+          created_at: string
+          created_by: string
+          field: string
+          id: string
+          is_archived: boolean
+          new_value: Json | null
+          old_value: Json | null
+          reason: string | null
+          report_id: string | null
+          updated_at: string
+          updated_by: string
+          work_date: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          field: string
+          id?: string
+          is_archived?: boolean
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          report_id?: string | null
+          updated_at?: string
+          updated_by?: string
+          work_date?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          field?: string
+          id?: string
+          is_archived?: boolean
+          new_value?: Json | null
+          old_value?: Json | null
+          reason?: string | null
+          report_id?: string | null
+          updated_at?: string
+          updated_by?: string
+          work_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factory_report_edit_log_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "factory_daily_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      factory_report_expenses: {
+        Row: {
+          amount_inr: number
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          is_archived: boolean
+          kind: string
+          module_id: string | null
+          report_id: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          amount_inr: number
+          created_at?: string
+          created_by?: string
+          description: string
+          id?: string
+          is_archived?: boolean
+          kind: string
+          module_id?: string | null
+          report_id: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Update: {
+          amount_inr?: number
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          is_archived?: boolean
+          kind?: string
+          module_id?: string | null
+          report_id?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factory_report_expenses_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "factory_report_expenses_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "factory_daily_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      factory_report_photos: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          is_archived: boolean
+          report_id: string
+          storage_path: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          report_id: string
+          storage_path: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          report_id?: string
+          storage_path?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factory_report_photos_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "factory_daily_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      factory_report_quantities: {
+        Row: {
+          amount_inr: number | null
+          boq_item_id: string
+          contractor_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          is_archived: boolean
+          module_id: string
+          rate_id: string | null
+          rate_used: number | null
+          remarks: string | null
+          report_id: string
+          stage: string
+          today_qty: number
+          unit: string | null
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          amount_inr?: number | null
+          boq_item_id: string
+          contractor_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          module_id: string
+          rate_id?: string | null
+          rate_used?: number | null
+          remarks?: string | null
+          report_id: string
+          stage: string
+          today_qty: number
+          unit?: string | null
+          updated_at?: string
+          updated_by?: string
+        }
+        Update: {
+          amount_inr?: number | null
+          boq_item_id?: string
+          contractor_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          module_id?: string
+          rate_id?: string | null
+          rate_used?: number | null
+          remarks?: string | null
+          report_id?: string
+          stage?: string
+          today_qty?: number
+          unit?: string | null
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factory_report_quantities_boq_item_id_fkey"
+            columns: ["boq_item_id"]
+            isOneToOne: false
+            referencedRelation: "project_boq_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "factory_report_quantities_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "labour_contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "factory_report_quantities_rate_id_fkey"
+            columns: ["rate_id"]
+            isOneToOne: false
+            referencedRelation: "subcontract_rates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "factory_report_quantities_report_id_module_id_stage_fkey"
+            columns: ["report_id", "module_id", "stage"]
+            isOneToOne: false
+            referencedRelation: "factory_report_blocks"
+            referencedColumns: ["report_id", "module_id", "stage"]
+          },
+        ]
+      }
+      factory_report_task_workers: {
+        Row: {
+          created_at: string
+          created_by: string
+          hours: number
+          id: string
+          is_archived: boolean
+          module_id: string
+          report_id: string
+          stage: string
+          updated_at: string
+          updated_by: string
+          worker_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          hours: number
+          id?: string
+          is_archived?: boolean
+          module_id: string
+          report_id: string
+          stage: string
+          updated_at?: string
+          updated_by?: string
+          worker_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          hours?: number
+          id?: string
+          is_archived?: boolean
+          module_id?: string
+          report_id?: string
+          stage?: string
+          updated_at?: string
+          updated_by?: string
+          worker_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factory_report_task_workers_report_id_module_id_stage_fkey"
+            columns: ["report_id", "module_id", "stage"]
+            isOneToOne: false
+            referencedRelation: "factory_report_blocks"
+            referencedColumns: ["report_id", "module_id", "stage"]
+          },
+          {
+            foreignKeyName: "factory_report_task_workers_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_worker_directory"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "factory_report_task_workers_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_worker_rates"
+            referencedColumns: ["worker_id"]
+          },
+          {
+            foreignKeyName: "factory_report_task_workers_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "labour_workers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feature_flags: {
         Row: {
@@ -9157,6 +9745,7 @@ export type Database = {
           total_amount: number
           unit: string | null
           wastage_pct: number
+          work_location: string
         }
         Insert: {
           actual_qty?: number
@@ -9181,6 +9770,7 @@ export type Database = {
           total_amount?: number
           unit?: string | null
           wastage_pct?: number
+          work_location?: string
         }
         Update: {
           actual_qty?: number
@@ -9205,6 +9795,7 @@ export type Database = {
           total_amount?: number
           unit?: string | null
           wastage_pct?: number
+          work_location?: string
         }
         Relationships: [
           {
@@ -17308,6 +17899,16 @@ export type Database = {
         Args: { _e: string; _f: string; _n: string; _o: string; _p: string }
         Returns: undefined
       }
+      _factory_can_boq: { Args: never; Returns: boolean }
+      _factory_validate_subcontracts: {
+        Args: { p_report_id: string }
+        Returns: undefined
+      }
+      _factory_validate_workers: {
+        Args: { p_report: string }
+        Returns: undefined
+      }
+      _factory_window: { Args: { p_date: string }; Returns: undefined }
       _site_report_check_window: {
         Args: { p_date: string; p_project_id: string }
         Returns: undefined
@@ -17355,6 +17956,16 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      add_factory_attendance_photo: {
+        Args: {
+          p_accuracy_m: number
+          p_captured_at: string
+          p_lat: number
+          p_lng: number
+          p_storage_path: string
+        }
+        Returns: string
       }
       add_site_report_elevation_photo: {
         Args: {
@@ -17525,6 +18136,7 @@ export type Database = {
         Args: { _entered_by: string; _uid: string }
         Returns: boolean
       }
+      can_read_factory: { Args: { _uid: string }; Returns: boolean }
       can_read_measurements: { Args: { _user_id: string }; Returns: boolean }
       can_read_site_readiness: {
         Args: { _project_id: string; _uid: string }
@@ -17571,11 +18183,13 @@ export type Database = {
         Returns: boolean
       }
       can_view_driver_contact: { Args: { _user_id: string }; Returns: boolean }
+      can_view_factory_cost: { Args: { _uid: string }; Returns: boolean }
       can_view_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
       can_view_profile_pii: { Args: { _user_id: string }; Returns: boolean }
       can_view_quotations: { Args: { _user_id: string }; Returns: boolean }
       can_view_running_bill: { Args: { _uid: string }; Returns: boolean }
       can_view_work_orders: { Args: { _user_id: string }; Returns: boolean }
+      can_write_factory: { Args: { _uid: string }; Returns: boolean }
       can_write_site_readiness: { Args: { _uid: string }; Returns: boolean }
       can_write_site_report: {
         Args: { _project_id: string; _uid: string }
@@ -17635,6 +18249,10 @@ export type Database = {
           p_schedule_rows: Json
         }
         Returns: Json
+      }
+      confirm_factory_hours: {
+        Args: { p_date: string; p_rows: Json }
+        Returns: number
       }
       confirm_kickoff_meeting: {
         Args: {
@@ -17745,6 +18363,7 @@ export type Database = {
           unit: string
         }[]
       }
+      get_boq_work_locations: { Args: { p_project_id: string }; Returns: Json }
       get_client_wo_summary: {
         Args: { _wo_id: string }
         Returns: {
@@ -17789,6 +18408,12 @@ export type Database = {
           wedding_anniversary: string
         }[]
       }
+      get_factory_attendance: { Args: { p_date: string }; Returns: Json }
+      get_factory_cost: {
+        Args: { p_from: string; p_to: string }
+        Returns: Json
+      }
+      get_factory_report: { Args: { p_date: string }; Returns: Json }
       get_handover_readiness: { Args: { _project_id: string }; Returns: Json }
       get_labour_attendance_warnings: {
         Args: { p_project_id: string; p_rows: Json; p_work_date: string }
@@ -18189,9 +18814,17 @@ export type Database = {
         | { Args: { p_dry?: boolean }; Returns: Json }
         | { Args: { p_asof: string; p_dry: boolean }; Returns: Json }
       safe_uuid: { Args: { _t: string }; Returns: string }
+      save_factory_attendance: {
+        Args: { p_date: string; p_reason?: string; p_rows: Json }
+        Returns: number
+      }
       save_factory_measurement_wip: {
         Args: { p_measurement_id: string; p_total: number }
         Returns: undefined
+      }
+      save_factory_report_draft: {
+        Args: { p_date: string; p_payload: Json }
+        Returns: string
       }
       save_labour_attendance: {
         Args: {
@@ -18217,6 +18850,10 @@ export type Database = {
           suggested_reassign_name: string
           suggested_reassign_profile_id: string
         }[]
+      }
+      set_boq_work_location: {
+        Args: { p_item_id: string; p_location: string }
+        Returns: undefined
       }
       set_feature_flag: {
         Args: { _enabled: boolean; _key: string }
@@ -18246,6 +18883,7 @@ export type Database = {
         }
         Returns: string
       }
+      submit_factory_report: { Args: { p_report_id: string }; Returns: Json }
       submit_site_report: { Args: { p_report_id: string }; Returns: Json }
       sync_deal_win: {
         Args: {

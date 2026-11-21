@@ -1,0 +1,18 @@
+import { describe,expect,it } from "vitest";
+import { canWriteFactory,canReadFactory,canViewFactoryCost,factoryBlockers,toChipRows,fromChipRows,factoryDraftPayload,factoryCostSheets,type FactoryCostData } from "@/lib/factory-report";
+import { cappedWorkValue } from "@/lib/running-bill";
+import { FACTORY_EXPORT_SCHEMA } from "../../supabase/functions/_shared/factory-export-schema";
+const worker={worker_id:"w",name:"Fixture",skill_type:null,contractor_name:null,attendance_hours:8};
+describe("Factory rules",()=>{
+ for(const role of ["factory_floor_supervisor","senior_factory_supervisor","production_head","head_operations","managing_director","finance_director","sales_director","architecture_director","super_admin","finance_manager","head_of_projects","planning_head","quantity_surveyor","costing_engineer","site_engineer","site_installation_mgr","stores_executive","chairman"]){
+ it(`role matrix: ${role}`,()=>{expect(canWriteFactory(role)).toBe(["factory_floor_supervisor","senior_factory_supervisor","production_head","head_operations","managing_director","finance_director","sales_director","architecture_director","super_admin"].includes(role));expect(canViewFactoryCost(role)).toBe(["production_head","head_operations","managing_director","finance_director","sales_director","architecture_director","super_admin","finance_manager","head_of_projects","planning_head","quantity_surveyor","costing_engineer"].includes(role));expect(canReadFactory(role)).toBe(canWriteFactory(role)||canViewFactoryCost(role));});}
+ it("blocks over-allocation across module/stage blocks",()=>{expect(factoryBlockers([],"Note sufficient",[worker],[{module_id:"m1",stage:"Main Frame",worker_id:"w",hours:6},{module_id:"m2",stage:"Paint",worker_id:"w",hours:3}],0).some(p=>p.includes("exceed"))).toBe(true);});
+ it("blocks an absent worker",()=>expect(factoryBlockers([],"Note sufficient",[],[{module_id:"m",stage:"Paint",worker_id:"absent",hours:2}],0).some(p=>p.includes("present"))).toBe(true));
+ it("permits a no-photo note-only submission",()=>expect(factoryBlockers([],"No work today",[],[],0)).toEqual([]));
+ it("requires confirmed hours",()=>expect(factoryBlockers([],"No work today",[worker],[],1)).toContain("Confirm hours for 1 workers in Factory attendance."));
+ it("round-trips exact chip hours and stage identity",()=>{const rows=[{module_id:"m",stage:"Main Frame",worker_id:"w",hours:6}];expect(fromChipRows(toChipRows(rows))).toEqual(rows);});
+ it("omits only untouched empty expense rows from a draft",()=>expect(factoryDraftPayload({expenses:[{module_id:null,kind:"expense" as const,description:"",amount_inr:0},{module_id:null,kind:"consumable" as const,description:"Tape",amount_inr:200}]}).expenses).toEqual([{module_id:null,kind:"consumable",description:"Tape",amount_inr:200}]));
+ it("caps combined site/factory production, not each source separately",()=>expect(cappedWorkValue(10+30,30,1000)).toEqual({billable_qty:30,excess_qty:10,value:30000,excess_value:10000}));
+ it("exports every factory table without rate fields",()=>{expect(FACTORY_EXPORT_SCHEMA).toHaveLength(10);for(const s of FACTORY_EXPORT_SCHEMA){expect(s.version).toBe(1);expect(s.columns.map(c=>c.name).some(n=>/rate|salary|wage/i.test(n))).toBe(false);expect(s.columns.map(c=>c.name)).toContain("is_archived");}});
+ it("Excel preserves exact module labour, Unallocated and four detail sheets",()=>{const c:FactoryCostData={modules:[],boq:[],stages:[],workers:[],unallocated:{hours:2,cost:200},factory_level:{consumables:0,expenses:0},attendance_total:800};const s=factoryCostSheets(c);expect(Object.keys(s)).toEqual(["Modules","BOQ items","Stages","Workers"]);expect(s.Modules[1][3]).toBe(200);});
+});
