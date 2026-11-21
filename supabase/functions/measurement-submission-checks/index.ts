@@ -1,3 +1,5 @@
+import { authenticateCronRequest } from "../_shared/cron-auth.ts";
+import { authorizeUser, DIRECTOR_CALLERS, denied } from "../_shared/caller-auth.ts";
 import { TIER1_ROLES, uniqueRecipientIds } from "../_shared/director-tier.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 // Daily measurement submission checks.
@@ -32,6 +34,13 @@ async function notify(supabase: any, recipients: string[], title: string, body: 
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (!req.headers.get("Authorization")) return denied(401, "Unauthorized");
+  const cronFailure = authenticateCronRequest(req);
+  if (cronFailure) {
+    const access = await authorizeUser(req, DIRECTOR_CALLERS);
+    if (access instanceof Response) return access;
+  }
+
 
   const supabase = createClient(
     (Deno.env.get("SUPABASE_URL") ?? ""),

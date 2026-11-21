@@ -1,3 +1,4 @@
+import { authorizeUser, canAccessProject, denied } from "../_shared/caller-auth.ts";
 // Compare today's photo with yesterday's photo at the same position, and cross-check measurement sheet entries.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { logTechnicalError } from "../_shared/error-log.ts";
@@ -7,23 +8,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-async function requireUser(req: Request) {
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) return null;
-  const client = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
-    { global: { headers: { Authorization: authHeader } } }
-  );
-  const { data: { user } } = await client.auth.getUser();
-  return user;
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   let actingUserId: string | null = null;
   try {
-    const user = await requireUser(req);
+    const access = await authorizeUser(req);
+    if (access instanceof Response) return access;
+    const user = { id: access.userId };
     actingUserId = user?.id ?? null;
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
@@ -40,7 +31,8 @@ Deno.serve(async (req) => {
     const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
     const { data: photo } = await sb.from("site_position_photos").select("*").eq("id", photo_id).single();
-    if (!photo) throw new Error("Photo not found");
+    if (!photo) return denied(403, "Forbidden");
+    if (!await canAccessProject(access.client, access.userId, photo.project_id)) return denied(403, "Forbidden");
 
     const { data: pos } = await sb.from("photo_positions").select("area_name,floor_name").eq("id", photo.position_id).single();
 

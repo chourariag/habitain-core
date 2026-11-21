@@ -1,3 +1,4 @@
+import { authorizeUser, canAccessProject, denied } from "../_shared/caller-auth.ts";
 // Analyze a floor plan image with Lovable AI (Gemini) and create candidate camera positions.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -6,22 +7,12 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-async function requireUser(req: Request) {
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) return null;
-  const client = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
-    { global: { headers: { Authorization: authHeader } } }
-  );
-  const { data: { user } } = await client.auth.getUser();
-  return user;
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
-    const user = await requireUser(req);
+    const access = await authorizeUser(req);
+    if (access instanceof Response) return access;
+    const user = { id: access.userId };
     if (!user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -37,7 +28,14 @@ Deno.serve(async (req) => {
     const sb = createClient(SUPABASE_URL, SERVICE_KEY);
 
     const { data: fp, error: fpErr } = await sb.from("floor_plans").select("*").eq("id", floor_plan_id).single();
-    if (fpErr || !fp) throw new Error("Floor plan not found");
+    if (fpErr || !fp) return denied(403, "Forbidden");
+    if (!await canAccessProject(access.client, access.userId, fp.project_id)) return denied(403, "Forbidden");
+    const [{ data: canManage, error: manageError }, { data: isMd, error: mdError }] = await Promise.all([
+      access.client.rpc("can_manage_floor_plan", { _user_id: access.userId }),
+      access.client.rpc("is_md", { _user_id: access.userId }),
+    ]);
+    const permitted = isMd === true || (canManage === true && (fp.is_locked === false || fp.uploaded_by === access.userId));
+    if (manageError || mdError || !permitted) return denied(403, "Forbidden");
 
     await sb.from("floor_plans").update({ ai_analysis_status: "processing", ai_analysis_error: null }).eq("id", floor_plan_id);
 

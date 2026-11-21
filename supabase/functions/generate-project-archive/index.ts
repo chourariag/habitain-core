@@ -1,3 +1,4 @@
+import { authorizeUser, DIRECTOR_CALLERS, canAccessProject, denied } from "../_shared/caller-auth.ts";
 // Generate project archive ZIP. Creates a manifest JSON + summary file and stores in `project-archives` bucket.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import JSZip from "https://esm.sh/jszip@3.10.1";
@@ -6,10 +7,13 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    const access = await authorizeUser(req, [...DIRECTOR_CALLERS, "head_of_projects"]);
+    if (access instanceof Response) return access;
     const { project_id } = await req.json();
     if (!project_id) {
       return new Response(JSON.stringify({ error: "project_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    if (!await canAccessProject(access.client, access.userId, project_id)) return denied(403, "Forbidden");
     const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
     // Mark generating

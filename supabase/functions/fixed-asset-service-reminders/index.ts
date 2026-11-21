@@ -1,3 +1,5 @@
+import { authenticateCronRequest } from "../_shared/cron-auth.ts";
+import { authorizeUser, DIRECTOR_CALLERS, denied } from "../_shared/caller-auth.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
@@ -7,6 +9,13 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (!req.headers.get("Authorization")) return denied(401, "Unauthorized");
+  const cronFailure = authenticateCronRequest(req);
+  if (cronFailure) {
+    const access = await authorizeUser(req, DIRECTOR_CALLERS);
+    if (access instanceof Response) return access;
+  }
+
 
   try {
     const supabase = createClient(

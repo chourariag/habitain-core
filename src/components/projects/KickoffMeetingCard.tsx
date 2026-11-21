@@ -69,6 +69,7 @@ export default function KickoffMeetingCard({ userRole }: Props) {
 
       const { data: sendData, error: sendError } = await supabase.functions.invoke("send-calendar-invite", {
         body: {
+          project_id: row.project_id,
           attendee_emails: emails,
           title: `GFC Kickoff Meeting — ${projectName}`,
           date: d.date,

@@ -1,3 +1,5 @@
+import { authenticateCronRequest } from "../_shared/cron-auth.ts";
+import { authorizeUser, DIRECTOR_CALLERS, denied } from "../_shared/caller-auth.ts";
 // Daily cron: find projects whose planned dispatch is exactly 14 days away,
 // then notify Karthik (planning_engineer) to fill Site Schedule and
 // Awaiz (site_installation_mgr) to fill Installation Sequence.
@@ -11,6 +13,13 @@ const corsHeaders = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (!req.headers.get("Authorization")) return denied(401, "Unauthorized");
+  const cronFailure = authenticateCronRequest(req);
+  if (cronFailure) {
+    const access = await authorizeUser(req, DIRECTOR_CALLERS);
+    if (access instanceof Response) return access;
+  }
+
 
   const url = Deno.env.get("SUPABASE_URL")!;
   const key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

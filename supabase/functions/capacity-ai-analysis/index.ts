@@ -1,3 +1,4 @@
+import { authorizeUser, CAPACITY_CALLERS, canAccessProject, denied } from "../_shared/caller-auth.ts";
 // AI Capacity Analysis — Gemini 2.5 Pro via Lovable AI Gateway
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
@@ -73,22 +74,17 @@ function err(status: number, message: string) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
+    const access = await authorizeUser(req, CAPACITY_CALLERS);
+    if (access instanceof Response) return access;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     if (!LOVABLE_API_KEY) return err(500, "LOVABLE_API_KEY not configured");
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return err(401, "Missing auth");
-    const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: userData } = await userClient.auth.getUser();
-    if (!userData?.user) return err(401, "Invalid user");
-
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const body = await req.json().catch(() => ({}));
+    if (body.project_id && !await canAccessProject(access.client, access.userId, body.project_id)) return denied(403, "Forbidden");
     const newProject: { module_count?: number; target_start?: string } | undefined = body.new_project;
     const factoryDates: { start?: string; end?: string; modules?: number; project_name?: string } | undefined = body.factory_dates;
 

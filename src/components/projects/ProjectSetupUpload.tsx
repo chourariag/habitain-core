@@ -366,6 +366,7 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
   const isAdsProject = (projectType ?? "").toLowerCase().startsWith("ads");
   const { setupReady } = usePreProdGates(projectId);
   const uploadBlocked = !isAdsProject && !setupReady;
+  const canCheckCapacity = ["super_admin", ...TIER1_ROLES, "production_head", "head_operations", "planning_engineer"].includes(userRole || "");
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -980,6 +981,7 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
           size="sm"
           variant="outline"
           onClick={() => setCapOpen(true)}
+          disabled={!canCheckCapacity}
           className="gap-1.5"
           title="Run AI capacity check for your planned factory dates"
         >

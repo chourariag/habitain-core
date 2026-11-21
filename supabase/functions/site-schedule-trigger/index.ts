@@ -1,3 +1,5 @@
+import { authenticateCronRequest } from "../_shared/cron-auth.ts";
+import { authorizeUser, DIRECTOR_CALLERS, denied } from "../_shared/caller-auth.ts";
 // Daily cron — fires the site-schedule unlock notification when a project's
 // earliest planned dispatch date is exactly 14 days away, and escalates to
 // Planning Head if the SIM hasn't filled the site schedule within 48 hours.
@@ -15,6 +17,13 @@ const SITE_STAGES = [
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  if (!req.headers.get("Authorization")) return denied(401, "Unauthorized");
+  const cronFailure = authenticateCronRequest(req);
+  if (cronFailure) {
+    const access = await authorizeUser(req, DIRECTOR_CALLERS);
+    if (access instanceof Response) return access;
+  }
+
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,

@@ -50,14 +50,15 @@ async function dispatchEmails(inserted: Array<{ id: string } & NotificationInput
   if (!recipientIds.length) return;
   const { data: profiles } = await supabase
     .from("profiles")
-    .select("auth_user_id, email, role")
+    .select("auth_user_id, role")
     .in("auth_user_id", recipientIds as any);
-  const byAuthId = new Map<string, { email: string | null; role: string | null }>();
-  (profiles ?? []).forEach((p: any) => byAuthId.set(p.auth_user_id, { email: p.email, role: p.role }));
+  const byAuthId = new Map<string, { role: string | null }>();
+  (profiles ?? []).forEach((p: any) => byAuthId.set(p.auth_user_id, { role: p.role }));
+  const { data: { session } } = await supabase.auth.getSession();
 
   for (const n of inserted) {
     const prof = byAuthId.get(n.recipient_id);
-    if (!prof?.email) continue;
+    if (!prof) continue;
     const shouldEmail =
       n.priority === "high" || n.priority === "critical" ||
       HIGH_PRIORITY_CATEGORIES.has(n.category.toLowerCase()) ||
@@ -66,7 +67,12 @@ async function dispatchEmails(inserted: Array<{ id: string } & NotificationInput
     const tpl = pickTemplate(n);
     // Fire and forget — don't block the caller
     supabase.functions.invoke("send-email", {
-      body: { to: [prof.email], subject: tpl.subject, html: tpl.html, text: tpl.text, notification_id: n.id },
+      body: {
+        recipient_ids: [n.recipient_id], template: "notification",
+        title: n.title, message: n.body, category: n.category,
+        navigate_to: n.navigate_to, subject: tpl.subject,
+        ...(n.recipient_id === session?.user.id ? { notification_id: n.id } : {}),
+      },
     }).catch((e) => console.error("send-email invoke failed", e));
   }
 }

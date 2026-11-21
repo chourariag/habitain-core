@@ -1,3 +1,5 @@
+import { authenticateCronRequest } from "../_shared/cron-auth.ts";
+import { authorizeUser, DIRECTOR_CALLERS, denied } from "../_shared/caller-auth.ts";
 import { TIER1_ROLES, uniqueByAuthUser } from "../_shared/director-tier.ts";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
@@ -5,6 +7,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (!req.headers.get("Authorization")) return denied(401, "Unauthorized");
+  const cronFailure = authenticateCronRequest(req);
+  if (cronFailure) {
+    const access = await authorizeUser(req, DIRECTOR_CALLERS);
+    if (access instanceof Response) return access;
+  }
+
 
   const supabase = createClient(
     (Deno.env.get("SUPABASE_URL") ?? ""),

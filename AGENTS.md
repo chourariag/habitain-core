@@ -28,3 +28,5 @@
 - Account password mutations use the checked account endpoint and shared fingerprint-based policy; mandatory-change flags clear only after Auth succeeds, and authenticated screens stay unmounted until the flag is checked.
 - Account role changes use a service-only serialized, audited RPC replacing all target role rows and synchronizing the profile mirror; server grants use user_roles and protect self changes and the last active Super Admin.
 - Generated account credentials remain only in transient responses and screen state, cleared on dismissal; bulk creation exposes a CSV download without audit-log or persistent client storage copies.
+- Scoped machine functions use the generated cron authenticator with a validated Tier 1/Super manual fallback; legacy unmarked schedules cannot be tightened until header migration or interruption is explicitly resolved.
+- Scoped user functions authenticate against user_roles and resolve record projects server-side before privileged work; email user input enters escaped server templates and notification flags are caller-owned.
