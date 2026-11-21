@@ -309,6 +309,13 @@
       "when": 1795272205948,
       "tag": "0043_mobile_report_progress_alias_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1795279564487,
+      "tag": "0044_running_bill_boq_cap",
+      "breakpoints": true
     }
   ]
 }

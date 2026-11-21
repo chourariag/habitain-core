@@ -31,11 +31,11 @@ export function TaskWorkerChips({ taskId, workers, rows, readOnly, onChange }: {
       {workers.map(w => {
         const row = rows.find(r => r.task_id === taskId && r.worker_id === w.worker_id);
         const available = remainingHours(w, rows, taskId);
-        return <div key={w.worker_id} className="min-w-0 max-w-full space-y-1">
-          <Button type="button" size="sm" variant={row ? "default" : "outline"} className="h-auto min-h-9 max-w-full whitespace-normal text-left" title={[w.skill_type,w.contractor_name].filter(Boolean).join(" · ")} aria-pressed={!!row} disabled={readOnly || (!row && available <= 0)} onClick={() => select(w)}>
+        return <div key={w.worker_id} className="inline-flex min-w-0 max-w-full items-stretch" data-worker-group>
+          <Button type="button" size="sm" variant={row ? "default" : "outline"} className={`h-auto min-h-11 min-w-0 whitespace-normal text-left ${row ? 'rounded-r-none' : ''}`} title={[w.skill_type,w.contractor_name].filter(Boolean).join(" · ")} aria-pressed={!!row} disabled={readOnly || (!row && available <= 0)} onClick={() => select(w)}>
             {row && <Check className="mr-1 h-3.5 w-3.5 shrink-0" />}<span className="break-words">{w.name}{row ? ` · ${row.hours} h` : ` · ${available} h`}</span>
           </Button>
-          {row && <Input className="w-24 max-w-full" aria-label={`${w.name} task hours`} type="number" inputMode="decimal" min={0.5} max={Math.min(16,available)} step={0.5} value={row.hours} disabled={readOnly} onChange={e => onChange(rows.map(r => r.task_id === taskId && r.worker_id === w.worker_id ? {...r,hours:Number(e.target.value)} : r))} />}
+          {row && <Input className="w-16 shrink-0 h-auto min-h-11 rounded-l-none border-l-0 px-2" aria-label={`${w.name} task hours`} type="number" inputMode="decimal" min={0.5} max={Math.min(16,available)} step={0.5} value={row.hours} disabled={readOnly} onChange={e => onChange(rows.map(r => r.task_id === taskId && r.worker_id === w.worker_id ? {...r,hours:Number(e.target.value)} : r))} />}
         </div>;
       })}
     </div>

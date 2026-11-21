@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,7 @@ import {
 import { TaskWorkerChips } from "@/components/site/TaskWorkerChips";
 import { allocatedHours, calculatedProgress, isTodaysTask, workerAllocationProblems, type PresentWorker, type TaskWorker } from "@/lib/site-report-task-workers";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { createReportAutosave, reportTaskStatus } from "@/lib/site-report-autosave";
 
 type Expense = { id: string; kind: "consumable" | "expense"; description: string; amount_inr: string };
 type Task = { id: string; code: string; name: string; pct: number; planned_start: string; planned_finish?: string | null; previous_report?: boolean; in_report?: boolean; actual_start: string | null };
@@ -51,7 +52,9 @@ const ddmmyyyy = (iso: string) => format(parseISO(iso), "dd/MM/yyyy");
 const slotKey = (p: { kind: string; elevation_id?: string | null }) => p.kind === "elevation" && p.elevation_id ? `elevation:${p.elevation_id}` : p.kind;
 const rpc = (fn: string, args: Record<string, unknown>) => (supabase as any).rpc(fn, args);
 
-export function DailySiteReport({ projectId }: { projectId: string }) {
+export function DailySiteReport({ projectId: requestedProjectId }: { projectId: string }) {
+  const [projectId, setProjectId] = useState(requestedProjectId);
+  const [changingScope, setChangingScope] = useState(false);
   const [date, setDate] = useState(istToday());
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,6 +69,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
   const [showOtherTasks, setShowOtherTasks] = useState(false);
   const [checklistOpen, setChecklistOpen] = useState(false);
   const [qrows, setQrows] = useState<QtyRow[]>([]);
+  const [newOtherKeys, setNewOtherKeys] = useState<string[]>([]);
   const [headcount, setHeadcount] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
   const [siteClean, setSiteClean] = useState(false);
@@ -77,8 +81,12 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
   const [hoursBlock, setHoursBlock] = useState<string | null>(null);
   const [summary, setSummary] = useState<null | { tasks_updated: number; tasks_skipped?: { code: string }[]; quantity_lines: number; photos: number }>(null);
   const reportId = useRef<string | null>(null);
-  const timer = useRef<number | null>(null);
+  const autosave = useRef(createReportAutosave());
   const dirty = useRef(false);
+  const revision = useRef(0);
+  const checklistRef = useRef<HTMLDivElement>(null);
+  const submitRef = useRef<HTMLDivElement>(null);
+  const [barHeights, setBarHeights] = useState({ checklist: 96, submit: 60 });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,7 +104,8 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     setTaskStatus(Object.fromEntries(v.progress.map(p => [p.task_id,p.task_status ?? "ongoing"])));
     setRemarks(Object.fromEntries(v.progress.map(p => [p.task_id,p.remarks ?? ""])));
     setExpenses((v.expenses ?? []).map(e => ({...e,amount_inr:String(e.amount_inr)})));
-    setOpenTask(null); setAddedTasks([]);
+    setOpenTask(null); setAddedTasks([]); setNewOtherKeys([]);
+    dirty.current = false;
     setQrows(v.quantities.filter((q) => Number(q.today_qty) > 0 || q.contractor_id || !q.boq_item_id).map((q) => ({
       key: q.id, boq_item_id: q.boq_item_id, contractor_id: q.contractor_id, extra_work_description: q.extra_work_description ?? "",
       unit: q.unit ?? "", today_qty: Number(q.today_qty) > 0 ? String(q.today_qty) : "",
@@ -134,7 +143,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
   const taskPct = useCallback((id: string) => calculatedProgress((data?.boq ?? []).filter(b => b.task_id === id).map(b => ({cumulative:Number(b.cumulative),today:qrows.filter(r => r.boq_item_id === b.id).reduce((n,r) => n+(Number(r.today_qty)||0),0),progress_weight:Number(b.progress_weight)})),parsePct(pct[id] ?? ""),taskStatus[id] === "completed"),[data?.boq,qrows,pct,taskStatus]);
   const buildPayload = useCallback(() => ({
     notes, site_clean: siteClean,
-    progress: workedTaskIds.map(task_id => ({ task_id, pct: taskPct(task_id), task_status:taskStatus[task_id] ?? "ongoing", remarks:remarks[task_id] ?? "" })),
+    progress: workedTaskIds.map(task_id => ({ task_id, pct: taskPct(task_id), task_status:reportTaskStatus(taskPct(task_id)), remarks:remarks[task_id] ?? "" })),
     task_workers:taskWorkers,
     task_worker_task_ids:[...new Set([...workerTaskIds,...taskWorkers.map(r => r.task_id)])],
     quantities: quantityPayload(qrows, data?.rates ?? []),
@@ -147,20 +156,45 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     if (workerAllocationProblems(data?.present_workers ?? [],taskWorkers).length) { setSaveState("error"); return null; }
     if (expenses.some(e => !e.description.trim() || !e.amount_inr.trim() || !Number.isFinite(Number(e.amount_inr)) || Number(e.amount_inr)<0)) { setSaveState("error"); return null; }
     setSaveState("saving");
+    const savedRevision = revision.current;
     const { data: id, error } = await rpc("save_site_report_draft", { p_project_id: projectId, p_date: date, p_payload: buildPayload() });
     if (error) { setSaveState("error"); console.error("save_site_report_draft failed:", error); toast.error(siteReportErrorMessage(error)); return null; }
-    reportId.current = id as string; dirty.current = false; setSaveState("saved");
+    reportId.current = id as string; dirty.current = revision.current !== savedRevision; setSaveState("saved");
     return id as string;
   }, [canEdit, projectId, date, buildPayload, data?.present_workers, taskWorkers, expenses]);
 
-  // autosave on every change (debounced)
+  // Each scheduled callback retains its report scope and payload.
   useEffect(() => {
     if (!dirty.current) return;
-    if (timer.current) window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => { saveNow(); }, 900);
-    return () => { if (timer.current) window.clearTimeout(timer.current); };
+    autosave.current.schedule(saveNow);
   }, [pct, taskWorkers, taskStatus, remarks, expenses, qrows, headcount, notes, siteClean, saveNow]);
-  const touch = () => { dirty.current = true; };
+  const touch = () => { dirty.current = true; revision.current += 1; };
+  const latestSave = useRef(saveNow);
+  latestSave.current = saveNow;
+  const changeScope = useCallback(async (nextProject: string, nextDate: string) => {
+    setChangingScope(true);
+    try {
+      if (dirty.current) autosave.current.schedule(latestSave.current);
+      await autosave.current.flush();
+      if (dirty.current) { toast.error("Save the current report before changing the date or project."); return; }
+      autosave.current.clear();
+      setData(null); setPending({}); setSaveState("idle");
+      setProjectId(nextProject); setDate(nextDate);
+    } finally { setChangingScope(false); }
+  }, []);
+  useEffect(() => {
+    if (requestedProjectId !== projectId) void changeScope(requestedProjectId, date);
+  }, [requestedProjectId, projectId, date, changeScope]);
+  useEffect(() => () => { void autosave.current.flush(); }, []);
+  useEffect(() => {
+    const observer = new ResizeObserver(() => setBarHeights({
+      checklist: checklistRef.current?.getBoundingClientRect().height ?? 96,
+      submit: submitRef.current?.getBoundingClientRect().height ?? 0,
+    }));
+    if (checklistRef.current) observer.observe(checklistRef.current);
+    if (submitRef.current) observer.observe(submitRef.current);
+    return () => observer.disconnect();
+  }, [data?.can_write, loading]);
 
   const uploadPending = async (kind: string, p: Pending) => {
     setPending((s) => ({ ...s, [kind]: { ...p, busy: true, error: undefined } }));
@@ -196,6 +230,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
 
   const submit = async () => {
     setSubmitting(true);
+    await autosave.current.flush();
     const id = await saveNow();
     if (!id) { setSubmitting(false); return; }
     const { data: res, error } = await rpc("submit_site_report", { p_report_id: id });
@@ -229,7 +264,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
   if ((data.rates ?? []).length || (data.contractors ?? []).length) {
     for (const p of new Set(qrows.map((r) => rowProblem(r, data.rates ?? [])).filter(Boolean) as string[])) blockers.push(p);
   }
-  const readOnly = !canEdit;
+  const readOnly = !canEdit || changingScope;
 
   const rates = data.rates ?? [];
   const contractors = data.contractors ?? [];
@@ -238,10 +273,14 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
     const rows = qrows.filter((r) => r.boq_item_id === bid);
     return rows.length ? rows : [{ key: `own:${bid}`, boq_item_id: bid, contractor_id: null, extra_work_description: "", unit: "", today_qty: "" }];
   };
-  const otherRows = qrows.filter((r) => !r.boq_item_id);
+  const otherRows = qrows.filter((r) => !r.boq_item_id && (r.extra_work_description.trim() || Number(r.today_qty) !== 0 || newOtherKeys.includes(r.key)));
   const missingHeadcount = contractorsMissingHeadcount(qrows, headcount);
   const upsertRow = (row: QtyRow, patch: Partial<QtyRow>) => {
     touch();
+    if (row.boq_item_id && patch.today_qty !== undefined) {
+      const taskId = data.boq.find(b => b.id === row.boq_item_id)?.task_id;
+      if (taskId) setTaskStatus(s => ({ ...s, [taskId]: "ongoing" }));
+    }
     setQrows((s) => s.some((r) => r.key === row.key) ? s.map((r) => r.key === row.key ? { ...r, ...patch } : r) : [...s, { ...row, ...patch }]);
   };
   const splitRow = (bid: string) => {
@@ -254,7 +293,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
       return [...base, { key: crypto.randomUUID(), boq_item_id: bid, contractor_id: next.id, extra_work_description: "", unit: "", today_qty: "" }];
     });
   };
-  const addOther = () => { touch(); setQrows((s) => [...s, { key: crypto.randomUUID(), boq_item_id: null, contractor_id: null, extra_work_description: "", unit: "", today_qty: "" }]); };
+  const addOther = () => { const key = crypto.randomUUID(); setNewOtherKeys(s => [...s, key]); touch(); setQrows((s) => [...s, { key, boq_item_id: null, contractor_id: null, extra_work_description: "", unit: "", today_qty: "" }]); };
   const setDoneBy = (row: QtyRow, cid: string | null) => {
     if (row.boq_item_id && qrows.some((r) => r.key !== row.key && r.boq_item_id === row.boq_item_id && r.contractor_id === cid)) {
       toast.error("This item already has a row for that choice."); return;
@@ -342,12 +381,12 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
   };
 
   return (
-    <div className="space-y-3 max-w-2xl mx-auto w-full min-w-0 pb-16 md:pb-0">
+    <div style={{ '--report-strip-height': `${barHeights.checklist}px`, '--report-submit-height': `${barHeights.submit}px` } as CSSProperties} className="space-y-3 max-w-2xl mx-auto w-full min-w-0 pb-[calc(var(--report-submit-height)+env(safe-area-inset-bottom)+4rem)] md:pb-[calc(var(--report-submit-height)+env(safe-area-inset-bottom))] [&_section]:scroll-mt-[var(--report-strip-height)] [&_[data-report-section]]:scroll-mt-[var(--report-strip-height)]">
       <Card>
         <CardContent className="p-3 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm font-semibold">Report date</span>
-            <select className="h-9 rounded-md border border-input bg-background px-2 text-sm" value={date} onChange={(e) => setDate(e.target.value)} aria-label="Report date">
+            <select className="h-9 rounded-md border border-input bg-background px-2 text-sm" value={date} disabled={changingScope} onChange={(e) => { void changeScope(projectId, e.target.value); }} aria-label="Report date">
               {dates.map((d) => <option key={d} value={d}>{ddmmyyyy(d)}{d === today ? " (today)" : ""}</option>)}
             </select>
             <Badge variant={submitted ? "default" : "outline"}>{submitted ? "Submitted" : data.report ? "Draft" : "Not started"}</Badge>
@@ -360,7 +399,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
         </CardContent>
       </Card>
 
-      <div className="sticky top-0 z-20 border-y border-border bg-background py-2" aria-label="Report checklist">
+      <div ref={checklistRef} className="sticky top-0 z-20 border-y border-border bg-background py-2" aria-label="Report checklist">
         <div className="grid grid-cols-4 gap-1">
           {([['Tasks',Math.max(taskProblems.length,workedTaskIds.length ? 0 : notes.trim().length<5 ? 1 : 0)],['Quantities',qrows.filter(r => rowProblem(r,data.rates ?? [])).length],['Labour',allocationProblems.length],['Hours confirmed',Number(data.unconfirmed_workers ?? 0)]] as [string,number][]).map(([label,count]) => <Button key={label} size="sm" variant="outline" className="h-auto min-h-10 px-1 text-[10px] whitespace-normal gap-1" onClick={() => {
             let tid:string|undefined;
@@ -374,7 +413,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
         {blockers.length>0 && <Button variant="ghost" size="sm" className="h-7 w-full text-xs text-warning" onClick={()=>setChecklistOpen(true)}><ListChecks className="mr-1 h-3.5 w-3.5" />{blockers.length} checks before submit</Button>}
       </div>
       <Sheet open={checklistOpen} onOpenChange={setChecklistOpen}><SheetContent side="bottom" className="max-h-[60dvh] overflow-y-auto"><SheetHeader><SheetTitle>Before submit</SheetTitle></SheetHeader><ul className="list-disc pl-4 py-3 text-sm space-y-2">{blockers.map(b=><li key={b}>{b}</li>)}</ul>{Number(data.unconfirmed_workers)>0 && <Link to="/labour" className="text-primary underline">Open People</Link>}</SheetContent></Sheet>
-      <div id="hours-confirmed" className="scroll-mt-28">{Number(data.unconfirmed_workers)>0 && <p className="text-sm text-warning">Confirm hours for {data.unconfirmed_workers} workers in People. <Link to="/labour" className="underline">Open People</Link></p>}</div>
+      <div id="hours-confirmed" data-report-section>{Number(data.unconfirmed_workers)>0 && <p className="text-sm text-warning">Confirm hours for {data.unconfirmed_workers} workers in People. <Link to="/labour" className="underline">Open People</Link></p>}</div>
       {hoursBlock && (
         <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm break-words">
           {hoursBlock} <Link to="/labour" className="font-medium underline">Open People</Link>
@@ -399,14 +438,15 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
           const lines=data.boq.filter(b=>b.task_id===t.id);const after=taskPct(t.id);const expanded=openTask===t.id;
           const manual=!lines.some(b=>Number(b.progress_weight)>0);
           const showWorkers=lines.length===0 || qrows.some(r=>!r.contractor_id && Number(r.today_qty)>0 && lines.some(b=>b.id===r.boq_item_id)) || taskWorkers.some(r=>r.task_id===t.id);
-          return <div key={t.id} id={`task-${t.id}`} className="scroll-mt-28 rounded-md border border-border min-w-0">
+          const status = reportTaskStatus(after ?? (Number(t.pct) || 0));
+          return <div key={t.id} id={`task-${t.id}`} data-report-section className="rounded-md border border-border min-w-0">
             <Button variant="ghost" className="h-auto w-full justify-start whitespace-normal p-3 gap-2" aria-expanded={expanded} onClick={()=>setOpenTask(expanded?null:t.id)}>
               {expanded?<ChevronDown className="h-4 w-4 shrink-0"/>:<ChevronRight className="h-4 w-4 shrink-0"/>}
               <span className="min-w-0 flex-1 text-left"><span className="block text-xs text-muted-foreground">{t.code}</span><span className="block text-sm break-words">{t.name}</span><span className="block text-xs text-muted-foreground">Now {Number(t.pct)||0}% → {after ?? (Number(t.pct)||0)}%</span></span>
-              <Badge variant={taskStatus[t.id]==='completed'?'default':'outline'} className="shrink-0 text-[10px]">{taskStatus[t.id]==='completed'?'Completed':'Ongoing'}</Badge>
+              <Badge variant={status==='completed'?'default':'outline'} className="shrink-0 text-[10px]">{status==='completed'?'Completed':'Ongoing'}</Badge>
             </Button>
             {expanded && <div className="border-t border-border p-3 space-y-4 min-w-0">
-              {lines.map(b=>{const rows=rowsFor(b.id);const total=rows.reduce((n,r)=>n+(Number(r.today_qty)||0),0);return <div key={b.id} className="space-y-2 min-w-0" id={`quantity-${b.id}`}>
+              {lines.map(b=>{const rows=rowsFor(b.id);const total=rows.reduce((n,r)=>n+(Number(r.today_qty)||0),0);return <div key={b.id} data-report-section className="space-y-2 min-w-0" id={`quantity-${b.id}`}>
                 <p className="text-sm break-words">{b.description}</p><p className="text-xs text-muted-foreground">BOQ {Number(b.boq_qty)} {b.unit} / so far {Number(b.cumulative)} {b.unit}</p>
                 {rows.map(r=>renderQtyRow(r,b.unit ?? ''))}
                 {exceedsBoq(Number(b.boq_qty),Number(b.cumulative),total) && <p className="text-xs text-warning">Total would exceed BOQ quantity</p>}
@@ -415,7 +455,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
               {showWorkers && <TaskWorkerChips taskId={t.id} workers={workers} rows={taskWorkers} readOnly={readOnly} onChange={rows=>{touch();setWorkerTaskIds(prev=>[...new Set([...prev,t.id])]);setTaskWorkers(rows);}}/>}
               <div className="space-y-2">
                 <label className="text-xs text-muted-foreground">Status</label>
-                <div className="flex gap-2">{(['ongoing','completed'] as const).map(status=><Button key={status} size="sm" variant={(taskStatus[t.id] ?? 'ongoing')===status?'default':'outline'} disabled={readOnly} onClick={()=>{touch();setTaskStatus(prev=>({...prev,[t.id]:status}));}}>{status==='ongoing'?'Ongoing':'Completed'}</Button>)}</div>
+                <div className="flex gap-2">{(['ongoing','completed'] as const).map(choice=><Button key={choice} size="sm" variant={status===choice?'default':'outline'} disabled={readOnly} onClick={()=>{touch();setTaskStatus(prev=>({...prev,[t.id]:choice}));}}>{choice==='ongoing'?'Ongoing':'Completed'}</Button>)}</div>
                 {manual ? <div><label className="text-xs text-muted-foreground" htmlFor={`pct-${t.id}`}>% after today</label><Input id={`pct-${t.id}`} type="number" inputMode="decimal" min={0} max={100} value={pct[t.id] ?? ''} disabled={readOnly || taskStatus[t.id]==='completed'} onChange={e=>{touch();setPct(prev=>({...prev,[t.id]:e.target.value}));}}/></div> : <p className="text-sm">Progress: {after ?? 0}%</p>}
                 {after!=null && after<Number(t.pct) && <p className="text-xs text-warning">Lower than current progress</p>}
                 <Textarea aria-label={`${t.name} remarks`} rows={2} placeholder="Remarks (optional)" value={remarks[t.id] ?? ''} disabled={readOnly} onChange={e=>{touch();setRemarks(prev=>({...prev,[t.id]:e.target.value}));}}/>
@@ -427,14 +467,14 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
         <Button size="sm" variant="outline" onClick={()=>setShowOtherTasks(!showOtherTasks)}><Plus className="mr-1 h-4 w-4"/>Add another task</Button>
         {(showOtherTasks || taskSearch) && <div className="space-y-1">{otherTasks.map(t=><Button key={t.id} variant="ghost" className="w-full justify-start h-auto whitespace-normal text-left" onClick={()=>{setAddedTasks(prev=>[...prev,t.id]);setOpenTask(t.id);setTaskSearch('');setShowOtherTasks(false);}}><Plus className="mr-2 h-4 w-4 shrink-0"/><span className="break-words">{t.code} · {t.name}</span></Button>)}</div>}
       </section>
-      <section id="other-work" className="space-y-2 scroll-mt-28">
+      <section id="other-work" className="space-y-2">
         <h3 className="text-sm font-semibold">Other work (not in BOQ)</h3>
         {otherRows.map(r=>renderQtyRow(r,r.unit,true))}
         {!readOnly && <Button size="sm" variant="outline" onClick={addOther}><Plus className="mr-1 h-4 w-4"/>Other work</Button>}
       </section>
 
       {contractors.length > 0 && (
-        <Card>
+        <Card data-report-section>
           <CardHeader className="p-3 pb-1"><CardTitle className="text-base">Subcontractor headcount today</CardTitle></CardHeader>
           <CardContent className="p-3 pt-1 space-y-2">
             {contractors.map((c) => (
@@ -455,13 +495,13 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
         </Card>
       )}
 
-      <section id="manpower" className="space-y-2 scroll-mt-28">
+      <section id="manpower" className="space-y-2">
         <h3 className="text-sm font-semibold">Manpower for the day</h3>
         <div className="flex flex-wrap gap-2">{workers.map(w=>{const allocated=allocatedHours(taskWorkers,w.worker_id);return <Badge key={w.worker_id} variant="outline" className={`max-w-full whitespace-normal break-words ${allocated===0?'text-muted-foreground':allocated===Number(w.attendance_hours)?'text-primary border-primary':'text-warning border-warning'}`}>{w.name} · {allocated}/{Number(w.attendance_hours)} h{allocated===0?' · idle':''}</Badge>;})}</div>
         {!workers.length && <p className="text-sm text-muted-foreground">No present workers. <Link to="/labour" className="text-primary underline">Open People</Link></p>}
         {workers.some(w=>allocatedHours(taskWorkers,w.worker_id)<Number(w.attendance_hours)) && <p className="text-xs text-warning">Some attendance hours are unallocated.</p>}
       </section>
-      <Card>
+      <Card data-report-section>
         <CardHeader className="p-3 pb-1"><CardTitle className="text-base">Consumables &amp; site expenses</CardTitle></CardHeader>
         <CardContent className="p-3 space-y-3">
           {expenses.map(e=><div key={e.id} className="space-y-2 border-b border-border pb-3 min-w-0">
@@ -472,7 +512,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
           {!readOnly && <Button size="sm" variant="outline" onClick={()=>{touch();setExpenses(prev=>[...prev,{id:crypto.randomUUID(),kind:'consumable',description:'',amount_inr:''}]);}}><Plus className="mr-1 h-4 w-4"/>Add</Button>}
         </CardContent>
       </Card>
-      <Card>
+      <Card data-report-section>
         <details><summary className="cursor-pointer p-3 text-base font-semibold">Photos (optional)</summary>
         <CardContent className="p-3 pt-1 grid grid-cols-1 min-[400px]:grid-cols-2 gap-2">
           {elevations.length === 0 ? (
@@ -498,7 +538,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
         </details>
       </Card>
 
-      <Card>
+      <Card data-report-section id="report-notes">
         <CardHeader className="p-3 pb-1"><CardTitle className="text-base">Notes</CardTitle></CardHeader>
         <CardContent className="p-3 pt-1">
           <Textarea rows={3} value={notes} disabled={readOnly} placeholder="If no work happened today, say why"
@@ -507,7 +547,7 @@ export function DailySiteReport({ projectId }: { projectId: string }) {
       </Card>
 
       {!readOnly && (
-        <div className="fixed bottom-16 left-4 right-4 md:sticky md:bottom-0 md:left-auto md:right-auto z-20 bg-background border-t border-border py-2 space-y-2">
+        <div ref={submitRef} className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-4 right-4 md:sticky md:bottom-0 md:left-auto md:right-auto z-20 bg-background border-t border-border py-2 space-y-2">
           <Button className="w-full h-11" disabled={blockers.length > 0 || submitting} onClick={submit}>
             {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}{submitted ? "Re-submit report" : "Submit report"}
           </Button>

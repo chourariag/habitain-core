@@ -203,7 +203,8 @@ function SiteHubContent() {
     </div>
   );
 
-  if (loading) {
+  // Keep the report mounted during project refresh so it can await its old-scope autosave.
+  if (loading && activeTab !== "daily-report") {
     return <div className="flex justify-center items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
