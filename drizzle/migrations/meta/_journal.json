@@ -351,6 +351,13 @@
       "when": 1795286221156,
       "tag": "0049_factory_permissions_use_assigned_roles",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1795286806975,
+      "tag": "0050_factory_direct_access_privacy_fix",
+      "breakpoints": true
     }
   ]
 }

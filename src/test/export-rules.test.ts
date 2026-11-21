@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { EXPORT_SCHEMA } from '../../supabase/functions/_shared/export-schema';
+import { FACTORY_EXPORT_SCHEMA } from '../../supabase/functions/_shared/factory-export-schema';
 import { expiredFolder, hashToken, istDate, LINK_SECONDS, RETENTION_DAYS, sanitize, toCsv, wageAmount } from '../../supabase/functions/_shared/export-utils';
 describe('P8 export rules', () => {
   it('exports hourly wages and amounts but not salary, bank, ID numbers or auth fields', () => {
@@ -17,6 +18,17 @@ describe('P8 export rules', () => {
       expect(schema?.columns.map(c => c.name)).not.toContain('effective_hourly_rate');
       expect(schema?.columns.map(c => c.name)).toContain('is_archived');
     }
+  });
+  it('factory files use the nightly manifest and expose no rates or worker wages', () => {
+    expect(FACTORY_EXPORT_SCHEMA).toHaveLength(10);
+    for (const schema of FACTORY_EXPORT_SCHEMA) {
+      expect(EXPORT_SCHEMA).toContain(schema);
+      expect(schema.version).toBe(1);
+      for (const column of schema.columns) expect(column.name).not.toMatch(/rate|wage|salary|payroll|compensation/i);
+    }
+    const attendance = EXPORT_SCHEMA.find(s => s.table === 'factory_labour_attendance');
+    expect(attendance?.columns.map(c => c.name)).not.toContain('amount');
+    expect(attendance?.columns.map(c => c.name)).not.toContain('effective_hourly_rate');
   });
   it('keeps 60-day dated folders and latest, removing only older export dates', () => {
     expect(RETENTION_DAYS).toBe(60);

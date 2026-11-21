@@ -34,3 +34,4 @@
 - Factory reports use checked full-list RPCs, archived replacement, private attendance-rate snapshots and module/stage allocation; source-linked production logs preserve history without changing module stages.
 - New factory role gates read caller-bound user_roles, not legacy profile role mirrors; monetary snapshots have no direct authenticated column grants and cost access uses checked RPCs.
 - Running Bill unions submitted site/factory quantities before the existing positive-BOQ cap, while factory labour remains a separate exact-allocation section and legacy site cost CTEs remain unchanged.
+- Factory nightly exports use the shared versioned manifest with operational attendance hours only, excluding worker wage amounts and rate fields, so private cost snapshots never enter factory CSV projections.
