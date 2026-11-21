@@ -36,7 +36,7 @@ describe("Factory permission flows for roles without existing accounts", () => {
   for (const role of ["factory_floor_supervisor", "senior_factory_supervisor"]) {
     it(`${role} confirms attendance hours through the checked action`, async () => {
       render(<FactoryAttendance role={role} />);
-      fireEvent.click(await screen.findByRole("button", { name: "Confirm hours", exact: true }));
+      fireEvent.click(await screen.findByRole("button", { name: /^Confirm hours$/ }));
       await waitFor(() => expect(fixture.rpc).toHaveBeenCalledWith("confirm_factory_hours", expect.objectContaining({ p_rows: [{ worker_id: "worker", hours: 8 }] })));
     });
     it(`${role} saves and submits exact worker allocations without requesting costs`, async () => {

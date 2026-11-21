@@ -26,7 +26,7 @@ BEGIN
   EXCEPTION WHEN insufficient_privilege THEN RESET ROLE; INSERT INTO fac_access VALUES('attendance:'||c,'PASS denied 42501'); END;
  END LOOP;
  FOR r IN SELECT oid,proname,proargtypes FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN('can_read_factory','can_write_factory','can_view_factory_cost','_factory_can_boq','_factory_window','_factory_validate_workers','_factory_validate_subcontracts','add_factory_attendance_photo','get_factory_attendance','save_factory_attendance','confirm_factory_hours','get_factory_report','save_factory_report_draft','submit_factory_report','get_factory_cost','get_boq_work_locations','set_boq_work_location') LOOP
-  SELECT coalesce(string_agg('NULL::'||t::regtype::text,','),'') INTO args FROM unnest(r.proargtypes) t;
+  SELECT coalesce(string_agg('NULL::'||arg.arg_type::regtype::text,','),'') INTO args FROM unnest(r.proargtypes) AS arg(arg_type);
   BEGIN
    SET LOCAL ROLE anon; EXECUTE format('SELECT public.%I(%s)',r.proname,args);
    RAISE EXCEPTION 'Unexpected anonymous function access: %',r.proname;
