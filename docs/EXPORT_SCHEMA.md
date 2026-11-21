@@ -6,7 +6,7 @@ Files are stored at `YYYY-MM-DD/<source>_v1.csv` (IST run date) and `latest/<sou
 
 Source rows include archived/draft rows. `daily_measurements` contains only `trade=daily_site_report`. Photo files contain metadata only. No image/receipt bytes are read. `labour_worker_rates` is exported through a service-only projection, not its role-filtered view. `labour_attendance.amount = hours × effective_hourly_rate`; rates are current effective rates (not historical snapshots). Effective rates preserve the existing hourly-rate fallback; monthly salary itself is never exported.
 
-Excluded: auth, employee salary/payroll tables, monthly_salary, client_portal_token, receipt_url, client phone/email, bank/PAN/Aadhaar fields. Explicit projections freeze the schema; no SELECT *. Nested sensitive JSON keys are removed. The token grants all 26 latest files, including wages and GPS metadata; only Tier 1/Super Admin can issue or revoke it. Links expire after 300 seconds; revocation cannot invalidate already issued links before expiry.
+Excluded: auth, employee salary/payroll tables, monthly_salary, client_portal_token, receipt_url, client phone/email, bank/PAN/Aadhaar fields. Explicit projections freeze the schema; no SELECT *. Nested sensitive JSON keys are removed. The token grants all 36 latest files, including wages and GPS metadata; only Tier 1/Super Admin can issue or revoke it. Links expire after 300 seconds; revocation cannot invalidate already issued links before expiry.
 
 Snapshots page each source in deterministic key order; separate tables are not one cross-table transaction. Dated retention is 60 days; latest is never pruned.
 
@@ -578,7 +578,7 @@ Metadata only; image files are never exported.
 
 ## Mobile Daily Report exports
 
-Manifest now contains **26 files**. The two new v1 files carry no worker wages or rates. Archived replacements remain in the export; consumers use `is_archived=false` for current rows.
+The pre-factory manifest contained **26 files**; FAC-1 adds 10 files for **36 total**. The two new v1 files carry no worker wages or rates. Archived replacements remain in the export; consumers use `is_archived=false` for current rows.
 
 ## site_report_task_workers_v1.csv
 
@@ -611,3 +611,174 @@ Manifest now contains **26 files**. The two new v1 files carry no worker wages o
 | `updated_by` | uuid |
 | `created_at` | timestamp with time zone |
 | `updated_at` | timestamp with time zone |
+
+## Factory exports (FAC-1)
+
+The shared P8 nightly manifest contains **36 files**: 26 existing sources plus the following 10 versioned factory sources. Factory projections exclude hourly/unit rates, rate identifiers, salary/payroll and worker wage amounts. Factory attendance exports hours only, not `amount` or `effective_hourly_rate`. Subcontract accrued amounts and consumable/expense amounts are not worker wages and remain in their explicit projections. Existing non-factory projections are unchanged. Photos contain metadata only; image bytes are never exported.
+
+Factory v1 projections were corrected before their first verified export; no nightly or manual export was invoked during this verification.
+
+### factory_daily_reports_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `report_date` | date |
+| `status` | text |
+| `notes` | text |
+| `submitted_by` | uuid |
+| `submitted_at` | timestamp with time zone |
+| `is_archived` | boolean |
+| `created_by` | uuid |
+| `updated_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_at` | timestamp with time zone |
+
+### factory_labour_attendance_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `work_date` | date |
+| `worker_id` | uuid |
+| `hours` | numeric |
+| `hours_confirmed` | boolean |
+| `no_photo_exception` | boolean |
+| `is_archived` | boolean |
+| `created_by` | uuid |
+| `updated_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_at` | timestamp with time zone |
+
+### factory_attendance_photos_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `work_date` | date |
+| `storage_path` | text |
+| `captured_at` | timestamp with time zone |
+| `received_at` | timestamp with time zone |
+| `gps_lat` | numeric |
+| `gps_lng` | numeric |
+| `gps_accuracy_m` | numeric |
+| `flags` | jsonb |
+| `is_archived` | boolean |
+| `created_by` | uuid |
+| `updated_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_at` | timestamp with time zone |
+
+### factory_report_blocks_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `report_id` | uuid |
+| `module_id` | uuid |
+| `stage` | text |
+| `stage_status` | text |
+| `progress_pct` | numeric |
+| `remarks` | text |
+| `is_archived` | boolean |
+| `created_by` | uuid |
+| `updated_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_at` | timestamp with time zone |
+
+### factory_report_task_workers_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `report_id` | uuid |
+| `module_id` | uuid |
+| `stage` | text |
+| `worker_id` | uuid |
+| `hours` | numeric |
+| `is_archived` | boolean |
+| `created_by` | uuid |
+| `updated_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_at` | timestamp with time zone |
+
+### factory_report_quantities_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `report_id` | uuid |
+| `module_id` | uuid |
+| `stage` | text |
+| `boq_item_id` | uuid |
+| `contractor_id` | uuid |
+| `unit` | text |
+| `today_qty` | numeric |
+| `amount_inr` | numeric |
+| `remarks` | text |
+| `is_archived` | boolean |
+| `created_by` | uuid |
+| `updated_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_at` | timestamp with time zone |
+
+### factory_report_expenses_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `report_id` | uuid |
+| `module_id` | uuid |
+| `kind` | text |
+| `description` | text |
+| `amount_inr` | numeric |
+| `is_archived` | boolean |
+| `created_by` | uuid |
+| `updated_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_at` | timestamp with time zone |
+
+### factory_report_photos_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `report_id` | uuid |
+| `storage_path` | text |
+| `is_archived` | boolean |
+| `created_by` | uuid |
+| `updated_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_at` | timestamp with time zone |
+
+### factory_report_edit_log_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `report_id` | uuid |
+| `work_date` | date |
+| `field` | text |
+| `old_value` | jsonb |
+| `new_value` | jsonb |
+| `reason` | text |
+| `is_archived` | boolean |
+| `created_by` | uuid |
+| `updated_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_at` | timestamp with time zone |
+
+### boq_work_location_log_v1.csv
+
+| Column | Type |
+|---|---|
+| `id` | uuid |
+| `boq_item_id` | uuid |
+| `old_location` | text |
+| `new_location` | text |
+| `is_archived` | boolean |
+| `created_by` | uuid |
+| `updated_by` | uuid |
+| `created_at` | timestamp with time zone |
+| `updated_at` | timestamp with time zone |
+
