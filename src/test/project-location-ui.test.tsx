@@ -1,19 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ProjectLocationContact } from "@/components/projects/ProjectLocationContact";
-import { RequestClientContact } from "@/components/projects/RequestClientContact";
+import { isTier1OrSuper } from "@/lib/roles";
 const rpc = vi.hoisted(() => vi.fn());
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc } }));
 const project = { id: "project", location: "Bengaluru", site_lat: 12.9716, site_lng: 77.5946, site_radius: 300 };
 beforeEach(() => { rpc.mockReset(); rpc.mockResolvedValue({ data: [{ client_phone: "+919876543210", client_email: "client@example.com" }], error: null }); });
 afterEach(cleanup);
-describe("private pending contact access", () => {
-  it.each(["managing_director", "finance_director", "sales_director", "architecture_director", "super_admin"])("fetches private contact for %s", async role => {
-    render(<RequestClientContact requestId="request" role={role} />);
-    await waitFor(() => expect(rpc).toHaveBeenCalledWith("get_project_request_client_contact", { p_request_id: "request" }));
-    await screen.findByText("client@example.com");
-  });
-  it.each(["finance_manager", "head_of_projects", "principal_architect", "project_architect", "site_installation_mgr", "sales_executive", "sales_associate", "marketing", "accounts_executive", "head_operations", "site_engineer", null])("never fetches contact for %s", role => { render(<RequestClientContact requestId="request" role={role} />); expect(rpc).not.toHaveBeenCalled(); });
+describe("unchanged director-only contact role matrix", () => {
+  it.each(["managing_director", "finance_director", "sales_director", "architecture_director", "super_admin"])("allows %s", role => expect(isTier1OrSuper(role)).toBe(true));
+  it.each(["finance_manager", "head_of_projects", "principal_architect", "project_architect", "site_installation_mgr", "sales_executive", "sales_associate", "marketing", "accounts_executive", "head_operations", "site_engineer", null])("denies %s", role => expect(isTier1OrSuper(role)).toBe(false));
 });
 describe("checked project editors", () => {
   it("sends a location edit through the checked writer", async () => {

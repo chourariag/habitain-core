@@ -19007,13 +19007,6 @@ export type Database = {
         Args: { _on_date: string; _project_id: string }
         Returns: number
       }
-      get_project_request_client_contact: {
-        Args: { p_request_id: string }
-        Returns: {
-          client_email: string
-          client_phone: string
-        }[]
-      }
       get_project_setup_status: {
         Args: { p_project_id: string }
         Returns: Json
@@ -19122,10 +19115,6 @@ export type Database = {
       normalize_ledger_name: { Args: { _name: string }; Returns: string }
       parity2_rollback: { Args: never; Returns: undefined }
       project_archive_upload_reminders: { Args: never; Returns: undefined }
-      raise_project_request: {
-        Args: { p_email: string; p_payload: Json; p_phone: string }
-        Returns: string
-      }
       recalc_running_bill: {
         Args: { _project_id: string }
         Returns: {

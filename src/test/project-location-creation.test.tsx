@@ -1,17 +1,17 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NewProjectDialog } from "@/components/projects/NewProjectDialog";
-const s = vi.hoisted(() => ({ role: "managing_director", allowed: true, writes: vi.fn(), rpc: vi.fn(), user: { id: "creator" } }));
+const s = vi.hoisted(() => ({ role: "managing_director", allowed: true, writes: vi.fn(), rpc: vi.fn(), notifications: vi.fn(), user: { id: "creator" } }));
 vi.mock("@/hooks/useUserRole", () => ({ useUserRole: () => ({ role: s.role, userId: s.user.id }) }));
 vi.mock("@/hooks/useProjectArchitect", () => ({ fetchArchitectCandidates: async () => [{ id: "architect", display_name: "Assigned architect" }] }));
 vi.mock("@/components/ui/select", () => ({ Select: ({ value, onValueChange, children }: any) => <select value={value} onChange={e => onValueChange(e.target.value)}>{children}</select>, SelectTrigger: () => null, SelectValue: () => null, SelectContent: ({ children }: any) => <>{children}</>, SelectItem: ({ value, children }: any) => <option value={value}>{children}</option> }));
 vi.mock("@/components/ui/calendar", () => ({ Calendar: ({ onSelect }: any) => <button type="button" onClick={() => onSelect(new Date(2026, 10, 22))}>Choose date</button> }));
-vi.mock("@/lib/notifications", () => ({ insertNotifications: async () => undefined }));
+vi.mock("@/lib/notifications", () => ({ insertNotifications: s.notifications }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { rpc: s.rpc, from: (table: string) => {
-  const b: any = { select: () => b, eq: () => b, insert: (rows: unknown) => { s.writes(table, rows); return b; }, single: async () => ({ data: { id: table === "projects" ? "project" : "panel-parent" }, error: null }), then: (resolve: any) => Promise.resolve({ data: table === "modules" ? [{ id: "module-1" }, { id: "module-2" }] : [], error: null }).then(resolve) }; return b;
+  const b: any = { select: () => b, eq: () => b, insert: (rows: unknown) => { s.writes(table, rows); return b; }, single: async () => ({ data: { id: table === "projects" ? "project" : "panel-parent" }, error: null }), then: (resolve: any) => Promise.resolve({ data: table === "profiles" ? [{ auth_user_id: "planner" }] : table === "modules" ? [{ id: "module-1" }, { id: "module-2" }] : [], error: null }).then(resolve) }; return b;
 } } }));
 vi.mock("@/lib/auth-client", async () => ({ getAuthedClient: async () => ({ client: (await import("@/integrations/supabase/client")).supabase, session: { user: s.user } }) }));
-beforeEach(() => { s.writes.mockReset(); s.rpc.mockReset(); s.allowed = true; s.rpc.mockImplementation(async (name: string) => ({ data: name === "can_create_project" ? s.allowed : "project", error: null })); s.role = "managing_director"; });
+beforeEach(() => { s.writes.mockReset(); s.rpc.mockReset(); s.notifications.mockReset(); s.notifications.mockResolvedValue(undefined); s.allowed = true; s.rpc.mockImplementation(async (name: string) => ({ data: name === "can_create_project" ? s.allowed : "project", error: null })); s.role = "managing_director"; });
 afterEach(cleanup);
 async function fill() {
   render(<NewProjectDialog open onOpenChange={vi.fn()} onCreated={vi.fn()} />);
@@ -44,6 +44,11 @@ it("a granted Planning Head creates directly without putting contact in the proj
   expect(JSON.stringify(payload)).not.toContain("9876543210"); expect(JSON.stringify(payload)).not.toContain("private@example.invalid");
   expect(s.writes.mock.calls.filter(([table]) => table === "projects")).toHaveLength(0);
   expect(s.rpc.mock.calls.some(([name]) => name === "raise_project_request")).toBe(false);
+  await waitFor(() => expect(s.notifications).toHaveBeenCalledOnce());
+  const notifications = s.notifications.mock.calls[0]?.[0];
+  expect(notifications[0]).toMatchObject({ recipient_id: "planner", related_id: "project" });
+  expect(JSON.stringify(notifications)).not.toContain("9876543210");
+  expect(JSON.stringify(notifications)).not.toContain("private@example.invalid");
 });
 it("a denied person cannot open the project dialog even with a director-looking screen role", async () => {
   s.allowed = false;

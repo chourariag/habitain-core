@@ -28,7 +28,7 @@ BEGIN
    BEGIN PERFORM public.grant_project_creator(grantee,'unauthorized'); RAISE EXCEPTION 'Unauthorized grant'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
    BEGIN PERFORM public.revoke_project_creator(grantee); RAISE EXCEPTION 'Unauthorized revoke'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
    BEGIN PERFORM public.approve_project_request(gen_random_uuid()); RAISE EXCEPTION 'Legacy approval bypass'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
-   BEGIN PERFORM public.raise_project_request(payload,'9876543210','access-check@example.invalid'); RAISE EXCEPTION 'Legacy request bypass'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+   IF to_regprocedure('public.raise_project_request(jsonb,text,text)') IS NOT NULL THEN RAISE EXCEPTION 'Retired legacy request still exists'; END IF;
   END IF;
   BEGIN PERFORM user_id FROM public.project_creators; RAISE EXCEPTION 'Direct creator read'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
   BEGIN INSERT INTO public.project_creators(user_id,granted_by) VALUES(grantee,r.uid); RAISE EXCEPTION 'Direct creator write'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;

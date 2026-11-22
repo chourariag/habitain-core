@@ -1,5 +1,12 @@
 # SECURITY-1 Access Map
 
+## PROJ-LOC cleanup — 0064
+
+- Zero rows in `project_client_contact_requests` at inspection and cleanup. Table deletion is blocked by the platform; the private table is retained, explicitly deprecated, with unchanged RLS and no client grants. No app reader/writer remains.
+- Removed `raise_project_request(jsonb,text,text)` and `get_project_request_client_contact(uuid)` and the Approvals pending-contact display. `approve_project_request(uuid)` keeps its existing authorization, decision, ownership and status-audit behavior but no longer reads/copies/clears staging. Existing approval records are untouched; its payload still excludes contact through the existing guard.
+- `create_project(jsonb,text,text)` already writes validated phone/email directly to projects for every entitled caller, including explicitly granted non-directors. Its implementation and the New Project call remain unchanged.
+- `get_project_client_contact`, director-only `set_project_client_contact`, site location/editing, attendance and safe export/list projections remain unchanged. Historical PROJ-LOC/PROJ-ACCESS sections below describe behavior before this cleanup.
+
 ## PROJ-ACCESS — 0063
 
 - `project_creators`: RLS on, no client policies or PUBLIC/anon/authenticated table grants; service role has full access. Explicit grant rows are soft-revoked and audited in the existing `super_admin_audit_log`. Built-in Tier 1/Super principals are never seeded.
