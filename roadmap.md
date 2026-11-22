@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [x] PROJ-ACCESS: 0063 private audited grants, checked atomic creation, server-driven button/dialog and management tab; 31-principal rollback checks, grant/revoke/private access and 3 modules/22 stages/3 panels; 876 tests/0 skips, MD 360px, unchanged Running Bill; zero seeded grants/pending requests. Evidence docs/PROJ_ACCESS_CONFIRM.md.
 - [x] PHASE1-GATES-OFF: reversible frontend-only switch; user reconfirmed preserving live database stage/GFC restrictions. 46 new tests; 851 passed/0 skipped; signed-in zero-gate Test project workbook validation without Commit, 360px no overflow, unchanged Running Bill. Evidence: docs/PHASE1_GATES_OFF_CONFIRM.md.
 - [x] SEC-5b addendum: ID43 query target rejected; validated JSON daily fallback deployed/body updated before restricted window; page refresh removed; 713 tests/0 skips. Evidence docs/SEC5B_CONFIRM.md addendum; first natural KPI tick due 18:35 UTC, not yet observed.
 - [x] SEC-5b: managed 38–42 replace disabled 21/31–34; four cron-only guards, KPI daily 43/caller gate; 8 live 401s, first DM ticks 200, 703 tests/0 skips, events 0; evidence docs/SEC5B_CONFIRM.md. KPI page click unverified because existing kpis flag is OFF; signed-in helper checked with request interception.

@@ -1,4 +1,4 @@
-import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
+import { isTier1OrSuper } from "@/lib/roles";
 import { Link } from "react-router-dom";
 import { PROJECT_PUBLIC_SELECT, hasSitePin } from "@/lib/project-location";
 import { useState, useEffect, useCallback } from "react";
@@ -10,13 +10,12 @@ import { ProjectCommandCard } from "@/components/projects/ProjectCommandCard";
 import type { Tables } from "@/integrations/supabase/types";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
-
-const NEW_PROJECT_ROLES = ["planning_head", "planning_engineer", ...TIER1_ROLES, "super_admin"];
+import { useCanCreateProject } from "@/hooks/useCanCreateProject";
 
 export default function Projects() {
   const { role } = useUserRole();
   const flags = useFeatureFlags();
-  const canCreate = !!role && NEW_PROJECT_ROLES.includes(role);
+  const { allowed: canCreate } = useCanCreateProject();
   const [projects, setProjects] = useState<Tables<"projects">[]>([]);
   const [modulesByProject, setModulesByProject] = useState<Record<string, any[]>>({});
   const [handoversByProject, setHandoversByProject] = useState<Record<string, boolean>>({});
@@ -176,7 +175,7 @@ export default function Projects() {
         </div>
       )}
 
-      <NewProjectDialog open={dialogOpen} onOpenChange={setDialogOpen} onCreated={fetchProjects} />
+      {canCreate && <NewProjectDialog open={dialogOpen} onOpenChange={setDialogOpen} onCreated={fetchProjects} />}
     </div>
   );
 }

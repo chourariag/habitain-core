@@ -10037,6 +10037,51 @@ export type Database = {
           },
         ]
       }
+      project_creators: {
+        Row: {
+          created_at: string
+          created_by: string
+          granted_at: string
+          granted_by: string
+          is_active: boolean
+          is_archived: boolean
+          note: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          updated_at: string
+          updated_by: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          granted_at?: string
+          granted_by: string
+          is_active?: boolean
+          is_archived?: boolean
+          note?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          updated_at?: string
+          updated_by?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          granted_at?: string
+          granted_by?: string
+          is_active?: boolean
+          is_archived?: boolean
+          note?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+          updated_at?: string
+          updated_by?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       project_design_files: {
         Row: {
           budget_discussed: boolean
@@ -18366,6 +18411,7 @@ export type Database = {
       }
       can_capture_site_photo: { Args: { _user_id: string }; Returns: boolean }
       can_costing_approve_wo: { Args: { _user_id: string }; Returns: boolean }
+      can_create_project: { Args: { _uid: string }; Returns: boolean }
       can_delete_site_readiness: { Args: { _uid: string }; Returns: boolean }
       can_edit_design_schedule: { Args: { _user_id: string }; Returns: boolean }
       can_edit_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
@@ -18567,6 +18613,10 @@ export type Database = {
           _salary_review_due?: string
           _skill_type: string
         }
+        Returns: string
+      }
+      create_project: {
+        Args: { p_email: string; p_payload: Json; p_phone: string }
         Returns: string
       }
       cv_alert_overdue_commitments: { Args: never; Returns: number }
@@ -19024,6 +19074,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      grant_project_creator: {
+        Args: { p_note?: string; p_user_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -19054,6 +19108,7 @@ export type Database = {
       ist_today: { Args: never; Returns: string }
       kickoff_meeting_daily_reminders: { Args: never; Returns: undefined }
       list_open_reminders: { Args: never; Returns: Json }
+      list_project_creators: { Args: never; Returns: Json }
       log_offboarding_audit: {
         Args: {
           _action: string
@@ -19113,6 +19168,10 @@ export type Database = {
         }[]
       }
       required_gfc_for_stage: { Args: { _stage: string }; Returns: string }
+      revoke_project_creator: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       run_reminders:
         | { Args: { p_dry?: boolean }; Returns: Json }
         | { Args: { p_asof: string; p_dry: boolean }; Returns: Json }

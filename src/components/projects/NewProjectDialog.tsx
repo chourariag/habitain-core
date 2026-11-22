@@ -16,14 +16,13 @@ import { CalendarIcon, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
-import { useUserRole } from "@/hooks/useUserRole";
+import { useCanCreateProject } from "@/hooks/useCanCreateProject";
 import { SiteLocationFields } from "@/components/projects/SiteLocationFields";
 import { ClientContactFields } from "@/components/projects/ClientContactFields";
 import { emptySiteLocation, normaliseClientPhone, validClientEmail, validateSiteLocation } from "@/lib/project-location";
 import { listClientWorkOrders, type ClientWorkOrder } from "@/lib/contractor-wo";
 import { fetchArchitectCandidates, type ArchitectProfile } from "@/hooks/useProjectArchitect";
-import { ROLE_LABELS, TIER1_ROLES } from "@/lib/roles";
+import { ROLE_LABELS } from "@/lib/roles";
 import { useEffect } from "react";
 
 
@@ -39,12 +38,12 @@ const PRODUCTION_SYSTEMS: { value: "modular" | "panelised" | "hybrid"; label: st
   { value: "hybrid", label: "Hybrid" },
 ];
 
-const ALLOWED_RAISERS = ["planning_head", ...TIER1_ROLES, "super_admin"];
-
 export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDialogProps) {
-  const { role } = useUserRole();
-  const canRaise = !!role && ALLOWED_RAISERS.includes(role);
-  const requiresApproval = !!role && ![...TIER1_ROLES, "super_admin"].includes(role);
+  const { allowed } = useCanCreateProject();
+  return allowed ? <AllowedNewProjectDialog open={open} onOpenChange={onOpenChange} onCreated={onCreated} /> : null;
+}
+
+function AllowedNewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDialogProps) {
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [clientName, setClientName] = useState("");
@@ -101,7 +100,6 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
     if (!validClientEmail(clientEmail)) { toast.error("Enter a valid client email address"); return; }
     if (!startDate || !estCompletion) { toast.error("Contract Start and Expected Delivery dates are required"); return; }
     if (!architectId) { toast.error("Assign a Project Architect — this owns the S-1 and E-5 gates"); return; }
-    if (!canRaise) { toast.error("Only the Planning Head can raise a project creation request."); return; }
 
     if (isContractorWo) {
       if (!workOrderId) { toast.error("Select the Contractor Work Order this project sits under"); return; }
@@ -114,7 +112,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
 
     setLoading(true);
     try {
-      const { client, session } = await getAuthedClient();
+      const { client } = await getAuthedClient();
 
       const corePayload = {
         name: name.trim(),
@@ -135,102 +133,12 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
           : {}),
       };
 
-      // Non-MD users → approval request
-      if (requiresApproval) {
-        const { data: requestId, error: requestError } = await client.rpc("raise_project_request", { p_payload: corePayload, p_phone: phone, p_email: clientEmail.trim() });
-        if (requestError) throw requestError;
-        const reqRow = { id: requestId };
-
-        try {
-          const approverRole = division === "ADS" ? "principal_architect" : "sales_director";
-          const { data: approvers } = await supabase
-            .from("profiles")
-            .select("auth_user_id")
-            .eq("role", approverRole as any)
-            .eq("is_active", true);
-          const recipients = (approvers || []).map((a: any) => a.auth_user_id);
-          if (recipients.length > 0) {
-            const title = division === "ADS"
-              ? `New ADS project request — ${name.trim()}`
-              : `New project request — ${name.trim()}`;
-            const body = `${clientName.trim()} | ${productionSystem.toUpperCase()} | ${corePayload.module_count} modules / ${corePayload.panel_count} panels | ₹${corePayload.contract_value.toLocaleString("en-IN")}\nRaised by ${session.user.email || "Project Manager"}. Tap to review and approve.`;
-            const { insertNotifications } = await import("@/lib/notifications");
-            await insertNotifications(recipients.map((rid) => ({
-              recipient_id: rid,
-              title,
-              body,
-              category: "approval_request",
-              related_table: "approval_requests",
-              related_id: reqRow?.id,
-              navigate_to: `/approvals?id=${reqRow?.id}`,
-            })));
-          }
-        } catch (notifyErr) { console.warn("notify approver failed", notifyErr); }
-
-        toast.success(
-          division === "ADS"
-            ? "Project request sent to Principal Architect for approval"
-            : "Project request sent to Sales Director for approval"
-        );
-        resetForm();
-        onOpenChange(false);
-        onCreated();
-        setLoading(false);
-        return;
-      }
-
-      // MD / super_admin: direct create
-      const { data: project, error } = await client.from("projects").insert({
-        ...corePayload,
-        client_phone: phone, client_email: clientEmail.trim(),
-        created_by: session.user.id,
-        updated_by: session.user.id,
-        status: "Active",
-      } as any).select("id").single();
-
+      // The server checks the caller and creates all initial records in one transaction.
+      const { data: projectId, error } = await client.rpc("create_project", {
+        p_payload: corePayload, p_phone: phone, p_email: clientEmail.trim(),
+      });
       if (error) throw error;
-      const projectId = (project as any).id;
-
-      // Auto-create modules / panels
-      const mCount = corePayload.module_count;
-      const pCount = corePayload.panel_count;
-      if (mCount > 0 && projectId) {
-        const moduleInserts = Array.from({ length: mCount }, (_, i) => ({
-          project_id: projectId,
-          name: `Module ${i + 1}`,
-          module_type: "standard",
-          current_stage: "Main Frame",
-          production_status: "not_started",
-          created_by: session.user.id,
-        }));
-        await client.from("modules").insert(moduleInserts as any);
-        const { data: createdModules } = await client.from("modules").select("id").eq("project_id", projectId);
-        if (createdModules) {
-          const stageInserts = (createdModules as any[]).flatMap((m: any) =>
-            PRODUCTION_STAGES.map((stage, idx) => ({
-              module_id: m.id, stage_name: stage, stage_order: idx + 1, status: "pending",
-            }))
-          );
-          await client.from("production_stages").insert(stageInserts as any);
-        }
-      }
-      if (pCount > 0 && projectId) {
-        const { data: parentModule } = await client.from("modules").insert({
-          project_id: projectId, name: "Panel Production", module_type: "standard",
-          current_stage: "Main Frame", production_status: "not_started", created_by: session.user.id,
-        } as any).select("id").single();
-        if (parentModule) {
-          const panelInserts = Array.from({ length: pCount }, (_, i) => ({
-            module_id: (parentModule as any).id,
-            panel_code: `Panel ${i + 1}`,
-            panel_type: "wall",
-            current_stage: "Main Frame",
-            production_status: "not_started",
-            created_by: session.user.id,
-          }));
-          await (client.from("panels") as any).insert(panelInserts);
-        }
-      }
+      if (!projectId) throw new Error("Project creation returned no project");
 
       // Notify planning engineers (Karthik) to upload the Project Setup Template
       try {
@@ -269,7 +177,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
           <DialogHeader className="px-4 pt-4 pb-2">
             <DialogTitle className="font-display text-xl">New Project</DialogTitle>
             <p className="text-xs text-muted-foreground">
-              After approval, planning details (BOQ, schedule, materials)
+              Planning details (BOQ, schedule, materials)
               come from the Project Setup Template upload.
             </p>
           </DialogHeader>
@@ -410,7 +318,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
             <Button type="button" variant="outline" className="min-h-11" onClick={() => { setClientPhone(""); setClientEmail(""); onOpenChange(false); }} disabled={loading}>Cancel</Button>
             <Button type="submit" className="min-h-11" disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {requiresApproval ? "Send for Approval" : "Create Project"}
+              Create Project
             </Button>
           </div>
         </form>

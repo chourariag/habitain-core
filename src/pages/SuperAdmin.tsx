@@ -14,6 +14,8 @@ import { AuditTrailTab } from "@/components/super-admin/AuditTrailTab";
 import { CreateAccountsTab } from "@/components/super-admin/CreateAccountsTab";
 import { TallyIngestionKeySection } from "@/components/super-admin/TallyIngestionKeySection";
 import { SoleRoleHoldersTab } from "@/components/super-admin/SoleRoleHoldersTab";
+import { ProjectCreatorsTab } from "@/components/super-admin/ProjectCreatorsTab";
+import { ScrollableTabsWrapper } from "@/components/ui/scrollable-tabs";
 
 
 const MD_ROLES = [...TIER1_ROLES, "super_admin"];
@@ -36,6 +38,7 @@ export default function SuperAdmin() {
       </div>
 
       <Tabs defaultValue="tasks">
+        <ScrollableTabsWrapper>
         <TabsList>
           <TabsTrigger value="tasks" className="gap-1.5"><ListTree className="h-3.5 w-3.5" /> Task Master</TabsTrigger>
           <TabsTrigger value="roles" className="gap-1.5"><KeySquare className="h-3.5 w-3.5" /> Roles &amp; Access</TabsTrigger>
@@ -44,10 +47,12 @@ export default function SuperAdmin() {
           <TabsTrigger value="approvals" className="gap-1.5"><BadgeIndianRupee className="h-3.5 w-3.5" /> Approvals</TabsTrigger>
           <TabsTrigger value="databank" className="gap-1.5"><Database className="h-3.5 w-3.5" /> Data Bank</TabsTrigger>
           <TabsTrigger value="users" className="gap-1.5"><Users className="h-3.5 w-3.5" /> Users</TabsTrigger>
+          <TabsTrigger value="project-creators" className="gap-1.5"><UsersRound className="h-3.5 w-3.5" /> Project Creators</TabsTrigger>
           <TabsTrigger value="create-accounts" className="gap-1.5"><UserPlus className="h-3.5 w-3.5" /> Create Accounts</TabsTrigger>
           <TabsTrigger value="audit" className="gap-1.5"><History className="h-3.5 w-3.5" /> Audit</TabsTrigger>
           <TabsTrigger value="sole-roles" className="gap-1.5"><UsersRound className="h-3.5 w-3.5" /> Sole Role Holders</TabsTrigger>
         </TabsList>
+        </ScrollableTabsWrapper>
 
         <TabsContent value="tasks" className="mt-4"><TaskMasterTab /></TabsContent>
         <TabsContent value="roles" className="mt-4"><RolesAccessTab /></TabsContent>
@@ -56,6 +61,7 @@ export default function SuperAdmin() {
         <TabsContent value="approvals" className="mt-4"><ApprovalsTab /></TabsContent>
         <TabsContent value="databank" className="mt-4"><DataBankTab /></TabsContent>
         <TabsContent value="users" className="mt-4"><UsersTab /></TabsContent>
+        <TabsContent value="project-creators" className="mt-4 min-w-0"><ProjectCreatorsTab /></TabsContent>
         <TabsContent value="create-accounts" className="mt-4"><CreateAccountsTab /></TabsContent>
         <TabsContent value="audit" className="mt-4"><AuditTrailTab /></TabsContent>
         <TabsContent value="sole-roles" className="mt-4"><SoleRoleHoldersTab /></TabsContent>

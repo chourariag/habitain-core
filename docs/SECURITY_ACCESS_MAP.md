@@ -1,5 +1,14 @@
 # SECURITY-1 Access Map
 
+## PROJ-ACCESS — 0063
+
+- `project_creators`: RLS on, no client policies or PUBLIC/anon/authenticated table grants; service role has full access. Explicit grant rows are soft-revoked and audited in the existing `super_admin_audit_log`. Built-in Tier 1/Super principals are never seeded.
+- `can_create_project(uuid)` is STABLE SECURITY DEFINER, `search_path=public`, authenticated execution only (PUBLIC/anon revoked). Requires an active non-archived profile plus caller-bound `user_roles` Tier 1/Super entitlement or an active explicit grant.
+- `list_project_creators()`, `grant_project_creator(uuid,text)`, `revoke_project_creator(uuid)` check active Tier 1/Super caller internally. The list supplies safe names/role arrays, built-in markers, grant attribution/status and active candidates; no account/contact secrets. Grant/revoke cannot change the built-in group or roles/accounts. All are SECURITY DEFINER, `search_path=public`, PUBLIC/anon revoked, authenticated execution granted; list is STABLE.
+- Only projects INSERT policy changes to `can_create_project(auth.uid())`; existing projects UPDATE/DELETE and all child-table policies are untouched. `create_project(jsonb,text,text)` checks the authenticated caller, accepts fixed creation fields, validates existing site/contact/WO requirements, and atomically creates project/modules/stages/panels. Generated project type stays generated; private client contact returns no values. PUBLIC/anon revoked, authenticated execution granted.
+- Legacy `approve_project_request` and `raise_project_request` now require the creation entitlement before their existing behavior, so their SECURITY DEFINER paths cannot bypass the new restriction. Pending requests are untouched. Allowed new creators bypass approval entirely via `create_project`; old approval readers/decision rules remain.
+- New Project visibility calls the server helper, not a hardcoded role list. Project Creators tab uses only checked RPCs and requires Tier 1/Super. Existing Role Permissions, Phase 1 gates, Setup, reports, rates, costs, flags, jobs and reminders are unchanged.
+
 ## Phase 1 gates off — frontend only
 
 `PREPROD_GATES_ENFORCED=false` in `src/lib/phase-flags.ts` hides the pre-production checklist, Setup Approval, Factory Floor warning and GFC Setup deadline; skips their gate-only reads; and bypasses legacy Setup upload blocking plus Kanban Project Setup/H1/H2/H3 locks and requirement labels. Set true to restore the original layer. Previous-stage QC and immediate-next-stage movement stay enforced. Current workbook uploader roles and the `project_setup` module flag are untouched. No database, policies, grants, triggers, stored approval/status data, schedules or reminders change. Billing events remain server-driven: a pending `project_setup_approved` milestone does not automatically fire while the stored flag stays false.
