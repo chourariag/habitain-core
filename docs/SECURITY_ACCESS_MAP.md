@@ -1,5 +1,16 @@
 # SECURITY-1 Access Map
 
+## Project Rates — 0053–0055
+
+- `project_cost_rates` and `project_cost_rates_log`: RLS enabled, no authenticated/anonymous direct grants or policies; service role has full access. No existing policy changed.
+- Checked authenticated-only RPCs: `get_cost_rates`, `set_material_rate`, `upsert_subcontract_rate`, `deactivate_subcontract_rate`, `validate_cost_rates_upload`, `apply_cost_rates_upload`. All SECURITY DEFINER with `search_path=public`; PUBLIC/anon execution revoked. Read/validation functions are STABLE. Caller is always `auth.uid()` and must pass `can_view_running_bill`.
+- Private helpers `_cost_require_project`, `_validate_cost_subcontract`, `_cost_rate_log`, `_snapshot_report_material` have no PUBLIC, anon or authenticated execution grants. Audit triggers record material/subcontract changes made by both Setup and Rates; no Setup writer was changed.
+- `subcontract_rates.includes_material` defaults false. Its commercial direct table SELECT grant was replaced by the explicit safe metadata column list, without changing RLS; commercial readers use checked RPCs. `get_subcontract_rates` now uses the existing Running Bill commercial gate; Daily Report metadata/validation remains available through its existing safe reader.
+- Both quantity tables add `material_rate_used`, `material_amount_inr`, `material_rate_missing`, with no direct authenticated/anon SELECT grants. Site and factory checked readers omit material keys entirely when the caller cannot view Running Bill. No report-screen code changed.
+- Submit captures the current material rate once, zero amount when the matching active contractor includes material, and zero amount/missing=true when no material rate exists. Existing submitted rows stay NULL; later edits/rate changes preserve captured rates and amounts. Existing billing/subcontract/attendance calculations remain unchanged.
+- Rates tab uses existing `project_setup` flag, without changing its value. Excel key is project+sno on latest `project_boq` version, with read-only description/unit/location checked server-side and version checked again at Confirm. Inactive rates remain inactive on import.
+- No material cost columns, rates or new tables were added to nightly exports. No flags, cron, schedules, reminders, roles or accounts changed.
+
 ## Live inspection
 
 Inspected live public policies, active profile role coverage, storage bucket configuration, scanner findings and source references. Migration 0033 applied: 11 mapped open policies scoped and backed up; WIP isolated. No account, role, flag, scheduler, or storage configuration changes.

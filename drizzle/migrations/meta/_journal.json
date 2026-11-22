@@ -372,6 +372,27 @@
       "when": 1795339012240,
       "tag": "0052_site_overview_last_update_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "7",
+      "when": 1795340566180,
+      "tag": "0053_project_cost_rates",
+      "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1795340601350,
+      "tag": "0054_submit_material_cost_snapshots",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1795341122188,
+      "tag": "0055_cost_rate_import_and_included_snapshot_semantics",
+      "breakpoints": true
     }
   ]
 }

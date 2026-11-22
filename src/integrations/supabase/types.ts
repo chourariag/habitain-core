@@ -4425,6 +4425,9 @@ export type Database = {
           created_by: string
           id: string
           is_archived: boolean
+          material_amount_inr: number | null
+          material_rate_missing: boolean | null
+          material_rate_used: number | null
           module_id: string
           rate_id: string | null
           rate_used: number | null
@@ -4444,6 +4447,9 @@ export type Database = {
           created_by?: string
           id?: string
           is_archived?: boolean
+          material_amount_inr?: number | null
+          material_rate_missing?: boolean | null
+          material_rate_used?: number | null
           module_id: string
           rate_id?: string | null
           rate_used?: number | null
@@ -4463,6 +4469,9 @@ export type Database = {
           created_by?: string
           id?: string
           is_archived?: boolean
+          material_amount_inr?: number | null
+          material_rate_missing?: boolean | null
+          material_rate_used?: number | null
           module_id?: string
           rate_id?: string | null
           rate_used?: number | null
@@ -9870,6 +9879,123 @@ export type Database = {
           },
         ]
       }
+      project_cost_rates: {
+        Row: {
+          boq_item_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_archived: boolean
+          material_rate_inr: number
+          project_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          boq_item_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          material_rate_inr: number
+          project_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          boq_item_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_archived?: boolean
+          material_rate_inr?: number
+          project_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_cost_rates_boq_item_id_fkey"
+            columns: ["boq_item_id"]
+            isOneToOne: false
+            referencedRelation: "project_boq_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_cost_rates_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_cost_rates_log: {
+        Row: {
+          boq_item_id: string | null
+          changed_at: string
+          changed_by: string
+          created_at: string
+          created_by: string | null
+          field: string
+          id: string
+          is_archived: boolean
+          new_value: Json | null
+          old_value: Json | null
+          project_id: string
+          subcontract_rate_id: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          boq_item_id?: string | null
+          changed_at?: string
+          changed_by?: string
+          created_at?: string
+          created_by?: string | null
+          field: string
+          id?: string
+          is_archived?: boolean
+          new_value?: Json | null
+          old_value?: Json | null
+          project_id: string
+          subcontract_rate_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          boq_item_id?: string | null
+          changed_at?: string
+          changed_by?: string
+          created_at?: string
+          created_by?: string | null
+          field?: string
+          id?: string
+          is_archived?: boolean
+          new_value?: Json | null
+          old_value?: Json | null
+          project_id?: string
+          subcontract_rate_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_cost_rates_log_boq_item_id_fkey"
+            columns: ["boq_item_id"]
+            isOneToOne: false
+            referencedRelation: "project_boq_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_cost_rates_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_design_files: {
         Row: {
           budget_discussed: boolean
@@ -14924,6 +15050,9 @@ export type Database = {
           created_by: string | null
           extra_work_description: string | null
           id: string
+          material_amount_inr: number | null
+          material_rate_missing: boolean | null
+          material_rate_used: number | null
           project_id: string
           rate_id: string | null
           rate_used: number | null
@@ -14942,6 +15071,9 @@ export type Database = {
           created_by?: string | null
           extra_work_description?: string | null
           id?: string
+          material_amount_inr?: number | null
+          material_rate_missing?: boolean | null
+          material_rate_used?: number | null
           project_id: string
           rate_id?: string | null
           rate_used?: number | null
@@ -14960,6 +15092,9 @@ export type Database = {
           created_by?: string | null
           extra_work_description?: string | null
           id?: string
+          material_amount_inr?: number | null
+          material_rate_missing?: boolean | null
+          material_rate_used?: number | null
           project_id?: string
           rate_id?: string | null
           rate_used?: number | null
@@ -15680,6 +15815,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          includes_material: boolean
           is_active: boolean
           lump_sum_inr: number | null
           package_qty: number | null
@@ -15697,6 +15833,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          includes_material?: boolean
           is_active?: boolean
           lump_sum_inr?: number | null
           package_qty?: number | null
@@ -15714,6 +15851,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          includes_material?: boolean
           is_active?: boolean
           lump_sum_inr?: number | null
           package_qty?: number | null
@@ -17894,6 +18032,10 @@ export type Database = {
       }
     }
     Functions: {
+      _cost_require_project: {
+        Args: { p_boq_item_id?: string; p_project_id: string }
+        Returns: undefined
+      }
       _cpt_validate: { Args: { _token: string }; Returns: string }
       _elevation_log: {
         Args: { _e: string; _f: string; _n: string; _o: string; _p: string }
@@ -17925,6 +18067,21 @@ export type Database = {
       }
       _site_report_validate_task_workers: {
         Args: { p_report_id: string }
+        Returns: undefined
+      }
+      _snapshot_report_material: {
+        Args: { p_factory: boolean; p_report_id: string }
+        Returns: undefined
+      }
+      _validate_cost_subcontract: {
+        Args: {
+          p_contractor_id: string
+          p_lump: number
+          p_package: number
+          p_rate: number
+          p_type: string
+          p_unit: string
+        }
         Returns: undefined
       }
       acknowledge_reminder: { Args: { p_id: string }; Returns: undefined }
@@ -18003,6 +18160,10 @@ export type Database = {
         Returns: undefined
       }
       amc_followup_daily_reminders: { Args: never; Returns: undefined }
+      apply_cost_rates_upload: {
+        Args: { p_boq_id: string; p_project_id: string; p_rows: Json }
+        Returns: Json
+      }
       apply_record_edit: {
         Args: {
           _changes: Json
@@ -18289,6 +18450,10 @@ export type Database = {
         Returns: string
       }
       cv_alert_overdue_commitments: { Args: never; Returns: number }
+      deactivate_subcontract_rate: {
+        Args: { p_project_id: string; p_rate_id: string }
+        Returns: undefined
+      }
       escalate_foundation_issues: {
         Args: { p_project_id: string }
         Returns: number
@@ -18383,6 +18548,7 @@ export type Database = {
           work_order_id: string
         }[]
       }
+      get_cost_rates: { Args: { p_project_id: string }; Returns: Json }
       get_design_stages_by_portal_token: {
         Args: { _token: string }
         Returns: {
@@ -18862,6 +19028,10 @@ export type Database = {
         Returns: boolean
       }
       set_labour_standard_hours: { Args: { p_hours: number }; Returns: number }
+      set_material_rate: {
+        Args: { p_boq_item_id: string; p_project_id: string; p_rate: number }
+        Returns: undefined
+      }
       site_report_today: { Args: never; Returns: string }
       site_schedule_dispatch_reminders: { Args: never; Returns: number }
       storage_object_project_allowed: {
@@ -18950,6 +19120,20 @@ export type Database = {
         }
         Returns: string
       }
+      upsert_subcontract_rate: {
+        Args: {
+          p_active?: boolean
+          p_boq_item_id: string
+          p_contractor_id: string
+          p_includes_material?: boolean
+          p_lump_sum?: number
+          p_package_qty?: number
+          p_project_id: string
+          p_rate?: number
+          p_rate_type: string
+        }
+        Returns: string
+      }
       user_can_access_project: {
         Args: { _project_id: string; _uid: string }
         Returns: boolean
@@ -18968,6 +19152,10 @@ export type Database = {
       user_is_project_participant: {
         Args: { _project_id: string; _uid: string }
         Returns: boolean
+      }
+      validate_cost_rates_upload: {
+        Args: { p_project_id: string; p_rows: Json }
+        Returns: Json
       }
       validate_subcontract_rates: {
         Args: { p_file_boq_snos?: Json; p_project_id: string; p_rows: Json }

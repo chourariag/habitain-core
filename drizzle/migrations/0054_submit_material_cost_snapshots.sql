@@ -1,0 +1,26 @@
+ALTER TABLE public.site_report_quantities ADD COLUMN material_rate_used numeric,ADD COLUMN material_amount_inr numeric,ADD COLUMN material_rate_missing boolean;
+ALTER TABLE public.factory_report_quantities ADD COLUMN material_rate_used numeric,ADD COLUMN material_amount_inr numeric,ADD COLUMN material_rate_missing boolean;
+REVOKE SELECT(material_rate_used,material_amount_inr,material_rate_missing) ON public.site_report_quantities,public.factory_report_quantities FROM anon,authenticated;
+CREATE FUNCTION public._snapshot_report_material(p_report_id uuid,p_factory boolean) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $$ DECLARE submitted timestamptz; pid uuid; BEGIN
+IF p_factory THEN SELECT submitted_at INTO submitted FROM public.factory_daily_reports WHERE id=p_report_id; IF NOT public.can_write_factory(auth.uid()) THEN RAISE EXCEPTION 'Not authorized' USING ERRCODE='42501'; END IF;
+WITH candidates AS(SELECT q.id,q.today_qty,r.material_rate_inr,coalesce(s.includes_material,false) included FROM public.factory_report_quantities q JOIN public.project_boq_items b ON b.id=q.boq_item_id JOIN public.project_boq h ON h.id=b.boq_id LEFT JOIN public.project_cost_rates r ON r.project_id=h.project_id AND r.boq_item_id=b.id AND NOT r.is_archived LEFT JOIN public.subcontract_rates s ON s.project_id=h.project_id AND s.boq_item_id=b.id AND s.contractor_id=q.contractor_id AND s.is_active WHERE q.report_id=p_report_id AND q.today_qty>0 AND NOT q.is_archived AND q.material_rate_missing IS NULL AND (submitted IS NULL OR q.created_at>submitted)) UPDATE public.factory_report_quantities q SET material_rate_used=CASE WHEN c.included THEN 0 ELSE c.material_rate_inr END,material_amount_inr=CASE WHEN c.included THEN 0 ELSE c.today_qty*coalesce(c.material_rate_inr,0) END,material_rate_missing=NOT c.included AND c.material_rate_inr IS NULL FROM candidates c WHERE q.id=c.id;
+ELSE SELECT submitted_at,project_id INTO submitted,pid FROM public.daily_measurements WHERE id=p_report_id AND trade='daily_site_report'; IF pid IS NULL OR NOT public.can_write_site_report(auth.uid(),pid) THEN RAISE EXCEPTION 'Not authorized' USING ERRCODE='42501'; END IF;
+WITH candidates AS(SELECT q.id,q.today_qty,r.material_rate_inr,coalesce(s.includes_material,false) included FROM public.site_report_quantities q LEFT JOIN public.project_cost_rates r ON r.project_id=pid AND r.boq_item_id=q.boq_item_id AND NOT r.is_archived LEFT JOIN public.subcontract_rates s ON s.project_id=pid AND s.boq_item_id=q.boq_item_id AND s.contractor_id=q.contractor_id AND s.is_active WHERE q.report_id=p_report_id AND q.boq_item_id IS NOT NULL AND q.today_qty>0 AND q.material_rate_missing IS NULL AND (submitted IS NULL OR q.created_at>submitted)) UPDATE public.site_report_quantities q SET material_rate_used=CASE WHEN c.included THEN 0 ELSE c.material_rate_inr END,material_amount_inr=CASE WHEN c.included THEN 0 ELSE c.today_qty*coalesce(c.material_rate_inr,0) END,material_rate_missing=NOT c.included AND c.material_rate_inr IS NULL FROM candidates c WHERE q.id=c.id;
+END IF; END $$;
+REVOKE ALL ON FUNCTION public._snapshot_report_material(uuid,boolean) FROM PUBLIC,anon,authenticated;
+DO $patch$ DECLARE d text; anchor text; BEGIN
+ d:=pg_get_functiondef('public.submit_site_report(uuid)'::regprocedure); anchor:=E'UPDATE public.daily_measurements SET\n    report_status=';
+ IF position(anchor IN d)=0 THEN RAISE EXCEPTION 'Site submit anchor missing'; END IF;
+ EXECUTE replace(d,anchor,'PERFORM public._snapshot_report_material(r.id,false); '||anchor);
+ d:=pg_get_functiondef('public.submit_factory_report(uuid)'::regprocedure); anchor:='UPDATE public.factory_daily_reports SET status=';
+ IF position(anchor IN d)=0 THEN RAISE EXCEPTION 'Factory submit anchor missing'; END IF;
+ EXECUTE replace(d,anchor,'PERFORM public._snapshot_report_material(r.id,true); '||anchor);
+ d:=pg_get_functiondef('public.get_site_report(uuid,date)'::regprocedure); anchor:='''amount_inr'',amount_inr) ELSE';
+ IF position(anchor IN d)=0 THEN RAISE EXCEPTION 'Site reader anchor missing'; END IF;
+ EXECUTE replace(d,anchor,'''amount_inr'',amount_inr,''material_rate_used'',material_rate_used,''material_amount_inr'',material_amount_inr,''material_rate_missing'',material_rate_missing) ELSE');
+ d:=pg_get_functiondef('public.get_factory_report(date)'::regprocedure); anchor:='''remarks'',q.remarks)) FROM public.factory_report_quantities';
+ IF position(anchor IN d)=0 THEN RAISE EXCEPTION 'Factory reader anchor missing'; END IF;
+ EXECUTE replace(d,anchor,'''remarks'',q.remarks)||CASE WHEN public.can_view_running_bill(auth.uid()) THEN jsonb_build_object(''material_rate_used'',q.material_rate_used,''material_amount_inr'',q.material_amount_inr,''material_rate_missing'',q.material_rate_missing) ELSE ''{}''::jsonb END) FROM public.factory_report_quantities');
+END $patch$;
+COMMENT ON COLUMN public.site_report_quantities.material_rate_missing IS 'NULL = legacy or not captured. First-submit snapshots are never refreshed by report corrections.';
+COMMENT ON COLUMN public.factory_report_quantities.material_rate_missing IS 'NULL = legacy or not captured. First-submit snapshots are never refreshed by report corrections.';
