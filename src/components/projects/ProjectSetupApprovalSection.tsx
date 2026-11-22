@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle2, XCircle, Loader2, ShieldCheck } from "lucide-react";
 import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
+import { PREPROD_GATES_ENFORCED } from "@/lib/phase-flags";
 
 interface Props {
   projectId: string;
@@ -46,6 +47,10 @@ function statusBadge(s: string) {
 }
 
 export function ProjectSetupApprovalSection({ projectId, projectName, userRole, setupUploadedAt, onApproved }: Props) {
+  return PREPROD_GATES_ENFORCED ? <EnforcedProjectSetupApprovalSection projectId={projectId} projectName={projectName} userRole={userRole} setupUploadedAt={setupUploadedAt} onApproved={onApproved} /> : null;
+}
+
+function EnforcedProjectSetupApprovalSection({ projectId, projectName, userRole, setupUploadedAt, onApproved }: Props) {
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [projectApproved, setProjectApproved] = useState<boolean>(false);
   const [projectStatus, setProjectStatus] = useState<string>("not_submitted");

@@ -10,6 +10,7 @@ import { isAdsDivision, ADS_REQUIRED_GATES } from "@/lib/project-type";
 import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useProjectArchitect, ARCHITECT_OWNED_GATES } from "@/hooks/useProjectArchitect";
+import { PREPROD_GATES_ENFORCED } from "@/lib/phase-flags";
 
 
 // C-3 (Sale Agreement) + C-4 (Scope of Work) are combined into one row: "sale_scope"
@@ -94,6 +95,7 @@ export async function fetchPreProdGates(projectId: string, pipeline: "habitainer
 export function usePreProdGates(projectId: string, pipeline: "habitainer" | "ads" = "habitainer") {
   const [gates, setGates] = useState<GateInfo[] | null>(null);
   useEffect(() => {
+    if (!PREPROD_GATES_ENFORCED) return;
     let cancelled = false;
     const load = () => fetchPreProdGates(projectId, pipeline).then(g => { if (!cancelled) setGates(g); });
     load();
@@ -126,6 +128,10 @@ export function gateLink(projectId: string, code: string) {
 }
 
 export function PreProductionChecklist({ projectId, division }: { projectId: string; division?: string | null }) {
+  return PREPROD_GATES_ENFORCED ? <EnforcedPreProductionChecklist projectId={projectId} division={division} /> : null;
+}
+
+function EnforcedPreProductionChecklist({ projectId, division }: { projectId: string; division?: string | null }) {
   const isAds = isAdsDivision(division);
   const pipeline: "habitainer" | "ads" = isAds ? "ads" : "habitainer";
   const { gates, completedCount, total, allComplete, loading } = usePreProdGates(projectId, pipeline);

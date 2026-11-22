@@ -2,6 +2,8 @@
 // Maps a stage name to the GFC sign-off it requires (H1 / H2 / H3),
 // and evaluates whether a stage can be started for a given project/module.
 
+import { PREPROD_GATES_ENFORCED } from "@/lib/phase-flags";
+
 export type GfcGate = "H1" | "H2" | "H3" | null;
 
 /** Map a free-form stage name to the GFC drawing approval it requires. */
@@ -45,7 +47,7 @@ export interface GateResult {
 /** Evaluate all gates for advancing a module into `targetStage`. */
 export function evaluateStageGate(targetStage: string, ctx: GateContext): GateResult {
   // Gate 5 — Project Setup approved
-  if (!ctx.projectSetupApproved) {
+  if (PREPROD_GATES_ENFORCED && !ctx.projectSetupApproved) {
     return {
       allowed: false,
       reason: "Project Setup not yet approved by Planning Head and Head of Projects.",
@@ -54,7 +56,7 @@ export function evaluateStageGate(targetStage: string, ctx: GateContext): GateRe
 
   // Gate 1/2/3 — GFC drawings
   const need = requiredGfcForStage(targetStage);
-  if (need && !ctx.approvedGfc.has(need)) {
+  if (PREPROD_GATES_ENFORCED && need && !ctx.approvedGfc.has(need)) {
     const who =
       need === "H3"
         ? " by Principal Architect"

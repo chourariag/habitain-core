@@ -1,5 +1,11 @@
 # SECURITY-1 Access Map
 
+## Phase 1 gates off — frontend only
+
+`PREPROD_GATES_ENFORCED=false` in `src/lib/phase-flags.ts` hides the pre-production checklist, Setup Approval, Factory Floor warning and GFC Setup deadline; skips their gate-only reads; and bypasses legacy Setup upload blocking plus Kanban Project Setup/H1/H2/H3 locks and requirement labels. Set true to restore the original layer. Previous-stage QC and immediate-next-stage movement stay enforced. Current workbook uploader roles and the `project_setup` module flag are untouched. No database, policies, grants, triggers, stored approval/status data, schedules or reminders change. Billing events remain server-driven: a pending `project_setup_approved` milestone does not automatically fire while the stored flag stays false.
+
+Live inspection also found the enabled `trg_modules_stage_gate_guard` on modules and Setup-dependent GFC/drawing/storage read policies. These cannot follow a frontend constant and remain enforced. The user explicitly confirmed frontend-only scope after this limitation was reported. The switch restores/bypasses the screen layer only, not database stage restrictions. Full evidence: `docs/PHASE1_GATES_OFF_CONFIRM.md`.
+
 ## PROJ-LOC — 0058–0062
 
 - `get_project_client_contact(uuid)` and `get_project_request_client_contact(uuid)` are STABLE SECURITY DEFINER, `search_path=public`, PUBLIC/anon revoked, authenticated execution granted; only `is_tier1_or_super(auth.uid())` can receive contact rows. Other authenticated callers receive no row.

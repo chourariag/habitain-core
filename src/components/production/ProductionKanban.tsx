@@ -7,6 +7,7 @@ import { getStagesForSystem, type ProductionSystem } from "@/lib/production-syst
 import { evaluateStageGate, requiredGfcForStage, type GateContext } from "@/lib/stage-gates";
 import { StageWastageDialog, type WastagePayload } from "./StageWastageDialog";
 import { Lock } from "lucide-react";
+import { PREPROD_GATES_ENFORCED } from "@/lib/phase-flags";
 
 type ModuleWithProject = Tables<"modules"> & { projects: { name: string } | null };
 
@@ -74,6 +75,7 @@ export function ProductionKanban({ modules, onRefresh, productionSystem }: Props
   }, [moduleIds.join(",")]);
 
   useEffect(() => {
+    if (!PREPROD_GATES_ENFORCED) return;
     if (projectIds.length === 0) { setGfcByProject({}); setSetupByProject({}); return; }
     supabase
       .from("gfc_records")
@@ -266,7 +268,7 @@ export function ProductionKanban({ modules, onRefresh, productionSystem }: Props
         <div className="flex gap-3 min-w-max">
           {grouped.map(({ stage, items }) => {
             const lockReason = columnLockReason(stage, items);
-            const need = requiredGfcForStage(stage);
+            const need = PREPROD_GATES_ENFORCED ? requiredGfcForStage(stage) : null;
             return (
               <div
                 key={stage}

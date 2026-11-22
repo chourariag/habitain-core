@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { usePreProdGates } from "@/components/projects/PreProductionChecklist";
 import GfcSetupDeadlineBanner from "@/components/projects/GfcSetupDeadlineBanner";
+import { PREPROD_GATES_ENFORCED } from "@/lib/phase-flags";
 
 interface Props {
   projectId: string;
@@ -365,7 +366,7 @@ function injectVaishnaviBoqOnSite(ws: ExcelJS.Worksheet, startRow?: number) {
 export function ProjectSetupUpload({ projectId, userRole, productionSystem, projectType, onImported }: Props) {
   const isAdsProject = (projectType ?? "").toLowerCase().startsWith("ads");
   const { setupReady } = usePreProdGates(projectId);
-  const uploadBlocked = !isAdsProject && !setupReady;
+  const uploadBlocked = PREPROD_GATES_ENFORCED && !isAdsProject && !setupReady;
   const canCheckCapacity = ["super_admin", ...TIER1_ROLES, "production_head", "head_operations", "planning_engineer"].includes(userRole || "");
   const fileRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();

@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Clock, CheckCircle2 } from "lucide-react";
+import { PREPROD_GATES_ENFORCED } from "@/lib/phase-flags";
 
 interface Props { projectId: string; }
 
 export default function GfcSetupDeadlineBanner({ projectId }: Props) {
+  return PREPROD_GATES_ENFORCED ? <EnforcedGfcSetupDeadlineBanner projectId={projectId} /> : null;
+}
+
+function EnforcedGfcSetupDeadlineBanner({ projectId }: Props) {
   const [approvedAt, setApprovedAt] = useState<string | null>(null);
   const [, setTick] = useState(0);
 

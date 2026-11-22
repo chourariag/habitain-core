@@ -34,6 +34,7 @@ import { PreProductionChecklist } from "@/components/projects/PreProductionCheck
 import { ProjectArchitectCard } from "@/components/projects/ProjectArchitectCard";
 import { ProjectLocationContact } from "@/components/projects/ProjectLocationContact";
 import { PROJECT_PUBLIC_SELECT } from "@/lib/project-location";
+import { PREPROD_GATES_ENFORCED } from "@/lib/phase-flags";
 
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { isAdsProject } from "@/lib/project-type";
@@ -215,13 +216,13 @@ export default function ProjectDetail() {
 
       <ProjectArchitectCard projectId={id!} userRole={userRole} />
 
-      <PreProductionChecklist projectId={id!} division={proj.division ?? null} />
+      {PREPROD_GATES_ENFORCED && <PreProductionChecklist projectId={project.id} division={proj.division ?? null} />}
 
       {LEGACY_PROJECT_SETUP_UPLOAD_VISIBLE && !isAds && flags.isEnabled("project_setup") && (
         <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} projectType={proj.division ?? null} onImported={fetchData} />
       )}
 
-      {!isAds && flags.isEnabled("project_setup") && (
+      {PREPROD_GATES_ENFORCED && !isAds && flags.isEnabled("project_setup") && (
         <ProjectSetupApprovalSection
           projectId={id!}
           projectName={project.name}

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { REQUIRED_GATES } from "@/components/projects/PreProductionChecklist";
+import { PREPROD_GATES_ENFORCED } from "@/lib/phase-flags";
 
 type BlockedProj = { id: string; name: string; missing: number };
 
@@ -12,6 +13,10 @@ type BlockedProj = { id: string; name: string; missing: number };
  * incomplete. Read-only; surface only — does not prevent navigation.
  */
 export function FactoryFloorPreProdBanner() {
+  return PREPROD_GATES_ENFORCED ? <EnforcedFactoryFloorPreProdBanner /> : null;
+}
+
+function EnforcedFactoryFloorPreProdBanner() {
   const [projects, setProjects] = useState<BlockedProj[]>([]);
 
   useEffect(() => {
