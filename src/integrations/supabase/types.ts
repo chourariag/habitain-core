@@ -18188,6 +18188,7 @@ export type Database = {
       can_view_profile_pii: { Args: { _user_id: string }; Returns: boolean }
       can_view_quotations: { Args: { _user_id: string }; Returns: boolean }
       can_view_running_bill: { Args: { _uid: string }; Returns: boolean }
+      can_view_site_overview: { Args: { _uid: string }; Returns: boolean }
       can_view_work_orders: { Args: { _user_id: string }; Returns: boolean }
       can_write_factory: { Args: { _uid: string }; Returns: boolean }
       can_write_site_readiness: { Args: { _uid: string }; Returns: boolean }
@@ -18698,6 +18699,7 @@ export type Database = {
         }[]
       }
       get_scope_signoff_by_token: { Args: { p_token: string }; Returns: Json }
+      get_site_overview: { Args: { p_date: string }; Returns: Json }
       get_site_report: {
         Args: { p_date: string; p_project_id: string }
         Returns: Json

@@ -46,13 +46,16 @@ import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { featureFlagForSiteTab } from "@/lib/feature-flags";
 import { DailySiteReport } from "@/components/site/DailySiteReport";
 import { ClipboardList } from "lucide-react";
+import { SiteTodayOverview } from "@/components/site/SiteTodayOverview";
+import { canOpenSiteOverview } from "@/lib/site-overview";
 
 function SiteHubContent() {
   const featureFlags = useFeatureFlags();
   const navigate = useNavigate();
   const location = useLocation();
   const { selectedProjectId, selectedProject } = useProjectContext();
-  const { userId } = useUserRole();
+  const { userId, role: overviewRole } = useUserRole();
+  const showToday = featureFlags.isEnabled("site_report") && canOpenSiteOverview(overviewRole);
   const [modules, setModules] = useState<Tables<"modules">[]>([]);
   const [panelsByModule, setPanelsByModule] = useState<Record<string, any[]>>({});
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -65,9 +68,10 @@ function SiteHubContent() {
   // Dispatch Pipeline tab is hidden (code kept); ?tab=pipeline links land on Site Readiness.
   // Default: Daily Report when enabled, otherwise Site Readiness.
   const resolveTab = (search: string) => {
-    const fallback = featureFlags.isEnabled("site_report") ? "daily-report" : "site-readiness";
+    const fallback = showToday ? "today" : featureFlags.isEnabled("site_report") ? "daily-report" : "site-readiness";
     const raw = new URLSearchParams(search).get("tab");
     const requested = raw === "pipeline" ? "site-readiness" : raw ?? fallback;
+    if (requested === "today" && !showToday) return fallback;
     const requiredFlag = featureFlagForSiteTab(requested);
     return requiredFlag && !featureFlags.isEnabled(requiredFlag) ? fallback : requested;
   };
@@ -76,7 +80,7 @@ function SiteHubContent() {
   useEffect(() => {
     setActiveTab(resolveTab(location.search));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search, featureFlags.flags]);
+  }, [location.search, featureFlags.flags, overviewRole]);
 
   const fetchData = useCallback(async () => {
     if (!selectedProjectId) return;
@@ -204,7 +208,7 @@ function SiteHubContent() {
   );
 
   // Keep the report mounted during project refresh so it can await its old-scope autosave.
-  if (loading && activeTab !== "daily-report") {
+  if (loading && activeTab !== "daily-report" && activeTab !== "today") {
     return <div className="flex justify-center items-center py-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
   }
 
@@ -212,23 +216,23 @@ function SiteHubContent() {
 
   return (
     <div className="space-y-0">
-      <MobileProjectSwitcher label="Project" />
+      {activeTab !== "today" && <MobileProjectSwitcher label="Project" />}
       <div className="p-4 md:p-6 space-y-6">
-      {selectedProjectId && selectedProject && (
+      {activeTab !== "today" && selectedProjectId && selectedProject && (
         <ProjectChatButton projectId={selectedProjectId} projectName={selectedProject.name} projectType="production" />
       )}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "#1A1A1A" }}>Site Hub</h1>
-          <p className="text-sm mt-1">
+          {activeTab === "today" ? <p className="mt-1 text-sm text-muted-foreground">Today · Sites & Factory</p> : <p className="text-sm mt-1">
             <span className="font-bold" style={{ color: "#006039" }}>{selectedProject?.name}</span>
             <span style={{ color: "#666666" }}> — Dispatch-to-handover workflows</span>
-          </p>
+          </p>}
         </div>
-        <Badge variant="outline" style={badgeStyle(summary.tone)}>{summary.label}</Badge>
+        {activeTab !== "today" && <Badge variant="outline" style={badgeStyle(summary.tone)}>{summary.label}</Badge>}
       </div>
 
-      {canRequestAdvance && selectedProjectId && (
+      {activeTab !== "today" && canRequestAdvance && selectedProjectId && (
         <Button
           variant="outline"
           size="sm"
@@ -240,9 +244,10 @@ function SiteHubContent() {
       )}
 
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={tab => { setActiveTab(tab); const params = new URLSearchParams(location.search); params.set("tab", tab); navigate({ search: params.toString() }, { replace: true }); }} className="space-y-4">
         <ScrollableTabsWrapper>
           <TabsList>
+            {showToday && <TabsTrigger value="today" className="min-h-11 gap-1.5"><CalendarDays className="h-4 w-4" /> Today</TabsTrigger>}
             {featureFlags.isEnabled("site_report") && <TabsTrigger value="daily-report" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Daily Report</TabsTrigger>}
             <TabsTrigger value="site-readiness" className="gap-1.5"><ClipboardCheck className="h-4 w-4" /> Site Readiness</TabsTrigger>
             <TabsTrigger value="schedule" className="gap-1.5"><CalendarDays className="h-4 w-4" /> Schedule</TabsTrigger>
@@ -260,6 +265,7 @@ function SiteHubContent() {
           </TabsList>
         </ScrollableTabsWrapper>
 
+        {showToday && <TabsContent value="today"><SiteTodayOverview /></TabsContent>}
         <TabsContent value="site-readiness" className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <ClipboardCheck className="h-5 w-5 shrink-0" style={{ color: siteReady ? "#006039" : "#D4860A" }} />
@@ -486,6 +492,13 @@ function SiteHubContent() {
 }
 
 export default function SiteHub() {
+  const { role } = useUserRole();
+  const flags = useFeatureFlags();
+  const location = useLocation();
+  const requested = new URLSearchParams(location.search).get("tab");
+  if ((!requested || requested === "today") && flags.isEnabled("site_report") && canOpenSiteOverview(role)) {
+    return <SiteHubContent />;
+  }
   return (
     <ProjectScopeGuard>
       <SiteHubContent />

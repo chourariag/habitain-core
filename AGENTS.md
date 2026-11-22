@@ -35,3 +35,4 @@
 - New factory role gates read caller-bound user_roles, not legacy profile role mirrors; monetary snapshots have no direct authenticated column grants and cost access uses checked RPCs.
 - Running Bill unions submitted site/factory quantities before the existing positive-BOQ cap, while factory labour remains a separate exact-allocation section and legacy site cost CTEs remain unchanged.
 - Factory nightly exports use the shared versioned manifest with operational attendance hours only, excluding worker wage amounts and rate fields, so private cost snapshots never enter factory CSV projections.
+- Today is a company-wide read-only Site Hub exception to project selection, using the existing site_report flag and a caller-bound overview RPC; existing project tabs retain their guard and permitted costs are aggregate-only.

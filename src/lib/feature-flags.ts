@@ -104,6 +104,7 @@ export const FEATURE_FLAG_BY_MODULE: Record<string, string> = {
 };
 
 const SITE_TAB_FLAGS: Record<string, string> = {
+  today: "site_report",
   drawings: "gfc",
   handover: "dispatch",
   "client-visits": "sales",

@@ -18,6 +18,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { featureFlagForModule } from "@/lib/feature-flags";
 import { LABOUR_DIRECTORY_VIEW_ROLES } from "@/lib/labour-rules";
+import { canOpenSiteOverview } from "@/lib/site-overview";
 
 type Tab = {
   to: string;
@@ -82,12 +83,12 @@ export function MobileNav() {
     if (t.featureFlag && !featureFlags.isEnabled(t.featureFlag)) return false;
     if (t.module) {
       const moduleFlag = featureFlagForModule(t.module);
-      return (!moduleFlag || featureFlags.isEnabled(moduleFlag)) && canView(t.module);
+      return (!moduleFlag || featureFlags.isEnabled(moduleFlag)) && (canView(t.module) || (t.module === "site" && t.to.startsWith("/site-hub") && canOpenSiteOverview(userRole)));
     }
     if (t.alwaysVisible) return true;
     if (t.roles) return userRole ? t.roles.includes(userRole) : false;
     return canSeeSection(userRole, t.section);
-  });
+  }).map(tab => tab.to.startsWith("/site-hub") && canOpenSiteOverview(userRole) ? { ...tab, to: "/site-hub?tab=today" } : tab);
   const primaryTabs = primaryPaths
     .map((path) => visibleTabs.find((tab) => tab.to.split("?")[0] === path))
     .filter((tab): tab is Tab => Boolean(tab));

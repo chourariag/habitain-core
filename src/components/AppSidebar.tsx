@@ -26,6 +26,7 @@ import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { featureFlagForModule } from "@/lib/feature-flags";
 import { LABOUR_DIRECTORY_VIEW_ROLES } from "@/lib/labour-rules";
 import { FACTORY_WRITE_ROLES, FACTORY_READ_ROLES } from "@/lib/factory-report";
+import { canOpenSiteOverview } from "@/lib/site-overview";
 
 type NavItem = { to: string; labelKey: string; icon: any; roles?: string[]; section: string; alwaysVisible?: boolean; module?: ModuleKey; featureFlag?: string; requireAdminPanel?: boolean; requireEmployeeManagement?: boolean };
 type NavSection = { key: string; labelKey?: string; items: NavItem[]; group?: "altree" };
@@ -160,7 +161,7 @@ export function AppSidebar() {
           const moduleFlag = featureFlagForModule(it.module);
           return (!it.featureFlag || featureFlags.isEnabled(it.featureFlag))
             && (!moduleFlag || featureFlags.isEnabled(moduleFlag))
-            && canView(it.module);
+            && (canView(it.module) || (it.to === "/site-hub" && canOpenSiteOverview(userRole)));
         }
         const sectionOk = it.alwaysVisible || canSeeSection(userRole, it.section);
         const roleOk = !it.roles || (userRole && it.roles.includes(userRole));

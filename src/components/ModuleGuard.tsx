@@ -6,6 +6,7 @@ import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { featureFlagForModule, featureFlagForSiteTab } from "@/lib/feature-flags";
 import type { ModuleKey } from "@/lib/rbac-matrix";
 import { Loader2 } from "lucide-react";
+import { canOpenSiteOverview } from "@/lib/site-overview";
 
 /**
  * Redirects to /dashboard when the current role has NONE access for the given module.
@@ -55,7 +56,12 @@ export function ModuleGuard({
   if (requireRoles && (!role || !(requireRoles.includes(role) || (requireRoles.includes("managing_director") && isTier1(role))))) {
     return <Navigate to="/dashboard" replace />;
   }
-  if (module && !canView(module)) {
+  const siteTab = new URLSearchParams(location.search).get("tab");
+  const overviewEntry = location.pathname === "/site-hub" && (!siteTab || siteTab === "today");
+  if (siteTab === "today" && location.pathname === "/site-hub" && !canOpenSiteOverview(role)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  if (module && !canView(module) && !(overviewEntry && canOpenSiteOverview(role))) {
     return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
