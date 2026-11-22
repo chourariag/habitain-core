@@ -259,7 +259,19 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const mode = url.searchParams.get("mode") ?? "daily";
+    let mode = url.searchParams.get("mode");
+    if (mode === null && req.method !== "GET" && req.method !== "HEAD") {
+      const body: unknown = await req.json().catch(() => null);
+      if (body && typeof body === "object" && "mode" in body) {
+        const bodyMode = (body as { mode: unknown }).mode;
+        if (bodyMode !== "daily" && bodyMode !== "weekly") {
+          return new Response(JSON.stringify({ error: "mode must be daily or weekly" }), {
+            status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        mode = bodyMode;
+      }
+    }
     const userId = url.searchParams.get("user_id");
     const today = new Date().toISOString().slice(0, 10);
 

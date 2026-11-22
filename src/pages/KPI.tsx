@@ -13,10 +13,9 @@ import {
 import { KPIScorecard } from "@/components/kpi/KPIScorecard";
 import { KpiOverviewGrid } from "@/components/kpi/KpiOverviewGrid";
 import { MdNotePanel } from "@/components/kpi/MdNotePanel";
-import { refreshKpiForRole } from "@/lib/kpi-recompute";
 
 export default function KPI() {
-  const { role, actualRole, userId, loading: roleLoading } = useUserRole();
+  const { role, userId, loading: roleLoading } = useUserRole();
   const userRole = role as AppRole | null;
   const viewType = getKpiViewType(userRole);
   const week = getWeekRange();
@@ -28,7 +27,7 @@ export default function KPI() {
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
       {viewType === "director" ? (
-        <DirectorView week={week} callerRole={actualRole as AppRole | null} />
+        <DirectorView week={week} />
       ) : viewType === "hod" && userRole ? (
         <HODView role={userRole} week={week} />
       ) : (
@@ -39,7 +38,7 @@ export default function KPI() {
 }
 
 /* ─── Director View ─── */
-function DirectorView({ week, callerRole }: { week: ReturnType<typeof getWeekRange>; callerRole: AppRole | null }) {
+function DirectorView({ week }: { week: ReturnType<typeof getWeekRange> }) {
   const [department, setDepartment] = useState("All");
   const [profiles, setProfiles] = useState<any[]>([]);
   const [snapshots, setSnapshots] = useState<any[]>([]);
@@ -92,8 +91,6 @@ function DirectorView({ week, callerRole }: { week: ReturnType<typeof getWeekRan
 
       <KpiOverviewGrid onSelect={(id, r) => {
         setSelectedUser({ id, role: r });
-        // fire-and-forget recompute for fresh data
-        void refreshKpiForRole(callerRole).catch(() => {});
       }} />
 
       <div className="rounded-lg border border-border p-4" style={{ backgroundColor: "#F7F7F7" }}>

@@ -7,7 +7,7 @@ export async function refreshKpiForRole(role: string | null | undefined): Promis
   const { data } = await supabase.auth.getSession();
   if (!data.session) return;
   await supabase.functions.invoke("kpi-recompute", {
-    body: null,
+    body: { mode: "daily" },
     headers: { Authorization: `Bearer ${data.session.access_token}` },
   });
 }

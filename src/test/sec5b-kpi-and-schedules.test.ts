@@ -4,11 +4,11 @@ const mock = vi.hoisted(() => ({ session: vi.fn(), invoke: vi.fn() }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { auth: { getSession: mock.session }, functions: { invoke: mock.invoke } } }));
 import { refreshKpiForRole } from "@/lib/kpi-recompute";
 beforeEach(() => { vi.clearAllMocks(); mock.session.mockResolvedValue({ data: { session: { access_token: "fixture-user-token" } } }); mock.invoke.mockResolvedValue({ data: {}, error: null }); });
-describe("KPI background caller uses only Tier 1 or Super", () => {
+describe("Retained manual helper uses only Tier 1 or Super (not called by KPI page)", () => {
   for (const role of ["managing_director", "finance_director", "sales_director", "architecture_director", "super_admin"]) {
     it(`${role} refreshes with the session bearer`, async () => {
       await refreshKpiForRole(role);
-      expect(mock.invoke).toHaveBeenCalledExactlyOnceWith("kpi-recompute", { body: null, headers: { Authorization: "Bearer fixture-user-token" } });
+      expect(mock.invoke).toHaveBeenCalledExactlyOnceWith("kpi-recompute", { body: { mode: "daily" }, headers: { Authorization: "Bearer fixture-user-token" } });
     });
   }
   for (const role of [null, "chairman", "finance_manager", "planning_engineer", "quantity_surveyor", "site_engineer", "factory_floor_supervisor"]) {

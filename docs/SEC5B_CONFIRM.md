@@ -138,3 +138,44 @@ Machine mappings: dispatch-14-day-trigger → same; fixed-asset-service-reminder
 No changes to roles/accounts, RLS, storage, exports, reports, attendance, Running Bill, reminder_events, feature-flag values, other schedules or other inactive functions. No new Edge Functions, no bulk security fixes. Functions are already deployed and schedules live. Future ticks and real delivery at those future times remain unobserved, as explicitly allowed by the due-time evidence requirement. KPI page-click check is blocked only by its existing disabled flag, which was preserved.
 
 **Publish > Update** to release the KPI page caller and scheduled-job snapshot changes.
+
+
+# SEC-5b addendum — explicit KPI mode (22/11/2026)
+
+This section supersedes the earlier default-daily and page-background-call descriptions; the historical cutover and eight live denial results above remain unchanged.
+
+## Authorisation and body verification
+
+The addendum explicitly overrides the same-body restriction only for original rows 21,31,32,33,34. Managed replacements 38–42 retain `{"trigger":"scheduled"}`. Bodies remain unread in all four callback sources: auto-submit-draft-expenses index.ts:5–8 (req handler, OPTIONS, generated auth only); daily-checkin-nudge:59–62 and 139 (OPTIONS/auth/error logger); approval-rejection-dm:35–38 and 140 (OPTIONS/auth/error logger); error-attribution-dm:42–45 (OPTIONS/auth only). Shared error-log.ts:20–25 reads request URL only. Full request-body traps still pass in handler tests.
+
+## Exact KPI scheduler outcome
+
+A single KPI job already existed (ID43). To avoid creating a duplicate, the supported **update_http_schedule** tool was used rather than create_http_schedule. The requested first target `/kpi-recompute?mode=daily` was submitted with ID43, its expected name and unchanged schedule. The scheduler refused: `classic target_path must be a lowercase Edge Function name`. This attempt changed nothing.
+
+The authorised fallback was implemented and deployed: kpi-recompute index.ts:262–274 reads validated JSON `mode` only when the URL has no mode. Accepted body modes are daily/weekly; explicit URL modes take precedence; no unconditional daily default remains. The existing URL user_id path and explicit URL daily/weekly branches remain in place. Missing mode on a bare call still gives 400. Existing authentication and calculators/upsert key remain unchanged.
+
+ID43 was then updated, not recreated:
+
+| ID | Name | UTC cron before → after | Target before → after | Body before → after | Active | Credential |
+|---|---|---|---|---|---|---|
+| 43 | kpi-recompute-daily | 35 18 * * * → same | kpi-recompute → same | {"trigger":"scheduled"} → {"mode":"daily"} | true → true | Generated cron bearer, unchanged |
+
+Read-back confirms exactly one daily KPI row and **no weekly KPI row**. All other rows 21/31–42 have identical metadata to the completed cutover above. No five-job recreation, disabling or re-enabling occurred in this addendum.
+
+The query-target attempt, code deployment and job43 body update completed between 11:18:02 and 11:19:05 UTC (16:48:02–16:49:05 IST), before the 16:50–17:40 prohibited window. Later calls were read-only metadata/count checks or local tests, not schedule/deployment changes. The original cutover had completed earlier at 16:40–16:42 IST: the two nudge replacements were created and old rows disabled in the same uninterrupted change, with no wait for a nudge tick. There was no duplicate nudge tick. The earlier report transparently records the brief create-first overlap while the five tool calls finished.
+
+## Page call and tests
+
+The redundant background invocation was **removed** from KPI.tsx, including its helper import and callerRole plumbing. Selecting a scorecard now only selects the scorecard. The retained helper source is no longer imported or called by that page; its explicit JSON daily body was aligned for compatibility without deleting existing code.
+
+- Focused addendum tests: **46 passed / 0 skipped**, 3 files.
+- Full regression suite: **713 passed / 0 skipped**, 54 files; started 11:19:50 UTC, duration 72.71 seconds.
+- Five rendered KPI-page tests (all four directors and Super) click the scorecard selection and assert **zero function invocations**.
+- KPI body-daily handler test uses a tracked fixture user and metric, runs twice, asserts 2 upserts with exactly **one** snapshot key `user_id,kpi_key,period_type,period_date`, period_type daily, date 2026-11-05, and zero sends.
+- Explicit URL daily overrides a weekly body and sends no digest. Missing/null/invalid body modes return 400 with zero score writes/sends. Four notification handler body-trap/auth tests still pass, and all guard assertions run without skips.
+- Preview: build OK at 11:18:37 and 11:19:35 UTC.
+- reminder_events remains **0** at 11:21:22.846655 UTC, compared with 0 before SEC-5b; no writes were made to it.
+
+No real email, notification or DM was sent during testing. No live authorised KPI run was forced: the requested after-publishing safe call applies to the query-string branch, which was rejected, and publishing has not occurred in this turn. The fallback was verified with mocked real-handler upserts and live schedule read-back, not a live score-writing call. First natural KPI run remains due 22/11/2026 18:35 UTC (23/11/2026 00:05 IST), not yet observed. The KPI screen remains gated by the unchanged OFF flag, so hosted screen end-to-end testing remains unavailable without changing that flag.
+
+**Publish > Update** to release removal of the KPI page background call. The explicit body-mode function is already deployed and the single daily job already uses {"mode":"daily"}. No other jobs, flags, roles, accounts, policies, exports, reports or attendance were changed.

@@ -29,7 +29,7 @@
 - Account role changes use a service-only serialized, audited RPC replacing all target role rows and synchronizing the profile mirror; server grants use user_roles and protect self changes and the last active Super Admin.
 - Generated account credentials remain only in transient responses and screen state, cleared on dismissal; bulk creation exposes a CSV download without audit-log or persistent client storage copies.
 - Scoped machine functions use generated cron authentication (Tier 1/Super fallback only where intended); migrated notification callbacks are cron-only, with old schedules retained disabled to prevent duplicate delivery.
-- KPI bare-target calls default to daily computation for managed POST schedules; background refresh uses the shared Tier 1/Super gate and an explicit session bearer.
+- KPI scheduled POSTs carry an explicit validated body mode when no URL mode exists; URL modes keep precedence and the KPI page is read-only without background recomputation.
 - Scoped user functions authenticate against user_roles and resolve record projects server-side before privileged work; email user input enters escaped server templates and notification flags are caller-owned.
 - Factory attendance is isolated in factory-specific records and reuses the live camera and shared shift setting; never represent the factory as a projects row because it would contaminate project lists and reporting expectations.
 - Factory reports use checked full-list RPCs, archived replacement, private attendance-rate snapshots and module/stage allocation; source-linked production logs preserve history without changing module stages.

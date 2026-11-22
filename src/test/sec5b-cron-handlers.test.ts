@@ -9,15 +9,25 @@ const LOCKED = ["auto-submit-draft-expenses", "daily-checkin-nudge", "approval-r
 function fixture(name: string) {
   let handler: (req: Request) => Promise<Response> = async () => new Response("not loaded", { status: 500 });
   const effects = { serviceReads: 0, clients: 0, writes: 0, sends: 0, logs: 0 };
+  const snapshots = new Map<string, Record<string, unknown>>();
   const env: Record<string, string> = { LOVABLE_CRON_SECRET: "fixture-managed-secret", SUPABASE_URL: "https://example.invalid", SUPABASE_SERVICE_ROLE_KEY: "fixture-service", SLACK_BOT_TOKEN: "fixture-slack" };
   function createClient() {
     effects.clients++;
     return {
       auth: { admin: { listUsers: async () => ({ data: { users: [] }, error: null }) } },
-      from() {
-        const q: any = { then: (fn: (v: unknown) => unknown) => fn({ data: [], error: null }) };
+      from(table: string) {
+        const data = name === "kpi-recompute" && table === "kpi_tracked_employees" ? [{ user_id: "fixture-user" }]
+          : name === "kpi-recompute" && table === "profiles" ? { role: "planning_engineer" }
+          : name === "kpi-recompute" && table === "kpi_definitions" ? [{ kpi_key: "fixture.metric", target_value: 1 }] : [];
+        const q: any = { then: (fn: (v: unknown) => unknown) => fn({ data, error: null }) };
         for (const method of ["select", "eq", "in", "order", "limit", "maybeSingle"]) q[method] = () => q;
         for (const method of ["insert", "update", "upsert"]) q[method] = () => { effects.writes++; return q; };
+        if (table === "kpi_snapshots") q.upsert = (row: Record<string, unknown>, options: { onConflict: string }) => {
+          effects.writes++;
+          if (options.onConflict !== "user_id,kpi_key,period_type,period_date") throw new Error("Wrong uniqueness key");
+          snapshots.set([row.user_id, row.kpi_key, row.period_type, row.period_date].join(","), row);
+          return q;
+        };
         return q;
       },
     };
@@ -46,11 +56,11 @@ function fixture(name: string) {
   };
   evaluate(resolve("supabase/functions", name, "index.ts"));
   return {
-    effects,
-    async call(token?: string) {
-      const req = new Request(`https://example.invalid/${name}`, { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: '{"trigger":"scheduled"}' });
-      for (const method of ["json", "text", "formData", "arrayBuffer", "blob"]) Object.defineProperty(req, method, { value: () => { throw new Error("Incoming body must remain unread"); } });
-      Object.defineProperty(req, "body", { get: () => { throw new Error("Incoming body must remain unread"); } });
+    effects, snapshots,
+    async call(token?: string, body: unknown = { trigger: "scheduled" }, query = "") {
+      const req = new Request(`https://example.invalid/${name}${query}`, { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: JSON.stringify(body) });
+      if (LOCKED.includes(name)) for (const method of ["json", "text", "formData", "arrayBuffer", "blob"]) Object.defineProperty(req, method, { value: () => { throw new Error("Incoming body must remain unread"); } });
+      if (LOCKED.includes(name)) Object.defineProperty(req, "body", { get: () => { throw new Error("Incoming body must remain unread"); } });
       return handler(req);
     },
   };
@@ -74,10 +84,30 @@ for (const name of LOCKED) {
     });
   });
 }
-it("KPI bare managed target really performs daily computation, not 400", async () => {
+it("KPI managed body daily upserts the same snapshot on repeated calls without sends", async () => {
   const f = fixture("kpi-recompute");
-  const response = await f.call("fixture-managed-secret");
-  expect(response.status).toBe(200);
-  expect(await response.json()).toMatchObject({ mode: "daily", count: 0 });
+  for (let run = 0; run < 2; run++) {
+    const response = await f.call("fixture-managed-secret", { mode: "daily" });
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ mode: "daily", count: 1 });
+  }
+  expect(f.effects.writes).toBe(2);
+  expect(f.snapshots.size).toBe(1);
+  expect([...f.snapshots.values()][0]).toMatchObject({ user_id: "fixture-user", kpi_key: "fixture.metric", period_type: "daily", period_date: "2026-11-05" });
   expect(f.effects.sends).toBe(0);
 });
+it("KPI explicit URL daily takes precedence over body weekly", async () => {
+  const f = fixture("kpi-recompute");
+  const response = await f.call("fixture-managed-secret", { mode: "weekly" }, "?mode=daily");
+  expect(response.status).toBe(200);
+  expect(await response.json()).toMatchObject({ mode: "daily" });
+  expect(f.effects.sends).toBe(0);
+});
+for (const body of [{ trigger: "scheduled" }, null, { mode: "invalid" }, { mode: 123 }]) {
+  it(`KPI missing/invalid mode ${JSON.stringify(body)} remains 400 without score writes`, async () => {
+    const f = fixture("kpi-recompute");
+    expect((await f.call("fixture-managed-secret", body)).status).toBe(400);
+    expect(f.effects.writes).toBe(0);
+    expect(f.effects.sends).toBe(0);
+  });
+}
