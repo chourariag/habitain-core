@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download, AlertTriangle, Clock, CheckCircle2 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 import {
   PieChart,
   Pie,

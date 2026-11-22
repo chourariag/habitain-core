@@ -1,6 +1,6 @@
 import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

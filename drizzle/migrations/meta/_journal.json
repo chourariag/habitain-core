@@ -456,6 +456,13 @@
       "when": 1795349759167,
       "tag": "0064_retire_project_approval_contact_staging",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1795352204807,
+      "tag": "0065_sec6a_advance_portal_tightening",
+      "breakpoints": true
     }
   ]
 }

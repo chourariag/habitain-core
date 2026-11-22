@@ -1,4 +1,5 @@
 import { PROFILE_SAFE_COLUMNS } from "@/lib/profile-columns";
+import { safeCsvCell } from "@/lib/export-safety";
 import { useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -60,7 +61,7 @@ function downloadCsv(rows: Record<string, string>[], filename: string) {
   const headers = Object.keys(rows[0]);
   const csv = [
     headers.join(","),
-    ...rows.map((r) => headers.map((h) => `"${String(r[h] ?? "").replace(/"/g, '""')}"`).join(",")),
+    ...rows.map((r) => headers.map((h) => safeCsvCell(r[h] ?? "", true)).join(",")),
   ].join("\n");
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);

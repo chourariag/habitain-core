@@ -1,4 +1,5 @@
 import { TIER1_ROLES } from "@/lib/roles";
+import { safeCsvCell } from "@/lib/export-safety";
 import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -72,7 +73,7 @@ function downloadHabitainerTemplate() {
     "ABC Steel Pvt Ltd", "Sample item", "100", "Nos", "250.00", "25000.00",
     "2026-07-15", "30 days from delivery", "18", "30", "—",
   ];
-  const csv = [headers.join(","), sample.map((v) => `"${v}"`).join(",")].join("\n");
+  const csv = [headers.join(","), sample.map((v) => safeCsvCell(v, true)).join(",")].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

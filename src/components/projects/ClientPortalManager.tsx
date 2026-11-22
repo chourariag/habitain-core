@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { format, addDays } from "date-fns";
 import { Link2, RefreshCw, X, Globe, Copy } from "lucide-react";
@@ -28,6 +30,7 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
   const [magicTokens, setMagicTokens] = useState<any[]>([]);
   const [newClientName, setNewClientName] = useState("");
   const [newClientEmail, setNewClientEmail] = useState("");
+  const [expiryDays, setExpiryDays] = useState(90);
 
   const canManage = MANAGE_ROLES.includes(userRole ?? "");
   const canRevoke = ["super_admin", ...TIER1_ROLES, "finance_director", "sales_director", "planning_head"].includes(userRole ?? "");
@@ -59,64 +62,43 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
 
   if (!canManage) return null;
 
-  const generateToken = () => {
-    const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-    let token = "";
-    for (let i = 0; i < 32; i++) token += chars[Math.floor(Math.random() * chars.length)];
-    return token;
-  };
-
   const portalUrl = portalToken
     ? `${window.location.origin}/client/${portalToken}`
     : null;
 
   const handleGenerate = async () => {
+    if (!Number.isInteger(expiryDays) || expiryDays < 1) { toast.error("Expiry days must be positive"); return; }
     setLoading(true);
-    const token = generateToken();
-    const expires = addDays(new Date(), 30).toISOString();
-    const { error } = await supabase
-      .from("projects")
-      .update({
-        client_portal_token: token,
-        client_portal_enabled: true,
-        client_portal_expires_at: expires,
-      } as any)
-      .eq("id", projectId);
+    const { data, error } = await supabase.rpc("manage_project_portal_link", { p_project_id: projectId, p_action: "generate", p_days: expiryDays }).maybeSingle();
 
     if (error) {
       toast.error("Failed to generate portal link");
     } else {
-      setPortalToken(token);
+      setPortalToken(data?.client_portal_token ?? null);
       setEnabled(true);
-      setExpiresAt(expires);
+      setExpiresAt(data?.client_portal_expires_at ?? null);
       toast.success("Client portal link generated");
     }
     setLoading(false);
   };
 
   const handleRenew = async () => {
+    if (!Number.isInteger(expiryDays) || expiryDays < 1) { toast.error("Expiry days must be positive"); return; }
     setLoading(true);
-    const expires = addDays(new Date(), 30).toISOString();
-    const { error } = await supabase
-      .from("projects")
-      .update({ client_portal_expires_at: expires } as any)
-      .eq("id", projectId);
+    const { data, error } = await supabase.rpc("manage_project_portal_link", { p_project_id: projectId, p_action: "renew", p_days: expiryDays }).maybeSingle();
 
     if (error) {
       toast.error("Failed to renew");
     } else {
-      setExpiresAt(expires);
-      toast.success("Portal link renewed for 30 days");
+      setExpiresAt(data?.client_portal_expires_at ?? null);
+      toast.success(`Portal link renewed for ${expiryDays} days`);
     }
     setLoading(false);
   };
 
   const handleRevoke = async () => {
     setLoading(true);
-    const { error } = await supabase
-      .from("projects")
-      .update({ client_portal_enabled: false } as any)
-      .eq("id", projectId);
+    const { error } = await supabase.rpc("manage_project_portal_link", { p_project_id: projectId, p_action: "revoke" });
 
     if (error) {
       toast.error("Failed to revoke");
@@ -150,12 +132,14 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
   const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
 
   const generateClientPortalToken = async () => {
+    if (!Number.isInteger(expiryDays) || expiryDays < 1) { toast.error("Expiry days must be positive"); return; }
     const { data: u } = await supabase.auth.getUser();
     const { error } = await supabase.from("client_portal_tokens" as any).insert({
       project_id: projectId,
       client_name: newClientName || null,
       client_email: newClientEmail || null,
       created_by: u.user?.id ?? null,
+      expires_at: addDays(new Date(), expiryDays).toISOString(),
     });
     if (error) toast.error("Failed to generate client portal link");
     else {
@@ -173,6 +157,7 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
   };
 
   const regenerateClientPortalToken = async (oldId: string, clientName: string | null, clientEmail: string | null) => {
+    if (!Number.isInteger(expiryDays) || expiryDays < 1) { toast.error("Expiry days must be positive"); return; }
     const { data: u } = await supabase.auth.getUser();
     await supabase.from("client_portal_tokens" as any).update({ is_active: false }).eq("id", oldId);
     const { error } = await supabase.from("client_portal_tokens" as any).insert({
@@ -180,6 +165,7 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
       client_name: clientName,
       client_email: clientEmail,
       created_by: u.user?.id ?? null,
+      expires_at: addDays(new Date(), expiryDays).toISOString(),
     });
     if (error) toast.error("Failed to regenerate link");
     else { toast.success("New link generated; old one revoked"); await loadMagicTokens(); }
@@ -207,6 +193,10 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
+        <div className="space-y-1">
+          <Label htmlFor={`portal-expiry-${projectId}`}>Link validity (days)</Label>
+          <Input id={`portal-expiry-${projectId}`} type="number" min={1} value={expiryDays} onChange={event => setExpiryDays(Number(event.target.value))} />
+        </div>
         {!portalToken ? (
           <Button size="sm" onClick={handleGenerate} disabled={loading}>
             <Link2 className="h-3.5 w-3.5 mr-1" /> Generate Magic Link
@@ -230,7 +220,7 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
 
             <div className="flex gap-2">
               <Button size="sm" variant="outline" onClick={handleRenew} disabled={loading}>
-                <RefreshCw className="h-3 w-3 mr-1" /> Renew 30d
+                <RefreshCw className="h-3 w-3 mr-1" /> Renew
               </Button>
               {canRevoke && (
                 <Button size="sm" variant="destructive" onClick={handleRevoke} disabled={loading}>
@@ -275,17 +265,18 @@ export function ClientPortalManager({ projectId, userRole }: Props) {
           {magicTokens.length > 0 && (
             <ul className="space-y-2 pt-1">
               {magicTokens.map((t) => {
-                const url = `${window.location.origin}/client/${t.token}`;
+                const token = t.secret_token ?? t.token;
+                const url = `${window.location.origin}/client/${token}`;
                 return (
                   <li key={t.id} className="flex items-center gap-2 text-xs">
                     <Badge variant={t.is_active ? "default" : "outline"} className="text-[10px]">
-                      {t.is_active ? "Active" : "Revoked"}
+                      {!t.is_active ? "Revoked" : t.expires_at && new Date(t.expires_at) <= new Date() ? "Expired" : "Active"}
                     </Badge>
                     <span className="font-body truncate flex-1">{t.client_name || "—"}</span>
                     <code className="bg-muted px-1.5 py-0.5 rounded font-body truncate max-w-[160px]">
                       {url}
                     </code>
-                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyMagicLink(t.token)}>
+                    <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyMagicLink(token)}>
                       <Copy className="h-3 w-3" />
                     </Button>
                     {t.is_active && (

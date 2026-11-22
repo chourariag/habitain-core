@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { safeCsvCell } from "@/lib/export-safety";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -134,7 +135,7 @@ export function CreateAccountsTab() {
 
   const downloadCsv = () => {
     const data = [["Name", "Email", "Temporary password", "Role"], ...rows.filter(r => r.temporary_password).map(r => [r.full_name, r.email, r.temporary_password || "", r.role])];
-    const csv = data.map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = data.map(r => r.map(v => safeCsvCell(v, true)).join(",")).join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a"); link.href = url; link.download = "hstack-new-credentials.csv"; link.click(); URL.revokeObjectURL(url);
   };

@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 
 export const COST_RATE_COLUMNS = ["sno", "description", "unit", "work_location", "material_rate", "contractor", "rate_type", "rate", "lump_sum", "package_qty", "includes_material"] as const;
 export const ALTREE_RATE_MESSAGE = "ALTREE labour is costed through attendance, not piece rates.";

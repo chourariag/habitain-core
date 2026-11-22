@@ -127,6 +127,7 @@ export type Database = {
           rejection_reason: string | null
           released_at: string | null
           released_by: string | null
+          requested_by: string | null
           settled_amount: number | null
           settled_at: string | null
           settlement_method: string | null
@@ -171,6 +172,7 @@ export type Database = {
           rejection_reason?: string | null
           released_at?: string | null
           released_by?: string | null
+          requested_by?: string | null
           settled_amount?: number | null
           settled_at?: string | null
           settlement_method?: string | null
@@ -215,6 +217,7 @@ export type Database = {
           rejection_reason?: string | null
           released_at?: string | null
           released_by?: string | null
+          requested_by?: string | null
           settled_amount?: number | null
           settled_at?: string | null
           settlement_method?: string | null
@@ -1267,6 +1270,7 @@ export type Database = {
           is_active: boolean
           last_accessed_at: string | null
           project_id: string
+          secret_token: string | null
           token: string
         }
         Insert: {
@@ -1279,6 +1283,7 @@ export type Database = {
           is_active?: boolean
           last_accessed_at?: string | null
           project_id: string
+          secret_token?: string | null
           token?: string
         }
         Update: {
@@ -1291,6 +1296,7 @@ export type Database = {
           is_active?: boolean
           last_accessed_at?: string | null
           project_id?: string
+          secret_token?: string | null
           token?: string
         }
         Relationships: [
@@ -18830,73 +18836,15 @@ export type Database = {
       get_project_by_any_portal_token: {
         Args: { _token: string }
         Returns: {
-          actual_completion_date: string | null
-          actually_spent: number | null
-          archive_reason: string | null
-          archived_at: string | null
-          client_email: string | null
-          client_name: string | null
-          client_phone: string | null
-          client_portal_enabled: boolean
-          client_portal_expires_at: string | null
-          client_portal_status_message: string | null
-          client_portal_token: string | null
-          client_work_order_id: string | null
-          closed_at: string | null
-          closed_by: string | null
-          construction_type: string | null
-          contract_value: number | null
-          created_at: string | null
-          created_by: string | null
+          client_name: string
+          client_portal_expires_at: string
+          client_portal_status_message: string
           division: string
-          est_completion: string | null
-          gfc_budget: number | null
-          gfc_budget_approved_at: string | null
-          gfc_budget_total: number | null
           id: string
-          is_archived: boolean | null
-          is_design_only: boolean
-          location: string | null
-          milestones_locked: boolean
-          module_count: number
           name: string
-          panel_count: number
-          planned_labour_cost: number | null
-          production_system: string
-          project_architect_id: string | null
-          project_setup_approved: boolean
-          project_setup_approved_at: string | null
-          project_setup_status: string
-          project_size: string | null
-          project_type: string | null
-          setup_uploaded_at: string | null
-          setup_uploaded_by_name: string | null
-          site_lat: number | null
-          site_lng: number | null
-          site_radius: number | null
-          site_ready_confirmed: boolean | null
-          site_schedule_escalated_at: string | null
-          site_schedule_notified_at: string | null
-          site_schedule_unlocked_at: string | null
-          start_date: string | null
-          status: string | null
-          storage_cleaned: boolean
-          storage_cleaned_at: string | null
-          storage_cleaned_by: string | null
-          type: string | null
-          updated_at: string | null
-          updated_by: string | null
-          wip_close_date: string | null
-          wip_start_date: string | null
-          wip_status: string
-          wo_line_item_ref: string | null
+          start_date: string
+          status: string
         }[]
-        SetofOptions: {
-          from: "*"
-          to: "projects"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       get_project_by_client_portal_token: {
         Args: { _token: string }
@@ -18911,73 +18859,15 @@ export type Database = {
       get_project_by_portal_token: {
         Args: { _token: string }
         Returns: {
-          actual_completion_date: string | null
-          actually_spent: number | null
-          archive_reason: string | null
-          archived_at: string | null
-          client_email: string | null
-          client_name: string | null
-          client_phone: string | null
-          client_portal_enabled: boolean
-          client_portal_expires_at: string | null
-          client_portal_status_message: string | null
-          client_portal_token: string | null
-          client_work_order_id: string | null
-          closed_at: string | null
-          closed_by: string | null
-          construction_type: string | null
-          contract_value: number | null
-          created_at: string | null
-          created_by: string | null
+          client_name: string
+          client_portal_expires_at: string
+          client_portal_status_message: string
           division: string
-          est_completion: string | null
-          gfc_budget: number | null
-          gfc_budget_approved_at: string | null
-          gfc_budget_total: number | null
           id: string
-          is_archived: boolean | null
-          is_design_only: boolean
-          location: string | null
-          milestones_locked: boolean
-          module_count: number
           name: string
-          panel_count: number
-          planned_labour_cost: number | null
-          production_system: string
-          project_architect_id: string | null
-          project_setup_approved: boolean
-          project_setup_approved_at: string | null
-          project_setup_status: string
-          project_size: string | null
-          project_type: string | null
-          setup_uploaded_at: string | null
-          setup_uploaded_by_name: string | null
-          site_lat: number | null
-          site_lng: number | null
-          site_radius: number | null
-          site_ready_confirmed: boolean | null
-          site_schedule_escalated_at: string | null
-          site_schedule_notified_at: string | null
-          site_schedule_unlocked_at: string | null
-          start_date: string | null
-          status: string | null
-          storage_cleaned: boolean
-          storage_cleaned_at: string | null
-          storage_cleaned_by: string | null
-          type: string | null
-          updated_at: string | null
-          updated_by: string | null
-          wip_close_date: string | null
-          wip_start_date: string | null
-          wip_status: string
-          wo_line_item_ref: string | null
+          start_date: string
+          status: string
         }[]
-        SetofOptions: {
-          from: "*"
-          to: "projects"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       get_project_chat_participants: {
         Args: { _project_id: string }
@@ -19112,6 +19002,14 @@ export type Database = {
         }
         Returns: undefined
       }
+      manage_project_portal_link: {
+        Args: { p_action: string; p_days?: number; p_project_id: string }
+        Returns: {
+          client_portal_enabled: boolean
+          client_portal_expires_at: string
+          client_portal_token: string
+        }[]
+      }
       normalize_ledger_name: { Args: { _name: string }; Returns: string }
       parity2_rollback: { Args: never; Returns: undefined }
       project_archive_upload_reminders: { Args: never; Returns: undefined }
@@ -19157,6 +19055,7 @@ export type Database = {
         }[]
       }
       required_gfc_for_stage: { Args: { _stage: string }; Returns: string }
+      resolve_client_portal_token: { Args: { _token: string }; Returns: string }
       revoke_project_creator: {
         Args: { p_user_id: string }
         Returns: undefined

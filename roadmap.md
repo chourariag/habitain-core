@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [x] SEC-6a: 0065 self-action guard/strong expiring portal tokens; shared export/print safety; 31-principal rollback, 942 tests/0 skips, live MD Daily Report 360px and print readback. Full 28-finding inventory and unverified public-child/finance browser limitations: docs/SEC6A_CONFIRM.md.
 - [x] PROJ-LOC cleanup: 0064 removes staging RPCs/contact display and approval copy/clear; empty store deprecated (platform blocks table drops); direct creation/privacy and rollback matrix passed, 876 tests/0 skips, Running Bill unchanged. Evidence docs/PROJ_LOC_CLEANUP_CONFIRM.md.
 - [x] PROJ-ACCESS: 0063 private audited grants, checked atomic creation, server-driven button/dialog and management tab; 31-principal rollback checks, grant/revoke/private access and 3 modules/22 stages/3 panels; 876 tests/0 skips, MD 360px, unchanged Running Bill; zero seeded grants/pending requests. Evidence docs/PROJ_ACCESS_CONFIRM.md.
 - [x] PHASE1-GATES-OFF: reversible frontend-only switch; user reconfirmed preserving live database stage/GFC restrictions. 46 new tests; 851 passed/0 skipped; signed-in zero-gate Test project workbook validation without Commit, 360px no overflow, unchanged Running Bill. Evidence: docs/PHASE1_GATES_OFF_CONFIRM.md.

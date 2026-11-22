@@ -1,4 +1,5 @@
 import { TIER1_ROLES } from "@/lib/roles";
+import { safeCsvCell } from "@/lib/export-safety";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -225,7 +226,7 @@ export function PaymentsTab() {
     const header = "Project,Client,Milestone,Due Date,Amount,Status,Days Overdue\n";
     const rows = payments.map(p => {
       const days = p.status === "overdue" && p.due_date ? differenceInDays(new Date(), new Date(p.due_date)) : 0;
-      return `${p.project_name},${p.client_name},${p.milestone_description},${p.due_date},${p.amount},${p.status},${days || "—"}`;
+      return [p.project_name, p.client_name, p.milestone_description, p.due_date, p.amount, p.status, days || "—"].map(v => safeCsvCell(v)).join(",");
     }).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Payments_Export.csv"; a.click();

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 import { format, parseISO, subDays } from "date-fns";
 import { AlertTriangle, Download, FileSpreadsheet, Loader2, Search, Upload } from "lucide-react";
 import { toast } from "sonner";

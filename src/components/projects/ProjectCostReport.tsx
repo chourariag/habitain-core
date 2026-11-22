@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 import { ChevronDown, ChevronRight, Download, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";

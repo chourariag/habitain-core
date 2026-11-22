@@ -47,3 +47,5 @@
 - Project Cost compares selected-period costs with cap-aware earned(end) minus earned(start−1); cumulative earned value remains separate in UI/Excel, so the indicative difference always uses the same period.
 - Project contact is written directly by checked atomic creation; legacy approval has no contact staging. The empty deprecated store has no app RPCs. Audits record changed fields, never contact values.
 - Project screens use explicit public projections; contact readers/editors check caller-bound Tier 1/Super roles and archives strip private contact. Location edits use a checked Tier 1/Super/Head of Projects RPC, and site attendance writers reject missing pins without changing configured distance/photo/hours rules.
+
+- Export strings use shared safety adapters; portal links and advance self-actions are server-checked to prevent injection and self-approval.

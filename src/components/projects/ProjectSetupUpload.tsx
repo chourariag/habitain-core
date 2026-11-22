@@ -1,3 +1,4 @@
+import { safeExcelJsWorkbook } from "@/lib/safe-exceljs";
 import { TIER1_ROLES } from "@/lib/roles";
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
@@ -545,7 +546,7 @@ export function ProjectSetupUpload({ projectId, userRole, productionSystem, proj
       }
 
 
-      const out = await wb.xlsx.writeBuffer();
+      const out = await safeExcelJsWorkbook(wb).xlsx.writeBuffer();
       const safeName = (proj?.name || "Project").replace(/[^A-Za-z0-9]+/g, "_");
       const blob = new Blob([out], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       const url = URL.createObjectURL(blob);

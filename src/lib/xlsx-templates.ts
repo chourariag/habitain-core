@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 
 /** Generate and download an XLSX template with the given headers and sample data */
 export function downloadXlsxTemplate(

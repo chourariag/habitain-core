@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { safeCsvCell } from "@/lib/export-safety";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -110,7 +111,7 @@ export function BulkCreateAccountsDialog({ onDone }: Props) {
 
   function downloadCsv() {
     const values = rows.filter(r => r.status === "created").map(r => [r.name, r.email, r.role, r.password]);
-    const csv = [["Name", "Email", "Role", "Temporary password"], ...values].map(row => row.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+    const csv = [["Name", "Email", "Role", "Temporary password"], ...values].map(row => row.map(v => safeCsvCell(v, true)).join(",")).join("\n");
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
     const link = document.createElement("a"); link.href = url; link.download = "hstack-new-account-credentials.csv"; link.click(); URL.revokeObjectURL(url);
   }

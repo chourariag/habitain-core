@@ -195,7 +195,7 @@ export function ProfitLossTab() {
 
   const exportTallyFormat = async () => {
     if (!activeUpload || !lines.length) return;
-    const XLSX = await import("xlsx");
+    const XLSX = await import("@/lib/safe-xlsx");
     const expenses = lines.filter(l => l.side === "expense");
     const incomes = lines.filter(l => l.side === "income");
     const maxLen = Math.max(expenses.length, incomes.length);

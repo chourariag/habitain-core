@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Download, Lock, RotateCcw, Search, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 import {
   PAGE_GROUPS, PERMISSION_ROLES, PERMISSION_LEVELS, LOCKED_ROLES,
   defaultPermission, ALL_PAGE_KEYS,

@@ -1,4 +1,5 @@
 import { TIER1_ROLES } from "@/lib/roles";
+import { safeCsvCell } from "@/lib/export-safety";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -104,10 +105,10 @@ export function ReceivablesTab() {
       lines.push(headers.join(","));
       list.forEach((r, i) => {
         lines.push([
-          i+1, `"${r.project_name}"`, r.total_amount_incl_gst, r.received_amount_incl_gst,
+          i+1, safeCsvCell(r.project_name, true), r.total_amount_incl_gst, r.received_amount_incl_gst,
           r.basic_amount_this_bill, r.current_receivables_incl_gst, r.cumulative_received_incl_gst,
           r.retention_percent, r.retention_amount, r.pending_amount_excl_retention,
-          `"${r.remarks || ""}"`,
+          safeCsvCell(r.remarks || "", true),
         ].join(","));
       });
       const t = totals(list);

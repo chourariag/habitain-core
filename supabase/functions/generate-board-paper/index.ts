@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { escapeHtmlValues } from "../_shared/export-safety.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -29,7 +30,7 @@ Deno.serve(async (req) => {
     const { data: isDir } = await supabase.rpc("is_director", { _user_id: user.id });
     if (!isDir) return new Response("Forbidden", { status: 403, headers: corsHeaders });
 
-    const { sections, commentary, reportDate, periodType } = await req.json();
+    const { sections, commentary, reportDate, periodType } = escapeHtmlValues(await req.json());
 
     // Generate HTML-based PDF
     const formatCurrency = (n: number) => "₹" + (n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -215,7 +216,7 @@ ${commentaryBlock("upcoming_milestones")}
       headers: {
         ...corsHeaders,
         "Content-Type": "text/html; charset=utf-8",
-        "Content-Disposition": `attachment; filename="Board_Paper_${reportDate}.html"`,
+        "Content-Disposition": `attachment; filename="Board_Paper_${String(reportDate).replace(/[^0-9-]/g, "")}.html"`,
       },
     });
   } catch (err) {

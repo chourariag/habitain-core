@@ -1,4 +1,4 @@
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 import { format, parse, isValid, isFuture, startOfMonth, subMonths } from "date-fns";
 
 /** Single source of truth for the expense Excel template AND reader. */

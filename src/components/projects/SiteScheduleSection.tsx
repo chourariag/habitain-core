@@ -1,7 +1,7 @@
 import { TIER1_ROLES } from "@/lib/roles";
 import { ResponsiblePerson } from "@/components/common/ResponsiblePerson";
 import { useEffect, useState, useCallback } from "react";
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";

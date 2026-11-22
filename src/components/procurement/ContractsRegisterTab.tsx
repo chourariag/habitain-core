@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Download, Loader2, Search, ExternalLink, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from "date-fns";
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 import { Link } from "react-router-dom";
 
 const EDIT_ROLES = ["super_admin","managing_director","finance_director","sales_director","architecture_director","head_operations","procurement","planning_head"];

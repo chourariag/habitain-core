@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 
 export const SUPER_ADMIN_FEATURES = [
   "Dashboard","Projects","Factory Floor","Floor Map","Capacity Planning","Site Hub",

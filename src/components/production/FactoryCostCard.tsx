@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { format, parseISO, startOfMonth } from "date-fns";
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 import { Download, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";

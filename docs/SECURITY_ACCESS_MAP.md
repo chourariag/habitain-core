@@ -1,5 +1,9 @@
 # SECURITY-1 Access Map
 
+## SEC-6a — 0065
+
+Advance self-actions are blocked by a trigger with caller-bound requester identity; existing approver policies unchanged. New portal links are 32-byte cryptographic secrets, 90-day configurable expiry, revocable, with legacy tokens preserved and safe root projection. Legacy project management RPC is Tier 1/Super; per-client management keeps existing leadership/Planning Head policies. Private resolver is not client-executable; public checked root readers expose only portal fields. Spreadsheet/CSV writers use shared neutralization and board-paper dynamic HTML is escaped. Full grants, complete 28-finding inventory, scope limitations and 942-test evidence: [SEC6A_CONFIRM.md](SEC6A_CONFIRM.md).
+
 ## PROJ-LOC cleanup — 0064
 
 - Zero rows in `project_client_contact_requests` at inspection and cleanup. Table deletion is blocked by the platform; the private table is retained, explicitly deprecated, with unchanged RLS and no client grants. No app reader/writer remains.

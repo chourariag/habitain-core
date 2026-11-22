@@ -1,4 +1,5 @@
 import { TIER1_ROLES } from "@/lib/roles";
+import { safeCsvCell } from "@/lib/export-safety";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -156,8 +157,8 @@ export function DeliveryTrackerTab({ userRole, projects }: Props) {
       r.delay_days ?? "",
       r.status,
       r.risk_level ?? "",
-      (r.mitigation_note ?? "").replace(/"/g, '""'),
-    ].map((c) => `"${c}"`).join(","));
+      r.mitigation_note ?? "",
+    ].map((c) => safeCsvCell(c, true)).join(","));
     const csv = [header.join(","), ...lines].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);

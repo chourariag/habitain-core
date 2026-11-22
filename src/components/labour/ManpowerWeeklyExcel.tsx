@@ -1,3 +1,4 @@
+import { safeExcelJsWorkbook } from "@/lib/safe-exceljs";
 import { TIER1_ROLES } from "@/lib/roles";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ExcelJS from "exceljs";
@@ -170,7 +171,7 @@ export function ManpowerWeeklyExcel({ location, projectId }: Props) {
         selectLockedCells: true, selectUnlockedCells: true, formatCells: false,
       });
 
-      const buf = await wb.xlsx.writeBuffer();
+      const buf = await safeExcelJsWorkbook(wb).xlsx.writeBuffer();
       const blob = new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");

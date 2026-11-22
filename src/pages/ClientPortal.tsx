@@ -76,11 +76,8 @@ export default function ClientPortal() {
       return;
     }
 
-    if ((proj as any).client_portal_expires_at && new Date((proj as any).client_portal_expires_at) < new Date()) {
-      setError("This link has expired. Please contact your project manager for a new link.");
-      setLoading(false);
-      return;
-    }
+    // The checked lookup validates the actual link's expiry and revocation server-side.
+    // A per-client link need not share the legacy project link's expiry.
 
     setProject(proj);
 

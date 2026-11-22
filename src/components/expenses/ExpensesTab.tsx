@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { ROLE_LABELS, TIER1_ROLES, isTier1OrSuper, expandTier1Recipients, type AppRole } from "@/lib/roles";
 import { downloadXlsxTemplate, TEMPLATES } from "@/lib/xlsx-templates";
 import { insertNotifications } from "@/lib/notifications";
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 import { hasReceipt, openReceiptUrl, WARNING_LABELS } from "@/lib/expense-policy";
 
 const STATUS_COLORS: Record<string, { color: string; bg: string }> = {

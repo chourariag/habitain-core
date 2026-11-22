@@ -1,5 +1,5 @@
 import { format, parseISO } from "date-fns";
-import * as XLSX from "xlsx";
+import * as XLSX from "@/lib/safe-xlsx";
 
 export type CostParts = { own_labour: number; factory_labour: number; subcontract: number; material: number; consumables: number; expenses: number; consumables_expenses: number; total: number };
 export type CostDay = CostParts & { work_date: string; cumulative: number };

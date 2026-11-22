@@ -1,3 +1,4 @@
+import { safeExcelJsWorkbook } from "@/lib/safe-exceljs";
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
@@ -123,7 +124,7 @@ export function DesignScheduleUpload({
         }
       }
 
-      const buf = await wb.xlsx.writeBuffer();
+      const buf = await safeExcelJsWorkbook(wb).xlsx.writeBuffer();
       const url = URL.createObjectURL(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
       const a = document.createElement("a");
       a.href = url;

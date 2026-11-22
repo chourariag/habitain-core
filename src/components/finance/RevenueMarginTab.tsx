@@ -1,4 +1,5 @@
 import { TIER1_ROLES } from "@/lib/roles";
+import { safeCsvCell } from "@/lib/export-safety";
 import { useState, useEffect, useMemo, useCallback, Fragment } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -307,17 +308,17 @@ export function RevenueMarginTab() {
     const csvRows = [headers.join(",")];
     filtered.forEach(r => {
       csvRows.push([
-        r.project_code, `"${r.project_name}"`,
-        `"${r.primary_manager || ""}"`, `"${r.secondary_manager || ""}"`,
+        safeCsvCell(r.project_code), safeCsvCell(r.project_name, true),
+        safeCsvCell(r.primary_manager || "", true), safeCsvCell(r.secondary_manager || "", true),
         r.original_valuation, r.billed_revenue_incl_gst,
         r.previous_claim_gst, r.next_claim_gst, r.remaining_to_claim_gst,
         r.received_value_incl_gst,
         r.cost_to_date, r.expected_final_cost, r.anticipated_margin,
         r.tender_margin_pct ?? "", r.gfc_margin_pct ?? "",
-        r.actual_margin_pct.toFixed(1), fmtDate(r.planned_delivery),
+        r.actual_margin_pct.toFixed(1), safeCsvCell(fmtDate(r.planned_delivery)),
         fmtDate(r.actual_delivery), fmtDate(r.planned_handover),
         fmtDate(r.actual_handover), r.expected_variations,
-        r.anticipated_revenue, r.remaining_to_claim, `"${r.notes || ""}"`,
+        r.anticipated_revenue, r.remaining_to_claim, safeCsvCell(r.notes || "", true),
       ].join(","));
     });
 

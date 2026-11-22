@@ -1,3 +1,4 @@
+import { safeCsvCell } from "./export-safety.ts";
 export const LINK_SECONDS = 300;
 export const RETENTION_DAYS = 60;
 export function wageAmount(hours: number, effectiveRate: number): number { return hours * effectiveRate; }
@@ -9,8 +10,7 @@ export function sanitize(value: unknown): unknown {
 }
 export function csvCell(value: unknown): string {
   const cleaned = sanitize(value);
-  const text = cleaned == null ? '' : typeof cleaned === 'object' ? JSON.stringify(cleaned) : String(cleaned);
-  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  return safeCsvCell(cleaned);
 }
 export function toCsv(columns: readonly string[], rows: Record<string, unknown>[]): string {
   return [columns.join(','), ...rows.map(row => columns.map(column => csvCell(row[column])).join(','))].join('\r\n') + '\r\n';

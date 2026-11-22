@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { safeCsvCell } from "@/lib/export-safety";
 import { Button } from "@/components/ui/button";
 import { Copy, Download } from "lucide-react";
 
@@ -14,7 +15,7 @@ export function AccountCredentials({ credentials, onClose }: { credentials: Acco
       </div>)}
       <div className="flex flex-wrap gap-2">
         {<Button variant="outline" onClick={() => {
-          const csv = [["Email", "Temporary password"], ...credentials.map(c => [c.email, c.password])].map(r => r.map(v => `"${v.replace(/"/g, '""')}"`).join(",")).join("\n");
+          const csv = [["Email", "Temporary password"], ...credentials.map(c => [c.email, c.password])].map(r => r.map(v => safeCsvCell(v, true)).join(",")).join("\n");
           const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
           const link = document.createElement("a"); link.href = url; link.download = "hstack-new-account-credentials.csv"; link.click(); URL.revokeObjectURL(url);
         }}><Download className="h-4 w-4 mr-2" />Download CSV</Button>}
