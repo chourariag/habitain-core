@@ -1,5 +1,13 @@
 # SECURITY-1 Access Map
 
+## Project Cost — 0056
+
+- `get_cost_report(uuid,date,date)` is STABLE SECURITY DEFINER with `search_path=public`, authenticated-only execution, PUBLIC/anon revoked, and an internal `can_view_running_bill(auth.uid())` check.
+- Submitted non-archived site/factory reports only. Existing Running Bill and factory labour rules are reused; value earned/excess come from unchanged `get_running_bill`.
+- Per-person `amount` keys are omitted unless `can_access_labour_compensation(auth.uid())` passes. Factory unallocated aggregate is returned only when `can_view_factory_cost` passes and never added to project cost.
+- Frozen material fields are read, never recomputed or written. Missing rates and uncaptured legacy rows are separate counts. Zero captured amount with missing=false identifies includes-material snapshots without depending on a later-edited subcontract flag.
+- No new tables, policies, direct column grants, report writers, rates changes, nightly-export data, feature values, schedules or account changes. Project Cost navigation/content share the existing `project_setup` flag.
+
 ## Project Rates — 0053–0055
 
 - `project_cost_rates` and `project_cost_rates_log`: RLS enabled, no authenticated/anonymous direct grants or policies; service role has full access. No existing policy changed.

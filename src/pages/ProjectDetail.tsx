@@ -1,5 +1,6 @@
 import { RunningBillStatement } from "@/components/projects/RunningBillStatement";
 import { ProjectCostRates } from "@/components/projects/ProjectCostRates";
+import { ProjectCostReport } from "@/components/projects/ProjectCostReport";
 import { BOQWorkLocation } from "@/components/projects/BOQWorkLocation";
 import { canViewRunningBill } from "@/lib/running-bill";
 import { TIER1_ROLES } from "@/lib/roles";
@@ -232,6 +233,7 @@ export default function ProjectDetail() {
             <TabsTrigger value="billing" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Payment Milestones</TabsTrigger>
             {canViewRunningBill(userRole) && <TabsTrigger value="running-bill" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Running Bill</TabsTrigger>}
             {canViewRunningBill(userRole) && flags.isEnabled("project_setup") && <TabsTrigger value="rates" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Rates</TabsTrigger>}
+            {canViewRunningBill(userRole) && flags.isEnabled("project_setup") && <TabsTrigger value="cost" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Cost</TabsTrigger>}
             {!isAds && <TabsTrigger value="materials" className="gap-1.5"><Package className="h-4 w-4" /> Materials</TabsTrigger>}
             <TabsTrigger value="variations" className="gap-1.5"><GitCompareArrows className="h-4 w-4" /> Variations</TabsTrigger>
             {!isAds && <TabsTrigger value="scope" className="gap-1.5"><ScrollText className="h-4 w-4" /> Scope</TabsTrigger>}
@@ -255,6 +257,9 @@ export default function ProjectDetail() {
         </TabsContent>}
         {id && canViewRunningBill(userRole) && flags.isEnabled("project_setup") && <TabsContent value="rates" className="min-w-0 space-y-4">
           <ProjectCostRates projectId={id} role={userRole} />
+        </TabsContent>}
+        {id && canViewRunningBill(userRole) && flags.isEnabled("project_setup") && <TabsContent value="cost" className="min-w-0 space-y-4">
+          <ProjectCostReport projectId={id} role={userRole} onOpenRates={() => setActiveTab("rates")} />
         </TabsContent>}
 
         <TabsContent value="schedule" className="space-y-4">

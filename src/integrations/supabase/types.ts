@@ -18549,6 +18549,10 @@ export type Database = {
         }[]
       }
       get_cost_rates: { Args: { p_project_id: string }; Returns: Json }
+      get_cost_report: {
+        Args: { p_from: string; p_project_id: string; p_to: string }
+        Returns: Json
+      }
       get_design_stages_by_portal_token: {
         Args: { _token: string }
         Returns: {

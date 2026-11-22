@@ -1,0 +1,75 @@
+BEGIN;
+CREATE TEMP TABLE cost_worked_evidence(label text,data jsonb);
+DO $test$
+DECLARE actor uuid:='99b67080-a6eb-4feb-bd8e-92a287b430aa'; p uuid:='e4f51cd6-fb25-475e-980a-5e46070d678f'; c uuid:='152291ba-f894-401f-85fe-f68ba29af7d0';
+ b uuid; task uuid; module uuid; worker uuid:=gen_random_uuid(); r uuid:=gen_random_uuid(); f uuid:=gen_random_uuid(); si uuid:=gen_random_uuid(); fi uuid:=gen_random_uuid(); ni uuid:=gen_random_uuid(); li uuid:=gen_random_uuid(); d date; v jsonb; rb jsonb; fc jsonb; ov_before jsonb; old_defs jsonb; row_data jsonb; x record;
+BEGIN
+ PERFORM set_config('request.jwt.claim.sub',actor::text,true);
+ SELECT jsonb_object_agg(proname,md5(pg_get_functiondef(oid))) INTO old_defs FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN('get_running_bill','get_site_overview','save_site_report_draft','save_factory_report_draft','submit_site_report','submit_factory_report','_snapshot_report_material','apply_record_edit');
+ SELECT id INTO b FROM public.project_boq WHERE project_id=p ORDER BY version_number DESC,uploaded_at DESC LIMIT 1;
+ SELECT id INTO task FROM public.project_tasks WHERE project_id=p LIMIT 1;
+ SELECT id INTO module FROM public.modules WHERE project_id=p AND NOT is_archived LIMIT 1;
+ SELECT day::date INTO d FROM generate_series(current_date-2,current_date,interval '1 day') day WHERE NOT EXISTS(SELECT 1 FROM public.factory_daily_reports WHERE report_date=day::date) AND NOT EXISTS(SELECT 1 FROM public.daily_measurements WHERE project_id=p AND measurement_date=day::date AND trade='daily_site_report') AND NOT EXISTS(SELECT 1 FROM public.labour_attendance WHERE project_id=p AND work_date=day::date) ORDER BY day LIMIT 1;
+ IF d IS NULL OR task IS NULL OR module IS NULL THEN RAISE EXCEPTION 'Fixture inputs unavailable'; END IF;
+ INSERT INTO public.labour_workers(id,contractor_id,name,skill_type,department) VALUES(worker,c,'COST rollback worker','Fitter','both');
+ INSERT INTO public.labour_worker_compensation(worker_id,monthly_salary,hourly_rate,created_by) VALUES(worker,20800,NULL,actor);
+ INSERT INTO public.labour_attendance(work_date,worker_id,project_id,hours,recorded_by,hours_confirmed) VALUES(d,worker,p,8,actor,true);
+ INSERT INTO public.factory_labour_attendance(work_date,worker_id,hours,hours_confirmed,effective_hourly_rate,amount,no_photo_exception,created_by,updated_by) VALUES(d,worker,8,true,50,400,true,actor,actor);
+ INSERT INTO public.project_boq_items(id,boq_id,sno,item_description,unit,boq_qty,boq_rate,work_location,schedule_task_id) VALUES(si,b,991001,'Cost site fixture','kg',100,100,'site',task),(fi,b,991002,'Cost factory fixture','kg',100,100,'factory',NULL),(ni,b,991003,'Cost missing fixture','kg',100,100,'site',task),(li,b,991004,'Cost legacy fixture','kg',100,100,'site',task);
+ SET LOCAL ROLE authenticated;
+ PERFORM public.set_material_rate(p,si,125); PERFORM public.set_material_rate(p,fi,40);
+ PERFORM public.upsert_subcontract_rate(p,si,c,'per_unit',12,NULL,NULL,true,true);
+ PERFORM public.upsert_subcontract_rate(p,fi,c,'per_unit',20,NULL,NULL,false,true);
+ RESET ROLE;
+ INSERT INTO public.daily_measurements(id,project_id,measurement_date,location,trade,report_status,notes,submitted_by,created_by,updated_by) VALUES(r,p,d,'site','daily_site_report','draft','Cost fixture worked day',actor,actor,actor);
+ INSERT INTO public.site_report_task_workers(report_id,project_id,task_id,worker_id,hours,created_by,updated_by) VALUES(r,p,task,worker,6,actor,actor);
+ INSERT INTO public.site_report_labour(report_id,project_id,task_id,hours,created_by,updated_by) VALUES(r,p,task,6,actor,actor);
+ INSERT INTO public.site_report_quantities(report_id,project_id,boq_item_id,today_qty,contractor_id,created_by,updated_by) VALUES(r,p,si,2,NULL,actor,actor),(r,p,si,5,c,actor,actor),(r,p,ni,4,NULL,actor,actor);
+ INSERT INTO public.site_report_expenses(report_id,project_id,kind,description,amount_inr,created_by,updated_by) VALUES(r,p,'consumable','Site consumable',200,actor,actor),(r,p,'expense','Site expense',50,actor,actor);
+ INSERT INTO public.factory_daily_reports(id,report_date,status,notes,created_by,updated_by) VALUES(f,d,'draft','Factory cost fixture',actor,actor);
+ INSERT INTO public.factory_report_blocks(report_id,module_id,stage,stage_status,progress_pct,created_by,updated_by) VALUES(f,module,'Main Frame','ongoing',10,actor,actor);
+ INSERT INTO public.factory_report_task_workers(report_id,module_id,stage,worker_id,hours,created_by,updated_by) VALUES(f,module,'Main Frame',worker,6,actor,actor);
+ INSERT INTO public.factory_report_quantities(report_id,module_id,stage,boq_item_id,today_qty,contractor_id,unit,created_by,updated_by) VALUES(f,module,'Main Frame',fi,3,c,'kg',actor,actor);
+ INSERT INTO public.factory_report_expenses(report_id,module_id,kind,description,amount_inr,created_by,updated_by) VALUES(f,module,'consumable','Factory consumable',100,actor,actor),(f,module,'expense','Factory expense',25,actor,actor),(f,NULL,'expense','Factory level excluded',999,actor,actor);
+ SET LOCAL ROLE authenticated; PERFORM public.submit_site_report(r); PERFORM public.submit_factory_report(f); RESET ROLE;
+ -- Emulate a pre-COST-1a row by adding a NULL snapshot to this submitted fixture only.
+ INSERT INTO public.site_report_quantities(report_id,project_id,boq_item_id,today_qty,created_by,updated_by,created_at) VALUES(r,p,li,1,actor,actor,now()-interval '1 day');
+ SET LOCAL ROLE authenticated;
+ v:=public.get_cost_report(p,d,d); rb:=public.get_running_bill(p,d); fc:=public.get_factory_cost(d,d); ov_before:=public.get_site_overview(d);
+ RESET ROLE;
+ IF (v->'totals'->>'own_labour')::numeric<>800 OR (v->'totals'->>'factory_labour')::numeric<>300 OR (v->'totals'->>'subcontract')::numeric<>120 OR (v->'totals'->>'material')::numeric<>370 OR (v->'totals'->>'consumables')::numeric<>300 OR (v->'totals'->>'expenses')::numeric<>75 OR (v->'totals'->>'total')::numeric<>1965 THEN RAISE EXCEPTION 'Worked totals mismatch: %',v->'totals'; END IF;
+ IF (SELECT (x->>'amount')::numeric FROM jsonb_array_elements(rb->'labour_by_day') x WHERE (x->>'work_date')::date=d)<>800 THEN RAISE EXCEPTION 'Running Bill own labour mismatch'; END IF;
+ IF (SELECT (x->>'labour_cost')::numeric FROM jsonb_array_elements(fc->'modules') x WHERE x->>'module_id'=module::text)<>300 THEN RAISE EXCEPTION 'Factory module mismatch'; END IF;
+ IF (v->'factory_unallocated'->>'cost')::numeric<>100 THEN RAISE EXCEPTION 'Unallocated mismatch'; END IF;
+ IF (v->'material_status'->>'missing_count')::integer<>1 OR (v->'material_status'->>'missing_boq_value')::numeric<>400 OR (v->'material_status'->>'not_captured_count')::integer<>1 OR (v->'material_status'->>'correction_count')::integer<>0 THEN RAISE EXCEPTION 'Material states mismatch %',v->'material_status'; END IF;
+ IF (SELECT sum((g->>'total')::numeric) FROM jsonb_array_elements(v->'groups') g)<>1965 THEN RAISE EXCEPTION 'Group reconciliation'; END IF;
+ FOR x IN SELECT * FROM jsonb_to_recordset(v->'days') AS z(own_labour numeric,factory_labour numeric,subcontract numeric,material numeric,consumables numeric,expenses numeric,total numeric,cumulative numeric) LOOP
+  IF x.total<>x.own_labour+x.factory_labour+x.subcontract+x.material+x.consumables+x.expenses OR x.cumulative<>1965 THEN RAISE EXCEPTION 'Day cumulative'; END IF;
+ END LOOP;
+ INSERT INTO cost_worked_evidence VALUES('Worked day',jsonb_build_object('date',d,'cost',v->'totals','material',v->'material_status','running_bill_day',800,'factory_module',300,'factory_unallocated',100,'groups_total',1965));
+ -- Verify populated worker privacy under all existing non-compensation cost viewers.
+ FOR x IN SELECT DISTINCT ur.user_id FROM public.user_roles ur JOIN public.profiles pr ON pr.auth_user_id=ur.user_id WHERE pr.is_active AND ur.role::text IN('costing_engineer','planning_head','head_of_projects') LOOP
+  PERFORM set_config('request.jwt.claim.sub',x.user_id::text,true); SET LOCAL ROLE authenticated; v:=public.get_cost_report(p,d,d); RESET ROLE;
+  IF NOT EXISTS(SELECT 1 FROM jsonb_array_elements(v->'groups') g CROSS JOIN LATERAL jsonb_array_elements(g->'workers') w) OR EXISTS(SELECT 1 FROM jsonb_array_elements(v->'groups') g CROSS JOIN LATERAL jsonb_array_elements(g->'workers') w WHERE w ? 'amount') THEN RAISE EXCEPTION 'Populated worker privacy'; END IF;
+ END LOOP;
+ PERFORM set_config('request.jwt.claim.sub',actor::text,true);
+ SET LOCAL ROLE authenticated;
+ PERFORM public.save_site_report_draft(p,d,jsonb_build_object('quantities',jsonb_build_array(jsonb_build_object('boq_item_id',si,'today_qty',9),jsonb_build_object('boq_item_id',si,'contractor_id',c,'today_qty',5),jsonb_build_object('boq_item_id',ni,'today_qty',4),jsonb_build_object('boq_item_id',li,'today_qty',1))));
+ PERFORM public.submit_site_report(r);
+ v:=public.get_cost_report(p,d,d); RESET ROLE;
+ IF (v->'material_status'->>'site_correction_count')::integer<>1 OR (v->'material_status'->>'site_correction_difference')::numeric<>875 OR (v->'material_status'->>'factory_correction_count')::integer<>0 OR (v->'totals'->>'material')::numeric<>370 THEN RAISE EXCEPTION 'Site correction mismatch %',v->'material_status'; END IF;
+ SELECT jsonb_build_object('original_qty',2,'corrected_qty',today_qty,'frozen_rate',material_rate_used,'original_amount',material_amount_inr,'flag_count',v->'material_status'->'correction_count','difference',v->'material_status'->'correction_difference') INTO row_data FROM public.site_report_quantities WHERE report_id=r AND boq_item_id=si AND contractor_id IS NULL;
+ INSERT INTO cost_worked_evidence VALUES('Site correction',row_data);
+ SET LOCAL ROLE authenticated;
+ PERFORM public.save_factory_report_draft(d,jsonb_build_object('quantities',jsonb_build_array(jsonb_build_object('module_id',module,'stage','Main Frame','boq_item_id',fi,'contractor_id',c,'today_qty',9))));
+ v:=public.get_cost_report(p,d,d); RESET ROLE;
+ IF (v->'material_status'->>'factory_correction_count')::integer<>1 OR (v->'material_status'->>'factory_correction_difference')::numeric<>240 OR (v->'totals'->>'material')::numeric<>370 THEN RAISE EXCEPTION 'Factory correction mismatch'; END IF;
+ INSERT INTO cost_worked_evidence VALUES('Factory correction',jsonb_build_object('original_qty',3,'corrected_qty',9,'frozen_rate',40,'original_amount',120,'flag_count',1,'difference',240));
+ SET LOCAL ROLE authenticated;
+ v:=public.get_cost_report(p,d-1,d+1); RESET ROLE;
+ IF EXISTS(SELECT 1 FROM jsonb_array_elements(v->'days') x WHERE NOT EXISTS(SELECT 1 FROM public.daily_measurements z WHERE z.project_id=p AND z.trade='daily_site_report' AND z.report_status='submitted' AND NOT coalesce(z.is_archived,false) AND z.measurement_date=(x->>'work_date')::date) AND NOT EXISTS(SELECT 1 FROM public.factory_daily_reports z JOIN public.factory_report_blocks fb ON fb.report_id=z.id JOIN public.modules mm ON mm.id=fb.module_id WHERE mm.project_id=p AND z.status='submitted' AND NOT z.is_archived AND NOT fb.is_archived AND z.report_date=(x->>'work_date')::date)) THEN RAISE EXCEPTION 'Unsubmitted date included'; END IF;
+ IF EXISTS(SELECT 1 FROM (SELECT (x->>'cumulative')::numeric actual,sum((x->>'total')::numeric) OVER(ORDER BY x->>'work_date') expected FROM jsonb_array_elements(v->'days') x) z WHERE actual<>expected) THEN RAISE EXCEPTION 'Multi-day cumulative mismatch'; END IF;
+ IF old_defs IS DISTINCT FROM (SELECT jsonb_object_agg(proname,md5(pg_get_functiondef(oid))) FROM pg_proc WHERE pronamespace='public'::regnamespace AND proname IN('get_running_bill','get_site_overview','save_site_report_draft','save_factory_report_draft','submit_site_report','submit_factory_report','_snapshot_report_material','apply_record_edit')) THEN RAISE EXCEPTION 'Existing writer or reader changed'; END IF;
+END $test$;
+SELECT jsonb_agg(to_jsonb(e)) evidence FROM cost_worked_evidence e;
+ROLLBACK;

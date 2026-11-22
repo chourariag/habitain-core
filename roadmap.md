@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [x] COST-1b: 0056 read-only Cost RPC/tab with private worker amounts and local Excel; 31 principals (9 allowed/22 denied), worked day ₹1,965, frozen corrections ₹875 site/₹240 factory, exact Running Bill baseline and unchanged Overview; 29 new tests, 662 passed/4 legacy skips; real signed-in 360px/768px and Excel verified. Evidence: docs/COST_REPORT_CONFIRM.md.
 - [x] Project Rates: 0053–0055 checked/audited rates, project+sno/latest-BOQ Excel dry-run/atomic Confirm, private first-submit material snapshots; 31 existing principals/192 RPC checks plus 13 direct-access denials, rolled-back site/factory freezes and exact baseline; 53 new frontend tests, 633 passed/4 legacy skips; signed-in 360px/768px and real Excel dry-run verified without applying live changes.
 - [x] Today overview: 0051 reader/helper and 0052 last-update correction; first Site Hub tab uses unchanged site_report flag; 31 existing-principal checks, anonymous denials and rolled-back ₹1,519.24 site/₹525 factory reconciliation; 26 Today tests, 580 total passed/4 pre-existing skips; signed-in 360px/768px/date-change/read-only report verified.
 - [x] FAC-1 verification: 0050 fixes broad factory grants; 15 existing principals/120 rolled-back checks and 52 direct/anonymous checks; 36-file export docs/no-wage projection; exact baseline and reconciliation; unchanged transition diff; 554 tests passed/4 legacy skips.

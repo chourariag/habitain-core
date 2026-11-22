@@ -393,6 +393,13 @@
       "when": 1795341122188,
       "tag": "0055_cost_rate_import_and_included_snapshot_semantics",
       "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1795343329736,
+      "tag": "0056_project_read_only_cost_report",
+      "breakpoints": true
     }
   ]
 }
