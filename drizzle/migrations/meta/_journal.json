@@ -400,6 +400,13 @@
       "when": 1795343329736,
       "tag": "0056_project_read_only_cost_report",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1795344697858,
+      "tag": "0057_cost_report_period_earned_value",
+      "breakpoints": true
     }
   ]
 }
