@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FileText, Camera, Loader2, Check, X, PartyPopper, Mail, AlertTriangle, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { PROJECT_PUBLIC_SELECT } from "@/lib/project-location";
 
 interface Props {
   projectId: string;
@@ -70,12 +71,13 @@ export function HandoverPack({ projectId, clientName, userRole, installationComp
 
   const loadAll = async () => {
     setLoading(true);
-    const [{ data: proj }, { data: hp }, { data: rd }] = await Promise.all([
-      supabase.from("projects").select("*").eq("id", projectId).single(),
+    const [{ data: proj }, { data: hp }, { data: rd }, { data: contact }] = await Promise.all([
+      supabase.from("projects").select(PROJECT_PUBLIC_SELECT).eq("id", projectId).single(),
       (supabase.from("handover_pack") as any).select("*").eq("project_id", projectId).order("created_at", { ascending: false }).limit(1),
       (supabase.rpc as any)("get_handover_readiness", { _project_id: projectId }),
+      supabase.rpc("get_project_client_contact", { _project_id: projectId }),
     ]);
-    setProject(proj);
+    setProject(proj ? { ...proj, ...(contact?.[0] ?? {}) } : null);
     setExisting((hp as any[])?.[0] ?? null);
     setReadiness(rd as Readiness | null);
     setLoading(false);

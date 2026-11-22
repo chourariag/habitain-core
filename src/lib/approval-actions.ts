@@ -55,14 +55,8 @@ export async function approveRequest(req: ApprovalRequest, currentUserId?: strin
 
   if (req.request_type === "create_project") {
     const p = req.payload as Record<string, unknown>;
-    const { module_count: _mc, panel_count: _pc, ...projectFields } = p as any;
-    const { data: created, error } = await supabase.from("projects").insert({
-      ...projectFields, status: "Active", created_by: req.requested_by, updated_by: req.requested_by,
-    } as never).select("id,name").single();
+    const { data: newProjectId, error } = await supabase.rpc("approve_project_request", { p_request_id: req.id });
     if (error) throw error;
-    await setApprovalDecision(req.id, "approved");
-    await logAudit({ section: "Projects", action: "approve_create_project", entity: String(p.name) });
-    const newProjectId = (created as any)?.id;
 
     // Auto-create modules / panels per the request
     try {

@@ -3,7 +3,7 @@ import { ProjectCostRates } from "@/components/projects/ProjectCostRates";
 import { ProjectCostReport } from "@/components/projects/ProjectCostReport";
 import { BOQWorkLocation } from "@/components/projects/BOQWorkLocation";
 import { canViewRunningBill } from "@/lib/running-bill";
-import { TIER1_ROLES } from "@/lib/roles";
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +32,8 @@ import { ProjectSetupApprovalSection } from "@/components/projects/ProjectSetupA
 import { ProjectDesignScheduleTab } from "@/components/projects/ProjectDesignScheduleTab";
 import { PreProductionChecklist } from "@/components/projects/PreProductionChecklist";
 import { ProjectArchitectCard } from "@/components/projects/ProjectArchitectCard";
+import { ProjectLocationContact } from "@/components/projects/ProjectLocationContact";
+import { PROJECT_PUBLIC_SELECT } from "@/lib/project-location";
 
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { isAdsProject } from "@/lib/project-type";
@@ -60,6 +62,7 @@ export default function ProjectDetail() {
   };
   const { setSelectedProjectId } = useProjectContext();
   const [project, setProject] = useState<Tables<"projects"> | null>(null);
+  const [clientContact, setClientContact] = useState<{ client_phone: string | null; client_email: string | null } | null>(null);
   const [modules, setModules] = useState<any[]>([]);
   const [panels, setPanels] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
@@ -90,7 +93,7 @@ export default function ProjectDetail() {
     setLoading(true);
 
     const [projectRes, modulesRes, roleRes, handoverRes, contactRes] = await Promise.all([
-      supabase.from("projects").select("*").eq("id", id).single(),
+      supabase.from("projects").select(PROJECT_PUBLIC_SELECT).eq("id", id).single(),
       supabase.from("modules").select("*").eq("project_id", id).eq("is_archived", false).order("created_at", { ascending: true }),
       supabase.auth.getUser().then(async ({ data: { user } }) => {
         if (!user) return null;
@@ -102,7 +105,8 @@ export default function ProjectDetail() {
     ]);
 
     const contact = Array.isArray(contactRes.data) ? contactRes.data[0] : null;
-    setProject(projectRes.data ? { ...projectRes.data, ...(contact || {}) } : projectRes.data);
+    setProject(projectRes.data as Tables<"projects"> | null);
+    setClientContact(contact ?? null);
     setModules(modulesRes.data ?? []);
     setUserRole(roleRes as string | null);
     setHasHandover((handoverRes.data ?? []).length > 0);
@@ -147,11 +151,11 @@ export default function ProjectDetail() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <div className="flex items-start gap-3">
+      <div className="flex flex-wrap items-start gap-3">
         <Button variant="ghost" size="icon" onClick={() => navigate("/projects")} className="mt-1 shrink-0">
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1 basis-[200px]">
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">{project.name}</h1>
             <Badge className={statusCfg.badgeClass}>{statusCfg.label}</Badge>
@@ -193,19 +197,21 @@ export default function ProjectDetail() {
           <Box className="h-4 w-4 shrink-0" />
           <span>{modules.length} module{modules.length !== 1 ? "s" : ""} · {totalPanels} panel{totalPanels !== 1 ? "s" : ""}</span>
         </div>
-        {proj.client_phone && (
+        {isTier1OrSuper(userRole) && clientContact?.client_phone && (
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Phone className="h-4 w-4 shrink-0" /><span>{proj.client_phone}</span>
+            <Phone className="h-4 w-4 shrink-0" /><span>{clientContact.client_phone}</span>
           </div>
         )}
-        {proj.client_email && (
+        {isTier1OrSuper(userRole) && clientContact?.client_email && (
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Mail className="h-4 w-4 shrink-0" /><a href={`mailto:${proj.client_email}`} className="hover:underline">{proj.client_email}</a>
+            <Mail className="h-4 w-4 shrink-0" /><a href={`mailto:${clientContact.client_email}`} className="break-all hover:underline">{clientContact.client_email}</a>
           </div>
         )}
       </div>
 
-      <ClientPortalManager projectId={id!} userRole={userRole} />
+      <ProjectLocationContact project={project} role={userRole} contact={clientContact} onSaved={fetchData} />
+
+      <ClientPortalManager projectId={project.id} userRole={userRole} />
 
       <ProjectArchitectCard projectId={id!} userRole={userRole} />
 

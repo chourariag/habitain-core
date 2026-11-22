@@ -14,6 +14,7 @@ import { ToolboxCamera, type CapturedPhoto } from "@/components/labour/ToolboxCa
 import { FactoryAttendance } from "@/components/labour/FactoryAttendance";
 import { canWriteFactory } from "@/lib/factory-report";
 import { TIER1_ROLES } from "@/lib/roles";
+import { hasSitePin, SITE_LOCATION_MISSING } from "@/lib/project-location";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -141,6 +142,17 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit,
   const [photos, setPhotos] = useState<DayPhoto[]>([]);
   const [standardHours, setStandardHours] = useState(8);
   const [confirming, setConfirming] = useState(false);
+  const [pinProject, setPinProject] = useState<string | null>(null);
+  const [pinReady, setPinReady] = useState(false);
+  const locationBlocks = pinProject !== projectId || !pinReady;
+  useEffect(() => {
+    let current = true;
+    setPinReady(false); setPinProject(null);
+    if (projectId) void supabase.from("projects").select("site_lat,site_lng").eq("id", projectId).maybeSingle().then(({ data }) => {
+      if (current) { setPinReady(!!data && hasSitePin(data.site_lat, data.site_lng)); setPinProject(projectId); }
+    });
+    return () => { current = false; };
+  }, [projectId]);
   const isToday = workDate === istTodayISO();
   const hasPhoto = photos.length > 0;
   const canException = canUsePhotoException(role);
@@ -214,6 +226,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit,
 
   const onCaptured = async (p: CapturedPhoto) => {
     if (!projectId) return;
+    if (locationBlocks) { toast.error(SITE_LOCATION_MISSING); return; }
     const path = `${projectId}/${istTodayISO()}/${crypto.randomUUID()}.jpg`;
     const { error: upErr } = await supabase.storage.from("attendance-photos").upload(path, p.blob, { contentType: "image/jpeg" });
     if (upErr) { toast.error(`Photo upload failed: ${upErr.message}`); return; }
@@ -224,10 +237,11 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit,
   };
 
   const needsPhotoException = !isToday && !hasPhoto;
-  const photoGateBlocks = isToday ? !hasPhoto : (!hasPhoto && !canException);
+  const photoGateBlocks = locationBlocks || (isToday ? !hasPhoto : (!hasPhoto && !canException));
 
   const saveAttendance = async () => {
     if (!projectId) { toast.error("Choose a project first."); return; }
+    if (locationBlocks) { toast.error(SITE_LOCATION_MISSING); return; }
     const parsedWorkDate = parseLabourDateInput(dateText);
     if (!parsedWorkDate) { toast.error("Enter the date as DD/MM/YYYY."); return; }
     if (parsedWorkDate !== workDate) { toast.error("Finish entering a valid date before saving."); return; }
@@ -282,6 +296,8 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit,
         <div className="space-y-1.5"><Label htmlFor="labour-date">Work date</Label><Input id="labour-date" inputMode="numeric" maxLength={10} placeholder="DD/MM/YYYY" value={dateText} onChange={(event) => { const value = event.target.value; setDateText(value); const parsed = parseLabourDateInput(value); if (parsed) setWorkDate(parsed); }} onBlur={() => { if (!parseLabourDateInput(dateText)) setDateText(format(parseISO(workDate), "dd/MM/yyyy")); }} /></div>
       </div>
 
+      {projectId && locationBlocks && <p role="alert" className="text-sm text-destructive">{pinProject !== projectId ? "Checking site location…" : SITE_LOCATION_MISSING}</p>}
+
       {projectId && <section className="space-y-3 rounded-md border border-border p-3" aria-label="Toolbox talk photo">
         <h2 className="font-display text-base font-semibold">Step 1 · Toolbox talk photo</h2>
         <p className="text-xs text-muted-foreground">Take at least 1 photo (up to 3) live with the camera during the toolbox talk. GPS is required.</p>
@@ -292,7 +308,7 @@ function AttendanceTab({ workers, projects, projectId, onProjectChange, canEdit,
             {ph.flags?.low_accuracy ? <Badge variant="outline" className="px-1 text-[10px]">Low GPS accuracy</Badge> : null}
           </figcaption>
         </figure>)}</div>}
-        {canEdit && isToday && photos.length < 3 && <ToolboxCamera projectName={projectName} onCaptured={onCaptured} />}
+        {canEdit && !locationBlocks && isToday && photos.length < 3 && <ToolboxCamera projectName={projectName} onCaptured={onCaptured} />}
         {!isToday && !hasPhoto && <p className="text-sm text-muted-foreground break-words">No toolbox talk photo was taken on this day. Photos can only be taken on the day itself.{canException ? " You can still record attendance with a reason (logged as an exception)." : " Ask the Head of Projects to record it as an exception."}</p>}
       </section>}
 

@@ -9879,6 +9879,47 @@ export type Database = {
           },
         ]
       }
+      project_client_contact_requests: {
+        Row: {
+          created_at: string
+          created_by: string
+          email: string | null
+          is_archived: boolean
+          phone: string | null
+          request_id: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          email?: string | null
+          is_archived?: boolean
+          phone?: string | null
+          request_id: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          email?: string | null
+          is_archived?: boolean
+          phone?: string | null
+          request_id?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_client_contact_requests_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: true
+            referencedRelation: "approval_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_cost_rates: {
         Row: {
           boq_item_id: string
@@ -10384,6 +10425,66 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_location_contact_log: {
+        Row: {
+          action: string
+          created_at: string
+          created_by: string
+          fields: string[]
+          id: string
+          is_archived: boolean
+          new_location: Json | null
+          old_location: Json | null
+          project_id: string | null
+          request_id: string | null
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          created_by?: string
+          fields: string[]
+          id?: string
+          is_archived?: boolean
+          new_location?: Json | null
+          old_location?: Json | null
+          project_id?: string | null
+          request_id?: string | null
+          updated_at?: string
+          updated_by?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          created_by?: string
+          fields?: string[]
+          id?: string
+          is_archived?: boolean
+          new_location?: Json | null
+          old_location?: Json | null
+          project_id?: string | null
+          request_id?: string | null
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_location_contact_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_location_contact_log_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "approval_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -18051,6 +18152,11 @@ export type Database = {
         Returns: undefined
       }
       _factory_window: { Args: { p_date: string }; Returns: undefined }
+      _normalise_project_phone: { Args: { p_phone: string }; Returns: string }
+      _require_project_site_location: {
+        Args: { p_project_id: string }
+        Returns: undefined
+      }
       _site_report_check_window: {
         Args: { p_date: string; p_project_id: string }
         Returns: undefined
@@ -18081,6 +18187,16 @@ export type Database = {
           p_rate: number
           p_type: string
           p_unit: string
+        }
+        Returns: undefined
+      }
+      _validate_project_email: { Args: { p_email: string }; Returns: undefined }
+      _validate_project_location: {
+        Args: {
+          p_address: string
+          p_lat: number
+          p_lng: number
+          p_radius: number
         }
         Returns: undefined
       }
@@ -18177,6 +18293,10 @@ export type Database = {
       approve_handover_and_close: {
         Args: { _handover_id: string }
         Returns: undefined
+      }
+      approve_project_request: {
+        Args: { p_request_id: string }
+        Returns: string
       }
       archive_project_elevation: { Args: { p_id: string }; Returns: undefined }
       attach_expense_receipt: {
@@ -18837,6 +18957,13 @@ export type Database = {
         Args: { _on_date: string; _project_id: string }
         Returns: number
       }
+      get_project_request_client_contact: {
+        Args: { p_request_id: string }
+        Returns: {
+          client_email: string
+          client_phone: string
+        }[]
+      }
       get_project_setup_status: {
         Args: { p_project_id: string }
         Returns: Json
@@ -18940,6 +19067,10 @@ export type Database = {
       normalize_ledger_name: { Args: { _name: string }; Returns: string }
       parity2_rollback: { Args: never; Returns: undefined }
       project_archive_upload_reminders: { Args: never; Returns: undefined }
+      raise_project_request: {
+        Args: { p_email: string; p_payload: Json; p_phone: string }
+        Returns: string
+      }
       recalc_running_bill: {
         Args: { _project_id: string }
         Returns: {
@@ -19034,6 +19165,20 @@ export type Database = {
       set_labour_standard_hours: { Args: { p_hours: number }; Returns: number }
       set_material_rate: {
         Args: { p_boq_item_id: string; p_project_id: string; p_rate: number }
+        Returns: undefined
+      }
+      set_project_client_contact: {
+        Args: { p_email: string; p_phone: string; p_project_id: string }
+        Returns: undefined
+      }
+      set_project_site_location: {
+        Args: {
+          p_address: string
+          p_lat: number
+          p_lng: number
+          p_project_id: string
+          p_radius: number
+        }
         Returns: undefined
       }
       site_report_today: { Args: never; Returns: string }

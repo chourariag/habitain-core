@@ -18,7 +18,9 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { PRODUCTION_STAGES } from "@/components/projects/ProductionStageTracker";
 import { useUserRole } from "@/hooks/useUserRole";
-import { raiseApprovalRequest } from "@/lib/approval-requests";
+import { SiteLocationFields } from "@/components/projects/SiteLocationFields";
+import { ClientContactFields } from "@/components/projects/ClientContactFields";
+import { emptySiteLocation, normaliseClientPhone, validClientEmail, validateSiteLocation } from "@/lib/project-location";
 import { listClientWorkOrders, type ClientWorkOrder } from "@/lib/contractor-wo";
 import { fetchArchitectCandidates, type ArchitectProfile } from "@/hooks/useProjectArchitect";
 import { ROLE_LABELS, TIER1_ROLES } from "@/lib/roles";
@@ -58,6 +60,9 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
   const [woLineItemRef, setWoLineItemRef] = useState("");
   const [architects, setArchitects] = useState<ArchitectProfile[]>([]);
   const [architectId, setArchitectId] = useState("");
+  const [site, setSite] = useState(emptySiteLocation);
+  const [clientPhone, setClientPhone] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
 
 
   const isContractorWo = division === "Contractor WO";
@@ -78,6 +83,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
     setModuleCount(""); setPanelCount(""); setContractValue("");
     setStartDate(undefined); setEstCompletion(undefined);
     setWorkOrderId(""); setWoLineItemRef(""); setArchitectId("");
+    setSite(emptySiteLocation()); setClientPhone(""); setClientEmail("");
   };
 
 
@@ -88,6 +94,11 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
     e.preventDefault();
     if (!name.trim()) { toast.error("Project name is required"); return; }
     if (!clientName.trim()) { toast.error("Client name is required"); return; }
+    const siteError = validateSiteLocation(site);
+    if (siteError) { toast.error(siteError); return; }
+    const phone = normaliseClientPhone(clientPhone);
+    if (!phone) { toast.error("Enter a valid 10-digit Indian mobile number, optionally prefixed with +91"); return; }
+    if (!validClientEmail(clientEmail)) { toast.error("Enter a valid client email address"); return; }
     if (!startDate || !estCompletion) { toast.error("Contract Start and Expected Delivery dates are required"); return; }
     if (!architectId) { toast.error("Assign a Project Architect — this owns the S-1 and E-5 gates"); return; }
     if (!canRaise) { toast.error("Only the Planning Head can raise a project creation request."); return; }
@@ -108,6 +119,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
       const corePayload = {
         name: name.trim(),
         client_name: clientName.trim(),
+        location: site.location.trim(), site_lat: Number(site.site_lat), site_lng: Number(site.site_lng), site_radius: Number(site.site_radius),
         project_architect_id: architectId || null,
         division,
 
@@ -119,13 +131,15 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
         start_date: format(startDate, "yyyy-MM-dd"),
         est_completion: format(estCompletion, "yyyy-MM-dd"),
         ...(isContractorWo
-          ? { project_type: "contractor_wo", client_work_order_id: workOrderId, wo_line_item_ref: woLineItemRef.trim() || null }
+          ? { client_work_order_id: workOrderId, wo_line_item_ref: woLineItemRef.trim() || null }
           : {}),
       };
 
       // Non-MD users → approval request
       if (requiresApproval) {
-        const reqRow: any = await raiseApprovalRequest("create_project", corePayload);
+        const { data: requestId, error: requestError } = await client.rpc("raise_project_request", { p_payload: corePayload, p_phone: phone, p_email: clientEmail.trim() });
+        if (requestError) throw requestError;
+        const reqRow = { id: requestId };
 
         try {
           const approverRole = division === "ADS" ? "principal_architect" : "sales_director";
@@ -155,8 +169,8 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
 
         toast.success(
           division === "ADS"
-            ? "Project request sent to Principal Architect (Karan) for approval"
-            : "Project request sent to Sales Director (John) for approval"
+            ? "Project request sent to Principal Architect for approval"
+            : "Project request sent to Sales Director for approval"
         );
         resetForm();
         onOpenChange(false);
@@ -168,6 +182,7 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
       // MD / super_admin: direct create
       const { data: project, error } = await client.from("projects").insert({
         ...corePayload,
+        client_phone: phone, client_email: clientEmail.trim(),
         created_by: session.user.id,
         updated_by: session.user.id,
         status: "Active",
@@ -248,18 +263,18 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={next => { if (!next) { setClientPhone(""); setClientEmail(""); } onOpenChange(next); }}>
       <DialogContent className="p-0 sm:max-w-lg">
         <form onSubmit={handleSubmit} className="flex max-h-[85vh] flex-col">
           <DialogHeader className="px-4 pt-4 pb-2">
             <DialogTitle className="font-display text-xl">New Project</DialogTitle>
             <p className="text-xs text-muted-foreground">
-              Quick form. After approval, planning details (location, BOQ, schedule, materials)
+              After approval, planning details (BOQ, schedule, materials)
               come from the Project Setup Template upload.
             </p>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto px-4 py-2 pb-20 space-y-4">
+          <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 py-2 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="projName">Project Name *</Label>
               <Input id="projName" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Altree Villas Phase 2" required />
@@ -387,11 +402,13 @@ export function NewProjectDialog({ open, onOpenChange, onCreated }: NewProjectDi
                 </Popover>
               </div>
             </div>
+            <SiteLocationFields value={site} onChange={setSite} />
+            <ClientContactFields phone={clientPhone} email={clientEmail} onPhone={setClientPhone} onEmail={setClientEmail} />
           </div>
 
           <div className="flex items-center justify-end gap-2 border-t bg-background px-4 py-3">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
-            <Button type="submit" disabled={loading} style={{ backgroundColor: "#006039", color: "white" }}>
+            <Button type="button" variant="outline" className="min-h-11" onClick={() => { setClientPhone(""); setClientEmail(""); onOpenChange(false); }} disabled={loading}>Cancel</Button>
+            <Button type="submit" className="min-h-11" disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {requiresApproval ? "Send for Approval" : "Create Project"}
             </Button>

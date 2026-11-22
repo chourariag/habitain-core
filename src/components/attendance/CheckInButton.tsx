@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { hasRequiredAttendanceLocation } from "@/lib/attendance-location";
+import { hasSitePin, SITE_LOCATION_MISSING } from "@/lib/project-location";
 import { useProjectContext } from "@/contexts/ProjectContext";
 import { useConnectionStatus } from "@/components/OfflineProvider";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,7 @@ export function CheckInButton({ userRole }: Props) {
   const [gpsVerified, setGpsVerified] = useState(false);
   const [gpsWarning, setGpsWarning] = useState(false);
   const [gpsNotConfigured, setGpsNotConfigured] = useState(false);
+  const [siteLocationMissing, setSiteLocationMissing] = useState(false);
   const [gpsDisabled, setGpsDisabled] = useState(false);
   const [gpsDistance, setGpsDistance] = useState<number | null>(null);
   const [gpsAccuracy, setGpsAccuracy] = useState<number | null>(null);
@@ -94,6 +96,7 @@ export function CheckInButton({ userRole }: Props) {
     setGpsLat(null);
     setGpsLng(null);
     setGpsNotConfigured(false);
+    setSiteLocationMissing(false);
     setGpsDisabled(false);
     setGpsDistance(null);
     setGpsAccuracy(null);
@@ -169,17 +172,10 @@ export function CheckInButton({ userRole }: Props) {
             refLng = parseFloat(String((proj as any).site_lng || "0"));
             radius = Math.max(parseInt(String((proj as any).site_radius || "0")) || 0, MIN_RADIUS_METERS);
           }
-          if (!refLat || !refLng) {
-            setGpsDisabled(true);
-            try {
-              const pos = await getGPS();
-              setGpsLat(pos.coords.latitude);
-              setGpsLng(pos.coords.longitude);
-              setGpsAccuracy(pos.coords.accuracy ?? null);
-            } catch {
-              toast.error("GPS location is required to check in. Enable location access and try again.");
-            }
-            setStep("confirm");
+          if (!proj || !hasSitePin(proj.site_lat, proj.site_lng)) {
+            setSiteLocationMissing(true);
+            setGpsVerified(false);
+            setStep("gps");
             return;
           }
         }
@@ -227,6 +223,10 @@ export function CheckInButton({ userRole }: Props) {
 
   const handleCheckIn = async () => {
     if (!user) return;
+    if (locationType === "site") {
+      const { data: pin, error } = await supabase.from("projects").select("site_lat,site_lng").eq("id", selectedProject).maybeSingle();
+      if (error || !pin || !hasSitePin(pin.site_lat, pin.site_lng)) { setSiteLocationMissing(true); setStep("gps"); toast.error(SITE_LOCATION_MISSING); return; }
+    }
     if (!hasRequiredAttendanceLocation(gpsLat, gpsLng)) {
       toast.error("GPS location is required to check in. Enable location access and try again.");
       return;
@@ -288,7 +288,7 @@ export function CheckInButton({ userRole }: Props) {
     if (connectionStatus === "offline") {
       const offlineRec: OfflineAttendanceRecord = {
         id: crypto.randomUUID(),
-        user_id: user!.id,
+        user_id: user.id,
         date: format(now, "yyyy-MM-dd"),
         check_out_time: now.toISOString(),
         location_type: todayRecord.location_type,
@@ -327,6 +327,7 @@ export function CheckInButton({ userRole }: Props) {
     setGpsVerified(false);
     setGpsWarning(false);
     setGpsNotConfigured(false);
+    setSiteLocationMissing(false);
     setGpsDisabled(false);
     setGpsDistance(null);
     setGpsAccuracy(null);
@@ -441,7 +442,7 @@ export function CheckInButton({ userRole }: Props) {
           {step === "gps" && locationType === "site" && (
             <div className="space-y-3">
               <p className="text-sm" style={{ color: "#666" }}>Select project site:</p>
-              <Select value={selectedProject} onValueChange={setSelectedProject}>
+              <Select value={selectedProject} onValueChange={value => { setSelectedProject(value); setSiteLocationMissing(false); }}>
                 <SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger>
                 <SelectContent>
                   {projects.map((p) => (
@@ -449,6 +450,7 @@ export function CheckInButton({ userRole }: Props) {
                   ))}
                 </SelectContent>
               </Select>
+              {siteLocationMissing && <p role="alert" className="text-sm text-destructive">{SITE_LOCATION_MISSING}</p>}
               <Button onClick={() => handleSelectType("site")} disabled={!selectedProject} className="w-full" style={{ backgroundColor: "#006039" }}>
                 Verify Location
               </Button>

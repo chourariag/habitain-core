@@ -1,4 +1,6 @@
-import { TIER1_ROLES } from "@/lib/roles";
+import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
+import { Link } from "react-router-dom";
+import { PROJECT_PUBLIC_SELECT, hasSitePin } from "@/lib/project-location";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -30,7 +32,7 @@ export default function Projects() {
   const fetchProjects = useCallback(async () => {
     setLoading(true);
     const [projRes, modRes, handoverRes, schedRes, ncrRes, readyRes, dqRes, stageRes] = await Promise.all([
-      supabase.from("projects").select("*").eq("is_archived", false).order("created_at", { ascending: false }),
+      supabase.from("projects").select(PROJECT_PUBLIC_SELECT).eq("is_archived", false).order("created_at", { ascending: false }),
       supabase.from("modules").select("id, project_id, current_stage, production_status").eq("is_archived", false),
       supabase.from("handover_pack").select("project_id"),
       supabase.from("module_schedule").select("module_id, stage_name, target_end").not("target_end", "is", null),
@@ -40,7 +42,7 @@ export default function Projects() {
       (supabase.from("project_design_stages") as any).select("project_id, status").eq("status", "In Progress"),
     ]);
 
-    const allProjects = projRes.data ?? [];
+    const allProjects = (projRes.data ?? []) as Tables<"projects">[];
     setProjects(allProjects);
 
     // Group modules by project
@@ -129,7 +131,7 @@ export default function Projects() {
 
   return (
     <div className="p-4 md:p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "#1A1A1A" }}>Projects</h1>
           <p className="text-sm mt-1" style={{ color: "#666666" }}>Command centre — all construction projects</p>
@@ -144,6 +146,8 @@ export default function Projects() {
         )}
         </div>
       </div>
+
+      {!loading && isTier1OrSuper(role) && <section className="space-y-2 border-y border-border py-4" aria-label="Projects without a site location"><h2 className="font-display text-base font-semibold">Projects without a site location</h2>{projects.filter(p => !p.is_archived && ["active", "planning", "in_progress"].includes((p.status ?? "").toLowerCase()) && p.project_type !== "factory_cost_centre" && (!p.location?.trim() || !hasSitePin(p.site_lat, p.site_lng))).map(p => <Link key={p.id} to={`/projects/${p.id}`} className="flex min-h-11 items-center justify-between gap-3 border-b border-border text-sm text-primary"><span className="min-w-0 break-words">{p.name}</span><span className="shrink-0">Set location →</span></Link>)}</section>}
 
       {loading ? (
         <div className="flex justify-center py-12">

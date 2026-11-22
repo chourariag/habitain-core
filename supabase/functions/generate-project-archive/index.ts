@@ -3,6 +3,7 @@ import { authorizeUser, DIRECTOR_CALLERS, canAccessProject, denied } from "../_s
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import JSZip from "https://esm.sh/jszip@3.10.1";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { withoutProjectClientContact } from "../_shared/project-contact-privacy.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -31,7 +32,7 @@ Deno.serve(async (req) => {
         ? supabase.from(t).select("*").eq("id", project_id).maybeSingle()
         : supabase.from(t).select("*").eq("project_id", project_id);
       const { data: rows } = await (q as any);
-      data[t] = rows;
+      data[t] = t === "projects" ? withoutProjectClientContact(rows) : rows;
     }
 
     const zip = new JSZip();

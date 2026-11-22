@@ -8,6 +8,7 @@ import { ArrowLeft, Download, FileArchive, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { StorageManagementSection } from "@/components/StorageManagementSection";
+import { PROJECT_PUBLIC_SELECT } from "@/lib/project-location";
 
 type AnyRow = Record<string, any>;
 
@@ -44,7 +45,7 @@ export default function ProjectArchive() {
     const sb = supabase as any;
     const [project, archive, designStages, qcInspections, ncrs, designQueries, siteDiary, punchList, variations, boq, billingMilestones, invoices] =
       await Promise.all([
-        sb.from("projects").select("*").eq("id", id).maybeSingle(),
+        sb.from("projects").select(PROJECT_PUBLIC_SELECT).eq("id", id).maybeSingle(),
         sb.from("project_archives").select("*").eq("project_id", id).maybeSingle(),
         sb.from("project_design_stages").select("*, design_stage_definitions(stage_code, stage_name, stage_order)").eq("project_id", id),
         sb.from("qc_inspections").select("*").eq("project_id", id).order("created_at"),

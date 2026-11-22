@@ -1,5 +1,17 @@
 # SECURITY-1 Access Map
 
+## PROJ-LOC — 0058–0062
+
+- `get_project_client_contact(uuid)` and `get_project_request_client_contact(uuid)` are STABLE SECURITY DEFINER, `search_path=public`, PUBLIC/anon revoked, authenticated execution granted; only `is_tier1_or_super(auth.uid())` can receive contact rows. Other authenticated callers receive no row.
+- `raise_project_request(jsonb,text,text)` checks the existing creation roles (Planning Head or Tier 1/Super) against caller-bound `user_roles`. It atomically writes a whitelisted contact-free approval payload and private contact staging. Requesters may write but cannot read staged contact. `approve_project_request(uuid)` locks the pending request, uses unchanged `can_approve_request`, rejects self/double approval, copies contact into projects and clears/archives staging in one transaction. The existing generated project type remains database-derived.
+- `set_project_client_contact(uuid,text,text)` is director/Super-only; `set_project_site_location(uuid,text,numeric,numeric,integer)` additionally permits Head of Projects. Both are SECURITY DEFINER, `search_path=public`, PUBLIC/anon revoked, authenticated execution granted. Validation occurs inside the writers. Audits never include phone/email values.
+- `project_client_contact_requests` and `project_location_contact_log`: RLS enabled, zero client policies, all anon/authenticated direct grants explicitly revoked; service role retains full grants. No existing-table RLS policy changed. Contact staging is cleared and archived, not hard-deleted.
+- The broad projects SELECT grant found at inspection was removed; all non-private columns retain explicit authenticated SELECT. Phone/email and portal credentials are excluded. Project screens use an explicit safe projection; directors retrieve contact separately. Archive output strips project contact and portal credentials. Nightly export manifest is unchanged and excludes contact.
+- `_require_project_site_location` gates employee site check-in inserts/location changes, `save_labour_attendance` and `add_attendance_photo`. Existing distance thresholds, configured radius use, warning/manual exceptions, photos and hours rules are unchanged for configured projects. All new internal helpers and trigger functions have PUBLIC/anon/authenticated execution revoked.
+- The legacy portal-token reader was inspected and ultimately preserved: its email belongs to separately entered `client_portal_tokens`, not `projects`; no new-project contact is copied there. ClientPortalManager retains its separate token workflow.
+- A create-project-only payload trigger rejects phone/email keys, including nested ones, without changing other approval types or existing RLS policies.
+- No feature flags, cron schedules, reminders, user roles/accounts, storage policies, Setup upload, BOQ, Running Bill, Daily/Factory report, Rates or Cost report changes.
+
 ## Project Cost — 0056
 
 - `get_cost_report(uuid,date,date)` is STABLE SECURITY DEFINER with `search_path=public`, authenticated-only execution, PUBLIC/anon revoked, and an internal `can_view_running_bill(auth.uid())` check.

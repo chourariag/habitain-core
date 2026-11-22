@@ -16,6 +16,7 @@ import { approveRequest, rejectRequest, APPROVAL_TYPE_META, summarizeRequest } f
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import KickoffMeetingCard from "@/components/projects/KickoffMeetingCard";
+import { RequestClientContact } from "@/components/projects/RequestClientContact";
 
 const APPROVER_ROLES = [...TIER1_ROLES, "super_admin"];
 
@@ -254,6 +255,7 @@ export default function Approvals() {
                   <div className="col-span-2 break-words text-xs">{String(v ?? "—")}</div>
                 </div>
               ))}
+              {reviewing.request_type === "create_project" && <RequestClientContact requestId={reviewing.id} role={role} />}
               <div className="grid grid-cols-3 gap-2 py-1 text-xs text-muted-foreground">
                 <div>Requested by</div>
                 <div className="col-span-2">{reviewing.requested_by_name} · {new Date(reviewing.requested_at).toLocaleString("en-GB")}</div>
