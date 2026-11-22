@@ -1,3 +1,4 @@
+import { authenticateCronRequest } from "../_shared/cron-auth.ts";
 // Technical Error Attribution DM — polls error_log for un-notified rows and DMs
 // the affected user on Slack. Rows with user_id = NULL (cron jobs) are logged for
 // visibility only and are marked notified without any DM. No retries by design.
@@ -40,6 +41,8 @@ async function slackDM(token: string, channel: string, text: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const authFailure = authenticateCronRequest(req);
+  if (authFailure) return new Response(authFailure.body, { status: authFailure.status, headers: corsHeaders });
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,

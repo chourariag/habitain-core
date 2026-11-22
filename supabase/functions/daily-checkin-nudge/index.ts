@@ -1,3 +1,4 @@
+import { authenticateCronRequest } from "../_shared/cron-auth.ts";
 // Daily Check-In Nudge — Slack DM to users who haven't signed in today (IST),
 // plus one rollup post to #hstack-alert (C0BND0SSMAL).
 // Scheduled twice daily at 13:00 and 17:00 IST via pg_cron (07:30 / 11:30 UTC).
@@ -57,6 +58,8 @@ async function slackPost(token: string, channel: string, text: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const authFailure = authenticateCronRequest(req);
+  if (authFailure) return new Response(authFailure.body, { status: authFailure.status, headers: corsHeaders });
 
   const startedAt = new Date().toISOString();
   const supabase = createClient(

@@ -259,7 +259,7 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const mode = url.searchParams.get("mode");
+    const mode = url.searchParams.get("mode") ?? "daily";
     const userId = url.searchParams.get("user_id");
     const today = new Date().toISOString().slice(0, 10);
 

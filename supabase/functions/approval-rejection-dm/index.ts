@@ -1,3 +1,4 @@
+import { authenticateCronRequest } from "../_shared/cron-auth.ts";
 // Approval Rejection DM — polls approval_requests for newly rejected rows and
 // sends a personal Slack DM to the submitter. No channel fallback, no retries.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
@@ -33,6 +34,8 @@ async function slackDM(token: string, channel: string, text: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const authFailure = authenticateCronRequest(req);
+  if (authFailure) return new Response(authFailure.body, { status: authFailure.status, headers: corsHeaders });
 
   const startedAt = new Date().toISOString();
   const supabase = createClient(

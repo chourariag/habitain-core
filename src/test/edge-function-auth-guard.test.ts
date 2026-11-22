@@ -11,9 +11,6 @@ const ALLOWLIST: Record<string, string> = {
   "export-latest": "Existing hashed export-token helper; explicitly excluded.",
   "export-nightly": "Existing generated cron authenticator; explicitly excluded.",
 };
-// These are NOT allowlisted: individual guard assertions remain pending because
-// their active unmanaged schedules cannot receive a supported header-only update.
-const PENDING_HEADERS = new Set(["auto-submit-draft-expenses", "daily-checkin-nudge", "approval-rejection-dm", "error-attribution-dm"]);
 
 function inspect(path: string, seen = new Set<string>()): { service: boolean; check: boolean } {
   if (seen.has(path)) return { service: false, check: false };
@@ -49,8 +46,7 @@ function inspect(path: string, seen = new Set<string>()): { service: boolean; ch
 
 describe("Every service-key Edge function verifies its caller", () => {
   for (const folder of readdirSync("supabase/functions", { withFileTypes: true }).filter(f => f.isDirectory() && f.name !== "_shared")) {
-    const test = PENDING_HEADERS.has(folder.name) ? it.skip : it;
-    test(`${folder.name}: authentication or explicit reviewed exception`, () => {
+    it(`${folder.name}: authentication or explicit reviewed exception`, () => {
       const result = inspect(resolve("supabase/functions", folder.name, "index.ts"));
       expect(!result.service || result.check || Boolean(ALLOWLIST[folder.name]), `${folder.name} uses a service key without a verified caller`).toBe(true);
     });
