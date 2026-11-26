@@ -50,8 +50,8 @@ export function ScheduleTab({ projectId, userRole }: Props) {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
+  const refresh = useCallback(async (initial = false) => {
+    if (initial) setLoading(true);
     try {
       const [taskRes, unitRes, activityRes, libraryRes, holidayRes, baselineRes, commentRes, profileRes] = await Promise.all([
         (supabase.from("project_tasks") as any).select("*").eq("project_id", projectId).order("display_order", { ascending: true, nullsFirst: false }).order("task_id_in_schedule", { ascending: true }),
@@ -80,7 +80,7 @@ export function ScheduleTab({ projectId, userRole }: Props) {
     }
   }, [projectId]);
 
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => { void refresh(true); }, [refresh]);
 
   const latest = baselines[0] ?? null;
   const baselineExists = !!latest;
