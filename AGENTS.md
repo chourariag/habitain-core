@@ -49,3 +49,4 @@
 - Project screens use explicit public projections; contact readers/editors check caller-bound Tier 1/Super roles and archives strip private contact. Location edits use a checked Tier 1/Super/Head of Projects RPC, and site attendance writers reject missing pins without changing configured distance/photo/hours rules.
 
 - Export strings use shared safety adapters; portal links and advance self-actions are server-checked to prevent injection and self-approval.
+- Schedule baselines: editors come from schedule_editor_roles via can_edit_schedule; a project_tasks trigger locks baseline columns for non-editors and for baselined rows, which change only via publish_schedule_baseline/schedule_revise_task, so actuals stay writable by existing roles.

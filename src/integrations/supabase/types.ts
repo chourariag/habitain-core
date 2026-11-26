@@ -10866,6 +10866,53 @@ export type Database = {
           },
         ]
       }
+      project_schedule_units: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          day1: string | null
+          id: string
+          offset_note: string | null
+          project_id: string
+          unit_kind: string
+          unit_label: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          day1?: string | null
+          id?: string
+          offset_note?: string | null
+          project_id: string
+          unit_kind: string
+          unit_label: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          day1?: string | null
+          id?: string
+          offset_note?: string | null
+          project_id?: string
+          unit_kind?: string
+          unit_label?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_schedule_units_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_scope_exclusions: {
         Row: {
           created_at: string
@@ -11320,6 +11367,7 @@ export type Database = {
           backfill_note: string | null
           backfilled_at: string | null
           backfilled_by: string | null
+          baseline_version: number | null
           completion_percentage: number
           completion_type: Database["public"]["Enums"]["task_completion_type"]
           created_at: string
@@ -11336,6 +11384,7 @@ export type Database = {
           is_locked: boolean
           is_payment_milestone: boolean
           is_qc_gate: boolean
+          library_task_id: string | null
           lock_override_at: string | null
           lock_override_by: string | null
           lock_override_reason: string | null
@@ -11354,10 +11403,13 @@ export type Database = {
           special_note: string | null
           stage_name: string | null
           stage_number: string | null
+          start_day: number | null
           status: string
           task_id_in_schedule: string
           task_name: string
           task_type: Database["public"]["Enums"]["task_template_type"]
+          unit_kind: string | null
+          unit_label: string | null
           updated_at: string
           work_category: string
         }
@@ -11367,6 +11419,7 @@ export type Database = {
           backfill_note?: string | null
           backfilled_at?: string | null
           backfilled_by?: string | null
+          baseline_version?: number | null
           completion_percentage?: number
           completion_type?: Database["public"]["Enums"]["task_completion_type"]
           created_at?: string
@@ -11383,6 +11436,7 @@ export type Database = {
           is_locked?: boolean
           is_payment_milestone?: boolean
           is_qc_gate?: boolean
+          library_task_id?: string | null
           lock_override_at?: string | null
           lock_override_by?: string | null
           lock_override_reason?: string | null
@@ -11401,10 +11455,13 @@ export type Database = {
           special_note?: string | null
           stage_name?: string | null
           stage_number?: string | null
+          start_day?: number | null
           status?: string
           task_id_in_schedule: string
           task_name: string
           task_type?: Database["public"]["Enums"]["task_template_type"]
+          unit_kind?: string | null
+          unit_label?: string | null
           updated_at?: string
           work_category?: string
         }
@@ -11414,6 +11471,7 @@ export type Database = {
           backfill_note?: string | null
           backfilled_at?: string | null
           backfilled_by?: string | null
+          baseline_version?: number | null
           completion_percentage?: number
           completion_type?: Database["public"]["Enums"]["task_completion_type"]
           created_at?: string
@@ -11430,6 +11488,7 @@ export type Database = {
           is_locked?: boolean
           is_payment_milestone?: boolean
           is_qc_gate?: boolean
+          library_task_id?: string | null
           lock_override_at?: string | null
           lock_override_by?: string | null
           lock_override_reason?: string | null
@@ -11448,14 +11507,24 @@ export type Database = {
           special_note?: string | null
           stage_name?: string | null
           stage_number?: string | null
+          start_day?: number | null
           status?: string
           task_id_in_schedule?: string
           task_name?: string
           task_type?: Database["public"]["Enums"]["task_template_type"]
+          unit_kind?: string | null
+          unit_label?: string | null
           updated_at?: string
           work_category?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "project_tasks_library_task_id_fkey"
+            columns: ["library_task_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_library_tasks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_tasks_parent_task_id_fkey"
             columns: ["parent_task_id"]
@@ -13933,6 +14002,86 @@ export type Database = {
           },
         ]
       }
+      schedule_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          entity: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          project_id: string | null
+          reason: string | null
+          task_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          entity: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          project_id?: string | null
+          reason?: string | null
+          task_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          entity?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          project_id?: string | null
+          reason?: string | null
+          task_id?: string | null
+        }
+        Relationships: []
+      }
+      schedule_baselines: {
+        Row: {
+          id: string
+          kind: string
+          project_id: string
+          published_at: string
+          published_by: string
+          reason: string | null
+          snapshot: Json
+          version: number
+        }
+        Insert: {
+          id?: string
+          kind: string
+          project_id: string
+          published_at?: string
+          published_by: string
+          reason?: string | null
+          snapshot: Json
+          version: number
+        }
+        Update: {
+          id?: string
+          kind?: string
+          project_id?: string
+          published_at?: string
+          published_by?: string
+          reason?: string | null
+          snapshot?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_baselines_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedule_conflicts: {
         Row: {
           conflict_status: string
@@ -13997,6 +14146,224 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_editor_roles: {
+        Row: {
+          created_at: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
+      schedule_holidays: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          holiday_date: string
+          is_active: boolean
+          label: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          holiday_date: string
+          is_active?: boolean
+          label: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          holiday_date?: string
+          is_active?: boolean
+          label?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      schedule_library_activities: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string | null
+          display_order: number
+          id: string
+          name: string
+          phase: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          name: string
+          phase: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          id?: string
+          name?: string
+          phase?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      schedule_library_tasks: {
+        Row: {
+          active: boolean
+          activity_id: string
+          code: string
+          created_at: string
+          created_by: string | null
+          crew: Json
+          default_days: number
+          display_order: number
+          entry_mode: string
+          id: string
+          is_hold: boolean
+          is_payment_milestone: boolean
+          is_qc_gate: boolean
+          is_tracked: boolean
+          name: string
+          output_per_person_day: number | null
+          qty: number | null
+          unit: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          activity_id: string
+          code: string
+          created_at?: string
+          created_by?: string | null
+          crew?: Json
+          default_days?: number
+          display_order?: number
+          entry_mode?: string
+          id?: string
+          is_hold?: boolean
+          is_payment_milestone?: boolean
+          is_qc_gate?: boolean
+          is_tracked?: boolean
+          name: string
+          output_per_person_day?: number | null
+          qty?: number | null
+          unit?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          activity_id?: string
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          crew?: Json
+          default_days?: number
+          display_order?: number
+          entry_mode?: string
+          id?: string
+          is_hold?: boolean
+          is_payment_milestone?: boolean
+          is_qc_gate?: boolean
+          is_tracked?: boolean
+          name?: string
+          output_per_person_day?: number | null
+          qty?: number | null
+          unit?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_library_tasks_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_library_activities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_task_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          id: string
+          project_id: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          task_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          author_id?: string
+          body: string
+          created_at?: string
+          id?: string
+          project_id: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          task_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          task_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_task_comments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "schedule_task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
             referencedColumns: ["id"]
           },
         ]
@@ -18421,6 +18788,7 @@ export type Database = {
       can_delete_site_readiness: { Args: { _uid: string }; Returns: boolean }
       can_edit_design_schedule: { Args: { _user_id: string }; Returns: boolean }
       can_edit_fixed_assets: { Args: { _user_id: string }; Returns: boolean }
+      can_edit_schedule: { Args: { _uid: string }; Returns: boolean }
       can_edit_sop_dept: {
         Args: { _department: string; _user_id: string }
         Returns: boolean
@@ -19013,6 +19381,10 @@ export type Database = {
       normalize_ledger_name: { Args: { _name: string }; Returns: string }
       parity2_rollback: { Args: never; Returns: undefined }
       project_archive_upload_reminders: { Args: never; Returns: undefined }
+      publish_schedule_baseline: {
+        Args: { p_project_id: string; p_reason?: string }
+        Returns: number
+      }
       recalc_running_bill: {
         Args: { _project_id: string }
         Returns: {
@@ -19100,6 +19472,19 @@ export type Database = {
           suggested_reassign_name: string
           suggested_reassign_profile_id: string
         }[]
+      }
+      schedule_is_working_day: { Args: { d: string }; Returns: boolean }
+      schedule_revise_task: {
+        Args: { p_patch: Json; p_reason: string; p_task_id: string }
+        Returns: Json
+      }
+      schedule_working_date: {
+        Args: { day1: string; n: number }
+        Returns: string
+      }
+      schedule_working_days_between: {
+        Args: { a: string; b: string }
+        Returns: number
       }
       set_boq_work_location: {
         Args: { p_item_id: string; p_location: string }

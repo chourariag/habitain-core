@@ -463,6 +463,13 @@
       "when": 1795352204807,
       "tag": "0065_sec6a_advance_portal_tightening",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1795691025538,
+      "tag": "0066_sched1_schedule_foundation",
+      "breakpoints": true
     }
   ]
 }
