@@ -15,7 +15,7 @@
 
 ## 3. Rollback tests (`src/test/sched2f-revision-dates.rollback.sql`, Azad editor / prod.dbr4 non-editor; ended with EVIDENCE exception, all undone)
 - (a) F01 start day 2, days 5 → 01/12/2026–05/12/2026 (was finish 03/12).
-- (b) F03 3→4… 2→4 days: F04 moved 02/12–08/12 → 04/12–10/12; 1 cascade audit row.
+- (b) F03 2→4 days: F04 moved 02/12–08/12 → 04/12–10/12; 1 cascade audit row.
 - (c) F04 with actual start 04/12/2026: not moved, reason "Already started on 04/12/2026"; dates unchanged.
 - (d) Holiday 03/12 added via schedule_change_holiday: F01 stayed 05/12 until revised; revision → finish 07/12 (skips holiday Thu 03/12 and Sunday 06/12).
 - (e) F03 after F04 → 22023 "Schedule dependency cycle: F03-TEST-M1 (…) -> F04-TEST-M1 (…) -> F03-TEST-M1 (…)".

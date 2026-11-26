@@ -50,4 +50,4 @@
 
 - Exports use shared safety adapters; portal links/advance self-actions are server-checked.
 - Schedule: checked contexts protect baselines; named editors allowed; server sets pre-baseline dates/library/repeats; lists hide removals; follow-ups/unit-less rows stay unbaselined; panel helper takes batch IDs.
-- Post-baseline revise/add/remove recalculate planned dates server-side via shared internal helpers (_schedule_recalc_one, _schedule_cascade_successors) built on schedule_working_date; started/progressed/removed successors are never moved, removed predecessors are re-linked to their own predecessors, and snapshots stay as published.
+- Post-baseline schedule edits recalc dates via shared server helpers on schedule_working_date; started/removed tasks never move.
