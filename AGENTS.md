@@ -50,4 +50,4 @@
 
 - Exports use shared safety adapters; portal links/advance self-actions are server-checked.
 - Schedule: checked contexts protect baselines; named users add editors; server functions handle pre-baseline dates/library/repeats; lists hide removals; follow-ups stay unbaselined; panel helper takes batch IDs.
-- Legacy unscheduled task cleanup goes only through schedule_clear_unscheduled_tasks (editor, project-checked, pre-baseline, reasoned, audited) and keeps any row with progress or links; template cloning is unchanged.
+- Legacy task cleanup: only schedule_clear_unscheduled_tasks (checked, pre-baseline, audited).
