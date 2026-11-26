@@ -49,4 +49,4 @@
 - Project screens use explicit public projections; contact readers/editors check caller-bound Tier 1/Super roles and archives strip private contact. Location edits use a checked Tier 1/Super/Head of Projects RPC, and site attendance writers reject missing pins without changing configured distance/photo/hours rules.
 
 - Exports use shared safety adapters; portal links/advance self-actions are server-checked.
-- Schedule: checked contexts protect baselines; named users add editors; server functions handle pre-baseline dates/library/repeats; lists hide removals; follow-ups stay unbaselined; panel helper takes batch IDs; baselines snapshot only active unit tasks (unit-less legacy rows stay unstamped but project-locked); library tasks carry responsible_role copied on add.
+- Schedule: checked contexts protect baselines; named users add editors; server functions handle pre-baseline dates/library/repeats; lists hide removals; follow-ups stay unbaselined; panel helper takes batch IDs; baselines hold only unit tasks.
