@@ -1,8 +1,9 @@
 # HStack Build Roadmap
 
 ## In Progress
-- [ ] SCHED-2b: frontend-only project Schedule builder/read-only views using checked RPCs; desktop editor gate, baseline revisions/history/comments/Gantt/holidays; default-off legacy schedule uploads while preserving BOQ and actuals; inspect/evidence/tests/browser walkthrough.
-- [ ] SCHED-2b correction: strip every client actor/timestamp field from new schedule writes; regression-test payloads; real non-editor comment + editor seen/resolved browser/database readback; no database/account changes.
+- [x] SCHED-2b: Schedule plan + Actuals sub-tabs on checked RPCs; desktop gate, revisions/history/comments/Gantt/holidays; legacy schedule uploads default-off with BOQ preserved. 964 tests. Evidence docs/SCHED2B_CONFIRM.md.
+- [x] SCHED-2b correction: actor/timestamp fields removed from all new writes; regression test; real Tagore comment + Venkat seen/resolved verified, no column errors.
+- [ ] SCHED-2b live builder walkthrough (Day 1, library, repeat, publish v1/v2): blocked — would create permanent baselines on a real project; needs a test project or user go-ahead. Live non-editor phone screen blocked by mandatory password change on every eligible account.
 - [x] SCHED-2a-fix: 0073 restores exactly Venkat/Azad by idempotent email lookup; one active Azad match (production_head) added. Real-Azad recalculation/audit and real-account temporary-head_operations 42501 denial rolled back with zero residual fixtures; 955 tests/0 skips. Evidence docs/SCHED2A_FIX_CONFIRM.md; database only, no publish needed.
 - [x] SCHED-2a: 0070–0072 named Venkat-only editor, closure follow-up preservation and explicit published re-clone block; checked pre-baseline date/library/repeat functions. Real-principal rollback a–g passed; 955 tests/0 skips; zero residual fixtures. Evidence docs/SCHED2A_CONFIRM.md; database-only, no publish needed.
 - [x] SCHED-1b: 0067–0069 baseline membership/calendar guards, archive removals, fixed checked helper; unchanged 15/107 seed re-run; real-principal rollback matrix and production-head handover readback. User confirmed factory_supervisor remains blocked. Evidence docs/SCHED1b_CONFIRM.md; legacy upload/closure caveats disclosed.
