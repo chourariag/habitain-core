@@ -44,9 +44,9 @@
 - Project Rates uses the unchanged project_setup flag and can_view_running_bill gate; Excel keys resolve project+sno against the latest BOQ and revalidate atomically at Confirm, preventing stale-version imports.
 - Material quantity snapshots capture once through submit-only helpers, distinguish uncaptured legacy NULLs from missing rates, and suppress amounts when an active contractor rate includes material; explicit safe column grants keep rates/amounts RPC-only and outside nightly exports.
 - Project Cost uses the unchanged project_setup flag and checked get_cost_report reader; it consumes frozen material without rewriting snapshots, retains Running Bill labour/value rules, and omits per-worker amounts unless compensation access passes, including local Excel downloads.
-- Project Cost compares selected-period costs with cap-aware earned(end) minus earned(start−1); cumulative earned value remains separate in UI/Excel, so the indicative difference always uses the same period.
-- Project contact is written directly by checked atomic creation; legacy approval has no contact staging. The empty deprecated store has no app RPCs. Audits record changed fields, never contact values.
+- Project Cost period earned = cap-aware earned(end) − earned(start−1); cumulative stays separate so the difference uses one period.
+- Project contact is written only by checked atomic creation (no approval staging; deprecated store unused); audits log changed fields, never values.
 - Project screens use explicit public projections; contact readers/editors check caller-bound Tier 1/Super roles and archives strip private contact. Location edits use a checked Tier 1/Super/Head of Projects RPC, and site attendance writers reject missing pins without changing configured distance/photo/hours rules.
 
 - Export strings use shared safety adapters; portal links and advance self-actions are server-checked to prevent injection and self-approval.
-- Schedule baselines: editors come from schedule_editor_roles via can_edit_schedule; a project_tasks trigger locks baseline columns for non-editors and for baselined rows, which change only via publish_schedule_baseline/schedule_revise_task, so actuals stay writable by existing roles.
+- Schedule: editors = schedule_editor_roles (can_edit_schedule); trigger locks project_tasks baseline columns, baselined rows change only via publish/revise RPCs, keeping actuals open.
