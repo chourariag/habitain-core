@@ -1,0 +1,2 @@
+- Keep HTML out of Workbox precache and navigation fallback; NetworkFirst shares /index.html in html-cache, seeded by the generated worker's install import, so newly activated workers serve unvisited routes offline.
+- Reject installation on a failed shell fetch rather than activating an update without its fresh HTML; a non-200 response never replaces the cached shell.

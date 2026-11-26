@@ -1,6 +1,8 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [x] PWA offline shell: shared /index.html key, install-time no-store 200-only seed; 955 tests/0 skips, generated Workbox static checks and old-worker immediate-offline /, /login, /attendance document delivery verified. HTML precache absent; attendance/IndexedDB unchanged. Worker generated against prior production assets, not a fresh app build.
+- [ ] Signed-in attendance after cold offline reload: existing mandatory-password/profile check stalls offline; outside requested PWA cache changes, requires separate authorization. Signed-out offline routes render login; protected attendance UI was not verified offline.
 - [x] SEC-6a: 0065 self-action guard/strong expiring portal tokens; shared export/print safety; 31-principal rollback, 942 tests/0 skips, live MD Daily Report 360px and print readback. Full 28-finding inventory and unverified public-child/finance browser limitations: docs/SEC6A_CONFIRM.md.
 - [x] PROJ-LOC cleanup: 0064 removes staging RPCs/contact display and approval copy/clear; empty store deprecated (platform blocks table drops); direct creation/privacy and rollback matrix passed, 876 tests/0 skips, Running Bill unchanged. Evidence docs/PROJ_LOC_CLEANUP_CONFIRM.md.
 - [x] PROJ-ACCESS: 0063 private audited grants, checked atomic creation, server-driven button/dialog and management tab; 31-principal rollback checks, grant/revoke/private access and 3 modules/22 stages/3 panels; 876 tests/0 skips, MD 360px, unchanged Running Bill; zero seeded grants/pending requests. Evidence docs/PROJ_ACCESS_CONFIRM.md.

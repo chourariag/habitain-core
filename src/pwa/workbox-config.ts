@@ -2,13 +2,15 @@ import type { GenerateSWOptions } from "workbox-build";
 
 /**
  * Never precache HTML: a cached document can reference chunks removed by a
- * later deployment. Navigations use the network first instead.
+ * later deployment. Navigations share one network-first document; the install
+ * hook seeds it before the new worker can activate, including on updates.
  */
 export const workboxConfig: Partial<GenerateSWOptions> = {
   clientsClaim: true,
   skipWaiting: true,
   cleanupOutdatedCaches: true,
   navigateFallback: null,
+  importScripts: ["/pwa-html-cache.js"],
   globPatterns: ["**/*.{js,css,ico,png,svg,woff2}"],
   globIgnores: ["**/version.json"],
   maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
@@ -23,6 +25,7 @@ export const workboxConfig: Partial<GenerateSWOptions> = {
       options: {
         cacheName: "html-cache",
         networkTimeoutSeconds: 5,
+        plugins: [{ cacheKeyWillBeUsed: async () => "/index.html" }],
       },
     },
     {
