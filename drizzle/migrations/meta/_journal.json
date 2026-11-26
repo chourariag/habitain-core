@@ -519,6 +519,13 @@
       "when": 1795711475835,
       "tag": "0073_sched2a_named_editor_seeds",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1795714416377,
+      "tag": "0074_sched2c_clear_unscheduled_tasks",
+      "breakpoints": true
     }
   ]
 }

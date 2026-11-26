@@ -232,7 +232,8 @@ export default function ProjectDetail() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <ScrollableTabsWrapper>
-          <TabsList>
+          {/* w-max: the wrapper (not the list) scrolls, so its arrows appear and Scope/Handover stay reachable. */}
+          <TabsList className="w-max max-w-none overflow-visible">
             <TabsTrigger value="schedule" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Schedule</TabsTrigger>
             {!isAds && flags.isEnabled("project_setup") && <TabsTrigger value="setup" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Setup</TabsTrigger>}
             <TabsTrigger value="billing" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Payment Milestones</TabsTrigger>

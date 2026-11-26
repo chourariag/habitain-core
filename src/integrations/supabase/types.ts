@@ -19541,6 +19541,10 @@ export type Database = {
         }
         Returns: Json
       }
+      schedule_clear_unscheduled_tasks: {
+        Args: { p_project_id: string; p_reason: string }
+        Returns: Json
+      }
       schedule_is_working_day: { Args: { d: string }; Returns: boolean }
       schedule_recalculate_dates: {
         Args: { p_project_id: string }

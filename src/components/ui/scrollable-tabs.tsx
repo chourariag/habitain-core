@@ -26,9 +26,25 @@ export function ScrollableTabsWrapper({ children, className }: ScrollableTabsWra
     el.addEventListener("scroll", checkOverflow, { passive: true });
     const ro = new ResizeObserver(checkOverflow);
     ro.observe(el);
+    // Also watch the tab list itself: tabs that appear after permissions load widen it without resizing the scroller.
+    if (el.firstElementChild) ro.observe(el.firstElementChild);
+    // Keep the active tab in view whenever it changes.
+    const revealActive = () => {
+      const active = el.querySelector<HTMLElement>('[role="tab"][data-state="active"]');
+      if (!active) return;
+      const left = active.getBoundingClientRect().left - el.getBoundingClientRect().left + el.scrollLeft;
+      if (left < el.scrollLeft || left + active.offsetWidth > el.scrollLeft + el.clientWidth) {
+        el.scrollTo({ left: Math.max(0, left - 32), behavior: "smooth" });
+      }
+      checkOverflow();
+    };
+    const mo = new MutationObserver(revealActive);
+    mo.observe(el, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-state"] });
+    revealActive();
     return () => {
       el.removeEventListener("scroll", checkOverflow);
       ro.disconnect();
+      mo.disconnect();
     };
   }, [checkOverflow]);
 

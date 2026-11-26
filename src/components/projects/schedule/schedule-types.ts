@@ -1,4 +1,5 @@
 import { format, parseISO } from "date-fns";
+export { ROLE_LABELS } from "@/lib/roles";
 
 export type UnitKind = "module" | "panel_set" | "site";
 
@@ -61,6 +62,8 @@ export interface ScheduleHoliday {
   holiday_date: string;
   label: string;
   is_active: boolean;
+  created_by?: string | null;
+  created_at?: string | null;
 }
 
 export interface ScheduleBaseline {
@@ -168,4 +171,26 @@ export function compareSnapshots(previous: ScheduleSnapshotTask[], current: Sche
     }
   }
   return changes;
+}
+
+/** Readable role name for display only (never a permission decision). */
+export function roleName(role: string | null | undefined, labels: Record<string, string>) {
+  if (!role) return "—";
+  return labels[role] ?? role.split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
+}
+
+/** Library activities with no fixed day are shown to planners as "Unscheduled extras". */
+export function isExtrasGroup(name: string | null | undefined) {
+  const value = (name ?? "").trim().toLowerCase();
+  return value === "other" || value.startsWith("extra works");
+}
+
+export function activityDisplayName(name: string | null | undefined) {
+  if (!name) return "Other";
+  return isExtrasGroup(name) ? "Unscheduled extras" : name;
+}
+
+/** Natural sort by task code so F00 comes before F01 and S07 before S08. */
+export function compareCodes(a: string, b: string) {
+  return a.localeCompare(b, undefined, { numeric: true, sensitivity: "base" });
 }

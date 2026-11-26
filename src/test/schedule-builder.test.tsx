@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import fs from "node:fs";
 import path from "node:path";
 import type { ScheduleBaseline, ScheduleTask } from "@/components/projects/schedule/schedule-types";
@@ -80,7 +80,7 @@ describe("Schedule builder access modes", () => {
     render(<ScheduleTab projectId="project-1" userRole="head_operations" />);
     expect(await screen.findByRole("button", { name: "Add task not in library" })).toBeVisible();
     expect(screen.getByText("2. Add tasks")).toBeVisible();
-    expect(screen.getAllByRole("button", { name: "Save & recalculate" })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: "Save" })).toHaveLength(2); // unit Day 1 + task row
     expect(screen.queryByText("Schedules are built on a desktop. Open HStack on a computer to edit. The read-only schedule and comments remain available below.")).not.toBeInTheDocument();
   });
 
@@ -89,7 +89,7 @@ describe("Schedule builder access modes", () => {
     render(<ScheduleTab projectId="project-1" userRole="head_operations" />);
     expect(await screen.findByText(/Schedules are built on a desktop/)).toBeVisible();
     expect(screen.queryByRole("button", { name: "Add task not in library" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Save & recalculate" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Comment" })).toBeVisible();
   });
 
@@ -100,7 +100,7 @@ describe("Schedule builder access modes", () => {
     render(<ScheduleTab projectId="project-1" userRole="site_engineer" />);
     expect(await screen.findByRole("button", { name: "Comment" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Add task not in library" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Save & recalculate" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Review & publish baseline" })).not.toBeInTheDocument();
     expect(screen.queryByText(/Schedules are built on a desktop/)).not.toBeInTheDocument();
 
@@ -120,7 +120,7 @@ describe("Schedule builder access modes", () => {
     expect(await screen.findByText(/Baseline v1/)).toBeVisible();
     expect(screen.getByRole("button", { name: "Revise" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Remove with reason" })).toBeVisible();
-    expect(screen.queryByRole("button", { name: "Save & recalculate" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Publish revision" })).toBeVisible();
   });
 
@@ -173,3 +173,58 @@ describe("Schedule presentation helpers and legacy switch", () => {
     }
   });
 });
+
+describe("SCHED-2c task table", () => {
+  it("shows readable role names, one legacy summary line and keeps legacy rows collapsed", async () => {
+    mocks.tables.project_tasks = [
+      { ...task },
+      ...Array.from({ length: 3 }, (_, i) => ({ ...task, id: `legacy-${i}`, task_id_in_schedule: `L${i}`, task_name: `Legacy ${i}`, unit_kind: null, unit_label: null, planned_start_date: null, planned_finish_date: null, responsible_role: "sales_director" })),
+    ];
+    mocks.rpc.mockResolvedValue({ data: { warnings: ["L0 has no unit; using earliest module Day 1", "L1 has no unit; using earliest module Day 1"] }, error: null });
+    setWidth(1440);
+    render(<ScheduleTab projectId="project-1" userRole="planning_head" />);
+    expect(await screen.findByText("3 tasks have no unit and no dates.")).toBeVisible();
+    expect(screen.queryByText(/has no unit; using earliest/)).not.toBeInTheDocument();
+    expect(screen.getByText("Factory Supervisor")).toBeVisible();
+    expect(screen.queryByText("factory_supervisor")).not.toBeInTheDocument();
+    expect(screen.queryByText("Legacy 0")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show them" }));
+    expect(await screen.findByText("Legacy 0")).toBeVisible();
+    expect(screen.getAllByText("Sales Director").length).toBeGreaterThan(0);
+  });
+
+  it("adds predecessors without replacing the existing selection", async () => {
+    mocks.tables.project_tasks = [
+      { ...task, predecessor_ids: ["F00-M1"] },
+      { ...task, id: "task-0", task_id_in_schedule: "F00-M1", task_name: "Start" },
+      { ...task, id: "task-2", task_id_in_schedule: "F02-M1", task_name: "Frame" },
+      { ...task, id: "task-x", task_id_in_schedule: "F09-M2", task_name: "Other unit", unit_label: "Module 2" },
+    ];
+    setWidth(1440);
+    render(<ScheduleTab projectId="project-1" userRole="planning_head" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Predecessors for F01-M1" }));
+    const list = await screen.findByRole("listbox");
+    expect(within(list).queryByText("Other unit")).not.toBeInTheDocument();
+    const frame = within(list).getByText("Frame");
+    fireEvent.click(frame.closest("label")!.querySelector("button")!);
+    const row = screen.getAllByText("Material receipt").map((el) => el.closest("tr")).find(Boolean)!;
+    fireEvent.click(within(row).getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({ start_day: 1, duration_days: 2, predecessor_ids: ["F00-M1", "F02-M1"] }));
+  });
+
+  it("orders library tasks by code within an activity", async () => {
+    mocks.tables.schedule_library_activities = [{ id: "a1", code: "FAC", name: "Factory", phase: "factory", display_order: 1 }];
+    mocks.tables.schedule_library_tasks = [
+      { id: "l2", activity_id: "a1", code: "F01", name: "Second", default_days: 1, std_start_day: 1, display_order: 1 },
+      { id: "l1", activity_id: "a1", code: "F00", name: "First", default_days: 1, std_start_day: 1, display_order: 2 },
+    ];
+    setWidth(1440);
+    const { container } = render(<ScheduleTab projectId="project-1" userRole="planning_head" />);
+    const select = (await screen.findAllByRole("combobox")).find((el) => el.textContent?.includes("Choose unit"))!;
+    fireEvent.change(select, { target: { value: "module|Module 1" } });
+    const text = container.textContent ?? "";
+    expect(text.indexOf("First")).toBeLessThan(text.indexOf("Second"));
+    expect(screen.getByRole("button", { name: "Add selected (0)" })).toBeDisabled();
+  });
+});
+

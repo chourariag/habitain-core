@@ -14,12 +14,17 @@ interface Props {
   busy: boolean;
   onAdd: (task: ScheduleTask, body: string) => Promise<void>;
   onStatus: (comment: ScheduleComment, status: "seen" | "resolved") => Promise<void>;
+  /** Icon-only trigger for dense table rows. */
+  compact?: boolean;
+  count?: number;
 }
 
-export function ScheduleComments({ task, comments, names, canEditSchedule, busy, onAdd, onStatus }: Props) {
+export function ScheduleComments({ task, comments, names, canEditSchedule, busy, onAdd, onStatus, compact, count }: Props) {
   const [open, setOpen] = useState(false);
   const [body, setBody] = useState("");
-  const taskComments = comments.filter((comment) => comment.task_id === task.id);
+  const total = count ?? comments.filter((comment) => comment.task_id === task.id).length;
+  const taskComments = open ? comments.filter((comment) => comment.task_id === task.id) : [];
+  const label = `Comment${total ? ` (${total})` : ""}`;
   const submit = async () => {
     if (!body.trim()) return;
     await onAdd(task, body.trim());
@@ -27,10 +32,17 @@ export function ScheduleComments({ task, comments, names, canEditSchedule, busy,
   };
   return (
     <>
-      <Button type="button" size="sm" variant="outline" className="max-w-full whitespace-normal" onClick={() => setOpen(true)}>
-        <MessageSquare className="mr-1 h-4 w-4 shrink-0" /> Comment{taskComments.length ? ` (${taskComments.length})` : ""}
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
+      {compact ? (
+        <Button type="button" size="sm" variant="ghost" className="relative h-8 w-8 p-0" aria-label={label} title={label} onClick={() => setOpen(true)}>
+          <MessageSquare className="h-4 w-4" />
+          {total > 0 && <span className="absolute -right-0.5 -top-0.5 rounded-full bg-primary px-1 text-[9px] leading-4 text-primary-foreground" aria-hidden="true">{total}</span>}
+        </Button>
+      ) : (
+        <Button type="button" size="sm" variant="outline" className="max-w-full whitespace-normal" onClick={() => setOpen(true)}>
+          <MessageSquare className="mr-1 h-4 w-4 shrink-0" /> {label}
+        </Button>
+      )}
+      {open && <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Comments · {task.task_id_in_schedule}</DialogTitle>
@@ -63,7 +75,7 @@ export function ScheduleComments({ task, comments, names, canEditSchedule, busy,
             <Button type="button" disabled={!body.trim() || busy} onClick={() => void submit()}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Add comment</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog>}
     </>
   );
 }

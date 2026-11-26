@@ -62,3 +62,5 @@
 - [x] Inspected creation/contact/attendance and export paths; applied 0058–0062 private contact and location gates; preserved existing project values, roles, schedules and RLS.
 - [x] Added required New Project location/contact fields, checked project editors, missing-pin list and attendance blocks; signed-in 360px checked without production saves.
 - [x] 31-principal live rollback matrix, private approval copy/clear, attendance near/far and Running Bill baseline verified; 805 tests/0 skips. Persistent browser creation deliberately not performed; principal-only approver lacks an active account. Evidence: docs/PROJ_LOC_CONFIRM.md.
+
+- [x] SCHED-2c schedule builder fixes (table, picker, add-tasks bar, wording, Gantt, tab strip, clear unscheduled legacy tasks function — not run)

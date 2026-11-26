@@ -14,7 +14,7 @@ import { ScheduleLibrary } from "./ScheduleLibrary";
 import { ScheduleTaskTable, type CustomTaskInput, type TaskPatch } from "./ScheduleTaskTable";
 import { ScheduleGantt } from "./ScheduleGantt";
 import { ScheduleHolidays } from "./ScheduleHolidays";
-import { SchedulePublish } from "./SchedulePublish";
+import { SchedulePublish, type ClearResult } from "./SchedulePublish";
 import { ScheduleHistory } from "./ScheduleHistory";
 import { displayDate, type LibraryActivity, type LibraryTask, type ProfileNameMap, type ScheduleBaseline, type ScheduleComment, type ScheduleHoliday, type ScheduleTask, type ScheduleUnit, type UnitKind } from "./schedule-types";
 
@@ -58,7 +58,7 @@ export function ScheduleTab({ projectId, userRole }: Props) {
         (supabase.from("project_schedule_units") as any).select("*").eq("project_id", projectId).order("unit_kind").order("unit_label"),
         (supabase.from("schedule_library_activities") as any).select("id,code,name,phase,display_order").eq("active", true).order("display_order"),
         (supabase.from("schedule_library_tasks") as any).select("id,activity_id,code,name,default_days,std_start_day,display_order").eq("active", true).order("display_order"),
-        (supabase.from("schedule_holidays") as any).select("holiday_date,label,is_active").order("holiday_date", { ascending: false }),
+        (supabase.from("schedule_holidays") as any).select("holiday_date,label,is_active,created_by,created_at").order("holiday_date", { ascending: false }),
         (supabase.from("schedule_baselines") as any).select("*").eq("project_id", projectId).order("version", { ascending: false }),
         (supabase.from("schedule_task_comments") as any).select("*").eq("project_id", projectId).order("created_at", { ascending: true }),
         (supabase.from("profiles") as any).select("auth_user_id,display_name").eq("is_active", true),
@@ -114,13 +114,13 @@ export function ScheduleTab({ projectId, userRole }: Props) {
     const { error } = await (supabase.from("project_schedule_units") as any).update({ day1: day1 || null, offset_note: note || null }).eq("id", unit.id);
     if (error) throw error;
     await recalculate();
-  }, "Day 1 saved and dates recalculated by the database.");
+  }, "Day 1 saved; dates updated.");
 
   const addUnit = (kind: UnitKind, label: string, day1: string, note: string) => run(async () => {
     const { error } = await (supabase.from("project_schedule_units") as any).insert({ project_id: projectId, unit_kind: kind, unit_label: label.trim(), day1: day1 || null, offset_note: note || null });
     if (error) throw error;
     await recalculate();
-  }, "Unit added and dates recalculated by the database.");
+  }, "Unit added; dates updated.");
 
   const addLibrary = (unit: ScheduleUnit, ids: string[]) => run(async () => {
     const { data, error } = await supabase.rpc("schedule_add_library_tasks", { p_project_id: projectId, p_unit_kind: unit.unit_kind, p_unit_label: unit.unit_label, p_library_task_ids: ids });
@@ -147,7 +147,7 @@ export function ScheduleTab({ projectId, userRole }: Props) {
       if (error) throw error;
       await recalculate();
     }
-  }, baselineExists ? "Revision saved with its reason." : "Task saved and dates recalculated by the database.");
+  }, baselineExists ? "Revision saved with its reason." : "Task saved; dates updated.");
 
   const addCustom = (input: CustomTaskInput, reason?: string) => run(async () => {
     if (baselineExists) {
@@ -159,7 +159,7 @@ export function ScheduleTab({ projectId, userRole }: Props) {
       if (error) throw error;
       await recalculate();
     }
-  }, baselineExists ? "Revision task added with its reason." : "Custom task added and dates recalculated by the database.");
+  }, baselineExists ? "Revision task added with its reason." : "Task added; dates updated.");
 
   const removeTask = (task: ScheduleTask, reason: string) => run(async () => {
     const { error } = await supabase.rpc("schedule_remove_task", { p_task_id: task.id, p_reason: reason });
@@ -180,7 +180,18 @@ export function ScheduleTab({ projectId, userRole }: Props) {
       }
       await recalculate();
     }
-  }, baselineExists ? "Holiday revision saved with its reason; stored task dates did not move." : "Holiday saved and dates recalculated by the database.");
+  }, baselineExists ? "Holiday revision saved with its reason; stored task dates did not move." : "Holiday saved; dates updated.");
+
+  const clearUnscheduled = async (reason: string) => {
+    let result: ClearResult | null = null;
+    const ok = await run(async () => {
+      const { data, error } = await (supabase.rpc as any)("schedule_clear_unscheduled_tasks", { p_project_id: projectId, p_reason: reason });
+      if (error) throw error;
+      result = data as ClearResult;
+      toast.success(`Removed ${result.deleted} unscheduled tasks; kept ${result.skipped_with_progress}.`);
+    });
+    return ok ? (result as ClearResult | null) : null;
+  };
 
   const publish = (reason?: string) => run(async () => {
     const { data, error } = await supabase.rpc("publish_schedule_baseline", { p_project_id: projectId, p_reason: reason ?? null });
@@ -225,10 +236,10 @@ export function ScheduleTab({ projectId, userRole }: Props) {
           <ScheduleUnits units={units} canWrite={canWrite} baselineExists={baselineExists} busy={busy} onUpdate={updateUnit} onAdd={addUnit} />
           {canWrite && !baselineExists && <ScheduleLibrary activities={activities} libraryTasks={libraryTasks} projectTasks={tasks} units={units} busy={busy} onAdd={addLibrary} onRepeat={repeatUnits} />}
           {canWrite && baselineExists && <Alert><AlertTitle>Revision mode</AlertTitle><AlertDescription>Use Revise on an existing task or “Add task not in library”. Every addition, change and removal requires a reason. Publish the next version below when ready.</AlertDescription></Alert>}
-          <ScheduleTaskTable tasks={sortedTasks} units={units} comments={comments} names={names} warnings={warnings} canWrite={canWrite} baselineExists={baselineExists} busy={busy} onSave={saveTask} onAddCustom={addCustom} onRemove={removeTask} onAddComment={addComment} onCommentStatus={commentStatus} />
-          <ScheduleGantt tasks={tasks} holidays={holidays} />
-          <ScheduleHolidays holidays={holidays} canWrite={canWrite} baselineExists={baselineExists} busy={busy} onChange={changeHoliday} />
-          {canWrite && <SchedulePublish tasks={tasks} units={units} latest={latest} busy={busy} onPublish={publish} />}
+          <ScheduleTaskTable tasks={sortedTasks} units={units} activities={activities} libraryTasks={libraryTasks} comments={comments} names={names} warnings={warnings} canWrite={canWrite} baselineExists={baselineExists} busy={busy} onSave={saveTask} onAddCustom={addCustom} onRemove={removeTask} onAddComment={addComment} onCommentStatus={commentStatus} />
+          <ScheduleGantt tasks={tasks} holidays={holidays} units={units} activities={activities} libraryTasks={libraryTasks} />
+          <ScheduleHolidays holidays={holidays} names={names} canWrite={canWrite} baselineExists={baselineExists} busy={busy} onChange={changeHoliday} />
+          {canWrite && <SchedulePublish tasks={tasks} units={units} latest={latest} busy={busy} onPublish={publish} onClearUnscheduled={clearUnscheduled} />}
           <ScheduleHistory baselines={baselines} names={names} />
         </TabsContent>
         <TabsContent value="actuals" className="min-w-0">
