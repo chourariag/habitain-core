@@ -21,7 +21,7 @@ import { ArchiveProjectDialog } from "@/components/projects/ArchiveProjectDialog
 import { HandoverPack } from "@/components/site/HandoverPack";
 import { ClientPortalManager } from "@/components/projects/ClientPortalManager";
 import { BillingMilestonesSection } from "@/components/projects/BillingMilestonesSection";
-import { MicroScheduleTab } from "@/components/projects/MicroScheduleTab";
+import { ScheduleTab } from "@/components/projects/schedule/ScheduleTab";
 import { MaterialPlanTab } from "@/components/procurement/MaterialPlanTab";
 import { VariationsTab } from "@/components/projects/VariationsTab";
 import { ScopeOfWorkTab } from "@/components/projects/ScopeOfWorkTab";
@@ -34,7 +34,7 @@ import { PreProductionChecklist } from "@/components/projects/PreProductionCheck
 import { ProjectArchitectCard } from "@/components/projects/ProjectArchitectCard";
 import { ProjectLocationContact } from "@/components/projects/ProjectLocationContact";
 import { PROJECT_PUBLIC_SELECT } from "@/lib/project-location";
-import { PREPROD_GATES_ENFORCED } from "@/lib/phase-flags";
+import { PREPROD_GATES_ENFORCED, SCHEDULE_LEGACY_UPLOAD_VISIBLE } from "@/lib/phase-flags";
 
 import { computeProjectStatus, PROJECT_STATUS_CONFIG } from "@/lib/project-status";
 import { isAdsProject } from "@/lib/project-type";
@@ -47,8 +47,6 @@ const EDIT_ROLES = ["planning_engineer", "super_admin", ...TIER1_ROLES];
 const STAGE_ADVANCE_ROLES = ["planning_engineer", "production_head", "super_admin", ...TIER1_ROLES];
 const ARCHIVE_REQUEST_ROLES = ["managing_director", "super_admin", "finance_director", "sales_director", "architecture_director"];
 const PL_VIEW_ROLES = ["super_admin", "managing_director", "finance_director", "sales_director", "architecture_director", "head_operations", "finance_manager", "accounts_executive"];
-const LEGACY_PROJECT_SETUP_UPLOAD_VISIBLE = false;
-
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -218,7 +216,7 @@ export default function ProjectDetail() {
 
       {PREPROD_GATES_ENFORCED && <PreProductionChecklist projectId={project.id} division={proj.division ?? null} />}
 
-      {LEGACY_PROJECT_SETUP_UPLOAD_VISIBLE && !isAds && flags.isEnabled("project_setup") && (
+      {SCHEDULE_LEGACY_UPLOAD_VISIBLE && !isAds && flags.isEnabled("project_setup") && (
         <ProjectSetupUpload projectId={id!} userRole={userRole} productionSystem={(proj as any).production_system ?? "modular"} projectType={proj.division ?? null} onImported={fetchData} />
       )}
 
@@ -269,8 +267,8 @@ export default function ProjectDetail() {
           <ProjectCostReport projectId={id} role={userRole} onOpenRates={() => setActiveTab("rates")} />
         </TabsContent>}
 
-        <TabsContent value="schedule" className="space-y-4">
-          <MicroScheduleTab projectId={id!} userRole={userRole} />
+        <TabsContent value="schedule" className="min-w-0 space-y-4">
+          <ScheduleTab projectId={id!} userRole={userRole} />
         </TabsContent>
 
         {!isAds && flags.isEnabled("project_setup") && (

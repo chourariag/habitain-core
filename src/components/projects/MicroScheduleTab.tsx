@@ -23,6 +23,7 @@ import { downloadScheduleTemplate } from "@/lib/xlsx-templates";
 import { ChevronRight, ChevronDown, ShieldAlert } from "lucide-react";
 import { useProjectImportListener } from "@/lib/use-project-import";
 import { SetupTemplateBanner } from "./SetupTemplateBanner";
+import { SCHEDULE_LEGACY_UPLOAD_VISIBLE } from "@/lib/phase-flags";
 
 interface ProjectTask {
   id: string;
@@ -112,7 +113,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
     () => (showFullSchedule ? allTasks : allTasks.filter((t) => t.responsible_role === userRole)),
     [allTasks, showFullSchedule, userRole]
   );
-  const canUpload = UPLOAD_ROLES.includes(userRole ?? "") && !isProductionView;
+  const canUpload = SCHEDULE_LEGACY_UPLOAD_VISIBLE && UPLOAD_ROLES.includes(userRole ?? "") && !isProductionView;
   const canEdit = EDIT_ROLES.includes(userRole ?? "") && !isProductionView;
   const canOverride = ["planning_engineer", "super_admin", ...TIER1_ROLES].includes(userRole ?? "") && !isProductionView;
   const PHASES = useMemo(() => getPhasesForSystem(productionSystem), [productionSystem]);
@@ -558,7 +559,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
             <p className="text-muted-foreground text-sm">
               {allTasks.length > 0 && !showFullSchedule
                 ? "No tasks assigned to your role on this project."
-                : "No data uploaded yet. Ask Karthik to upload Project Setup Template."}
+                : "No tasks yet. Build the schedule in Schedule plan."}
             </p>
           </CardContent>
         </Card>
@@ -589,7 +590,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
         <Card>
           <CardContent className="py-12 text-center space-y-3">
             <p className="text-muted-foreground text-sm">
-              No schedule uploaded yet. Click "Upload Schedule" to import your execution plan.
+              No schedule tasks yet. Open Schedule plan to build the execution plan.
             </p>
           </CardContent>
         </Card>
