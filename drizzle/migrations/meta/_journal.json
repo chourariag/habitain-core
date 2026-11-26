@@ -568,6 +568,13 @@
       "when": 1795722402252,
       "tag": "0080_boq1_workbook_guard_compatibility",
       "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1795723755636,
+      "tag": "0081_boq1b_writers_and_consumed_line_guard",
+      "breakpoints": true
     }
   ]
 }

@@ -18787,6 +18787,14 @@ export type Database = {
         Returns: Json
       }
       _boq1_warnings: { Args: { p_boq: string; p_row: Json }; Returns: Json }
+      _boq1b_check_change: {
+        Args: {
+          p_old: Database["public"]["Tables"]["project_boq_items"]["Row"]
+          p_patch: Json
+        }
+        Returns: undefined
+      }
+      _boq1b_consumption: { Args: { p_line: string }; Returns: Json }
       _cost_require_project: {
         Args: { p_boq_item_id?: string; p_project_id: string }
         Returns: undefined

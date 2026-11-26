@@ -12,9 +12,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, ClipboardPaste, Save, LockKeyhole, Pencil, Archive, Download, Loader2, Check, AlertTriangle, X } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "@/lib/safe-xlsx";
+import { useUserRole } from "@/hooks/useUserRole";
+import { canShowBoqEntry } from "@/lib/boq-writers";
 import { BOQ_ENTRY_FIELDS, BOQ_ENTRY_LABELS, emptyBoqRow, entryFromLine, parseBoqPaste, mapBoqPaste, boqCurrency, boqTimestamp, type BoqEntryRow, type BoqState, type BoqPreview, type BoqWarning, type EntryField } from "@/lib/boq-entry";
 
 export function BoqEntry({ projectId }: { projectId: string }) {
+  const { role, isImpersonating } = useUserRole();
   const [data, setData] = useState<BoqState | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -35,6 +38,10 @@ export function BoqEntry({ projectId }: { projectId: string }) {
   const [pasteIssues, setPasteIssues] = useState<string[]>([]);
   const [ackNotes, setAckNotes] = useState<Record<string, string>>({});
   const [confirmFinal, setConfirmFinal] = useState(false);
+
+  useEffect(() => {
+    setRevision(false); setStaged([]); setEditor(null); setPasteOpen(false); setConfirmFinal(false);
+  }, [role, isImpersonating]);
 
   const applyState = (state: BoqState) => {
     setData(state);
@@ -69,7 +76,7 @@ export function BoqEntry({ projectId }: { projectId: string }) {
       setError(message); toast.error(message); return null;
     } finally { setBusy(false); }
   };
-  const canWrite = desktop && data?.can_write && (!data.header || data.header.entry_mode === "fresh");
+  const canWrite = desktop && canShowBoqEntry(data?.can_write ?? false, role, isImpersonating) && (!data?.header || data.header.entry_mode === "fresh");
   const editing = canWrite && (data?.header?.status !== "final" || revision);
   const stage = (rows: BoqEntryRow[]) => setStaged(old => [...old.filter(r => !rows.some(next => next.id && next.id === r.id)), ...rows]);
   const saveRow = async () => {
@@ -135,7 +142,7 @@ export function BoqEntry({ projectId }: { projectId: string }) {
   if (!data) return <section className="min-w-0 space-y-4" aria-label="BOQ"><h2 className="font-display text-xl font-bold">BOQ</h2>{busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <><p role="alert" className="break-words text-destructive">{error}</p><Button onClick={() => void load()}>Retry</Button></>}</section>;
   return <section className="min-w-0 space-y-5 pb-3" aria-label="BOQ entry">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex flex-wrap items-center gap-2"><h2 className="font-display text-xl font-bold">BOQ</h2><Badge variant="outline">{data.header?.status === "final" ? "Final · locked" : data.header?.entry_mode === "legacy" ? "Existing BOQ · read-only" : "Draft"}</Badge>{!desktop && <Badge variant="outline">Read-only on phone</Badge>}</div>
+      <div className="flex flex-wrap items-center gap-2"><h2 className="font-display text-xl font-bold">BOQ</h2><Badge variant="outline">{data.header?.status === "final" ? "Final · locked" : data.header?.entry_mode === "legacy" ? "Existing BOQ · read-only" : "Draft"}</Badge>{!desktop ? <Badge variant="outline">Read-only on phone</Badge> : !canShowBoqEntry(data.can_write, role, isImpersonating) && <Badge variant="outline">Read-only</Badge>}</div>
       <Button variant="outline" className="min-h-11" onClick={exportBoq} disabled={!data.header}><Download className="mr-2 h-4 w-4" /> Download BOQ</Button>
     </div>
     {error && <p role="alert" className="whitespace-pre-line break-words rounded-md border border-destructive p-3 text-sm text-destructive">{error}</p>}
@@ -155,7 +162,7 @@ export function BoqEntry({ projectId }: { projectId: string }) {
         {editing && data.header && <><Button variant="outline" className="min-h-11" disabled={busy} onClick={() => setEditor(emptyBoqRow())}><Plus className="mr-1 h-4 w-4" /> Add row</Button><Button variant="outline" className="min-h-11" onClick={() => { setPasteOpen(true); setPreview([]); }}><ClipboardPaste className="mr-1 h-4 w-4" /> Paste rows</Button></>}
         {canWrite && data.header?.status === "final" && !revision && <Button variant="outline" className="min-h-11" onClick={() => { setRevision(true); setReason(""); setStaged([]); }}><Pencil className="mr-1 h-4 w-4" /> Make revision</Button>}
       </div></div>
-      {revision && <div className="space-y-3 border-y border-border py-4"><Label htmlFor="boq-reason">Revision reason (required)</Label><Input id="boq-reason" value={reason} onChange={e => setReason(e.target.value)} /><p className="text-sm text-muted-foreground">{staged.length} line changes pending</p><div className="flex flex-wrap gap-2"><Button disabled={busy || !reason.trim()} onClick={async () => { const state = await mutate("revise", { rows: staged, control_total: total, source_note: source, reason }); if (state) { setRevision(false); setStaged([]); setEditor(null); } }}><Save className="mr-1 h-4 w-4" /> Save balanced revision</Button><Button variant="ghost" onClick={() => { setRevision(false); setStaged([]); setEditor(null); applyState(data); }}><X className="mr-1 h-4 w-4" /> Cancel</Button></div>{staged.map((row, i) => <p key={row.id ?? i} className="break-words text-xs">{row.remove ? "Remove" : "Change"} item {row.sno}: {row.item_description}</p>)}</div>}
+      {revision && <div className="space-y-3 border-y border-border py-4"><Label htmlFor="boq-reason">Revision reason (required)</Label><Input id="boq-reason" value={reason} onChange={e => setReason(e.target.value)} /><p className="text-sm text-muted-foreground">Reported quantities and frozen rates are protected. Used lines cannot be removed or changed below reported quantities.</p><p className="text-sm text-muted-foreground">{staged.length} line changes pending</p><div className="flex flex-wrap gap-2"><Button disabled={busy || !reason.trim()} onClick={async () => { const state = await mutate("revise", { rows: staged, control_total: total, source_note: source, reason }); if (state) { setRevision(false); setStaged([]); setEditor(null); } }}><Save className="mr-1 h-4 w-4" /> Save balanced revision</Button><Button variant="ghost" onClick={() => { setRevision(false); setStaged([]); setEditor(null); applyState(data); }}><X className="mr-1 h-4 w-4" /> Cancel</Button></div>{staged.map((row, i) => <p key={row.id ?? i} className="break-words text-xs">{row.remove ? "Remove" : "Change"} item {row.sno}: {row.item_description}</p>)}</div>}
       {desktop ? <div className="max-h-[55vh] max-w-full overflow-auto rounded-md border border-border" onPaste={e => { if (editing && e.clipboardData.getData("text").includes("\t")) { e.preventDefault(); setPaste(e.clipboardData.getData("text")); setPasteOpen(true); setPreview([]); } }}>
         <Table className="min-w-[980px] table-fixed text-xs"><TableHeader className="sticky top-0 z-10 bg-card"><TableRow><TableHead className="w-16">Item</TableHead><TableHead className="w-52">Description</TableHead><TableHead className="w-20">Unit</TableHead><TableHead className="w-24 text-right">Quantity</TableHead><TableHead className="w-28 text-right">Rate (₹)</TableHead><TableHead className="w-32 text-right">Amount (₹)</TableHead><TableHead className="w-28">Category</TableHead><TableHead className="w-28">Scope</TableHead><TableHead className="w-24">Location</TableHead><TableHead className="w-28">Actions</TableHead></TableRow></TableHeader>
           <TableBody>{data.lines.map(line => <TableRow key={line.id}><TableCell className="align-top">{line.sno}</TableCell><TableCell className="whitespace-normal break-words align-top"><p className="font-medium">{line.item_description}</p>{line.warnings.map(w => warningView(line.id, w))}</TableCell><TableCell className="break-words align-top">{line.unit}</TableCell><TableCell className="text-right align-top">{line.boq_qty}</TableCell><TableCell className="text-right align-top">{boqCurrency(line.boq_rate)}</TableCell><TableCell className="text-right align-top font-medium">{boqCurrency(line.total_amount)}</TableCell><TableCell className="break-words align-top">{line.category}</TableCell><TableCell className="break-words align-top">{line.scope}</TableCell><TableCell className="align-top">{line.work_location}</TableCell><TableCell className="align-top">{editing && <div className="flex"><Button variant="ghost" size="icon" className="h-11 w-11" title="Edit line" aria-label={`Edit item ${line.sno}`} onClick={() => setEditor(entryFromLine(line))}><Pencil className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-11 w-11" title="Archive line" aria-label={`Archive item ${line.sno}`} onClick={() => { const row = { ...entryFromLine(line), remove: true }; if (revision) stage([row]); else void mutate("save", { rows: [row] }); }}><Archive className="h-4 w-4" /></Button></div>}</TableCell></TableRow>)}
