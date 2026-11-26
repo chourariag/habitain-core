@@ -2,6 +2,7 @@ import Papa from "papaparse";
 
 export const BOQ_ENTRY_FIELDS = ["sno", "item_description", "unit", "boq_qty", "boq_rate", "category", "scope", "work_location"] as const;
 export const BOQ_ENTRY_LABELS = ["Item no", "Description", "Unit", "Quantity", "Rate", "Category", "Scope", "Work location"];
+export const BOQ_WORK_LOCATIONS = ["site", "factory"] as const;
 export type EntryField = typeof BOQ_ENTRY_FIELDS[number];
 export type BoqEntryRow = Record<EntryField, string> & { id?: string; remove?: boolean };
 export interface BoqWarning { key: string; kind: string; message: string; median_rate?: number; project_count?: number; acknowledged?: boolean }
@@ -20,15 +21,29 @@ export function parseBoqPaste(text: string): string[][] {
   if (parsed.data.length > 501) throw new Error("Paste up to 500 rows, plus an optional heading row.");
   return parsed.data;
 }
-export function mapBoqPaste(grid: string[][], mapping: number[], hasHeader: boolean): { rows: BoqEntryRow[]; issues: string[] } {
+export function mapBoqPaste(grid: string[][], mapping: number[], hasHeader: boolean, validScopes: readonly string[] = []): { rows: BoqEntryRow[]; issues: string[] } {
   if (mapping.length !== BOQ_ENTRY_FIELDS.length || mapping.some(i => !Number.isInteger(i) || i < 0)) throw new Error("Choose a column for each field.");
   const source = hasHeader ? grid.slice(1) : grid;
   if (source.length > 500) throw new Error("Paste up to 500 rows at a time.");
   const issues: string[] = [];
+  const canonical = (value: string, choices: readonly string[]) => choices.find(choice => choice.trim().toLowerCase() === value.trim().toLowerCase());
   const rows = source.map((cells, index) => {
-    if (mapping.some(i => i >= cells.length)) issues.push(`Row ${index + (hasHeader ? 2 : 1)}: a mapped column is missing.`);
+    const rowNumber = index + (hasHeader ? 2 : 1);
+    if (mapping.some(i => i >= cells.length)) issues.push(`Row ${rowNumber}: a mapped column is missing.`);
     const row = emptyBoqRow();
     BOQ_ENTRY_FIELDS.forEach((field, i) => { row[field] = cells[mapping[i]] ?? ""; });
+    row.scope = row.scope.trim();
+    if (row.scope && validScopes.length) {
+      const scope = canonical(row.scope, validScopes);
+      if (scope) row.scope = scope;
+      else issues.push(`Row ${rowNumber}: Scope '${row.scope}' is not valid. Use: ${validScopes.join(", ")}.`);
+    }
+    row.work_location = row.work_location.trim();
+    if (row.work_location) {
+      const workLocation = canonical(row.work_location, BOQ_WORK_LOCATIONS);
+      if (workLocation) row.work_location = workLocation;
+      else issues.push(`Row ${rowNumber}: Work location '${row.work_location}' is not valid. Use: ${BOQ_WORK_LOCATIONS.join(", ")}.`);
+    }
     return row;
   });
   return { rows, issues };

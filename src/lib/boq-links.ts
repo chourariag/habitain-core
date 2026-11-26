@@ -27,6 +27,12 @@ export const LINK_ACTION_LABEL: Record<string, string> = {
   split: "Quantity split saved", shares: "Task shares saved", lock: "Links locked", revision: "Revision saved",
   revision_split: "Revision · quantity split", revision_shares: "Revision · task shares",
 };
+export function boqLockedLinkNotice(state: Pick<LinkState, "set" | "revision_needed" | "lines">): string | null {
+  if (state.set.status !== "locked") return null;
+  if (!state.revision_needed) return "Links are already locked.";
+  const count = state.lines.filter(line => line.status !== "complete" && line.status !== "skipped").length;
+  return `Revision needed: ${count} line(s) have broken or incomplete links. Open each line below, fix it, then Submit revision.`;
+}
 export type LinkFilter = "all" | "needs_work" | "broken";
 export function filterLinkLines(lines: LinkLine[], filter: LinkFilter): LinkLine[] {
   if (filter === "broken") return lines.filter(l => l.status === "broken");

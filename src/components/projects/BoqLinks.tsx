@@ -13,9 +13,11 @@ import { AlertTriangle, Download, Link2, Loader2, LockKeyhole, Plus, Save, Split
 import { toast } from "sonner";
 import * as XLSX from "@/lib/safe-xlsx";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { canShowBoqEntry } from "@/lib/boq-writers";
 import { boqCurrency, boqTimestamp } from "@/lib/boq-entry";
-import { filterLinkLines, LINK_ACTION_LABEL, LINK_STATUS_LABEL, linkQty, unitKey, unitName, type LinkFilter, type LinkLine, type LinkState, type UnitRef } from "@/lib/boq-links";
+import { boqEntryQueryKey, boqLinksQueryKey } from "@/lib/boq-query-keys";
+import { boqLockedLinkNotice, filterLinkLines, LINK_ACTION_LABEL, LINK_STATUS_LABEL, linkQty, unitKey, unitName, type LinkFilter, type LinkLine, type LinkState, type UnitRef } from "@/lib/boq-links";
 
 type ShareDraft = { task_id: string; share_pct: string };
 type Change = { kind: "split"; boq_item_id: string; allocations: (UnitRef & { quantity: string })[]; label: string } | { kind: "shares"; boq_item_id: string; unit_kind: string; unit_label: string; shares: ShareDraft[]; label: string };
@@ -32,9 +34,9 @@ export function BoqLinks({ projectId }: { projectId: string }) {
   const view = (params.get("links") ?? "lines") as "lines" | "budget" | "history";
   const filter = (params.get("linkFilter") ?? "all") as LinkFilter;
   const setParam = (key: string, value: string) => setParams(old => { const next = new URLSearchParams(old); next.set(key, value); return next; }, { replace: true });
-  const [data, setData] = useState<LinkState | null>(null);
+  const queryClient = useQueryClient();
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [mutationBusy, setMutationBusy] = useState(false);
   const [desktop, setDesktop] = useState(() => window.matchMedia("(min-width: 768px)").matches);
   const [openLine, setOpenLine] = useState<string | null>(null);
   const [split, setSplit] = useState<Record<string, string>>({});
@@ -45,13 +47,20 @@ export function BoqLinks({ projectId }: { projectId: string }) {
   const [reviseOpen, setReviseOpen] = useState(false);
   const [reason, setReason] = useState("");
 
-  const load = useCallback(async () => {
-    setBusy(true); setError("");
-    const { data: result, error: failure } = await supabase.rpc("boq2_get", { p_project: projectId });
-    if (failure) setError(failure.message); else setData(result as unknown as LinkState);
-    setBusy(false);
-  }, [projectId]);
-  useEffect(() => { setData(null); setOpenLine(null); setStaged([]); void load(); }, [load]);
+  const { data: queryData, error: queryError, isFetching, refetch } = useQuery<LinkState>({
+    queryKey: boqLinksQueryKey(projectId),
+    queryFn: async () => {
+      const { data: result, error: failure } = await supabase.rpc("boq2_get", { p_project: projectId });
+      if (failure) throw failure;
+      return result as unknown as LinkState;
+    },
+  });
+  const data = queryData ?? null;
+  const busy = mutationBusy || isFetching;
+  const queryErrorText = queryError && typeof queryError === "object" && "message" in queryError ? String(queryError.message) : queryError ? "The links could not be loaded." : "";
+  const displayError = error || queryErrorText;
+  const load = useCallback(async () => { setError(""); await refetch(); }, [refetch]);
+  useEffect(() => { setOpenLine(null); setStaged([]); }, [projectId]);
   useEffect(() => { setStaged([]); setOpenLine(null); }, [role, isImpersonating]);
   useEffect(() => {
     const media = window.matchMedia("(min-width: 768px)");
@@ -60,6 +69,7 @@ export function BoqLinks({ projectId }: { projectId: string }) {
   }, []);
 
   const locked = data?.set.status === "locked";
+  const lockedNotice = data ? boqLockedLinkNotice(data) : null;
   const canWrite = desktop && !data?.blocked_reason && canShowBoqEntry(data?.can_write ?? false, role, isImpersonating);
   const line = data?.lines.find(l => l.id === openLine) ?? null;
 
@@ -72,13 +82,15 @@ export function BoqLinks({ projectId }: { projectId: string }) {
   };
 
   const mutate = async (action: string, payload: Record<string, unknown>, success: string) => {
-    setBusy(true); setError("");
+    setMutationBusy(true); setError("");
     try {
       const { data: result, error: failure } = await supabase.rpc("boq2_mutate", { p_project: projectId, p_action: action, p_payload: payload as never, p_expected_version: data?.set.version ?? 0 });
       if (failure) throw failure;
-      setData(result as unknown as LinkState); toast.success(success); return true;
+      queryClient.setQueryData(boqLinksQueryKey(projectId), result as unknown as LinkState);
+      await queryClient.invalidateQueries({ queryKey: boqEntryQueryKey(projectId) });
+      toast.success(success); return true;
     } catch (failure) { const m = errorText(failure); setError(m); toast.error(m); return false; }
-    finally { setBusy(false); }
+    finally { setMutationBusy(false); }
   };
 
   const splitPayload = (): (UnitRef & { quantity: string })[] => (data?.units ?? []).filter(u => split[unitKey(u)] !== undefined && split[unitKey(u)] !== "").map(u => ({ ...u, quantity: split[unitKey(u)] }));
@@ -134,7 +146,7 @@ export function BoqLinks({ projectId }: { projectId: string }) {
 
   const visible = useMemo(() => filterLinkLines(data?.lines ?? [], filter), [data, filter]);
 
-  if (!data) return <section className="min-w-0 space-y-3" aria-label="BOQ links"><h2 className="font-display text-xl font-bold">BOQ links</h2>{busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <><p role="alert" className="break-words text-destructive">{error}</p><Button className="min-h-11" onClick={() => void load()}>Retry</Button></>}</section>;
+  if (!data) return <section className="min-w-0 space-y-3" aria-label="BOQ links"><h2 className="font-display text-xl font-bold">BOQ links</h2>{busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <><p role="alert" className="break-words text-destructive">{displayError}</p><Button className="min-h-11" onClick={() => void load()}>Retry</Button></>}</section>;
 
   const t = data.totals;
   return <section className="min-w-0 space-y-4 pb-3" aria-label="BOQ links">
@@ -150,8 +162,9 @@ export function BoqLinks({ projectId }: { projectId: string }) {
     {canWrite && !locked && !data.can_lock && data.lock_reason && <p className="break-words text-sm text-muted-foreground">Lock is available when every line is fully linked: {data.lock_reason}</p>}
     {locked && data.set.locked_at && <p className="text-sm text-muted-foreground">Locked on {boqTimestamp(data.set.locked_at)}{data.set.locked_by_name ? ` by ${data.set.locked_by_name}` : ""}. Changes need a revision with a reason.</p>}
     {data.blocked_reason && <p role="status" className="rounded-md border border-warning p-3 text-sm text-warning">{data.blocked_reason}</p>}
-    {data.revision_needed && <div role="alert" className="flex items-start gap-2 rounded-md border border-destructive p-3 text-sm text-destructive"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><p className="min-w-0 break-words"><strong>Revision needed.</strong> {data.lock_reason}</p></div>}
-    {error && <p role="alert" className="whitespace-pre-line break-words rounded-md border border-destructive p-3 text-sm text-destructive">{error}</p>}
+    {data.revision_needed && lockedNotice && <div role="alert" className="flex items-start gap-2 rounded-md border border-destructive p-3 text-sm text-destructive"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><p className="min-w-0 break-words">{lockedNotice}</p></div>}
+    {locked && !data.revision_needed && lockedNotice && <p className="text-sm text-muted-foreground">{lockedNotice}</p>}
+    {displayError && <p role="alert" className="whitespace-pre-line break-words rounded-md border border-destructive p-3 text-sm text-destructive">{displayError}</p>}
 
     <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
       {[["BOQ total", boqCurrency(t.boq_total)], ["Linked value", boqCurrency(t.linked)], ["Unlinked value", boqCurrency(t.unlinked)], ["Lines fully linked", `${t.lines_complete} of ${t.lines_needed}`]].map(([label, value]) =>
@@ -256,7 +269,7 @@ export function BoqLinks({ projectId }: { projectId: string }) {
               {copyNotes.length > 0 && <div className="rounded-md border border-warning p-2 text-xs text-warning">{copyNotes.map((n, i) => <p key={i}>{n}</p>)}</div>}
             </div>
           </>}
-          {error && <p role="alert" className="break-words text-sm text-destructive">{error}</p>}
+          {displayError && <p role="alert" className="break-words text-sm text-destructive">{displayError}</p>}
         </>}
       </DialogContent>
     </Dialog>

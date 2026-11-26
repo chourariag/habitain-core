@@ -13,14 +13,16 @@ import { Plus, ClipboardPaste, Save, LockKeyhole, Pencil, Archive, Download, Loa
 import { toast } from "sonner";
 import * as XLSX from "@/lib/safe-xlsx";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { canShowBoqEntry } from "@/lib/boq-writers";
-import { BOQ_ENTRY_FIELDS, BOQ_ENTRY_LABELS, emptyBoqRow, entryFromLine, parseBoqPaste, mapBoqPaste, boqCurrency, boqTimestamp, type BoqEntryRow, type BoqState, type BoqPreview, type BoqWarning, type EntryField } from "@/lib/boq-entry";
+import { BOQ_ENTRY_FIELDS, BOQ_ENTRY_LABELS, BOQ_WORK_LOCATIONS, emptyBoqRow, entryFromLine, parseBoqPaste, mapBoqPaste, boqCurrency, boqTimestamp, type BoqEntryRow, type BoqState, type BoqPreview, type BoqWarning, type EntryField } from "@/lib/boq-entry";
+import { boqEntryQueryKey, boqLinksQueryKey } from "@/lib/boq-query-keys";
 
 export function BoqEntry({ projectId }: { projectId: string }) {
   const { role, isImpersonating } = useUserRole();
-  const [data, setData] = useState<BoqState | null>(null);
+  const queryClient = useQueryClient();
   const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [mutationBusy, setMutationBusy] = useState(false);
   const [desktop, setDesktop] = useState(() => window.matchMedia("(min-width: 768px)").matches);
   const [total, setTotal] = useState("");
   const [source, setSource] = useState("");
@@ -43,30 +45,42 @@ export function BoqEntry({ projectId }: { projectId: string }) {
     setRevision(false); setStaged([]); setEditor(null); setPasteOpen(false); setConfirmFinal(false);
   }, [role, isImpersonating]);
 
+  const { data: queryData, error: queryError, isFetching, refetch } = useQuery<BoqState>({
+    queryKey: boqEntryQueryKey(projectId),
+    queryFn: async () => {
+      const { data: result, error: failure } = await supabase.rpc("boq1_get", { p_project: projectId });
+      if (failure) throw failure;
+      return result as unknown as BoqState;
+    },
+  });
+  const data = queryData ?? null;
+  const busy = mutationBusy || isFetching;
+  const queryErrorText = queryError && typeof queryError === "object" && "message" in queryError ? String(queryError.message) : queryError ? "The BOQ could not be loaded." : "";
+  const displayError = error || queryErrorText;
   const applyState = (state: BoqState) => {
-    setData(state);
+    queryClient.setQueryData(boqEntryQueryKey(projectId), state);
     setTotal(state.header?.control_total == null ? "" : String(state.header.control_total));
     setSource(state.header?.source_note ?? "");
   };
-  const load = useCallback(async () => {
-    setBusy(true); setError("");
-    const { data: result, error: failure } = await supabase.rpc("boq1_get", { p_project: projectId });
-    if (failure) setError(failure.message); else applyState(result as unknown as BoqState);
-    setBusy(false);
-  }, [projectId]);
-  useEffect(() => { setData(null); setEditor(null); setRevision(false); setStaged([]); void load(); }, [load]);
+  const load = useCallback(async () => { setError(""); await refetch(); }, [refetch]);
+  useEffect(() => { setEditor(null); setRevision(false); setStaged([]); }, [projectId]);
+  useEffect(() => {
+    setTotal(data?.header?.control_total == null ? "" : String(data.header.control_total));
+    setSource(data?.header?.source_note ?? "");
+  }, [projectId, data?.header?.control_total, data?.header?.source_note]);
   useEffect(() => {
     const media = window.matchMedia("(min-width: 768px)");
     const update = () => setDesktop(media.matches);
     media.addEventListener("change", update); return () => media.removeEventListener("change", update);
   }, []);
   const mutate = async (action: string, payload: Record<string, unknown>): Promise<BoqState | null> => {
-    setBusy(true); setError("");
+    setMutationBusy(true); setError("");
     try {
       const { data: result, error: failure } = await supabase.rpc("boq1_mutate", { p_project: projectId, p_action: action, p_payload: payload as never, p_expected_version: data?.header?.entry_version });
       if (failure) throw failure;
       const state = result as unknown as BoqState;
       applyState(state);
+      if (["save", "revise", "finalise"].includes(action)) await queryClient.invalidateQueries({ queryKey: boqLinksQueryKey(projectId) });
       const failures = state.save_results?.filter(r => r.errors.length) ?? [];
       if (failures.length) { setError(failures.map(r => `Row ${r.row}: ${r.errors.join(" ")}`).join("\n")); toast.error(`${failures.length} rows were not saved.`); }
       else toast.success(action === "finalise" ? "BOQ finalised and locked." : action === "revise" ? "Balanced revision saved and logged." : action === "acknowledge" ? "Warning acknowledged." : "BOQ saved.");
@@ -74,7 +88,7 @@ export function BoqEntry({ projectId }: { projectId: string }) {
     } catch (failure: unknown) {
       const message = failure && typeof failure === "object" && "message" in failure ? String(failure.message) : "The BOQ could not be saved.";
       setError(message); toast.error(message); return null;
-    } finally { setBusy(false); }
+    } finally { setMutationBusy(false); }
   };
   const canWrite = desktop && canShowBoqEntry(data?.can_write ?? false, role, isImpersonating) && (!data?.header || data.header.entry_mode === "fresh");
   const editing = canWrite && (data?.header?.status !== "final" || revision);
@@ -86,15 +100,15 @@ export function BoqEntry({ projectId }: { projectId: string }) {
     if (result && !result.save_results?.some(r => r.errors.length)) setEditor(null);
   };
   const validatePaste = async (chosenMapping = mapping, includesHeader = hasHeader) => {
-    setBusy(true); setError("");
+    setMutationBusy(true); setError("");
     try {
       const parsed = parseBoqPaste(paste); setGrid(parsed);
-      const mapped = mapBoqPaste(parsed, chosenMapping, includesHeader); setPasteRows(mapped.rows); setPasteIssues(mapped.issues);
+      const mapped = mapBoqPaste(parsed, chosenMapping, includesHeader, data?.scopes ?? []); setPasteRows(mapped.rows); setPasteIssues(mapped.issues);
       const { data: result, error: failure } = await supabase.rpc("boq1_mutate", { p_project: projectId, p_action: "preview", p_payload: { rows: mapped.rows } as never, p_expected_version: data?.header?.entry_version });
       if (failure) throw failure;
       setPreview((result as unknown as { rows: BoqPreview[] }).rows.map(row => ({ ...row, errors: [...row.errors, ...mapped.issues.filter(issue => issue.startsWith(`Row ${row.row + (includesHeader ? 1 : 0)}:`))] })));
     } catch (failure: unknown) { setPasteIssues([failure && typeof failure === "object" && "message" in failure ? String(failure.message) : "Paste could not be read."]); setPreview([]); }
-    finally { setBusy(false); }
+    finally { setMutationBusy(false); }
   };
   const savePaste = async () => {
     const validRows = pasteRows.filter((_, i) => !preview[i]?.errors.length);
@@ -108,7 +122,7 @@ export function BoqEntry({ projectId }: { projectId: string }) {
       else { setPasteOpen(false); setPaste(""); setPreview([]); }
     }
   };
-  const dropdown = (field: EntryField, options: string[], value: string, update: (value: string) => void) => (
+  const dropdown = (field: EntryField, options: readonly string[], value: string, update: (value: string) => void) => (
     <Select value={value || "__empty__"} onValueChange={v => update(v === "__empty__" ? "" : v)}>
       <SelectTrigger className="h-11 min-w-0 text-xs" aria-label={BOQ_ENTRY_LABELS[BOQ_ENTRY_FIELDS.indexOf(field)]}><SelectValue /></SelectTrigger>
       <SelectContent><SelectItem value="__empty__">Select…</SelectItem>{[...new Set([...options, ...(value ? [value] : [])])].filter(Boolean).map(v => <SelectItem key={v} value={v}>{v}</SelectItem>)}</SelectContent>
@@ -120,7 +134,7 @@ export function BoqEntry({ projectId }: { projectId: string }) {
     if (field === "unit") return dropdown(field, data?.units ?? [], editor[field], update);
     if (field === "category") return dropdown(field, data?.categories ?? [], editor[field], update);
     if (field === "scope") return dropdown(field, data?.scopes ?? [], editor[field], update);
-    if (field === "work_location") return dropdown(field, ["factory", "site"], editor[field], update);
+    if (field === "work_location") return dropdown(field, BOQ_WORK_LOCATIONS, editor[field], update);
     return <Input className="h-11 min-w-0 text-xs" aria-label={BOQ_ENTRY_LABELS[BOQ_ENTRY_FIELDS.indexOf(field)]} value={editor[field]} onChange={e => update(e.target.value)} inputMode={["sno", "boq_qty", "boq_rate"].includes(field) ? "decimal" : "text"} />;
   };
   const warningView = (lineId: string, w: BoqWarning) => <div key={w.key ?? w.kind} className="flex min-w-0 flex-wrap items-start gap-2 border-t border-border py-2 text-xs text-warning">
@@ -139,13 +153,13 @@ export function BoqEntry({ projectId }: { projectId: string }) {
     XLSX.writeFile(wb, "Project_BOQ.xlsx");
   };
 
-  if (!data) return <section className="min-w-0 space-y-4" aria-label="BOQ"><h2 className="font-display text-xl font-bold">BOQ</h2>{busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <><p role="alert" className="break-words text-destructive">{error}</p><Button onClick={() => void load()}>Retry</Button></>}</section>;
+  if (!data) return <section className="min-w-0 space-y-4" aria-label="BOQ"><h2 className="font-display text-xl font-bold">BOQ</h2>{busy ? <Loader2 className="h-6 w-6 animate-spin" /> : <><p role="alert" className="break-words text-destructive">{displayError}</p><Button onClick={() => void load()}>Retry</Button></>}</section>;
   return <section className="min-w-0 space-y-5 pb-3" aria-label="BOQ entry">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-2"><h2 className="font-display text-xl font-bold">BOQ</h2><Badge variant="outline">{data.header?.status === "final" ? "Final · locked" : data.header?.entry_mode === "legacy" ? "Existing BOQ · read-only" : "Draft"}</Badge>{!desktop ? <Badge variant="outline">Read-only on phone</Badge> : !canShowBoqEntry(data.can_write, role, isImpersonating) && <Badge variant="outline">Read-only</Badge>}</div>
       <Button variant="outline" className="min-h-11" onClick={exportBoq} disabled={!data.header}><Download className="mr-2 h-4 w-4" /> Download BOQ</Button>
     </div>
-    {error && <p role="alert" className="whitespace-pre-line break-words rounded-md border border-destructive p-3 text-sm text-destructive">{error}</p>}
+    {displayError && <p role="alert" className="whitespace-pre-line break-words rounded-md border border-destructive p-3 text-sm text-destructive">{displayError}</p>}
     {data.header?.entry_mode === "legacy" && <p className="text-sm text-muted-foreground">Existing BOQ lines are unchanged. Fresh entry is available on projects without a BOQ.</p>}
     {!desktop && <p className="text-sm text-muted-foreground">BOQ entry and revisions are available on a desktop.</p>}
     <section className="space-y-3 border-b border-border pb-5">
