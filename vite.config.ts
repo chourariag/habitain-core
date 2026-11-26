@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
+import { workboxConfig } from "./src/pwa/workbox-config";
 
 const APP_VERSION = new Date().toISOString();
 
@@ -41,7 +42,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     versionFilePlugin(),
     VitePWA({
-      registerType: "prompt",
+      registerType: "autoUpdate",
       injectRegister: null,
       filename: "sw.js",
       devOptions: { enabled: false },
@@ -62,31 +63,7 @@ export default defineConfig(({ mode }) => ({
           { src: "/icons/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
-      workbox: {
-        clientsClaim: true,
-        skipWaiting: false,
-        navigateFallback: "/index.html",
-        navigateFallbackDenylist: [/^\/~oauth/, /^\/auth\/callback/, /^\/version\.json/],
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        globIgnores: ["**/version.json"],
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
-        runtimeCaching: [
-          {
-            urlPattern: ({ request }) => request.mode === "navigate",
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "html-cache",
-              networkTimeoutSeconds: 5,
-            },
-          },
-          {
-            urlPattern: ({ url, sameOrigin }) =>
-              sameOrigin && /\.(?:js|css|woff2?)$/.test(url.pathname),
-            handler: "CacheFirst",
-            options: { cacheName: "asset-cache" },
-          },
-        ],
-      },
+      workbox: workboxConfig,
     }),
   ].filter(Boolean),
   resolve: {
