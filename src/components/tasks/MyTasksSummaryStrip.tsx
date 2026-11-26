@@ -1,3 +1,4 @@
+import { responsibleRolesFor } from "@/lib/my-tasks-roles";
 import { isTier1 } from "@/lib/roles";
 import { useState, useEffect, useCallback, useMemo } from "react";
 
@@ -8,15 +9,6 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight, ClipboardList, AlertTriangle, Clock } from "lucide-react";
 import { format, isPast, isToday } from "date-fns";
 
-const ROLE_MAP: Record<string, string> = {
-  production_head: "production_head",
-  factory_supervisor: "factory_supervisor",
-  planning_engineer: "planning_engineer",
-  site_installation_manager: "site_installation_manager",
-  site_manager: "site_manager",
-  super_admin: "__all__",
-  managing_director: "__all__",
-};
 
 interface Props {
   userRole: string | null;
@@ -28,14 +20,14 @@ export function MyTasksSummaryStrip({ userRole }: Props) {
   const [expanded, setExpanded] = useState(false);
 
   const fetchTasks = useCallback(async () => {
-    const mapped = isTier1(userRole) ? "__all__" : ROLE_MAP[userRole ?? ""];
+    const mapped = responsibleRolesFor(userRole);
     if (!mapped) { setTasks([]); setLoading(false); return; }
     setLoading(true);
     let q = supabase
       .from("project_tasks")
       .select("id,task_name,phase,planned_finish_date,project_id,completion_percentage,projects:project_id(name)").eq("is_removed", false)
       .neq("status", "Completed");
-    if (mapped !== "__all__") q = q.eq("responsible_role", mapped);
+    if (mapped !== "all") q = q.in("responsible_role", mapped);
     const { data } = await q.order("planned_finish_date", { ascending: true }).limit(200);
     setTasks((data as any[]) ?? []);
     setLoading(false);

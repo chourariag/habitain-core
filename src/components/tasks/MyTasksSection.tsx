@@ -1,3 +1,4 @@
+import { responsibleRolesFor } from "@/lib/my-tasks-roles";
 import { TIER1_ROLES, isTier1 } from "@/lib/roles";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,15 +17,6 @@ const STATUS_CONFIG: Record<string, { color: string; dotClass: string; sortOrder
   Completed: { color: "text-green-700", dotClass: "bg-green-600", sortOrder: 5 },
 };
 
-const ROLE_MAP: Record<string, string> = {
-  production_head: "production_head",
-  factory_supervisor: "factory_supervisor",
-  planning_engineer: "planning_engineer",
-  site_installation_manager: "site_installation_manager",
-  site_manager: "site_manager",
-  super_admin: "__all__",
-  managing_director: "__all__",
-};
 
 interface TaskRow {
   id: string;
@@ -65,7 +57,7 @@ export function MyTasksSection({ userRole, phaseFilter, projectId, title = "My T
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
-    const mapped = isTier1(userRole) ? "__all__" : ROLE_MAP[userRole ?? ""];
+    const mapped = responsibleRolesFor(userRole);
     if (!mapped) { setTasks([]); setLoading(false); return; }
 
     let query = supabase
@@ -73,8 +65,8 @@ export function MyTasksSection({ userRole, phaseFilter, projectId, title = "My T
       .select("*, projects:project_id(name)").eq("is_removed", false)
       .neq("status", "Completed");
 
-    if (mapped !== "__all__") {
-      query = query.eq("responsible_role", mapped);
+    if (mapped !== "all") {
+      query = query.in("responsible_role", mapped);
     }
     if (phaseFilter && phaseFilter.length > 0) {
       query = query.in("phase", phaseFilter);

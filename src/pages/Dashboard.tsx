@@ -3,6 +3,7 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 import { Loader2 } from "lucide-react";
 import { HomeTaskList } from "@/components/dashboard/HomeTaskList";
+import { HomeMyTasks } from "@/components/dashboard/HomeMyTasks";
 
 export default function Dashboard() {
   const { role, loading } = useUserRole();
@@ -24,6 +25,7 @@ export default function Dashboard() {
         <p className="mt-1 text-sm text-muted-foreground">{userRole ? (ROLE_LABELS[userRole] ?? userRole.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())) : ""}</p>
       </div>
       <HomeTaskList userRole={userRole} />
+      <HomeMyTasks userRole={userRole} />
     </div>
   );
 }
