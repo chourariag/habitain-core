@@ -1,4 +1,3 @@
-import { format, parseISO } from "date-fns";
 export { ROLE_LABELS } from "@/lib/roles";
 
 export type UnitKind = "module" | "panel_set" | "site";
@@ -113,14 +112,20 @@ export function displayDate(value: string | null | undefined) {
   return year && month && day ? `${day}/${month}/${year}` : value;
 }
 
+const IST_PARTS = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+
+/** Timestamps (published/created/revised) always shown in IST as DD/MM/YYYY HH:mm, whatever the device time zone. */
 export function displayDateTime(value: string | null | undefined) {
   if (!value) return "—";
-  try {
-    return format(parseISO(value), "dd/MM/yyyy HH:mm");
-  } catch {
-    return value;
-  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  const part = (type: string) => IST_PARTS.formatToParts(date).find((p) => p.type === type)?.value ?? "";
+  return `${part("day")}/${part("month")}/${part("year")} ${part("hour")}:${part("minute")}`;
 }
+
+export interface MovedTask { code: string; name: string; old_start: string | null; old_finish: string | null; new_start: string | null; new_finish: string | null }
+export interface NotMovedTask { code: string; name: string; reason: string }
+export interface RevisionResult { task?: MovedTask; moved?: MovedTask[]; not_moved?: NotMovedTask[] }
 
 export function unitLabel(kind: UnitKind | null) {
   if (kind === "panel_set") return "Panel set";
@@ -134,6 +139,13 @@ export interface SnapshotChange {
   name: string;
   kind: "added" | "removed" | "changed";
   changes: string[];
+}
+
+function snapshotValue(key: string, value: unknown) {
+  if (value === null || value === undefined || value === "") return "—";
+  if (key === "planned_start_date" || key === "planned_finish_date") return displayDate(String(value));
+  if (Array.isArray(value)) return value.length ? value.join(", ") : "none";
+  return String(value);
 }
 
 /** Presentation-only snapshot comparison; it never calculates or changes a schedule. */
@@ -162,7 +174,7 @@ export function compareSnapshots(previous: ScheduleSnapshotTask[], current: Sche
       ["unit_label", "Unit"],
     ];
     const changed = fields.filter(([key]) => JSON.stringify(old[key] ?? null) !== JSON.stringify(task[key] ?? null))
-      .map(([key, label]) => `${label}: ${JSON.stringify(old[key] ?? "—")} → ${JSON.stringify(task[key] ?? "—")}`);
+      .map(([key, label]) => `${label}: ${snapshotValue(key, old[key])} → ${snapshotValue(key, task[key])}`);
     if (changed.length) changes.push({ taskId: task.id, code: task.task_id_in_schedule, name: task.task_name, kind: "changed", changes: changed });
   }
   for (const old of previous) {

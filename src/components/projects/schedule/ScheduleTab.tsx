@@ -16,7 +16,7 @@ import { ScheduleGantt } from "./ScheduleGantt";
 import { ScheduleHolidays } from "./ScheduleHolidays";
 import { SchedulePublish, type ClearResult } from "./SchedulePublish";
 import { ScheduleHistory } from "./ScheduleHistory";
-import { displayDate, type LibraryActivity, type LibraryTask, type ProfileNameMap, type ScheduleBaseline, type ScheduleComment, type ScheduleHoliday, type ScheduleTask, type ScheduleUnit, type UnitKind } from "./schedule-types";
+import { displayDate, type LibraryActivity, type LibraryTask, type ProfileNameMap, type ScheduleBaseline, type ScheduleComment, type ScheduleHoliday, type ScheduleTask, type ScheduleUnit, type UnitKind, displayDateTime, type RevisionResult } from "./schedule-types";
 
 interface Props {
   projectId: string;
@@ -42,6 +42,7 @@ export function ScheduleTab({ projectId, userRole }: Props) {
   const [comments, setComments] = useState<ScheduleComment[]>([]);
   const [names, setNames] = useState<ProfileNameMap>({});
   const [warnings, setWarnings] = useState<string[]>([]);
+  const [revisionNotice, setRevisionNotice] = useState<RevisionResult | null>(null);
 
   useEffect(() => {
     const update = () => setDesktop(window.innerWidth >= 1024);
@@ -140,8 +141,10 @@ export function ScheduleTab({ projectId, userRole }: Props) {
 
   const saveTask = (task: ScheduleTask, patch: TaskPatch, reason?: string) => run(async () => {
     if (baselineExists) {
-      const { error } = await supabase.rpc("schedule_revise_task", { p_task_id: task.id, p_patch: patch as any, p_reason: reason ?? "" });
+      const { data, error } = await supabase.rpc("schedule_revise_task", { p_task_id: task.id, p_patch: patch as any, p_reason: reason ?? "" });
       if (error) throw error;
+      const result = data as RevisionResult | null;
+      setRevisionNotice(result && (result.task || result.moved?.length || result.not_moved?.length) ? result : null);
     } else {
       const { error } = await (supabase.from("project_tasks") as any).update(patch).eq("id", task.id);
       if (error) throw error;
@@ -228,7 +231,7 @@ export function ScheduleTab({ projectId, userRole }: Props) {
         <Alert><Monitor className="h-4 w-4" /><AlertTitle>Desktop required for editing</AlertTitle><AlertDescription>Schedules are built on a desktop. Open HStack on a computer to edit. The read-only schedule and comments remain available below.</AlertDescription></Alert>
       )}
       {latest && (
-        <Card className="border-primary/30 bg-accent"><CardContent className="flex flex-wrap items-center gap-2 p-4 text-sm"><Badge>Baseline v{latest.version}</Badge><span>Published on {displayDate(latest.published_at)} by {names[latest.published_by] ?? "Staff member"}</span>{latest.reason && <span className="break-words text-muted-foreground">· {latest.reason}</span>}</CardContent></Card>
+        <Card className="border-primary/30 bg-accent"><CardContent className="flex flex-wrap items-center gap-2 p-4 text-sm"><Badge>Baseline v{latest.version}</Badge><span>Published on {displayDateTime(latest.published_at)} (IST) by {names[latest.published_by] ?? "Staff member"}</span>{latest.reason && <span className="break-words text-muted-foreground">· {latest.reason}</span>}</CardContent></Card>
       )}
       <Tabs defaultValue="plan" className="min-w-0">
         <TabsList className="max-w-full"><TabsTrigger value="plan">Schedule plan</TabsTrigger><TabsTrigger value="actuals">Actuals & progress</TabsTrigger></TabsList>
@@ -236,6 +239,7 @@ export function ScheduleTab({ projectId, userRole }: Props) {
           <ScheduleUnits units={units} canWrite={canWrite} baselineExists={baselineExists} busy={busy} onUpdate={updateUnit} onAdd={addUnit} />
           {canWrite && !baselineExists && <ScheduleLibrary activities={activities} libraryTasks={libraryTasks} projectTasks={tasks} units={units} busy={busy} onAdd={addLibrary} onRepeat={repeatUnits} />}
           {canWrite && baselineExists && <Alert><AlertTitle>Revision mode</AlertTitle><AlertDescription>Use Revise on an existing task or “Add task not in library”. Every addition, change and removal requires a reason. Publish the next version below when ready.</AlertDescription></Alert>}
+          {revisionNotice && <RevisionNotice result={revisionNotice} onClose={() => setRevisionNotice(null)} />}
           <ScheduleTaskTable tasks={sortedTasks} units={units} activities={activities} libraryTasks={libraryTasks} comments={comments} names={names} warnings={warnings} canWrite={canWrite} baselineExists={baselineExists} busy={busy} onSave={saveTask} onAddCustom={addCustom} onRemove={removeTask} onAddComment={addComment} onCommentStatus={commentStatus} />
           <ScheduleGantt tasks={tasks} holidays={holidays} units={units} activities={activities} libraryTasks={libraryTasks} />
           <ScheduleHolidays holidays={holidays} names={names} canWrite={canWrite} baselineExists={baselineExists} busy={busy} onChange={changeHoliday} />
@@ -247,5 +251,28 @@ export function ScheduleTab({ projectId, userRole }: Props) {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function RevisionNotice({ result, onClose }: { result: RevisionResult; onClose: () => void }) {
+  const moved = result.moved ?? [];
+  const notMoved = result.not_moved ?? [];
+  const range = (start: string | null, finish: string | null) => `${displayDate(start)} – ${displayDate(finish)}`;
+  return (
+    <Alert role="status" className="min-w-0">
+      <AlertTitle className="flex flex-wrap items-center justify-between gap-2">
+        <span>Revision saved</span>
+        <button type="button" onClick={onClose} className="text-xs font-normal text-muted-foreground underline">Dismiss</button>
+      </AlertTitle>
+      <AlertDescription className="space-y-2 break-words text-sm">
+        {result.task && <p>{result.task.name} now runs {range(result.task.new_start, result.task.new_finish)} (was {range(result.task.old_start, result.task.old_finish)}).</p>}
+        {moved.length > 0 ? (
+          <div><p className="font-medium">Following tasks moved ({moved.length}):</p><ul className="list-disc pl-5">{moved.map((task) => <li key={task.code}>{task.name}: {range(task.old_start, task.old_finish)} → {range(task.new_start, task.new_finish)}</li>)}</ul></div>
+        ) : <p>No following tasks needed to move.</p>}
+        {notMoved.length > 0 && (
+          <div><p className="font-medium">Not moved ({notMoved.length}):</p><ul className="list-disc pl-5">{notMoved.map((task) => <li key={task.code}>{task.name}: {task.reason}</li>)}</ul></div>
+        )}
+      </AlertDescription>
+    </Alert>
   );
 }

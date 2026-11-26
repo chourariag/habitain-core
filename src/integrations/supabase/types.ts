@@ -18620,6 +18620,28 @@ export type Database = {
         Args: { p_project_id: string }
         Returns: undefined
       }
+      _schedule_cascade_successors: {
+        Args: {
+          p_actor: string
+          p_project_id: string
+          p_reason: string
+          p_root_id: string
+          p_seed_ids: string[]
+        }
+        Returns: Json
+      }
+      _schedule_end_day: {
+        Args: { p_dur: number; p_start: number }
+        Returns: number
+      }
+      _schedule_recalc_one: {
+        Args: { p_derive_start: boolean; p_task_id: string }
+        Returns: undefined
+      }
+      _schedule_unit_day1: {
+        Args: { p_kind: string; p_label: string; p_project_id: string }
+        Returns: string
+      }
       _site_report_check_window: {
         Args: { p_date: string; p_project_id: string }
         Returns: undefined
