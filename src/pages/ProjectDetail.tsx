@@ -1,6 +1,7 @@
 import { RunningBillStatement } from "@/components/projects/RunningBillStatement";
 import { ProjectCostRates } from "@/components/projects/ProjectCostRates";
 import { ProjectCostReport } from "@/components/projects/ProjectCostReport";
+import { BoqTaskReport } from "@/components/projects/BoqTaskReport";
 import { BOQWorkLocation } from "@/components/projects/BOQWorkLocation";
 import { BoqEntry } from "@/components/projects/BoqEntry";
 import { BoqLinks } from "@/components/projects/BoqLinks";
@@ -269,6 +270,7 @@ export default function ProjectDetail() {
         </TabsContent>}
         {id && canViewRunningBill(userRole) && flags.isEnabled("project_setup") && <TabsContent value="cost" className="min-w-0 space-y-4">
           <ProjectCostReport projectId={id} role={userRole} onOpenRates={() => setActiveTab("rates")} />
+          <BoqTaskReport projectId={id} />
         </TabsContent>}
 
         <TabsContent value="schedule" className="min-w-0 space-y-4">

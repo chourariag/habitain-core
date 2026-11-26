@@ -19361,6 +19361,7 @@ export type Database = {
         Args: { p_item: string; p_project: string; p_units: Json }
         Returns: Json
       }
+      boq3_task_report: { Args: { p_project: string }; Returns: Json }
       can_access_labour_compensation: {
         Args: { _user_id: string }
         Returns: boolean
