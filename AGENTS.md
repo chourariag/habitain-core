@@ -38,7 +38,7 @@
 - Factory attendance is isolated in factory-specific records and reuses the live camera and shared shift setting; never represent the factory as a projects row because it would contaminate project lists and reporting expectations.
 - Factory reports use checked full-list RPCs, archived replacement, private attendance-rate snapshots and module/stage allocation; source-linked production logs preserve history without changing module stages.
 - New factory role gates read caller-bound user_roles, not legacy profile role mirrors; monetary snapshots have no direct authenticated column grants and cost access uses checked RPCs.
-- Running Bill unions submitted site/factory quantities before the existing positive-BOQ cap, while factory labour remains a separate exact-allocation section and legacy site cost CTEs remain unchanged.
+- Running Bill unions submitted site/factory quantities before the positive-BOQ cap; factory labour is a separate exact-allocation section; legacy site cost CTEs unchanged.
 - Factory nightly exports use the shared versioned manifest with operational attendance hours only, excluding worker wage amounts and rate fields, so private cost snapshots never enter factory CSV projections.
 - Today is a company-wide read-only Site Hub exception to project selection, using the existing site_report flag and a caller-bound overview RPC; existing project tabs retain their guard and permitted costs are aggregate-only.
 - Project Rates uses the unchanged project_setup flag and can_view_running_bill gate; Excel keys resolve project+sno against the latest BOQ and revalidate atomically at Confirm, preventing stale-version imports.
@@ -48,5 +48,5 @@
 - Project contact is written only by checked atomic creation (no approval staging; deprecated store unused); audits log changed fields, never values.
 - Project screens use explicit public projections; contact readers/editors check caller-bound Tier 1/Super roles and archives strip private contact. Location edits use a checked Tier 1/Super/Head of Projects RPC, and site attendance writers reject missing pins without changing configured distance/photo/hours rules.
 
-- Export strings use shared safety adapters; portal links and advance self-actions are server-checked to prevent injection and self-approval.
+- Exports use shared safety adapters; portal links/advance self-actions are server-checked (no injection, no self-approval).
 - Schedule: editors = schedule_editor_roles (can_edit_schedule); trigger locks project_tasks baseline columns, baselined rows change only via publish/revise RPCs, keeping actuals open.
