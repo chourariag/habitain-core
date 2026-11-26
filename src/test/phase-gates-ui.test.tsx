@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { MemoryRouter } from "react-router-dom";
 
 const mocks = vi.hoisted(() => ({ enforced: false, from: vi.fn(), rpc: vi.fn(), chain: {} as Record<string, any> }));
-vi.mock("@/lib/phase-flags", () => ({ get PREPROD_GATES_ENFORCED() { return mocks.enforced; }, SCHEDULE_LEGACY_UPLOAD_VISIBLE: false }));
+vi.mock("@/lib/phase-flags", () => ({ get PREPROD_GATES_ENFORCED() { return mocks.enforced; }, SCHEDULE_LEGACY_UPLOAD_VISIBLE: false, BOQ_LEGACY_UPLOAD_VISIBLE: false }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: mocks.from, rpc: mocks.rpc } }));
 vi.mock("@/hooks/useUserRole", () => ({ useUserRole: () => ({ role: "managing_director", userId: "director" }) }));
 vi.mock("@/hooks/useProjectArchitect", () => ({ useProjectArchitect: () => ({ architect: null }), ARCHITECT_OWNED_GATES: [] }));

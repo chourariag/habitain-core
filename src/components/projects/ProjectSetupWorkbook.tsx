@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Download, FileSpreadsheet, Search, Upload } from "lucide-react";
 import { toast } from "sonner";
-import { SCHEDULE_LEGACY_UPLOAD_VISIBLE } from "@/lib/phase-flags";
+import { SCHEDULE_LEGACY_UPLOAD_VISIBLE, BOQ_LEGACY_UPLOAD_VISIBLE } from "@/lib/phase-flags";
 import {
   validateProjectSetupRows,
   type ProjectSetupWorkbookRows,
@@ -123,7 +123,7 @@ function makeTemplate() {
     "Lump Sum (₹)": "",
     "Package Qty": "",
   };
-  const visibleSheets = sheets.filter(([name]) => SCHEDULE_LEGACY_UPLOAD_VISIBLE || name !== "Schedule");
+  const visibleSheets = sheets.filter(([name]) => (SCHEDULE_LEGACY_UPLOAD_VISIBLE || name !== "Schedule") && (BOQ_LEGACY_UPLOAD_VISIBLE || name !== "BOQ"));
   for (const [name, columns, example] of visibleSheets) {
     const worksheet = XLSX.utils.json_to_sheet([example], { header: columns });
     XLSX.utils.sheet_add_aoa(worksheet, [columns], { origin: "A1" });
@@ -251,7 +251,7 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
       const schedule = SCHEDULE_LEGACY_UPLOAD_VISIBLE
         ? sheetRows(workbook, "Schedule", SHEET_COLUMNS.schedule)
         : { rows: [], errors: [] };
-      const boq = sheetRows(workbook, "BOQ", SHEET_COLUMNS.boq);
+      const boq = BOQ_LEGACY_UPLOAD_VISIBLE ? sheetRows(workbook, "BOQ", SHEET_COLUMNS.boq) : { rows: [], errors: [] };
       const materials = sheetRows(workbook, "Material Plan", SHEET_COLUMNS.materials);
       const rows = { schedule: schedule.rows, boq: boq.rows, materials: materials.rows };
       const rateSheet = rateSheetRows(workbook);
@@ -293,7 +293,7 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
       const { data, error } = await (supabase.rpc as any)("commit_project_setup_excel_upload_v2", {
         p_project_id: projectId,
         p_schedule_rows: schedule,
-        p_boq_rows: boq,
+        p_boq_rows: BOQ_LEGACY_UPLOAD_VISIBLE ? boq : [],
         p_material_rows: materials,
         p_rate_rows: rateRows,
       });
@@ -341,7 +341,8 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
     <div className="min-w-0 space-y-4">
       {canUpload && (
         <section className="space-y-3 border-b border-border pb-4" aria-label="Upload project setup workbook">
-          {!SCHEDULE_LEGACY_UPLOAD_VISIBLE && <p className="break-words rounded-md bg-muted p-3 text-sm text-muted-foreground">Schedule-sheet uploading is off. Build tasks in the Schedule tab. This workbook continues to handle BOQ, Material Plan and Subcontract Rates only; any Schedule sheet is ignored.</p>}
+          {!SCHEDULE_LEGACY_UPLOAD_VISIBLE && <p className="break-words rounded-md bg-muted p-3 text-sm text-muted-foreground">Schedule-sheet uploading is off. Build tasks in the Schedule tab; any Schedule sheet is ignored.</p>}
+          {!BOQ_LEGACY_UPLOAD_VISIBLE && <p className="break-words rounded-md bg-muted p-3 text-sm text-muted-foreground">BOQ-sheet uploading is off. Enter the signed-document total and fresh lines in the BOQ tab. This workbook keeps Material Plan and Subcontract Rates; any BOQ sheet is ignored.</p>}
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Button variant="outline" onClick={downloadTemplate} className="max-w-full gap-2">
               <Download className="h-4 w-4 shrink-0" /> Download Template
@@ -373,7 +374,7 @@ export function ProjectSetupWorkbook({ projectId, userRole }: Props) {
               <h3 className="font-medium">Dry run</h3>
               <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
                 {SCHEDULE_LEGACY_UPLOAD_VISIBLE && <p>Schedule rows: {workbookRows?.schedule.length ?? 0} ({validCount("Schedule", workbookRows?.schedule.length ?? 0)} valid)</p>}
-                <p>BOQ rows: {workbookRows?.boq.length ?? 0} ({validCount("BOQ", workbookRows?.boq.length ?? 0)} valid)</p>
+                {BOQ_LEGACY_UPLOAD_VISIBLE && <p>BOQ rows: {workbookRows?.boq.length ?? 0} ({validCount("BOQ", workbookRows?.boq.length ?? 0)} valid)</p>}
                 <p>Material rows: {workbookRows?.materials.length ?? 0} ({validCount("Material Plan", workbookRows?.materials.length ?? 0)} valid)</p>
                 <p>Subcontract Rates rows: {rateRows === null ? "sheet not included" : `${rateRows.length} (${Math.max(0, rateRows.length - new Set((rateCheck?.errors ?? []).map((e) => e.match(/row (\d+)/)?.[1])).size)} valid)`}</p>
               </div>

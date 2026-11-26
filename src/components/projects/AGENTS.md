@@ -1,0 +1,1 @@
+- Fresh BOQ entry uses checked server functions on the existing header/lines; amounts, audit actors and times are server-filled, final changes require balanced revisions, and legacy uploads stay separately guarded to preserve downstream field contracts.

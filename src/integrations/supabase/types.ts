@@ -946,6 +946,69 @@ export type Database = {
         }
         Relationships: []
       }
+      boq_entry_audit: {
+        Row: {
+          action: string
+          boq_id: string
+          created_at: string
+          created_by: string
+          id: string
+          is_archived: boolean
+          line_id: string | null
+          new_value: Json | null
+          old_value: Json | null
+          project_id: string
+          reason: string | null
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          action: string
+          boq_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_archived?: boolean
+          line_id?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          project_id: string
+          reason?: string | null
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          action?: string
+          boq_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          line_id?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          project_id?: string
+          reason?: string | null
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boq_entry_audit_boq_id_fkey"
+            columns: ["boq_id"]
+            isOneToOne: false
+            referencedRelation: "project_boq"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boq_entry_audit_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boq_items: {
         Row: {
           boq_qty: number
@@ -998,6 +1061,73 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "boq_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boq_warning_acknowledgements: {
+        Row: {
+          boq_id: string
+          created_at: string
+          created_by: string
+          id: string
+          is_archived: boolean
+          line_id: string
+          note: string | null
+          project_id: string
+          updated_at: string
+          updated_by: string
+          warning: Json
+          warning_key: string
+        }
+        Insert: {
+          boq_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_archived?: boolean
+          line_id: string
+          note?: string | null
+          project_id: string
+          updated_at?: string
+          updated_by: string
+          warning: Json
+          warning_key: string
+        }
+        Update: {
+          boq_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          line_id?: string
+          note?: string | null
+          project_id?: string
+          updated_at?: string
+          updated_by?: string
+          warning?: Json
+          warning_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boq_warning_acknowledgements_boq_id_fkey"
+            columns: ["boq_id"]
+            isOneToOne: false
+            referencedRelation: "project_boq"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boq_warning_acknowledgements_line_id_fkey"
+            columns: ["line_id"]
+            isOneToOne: false
+            referencedRelation: "project_boq_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boq_warning_acknowledgements_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
@@ -9678,15 +9808,25 @@ export type Database = {
         Row: {
           blended_margin_pct: number
           civil_scope_value: number
+          control_total: number | null
           created_at: string
+          created_by: string | null
+          entry_mode: string
+          entry_version: number
           factory_scope_value: number
+          final_at: string | null
+          final_by: string | null
           gfc_pending_h1: boolean | null
           gfc_total_value: number | null
           id: string
+          is_archived: boolean
           project_id: string
+          source_note: string | null
+          status: string
           tender_total_value: number | null
           total_boq_value: number
           updated_at: string
+          updated_by: string | null
           uploaded_at: string
           uploaded_by: string | null
           uploaded_by_name: string | null
@@ -9695,15 +9835,25 @@ export type Database = {
         Insert: {
           blended_margin_pct?: number
           civil_scope_value?: number
+          control_total?: number | null
           created_at?: string
+          created_by?: string | null
+          entry_mode?: string
+          entry_version?: number
           factory_scope_value?: number
+          final_at?: string | null
+          final_by?: string | null
           gfc_pending_h1?: boolean | null
           gfc_total_value?: number | null
           id?: string
+          is_archived?: boolean
           project_id: string
+          source_note?: string | null
+          status?: string
           tender_total_value?: number | null
           total_boq_value?: number
           updated_at?: string
+          updated_by?: string | null
           uploaded_at?: string
           uploaded_by?: string | null
           uploaded_by_name?: string | null
@@ -9712,15 +9862,25 @@ export type Database = {
         Update: {
           blended_margin_pct?: number
           civil_scope_value?: number
+          control_total?: number | null
           created_at?: string
+          created_by?: string | null
+          entry_mode?: string
+          entry_version?: number
           factory_scope_value?: number
+          final_at?: string | null
+          final_by?: string | null
           gfc_pending_h1?: boolean | null
           gfc_total_value?: number | null
           id?: string
+          is_archived?: boolean
           project_id?: string
+          source_note?: string | null
+          status?: string
           tender_total_value?: number | null
           total_boq_value?: number
           updated_at?: string
+          updated_by?: string | null
           uploaded_at?: string
           uploaded_by?: string | null
           uploaded_by_name?: string | null
@@ -9744,14 +9904,19 @@ export type Database = {
           boq_rate: number
           category: string
           created_at: string
+          created_by: string | null
+          entry_managed: boolean
           gfc_amount: number | null
           id: string
+          is_archived: boolean
           item_description: string
           labour_rate: number
           margin_pct: number | null
           material_rate: number
           oh_rate: number
           procured_qty: number
+          quantity_missing: boolean
+          rate_missing: boolean
           schedule_task_id: string | null
           scope: string
           sno: number
@@ -9759,6 +9924,8 @@ export type Database = {
           tender_qty: number | null
           total_amount: number
           unit: string | null
+          updated_at: string
+          updated_by: string | null
           wastage_pct: number
           work_location: string
         }
@@ -9769,14 +9936,19 @@ export type Database = {
           boq_rate?: number
           category?: string
           created_at?: string
+          created_by?: string | null
+          entry_managed?: boolean
           gfc_amount?: number | null
           id?: string
+          is_archived?: boolean
           item_description?: string
           labour_rate?: number
           margin_pct?: number | null
           material_rate?: number
           oh_rate?: number
           procured_qty?: number
+          quantity_missing?: boolean
+          rate_missing?: boolean
           schedule_task_id?: string | null
           scope?: string
           sno?: number
@@ -9784,6 +9956,8 @@ export type Database = {
           tender_qty?: number | null
           total_amount?: number
           unit?: string | null
+          updated_at?: string
+          updated_by?: string | null
           wastage_pct?: number
           work_location?: string
         }
@@ -9794,14 +9968,19 @@ export type Database = {
           boq_rate?: number
           category?: string
           created_at?: string
+          created_by?: string | null
+          entry_managed?: boolean
           gfc_amount?: number | null
           id?: string
+          is_archived?: boolean
           item_description?: string
           labour_rate?: number
           margin_pct?: number | null
           material_rate?: number
           oh_rate?: number
           procured_qty?: number
+          quantity_missing?: boolean
+          rate_missing?: boolean
           schedule_task_id?: string | null
           scope?: string
           sno?: number
@@ -9809,6 +9988,8 @@ export type Database = {
           tender_qty?: number | null
           total_amount?: number
           unit?: string | null
+          updated_at?: string
+          updated_by?: string | null
           wastage_pct?: number
           work_location?: string
         }
@@ -18596,6 +18777,16 @@ export type Database = {
       }
     }
     Functions: {
+      _boq1_normal: { Args: { p_text: string }; Returns: string }
+      _boq1_number: {
+        Args: { p_label: string; p_paise?: boolean; p_value: string }
+        Returns: number
+      }
+      _boq1_rows: {
+        Args: { p_apply: boolean; p_boq: string; p_rows: Json }
+        Returns: Json
+      }
+      _boq1_warnings: { Args: { p_boq: string; p_row: Json }; Returns: Json }
       _cost_require_project: {
         Args: { p_boq_item_id?: string; p_project_id: string }
         Returns: undefined
@@ -18812,6 +19003,18 @@ export type Database = {
         Returns: Json
       }
       boq_cumulative_qty: { Args: { _boq_item_id: string }; Returns: number }
+      boq1_can_read: { Args: { p_project: string }; Returns: boolean }
+      boq1_can_write: { Args: { p_project: string }; Returns: boolean }
+      boq1_get: { Args: { p_project: string }; Returns: Json }
+      boq1_mutate: {
+        Args: {
+          p_action: string
+          p_expected_version?: number
+          p_payload: Json
+          p_project: string
+        }
+        Returns: Json
+      }
       can_access_labour_compensation: {
         Args: { _user_id: string }
         Returns: boolean

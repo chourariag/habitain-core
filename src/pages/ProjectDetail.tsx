@@ -2,6 +2,7 @@ import { RunningBillStatement } from "@/components/projects/RunningBillStatement
 import { ProjectCostRates } from "@/components/projects/ProjectCostRates";
 import { ProjectCostReport } from "@/components/projects/ProjectCostReport";
 import { BOQWorkLocation } from "@/components/projects/BOQWorkLocation";
+import { BoqEntry } from "@/components/projects/BoqEntry";
 import { canViewRunningBill } from "@/lib/running-bill";
 import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
@@ -236,6 +237,7 @@ export default function ProjectDetail() {
           <TabsList className="w-max max-w-none overflow-visible">
             <TabsTrigger value="schedule" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Schedule</TabsTrigger>
             {!isAds && flags.isEnabled("project_setup") && <TabsTrigger value="setup" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Setup</TabsTrigger>}
+            {flags.isEnabled("project_setup") && <TabsTrigger value="boq" className="gap-1.5"><FileText className="h-4 w-4" /> BOQ</TabsTrigger>}
             <TabsTrigger value="billing" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Payment Milestones</TabsTrigger>
             {canViewRunningBill(userRole) && <TabsTrigger value="running-bill" className="gap-1.5"><FileSpreadsheet className="h-4 w-4" /> Running Bill</TabsTrigger>}
             {canViewRunningBill(userRole) && flags.isEnabled("project_setup") && <TabsTrigger value="rates" className="gap-1.5"><IndianRupee className="h-4 w-4" /> Rates</TabsTrigger>}
@@ -271,6 +273,10 @@ export default function ProjectDetail() {
         <TabsContent value="schedule" className="min-w-0 space-y-4">
           <ScheduleTab projectId={id!} userRole={userRole} />
         </TabsContent>
+
+        {id && flags.isEnabled("project_setup") && <TabsContent value="boq" className="min-w-0 space-y-4">
+          <BoqEntry projectId={id} />
+        </TabsContent>}
 
         {!isAds && flags.isEnabled("project_setup") && (
           <TabsContent value="setup" className="min-w-0 space-y-4">

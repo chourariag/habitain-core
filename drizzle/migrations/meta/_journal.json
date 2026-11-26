@@ -554,6 +554,20 @@
       "when": 1795721389633,
       "tag": "0078_sched2h_site_engineer_task_actuals",
       "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1795722159627,
+      "tag": "0079_boq1_fresh_entry_control_and_lock",
+      "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1795722402252,
+      "tag": "0080_boq1_workbook_guard_compatibility",
+      "breakpoints": true
     }
   ]
 }

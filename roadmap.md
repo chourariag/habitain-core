@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [x] BOQ-1: additive fresh-entry controls/locks/audit and anonymous warnings; desktop grid/read-only phones; legacy upload guard; real-account rollback passed, zero fixtures; 989 tests; docs/BOQ1_CONFIRM.md. Successful fresh browser save remains unverified (existing test BOQ protected).
 - [x] SCHED-2h: 0078 site-engineer site-only actuals policy/whole-row guard; error-aware sheet and zero-row refusals; real-principal rollback matrix; View As mocked refusal at 390/1440; 984 tests. Evidence docs/SCHED2H_CONFIRM.md. Real successful browser save unverified: no eligible scheduled site task/project access; no live fixtures left.
 - [x] SCHED-2b: Schedule plan + Actuals sub-tabs on checked RPCs; desktop gate, revisions/history/comments/Gantt/holidays; legacy schedule uploads default-off with BOQ preserved. 964 tests. Evidence docs/SCHED2B_CONFIRM.md.
 - [x] SCHED-2b correction: actor/timestamp fields removed from all new writes; regression test; real Tagore comment + Venkat seen/resolved verified, no column errors.

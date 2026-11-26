@@ -1,4 +1,5 @@
 import { TIER1_ROLES } from "@/lib/roles";
+import { BOQ_LEGACY_UPLOAD_VISIBLE } from "@/lib/phase-flags";
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -77,7 +78,7 @@ export function BOQManager({ projectId }: Props) {
   const [pendingItems, setPendingItems] = useState<BoqItem[] | null>(null);
   const [pendingSummary, setPendingSummary] = useState<{ total: number; margin: number; factory: number; civil: number } | null>(null);
 
-  const canUpload = UPLOAD_ROLES.includes(role || "");
+  const canUpload = BOQ_LEGACY_UPLOAD_VISIBLE && UPLOAD_ROLES.includes(role || "");
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -388,9 +389,9 @@ export function BOQManager({ projectId }: Props) {
             <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={handleFileSelect} />
           </>
         )}
-        <Button size="sm" variant="outline" onClick={downloadTemplate} style={{ borderColor: "#006039", color: "#006039" }}>
+        {BOQ_LEGACY_UPLOAD_VISIBLE && <Button size="sm" variant="outline" onClick={downloadTemplate}>
           <Download className="h-4 w-4 mr-1" /> Download Template
-        </Button>
+        </Button>}
 
         {versions.length > 1 && (
           <Select
@@ -418,7 +419,7 @@ export function BOQManager({ projectId }: Props) {
         <Card>
           <CardContent className="py-12 text-center">
             <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No BOQ uploaded yet. Upload an Excel file to set the financial baseline.</p>
+            <p className="text-sm text-muted-foreground">No BOQ entered yet. Use the project's BOQ tab for fresh entry.</p>
           </CardContent>
         </Card>
       )}
