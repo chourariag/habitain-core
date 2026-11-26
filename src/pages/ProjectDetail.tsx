@@ -3,6 +3,7 @@ import { ProjectCostRates } from "@/components/projects/ProjectCostRates";
 import { ProjectCostReport } from "@/components/projects/ProjectCostReport";
 import { BOQWorkLocation } from "@/components/projects/BOQWorkLocation";
 import { BoqEntry } from "@/components/projects/BoqEntry";
+import { BoqLinks } from "@/components/projects/BoqLinks";
 import { canViewRunningBill } from "@/lib/running-bill";
 import { TIER1_ROLES, isTier1OrSuper } from "@/lib/roles";
 import { useState, useEffect, useCallback } from "react";
@@ -276,6 +277,7 @@ export default function ProjectDetail() {
 
         {id && flags.isEnabled("project_setup") && <TabsContent value="boq" className="min-w-0 space-y-4">
           <BoqEntry projectId={id} />
+          <BoqLinks projectId={id} />
         </TabsContent>}
 
         {!isAds && flags.isEnabled("project_setup") && (

@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [x] BOQ-2: 0082–0084 link tables/checked RPCs (split, shares, lock, reasoned revisions, broken-link read flags, suggestion helpers); 19 real-principal rollback checks, zero fixtures; reader fingerprints/outputs unchanged; BOQ links screen. Evidence docs/BOQ2_CONFIRM.md.
 - [x] BOQ-1b: added 3 writers; consumed/frozen guard; 15+2 real-principal rollback checks, zero fixtures; downstream fingerprints unchanged; 995 tests; docs/BOQ1B_CONFIRM.md. Quantity Surveyor real-principal check blocked: no account. Browser writes mocked/rollback-only.
 - [x] BOQ-1: additive fresh-entry controls/locks/audit and anonymous warnings; desktop grid/read-only phones; legacy upload guard; real-account rollback passed, zero fixtures; 989 tests; docs/BOQ1_CONFIRM.md. Successful fresh browser save remains unverified (existing test BOQ protected).
 - [x] SCHED-2h: 0078 site-engineer site-only actuals policy/whole-row guard; error-aware sheet and zero-row refusals; real-principal rollback matrix; View As mocked refusal at 390/1440; 984 tests. Evidence docs/SCHED2H_CONFIRM.md. Real successful browser save unverified: no eligible scheduled site task/project access; no live fixtures left.

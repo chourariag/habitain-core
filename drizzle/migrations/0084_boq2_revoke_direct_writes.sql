@@ -1,0 +1,3 @@
+REVOKE ALL ON public.boq_link_sets, public.boq_unit_allocations, public.boq_task_links, public.boq_link_audit FROM anon, PUBLIC;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.boq_link_sets, public.boq_unit_allocations, public.boq_task_links, public.boq_link_audit FROM authenticated;
+GRANT SELECT ON public.boq_link_sets, public.boq_unit_allocations, public.boq_task_links, public.boq_link_audit TO authenticated;

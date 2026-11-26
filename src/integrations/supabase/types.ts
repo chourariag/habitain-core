@@ -1068,6 +1068,276 @@ export type Database = {
           },
         ]
       }
+      boq_link_audit: {
+        Row: {
+          action: string
+          boq_item_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          is_archived: boolean
+          link_set_id: string
+          new_value: Json | null
+          old_value: Json | null
+          project_id: string
+          reason: string | null
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          action: string
+          boq_item_id?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          is_archived?: boolean
+          link_set_id: string
+          new_value?: Json | null
+          old_value?: Json | null
+          project_id: string
+          reason?: string | null
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          action?: string
+          boq_item_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          link_set_id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          project_id?: string
+          reason?: string | null
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boq_link_audit_link_set_id_fkey"
+            columns: ["link_set_id"]
+            isOneToOne: false
+            referencedRelation: "boq_link_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boq_link_audit_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boq_link_sets: {
+        Row: {
+          boq_id: string | null
+          created_at: string
+          created_by: string
+          id: string
+          is_archived: boolean
+          locked_at: string | null
+          locked_by: string | null
+          project_id: string
+          rules_source: string
+          status: string
+          updated_at: string
+          updated_by: string
+          version: number
+        }
+        Insert: {
+          boq_id?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          is_archived?: boolean
+          locked_at?: string | null
+          locked_by?: string | null
+          project_id: string
+          rules_source?: string
+          status?: string
+          updated_at?: string
+          updated_by: string
+          version?: number
+        }
+        Update: {
+          boq_id?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          locked_at?: string | null
+          locked_by?: string | null
+          project_id?: string
+          rules_source?: string
+          status?: string
+          updated_at?: string
+          updated_by?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boq_link_sets_boq_id_fkey"
+            columns: ["boq_id"]
+            isOneToOne: false
+            referencedRelation: "project_boq"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boq_link_sets_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boq_task_links: {
+        Row: {
+          boq_item_id: string
+          created_at: string
+          created_by: string
+          id: string
+          is_archived: boolean
+          link_set_id: string
+          project_id: string
+          share_pct: number
+          task_id: string
+          unit_kind: string
+          unit_label: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          boq_item_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_archived?: boolean
+          link_set_id: string
+          project_id: string
+          share_pct: number
+          task_id: string
+          unit_kind: string
+          unit_label: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          boq_item_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          link_set_id?: string
+          project_id?: string
+          share_pct?: number
+          task_id?: string
+          unit_kind?: string
+          unit_label?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boq_task_links_boq_item_id_fkey"
+            columns: ["boq_item_id"]
+            isOneToOne: false
+            referencedRelation: "project_boq_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boq_task_links_link_set_id_fkey"
+            columns: ["link_set_id"]
+            isOneToOne: false
+            referencedRelation: "boq_link_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boq_task_links_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boq_task_links_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "project_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boq_unit_allocations: {
+        Row: {
+          boq_item_id: string
+          created_at: string
+          created_by: string
+          id: string
+          is_archived: boolean
+          link_set_id: string
+          project_id: string
+          quantity: number
+          unit_kind: string
+          unit_label: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          boq_item_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_archived?: boolean
+          link_set_id: string
+          project_id: string
+          quantity: number
+          unit_kind: string
+          unit_label: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          boq_item_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_archived?: boolean
+          link_set_id?: string
+          project_id?: string
+          quantity?: number
+          unit_kind?: string
+          unit_label?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boq_unit_allocations_boq_item_id_fkey"
+            columns: ["boq_item_id"]
+            isOneToOne: false
+            referencedRelation: "project_boq_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boq_unit_allocations_link_set_id_fkey"
+            columns: ["link_set_id"]
+            isOneToOne: false
+            referencedRelation: "boq_link_sets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boq_unit_allocations_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boq_warning_acknowledgements: {
         Row: {
           boq_id: string
@@ -18795,6 +19065,48 @@ export type Database = {
         Returns: undefined
       }
       _boq1b_consumption: { Args: { p_line: string }; Returns: Json }
+      _boq2_apply_shares: {
+        Args: {
+          p_boq: string
+          p_item: string
+          p_kind: string
+          p_label: string
+          p_project: string
+          p_reason: string
+          p_set: string
+          p_shares: Json
+        }
+        Returns: undefined
+      }
+      _boq2_apply_split: {
+        Args: {
+          p_allocs: Json
+          p_boq: string
+          p_item: string
+          p_project: string
+          p_reason: string
+          p_set: string
+        }
+        Returns: undefined
+      }
+      _boq2_line_label: { Args: { p_item: string }; Returns: string }
+      _boq2_state: { Args: { p_project: string }; Returns: Json }
+      _boq2_task_problem: {
+        Args: {
+          p_kind: string
+          p_label: string
+          p_project: string
+          p_task: string
+        }
+        Returns: string
+      }
+      _boq2_units: {
+        Args: { p_project: string }
+        Returns: {
+          unit_kind: string
+          unit_label: string
+        }[]
+      }
       _cost_require_project: {
         Args: { p_boq_item_id?: string; p_project_id: string }
         Returns: undefined
@@ -19021,6 +19333,32 @@ export type Database = {
           p_payload: Json
           p_project: string
         }
+        Returns: Json
+      }
+      boq2_can_read: { Args: { p_project: string }; Returns: boolean }
+      boq2_can_write: { Args: { p_project: string }; Returns: boolean }
+      boq2_get: { Args: { p_project: string }; Returns: Json }
+      boq2_mutate: {
+        Args: {
+          p_action: string
+          p_expected_version?: number
+          p_payload: Json
+          p_project: string
+        }
+        Returns: Json
+      }
+      boq2_suggest_copy_shares: {
+        Args: {
+          p_from_kind: string
+          p_from_label: string
+          p_item: string
+          p_project: string
+          p_targets: Json
+        }
+        Returns: Json
+      }
+      boq2_suggest_equal_split: {
+        Args: { p_item: string; p_project: string; p_units: Json }
         Returns: Json
       }
       can_access_labour_compensation: {

@@ -575,6 +575,27 @@
       "when": 1795723755636,
       "tag": "0081_boq1b_writers_and_consumed_line_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 82,
+      "version": "7",
+      "when": 1795725777416,
+      "tag": "0082_boq2_task_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "7",
+      "when": 1795725870632,
+      "tag": "0083_boq2_state_person_name",
+      "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1795726145336,
+      "tag": "0084_boq2_revoke_direct_writes",
+      "breakpoints": true
     }
   ]
 }
