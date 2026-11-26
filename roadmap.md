@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [x] SCHED-2a-fix: 0073 restores exactly Venkat/Azad by idempotent email lookup; one active Azad match (production_head) added. Real-Azad recalculation/audit and real-account temporary-head_operations 42501 denial rolled back with zero residual fixtures; 955 tests/0 skips. Evidence docs/SCHED2A_FIX_CONFIRM.md; database only, no publish needed.
 - [x] SCHED-2a: 0070–0072 named Venkat-only editor, closure follow-up preservation and explicit published re-clone block; checked pre-baseline date/library/repeat functions. Real-principal rollback a–g passed; 955 tests/0 skips; zero residual fixtures. Evidence docs/SCHED2A_CONFIRM.md; database-only, no publish needed.
 - [x] SCHED-1b: 0067–0069 baseline membership/calendar guards, archive removals, fixed checked helper; unchanged 15/107 seed re-run; real-principal rollback matrix and production-head handover readback. User confirmed factory_supervisor remains blocked. Evidence docs/SCHED1b_CONFIRM.md; legacy upload/closure caveats disclosed.
 - [x] SCHED-1: 0066 editor roles, library/holiday/unit/baseline/comment tables, baseline guard trigger, publish/revise RPCs; impersonated rollback a–g passed, 955 tests/0 skips. Evidence docs/SCHED1_CONFIRM.md. Follow-up SCHED-1b checks the fixed helper and blocks destructive published-template re-clones; confirmed factory_supervisor restriction remains.

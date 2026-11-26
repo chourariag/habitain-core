@@ -512,6 +512,13 @@
       "when": 1795710982223,
       "tag": "0072_sched2a_recalculate_variable_resolution",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1795711475835,
+      "tag": "0073_sched2a_named_editor_seeds",
+      "breakpoints": true
     }
   ]
 }
