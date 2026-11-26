@@ -117,6 +117,7 @@ export function HomeMyTasks({ userRole }: { userRole: string | null }) {
         onUpdated={() => { setSelected(null); void load(); }}
         allTasks={allTasks as any}
         canEdit={canEdit}
+        userRole={userRole}
         canAddSubtasks={false}
       />
     </section>

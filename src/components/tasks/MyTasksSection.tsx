@@ -135,7 +135,7 @@ export function MyTasksSection({ userRole, phaseFilter, projectId, title = "My T
   const visibleTasks = expanded ? sortedTasks : sortedTasks.slice(0, 3);
   const remaining = Math.max(0, sortedTasks.length - 3);
 
-  const canEdit = ["planning_engineer", "production_head", "factory_supervisor", "site_installation_manager", "site_manager", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
+  const canEdit = ["planning_engineer", "production_head", "factory_supervisor", "site_installation_manager", "site_manager", "super_admin", "site_engineer", ...TIER1_ROLES].includes(userRole ?? "");
   const canAddSubtasks = ["planning_engineer", "super_admin", ...TIER1_ROLES].includes(userRole ?? "");
 
   if (loading) {
@@ -228,6 +228,7 @@ export function MyTasksSection({ userRole, phaseFilter, projectId, title = "My T
         onUpdated={() => { fetchTasks(); setSelectedTask(null); }}
         allTasks={allProjectTasks}
         canEdit={canEdit}
+        userRole={userRole}
         canAddSubtasks={canAddSubtasks}
       />
     </>

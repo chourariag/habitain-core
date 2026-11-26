@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { Play, CheckCircle2, AlertTriangle, Plus, Loader2, Calendar, Clock, Link2 } from "lucide-react";
 import { recordTaskBenchmark } from "@/lib/task-benchmarks";
+import { saveTaskProgress, type TaskProgressPatch } from "@/lib/task-progress-save";
 
 const DELAY_CAUSES = [
   "Internal — Method",
@@ -32,6 +33,8 @@ const ROLE_LABELS: Record<string, string> = {
   factory_supervisor: "Factory Supervisor",
   planning_engineer: "Planning Engineer",
   site_installation_manager: "Site Installation Mgr",
+  site_installation_mgr: "Site Installation Manager",
+  site_engineer: "Site Engineer",
   site_manager: "Site Manager",
   procurement: "Procurement",
   external_contractor: "External Contractor",
@@ -79,11 +82,15 @@ interface Props {
   allTasks?: TaskData[];
   canEdit?: boolean;
   canAddSubtasks?: boolean;
+  userRole?: string | null;
 }
 
-export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks = [], canEdit: canEditProp = true, canAddSubtasks = false }: Props) {
+export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks = [], canEdit: canEditProp = true, canAddSubtasks: canAddSubtasksProp = false, userRole }: Props) {
   const canEdit = canEditProp && !isBackfilledTask(task);
+  const isSiteEngineer = userRole === "site_engineer";
+  const canAddSubtasks = canAddSubtasksProp && !isSiteEngineer;
 
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [percentage, setPercentage] = useState(0);
   const [remarks, setRemarks] = useState("");
   const [delayCause, setDelayCause] = useState("");
@@ -95,6 +102,7 @@ export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks 
 
   useEffect(() => {
     if (task) {
+      setSaveError(null);
       setPercentage(task.completion_percentage);
       setRemarks(task.remarks ?? "");
       setDelayCause((task as any).delay_cause ?? "");
@@ -146,12 +154,14 @@ export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks 
 
   const handleStart = async () => {
     setSaving(true);
-    await supabase.from("project_tasks").update({
+    setSaveError(null);
+    const error = await saveTaskProgress(task.id, {
       actual_start_date: format(new Date(), "yyyy-MM-dd"),
       status: "In Progress",
       completion_percentage: Math.max(percentage, 5),
       remarks: remarks || null,
-    } as any).eq("id", task.id);
+    });
+    if (error) { setSaveError(error); setSaving(false); toast.error(error); return; }
     toast.success("Task started");
     setSaving(false);
     onUpdated();
@@ -164,15 +174,17 @@ export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks 
       return;
     }
     setSaving(true);
+    setSaveError(null);
     const finishDate = format(new Date(), "yyyy-MM-dd");
-    await supabase.from("project_tasks").update({
+    const error = await saveTaskProgress(task.id, {
       actual_finish_date: finishDate,
       status: "Completed",
       completion_percentage: 100,
       remarks: remarks || null,
       delay_cause: delayCause || null,
       delay_resolution: delayResolution || null,
-    } as any).eq("id", task.id);
+    });
+    if (error) { setSaveError(error); setSaving(false); toast.error(error); return; }
     // Record benchmark data point
     recordTaskBenchmark({
       ...task,
@@ -191,7 +203,8 @@ export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks 
       return;
     }
     setSaving(true);
-    const updates: any = {
+    setSaveError(null);
+    const updates: TaskProgressPatch = {
       completion_percentage: percentage,
       remarks: remarks || null,
       delay_cause: delayCause || null,
@@ -205,13 +218,14 @@ export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks 
       updates.actual_finish_date = format(new Date(), "yyyy-MM-dd");
       updates.status = "Completed";
     }
-    await supabase.from("project_tasks").update(updates).eq("id", task.id);
+    const error = await saveTaskProgress(task.id, updates);
+    if (error) { setSaveError(error); setSaving(false); toast.error(error); return; }
     // Record benchmark if completed
     if (percentage === 100) {
       recordTaskBenchmark({
         ...task,
         actual_start_date: updates.actual_start_date || task.actual_start_date,
-        actual_finish_date: updates.actual_finish_date,
+        actual_finish_date: updates.actual_finish_date ?? null,
         delay_cause: delayCause || null,
       }).catch(() => {});
     }
@@ -222,13 +236,18 @@ export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks 
   };
 
   const toggleSubtask = async (sub: Subtask) => {
+    if (isSiteEngineer) return;
     const newVal = !sub.is_complete;
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from("project_subtasks").update({
+    const { data, error } = await supabase.from("project_subtasks").update({
       is_complete: newVal,
       completed_at: newVal ? new Date().toISOString() : null,
       completed_by: newVal ? user?.id : null,
-    } as any).eq("id", sub.id);
+    } as any).eq("id", sub.id).select("id").maybeSingle();
+    if (error || !data) {
+      const message = error?.message ?? "This subtask was not saved. You do not have permission to update it.";
+      setSaveError(message); toast.error(message); return;
+    }
 
     const updated = subtasks.map((s) => s.id === sub.id ? { ...s, is_complete: newVal } : s);
     setSubtasks(updated);
@@ -242,12 +261,14 @@ export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks 
   };
 
   const addSubtask = async () => {
+    if (!canAddSubtasks) return;
     if (!newSubtaskTitle.trim()) return;
-    await supabase.from("project_subtasks").insert({
+    const { error } = await supabase.from("project_subtasks").insert({
       task_id: task.id,
       title: newSubtaskTitle.trim(),
       sort_order: subtasks.length,
     } as any);
+    if (error) { setSaveError(error.message); toast.error(error.message); return; }
     setNewSubtaskTitle("");
     fetchSubtasks(task.id);
   };
@@ -261,6 +282,8 @@ export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks 
             <div className="flex"><BackfilledTaskBadge task={task} /></div>
           )}
         </SheetHeader>
+
+        {saveError && <div role="alert" className="my-3 rounded-md border border-destructive bg-background p-3 text-sm text-destructive">{saveError}</div>}
 
 
         {/* Section A — Task Info */}
@@ -406,7 +429,7 @@ export function TaskUpdateSheet({ task, open, onOpenChange, onUpdated, allTasks 
                 <div className="space-y-2">
                   {subtasks.map((sub) => (
                     <label key={sub.id} className="flex items-center gap-2 text-sm cursor-pointer">
-                      <Checkbox checked={sub.is_complete} onCheckedChange={() => canEdit && toggleSubtask(sub)} disabled={!canEdit} />
+                      <Checkbox checked={sub.is_complete} onCheckedChange={() => canEdit && toggleSubtask(sub)} disabled={!canEdit || isSiteEngineer} />
                       <span className={sub.is_complete ? "line-through text-muted-foreground" : ""}>{sub.title}</span>
                     </label>
                   ))}

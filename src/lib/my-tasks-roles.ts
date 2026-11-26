@@ -31,5 +31,5 @@ export function responsibleRolesFor(role: string | null | undefined): MyTaskRole
 export const TASK_UPDATE_ROLES = [
   "super_admin", "managing_director", "chairman", "head_operations", "production_head", "planning_head",
   "planning_engineer", "site_installation_mgr", "factory_floor_supervisor", "factory_supervisor",
-  "finance_director", "sales_director", "architecture_director",
+  "finance_director", "sales_director", "architecture_director", "site_engineer",
 ];
