@@ -48,5 +48,5 @@
 - Project contact is written only by checked atomic creation (no approval staging; deprecated store unused); audits log changed fields, never values.
 - Project screens use explicit public projections; contact readers/editors check caller-bound Tier 1/Super roles and archives strip private contact. Location edits use a checked Tier 1/Super/Head of Projects RPC, and site attendance writers reject missing pins without changing configured distance/photo/hours rules.
 
-- Exports use shared safety adapters; portal links/advance self-actions are server-checked (no injection, no self-approval).
+- Exports use shared safety adapters; portal links/advance self-actions are server-checked.
 - Schedule: editors = schedule_editor_roles (can_edit_schedule); trigger locks project_tasks baseline columns, baselined rows change only via publish/revise RPCs, keeping actuals open.
