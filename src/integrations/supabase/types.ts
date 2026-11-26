@@ -14286,6 +14286,7 @@ export type Database = {
           name: string
           output_per_person_day: number | null
           qty: number | null
+          responsible_role: string | null
           source_flag: string | null
           source_steps: string | null
           std_start_day: number | null
@@ -14311,6 +14312,7 @@ export type Database = {
           name: string
           output_per_person_day?: number | null
           qty?: number | null
+          responsible_role?: string | null
           source_flag?: string | null
           source_steps?: string | null
           std_start_day?: number | null
@@ -14336,6 +14338,7 @@ export type Database = {
           name?: string
           output_per_person_day?: number | null
           qty?: number | null
+          responsible_role?: string | null
           source_flag?: string | null
           source_steps?: string | null
           std_start_day?: number | null

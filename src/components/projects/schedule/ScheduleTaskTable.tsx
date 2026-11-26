@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertTriangle, ChevronDown, ChevronRight, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Constants } from "@/integrations/supabase/types";
 import { ScheduleComments } from "./ScheduleComments";
 import { PredecessorPicker } from "./PredecessorPicker";
 import {
@@ -18,6 +19,7 @@ export interface TaskPatch {
   start_day: number;
   duration_days: number;
   predecessor_ids: string[];
+  responsible_role: string | null;
 }
 
 export interface CustomTaskInput {
@@ -244,12 +246,26 @@ export function plainWarning(warning: string) {
   return warning.replace(/\bpredecessor_ids?\b/gi, "predecessors").replace(/\bday1\b/gi, "Day 1").replace(/\bunit_label\b/gi, "unit");
 }
 
+const ROLE_OPTIONS = [...Constants.public.Enums.app_role].map((key) => [key, roleName(key, ROLE_LABELS)] as const).sort((a, b) => a[1].localeCompare(b[1]));
+
+/** Responsible role picker limited to the app's existing role names (no free text). */
+function RoleSelect({ value, onChange, label }: { value: string; onChange: (value: string) => void; label: string }) {
+  return (
+    <select className="h-8 w-full min-w-0 truncate rounded-md border border-input bg-background px-1 text-xs" value={value} onChange={(event) => onChange(event.target.value)} aria-label={label}>
+      <option value="">Not set</option>
+      {value && !ROLE_OPTIONS.some(([key]) => key === value) && <option value={value}>{roleName(value, ROLE_LABELS)}</option>}
+      {ROLE_OPTIONS.map(([key, name]) => <option key={key} value={key}>{name}</option>)}
+    </select>
+  );
+}
+
 function TaskRow({ task, activity, tasks, comments, names, warnings, canWrite, baselineExists, busy, onSave, onRemove, onAddComment, onCommentStatus }: Props & { task: ScheduleTask; activity: string }) {
   const extras = isExtrasGroup(activity) || activity === "Unscheduled extras";
   const initialDays = () => (extras && !task.planned_start_date && !task.planned_finish_date ? "" : String(task.duration_days ?? 0));
   const [startDay, setStartDay] = useState(String(task.start_day ?? 1));
   const [days, setDays] = useState(initialDays);
   const [predecessors, setPredecessors] = useState<string[]>(task.predecessor_ids ?? []);
+  const [role, setRole] = useState<string>(task.responsible_role ?? "");
   const [expanded, setExpanded] = useState(false);
   const [reviseOpen, setReviseOpen] = useState(false);
   const [removeOpen, setRemoveOpen] = useState(false);
@@ -261,8 +277,9 @@ function TaskRow({ task, activity, tasks, comments, names, warnings, canWrite, b
     setStartDay(String(task.start_day ?? 1));
     setDays(initialDays());
     setPredecessors(task.predecessor_ids ?? []);
+    setRole(task.responsible_role ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [task.id, task.start_day, task.duration_days, task.predecessor_ids, task.planned_start_date]);
+  }, [task.id, task.start_day, task.duration_days, task.predecessor_ids, task.planned_start_date, task.responsible_role]);
 
   // After a save, explain a start day that moved because of a predecessor (uses stored results only).
   useEffect(() => {
@@ -278,7 +295,7 @@ function TaskRow({ task, activity, tasks, comments, names, warnings, canWrite, b
   }, [task.start_day, task.predecessor_ids, task.unit_label, tasks]);
 
   const editable = canWrite && !baselineExists && !task.is_removed;
-  const patch = { start_day: Number(startDay), duration_days: Number(days), predecessor_ids: predecessors };
+  const patch: TaskPatch = { start_day: Number(startDay), duration_days: Number(days), predecessor_ids: predecessors, responsible_role: role || null };
   const validNumbers = days.trim() !== "" && Number.isInteger(patch.start_day) && patch.start_day >= 1 && Number.isInteger(patch.duration_days) && patch.duration_days >= 0;
   const taskWarnings = warnings.filter((warning) => warning.includes(task.task_id_in_schedule) && !NO_UNIT_WARNING.test(warning));
   const taskComments = comments.filter((comment) => comment.task_id === task.id).length;
@@ -325,7 +342,9 @@ function TaskRow({ task, activity, tasks, comments, names, warnings, canWrite, b
         </td>
         <td className={`${cell} whitespace-nowrap text-xs`}>{displayDate(task.planned_start_date)}</td>
         <td className={`${cell} whitespace-nowrap text-xs`}>{displayDate(task.planned_finish_date)}</td>
-        <td className={`${cell} text-xs`} style={{ maxWidth: 120 }}><span className="block truncate" title={roleName(task.responsible_role, ROLE_LABELS)}>{roleName(task.responsible_role, ROLE_LABELS)}</span></td>
+        <td className={`${cell} text-xs`} style={{ maxWidth: 140 }}>{editable
+          ? <RoleSelect value={role} onChange={setRole} label={`Responsible role for ${task.task_id_in_schedule}`} />
+          : <span className="block truncate" title={roleName(task.responsible_role, ROLE_LABELS)}>{roleName(task.responsible_role, ROLE_LABELS)}</span>}</td>
         <td className={`${cell} border-l`} style={stickyCell(undefined, true)}>
           <div className="flex items-center gap-1">
             {editable && <Button type="button" size="sm" className="h-8 px-3" disabled={!validNumbers || busy} title={days.trim() === "" ? "Set the days first" : undefined} onClick={() => void save()}>Save</Button>}
@@ -362,7 +381,8 @@ function TaskRow({ task, activity, tasks, comments, names, warnings, canWrite, b
             <div className="space-y-1 text-sm">Predecessors
               <PredecessorPicker unitLabel={task.unit_label} selfId={task.id} selfCode={task.task_id_in_schedule} tasks={tasks} value={predecessors} onChange={setPredecessors} label={`Revise predecessors for ${task.task_id_in_schedule}`} />
             </div>
-            <div className="rounded-md bg-muted p-3 text-sm"><strong>Changes:</strong><p>Start day: {task.start_day ?? "—"} → {startDay}</p><p>Days: {task.duration_days ?? 0} → {days || "—"}</p><p className="break-words">Predecessors: {(task.predecessor_ids ?? []).join(", ") || "—"} → {predecessors.join(", ") || "—"}</p></div>
+            <label className="block text-sm">Responsible role<RoleSelect value={role} onChange={setRole} label={`Revise responsible role for ${task.task_id_in_schedule}`} /></label>
+            <div className="rounded-md bg-muted p-3 text-sm"><strong>Changes:</strong><p>Start day: {task.start_day ?? "—"} → {startDay}</p><p>Days: {task.duration_days ?? 0} → {days || "—"}</p><p className="break-words">Predecessors: {(task.predecessor_ids ?? []).join(", ") || "—"} → {predecessors.join(", ") || "—"}</p><p>Responsible: {roleName(task.responsible_role, ROLE_LABELS)} → {roleName(role || null, ROLE_LABELS)}</p></div>
             <label>Reason (required)<Textarea value={reason} onChange={(event) => setReason(event.target.value)} rows={3} /></label>
             <DialogFooter><Button variant="outline" onClick={() => setReviseOpen(false)}>Cancel</Button><Button disabled={!validNumbers || !reason.trim() || busy} onClick={() => void save()}>Confirm revision</Button></DialogFooter>
           </DialogContent>

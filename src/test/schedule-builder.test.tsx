@@ -185,7 +185,8 @@ describe("SCHED-2c task table", () => {
     render(<ScheduleTab projectId="project-1" userRole="planning_head" />);
     expect(await screen.findByText("3 tasks have no unit and no dates.")).toBeVisible();
     expect(screen.queryByText(/has no unit; using earliest/)).not.toBeInTheDocument();
-    expect(screen.getByText("Factory Supervisor")).toBeVisible();
+    const roleSelect = screen.getByRole("combobox", { name: "Responsible role for F01-M1" }) as HTMLSelectElement;
+    expect(roleSelect.selectedOptions[0].textContent).toBe("Factory Supervisor");
     expect(screen.queryByText("factory_supervisor")).not.toBeInTheDocument();
     expect(screen.queryByText("Legacy 0")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Show them" }));
@@ -209,7 +210,32 @@ describe("SCHED-2c task table", () => {
     fireEvent.click(frame.closest("label")!.querySelector("button")!);
     const row = screen.getAllByText("Material receipt").map((el) => el.closest("tr")).find(Boolean)!;
     fireEvent.click(within(row).getByRole("button", { name: "Save" }));
-    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({ start_day: 1, duration_days: 2, predecessor_ids: ["F00-M1", "F02-M1"] }));
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({ start_day: 1, duration_days: 2, predecessor_ids: ["F00-M1", "F02-M1"], responsible_role: "factory_supervisor" }));
+  });
+
+  it("shows baseline scope: unit tasks in, legacy unit-less tasks out", async () => {
+    mocks.tables.project_tasks = [
+      task,
+      ...Array.from({ length: 2 }, (_, i) => ({ ...task, id: `legacy-s-${i}`, task_id_in_schedule: `LS${i}`, unit_kind: null, unit_label: null, planned_start_date: null, planned_finish_date: null })),
+    ];
+    setWidth(1440);
+    render(<ScheduleTab projectId="project-1" userRole="planning_head" />);
+    const scope = await screen.findByTestId("publish-scope");
+    expect(scope).toHaveTextContent("1 scheduled task will be in the baseline");
+    expect(scope).toHaveTextContent("2 legacy tasks without a unit are not part of the baseline");
+    expect(screen.getByRole("button", { name: "Review & publish baseline" })).toBeEnabled();
+  });
+
+  it("lets editors pick a responsible role from valid roles before a baseline", async () => {
+    mocks.tables.project_tasks = [task];
+    setWidth(1440);
+    render(<ScheduleTab projectId="project-1" userRole="planning_head" />);
+    const select = await screen.findByRole("combobox", { name: "Responsible role for F01-M1" });
+    expect(within(select).queryByRole("option", { name: "site_installation_mgr" })).not.toBeInTheDocument();
+    fireEvent.change(select, { target: { value: "site_installation_mgr" } });
+    const row = select.closest("tr")!;
+    fireEvent.click(within(row).getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ responsible_role: "site_installation_mgr" })));
   });
 
   it("orders library tasks by code within an activity", async () => {

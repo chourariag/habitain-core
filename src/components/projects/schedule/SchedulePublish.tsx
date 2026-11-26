@@ -29,8 +29,10 @@ export const SchedulePublish = forwardRef<HTMLDivElement, Props>(function Schedu
   const withoutDates = active.filter((task) => !task.planned_start_date || !task.planned_finish_date);
   const blocking = withoutDates.filter((task) => task.unit_kind && task.unit_label);
   const legacyUndated = withoutDates.filter((task) => !task.unit_label);
+  const scheduled = active.filter((task) => task.unit_label);
+  const legacy = active.filter((task) => !task.unit_label);
   const nextVersion = (latest?.version ?? 0) + 1;
-  const disabled = !active.length || blocking.length > 0 || (nextVersion > 1 && !reason.trim()) || busy;
+  const disabled = !scheduled.length || blocking.length > 0 || (nextVersion > 1 && !reason.trim()) || busy;
   const publish = async () => { if (await onPublish(nextVersion > 1 ? reason : undefined)) setOpen(false); };
   const clear = async () => {
     if (!onClearUnscheduled) return;
@@ -49,15 +51,19 @@ export const SchedulePublish = forwardRef<HTMLDivElement, Props>(function Schedu
             {!latest && onClearUnscheduled && legacyUndated.length > 0 && <Button type="button" size="sm" variant="outline" className="h-auto whitespace-normal text-left" disabled={busy} onClick={() => { setClearResult(null); setClearOpen(true); }}>Clear unscheduled legacy tasks…</Button>}
           </div>
         </div>
+        <div className="space-y-1 text-sm" data-testid="publish-scope">
+          <p><strong>{scheduled.length}</strong> scheduled task{scheduled.length === 1 ? "" : "s"} will be in the baseline</p>
+          <p className="text-muted-foreground"><strong>{legacy.length}</strong> legacy task{legacy.length === 1 ? "" : "s"} without a unit {legacy.length === 1 ? "is" : "are"} not part of the baseline</p>
+        </div>
         {clearResult && <p className="text-sm" role="status">Cleared {clearResult.deleted} unscheduled legacy task{clearResult.deleted === 1 ? "" : "s"}; kept {clearResult.skipped_with_progress} that have progress, comments or links.</p>}
         {blocking.length > 0 && <p className="break-words text-sm text-warning" role="alert">Publishing is blocked: {blocking.length} task{blocking.length === 1 ? "" : "s"} in a unit {blocking.length === 1 ? "has" : "have"} no calculated start or finish date. Set Day 1 for the unit and fix the warnings in the task table first.</p>}
-        <Button type="button" disabled={!active.length || blocking.length > 0 || busy} onClick={() => setOpen(true)}>{latest ? "Publish revision" : "Review & publish baseline"}</Button>
+        <Button type="button" disabled={!scheduled.length || blocking.length > 0 || busy} onClick={() => setOpen(true)}>{latest ? "Publish revision" : "Review & publish baseline"}</Button>
       </CardContent>
       {open && (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent>
             <DialogHeader><DialogTitle>Publish v{nextVersion}?</DialogTitle><DialogDescription>This saves a {nextVersion === 1 ? "baseline" : "revision"} copy of the plan that cannot be changed.</DialogDescription></DialogHeader>
-            <div className="rounded-md bg-muted p-3 text-sm"><p>{active.length} active tasks · {units.length} units</p><p>{unitsWithoutDay1.length} units without Day 1 · {withoutDates.length} tasks without dates</p></div>
+            <div className="rounded-md bg-muted p-3 text-sm"><p>{scheduled.length} scheduled tasks will be in the baseline</p><p>{legacy.length} legacy tasks without a unit are not part of the baseline</p><p>{units.length} units</p><p>{unitsWithoutDay1.length} units without Day 1 · {blocking.length} scheduled tasks without dates</p></div>
             {nextVersion > 1 && <label>Reason (required)<Textarea rows={3} value={reason} onChange={(event) => setReason(event.target.value)} /></label>}
             <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button disabled={disabled} onClick={() => void publish()}>Confirm publish v{nextVersion}</Button></DialogFooter>
           </DialogContent>
