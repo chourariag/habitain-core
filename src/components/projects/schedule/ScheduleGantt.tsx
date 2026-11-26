@@ -13,7 +13,7 @@ interface Props {
 }
 
 const DAY_WIDTH = 28;
-const LABEL_WIDTH = 240;
+const LABEL_WIDTH = 320;
 const ROW = 32;
 const LABEL_INSIDE_MIN = 96;
 
@@ -51,6 +51,8 @@ export const ScheduleGantt = forwardRef<HTMLDivElement, Props>(function Schedule
   const today = startOfDay(new Date());
   const todayInside = !!range && today >= range.start && today <= range.end;
   const width = range ? range.days.length * DAY_WIDTH : 0;
+  // Labels take any width the timeline does not need, so the chart never leaves blank space.
+  const labelW = `max(${LABEL_WIDTH}px, calc(100% - ${width}px))`;
   const offDays = useMemo(() => range ? range.days.map((day, index) => ({ index, key: format(day, "yyyy-MM-dd"), sunday: isSunday(day) })).filter((day) => day.sunday || holidayMap.has(day.key)) : [], [range, holidayMap]);
   const months = useMemo(() => {
     if (!range) return [] as Array<{ label: string; left: number; width: number }>;
@@ -81,10 +83,10 @@ export const ScheduleGantt = forwardRef<HTMLDivElement, Props>(function Schedule
         ) : (
           <>
             <div className="max-h-[70vh] max-w-full overflow-auto rounded-md border border-border" aria-label="Schedule Gantt chart">
-              <div className="relative" style={{ width: LABEL_WIDTH + width }}>
+              <div className="relative" style={{ width: LABEL_WIDTH + width, minWidth: "100%" }}>
                 <div className="sticky top-0 z-30 flex border-b border-border bg-card">
-                  <div className="sticky left-0 z-40 flex shrink-0 items-end border-r border-border bg-card px-3 pb-1 text-xs font-medium" style={{ width: LABEL_WIDTH }}>Unit / activity / task</div>
-                  <div className="relative" style={{ width, height: 44 }}>
+                  <div className="sticky left-0 z-40 flex shrink-0 items-end border-r border-border bg-card px-3 pb-1 text-xs font-medium" style={{ width: labelW, minWidth: LABEL_WIDTH }}>Unit / activity / task</div>
+                  <div className="relative shrink-0" style={{ width, height: 44 }}>
                     {months.map((month) => <div key={month.label + month.left} className="absolute top-0 h-5 overflow-hidden whitespace-nowrap border-l border-border px-1 text-[11px] font-medium" style={{ left: month.left, width: month.width }} title={month.label}>{month.width >= 70 ? month.label : month.width >= 28 ? month.label.slice(0, 3) : ""}</div>)}
                     {range.days.map((day, index) => {
                       const key = format(day, "yyyy-MM-dd");
@@ -95,7 +97,7 @@ export const ScheduleGantt = forwardRef<HTMLDivElement, Props>(function Schedule
                 </div>
                 <div className="relative">
                   {/* One shading layer for the whole chart instead of a cell per task per day. */}
-                  <div className="pointer-events-none absolute inset-y-0" style={{ left: LABEL_WIDTH, width }} aria-hidden="true">
+                  <div className="pointer-events-none absolute inset-y-0" style={{ left: labelW, width }} aria-hidden="true">
                     {offDays.map((day) => <div key={day.key} className="absolute inset-y-0 bg-muted" style={{ left: day.index * DAY_WIDTH, width: DAY_WIDTH }} />)}
                     {todayInside && <div className="absolute inset-y-0 z-10 w-0.5 bg-destructive" style={{ left: differenceInCalendarDays(today, range.start) * DAY_WIDTH + DAY_WIDTH / 2 }} />}
                   </div>
@@ -107,7 +109,7 @@ export const ScheduleGantt = forwardRef<HTMLDivElement, Props>(function Schedule
                       {!collapsed.has(group.key) && group.activities.map((activity) => (
                         <div key={activity.name}>
                           <div className="relative z-20 flex h-7 border-b border-border/60">
-                            <div className="sticky left-0 shrink-0 truncate border-r border-border bg-card pl-7 pr-2 text-[11px] font-medium leading-7 text-muted-foreground" style={{ width: LABEL_WIDTH }} title={activity.name}>{activity.name}</div>
+                            <div className="sticky left-0 shrink-0 truncate border-r border-border bg-card pl-7 pr-2 text-[11px] font-medium leading-7 text-muted-foreground" style={{ width: labelW, minWidth: LABEL_WIDTH }} title={activity.name}>{activity.name}</div>
                           </div>
                           {activity.tasks.map((task) => {
                             const start = parseISO(task.planned_start_date!);
@@ -118,10 +120,10 @@ export const ScheduleGantt = forwardRef<HTMLDivElement, Props>(function Schedule
                             const inside = barWidth >= LABEL_INSIDE_MIN;
                             return (
                               <div key={task.id} className="relative flex border-b border-border/40" style={{ height: ROW }}>
-                                <div className="sticky left-0 z-20 shrink-0 truncate border-r border-border bg-card pl-7 pr-2 text-xs" style={{ width: LABEL_WIDTH, lineHeight: `${ROW}px` }} title={tooltip}>
+                                <div className="sticky left-0 z-20 shrink-0 truncate border-r border-border bg-card pl-7 pr-2 text-xs" style={{ width: labelW, minWidth: LABEL_WIDTH, lineHeight: `${ROW}px` }} title={tooltip}>
                                   <span className="mr-2 font-mono text-[11px] text-muted-foreground">{task.task_id_in_schedule}</span>{task.task_name}
                                 </div>
-                                <div className="relative" style={{ width }}>
+                                <div className="relative shrink-0" style={{ width }}>
                                   <div className="absolute top-1.5 flex h-5 items-center overflow-hidden rounded bg-primary px-1.5 text-[10px] text-primary-foreground" style={{ left: left + 2, width: barWidth }} title={tooltip}>
                                     {inside && <span className="truncate">{task.task_name}</span>}
                                   </div>

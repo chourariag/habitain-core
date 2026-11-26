@@ -28,8 +28,8 @@ export function ScheduleUnits({ units, canWrite, baselineExists, busy, onUpdate,
       <CardHeader><CardTitle className="text-base">1. Units & Day 1</CardTitle><p className="text-sm text-muted-foreground">Sundays and listed holidays are off. Set Day 1 for each unit; task dates are worked out automatically from the start day, the days and the working calendar.</p></CardHeader>
       <CardContent className="space-y-4">
         <div className="max-w-full overflow-x-auto">
-          <Table className={canWrite && !baselineExists ? "min-w-[760px]" : "min-w-[560px]"}>
-            <TableHeader><TableRow><TableHead>Type</TableHead><TableHead>Label</TableHead><TableHead>Day 1</TableHead><TableHead>Offset note</TableHead>{canWrite && !baselineExists && <TableHead>Action</TableHead>}</TableRow></TableHeader>
+          <Table className={canWrite && !baselineExists ? "min-w-[640px]" : "min-w-[520px]"}>
+            <TableHeader><TableRow><TableHead>Type</TableHead><TableHead>Label</TableHead><TableHead>Day 1</TableHead><TableHead>Offset note</TableHead>{canWrite && !baselineExists && <TableHead className="sticky right-0 bg-card">Action</TableHead>}</TableRow></TableHeader>
             <TableBody>{units.map((unit) => <UnitRow key={unit.id} unit={unit} canWrite={canWrite && !baselineExists} busy={busy} onUpdate={onUpdate} />)}</TableBody>
           </Table>
         </div>
@@ -55,10 +55,10 @@ function UnitRow({ unit, canWrite, busy, onUpdate }: { unit: ScheduleUnit; canWr
   useEffect(() => { setDay1(unit.day1 ?? ""); setNote(unit.offset_note ?? ""); }, [unit.id, unit.day1, unit.offset_note]);
   return (
     <TableRow>
-      <TableCell>{unitLabel(unit.unit_kind)}</TableCell><TableCell className="font-medium">{unit.unit_label}</TableCell>
+      <TableCell className="whitespace-nowrap">{unitLabel(unit.unit_kind)}</TableCell><TableCell className="whitespace-nowrap font-medium">{unit.unit_label}</TableCell>
       <TableCell>{canWrite ? <Input type="date" value={day1} onChange={(event) => setDay1(event.target.value)} className="w-40" aria-label={`Day 1 for ${unit.unit_label}`} /> : displayDate(unit.day1)}</TableCell>
-      <TableCell>{canWrite ? <Input value={note} onChange={(event) => setNote(event.target.value)} aria-label={`Offset note for ${unit.unit_label}`} placeholder="Optional: why this unit starts later" title="Optional: why this unit starts later, e.g. waits for site clearance" /> : <span className="break-words">{unit.offset_note || "—"}</span>}</TableCell>
-      {canWrite && <TableCell><Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void onUpdate(unit, day1, note)}>Save</Button></TableCell>}
+      <TableCell>{canWrite ? <Input value={note} onChange={(event) => setNote(event.target.value)} aria-label={`Offset note for ${unit.unit_label}`} placeholder="Optional" className="min-w-[140px]" title="Optional: why this unit starts later, e.g. waits for site clearance" /> : <span className="break-words">{unit.offset_note || "—"}</span>}</TableCell>
+      {canWrite && <TableCell className="sticky right-0 whitespace-nowrap bg-card"><Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void onUpdate(unit, day1, note)}>Save</Button></TableCell>}
     </TableRow>
   );
 }

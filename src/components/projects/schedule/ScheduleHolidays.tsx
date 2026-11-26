@@ -21,12 +21,14 @@ export const ScheduleHolidays = forwardRef<HTMLDivElement, Props>(function Sched
   const [label, setLabel] = useState("");
   const [reason, setReason] = useState("");
   const [deactivating, setDeactivating] = useState<ScheduleHoliday | null>(null);
+  const target = deactivating;
+  const reactivating = !!target && !target.is_active;
   const add = async () => {
     if (await onChange(date, label, true, baselineExists ? reason : undefined)) { setDate(""); setLabel(""); setReason(""); }
   };
   const deactivate = async () => {
     if (!deactivating) return;
-    if (await onChange(deactivating.holiday_date, deactivating.label, false, baselineExists ? reason : undefined)) { setDeactivating(null); setReason(""); }
+    if (await onChange(deactivating.holiday_date, deactivating.label, !deactivating.is_active, baselineExists ? reason : undefined)) { setDeactivating(null); setReason(""); }
   };
   return (
     <Card className="min-w-0" ref={ref}>
@@ -40,6 +42,7 @@ export const ScheduleHolidays = forwardRef<HTMLDivElement, Props>(function Sched
               <span className="text-xs text-muted-foreground">Added by {holiday.created_by ? names[holiday.created_by] ?? "Staff member" : "System"}{holiday.created_at ? ` on ${displayDateTime(holiday.created_at)}` : ""}</span>
               <Badge variant={holiday.is_active ? "default" : "outline"}>{holiday.is_active ? "Active" : "Inactive"}</Badge>
               {canWrite && holiday.is_active && <Button type="button" size="sm" variant="outline" onClick={() => { setDeactivating(holiday); setReason(""); }}>Deactivate</Button>}
+              {canWrite && !holiday.is_active && <Button type="button" size="sm" variant="outline" onClick={() => { setDeactivating(holiday); setReason(""); }}>Reactivate</Button>}
             </div>
           ))}
           {holidays.length === 0 && <p className="text-sm text-muted-foreground">No holidays listed.</p>}
@@ -57,9 +60,9 @@ export const ScheduleHolidays = forwardRef<HTMLDivElement, Props>(function Sched
         )}
         {deactivating && (
           <div className="space-y-3 rounded-md border border-warning bg-muted p-3">
-            <p className="text-sm">Deactivate <strong>{deactivating.label}</strong> on {displayDate(deactivating.holiday_date)}? This changes the calendar for ALL projects.</p>
+            <p className="text-sm">{reactivating ? "Reactivate" : "Deactivate"} <strong>{deactivating.label}</strong> on {displayDate(deactivating.holiday_date)}? This changes the calendar for ALL projects.</p>
             {baselineExists && <label>Reason (required)<Textarea rows={2} value={reason} onChange={(event) => setReason(event.target.value)} /></label>}
-            <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setDeactivating(null)}>Cancel</Button><Button disabled={(baselineExists && !reason.trim()) || busy} onClick={() => void deactivate()}>Confirm deactivation</Button></div>
+            <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setDeactivating(null)}>Cancel</Button><Button disabled={(baselineExists && !reason.trim()) || busy} onClick={() => void deactivate()}>{reactivating ? "Confirm reactivation" : "Confirm deactivation"}</Button></div>
           </div>
         )}
       </CardContent>

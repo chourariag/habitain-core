@@ -53,7 +53,7 @@ interface Props {
 }
 
 const NO_UNIT = "__no_unit__";
-const W = { code: 132, name: 200, unit: 88 };
+const W = { code: 124, name: 190, unit: 84 };
 const LEFT_NAME = W.code;
 const LEFT_UNIT = W.code + W.name;
 const NO_UNIT_WARNING = /has no unit/i;
@@ -177,10 +177,10 @@ export function ScheduleTaskTable(props: Props) {
                 <Th sticky={LEFT_UNIT} width={W.unit} edge>Unit</Th>
                 <Th width={76}>Start day</Th>
                 <Th width={68}>Days</Th>
-                <Th width={168}>Predecessors</Th>
-                <Th width={92}>Start</Th>
-                <Th width={92}>Finish</Th>
-                <Th width={160}>Responsible</Th>
+                <Th width={140}>Predecessors</Th>
+                <Th width={88}>Start</Th>
+                <Th width={88}>Finish</Th>
+                <Th width={120}>Responsible</Th>
                 <Th stickyRight width={canWrite ? 108 : 56}>Actions</Th>
               </tr>
             </thead>
@@ -318,14 +318,14 @@ function TaskRow({ task, activity, tasks, comments, names, warnings, canWrite, b
         </td>
         <td className={cell}>{editable ? <Input type="number" min={1} step={1} value={startDay} onChange={(event) => setStartDay(event.target.value)} className="h-8 w-16 px-2" aria-label={`Start day for ${task.task_id_in_schedule}`} /> : task.start_day ?? "—"}</td>
         <td className={cell}>{editable ? <Input type="number" min={0} step={1} value={days} placeholder="—" onChange={(event) => setDays(event.target.value)} className="h-8 w-14 px-2" aria-label={`Duration for ${task.task_id_in_schedule}`} /> : (extras && !task.planned_start_date ? "—" : task.duration_days ?? 0)}</td>
-        <td className={cell} style={{ maxWidth: 168 }}>
+        <td className={cell} style={{ maxWidth: 140 }}>
           {editable
             ? <PredecessorPicker unitLabel={task.unit_label} selfId={task.id} selfCode={task.task_id_in_schedule} tasks={tasks} value={predecessors} onChange={setPredecessors} label={`Predecessors for ${task.task_id_in_schedule}`} />
             : <span className="block truncate font-mono text-xs" title={(task.predecessor_ids ?? []).join(", ")}>{(task.predecessor_ids ?? []).join(", ") || "—"}</span>}
         </td>
         <td className={`${cell} whitespace-nowrap text-xs`}>{displayDate(task.planned_start_date)}</td>
         <td className={`${cell} whitespace-nowrap text-xs`}>{displayDate(task.planned_finish_date)}</td>
-        <td className={`${cell} text-xs`} style={{ maxWidth: 160 }}><span className="block truncate" title={roleName(task.responsible_role, ROLE_LABELS)}>{roleName(task.responsible_role, ROLE_LABELS)}</span></td>
+        <td className={`${cell} text-xs`} style={{ maxWidth: 120 }}><span className="block truncate" title={roleName(task.responsible_role, ROLE_LABELS)}>{roleName(task.responsible_role, ROLE_LABELS)}</span></td>
         <td className={`${cell} border-l`} style={stickyCell(undefined, true)}>
           <div className="flex items-center gap-1">
             {editable && <Button type="button" size="sm" className="h-8 px-3" disabled={!validNumbers || busy} title={days.trim() === "" ? "Set the days first" : undefined} onClick={() => void save()}>Save</Button>}

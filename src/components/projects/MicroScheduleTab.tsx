@@ -18,7 +18,7 @@ import { MeasurementSheet } from "./MeasurementSheet";
 import { RedFlagAlerts } from "./RedFlagAlerts";
 import { fetchBenchmarkStats, getModuleCountBand, BenchmarkStats } from "@/lib/task-benchmarks";
 import * as XLSX from "xlsx";
-import { getPhasesForSystem, TASK_TYPE_META, type TaskTemplateType } from "@/lib/production-phases";
+import { displayPhaseFor, OTHER_PHASE, getPhasesForSystem, TASK_TYPE_META, type TaskTemplateType } from "@/lib/production-phases";
 import { downloadScheduleTemplate } from "@/lib/xlsx-templates";
 import { ChevronRight, ChevronDown, ShieldAlert } from "lucide-react";
 import { useProjectImportListener } from "@/lib/use-project-import";
@@ -428,8 +428,8 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
 
   const filteredTasks = useMemo(() => {
     if (phaseFilter === "all") return tasks;
-    return tasks.filter((t) => t.phase === phaseFilter);
-  }, [tasks, phaseFilter]);
+    return tasks.filter((t) => displayPhaseFor(t.phase, productionSystem, PHASES) === phaseFilter);
+  }, [tasks, phaseFilter, productionSystem, PHASES]);
 
   const taskMap = useMemo(() => {
     const m: Record<string, ProjectTask> = {};
@@ -614,7 +614,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
                 <SelectTrigger className="w-[180px] h-8 text-sm"><SelectValue placeholder="All Phases" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Phases</SelectItem>
-                  {PHASES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
+                  {[...PHASES, OTHER_PHASE].map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
                 </SelectContent>
               </Select>
             )}
@@ -624,7 +624,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
             <ListView tasks={filteredTasks} taskMap={taskMap} canEdit={canEdit} canOverride={canOverride} liveStatus={liveStatus} getDelay={getDelay} getBlockingName={getBlockingName} onStart={handleStartTask} onUpdate={updateTask} onRequestOverride={(t) => setOverrideTask(t)} materialRiskMap={materialRiskTaskIds} collapsedParents={collapsedParents} setCollapsedParents={setCollapsedParents} />
           )}
           {viewMode === "phase" && (
-            <PhaseBoard tasks={filteredTasks} liveStatus={liveStatus} phases={PHASES} />
+            <PhaseBoard tasks={filteredTasks} liveStatus={liveStatus} phases={PHASES} system={productionSystem} />
           )}
           {viewMode === "gantt" && (
             <GanttView tasks={filteredTasks} taskMap={taskMap} getDelay={getDelay} />
@@ -721,14 +721,14 @@ function ListView({ tasks, taskMap, canEdit, canOverride, liveStatus, getDelay, 
             <TableHead className="w-12">ID</TableHead>
             <TableHead>Task Name</TableHead>
             <TableHead className="w-28">Phase</TableHead>
-            <TableHead className="w-24">Start</TableHead>
-            <TableHead className="w-24">Finish</TableHead>
+            <TableHead className="w-28">Start</TableHead>
+            <TableHead className="w-28">Finish</TableHead>
             <TableHead className="w-16">Days</TableHead>
             <TableHead className="w-28">Responsible</TableHead>
             <TableHead className="w-28">Status</TableHead>
-            <TableHead className="w-16">%</TableHead>
+            <TableHead className="w-20">%</TableHead>
             <TableHead className="w-16">Delay</TableHead>
-            {canEdit && <TableHead className="w-20">Action</TableHead>}
+            {canEdit && <TableHead className="w-20 sticky right-0 z-10 bg-muted border-l">Action</TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -795,8 +795,8 @@ function ListView({ tasks, taskMap, canEdit, canOverride, liveStatus, getDelay, 
                   </div>
                 </TableCell>
                 <TableCell><span className="text-xs">{task.phase}</span></TableCell>
-                <TableCell className="text-xs">{task.planned_start_date ? format(new Date(task.planned_start_date), "dd MMM") : "-"}</TableCell>
-                <TableCell className="text-xs">{task.planned_finish_date ? format(new Date(task.planned_finish_date), "dd MMM") : "-"}</TableCell>
+                <TableCell className="text-xs whitespace-nowrap">{task.planned_start_date ? format(new Date(task.planned_start_date), "dd/MM/yyyy") : "-"}</TableCell>
+                <TableCell className="text-xs whitespace-nowrap">{task.planned_finish_date ? format(new Date(task.planned_finish_date), "dd/MM/yyyy") : "-"}</TableCell>
                 <TableCell className="text-xs">{task.duration_days || "-"}</TableCell>
                 <TableCell className="text-xs">{ROLE_LABELS[task.responsible_role ?? ""] ?? task.responsible_role ?? "-"}</TableCell>
                 <TableCell>
@@ -808,7 +808,7 @@ function ListView({ tasks, taskMap, canEdit, canOverride, liveStatus, getDelay, 
                   {canEdit && status !== "Blocked" && status !== "Upcoming" ? (
                     <Input
                       type="number" min={0} max={100}
-                      className="h-7 w-14 text-xs"
+                      className="h-7 w-20 text-xs"
                       defaultValue={task.completion_percentage}
                       onBlur={(e) => {
                         const val = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
@@ -826,7 +826,7 @@ function ListView({ tasks, taskMap, canEdit, canOverride, liveStatus, getDelay, 
                   {delay !== 0 ? (delay > 0 ? `+${delay}d` : `${delay}d`) : "-"}
                 </TableCell>
                 {canEdit && (
-                  <TableCell>
+                  <TableCell className="sticky right-0 z-10 bg-background border-l">
                     {(status === "Ready to Start" || (status === "Blocked" && task.is_locked)) && task.completion_percentage === 0 && (
                       <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => onStart(task)}>Start</Button>
                     )}
@@ -842,17 +842,21 @@ function ListView({ tasks, taskMap, canEdit, canOverride, liveStatus, getDelay, 
 }
 
 /* ===================== PHASE BOARD ===================== */
-function PhaseBoard({ tasks, liveStatus, phases }: { tasks: ProjectTask[]; liveStatus: (t: ProjectTask) => string; phases: string[] }) {
-  const grouped = useMemo(() => {
-    const m: Record<string, ProjectTask[]> = {};
-    phases.forEach((p) => { m[p] = []; });
-    tasks.forEach((t) => { (m[t.phase] ?? (m[t.phase] = [])).push(t); });
-    return m;
-  }, [tasks, phases]);
+export function groupTasksByDisplayPhase<T extends { phase: string }>(tasks: T[], phases: string[], system: string | null): Record<string, T[]> {
+  const m: Record<string, T[]> = {};
+  [...phases, OTHER_PHASE].forEach((p) => { m[p] = []; });
+  tasks.forEach((t) => { m[displayPhaseFor(t.phase, system, phases)].push(t); });
+  return m;
+}
+
+function PhaseBoard({ tasks, liveStatus, phases, system }: { tasks: ProjectTask[]; liveStatus: (t: ProjectTask) => string; phases: string[]; system: string | null }) {
+  const grouped = useMemo(() => groupTasksByDisplayPhase(tasks, phases, system), [tasks, phases, system]);
 
   return (
+    <div className="space-y-2">
+    <p className="text-xs text-muted-foreground" data-testid="phase-total">{tasks.length} tasks shown across all columns.</p>
     <div className="flex gap-3 overflow-x-auto pb-4">
-      {phases.map((phase) => {
+      {[...phases, OTHER_PHASE].map((phase) => {
         const phaseTasks = grouped[phase] ?? [];
         if (phaseTasks.length === 0) return null;
         return (
@@ -874,7 +878,7 @@ function PhaseBoard({ tasks, liveStatus, phases }: { tasks: ProjectTask[]; liveS
                       </div>
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>{ROLE_LABELS[task.responsible_role ?? ""] ?? "-"}</span>
-                        <span>{task.planned_finish_date ? format(new Date(task.planned_finish_date), "dd MMM") : "-"}</span>
+                        <span>{task.planned_finish_date ? format(new Date(task.planned_finish_date), "dd/MM/yyyy") : "-"}</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-1.5">
                         <div className="bg-[#006039] h-1.5 rounded-full transition-all" style={{ width: `${task.completion_percentage}%` }} />
@@ -887,6 +891,7 @@ function PhaseBoard({ tasks, liveStatus, phases }: { tasks: ProjectTask[]; liveS
           </div>
         );
       })}
+    </div>
     </div>
   );
 }

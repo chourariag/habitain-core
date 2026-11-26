@@ -105,3 +105,21 @@ export function groupStagesByPhase(
 
 // Re-export stage lists for convenience
 export { MODULAR_STAGES, HYBRID_STAGES, PANELISED_STAGES };
+
+export const OTHER_PHASE = "Other";
+
+/**
+ * Display-only: maps a stored task phase onto a column of the system's phase list.
+ * Schedule-library tasks store 'factory' / 'site'; anything unknown goes to "Other",
+ * so every task lands in exactly one column. Stored values are never changed.
+ */
+export function displayPhaseFor(phase: string | null | undefined, system: string | null | undefined, phases: string[]): string {
+  const value = (phase ?? "").trim();
+  if (value && phases.includes(value)) return value;
+  const lower = value.toLowerCase();
+  const panelised = system === "panelised";
+  const pick = (preferred: string, fallback: string) => phases.includes(preferred) ? preferred : phases.includes(fallback) ? fallback : OTHER_PHASE;
+  if (lower === "factory") return panelised ? pick("Panel Production", "Factory Production") : pick("Factory Production", "Panel Production");
+  if (lower === "site") return panelised ? pick("Site Erection", "Site Installation") : pick("Site Installation", "Site Erection");
+  return OTHER_PHASE;
+}
