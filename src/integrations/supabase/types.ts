@@ -14177,6 +14177,27 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_editor_users: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       schedule_holidays: {
         Row: {
           created_at: string
@@ -19498,6 +19519,15 @@ export type Database = {
           suggested_reassign_profile_id: string
         }[]
       }
+      schedule_add_library_tasks: {
+        Args: {
+          p_library_task_ids: string[]
+          p_project_id: string
+          p_unit_kind: string
+          p_unit_label: string
+        }
+        Returns: Json
+      }
       schedule_add_task: {
         Args: { p_project_id: string; p_reason: string; p_task: Json }
         Returns: string
@@ -19512,9 +19542,21 @@ export type Database = {
         Returns: Json
       }
       schedule_is_working_day: { Args: { d: string }; Returns: boolean }
+      schedule_recalculate_dates: {
+        Args: { p_project_id: string }
+        Returns: Json
+      }
       schedule_remove_task: {
         Args: { p_reason: string; p_task_id: string }
         Returns: string
+      }
+      schedule_repeat_for_units: {
+        Args: {
+          p_project_id: string
+          p_source_unit_label: string
+          p_target_unit_labels: string[]
+        }
+        Returns: Json
       }
       schedule_revise_task: {
         Args: { p_patch: Json; p_reason: string; p_task_id: string }

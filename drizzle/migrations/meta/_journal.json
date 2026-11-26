@@ -491,6 +491,27 @@
       "when": 1795693078546,
       "tag": "0069_sched1b_preserve_handover_restriction",
       "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1795710699809,
+      "tag": "0070_sched2a_named_editors_server_dates",
+      "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1795710903195,
+      "tag": "0071_sched2a_library_task_type_cast",
+      "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1795710982223,
+      "tag": "0072_sched2a_recalculate_variable_resolution",
+      "breakpoints": true
     }
   ]
 }

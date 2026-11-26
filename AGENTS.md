@@ -49,4 +49,4 @@
 - Project screens use explicit public projections; contact readers/editors check caller-bound Tier 1/Super roles and archives strip private contact. Location edits use a checked Tier 1/Super/Head of Projects RPC, and site attendance writers reject missing pins without changing configured distance/photo/hours rules.
 
 - Exports use shared safety adapters; portal links/advance self-actions are server-checked.
-- Schedule: owner-only checked RPC context guards baseline membership/calendar revisions; list readers hide is_removed, historical readers stay unchanged, and the panel helper accepts only a batch ID.
+- Schedule: checked contexts protect baselines; named users add editors; server functions handle pre-baseline dates/library/repeats; lists hide removals; follow-ups stay unbaselined; panel helper takes batch IDs.
