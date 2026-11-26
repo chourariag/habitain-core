@@ -54,7 +54,7 @@ async function buildProductionBrief(): Promise<BriefLine[]> {
   const [modulesRes, baysRes, tasksRes, ncrsRes, materialsRes] = await Promise.all([
     supabase.from("modules").select("id, current_stage").not("current_stage", "in", "(Dispatched,Installed)"),
     supabase.from("bay_assignments").select("bay_number"),
-    supabase.from("project_tasks").select("id, planned_finish_date, status").lte("planned_finish_date", today).neq("status", "Completed"),
+    supabase.from("project_tasks").select("id, planned_finish_date, status").eq("is_removed", false).lte("planned_finish_date", today).neq("status", "Completed"),
     supabase.from("ncr_register").select("id, status").eq("status", "Open"),
     supabase.from("material_requests" as any).select("id, project_id, projects(name)").eq("expected_delivery_date", today),
   ]);
@@ -73,7 +73,7 @@ async function buildProductionBrief(): Promise<BriefLine[]> {
 async function buildSiteBrief(uid: string): Promise<BriefLine[]> {
   const today = new Date().toISOString().slice(0, 10);
   const [tasksRes, punchRes, materialsRes] = await Promise.all([
-    supabase.from("project_tasks").select("id, task_name, planned_finish_date, status, projects(name)").lte("planned_finish_date", today).neq("status", "Completed"),
+    supabase.from("project_tasks").select("id, task_name, planned_finish_date, status, projects(name)").eq("is_removed", false).lte("planned_finish_date", today).neq("status", "Completed"),
     supabase.from("punch_list_items" as any).select("id, status").neq("status", "Closed"),
     supabase.from("material_requests" as any).select("id").eq("expected_delivery_date", today),
   ]);
@@ -95,7 +95,7 @@ async function buildPlanningBrief(): Promise<BriefLine[]> {
   const in7 = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
   const [projectsRes, tasksRes, materialsRes, dispatchRes] = await Promise.all([
     supabase.from("projects").select("id").neq("status", "Completed"),
-    supabase.from("project_tasks").select("id, planned_finish_date, status, delay_days").neq("status", "Completed"),
+    supabase.from("project_tasks").select("id, planned_finish_date, status, delay_days").eq("is_removed", false).neq("status", "Completed"),
     supabase.from("material_requests" as any).select("id, expected_delivery_date").lt("expected_delivery_date", today).neq("status", "Delivered"),
     supabase.from("dispatch_packs").select("id, dispatch_date").gte("dispatch_date", today).lte("dispatch_date", in7),
   ]);
@@ -218,7 +218,7 @@ async function buildDirectorBrief(): Promise<BriefLine[]> {
     supabase.from("projects").select("id").neq("status", "Completed"),
     supabase.from("ncr_register").select("id").eq("status", "Open"),
     supabase.from("project_invoices").select("amount_outstanding").lt("due_date", today).gt("amount_outstanding", 0),
-    supabase.from("project_tasks").select("id, delay_days").gt("delay_days", 5).neq("status", "Completed"),
+    supabase.from("project_tasks").select("id, delay_days").eq("is_removed", false).gt("delay_days", 5).neq("status", "Completed"),
     supabase.from("dispatch_packs").select("id").eq("dispatch_date", today),
   ]);
   const overdueTotal = (overdueInvRes.data || []).reduce((s: number, r: any) => s + Number(r.amount_outstanding || 0), 0);
@@ -279,8 +279,8 @@ async function buildHeadOfProjectsBrief(): Promise<BriefLine[]> {
   const today = new Date().toISOString().slice(0, 10);
   const [projectsRes, delaysRes, milestonesRes] = await Promise.all([
     supabase.from("projects").select("id, name, status").neq("status", "Completed"),
-    supabase.from("project_tasks").select("id, delay_days").gt("delay_days", 2).neq("status", "Completed"),
-    supabase.from("project_tasks").select("id").eq("planned_finish_date", today).neq("status", "Completed"),
+    supabase.from("project_tasks").select("id, delay_days").eq("is_removed", false).gt("delay_days", 2).neq("status", "Completed"),
+    supabase.from("project_tasks").select("id").eq("is_removed", false).eq("planned_finish_date", today).neq("status", "Completed"),
   ]);
   return [
     { kind: "info", text: `Active projects under oversight: ${projectsRes.data?.length || 0}`, to: "/projects" },

@@ -36,7 +36,7 @@ export default function Management() {
     setLoading(true);
     const [p, t, m, rm, b, g] = await Promise.all([
       supabase.from("projects").select("id,name,status,location,type,est_completion,start_date").eq("is_archived", false),
-      supabase.from("project_tasks").select("project_id,phase,planned_start_date,planned_finish_date,actual_start_date,actual_finish_date,completion_percentage,status"),
+      supabase.from("project_tasks").select("project_id,phase,planned_start_date,planned_finish_date,actual_start_date,actual_finish_date,completion_percentage,status").eq("is_removed", false),
       supabase.from("project_billing_milestones").select("project_id,amount_incl_gst,amount_excl_gst,status,billed_date,received_date,description"),
       supabase.from("project_revenue_margin").select("project_id,original_valuation,expected_final_cost,tender_margin_pct,gfc_margin_pct,expected_variations"),
       supabase.from("boq_items").select("id,project_id,description,unit,boq_qty,boq_rate,stage").eq("is_archived", false),
