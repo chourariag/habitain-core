@@ -70,7 +70,7 @@ export function MyTasksSection({ userRole, phaseFilter, projectId, title = "My T
 
     let query = supabase
       .from("project_tasks")
-      .select("*, projects:project_id(name)")
+      .select("*, projects:project_id(name)").eq("is_removed", false)
       .neq("status", "Completed");
 
     if (mapped !== "__all__") {
@@ -97,7 +97,7 @@ export function MyTasksSection({ userRole, phaseFilter, projectId, title = "My T
       const projectIds = [...new Set(rows.map((r: any) => r.project_id))];
       const { data: allData } = await supabase
         .from("project_tasks")
-        .select("*")
+        .select("*").eq("is_removed", false)
         .in("project_id", projectIds);
       setAllProjectTasks((allData as any as TaskRow[]) ?? []);
     }

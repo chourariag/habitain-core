@@ -384,17 +384,11 @@ export default function FactoryFloorMap() {
     // 1. Create project task for receiving supervisor
     let taskId: string | null = null;
     if (batch.project_id) {
-      const { data: taskRow } = await supabase.from("project_tasks").insert({
-        project_id: batch.project_id,
-        task_id_in_schedule: `PHO-${Date.now()}`,
-        task_name: `Collect panels from Panel Bay ${batch.bay_number - PANEL_BAY_START + 1}`,
-        phase: "Production",
-        responsible_role: "factory_floor_supervisor",
-        status: "Upcoming",
-        planned_start_date: format(new Date(), "yyyy-MM-dd"),
-        planned_finish_date: format(addDays(new Date(), 1), "yyyy-MM-dd"),
-      }).select("id").single();
-      taskId = taskRow?.id ?? null;
+      const { data: helperTaskId, error: helperError } = await supabase.rpc("create_panel_handover_task", {
+        p_batch_id: batch.id,
+      });
+      if (helperError) { toast.error(helperError.message); return; }
+      taskId = helperTaskId;
     }
 
     // 2. Create handover record

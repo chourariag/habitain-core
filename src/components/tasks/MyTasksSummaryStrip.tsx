@@ -33,7 +33,7 @@ export function MyTasksSummaryStrip({ userRole }: Props) {
     setLoading(true);
     let q = supabase
       .from("project_tasks")
-      .select("id,task_name,phase,planned_finish_date,project_id,completion_percentage,projects:project_id(name)")
+      .select("id,task_name,phase,planned_finish_date,project_id,completion_percentage,projects:project_id(name)").eq("is_removed", false)
       .neq("status", "Completed");
     if (mapped !== "__all__") q = q.eq("responsible_role", mapped);
     const { data } = await q.order("planned_finish_date", { ascending: true }).limit(200);

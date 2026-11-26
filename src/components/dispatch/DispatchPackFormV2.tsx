@@ -81,7 +81,7 @@ export function DispatchPackFormV2({ projectId, projectName }: Props) {
     if (!r || !r.factory_works_completed || (Array.isArray(r.factory_works_completed) && r.factory_works_completed.length === 0)) {
       const { data: tasks } = await supabase
         .from("project_tasks")
-        .select("task_name,phase,status,completion_percentage")
+        .select("task_name,phase,status,completion_percentage").eq("is_removed", false)
         .eq("project_id", projectId)
         .order("display_order");
       const factory = (tasks ?? []).filter((t: any) => (t.phase ?? "").toLowerCase().includes("factory") || (t.phase ?? "").toLowerCase().includes("production"));

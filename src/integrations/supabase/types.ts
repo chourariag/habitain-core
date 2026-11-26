@@ -11384,6 +11384,7 @@ export type Database = {
           is_locked: boolean
           is_payment_milestone: boolean
           is_qc_gate: boolean
+          is_removed: boolean
           library_task_id: string | null
           lock_override_at: string | null
           lock_override_by: string | null
@@ -11399,6 +11400,9 @@ export type Database = {
           qc_request_notified_user: string | null
           qc_requested_at: string | null
           remarks: string | null
+          removed_at: string | null
+          removed_by: string | null
+          removed_reason: string | null
           responsible_role: string | null
           special_note: string | null
           stage_name: string | null
@@ -11436,6 +11440,7 @@ export type Database = {
           is_locked?: boolean
           is_payment_milestone?: boolean
           is_qc_gate?: boolean
+          is_removed?: boolean
           library_task_id?: string | null
           lock_override_at?: string | null
           lock_override_by?: string | null
@@ -11451,6 +11456,9 @@ export type Database = {
           qc_request_notified_user?: string | null
           qc_requested_at?: string | null
           remarks?: string | null
+          removed_at?: string | null
+          removed_by?: string | null
+          removed_reason?: string | null
           responsible_role?: string | null
           special_note?: string | null
           stage_name?: string | null
@@ -11488,6 +11496,7 @@ export type Database = {
           is_locked?: boolean
           is_payment_milestone?: boolean
           is_qc_gate?: boolean
+          is_removed?: boolean
           library_task_id?: string | null
           lock_override_at?: string | null
           lock_override_by?: string | null
@@ -11503,6 +11512,9 @@ export type Database = {
           qc_request_notified_user?: string | null
           qc_requested_at?: string | null
           remarks?: string | null
+          removed_at?: string | null
+          removed_by?: string | null
+          removed_reason?: string | null
           responsible_role?: string | null
           special_note?: string | null
           stage_name?: string | null
@@ -14253,6 +14265,9 @@ export type Database = {
           name: string
           output_per_person_day: number | null
           qty: number | null
+          source_flag: string | null
+          source_steps: string | null
+          std_start_day: number | null
           unit: string | null
           updated_at: string
           updated_by: string | null
@@ -14275,6 +14290,9 @@ export type Database = {
           name: string
           output_per_person_day?: number | null
           qty?: number | null
+          source_flag?: string | null
+          source_steps?: string | null
+          std_start_day?: number | null
           unit?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -14297,6 +14315,9 @@ export type Database = {
           name?: string
           output_per_person_day?: number | null
           qty?: number | null
+          source_flag?: string | null
+          source_steps?: string | null
+          std_start_day?: number | null
           unit?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -18989,6 +19010,10 @@ export type Database = {
         }
         Returns: string
       }
+      create_panel_handover_task: {
+        Args: { p_batch_id: string }
+        Returns: string
+      }
       create_project: {
         Args: { p_email: string; p_payload: Json; p_phone: string }
         Returns: string
@@ -19473,7 +19498,24 @@ export type Database = {
           suggested_reassign_profile_id: string
         }[]
       }
+      schedule_add_task: {
+        Args: { p_project_id: string; p_reason: string; p_task: Json }
+        Returns: string
+      }
+      schedule_change_holiday: {
+        Args: {
+          p_active: boolean
+          p_date: string
+          p_label: string
+          p_reason: string
+        }
+        Returns: Json
+      }
       schedule_is_working_day: { Args: { d: string }; Returns: boolean }
+      schedule_remove_task: {
+        Args: { p_reason: string; p_task_id: string }
+        Returns: string
+      }
       schedule_revise_task: {
         Args: { p_patch: Json; p_reason: string; p_task_id: string }
         Returns: Json

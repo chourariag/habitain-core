@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [ ] SCHED-1b: inspect writers and Venkat roles; guard baseline adds/removals and holidays; checked handover helper; unchanged library seed; rollback role tests and confirmation. User confirmed preserving existing handover permissions; factory_supervisor full handover remains blocked.
 - [x] SCHED-1: 0066 editor roles, library/holiday/unit/baseline/comment tables, baseline guard trigger, publish/revise RPCs; impersonated rollback a–g passed, 955 tests/0 skips. Evidence docs/SCHED1_CONFIRM.md. Open: FactoryFloorMap helper-task insert for non-editors and template re-clone on system change need decisions.
 - [x] PWA offline shell: shared /index.html key, install-time no-store 200-only seed; 955 tests/0 skips, generated Workbox static checks and old-worker immediate-offline /, /login, /attendance document delivery verified. HTML precache absent; attendance/IndexedDB unchanged. Worker generated against prior production assets, not a fresh app build.
 - [ ] Signed-in attendance after cold offline reload: existing mandatory-password/profile check stalls offline; outside requested PWA cache changes, requires separate authorization. Signed-out offline routes render login; protected attendance UI was not verified offline.

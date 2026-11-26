@@ -123,7 +123,7 @@ export function MicroScheduleTab({ projectId, userRole }: Props) {
   const fetchTasks = useCallback(async () => {
     setLoading(true);
     const [taskRes, alertRes, projectRes, stagesRes] = await Promise.all([
-      supabase.from("project_tasks").select("*").eq("project_id", projectId).order("display_order", { ascending: true, nullsFirst: false }).order("task_id_in_schedule", { ascending: true }),
+      supabase.from("project_tasks").select("*").eq("is_removed", false).eq("project_id", projectId).order("display_order", { ascending: true, nullsFirst: false }).order("task_id_in_schedule", { ascending: true }),
       supabase.from("material_alerts").select("related_task_id, material_name").eq("project_id", projectId).eq("status", "active").not("related_task_id", "is", null),
       supabase.from("projects").select("name, production_system").eq("id", projectId).maybeSingle(),
       (supabase.from("project_stages") as any).select("id", { count: "exact", head: true }).eq("project_id", projectId).lte("stage_number", 15),

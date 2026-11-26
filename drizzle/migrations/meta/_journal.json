@@ -470,6 +470,27 @@
       "when": 1795691025538,
       "tag": "0066_sched1_schedule_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1795692710628,
+      "tag": "0067_sched1b_baseline_gaps",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1795692945365,
+      "tag": "0068_sched1b_handover_role_source",
+      "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1795693078546,
+      "tag": "0069_sched1b_preserve_handover_restriction",
+      "breakpoints": true
     }
   ]
 }

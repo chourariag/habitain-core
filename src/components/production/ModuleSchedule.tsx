@@ -50,7 +50,7 @@ export function ModuleSchedule({ moduleId, currentStage }: Props) {
     if (projectId) {
       const { data: tdata } = await supabase
         .from("project_tasks")
-        .select("stage_name, status, actual_start_date, actual_finish_date")
+        .select("stage_name, status, actual_start_date, actual_finish_date").eq("is_removed", false)
         .eq("project_id", projectId);
       (tdata || []).forEach((t: any) => {
         if (!t.stage_name) return;

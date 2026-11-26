@@ -45,7 +45,7 @@ export function InstallationSequenceDoc({ projectId, projectName, userRole }: Pr
     (async () => {
       const { data } = await supabase
         .from("project_tasks")
-        .select("planned_finish_date,task_name")
+        .select("planned_finish_date,task_name").eq("is_removed", false)
         .eq("project_id", projectId)
         .ilike("task_name", "%dispatch%")
         .order("planned_finish_date", { ascending: true })

@@ -65,7 +65,7 @@ export function InstallationSequenceV2({ projectId, projectName }: Props) {
   const load = useCallback(async () => {
     setLoading(true);
     const { data: tasks } = await supabase
-      .from("project_tasks").select("planned_finish_date,task_name")
+      .from("project_tasks").select("planned_finish_date,task_name").eq("is_removed", false)
       .eq("project_id", projectId).ilike("task_name", "%dispatch%")
       .order("planned_finish_date", { ascending: true }).limit(1);
     const d = tasks?.[0]?.planned_finish_date;
