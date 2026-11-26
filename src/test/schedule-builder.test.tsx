@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import fs from "node:fs";
+import path from "node:path";
 import type { ScheduleBaseline, ScheduleTask } from "@/components/projects/schedule/schedule-types";
 
 const mocks = vi.hoisted(() => ({
@@ -51,7 +53,12 @@ beforeEach(() => {
     profiles: [{ auth_user_id: "editor-id", display_name: "Editor" }],
   };
   mocks.insert.mockReset().mockResolvedValue({ error: null });
-  mocks.update.mockReset().mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: null }) });
+  mocks.update.mockReset().mockImplementation((payload: Record<string, unknown>) => ({
+    eq: vi.fn().mockImplementation(async () => {
+      if (payload.status) mocks.tables.schedule_task_comments = mocks.tables.schedule_task_comments.map((comment) => ({ ...comment, status: payload.status }));
+      return { error: null };
+    }),
+  }));
   mocks.upsert.mockReset().mockResolvedValue({ error: null });
   mocks.rpc.mockReset().mockResolvedValue({ data: { count: 1, warnings: [] }, error: null });
   mocks.from.mockReset().mockImplementation((table: string) => {
@@ -100,7 +107,7 @@ describe("Schedule builder access modes", () => {
     fireEvent.click(screen.getByRole("button", { name: "Comment" }));
     fireEvent.change(screen.getByPlaceholderText("Leave schedule feedback without editing the task"), { target: { value: "Please review access at the stair opening." } });
     fireEvent.click(screen.getByRole("button", { name: "Add comment" }));
-    await waitFor(() => expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({ project_id: "project-1", task_id: "task-1", author_id: "site-user", status: "open" })));
+    await waitFor(() => expect(mocks.insert).toHaveBeenCalledWith({ project_id: "project-1", task_id: "task-1", body: "Please review access at the stair opening." }));
     expect(mocks.rpc).not.toHaveBeenCalledWith("schedule_revise_task", expect.anything());
     expect(mocks.rpc).not.toHaveBeenCalledWith("schedule_recalculate_dates", expect.anything());
   });
@@ -115,6 +122,23 @@ describe("Schedule builder access modes", () => {
     expect(screen.getByRole("button", { name: "Remove with reason" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Save & recalculate" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Publish revision" })).toBeVisible();
+  });
+
+  it("sends only status when an editor marks a comment seen and resolved", async () => {
+    mocks.tables.schedule_baselines = [{ ...baseline }];
+    mocks.tables.schedule_task_comments = [{ id: "comment-1", project_id: "project-1", task_id: "task-1", author_id: "site-user", body: "Check this task", status: "open", created_at: "2026-11-26T10:00:00Z", updated_at: "2026-11-26T10:00:00Z" }];
+    setWidth(1440);
+    render(<ScheduleTab projectId="project-1" userRole="head_operations" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Comment (1)" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Mark seen" }));
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({ status: "seen" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Mark resolved" }));
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({ status: "resolved" }));
+    for (const call of mocks.update.mock.calls) {
+      expect(Object.keys(call[0])).not.toContain("updated_by");
+      expect(Object.keys(call[0])).not.toContain("resolved_by");
+      expect(Object.keys(call[0])).not.toContain("resolved_at");
+    }
   });
 
   it("blocks publishing when a task in a unit has no calculated dates", async () => {
@@ -140,5 +164,12 @@ describe("Schedule presentation helpers and legacy switch", () => {
 
   it("keeps legacy schedule uploads off by default", () => {
     expect(SCHEDULE_LEGACY_UPLOAD_VISIBLE).toBe(false);
+  });
+
+  it("fails if schedule write payloads reintroduce client actor or timestamp fields", () => {
+    const source = fs.readFileSync(path.resolve(process.cwd(), "src/components/projects/schedule/ScheduleTab.tsx"), "utf8");
+    for (const field of ["author_id", "created_by", "updated_by", "resolved_by", "resolved_at"]) {
+      expect(source, `${field} must be set by the database`).not.toContain(`${field}:`);
+    }
   });
 });

@@ -111,13 +111,13 @@ export function ScheduleTab({ projectId, userRole }: Props) {
   };
 
   const updateUnit = (unit: ScheduleUnit, day1: string, note: string) => run(async () => {
-    const { error } = await (supabase.from("project_schedule_units") as any).update({ day1: day1 || null, offset_note: note || null, updated_by: user?.id }).eq("id", unit.id);
+    const { error } = await (supabase.from("project_schedule_units") as any).update({ day1: day1 || null, offset_note: note || null }).eq("id", unit.id);
     if (error) throw error;
     await recalculate();
   }, "Day 1 saved and dates recalculated by the database.");
 
   const addUnit = (kind: UnitKind, label: string, day1: string, note: string) => run(async () => {
-    const { error } = await (supabase.from("project_schedule_units") as any).insert({ project_id: projectId, unit_kind: kind, unit_label: label.trim(), day1: day1 || null, offset_note: note || null, created_by: user?.id, updated_by: user?.id });
+    const { error } = await (supabase.from("project_schedule_units") as any).insert({ project_id: projectId, unit_kind: kind, unit_label: label.trim(), day1: day1 || null, offset_note: note || null });
     if (error) throw error;
     await recalculate();
   }, "Unit added and dates recalculated by the database.");
@@ -172,10 +172,10 @@ export function ScheduleTab({ projectId, userRole }: Props) {
       if (error) throw error;
     } else {
       if (active) {
-        const { error } = await (supabase.from("schedule_holidays") as any).upsert({ holiday_date: date, label: label.trim(), is_active: true, created_by: user?.id, updated_by: user?.id }, { onConflict: "holiday_date" });
+        const { error } = await (supabase.from("schedule_holidays") as any).upsert({ holiday_date: date, label: label.trim(), is_active: true }, { onConflict: "holiday_date" });
         if (error) throw error;
       } else {
-        const { error } = await (supabase.from("schedule_holidays") as any).update({ is_active: false, updated_by: user?.id }).eq("holiday_date", date);
+        const { error } = await (supabase.from("schedule_holidays") as any).update({ is_active: false }).eq("holiday_date", date);
         if (error) throw error;
       }
       await recalculate();
@@ -192,7 +192,7 @@ export function ScheduleTab({ projectId, userRole }: Props) {
     if (!user) return;
     setBusy(true);
     try {
-      const { error } = await (supabase.from("schedule_task_comments") as any).insert({ project_id: projectId, task_id: task.id, author_id: user.id, body, status: "open" });
+      const { error } = await (supabase.from("schedule_task_comments") as any).insert({ project_id: projectId, task_id: task.id, body });
       if (error) throw error;
       toast.success("Comment added without changing the schedule.");
       await refresh();
@@ -202,7 +202,7 @@ export function ScheduleTab({ projectId, userRole }: Props) {
   const commentStatus = async (comment: ScheduleComment, status: "seen" | "resolved") => {
     setBusy(true);
     try {
-      const { error } = await (supabase.from("schedule_task_comments") as any).update({ status, updated_by: user?.id, ...(status === "resolved" ? { resolved_by: user?.id, resolved_at: new Date().toISOString() } : {}) }).eq("id", comment.id);
+      const { error } = await (supabase.from("schedule_task_comments") as any).update({ status }).eq("id", comment.id);
       if (error) throw error;
       toast.success(`Comment marked ${status}.`);
       await refresh();
