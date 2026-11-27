@@ -1,7 +1,7 @@
 # BOQ-3b confirmation — optional unit split for site quantities
 
 ## Migration
-- `drizzle/migrations/0087_boq3b_site_quantity_units.sql` (number 0087). Commit: see `git log -- docs/BOQ3B_CONFIRM.md` (implementation commit is the one adding this file).
+- `drizzle/migrations/0087_boq3b_site_quantity_units.sql` (number 0087). Commit: `fa1db16e`.
 - Adds table `site_quantity_units` (SELECT-only grant to authenticated, RLS `user_can_access_project`, same as `site_report_quantities.srq_read`; no client INSERT/UPDATE/DELETE), functions `site_set_quantity_units`, `site_get_quantity_units`, and replaces `boq3_task_report`.
 - Not changed: `save_site_report_draft`, `submit_site_report`, `get_site_report`, `get_running_bill`, `get_cost_report`, `site_report_quantities`, any existing money calculation.
 
