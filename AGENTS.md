@@ -50,5 +50,5 @@
 
 - Exports use shared safety adapters; portal links/advance self-actions are server-checked.
 - Schedule: checked contexts protect baselines; named editors allowed; server sets pre-baseline dates/library/repeats; lists hide removals; follow-ups/unit-less rows stay unbaselined; panel helper takes batch IDs.
-- Post-baseline schedule edits recalc dates in shared server helpers.
+- Post-baseline edits recalc via shared server helpers.
 - Site unit splits: site_quantity_units via site_set_quantity_units (report-draft rules), read separately; report RPCs unchanged.
