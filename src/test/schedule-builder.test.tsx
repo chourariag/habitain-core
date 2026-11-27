@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { toast } from "sonner";
 import fs from "node:fs";
 import path from "node:path";
 import type { ScheduleBaseline, ScheduleTask } from "@/components/projects/schedule/schedule-types";
@@ -24,6 +26,7 @@ vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 import { ScheduleTab } from "@/components/projects/schedule/ScheduleTab";
 import { compareSnapshots } from "@/components/projects/schedule/schedule-types";
 import { SCHEDULE_LEGACY_UPLOAD_VISIBLE } from "@/lib/phase-flags";
+import { boqTaskReportQueryKey } from "@/lib/boq-task-report";
 
 const task: ScheduleTask = {
   id: "task-1", project_id: "project-1", task_id_in_schedule: "F01-M1", task_name: "Material receipt", phase: "factory",
@@ -43,6 +46,10 @@ function setWidth(width: number) {
   window.dispatchEvent(new Event("resize"));
 }
 
+function renderSchedule(userRole = "head_operations", client = new QueryClient({ defaultOptions: { queries: { retry: false } } })) {
+  return render(<QueryClientProvider client={client}><ScheduleTab projectId="project-1" userRole={userRole} /></QueryClientProvider>);
+}
+
 beforeEach(() => {
   mocks.allowed = true;
   mocks.userId = "editor-id";
@@ -51,7 +58,12 @@ beforeEach(() => {
     project_schedule_units: [{ id: "unit-1", project_id: "project-1", unit_kind: "module", unit_label: "Module 1", day1: "2026-11-02", offset_note: null }],
     schedule_library_activities: [], schedule_library_tasks: [], schedule_holidays: [], schedule_baselines: [], schedule_task_comments: [],
     profiles: [{ auth_user_id: "editor-id", display_name: "Editor" }],
+    modules: [
+      { id: "module-1", project_id: "project-1", name: "Module 1", module_code: null, is_archived: false },
+      { id: "module-2", project_id: "project-1", name: "Module 2", module_code: null, is_archived: false },
+    ],
   };
+  vi.mocked(toast.success).mockClear();
   mocks.insert.mockReset().mockResolvedValue({ error: null });
   mocks.update.mockReset().mockImplementation((payload: Record<string, unknown>) => ({
     eq: vi.fn().mockImplementation(async () => {
@@ -77,32 +89,35 @@ afterEach(cleanup);
 describe("Schedule builder access modes", () => {
   it("shows an editor the desktop builder at 1440px", async () => {
     setWidth(1440);
-    render(<ScheduleTab projectId="project-1" userRole="head_operations" />);
+    renderSchedule();
     expect(await screen.findByRole("button", { name: "Add task not in library" })).toBeVisible();
     expect(screen.getByText("2. Add tasks")).toBeVisible();
     expect(screen.getAllByRole("button", { name: "Save" })).toHaveLength(2); // unit Day 1 + task row
     expect(screen.queryByText("Schedules are built on a desktop. Open HStack on a computer to edit. The read-only schedule and comments remain available below.")).not.toBeInTheDocument();
   });
 
-  it("shows an editor the exact desktop message and no schedule write controls at 900px", async () => {
+  it("keeps existing schedule task controls desktop-only at 900px while module links remain available", async () => {
     setWidth(900);
-    render(<ScheduleTab projectId="project-1" userRole="head_operations" />);
+    renderSchedule();
     expect(await screen.findByText(/Schedules are built on a desktop/)).toBeVisible();
     expect(screen.queryByRole("button", { name: "Add task not in library" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Comment" })).toBeVisible();
+    expect(screen.getByRole("combobox", { name: "Factory module for Module 1" })).toBeVisible();
   });
 
   it("keeps a phone non-editor read-only while allowing task comments", async () => {
     mocks.allowed = false;
     mocks.userId = "site-user";
     setWidth(390);
-    render(<ScheduleTab projectId="project-1" userRole="site_engineer" />);
+    renderSchedule("site_engineer");
     expect(await screen.findByRole("button", { name: "Comment" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Add task not in library" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Review & publish baseline" })).not.toBeInTheDocument();
     expect(screen.queryByText(/Schedules are built on a desktop/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "Factory module for Module 1" })).not.toBeInTheDocument();
+    expect(screen.getByText("Not linked")).toBeVisible();
 
     fireEvent.click(screen.getByRole("button", { name: "Comment" }));
     fireEvent.change(screen.getByPlaceholderText("Leave schedule feedback without editing the task"), { target: { value: "Please review access at the stair opening." } });
@@ -112,11 +127,43 @@ describe("Schedule builder access modes", () => {
     expect(mocks.rpc).not.toHaveBeenCalledWith("schedule_recalculate_dates", expect.anything());
   });
 
+  it("links a factory module at 390px, disables taken modules and refreshes the BOQ report query", async () => {
+    mocks.tables.project_schedule_units = [
+      ...mocks.tables.project_schedule_units,
+      { id: "unit-2", project_id: "project-1", unit_kind: "module", unit_label: "Module 2", day1: "2026-11-02", offset_note: null, module_id: "module-1" },
+    ];
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const invalidate = vi.spyOn(client, "invalidateQueries");
+    setWidth(390);
+    renderSchedule("planning_head", client);
+    const select = await screen.findByRole("combobox", { name: "Factory module for Module 1" });
+    expect(select).toBeVisible();
+    expect(select).toHaveClass("w-full", "min-h-[44px]");
+    expect(within(select).getByRole("option", { name: "Module 1" })).toBeDisabled();
+    fireEvent.change(select, { target: { value: "module-2" } });
+    await waitFor(() => expect(mocks.rpc).toHaveBeenCalledWith("schedule_set_unit_module", { p_unit: "unit-1", p_module: "module-2" }));
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: boqTaskReportQueryKey("project-1") }));
+  });
+
+  it("auto-matches only on demand, lists skip reasons and refreshes the BOQ report query", async () => {
+    mocks.rpc.mockImplementation(async (name: string) => name === "schedule_auto_match_units"
+      ? { data: { linked: 2, skipped: [{ unit_label: "M9", reason: "No exact module name or code match" }] }, error: null }
+      : { data: { count: 1, warnings: [] }, error: null });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const invalidate = vi.spyOn(client, "invalidateQueries");
+    setWidth(1440);
+    renderSchedule("planning_head", client);
+    expect(mocks.rpc).not.toHaveBeenCalledWith("schedule_auto_match_units", expect.anything());
+    fireEvent.click(await screen.findByRole("button", { name: "Auto-match by name" }));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Linked 2 unit(s). Skipped: M9: No exact module name or code match"));
+    await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: boqTaskReportQueryKey("project-1") }));
+  });
+
   it("uses reasoned revision and removal controls after v1", async () => {
     mocks.tables.schedule_baselines = [{ ...baseline }];
     mocks.tables.project_tasks = [{ ...task, baseline_version: 1 }];
     setWidth(1440);
-    render(<ScheduleTab projectId="project-1" userRole="head_operations" />);
+    renderSchedule();
     expect(await screen.findByText(/Baseline v1/)).toBeVisible();
     expect(screen.getByRole("button", { name: "Revise" })).toBeVisible();
     expect(screen.getByRole("button", { name: "Remove with reason" })).toBeVisible();
@@ -128,7 +175,7 @@ describe("Schedule builder access modes", () => {
     mocks.tables.schedule_baselines = [{ ...baseline }];
     mocks.tables.schedule_task_comments = [{ id: "comment-1", project_id: "project-1", task_id: "task-1", author_id: "site-user", body: "Check this task", status: "open", created_at: "2026-11-26T10:00:00Z", updated_at: "2026-11-26T10:00:00Z" }];
     setWidth(1440);
-    render(<ScheduleTab projectId="project-1" userRole="head_operations" />);
+    renderSchedule();
     fireEvent.click(await screen.findByRole("button", { name: "Comment (1)" }));
     fireEvent.click(await screen.findByRole("button", { name: "Mark seen" }));
     await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({ status: "seen" }));
@@ -144,7 +191,7 @@ describe("Schedule builder access modes", () => {
   it("blocks publishing when a task in a unit has no calculated dates", async () => {
     mocks.tables.project_tasks = [{ ...task, planned_start_date: null, planned_finish_date: null }];
     setWidth(1440);
-    render(<ScheduleTab projectId="project-1" userRole="head_operations" />);
+    renderSchedule();
     const button = await screen.findByRole("button", { name: "Review & publish baseline" });
     expect(button).toBeDisabled();
     expect(screen.getByText(/Publishing is blocked: 1 task in a unit has no calculated start or finish date/)).toBeVisible();
@@ -182,7 +229,7 @@ describe("SCHED-2c task table", () => {
     ];
     mocks.rpc.mockResolvedValue({ data: { warnings: ["L0 has no unit; using earliest module Day 1", "L1 has no unit; using earliest module Day 1"] }, error: null });
     setWidth(1440);
-    render(<ScheduleTab projectId="project-1" userRole="planning_head" />);
+    renderSchedule("planning_head");
     expect(await screen.findByText("3 tasks have no unit and no dates.")).toBeVisible();
     expect(screen.queryByText(/has no unit; using earliest/)).not.toBeInTheDocument();
     const roleSelect = screen.getByRole("combobox", { name: "Responsible role for F01-M1" }) as HTMLSelectElement;
@@ -202,7 +249,7 @@ describe("SCHED-2c task table", () => {
       { ...task, id: "task-x", task_id_in_schedule: "F09-M2", task_name: "Other unit", unit_label: "Module 2" },
     ];
     setWidth(1440);
-    render(<ScheduleTab projectId="project-1" userRole="planning_head" />);
+    renderSchedule("planning_head");
     fireEvent.click(await screen.findByRole("button", { name: "Predecessors for F01-M1" }));
     const list = await screen.findByRole("listbox");
     expect(within(list).queryByText("Other unit")).not.toBeInTheDocument();
@@ -219,7 +266,7 @@ describe("SCHED-2c task table", () => {
       ...Array.from({ length: 2 }, (_, i) => ({ ...task, id: `legacy-s-${i}`, task_id_in_schedule: `LS${i}`, unit_kind: null, unit_label: null, planned_start_date: null, planned_finish_date: null })),
     ];
     setWidth(1440);
-    render(<ScheduleTab projectId="project-1" userRole="planning_head" />);
+    renderSchedule("planning_head");
     const scope = await screen.findByTestId("publish-scope");
     expect(scope).toHaveTextContent("1 scheduled task will be in the baseline");
     expect(scope).toHaveTextContent("2 legacy tasks without a unit are not part of the baseline");
@@ -229,7 +276,7 @@ describe("SCHED-2c task table", () => {
   it("lets editors pick a responsible role from valid roles before a baseline", async () => {
     mocks.tables.project_tasks = [task];
     setWidth(1440);
-    render(<ScheduleTab projectId="project-1" userRole="planning_head" />);
+    renderSchedule("planning_head");
     const select = await screen.findByRole("combobox", { name: "Responsible role for F01-M1" });
     expect(within(select).queryByRole("option", { name: "site_installation_mgr" })).not.toBeInTheDocument();
     fireEvent.change(select, { target: { value: "site_installation_mgr" } });
@@ -245,7 +292,7 @@ describe("SCHED-2c task table", () => {
       { id: "l1", activity_id: "a1", code: "F00", name: "First", default_days: 1, std_start_day: 1, display_order: 2 },
     ];
     setWidth(1440);
-    const { container } = render(<ScheduleTab projectId="project-1" userRole="planning_head" />);
+    const { container } = renderSchedule("planning_head");
     const select = (await screen.findAllByRole("combobox")).find((el) => el.textContent?.includes("Choose unit"))!;
     fireEvent.change(select, { target: { value: "module|Module 1" } });
     const text = container.textContent ?? "";

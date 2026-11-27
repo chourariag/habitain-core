@@ -11323,6 +11323,7 @@ export type Database = {
           created_by: string | null
           day1: string | null
           id: string
+          module_id: string | null
           offset_note: string | null
           project_id: string
           unit_kind: string
@@ -11335,6 +11336,7 @@ export type Database = {
           created_by?: string | null
           day1?: string | null
           id?: string
+          module_id?: string | null
           offset_note?: string | null
           project_id: string
           unit_kind: string
@@ -11347,6 +11349,7 @@ export type Database = {
           created_by?: string | null
           day1?: string | null
           id?: string
+          module_id?: string | null
           offset_note?: string | null
           project_id?: string
           unit_kind?: string
@@ -11355,6 +11358,13 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "project_schedule_units_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_schedule_units_project_id_fkey"
             columns: ["project_id"]
@@ -20107,6 +20117,7 @@ export type Database = {
         Args: { p_project_id: string; p_reason: string; p_task: Json }
         Returns: string
       }
+      schedule_auto_match_units: { Args: { p_project: string }; Returns: Json }
       schedule_change_holiday: {
         Args: {
           p_active: boolean
@@ -20139,6 +20150,10 @@ export type Database = {
       }
       schedule_revise_task: {
         Args: { p_patch: Json; p_reason: string; p_task_id: string }
+        Returns: Json
+      }
+      schedule_set_unit_module: {
+        Args: { p_module: string; p_unit: string }
         Returns: Json
       }
       schedule_working_date: {

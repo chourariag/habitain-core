@@ -1,6 +1,7 @@
 # HStack Build Roadmap
 
 ## In Progress
+- [x] BOQ-3a2: 0086 explicit schedule-unit/factory-module links, checked editor RPCs/backfill, link-aware read-only BOQ-3 report and Schedule Units controls; 15+11 real-principal rollback checks, 1,011 tests, signed-in 390/1440 checks, docs/BOQ3A2_CONFIRM.md.
 - [x] BOQ-2b: shared React Query refresh between BOQ entry/links, tolerant canonical paste values with valid-list errors, locked broken-link revision message; 1,007 tests, mocked no-reload browser evidence, no migration or database changes; docs/BOQ2B_CONFIRM.md.
 - [x] BOQ-2: 0082–0084 link tables/checked RPCs (split, shares, lock, reasoned revisions, broken-link read flags, suggestion helpers); 19 real-principal rollback checks, zero fixtures; reader fingerprints/outputs unchanged; BOQ links screen. Evidence docs/BOQ2_CONFIRM.md.
 - [x] BOQ-1b: added 3 writers; consumed/frozen guard; 15+2 real-principal rollback checks, zero fixtures; downstream fingerprints unchanged; 995 tests; docs/BOQ1B_CONFIRM.md. Quantity Surveyor real-principal check blocked: no account. Browser writes mocked/rollback-only.

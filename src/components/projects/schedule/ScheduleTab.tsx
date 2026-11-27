@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,7 +17,8 @@ import { ScheduleGantt } from "./ScheduleGantt";
 import { ScheduleHolidays } from "./ScheduleHolidays";
 import { SchedulePublish, type ClearResult } from "./SchedulePublish";
 import { ScheduleHistory } from "./ScheduleHistory";
-import { displayDate, type LibraryActivity, type LibraryTask, type ProfileNameMap, type ScheduleBaseline, type ScheduleComment, type ScheduleHoliday, type ScheduleTask, type ScheduleUnit, type UnitKind, displayDateTime, type RevisionResult } from "./schedule-types";
+import { displayDate, type FactoryModule, type LibraryActivity, type LibraryTask, type ProfileNameMap, type ScheduleBaseline, type ScheduleComment, type ScheduleHoliday, type ScheduleTask, type ScheduleUnit, type UnitKind, displayDateTime, type RevisionResult } from "./schedule-types";
+import { boqTaskReportQueryKey } from "@/lib/boq-task-report";
 
 interface Props {
   projectId: string;
@@ -29,12 +31,14 @@ function message(error: unknown) {
 
 export function ScheduleTab({ projectId, userRole }: Props) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { allowed, loading: entitlementLoading } = useCanEditSchedule();
   const [desktop, setDesktop] = useState(() => typeof window === "undefined" || window.innerWidth >= 1024);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [tasks, setTasks] = useState<ScheduleTask[]>([]);
   const [units, setUnits] = useState<ScheduleUnit[]>([]);
+  const [modules, setModules] = useState<FactoryModule[]>([]);
   const [activities, setActivities] = useState<LibraryActivity[]>([]);
   const [libraryTasks, setLibraryTasks] = useState<LibraryTask[]>([]);
   const [holidays, setHolidays] = useState<ScheduleHoliday[]>([]);
@@ -54,9 +58,10 @@ export function ScheduleTab({ projectId, userRole }: Props) {
   const refresh = useCallback(async (initial = false) => {
     if (initial) setLoading(true);
     try {
-      const [taskRes, unitRes, activityRes, libraryRes, holidayRes, baselineRes, commentRes, profileRes] = await Promise.all([
+      const [taskRes, unitRes, moduleRes, activityRes, libraryRes, holidayRes, baselineRes, commentRes, profileRes] = await Promise.all([
         (supabase.from("project_tasks") as any).select("*").eq("project_id", projectId).order("display_order", { ascending: true, nullsFirst: false }).order("task_id_in_schedule", { ascending: true }),
         (supabase.from("project_schedule_units") as any).select("*").eq("project_id", projectId).order("unit_kind").order("unit_label"),
+        (supabase.from("modules") as any).select("id,project_id,name,module_code,is_archived").eq("project_id", projectId).order("name"),
         (supabase.from("schedule_library_activities") as any).select("id,code,name,phase,display_order").eq("active", true).order("display_order"),
         (supabase.from("schedule_library_tasks") as any).select("id,activity_id,code,name,default_days,std_start_day,display_order").eq("active", true).order("display_order"),
         (supabase.from("schedule_holidays") as any).select("holiday_date,label,is_active,created_by,created_at").order("holiday_date", { ascending: false }),
@@ -64,10 +69,11 @@ export function ScheduleTab({ projectId, userRole }: Props) {
         (supabase.from("schedule_task_comments") as any).select("*").eq("project_id", projectId).order("created_at", { ascending: true }),
         (supabase.from("profiles") as any).select("auth_user_id,display_name").eq("is_active", true),
       ]);
-      const failure = [taskRes, unitRes, activityRes, libraryRes, holidayRes, baselineRes, commentRes, profileRes].find((result) => result.error);
+      const failure = [taskRes, unitRes, moduleRes, activityRes, libraryRes, holidayRes, baselineRes, commentRes, profileRes].find((result) => result.error);
       if (failure?.error) throw failure.error;
       setTasks((taskRes.data ?? []) as ScheduleTask[]);
       setUnits((unitRes.data ?? []) as ScheduleUnit[]);
+      setModules((moduleRes.data ?? []) as FactoryModule[]);
       setActivities((activityRes.data ?? []) as LibraryActivity[]);
       setLibraryTasks((libraryRes.data ?? []) as LibraryTask[]);
       setHolidays((holidayRes.data ?? []) as ScheduleHoliday[]);
@@ -122,6 +128,21 @@ export function ScheduleTab({ projectId, userRole }: Props) {
     if (error) throw error;
     await recalculate();
   }, "Unit added; dates updated.");
+
+  const setUnitModule = (unit: ScheduleUnit, moduleId: string | null) => run(async () => {
+    const { error } = await supabase.rpc("schedule_set_unit_module", { p_unit: unit.id, p_module: moduleId });
+    if (error) throw error;
+    await queryClient.invalidateQueries({ queryKey: boqTaskReportQueryKey(projectId) });
+  }, moduleId ? "Factory module linked." : "Factory module link cleared.");
+
+  const autoMatchUnits = () => run(async () => {
+    const { data, error } = await supabase.rpc("schedule_auto_match_units", { p_project: projectId });
+    if (error) throw error;
+    const result = data as unknown as { linked: number; skipped: Array<{ unit_label: string; reason: string }> };
+    const skipped = result.skipped.length ? result.skipped.map(item => `${item.unit_label}: ${item.reason}`).join("; ") : "none";
+    toast.success(`Linked ${result.linked} unit(s). Skipped: ${skipped}`);
+    await queryClient.invalidateQueries({ queryKey: boqTaskReportQueryKey(projectId) });
+  });
 
   const addLibrary = (unit: ScheduleUnit, ids: string[]) => run(async () => {
     const { data, error } = await supabase.rpc("schedule_add_library_tasks", { p_project_id: projectId, p_unit_kind: unit.unit_kind, p_unit_label: unit.unit_label, p_library_task_ids: ids });
@@ -236,7 +257,7 @@ export function ScheduleTab({ projectId, userRole }: Props) {
       <Tabs defaultValue="plan" className="min-w-0">
         <TabsList className="max-w-full"><TabsTrigger value="plan">Schedule plan</TabsTrigger><TabsTrigger value="actuals">Actuals & progress</TabsTrigger></TabsList>
         <TabsContent value="plan" className="min-w-0 space-y-4">
-          <ScheduleUnits units={units} canWrite={canWrite} baselineExists={baselineExists} busy={busy} onUpdate={updateUnit} onAdd={addUnit} />
+          <ScheduleUnits units={units} modules={modules} canWrite={canWrite} canLinkModules={allowed && !entitlementLoading} desktop={desktop} baselineExists={baselineExists} busy={busy} onUpdate={updateUnit} onAdd={addUnit} onSetModule={setUnitModule} onAutoMatch={autoMatchUnits} />
           {canWrite && !baselineExists && <ScheduleLibrary activities={activities} libraryTasks={libraryTasks} projectTasks={tasks} units={units} busy={busy} onAdd={addLibrary} onRepeat={repeatUnits} />}
           {canWrite && baselineExists && <Alert><AlertTitle>Revision mode</AlertTitle><AlertDescription>Use Revise on an existing task or “Add task not in library”. Every addition, change and removal requires a reason. Publish the next version below when ready.</AlertDescription></Alert>}
           {revisionNotice && <RevisionNotice result={revisionNotice} onClose={() => setRevisionNotice(null)} />}

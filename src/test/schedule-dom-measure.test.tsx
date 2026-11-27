@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const tables: Record<string, any[]> = {};
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {
@@ -27,7 +28,8 @@ describe("Schedule tab DOM size with 200 tasks", () => {
     seed();
     Object.defineProperty(window, "innerWidth", { configurable: true, value: 1440 });
     const t0 = performance.now();
-    const { container } = render(<ScheduleTab projectId="p" userRole="planning_head" />);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const { container } = render(<QueryClientProvider client={client}><ScheduleTab projectId="p" userRole="planning_head" /></QueryClientProvider>);
     await screen.findByText(/Task table/);
     const ms = Math.round(performance.now() - t0);
     const count = container.querySelectorAll("*").length;

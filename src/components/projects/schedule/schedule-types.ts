@@ -9,6 +9,15 @@ export interface ScheduleUnit {
   unit_label: string;
   day1: string | null;
   offset_note: string | null;
+  module_id?: string | null;
+}
+
+export interface FactoryModule {
+  id: string;
+  project_id: string;
+  name: string;
+  module_code: string | null;
+  is_archived: boolean;
 }
 
 export interface ScheduleTask {
