@@ -1,7 +1,7 @@
 # BOQ-3a2 — Explicit schedule-unit ↔ factory-module links
 
 - **Migration:** 0086 only, applied as `drizzle/migrations/0086_0086_boq3a2_unit_module_link.sql` (the migration tool added its own `0086_` prefix).
-- **Implementation commit:** `PENDING_IMPLEMENTATION_COMMIT`.
+- **Implementation commit:** `d57d2bd3`.
 - **Other migrations:** none. No BOQ-1/BOQ-2 table, rule, money calculation, Running Bill, Cost report, schedule task, or `schedule_task_id` change.
 
 ## Inspect findings
