@@ -38,13 +38,13 @@
 - Factory attendance is isolated in factory-specific records and reuses the live camera and shared shift setting; never represent the factory as a projects row because it would contaminate project lists and reporting expectations.
 - Factory reports use checked full-list RPCs, archived replacement, private attendance-rate snapshots and module/stage allocation; source-linked production logs preserve history without changing module stages.
 - New factory role gates read caller-bound user_roles, not legacy profile role mirrors; monetary snapshots have no direct authenticated column grants and cost access uses checked RPCs.
-- Running Bill unions submitted site/factory quantities before the positive-BOQ cap; factory labour is a separate exact-allocation section; legacy site cost CTEs unchanged.
+- Running Bill unions site/factory quantities before the BOQ cap; factory labour allocated exactly.
 - Factory nightly exports use the shared versioned manifest with operational attendance hours only, excluding worker wage amounts and rate fields, so private cost snapshots never enter factory CSV projections.
 - Today is a company-wide read-only Site Hub exception to project selection, using the existing site_report flag and a caller-bound overview RPC; existing project tabs retain their guard and permitted costs are aggregate-only.
 - Project Rates uses the unchanged project_setup flag and can_view_running_bill gate; Excel keys resolve project+sno against the latest BOQ and revalidate atomically at Confirm, preventing stale-version imports.
 - Material quantity snapshots capture once through submit-only helpers, distinguish uncaptured legacy NULLs from missing rates, and suppress amounts when an active contractor rate includes material; explicit safe column grants keep rates/amounts RPC-only and outside nightly exports.
 - Project Cost uses the unchanged project_setup flag and checked get_cost_report reader; it consumes frozen material without rewriting snapshots, retains Running Bill labour/value rules, and omits per-worker amounts unless compensation access passes, including local Excel downloads.
-- Project Cost period earned = cap-aware earned(end) − earned(start−1); cumulative stays separate so the difference uses one period.
+- Project Cost period earned = earned(end) − earned(start−1), cap-aware.
 - Project contact is written only by checked atomic creation (no approval staging; deprecated store unused); audits log changed fields, never values.
 - Project screens use explicit public projections; contact readers/editors check caller-bound Tier 1/Super roles and archives strip private contact. Location edits use a checked Tier 1/Super/Head of Projects RPC, and site attendance writers reject missing pins without changing configured distance/photo/hours rules.
 
