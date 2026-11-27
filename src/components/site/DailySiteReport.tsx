@@ -23,6 +23,8 @@ import { TaskWorkerChips } from "@/components/site/TaskWorkerChips";
 import { allocatedHours, calculatedProgress, isTodaysTask, workerAllocationProblems, type PresentWorker, type TaskWorker } from "@/lib/site-report-task-workers";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { createReportAutosave, reportTaskStatus } from "@/lib/site-report-autosave";
+import { SiteQuantityUnits } from "@/components/site/SiteQuantityUnits";
+import { findQuantityUnits, type QuantityUnits, type SplitRow } from "@/lib/site-quantity-units";
 
 type Expense = { id: string; kind: "consumable" | "expense"; description: string; amount_inr: string };
 type Task = { id: string; code: string; name: string; pct: number; planned_start: string; planned_finish?: string | null; previous_report?: boolean; in_report?: boolean; actual_start: string | null };
@@ -69,6 +71,8 @@ export function DailySiteReport({ projectId: requestedProjectId }: { projectId: 
   const [showOtherTasks, setShowOtherTasks] = useState(false);
   const [checklistOpen, setChecklistOpen] = useState(false);
   const [qrows, setQrows] = useState<QtyRow[]>([]);
+  const [qUnits, setQUnits] = useState<QuantityUnits[]>([]);
+  const [qtyChangedKeys, setQtyChangedKeys] = useState<string[]>([]);
   const [newOtherKeys, setNewOtherKeys] = useState<string[]>([]);
   const [headcount, setHeadcount] = useState<Record<string, string>>({});
   const [notes, setNotes] = useState("");
@@ -87,6 +91,16 @@ export function DailySiteReport({ projectId: requestedProjectId }: { projectId: 
   const checklistRef = useRef<HTMLDivElement>(null);
   const submitRef = useRef<HTMLDivElement>(null);
   const [barHeights, setBarHeights] = useState({ checklist: 96, submit: 60 });
+
+  // BOQ-3b optional unit split; read separately so get_site_report stays unchanged.
+  const loadUnits = useCallback(async (id: string | null): Promise<QuantityUnits[]> => {
+    if (!id) { setQUnits([]); return []; }
+    const { data: u, error } = await rpc("site_get_quantity_units", { p_report: id });
+    const raw = !error && u ? (u as { quantities?: unknown }).quantities : null;
+    const list = Array.isArray(raw) ? (raw as QuantityUnits[]).filter(q => q && Array.isArray(q.split) && Array.isArray(q.allocated)) : [];
+    setQUnits(list);
+    return list;
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -112,7 +126,9 @@ export function DailySiteReport({ projectId: requestedProjectId }: { projectId: 
     })));
     setHeadcount(Object.fromEntries((v.headcount ?? []).map((h) => [h.contractor_id, String(h.headcount)])));
     setSummary(null);
-  }, [projectId, date]);
+    setQtyChangedKeys([]);
+    void loadUnits(v.report?.id ?? null);
+  }, [projectId, date, loadUnits]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -160,8 +176,25 @@ export function DailySiteReport({ projectId: requestedProjectId }: { projectId: 
     const { data: id, error } = await rpc("save_site_report_draft", { p_project_id: projectId, p_date: date, p_payload: buildPayload() });
     if (error) { setSaveState("error"); console.error("save_site_report_draft failed:", error); toast.error(siteReportErrorMessage(error)); return null; }
     reportId.current = id as string; dirty.current = revision.current !== savedRevision; setSaveState("saved");
+    void loadUnits(id as string);
     return id as string;
-  }, [canEdit, projectId, date, buildPayload, data?.present_workers, taskWorkers, expenses]);
+  }, [canEdit, projectId, date, buildPayload, data?.present_workers, taskWorkers, expenses, loadUnits]);
+
+  // Saves the report draft first, then the unit split for that quantity row.
+  const saveUnits = useCallback(async (row: QtyRow, split: SplitRow[]) => {
+    await autosave.current.flush();
+    const id = await saveNow();
+    if (!id) return false;
+    const list = await loadUnits(id);
+    const target = findQuantityUnits(list, row.boq_item_id, row.contractor_id);
+    if (!target) { toast.error("Could not find this quantity in the saved report. Please try again."); return false; }
+    const { error } = await rpc("site_set_quantity_units", { p_quantity: target.quantity_id, p_split: split });
+    if (error) { console.error("site_set_quantity_units failed:", error); toast.error(error.message || "Could not save the unit split."); return false; }
+    setQtyChangedKeys(k => k.filter(x => x !== row.key));
+    await loadUnits(id);
+    toast.success("Unit split saved");
+    return true;
+  }, [saveNow, loadUnits]);
 
   // Each scheduled callback retains its report scope and payload.
   useEffect(() => {
@@ -280,6 +313,7 @@ export function DailySiteReport({ projectId: requestedProjectId }: { projectId: 
     if (row.boq_item_id && patch.today_qty !== undefined) {
       const taskId = data.boq.find(b => b.id === row.boq_item_id)?.task_id;
       if (taskId) setTaskStatus(s => ({ ...s, [taskId]: "ongoing" }));
+      if (findQuantityUnits(qUnits, row.boq_item_id, row.contractor_id)?.split.length) setQtyChangedKeys(k => k.includes(row.key) ? k : [...k, row.key]);
     }
     setQrows((s) => s.some((r) => r.key === row.key) ? s.map((r) => r.key === row.key ? { ...r, ...patch } : r) : [...s, { ...row, ...patch }]);
   };
@@ -343,6 +377,11 @@ export function DailySiteReport({ projectId: requestedProjectId }: { projectId: 
             {rate?.rate_type === "lump_sum" && <span className="text-muted-foreground"> · package {Number(rate.used_qty)} of {Number(rate.package_qty)} done</span>}</p>
         )}
         {problem && <p className="text-xs text-destructive flex items-start gap-1"><AlertTriangle className="h-3 w-3 mt-0.5 shrink-0" /><span className="break-words">{problem}</span></p>}
+        {!other && row.boq_item_id && Number(row.today_qty) > 0 && (() => {
+          const u = findQuantityUnits(qUnits, row.boq_item_id, row.contractor_id);
+          return u ? <SiteQuantityUnits units={u} quantity={Number(row.today_qty)} uom={unit} readOnly={readOnly}
+            qtyChanged={qtyChangedKeys.includes(row.key)} onSave={split => saveUnits(row, split)} /> : null;
+        })()}
       </div>
     );
   };

@@ -36,6 +36,7 @@ describe("Daily Report scope transitions", () => {
     const events: string[] = [];
     let complete: (() => void) | undefined;
     calls.rpc.mockImplementation((name,args) => {
+      if(name==="site_get_quantity_units") return Promise.resolve({data:{quantities:[]},error:null});
       if(name==="save_site_report_draft") {
         events.push(`save:${args.p_project_id}:${args.p_date}:${args.p_payload.notes}`);
         return new Promise(resolve => {complete=()=>resolve({data:"report",error:null});});

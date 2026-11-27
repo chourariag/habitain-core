@@ -34,6 +34,6 @@ describe("BOQ-3a task report section", () => {
     expect(screen.getByText("Linked")).toBeInTheDocument();
     expect(screen.getByText("By name")).toBeInTheDocument();
     expect(screen.getByText("Link this unit to a factory module in Schedule > Units")).toBeInTheDocument();
-    expect(screen.getByText(/Waiting for unit on site reports/)).toBeInTheDocument();
+    expect(screen.getByText("Site-work lines")).toBeInTheDocument();
   });
 });

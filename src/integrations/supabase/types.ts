@@ -15339,6 +15339,60 @@ export type Database = {
           },
         ]
       }
+      site_quantity_units: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          project_id: string
+          qty: number
+          quantity_id: string
+          unit_kind: string
+          unit_label: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id: string
+          qty: number
+          quantity_id: string
+          unit_kind: string
+          unit_label: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id?: string
+          qty?: number
+          quantity_id?: string
+          unit_kind?: string
+          unit_label?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_quantity_units_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_quantity_units_quantity_id_fkey"
+            columns: ["quantity_id"]
+            isOneToOne: false
+            referencedRelation: "site_report_quantities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_readiness: {
         Row: {
           crane_booked: boolean
@@ -20191,8 +20245,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      site_get_quantity_units: { Args: { p_report: string }; Returns: Json }
       site_report_today: { Args: never; Returns: string }
       site_schedule_dispatch_reminders: { Args: never; Returns: number }
+      site_set_quantity_units: {
+        Args: { p_quantity: string; p_split: Json }
+        Returns: Json
+      }
       storage_object_project_allowed: {
         Args: { _object_name: string; _uid: string }
         Returns: boolean
